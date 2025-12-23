@@ -1,58 +1,36 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
+import '../core/constants/pet_constants.dart';
 
 /// ============================================================
-/// 반려동물 모델
-/// 반려동물의 모든 정보를 담는 데이터 구조
+/// 강아지 모델 (V2 리팩토링 - 강아지 전용)
+/// 
+/// 변경사항:
+/// - PetType 제거 (강아지 전용 앱)
+/// - PetSize -> DogSize
+/// - PetGender -> DogGender  
+/// - PetTrait -> DogTrait
+/// - 50개 특성 시스템, 건강수첩 연동
 /// ============================================================
 
-/// 반려동물 종류 열거형
-enum PetType {
-  dog,    // 강아지
-  cat,    // 고양이
-  bird,   // 새
-  fish,   // 물고기
-  rabbit, // 토끼
-  hamster,// 햄스터
-  other,  // 기타
-}
-
-/// 반려동물 성별 열거형
-enum PetGender {
-  male,   // 수컷
-  female, // 암컷
-}
-
-/// 반려동물 성격 유형
-enum PetPersonality {
-  active,     // 활발한
-  calm,       // 차분한
-  friendly,   // 친화적인
-  shy,        // 수줍은
-  playful,    // 장난스러운
-  protective, // 보호적인
-  independent,// 독립적인
-  affectionate,// 애정적인
-}
-
-class PetModel extends Equatable {
+class DogModel extends Equatable {
   /// 고유 ID
   final String id;
   
   /// 보호자(사용자) ID
   final String ownerId;
   
-  /// 반려동물 이름
+  /// 대표 강아지 여부 (여러 마리 중 대표로 표시될 강아지)
+  final bool isPrimary;
+  
+  /// 강아지 이름
   final String name;
   
-  /// 종류 (강아지, 고양이 등)
-  final PetType type;
-  
-  /// 품종 (예: 골든 리트리버, 페르시안 등)
+  /// 품종 (예: 골든 리트리버, 말티즈 등)
   final String? breed;
   
   /// 성별
-  final PetGender gender;
+  final DogGender gender;
   
   /// 생년월일
   final DateTime? birthDate;
@@ -63,8 +41,8 @@ class PetModel extends Equatable {
   /// 중성화 여부
   final bool isNeutered;
   
-  /// 성격 목록
-  final List<PetPersonality> personalities;
+  /// 특성 목록 (최소 5개 이상)
+  final List<DogTrait> traits;
   
   /// 자기소개/특징
   final String? bio;
@@ -81,23 +59,29 @@ class PetModel extends Equatable {
   /// 동물등록 인증 여부
   final bool isRegistrationVerified;
   
+  /// 예방접종 인증 여부
+  final bool isVaccinationVerified;
+  
   /// 혈통서 보유 여부
   final bool hasPedigree;
   
   /// 혈통서 이미지 URL
   final String? pedigreeImageUrl;
   
-  /// 건강 인증서 보유 여부
-  final bool hasHealthCertificate;
-  
   /// 마지막 건강검진일
   final DateTime? lastHealthCheckDate;
   
-  /// 예방접종 완료 여부
-  final bool isVaccinationComplete;
-  
   /// 교배 가능 여부
   final bool isBreedingAvailable;
+  
+  /// 건강수첩 활성화 여부
+  final bool healthBookEnabled;
+  
+  /// 활성화된 건강수첩 카테고리
+  final List<HealthCategory> enabledHealthCategories;
+  
+  /// 산책 기능 활성화 여부
+  final bool walkFeatureEnabled;
   
   /// 생성일
   final DateTime createdAt;
@@ -105,28 +89,30 @@ class PetModel extends Equatable {
   /// 수정일
   final DateTime updatedAt;
 
-  const PetModel({
+  const DogModel({
     required this.id,
     required this.ownerId,
+    this.isPrimary = false,
     required this.name,
-    required this.type,
     this.breed,
     required this.gender,
     this.birthDate,
     this.weight,
     this.isNeutered = false,
-    this.personalities = const [],
+    this.traits = const [],
     this.bio,
     this.profileImageUrl,
     this.photoUrls = const [],
     this.registrationNumber,
     this.isRegistrationVerified = false,
+    this.isVaccinationVerified = false,
     this.hasPedigree = false,
     this.pedigreeImageUrl,
-    this.hasHealthCertificate = false,
     this.lastHealthCheckDate,
-    this.isVaccinationComplete = false,
     this.isBreedingAvailable = false,
+    this.healthBookEnabled = false,
+    this.enabledHealthCategories = const [],
+    this.walkFeatureEnabled = true,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -147,77 +133,59 @@ class PetModel extends Equatable {
     }
   }
 
-  /// 종류 한글 표시
-  String get typeString {
-    switch (type) {
-      case PetType.dog:
-        return '강아지';
-      case PetType.cat:
-        return '고양이';
-      case PetType.bird:
-        return '새';
-      case PetType.fish:
-        return '물고기';
-      case PetType.rabbit:
-        return '토끼';
-      case PetType.hamster:
-        return '햄스터';
-      case PetType.other:
-        return '기타';
-    }
+  /// 나이 (년 단위)
+  int? get ageYears {
+    if (birthDate == null) return null;
+    final now = DateTime.now();
+    return now.difference(birthDate!).inDays ~/ 365;
   }
 
   /// 성별 한글 표시
-  String get genderString {
-    return gender == PetGender.male ? '수컷' : '암컷';
+  String get genderString => gender.label;
+
+  /// 성별 기호
+  String get genderSymbol => gender.symbol;
+
+  /// 체중 크기 분류
+  DogSize? get size {
+    if (weight == null) return null;
+    return DogSize.fromWeight(weight!);
   }
 
-  /// 성격 한글 목록
-  List<String> get personalityStrings {
-    return personalities.map((p) {
-      switch (p) {
-        case PetPersonality.active:
-          return '활발한';
-        case PetPersonality.calm:
-          return '차분한';
-        case PetPersonality.friendly:
-          return '친화적인';
-        case PetPersonality.shy:
-          return '수줍은';
-        case PetPersonality.playful:
-          return '장난스러운';
-        case PetPersonality.protective:
-          return '보호적인';
-        case PetPersonality.independent:
-          return '독립적인';
-        case PetPersonality.affectionate:
-          return '애정적인';
-      }
-    }).toList();
-  }
+  /// 체중 크기 한글 표시
+  String get sizeString => size?.label ?? '미입력';
 
-  /// Firestore 문서에서 PetModel 생성
-  factory PetModel.fromFirestore(DocumentSnapshot doc) {
+  /// 특성 한글 목록
+  List<String> get traitLabels => traits.map((t) => t.label).toList();
+
+  /// 산책 가능 여부 (강아지는 항상 산책 가능)
+  bool get canWalk => walkFeatureEnabled;
+
+  /// 특성 유효성 검사 (최소 5개)
+  bool get hasValidTraits => traits.length >= 5;
+
+  /// Firestore 문서에서 DogModel 생성
+  factory DogModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    return PetModel(
+    return DogModel(
       id: doc.id,
       ownerId: data['ownerId'] ?? '',
+      isPrimary: data['isPrimary'] ?? false,
       name: data['name'] ?? '',
-      type: PetType.values.firstWhere(
-        (e) => e.name == data['type'],
-        orElse: () => PetType.dog,
-      ),
       breed: data['breed'],
-      gender: data['gender'] == 'female' ? PetGender.female : PetGender.male,
+      gender: DogGender.values.firstWhere(
+        (e) => e.name == data['gender'],
+        orElse: () => DogGender.male,
+      ),
       birthDate: data['birthDate'] != null
           ? (data['birthDate'] as Timestamp).toDate()
           : null,
       weight: data['weight']?.toDouble(),
       isNeutered: data['isNeutered'] ?? false,
-      personalities: (data['personalities'] as List<dynamic>?)
-              ?.map((p) => PetPersonality.values.firstWhere(
-                    (e) => e.name == p,
-                    orElse: () => PetPersonality.friendly,
+      traits: (data['traits'] as List<dynamic>?)
+              ?.map((t) => DogTrait.values.firstWhere(
+                    (e) => e.name == t,
+                    orElse: () => DogTrait.friendly,
                   ))
               .toList() ??
           [],
@@ -226,14 +194,22 @@ class PetModel extends Equatable {
       photoUrls: List<String>.from(data['photoUrls'] ?? []),
       registrationNumber: data['registrationNumber'],
       isRegistrationVerified: data['isRegistrationVerified'] ?? false,
+      isVaccinationVerified: data['isVaccinationVerified'] ?? false,
       hasPedigree: data['hasPedigree'] ?? false,
       pedigreeImageUrl: data['pedigreeImageUrl'],
-      hasHealthCertificate: data['hasHealthCertificate'] ?? false,
       lastHealthCheckDate: data['lastHealthCheckDate'] != null
           ? (data['lastHealthCheckDate'] as Timestamp).toDate()
           : null,
-      isVaccinationComplete: data['isVaccinationComplete'] ?? false,
       isBreedingAvailable: data['isBreedingAvailable'] ?? false,
+      healthBookEnabled: data['healthBookEnabled'] ?? false,
+      enabledHealthCategories: (data['enabledHealthCategories'] as List<dynamic>?)
+              ?.map((c) => HealthCategory.values.firstWhere(
+                    (e) => e.name == c,
+                    orElse: () => HealthCategory.weight,
+                  ))
+              .toList() ??
+          [],
+      walkFeatureEnabled: data['walkFeatureEnabled'] ?? true,
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
@@ -247,85 +223,102 @@ class PetModel extends Equatable {
   Map<String, dynamic> toFirestore() {
     return {
       'ownerId': ownerId,
+      'isPrimary': isPrimary,
       'name': name,
-      'type': type.name,
       'breed': breed,
       'gender': gender.name,
       'birthDate': birthDate != null ? Timestamp.fromDate(birthDate!) : null,
       'weight': weight,
       'isNeutered': isNeutered,
-      'personalities': personalities.map((p) => p.name).toList(),
+      'traits': traits.map((t) => t.name).toList(),
+      'type': 'dog', // 호환성을 위해 유지
       'bio': bio,
       'profileImageUrl': profileImageUrl,
       'photoUrls': photoUrls,
       'registrationNumber': registrationNumber,
       'isRegistrationVerified': isRegistrationVerified,
+      'isVaccinationVerified': isVaccinationVerified,
       'hasPedigree': hasPedigree,
       'pedigreeImageUrl': pedigreeImageUrl,
-      'hasHealthCertificate': hasHealthCertificate,
       'lastHealthCheckDate': lastHealthCheckDate != null
           ? Timestamp.fromDate(lastHealthCheckDate!)
           : null,
-      'isVaccinationComplete': isVaccinationComplete,
       'isBreedingAvailable': isBreedingAvailable,
+      'healthBookEnabled': healthBookEnabled,
+      'enabledHealthCategories': enabledHealthCategories.map((c) => c.name).toList(),
+      'walkFeatureEnabled': walkFeatureEnabled,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
   }
 
   /// 복사본 생성
-  PetModel copyWith({
+  DogModel copyWith({
     String? id,
     String? ownerId,
+    bool? isPrimary,
     String? name,
-    PetType? type,
     String? breed,
-    PetGender? gender,
+    DogGender? gender,
     DateTime? birthDate,
     double? weight,
     bool? isNeutered,
-    List<PetPersonality>? personalities,
+    List<DogTrait>? traits,
     String? bio,
     String? profileImageUrl,
     List<String>? photoUrls,
     String? registrationNumber,
     bool? isRegistrationVerified,
+    bool? isVaccinationVerified,
     bool? hasPedigree,
     String? pedigreeImageUrl,
-    bool? hasHealthCertificate,
     DateTime? lastHealthCheckDate,
-    bool? isVaccinationComplete,
     bool? isBreedingAvailable,
+    bool? healthBookEnabled,
+    List<HealthCategory>? enabledHealthCategories,
+    bool? walkFeatureEnabled,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
-    return PetModel(
+    return DogModel(
       id: id ?? this.id,
       ownerId: ownerId ?? this.ownerId,
+      isPrimary: isPrimary ?? this.isPrimary,
       name: name ?? this.name,
-      type: type ?? this.type,
       breed: breed ?? this.breed,
       gender: gender ?? this.gender,
       birthDate: birthDate ?? this.birthDate,
       weight: weight ?? this.weight,
       isNeutered: isNeutered ?? this.isNeutered,
-      personalities: personalities ?? this.personalities,
+      traits: traits ?? this.traits,
       bio: bio ?? this.bio,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       photoUrls: photoUrls ?? this.photoUrls,
       registrationNumber: registrationNumber ?? this.registrationNumber,
-      isRegistrationVerified:
-          isRegistrationVerified ?? this.isRegistrationVerified,
+      isRegistrationVerified: isRegistrationVerified ?? this.isRegistrationVerified,
+      isVaccinationVerified: isVaccinationVerified ?? this.isVaccinationVerified,
       hasPedigree: hasPedigree ?? this.hasPedigree,
       pedigreeImageUrl: pedigreeImageUrl ?? this.pedigreeImageUrl,
-      hasHealthCertificate:
-          hasHealthCertificate ?? this.hasHealthCertificate,
       lastHealthCheckDate: lastHealthCheckDate ?? this.lastHealthCheckDate,
-      isVaccinationComplete:
-          isVaccinationComplete ?? this.isVaccinationComplete,
       isBreedingAvailable: isBreedingAvailable ?? this.isBreedingAvailable,
+      healthBookEnabled: healthBookEnabled ?? this.healthBookEnabled,
+      enabledHealthCategories: enabledHealthCategories ?? this.enabledHealthCategories,
+      walkFeatureEnabled: walkFeatureEnabled ?? this.walkFeatureEnabled,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  /// 빈 모델 생성 (신규 등록 시)
+  factory DogModel.empty(String ownerId) {
+    final now = DateTime.now();
+    return DogModel(
+      id: '',
+      ownerId: ownerId,
+      name: '',
+      gender: DogGender.male,
+      createdAt: now,
+      updatedAt: now,
     );
   }
 
@@ -333,25 +326,27 @@ class PetModel extends Equatable {
   List<Object?> get props => [
         id,
         ownerId,
+        isPrimary,
         name,
-        type,
         breed,
         gender,
         birthDate,
         weight,
         isNeutered,
-        personalities,
+        traits,
         bio,
         profileImageUrl,
         photoUrls,
         registrationNumber,
         isRegistrationVerified,
+        isVaccinationVerified,
         hasPedigree,
         pedigreeImageUrl,
-        hasHealthCertificate,
         lastHealthCheckDate,
-        isVaccinationComplete,
         isBreedingAvailable,
+        healthBookEnabled,
+        enabledHealthCategories,
+        walkFeatureEnabled,
         createdAt,
         updatedAt,
       ];
