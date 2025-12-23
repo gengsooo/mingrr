@@ -92,15 +92,16 @@ class HealthScreen extends ConsumerWidget {
 
   /// 강아지 건강수첩 카테고리 목록
   /// - 대변/소변/음수 제거 (사용자 요청)
+  /// - 놀이 제거, 그루밍 추가
   List<HealthCategory> _getCategories() {
     return [
       HealthCategory.weight,
       HealthCategory.walk,
-      HealthCategory.play,
+      HealthCategory.grooming,
+      HealthCategory.medication,
       HealthCategory.vaccination,
       HealthCategory.checkup,
-      HealthCategory.medication,
-      HealthCategory.shower,
+      HealthCategory.teethCare,
       HealthCategory.special,
     ];
   }
@@ -217,9 +218,21 @@ class HealthScreen extends ConsumerWidget {
           const SizedBox(height: 20),
           
           // 최근 기록
-          const Text(
-            '최근 기록',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                '최근 기록',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              GestureDetector(
+                onTap: () => _showAllRecords(context, category),
+                child: const Text(
+                  '더보기',
+                  style: TextStyle(fontSize: 14, color: AppColors.health),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           _buildRecentRecords(category),
@@ -283,8 +296,8 @@ class HealthScreen extends ConsumerWidget {
         return _buildWeightSummary();
       case HealthCategory.walk:
         return _buildWalkSummary();
-      case HealthCategory.play:
-        return _buildPlaySummary();
+      case HealthCategory.grooming:
+        return _buildGroomingSummary();
       default:
         return _buildDefaultSummary(category);
     }
@@ -312,13 +325,13 @@ class HealthScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPlaySummary() {
+  Widget _buildGroomingSummary() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _buildSummaryItem('오늘', '15분', AppColors.dating),
-        _buildSummaryItem('이번주', '2시간', AppColors.dating),
-        _buildSummaryItem('평균', '20분/일', AppColors.dating),
+        _buildSummaryItem('최근 샤워', '3일 전', AppColors.health),
+        _buildSummaryItem('최근 빗질', '오늘', AppColors.health),
+        _buildSummaryItem('이번달', '8회', AppColors.health),
       ],
     );
   }
@@ -415,11 +428,25 @@ class HealthScreen extends ConsumerWidget {
         return '${5.2 - index * 0.1}kg';
       case HealthCategory.walk:
         return '${30 + index * 5}분, ${(1.2 + index * 0.3).toStringAsFixed(1)}km';
-      case HealthCategory.play:
-        return '${15 + index * 5}분';
+      case HealthCategory.grooming:
+        final types = ['샤워', '빗질', '발톱정리', '이발', '귀청소'];
+        return types[index % types.length];
       default:
         return '기록됨';
     }
+  }
+
+  /// 모든 기록 보기 화면
+  void _showAllRecords(BuildContext context, HealthCategory category) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _AllRecordsScreen(
+          category: category,
+          getDemoRecordValue: _getDemoRecordValue,
+        ),
+      ),
+    );
   }
 
   /// 기록 추가 바텀시트
@@ -492,8 +519,8 @@ class HealthScreen extends ConsumerWidget {
     switch (category) {
       case HealthCategory.weight:
         return _buildWeightForm();
-      case HealthCategory.play:
-        return _buildPlayForm();
+      case HealthCategory.grooming:
+        return _buildGroomingForm();
       default:
         return _buildDefaultForm(category);
     }
@@ -527,30 +554,41 @@ class HealthScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPlayForm() {
+  Widget _buildGroomingForm() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('놀이 시간 (분)', style: TextStyle(fontWeight: FontWeight.w500)),
-        const SizedBox(height: 8),
-        const TextField(
-          keyboardType: TextInputType.number,
-          decoration: InputDecoration(
-            hintText: '예: 30',
-            suffixText: '분',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        const SizedBox(height: 16),
-        const Text('놀이 종류', style: TextStyle(fontWeight: FontWeight.w500)),
+        const Text('그루밍 종류', style: TextStyle(fontWeight: FontWeight.w500)),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: ['공놀이 🎾', '터그놀이 🪢', '숨바꼭질 🙈', '산책놀이 🚶', '훈련 🎓', '기타']
+          children: [
+            '샤워 🚿', 
+            '빗질 🪮', 
+            '발톱정리 ✂️', 
+            '이발 💇', 
+            '귀청소 👂',
+            '눈물자국 👁️',
+            '항문낭 🔘',
+            '발바닥 🐾',
+          ].map((label) => ChoiceChip(
+                label: Text(label),
+                selected: label.startsWith('샤워'),
+                onSelected: (value) {},
+              ))
+              .toList(),
+        ),
+        const SizedBox(height: 16),
+        const Text('장소', style: TextStyle(fontWeight: FontWeight.w500)),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: ['집에서', '미용실', '동물병원']
               .map((label) => ChoiceChip(
                     label: Text(label),
-                    selected: label.startsWith('공놀이'),
+                    selected: label == '집에서',
                     onSelected: (value) {},
                   ))
               .toList(),
@@ -583,6 +621,278 @@ class HealthScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// 기간 필터 타입
+enum _DateFilterType {
+  oneWeek('1주일'),
+  oneMonth('1개월'),
+  threeMonths('3개월'),
+  sixMonths('6개월'),
+  oneYear('1년'),
+  all('전체');
+
+  final String label;
+  const _DateFilterType(this.label);
+  
+  int? get days => switch (this) {
+    _DateFilterType.oneWeek => 7,
+    _DateFilterType.oneMonth => 30,
+    _DateFilterType.threeMonths => 90,
+    _DateFilterType.sixMonths => 180,
+    _DateFilterType.oneYear => 365,
+    _DateFilterType.all => null,
+  };
+}
+
+/// 전체 기록 보기 화면
+class _AllRecordsScreen extends StatefulWidget {
+  final HealthCategory category;
+  final String Function(HealthCategory, int) getDemoRecordValue;
+
+  const _AllRecordsScreen({
+    required this.category,
+    required this.getDemoRecordValue,
+  });
+
+  @override
+  State<_AllRecordsScreen> createState() => _AllRecordsScreenState();
+}
+
+class _AllRecordsScreenState extends State<_AllRecordsScreen> {
+  _DateFilterType _selectedFilter = _DateFilterType.oneMonth; // 기본값: 1개월
+  DateTime? _customStartDate;
+  DateTime? _customEndDate;
+
+  /// 필터에 따른 데모 데이터 생성
+  List<Map<String, String>> _getFilteredRecords() {
+    final int totalDays = _selectedFilter.days ?? 365; // 전체는 1년치 데이터
+    final records = <Map<String, String>>[];
+    
+    for (int i = 0; i < totalDays; i += 2) { // 2일에 1개씩 기록
+      final date = DateTime.now().subtract(Duration(days: i));
+      
+      // 커스텀 날짜 범위 체크
+      if (_customStartDate != null && date.isBefore(_customStartDate!)) continue;
+      if (_customEndDate != null && date.isAfter(_customEndDate!)) continue;
+      
+      records.add({
+        'date': '${date.year}.${date.month}.${date.day}',
+        'time': '${(14 - i % 12).abs()}:${(i * 7) % 60}0',
+        'value': widget.getDemoRecordValue(widget.category, i ~/ 2),
+        'rawDate': date.toIso8601String(),
+      });
+    }
+    
+    return records;
+  }
+
+  void _showDateRangePicker() async {
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: DateTime.now().subtract(const Duration(days: 365 * 2)),
+      lastDate: DateTime.now(),
+      initialDateRange: _customStartDate != null && _customEndDate != null
+          ? DateTimeRange(start: _customStartDate!, end: _customEndDate!)
+          : DateTimeRange(
+              start: DateTime.now().subtract(const Duration(days: 30)),
+              end: DateTime.now(),
+            ),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.health,
+              onPrimary: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _customStartDate = picked.start;
+        _customEndDate = picked.end;
+        _selectedFilter = _DateFilterType.all; // 커스텀 날짜 선택 시 필터 해제
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final records = _getFilteredRecords();
+    
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text('${widget.category.label} 기록'),
+        backgroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_month),
+            onPressed: _showDateRangePicker,
+            tooltip: '날짜 선택',
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // 기간 필터 탭
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: _DateFilterType.values.map((filter) {
+                  final isSelected = _selectedFilter == filter && 
+                      _customStartDate == null && _customEndDate == null;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(filter.label),
+                      selected: isSelected,
+                      selectedColor: AppColors.health.withOpacity(0.2),
+                      onSelected: (selected) {
+                        if (selected) {
+                          setState(() {
+                            _selectedFilter = filter;
+                            _customStartDate = null;
+                            _customEndDate = null;
+                          });
+                        }
+                      },
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          
+          // 선택된 날짜 범위 표시
+          if (_customStartDate != null && _customEndDate != null)
+            Container(
+              color: Colors.white,
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.date_range, size: 16, color: AppColors.health),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${_customStartDate!.year}.${_customStartDate!.month}.${_customStartDate!.day} ~ '
+                    '${_customEndDate!.year}.${_customEndDate!.month}.${_customEndDate!.day}',
+                    style: const TextStyle(fontSize: 13, color: AppColors.health),
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _customStartDate = null;
+                        _customEndDate = null;
+                        _selectedFilter = _DateFilterType.oneMonth;
+                      });
+                    },
+                    child: const Icon(Icons.close, size: 18, color: AppColors.textHint),
+                  ),
+                ],
+              ),
+            ),
+          
+          // 기록 개수 표시
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '총 ${records.length}개의 기록',
+              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            ),
+          ),
+          
+          // 기록 목록
+          Expanded(
+            child: records.isEmpty
+                ? const Center(
+                    child: Text(
+                      '해당 기간에 기록이 없습니다',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: records.length,
+                    itemBuilder: (context, index) {
+                      final record = records[index];
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.divider),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: AppColors.health.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  widget.category.emoji,
+                                  style: const TextStyle(fontSize: 18),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    record['value']!,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${record['date']} ${record['time']}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete_outline,
+                                color: AppColors.textHint,
+                                size: 20,
+                              ),
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('기록이 삭제되었습니다')),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }

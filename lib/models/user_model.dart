@@ -87,6 +87,12 @@ class UserModel extends Equatable {
   
   /// 프리미엄 회원 여부 (수익화 - 현재 숨김)
   final bool isPremium;
+  
+  /// 꼬순내지수 (보호자 평점, 기본값: 50%)
+  final double kkosunnaeScore;
+  
+  /// 받은 평가 수
+  final int ratingCount;
 
   const UserModel({
     required this.id,
@@ -114,6 +120,8 @@ class UserModel extends Equatable {
     required this.createdAt,
     required this.lastActiveAt,
     this.isPremium = false,
+    this.kkosunnaeScore = 50.0,
+    this.ratingCount = 0,
   });
 
   /// 나이 계산 (생년월일 기준)
@@ -172,6 +180,8 @@ class UserModel extends Equatable {
           ? (data['lastActiveAt'] as Timestamp).toDate()
           : DateTime.now(),
       isPremium: data['isPremium'] ?? false,
+      kkosunnaeScore: (data['kkosunnaeScore'] ?? 50.0).toDouble(),
+      ratingCount: data['ratingCount'] ?? 0,
     );
   }
 
@@ -204,6 +214,8 @@ class UserModel extends Equatable {
       'createdAt': Timestamp.fromDate(createdAt),
       'lastActiveAt': Timestamp.fromDate(lastActiveAt),
       'isPremium': isPremium,
+      'kkosunnaeScore': kkosunnaeScore,
+      'ratingCount': ratingCount,
     };
   }
 
@@ -234,6 +246,8 @@ class UserModel extends Equatable {
     DateTime? createdAt,
     DateTime? lastActiveAt,
     bool? isPremium,
+    double? kkosunnaeScore,
+    int? ratingCount,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -261,6 +275,8 @@ class UserModel extends Equatable {
       createdAt: createdAt ?? this.createdAt,
       lastActiveAt: lastActiveAt ?? this.lastActiveAt,
       isPremium: isPremium ?? this.isPremium,
+      kkosunnaeScore: kkosunnaeScore ?? this.kkosunnaeScore,
+      ratingCount: ratingCount ?? this.ratingCount,
     );
   }
 
@@ -303,5 +319,7 @@ class UserModel extends Equatable {
         createdAt,
         lastActiveAt,
         isPremium,
+        kkosunnaeScore,
+        ratingCount,
       ];
 }

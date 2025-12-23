@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/top_navigation.dart';
+import '../../../../core/widgets/verification_badge.dart';
 import 'dog_detail_screen.dart';
 
 /// ============================================================
@@ -36,9 +37,6 @@ final _breedingSizeFilterProvider = StateProvider<List<String>>((ref) => []);
 
 /// 나이 필터 (null: 전체, 3, 5, 10, 15)
 final _breedingAgeFilterProvider = StateProvider<int?>((ref) => null);
-
-/// 혈통서 필터
-final _breedingHasPedigreeFilterProvider = StateProvider<bool?>((ref) => null);
 
 /// 인증 필터 (identity: 본인인증, pet: 동물인증, location: 위치인증)
 final _breedingIdentityVerifiedFilterProvider = StateProvider<bool?>((ref) => null);
@@ -418,7 +416,6 @@ class DatingScreen extends ConsumerWidget {
     final identityVerified = ref.watch(_breedingIdentityVerifiedFilterProvider);
     final petVerified = ref.watch(_breedingPetVerifiedFilterProvider);
     final locationVerified = ref.watch(_breedingLocationVerifiedFilterProvider);
-    final hasPedigree = ref.watch(_breedingHasPedigreeFilterProvider);
     
     return Row(
       children: [
@@ -444,14 +441,6 @@ class DatingScreen extends ConsumerWidget {
           onTap: () => ref.read(_breedingLocationVerifiedFilterProvider.notifier).state = 
               locationVerified == true ? null : true,
           icon: Icons.location_on_outlined,
-        ),
-        const SizedBox(width: 6),
-        _buildFilterChip(
-          label: '혈통서',
-          isSelected: hasPedigree == true,
-          onTap: () => ref.read(_breedingHasPedigreeFilterProvider.notifier).state = 
-              hasPedigree == true ? null : true,
-          icon: Icons.verified_outlined,
         ),
       ],
     );
@@ -525,7 +514,6 @@ class DatingScreen extends ConsumerWidget {
     final isIdentityVerified = index % 3 != 0;
     final isPetVerified = index % 2 == 0;
     final isLocationVerified = index % 4 != 0;
-    final requiresPedigree = index % 2 == 0;
     final requiresHealthCheck = index % 3 == 0;
     final requiresSameBreed = index % 4 == 0;
     
@@ -581,16 +569,11 @@ class DatingScreen extends ConsumerWidget {
                     bottom: 8,
                     left: 8,
                     right: 8,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        if (isIdentityVerified)
-                          _buildVerificationBadge(Icons.person, AppColors.success),
-                        if (isPetVerified)
-                          _buildVerificationBadge(Icons.pets, AppColors.success),
-                        if (isLocationVerified)
-                          _buildVerificationBadge(Icons.location_on, AppColors.success),
-                      ],
+                    child: VerificationBadgeRow(
+                      isIdentityVerified: isIdentityVerified,
+                      isPetVerified: isPetVerified,
+                      isLocationVerified: isLocationVerified,
+                      useMediumSize: false,
                     ),
                   ),
                 ],
@@ -632,14 +615,12 @@ class DatingScreen extends ConsumerWidget {
                       spacing: 6,
                       runSpacing: 4,
                       children: [
-                        if (requiresPedigree)
-                          _buildBreedingConditionTag('혈통서', Icons.verified_outlined),
                         if (requiresHealthCheck)
                           _buildBreedingConditionTag('건강검진', Icons.health_and_safety_outlined),
                         if (requiresSameBreed)
                           _buildBreedingConditionTag('같은 품종', Icons.pets),
-                        if (!requiresPedigree && !requiresHealthCheck && !requiresSameBreed)
-                          _buildBreedingConditionTag('조건 없음', Icons.check_circle_outline),
+                        if (!requiresHealthCheck && !requiresSameBreed)
+                          _buildBreedingConditionTag('조건 없음', Icons.check_circle_outline, isNoCondition: true),
                       ],
                     ),
                   ],
@@ -652,35 +633,23 @@ class DatingScreen extends ConsumerWidget {
     );
   }
 
-  /// 인증 배지 (교배찾기 카드용)
-  Widget _buildVerificationBadge(IconData icon, Color color) {
-    return Container(
-      margin: const EdgeInsets.only(right: 4),
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(icon, size: 10, color: Colors.white),
-    );
-  }
-
   /// 교배 조건 태그
-  Widget _buildBreedingConditionTag(String text, IconData icon) {
+  Widget _buildBreedingConditionTag(String text, IconData icon, {bool isNoCondition = false}) {
+    final color = isNoCondition ? Colors.grey : AppColors.dating;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.dating.withOpacity(0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 10, color: AppColors.dating),
+          Icon(icon, size: 10, color: color),
           const SizedBox(width: 4),
           Text(
             text,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: AppColors.dating),
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: color),
           ),
         ],
       ),
@@ -949,9 +918,9 @@ class DatingScreen extends ConsumerWidget {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _buildWriteConditionChip('혈통서 필수', Icons.verified_outlined),
                         _buildWriteConditionChip('건강검진 완료', Icons.health_and_safety_outlined),
                         _buildWriteConditionChip('같은 품종만', Icons.pets),
+                        _buildWriteConditionChip('혈통서 필수', Icons.verified_outlined),
                       ],
                     ),
                     const SizedBox(height: 40),
@@ -1132,17 +1101,17 @@ class DatingScreen extends ConsumerWidget {
     );
   }
 
-  /// 작은 태그 (근처검색용)
+  /// 작은 태그 (근처검색용 - 회색)
   Widget _buildSmallTag(String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.dating.withOpacity(0.1),
+        color: Colors.grey.withOpacity(0.15),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 9, color: AppColors.dating),
+        style: const TextStyle(fontSize: 9, color: AppColors.textSecondary),
       ),
     );
   }

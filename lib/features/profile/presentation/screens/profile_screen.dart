@@ -5,7 +5,11 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/verification_badge.dart';
+import '../../../../core/widgets/warmth_score.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import 'pet_edit_screen.dart';
+import 'profile_edit_screen.dart';
 
 /// ============================================================
 /// 프로필 화면 (V2 리팩토링 - 강아지 전용)
@@ -46,7 +50,7 @@ class ProfileScreen extends ConsumerWidget {
               onPressed: () => context.pop(),
             ),
             flexibleSpace: FlexibleSpaceBar(
-              background: _buildProfileHeader(currentUser),
+              background: _buildProfileHeader(context, currentUser),
             ),
             actions: [
               // 설정 버튼 (우상단 톱니바퀴)
@@ -96,100 +100,102 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  /// 프로필 헤더
-  Widget _buildProfileHeader(AsyncValue<dynamic> currentUser) {
+  /// 프로필 헤더 (보호자 사진 선택적 업로드 가능)
+  Widget _buildProfileHeader(BuildContext context, AsyncValue<dynamic> currentUser) {
     return Container(
       decoration: const BoxDecoration(
         gradient: AppColors.warmGradient,
       ),
       child: SafeArea(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 20),
-            // 프로필 이미지
-            Stack(
-              children: [
-                const MingrrAvatar(
-                  size: 100,
-                  showBorder: true,
-                  borderColor: Colors.white,
-                  placeholderIcon: Icons.person,
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    width: 32,
-                    height: 32,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // 프로필 이미지 (선택적 - 없으면 기본 아이콘)
+              Stack(
+                children: [
+                  Container(
+                    width: 100,
+                    height: 100,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.primary.withOpacity(0.15),
                       shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 5,
-                        ),
-                      ],
+                      border: Border.all(color: Colors.white, width: 3),
                     ),
                     child: const Icon(
-                      Icons.camera_alt,
-                      size: 18,
-                      color: AppColors.textSecondary,
+                      Icons.person,
+                      size: 50,
+                      color: AppColors.primary,
                     ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSizes.gapM),
-            
-            // 닉네임
-            currentUser.when(
-              data: (user) => Text(
-                user?.nickname ?? '사용자',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: const Icon(
+                        Icons.camera_alt,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              loading: () => const Text('로딩 중...'),
-              error: (_, __) => const Text('사용자'),
-            ),
-            const SizedBox(height: 4),
-            
-            // 한줄 소개
-            const Text(
-              '반려동물과 함께하는 행복한 일상 🐾',
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: AppSizes.gapM),
-            
-            // 프로필 수정 버튼
-            OutlinedButton(
-              onPressed: () {
-                // TODO: 프로필 수정 화면
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.textPrimary,
-                side: const BorderSide(color: AppColors.textPrimary),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 8,
+              const SizedBox(height: AppSizes.gapM),
+              
+              // 닉네임
+              currentUser.when(
+                data: (user) => Text(
+                  user?.nickname ?? '사용자',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
+                loading: () => const Text('로딩 중...'),
+                error: (_, __) => const Text('사용자'),
               ),
-              child: const Text('프로필 수정'),
-            ),
-          ],
+              const SizedBox(height: 8),
+              
+              // 꼬순내지수
+              const KkosunnaeScoreMedium(score: 50.0),
+              const SizedBox(height: AppSizes.gapM),
+              
+              // 프로필 수정 버튼
+              OutlinedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ProfileEditScreen()),
+                  );
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.textPrimary,
+                  side: const BorderSide(color: AppColors.textPrimary),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 8,
+                  ),
+                ),
+                child: const Text('프로필 수정'),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  /// 인증 배지 섹션 (V1: 본인인증, 동물등록, 예방접종)
+  /// 인증 배지 섹션 (통일된 인증 배지 위젯 사용)
   Widget _buildVerificationSection(
     BuildContext context,
     WidgetRef ref,
@@ -226,86 +232,26 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: AppSizes.gapM),
           Row(
             children: [
-              _buildBadgeItem(
-                icon: Icons.badge_outlined,
-                label: BadgeType.identity.label,
-                emoji: BadgeType.identity.emoji,
+              VerificationBadgeLarge(
+                type: VerificationBadgeType.identity,
                 isVerified: verifications[BadgeType.identity] ?? false,
                 onTap: () => _showVerificationSheet(context, ref, verifications),
               ),
               const SizedBox(width: AppSizes.gapM),
-              _buildBadgeItem(
-                icon: Icons.pets,
-                label: BadgeType.petRegistration.label,
-                emoji: BadgeType.petRegistration.emoji,
+              VerificationBadgeLarge(
+                type: VerificationBadgeType.pet,
                 isVerified: verifications[BadgeType.petRegistration] ?? false,
                 onTap: () => _showVerificationSheet(context, ref, verifications),
               ),
               const SizedBox(width: AppSizes.gapM),
-              _buildBadgeItem(
-                icon: Icons.location_on,
-                label: BadgeType.location.label,
-                emoji: BadgeType.location.emoji,
+              VerificationBadgeLarge(
+                type: VerificationBadgeType.location,
                 isVerified: verifications[BadgeType.location] ?? false,
                 onTap: () => _showVerificationSheet(context, ref, verifications),
               ),
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  /// 배지 아이템
-  Widget _buildBadgeItem({
-    required IconData icon,
-    required String label,
-    required String emoji,
-    required bool isVerified,
-    VoidCallback? onTap,
-  }) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
-          decoration: BoxDecoration(
-            color: isVerified
-                ? AppColors.success.withOpacity(0.1)
-                : AppColors.divider.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(AppSizes.radiusM),
-          ),
-          child: Column(
-            children: [
-              Text(emoji, style: const TextStyle(fontSize: 24)),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: isVerified ? AppColors.success : AppColors.textHint,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isVerified ? AppColors.success : AppColors.textHint,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  isVerified ? '완료' : '미인증',
-                  style: const TextStyle(
-                    fontSize: 9,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -326,7 +272,10 @@ class ProfileScreen extends ConsumerWidget {
               child: MingrrCard(
                 margin: EdgeInsets.zero,
                 onTap: () {
-                  // TODO: 반려동물 추가
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const PetEditScreen()),
+                  );
                 },
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -386,7 +335,12 @@ class ProfileScreen extends ConsumerWidget {
             // 프로필 이미지
             GestureDetector(
               onTap: () {
-                // TODO: 반려동물 상세/수정
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PetEditScreen(petId: 'pet_$index'),
+                  ),
+                );
               },
               child: Stack(
                 children: [

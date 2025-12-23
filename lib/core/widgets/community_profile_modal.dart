@@ -1,0 +1,494 @@
+import 'package:flutter/material.dart';
+import '../constants/app_colors.dart';
+import '../constants/app_sizes.dart';
+import 'guardian_profile_modal.dart';
+
+/// ============================================================
+/// 소모임 프로필 모달
+/// 
+/// 소모임 채팅에서 소모임 정보를 표시할 때 사용
+/// ============================================================
+
+/// 소모임 멤버 정보
+class CommunityMember {
+  final String id;
+  final String nickname;
+  final double kkosunnaeScore;
+  final bool isOnline;
+
+  const CommunityMember({
+    required this.id,
+    required this.nickname,
+    this.kkosunnaeScore = 50.0,
+    this.isOnline = false,
+  });
+}
+
+/// 소모임 프로필 모달 표시 함수
+void showCommunityProfileModal(
+  BuildContext context, {
+  required String communityId,
+  required String communityName,
+  String? description,
+  int memberCount = 0,
+  String? category,
+  String? location,
+  String? createdAt,
+  List<String> tags = const [],
+  bool isJoined = true,
+  List<CommunityMember> members = const [],
+}) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => CommunityProfileModal(
+      communityId: communityId,
+      communityName: communityName,
+      description: description,
+      memberCount: memberCount,
+      category: category,
+      location: location,
+      createdAt: createdAt,
+      tags: tags,
+      isJoined: isJoined,
+      members: members,
+    ),
+  );
+}
+
+/// 소모임 프로필 모달 위젯
+class CommunityProfileModal extends StatelessWidget {
+  final String communityId;
+  final String communityName;
+  final String? description;
+  final int memberCount;
+  final String? category;
+  final String? location;
+  final String? createdAt;
+  final List<String> tags;
+  final bool isJoined;
+  final List<CommunityMember> members;
+
+  const CommunityProfileModal({
+    super.key,
+    required this.communityId,
+    required this.communityName,
+    this.description,
+    this.memberCount = 0,
+    this.category,
+    this.location,
+    this.createdAt,
+    this.tags = const [],
+    this.isJoined = true,
+    this.members = const [],
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.75,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 핸들
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.divider,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          
+          // 헤더
+          Padding(
+            padding: const EdgeInsets.all(AppSizes.paddingL),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '소모임 정보',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          
+          // 본문
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSizes.paddingL,
+                0,
+                AppSizes.paddingL,
+                AppSizes.paddingL,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 소모임 기본 정보
+                  _buildCommunityInfo(),
+                  const SizedBox(height: AppSizes.gapL),
+                  
+                  // 태그
+                  if (tags.isNotEmpty) ...[
+                    _buildTags(),
+                    const SizedBox(height: AppSizes.gapL),
+                  ],
+                  
+                  // 소개
+                  if (description != null && description!.isNotEmpty) ...[
+                    _buildDescription(),
+                    const SizedBox(height: AppSizes.gapL),
+                  ],
+                  
+                  // 멤버 리스트
+                  if (members.isNotEmpty) ...[
+                    _buildMembersSection(context),
+                    const SizedBox(height: AppSizes.gapL),
+                  ],
+                  
+                  // 상세 정보
+                  _buildDetails(),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 멤버 리스트 섹션
+  Widget _buildMembersSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '참여 멤버 (${members.length})',
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: AppSizes.gapS),
+        ...members.take(5).map((member) => _buildMemberItem(context, member)),
+        if (members.length > 5)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Center(
+              child: Text(
+                '외 ${members.length - 5}명',
+                style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// 멤버 아이템 (클릭 시 보호자 프로필)
+  Widget _buildMemberItem(BuildContext context, CommunityMember member) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.pop(context);
+        showGuardianProfileModal(
+          context,
+          guardianId: member.id,
+          guardianName: member.nickname,
+          kkosunnaeScore: member.kkosunnaeScore,
+          gender: GuardianGender.unknown,
+          isIdentityVerified: true,
+          isPetVerified: true,
+          isLocationVerified: false,
+          dogs: [
+            GuardianDogInfo(
+              id: 'dog_${member.id}',
+              name: '멍멍이',
+              breed: '골든 리트리버',
+              ageString: '3살',
+              likeCount: 42,
+            ),
+          ],
+          activityInfo: const GuardianActivityInfo(
+            walkCount: 85,
+            datingCount: 12,
+            marketCount: 5,
+            communityCount: 18,
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Stack(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.person, size: 20, color: AppColors.primary),
+                ),
+                if (member.isOnline)
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: AppColors.success,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    member.nickname,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      const Icon(Icons.pets, size: 12, color: AppColors.primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${member.kkosunnaeScore.toInt()}%',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, size: 18, color: AppColors.textHint),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 소모임 기본 정보
+  Widget _buildCommunityInfo() {
+    return Row(
+      children: [
+        // 프로필 이미지
+        Container(
+          width: 70,
+          height: 70,
+          decoration: BoxDecoration(
+            color: AppColors.community.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.groups,
+            size: 35,
+            color: AppColors.community,
+          ),
+        ),
+        const SizedBox(width: AppSizes.gapM),
+        
+        // 정보
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                communityName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(Icons.people, size: 16, color: AppColors.textSecondary),
+                  const SizedBox(width: 4),
+                  Text(
+                    '멤버 $memberCount명',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  if (category != null) ...[
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.community.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        category!,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.community,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 태그
+  Widget _buildTags() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '관심사',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: AppSizes.gapS),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: tags.map((tag) => Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.community.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              '#$tag',
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.community,
+              ),
+            ),
+          )).toList(),
+        ),
+      ],
+    );
+  }
+
+  /// 소개
+  Widget _buildDescription() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '소개',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: AppSizes.gapS),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            description!,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.5,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 상세 정보
+  Widget _buildDetails() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '상세 정보',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: AppSizes.gapS),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.background,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              if (location != null)
+                _buildDetailRow(Icons.location_on, '활동 지역', location!),
+              if (createdAt != null) ...[
+                if (location != null) const Divider(height: 16),
+                _buildDetailRow(Icons.calendar_today, '개설일', createdAt!),
+              ],
+              const Divider(height: 16),
+              _buildDetailRow(
+                Icons.check_circle,
+                '가입 상태',
+                isJoined ? '가입됨' : '미가입',
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: AppColors.textSecondary),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+}

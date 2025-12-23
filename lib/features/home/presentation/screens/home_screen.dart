@@ -31,7 +31,7 @@ final _demoDogsProvider = Provider<List<_DemoDog>>((ref) => [
 final _homeHealthCategoriesProvider = StateProvider<List<HealthCategory>>((ref) => [
   HealthCategory.weight,
   HealthCategory.walk,
-  HealthCategory.play,
+  HealthCategory.grooming,
 ]);
 
 /// 데모용 강아지 클래스
@@ -581,8 +581,8 @@ class HomeScreen extends ConsumerWidget {
         return '5.2kg';
       case HealthCategory.walk:
         return '1회';
-      case HealthCategory.play:
-        return '15분';
+      case HealthCategory.grooming:
+        return '3일 전';
       case HealthCategory.medication:
         return '1회';
       default:
@@ -597,8 +597,8 @@ class HomeScreen extends ConsumerWidget {
         return AppColors.health;
       case HealthCategory.walk:
         return AppColors.walk;
-      case HealthCategory.play:
-        return AppColors.dating;
+      case HealthCategory.grooming:
+        return AppColors.health;
       case HealthCategory.medication:
         return AppColors.community;
       default:

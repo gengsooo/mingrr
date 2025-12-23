@@ -813,7 +813,7 @@ class GroomingRecordModel extends Equatable {
       petId: data['petId'] ?? '',
       groomingType: HealthCategory.values.firstWhere(
         (e) => e.name == data['groomingType'],
-        orElse: () => HealthCategory.shower,
+        orElse: () => HealthCategory.grooming,
       ),
       recordDate: (data['recordDate'] as Timestamp).toDate(),
       location: data['location'],

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/top_navigation.dart';
+import 'community_detail_screen.dart';
 
 /// ============================================================
 /// 소모임 화면
@@ -360,6 +361,7 @@ class CommunityScreen extends ConsumerWidget {
         
         // 모임 카드들
         ...groups.map((group) => _buildGroupCard(
+          context: context,
           name: group['name'] as String,
           category: group['category'] as String,
           members: group['members'] as int,
@@ -457,19 +459,31 @@ class CommunityScreen extends ConsumerWidget {
 
   /// 모임 카드
   Widget _buildGroupCard({
+    required BuildContext context,
     required String name,
     required String category,
     required int members,
     required String district,
   }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
-      ),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CommunityDetailScreen(
+              communityId: name.hashCode.toString(),
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
+        ),
       child: Row(
         children: [
           Container(
@@ -523,6 +537,7 @@ class CommunityScreen extends ConsumerWidget {
             child: const Text('가입', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
           ),
         ],
+      ),
       ),
     );
   }

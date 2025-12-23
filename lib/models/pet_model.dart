@@ -83,6 +83,9 @@ class DogModel extends Equatable {
   /// 산책 기능 활성화 여부
   final bool walkFeatureEnabled;
   
+  /// 좋아요 수
+  final int likeCount;
+  
   /// 생성일
   final DateTime createdAt;
   
@@ -113,6 +116,7 @@ class DogModel extends Equatable {
     this.healthBookEnabled = false,
     this.enabledHealthCategories = const [],
     this.walkFeatureEnabled = true,
+    this.likeCount = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -210,6 +214,7 @@ class DogModel extends Equatable {
               .toList() ??
           [],
       walkFeatureEnabled: data['walkFeatureEnabled'] ?? true,
+      likeCount: data['likeCount'] ?? 0,
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
@@ -247,6 +252,7 @@ class DogModel extends Equatable {
       'healthBookEnabled': healthBookEnabled,
       'enabledHealthCategories': enabledHealthCategories.map((c) => c.name).toList(),
       'walkFeatureEnabled': walkFeatureEnabled,
+      'likeCount': likeCount,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -277,6 +283,7 @@ class DogModel extends Equatable {
     bool? healthBookEnabled,
     List<HealthCategory>? enabledHealthCategories,
     bool? walkFeatureEnabled,
+    int? likeCount,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -304,6 +311,7 @@ class DogModel extends Equatable {
       healthBookEnabled: healthBookEnabled ?? this.healthBookEnabled,
       enabledHealthCategories: enabledHealthCategories ?? this.enabledHealthCategories,
       walkFeatureEnabled: walkFeatureEnabled ?? this.walkFeatureEnabled,
+      likeCount: likeCount ?? this.likeCount,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -347,6 +355,7 @@ class DogModel extends Equatable {
         healthBookEnabled,
         enabledHealthCategories,
         walkFeatureEnabled,
+        likeCount,
         createdAt,
         updatedAt,
       ];
