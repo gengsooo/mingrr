@@ -22,12 +22,6 @@ final _selectedDogProvider = StateProvider<int>((ref) => 0);
 /// 선택된 탭 인덱스
 final _selectedTabProvider = StateProvider<int>((ref) => 0);
 
-/// 산책 중 여부
-final _isWalkingProvider = StateProvider<bool>((ref) => false);
-
-/// 산책 중인 강아지 ID 목록 (다중 선택)
-final _walkingDogIdsProvider = StateProvider<List<String>>((ref) => []);
-
 /// 데모용 강아지 목록
 final _demoDogsProvider = Provider<List<_DemoDog>>((ref) => [
   _DemoDog(id: '1', name: '뽀삐', breed: '골든 리트리버', isPrimary: true),
@@ -51,7 +45,6 @@ class HealthScreen extends ConsumerWidget {
     final dogs = ref.watch(_demoDogsProvider);
     final selectedDogIndex = ref.watch(_selectedDogProvider);
     final selectedTab = ref.watch(_selectedTabProvider);
-    final isWalking = ref.watch(_isWalkingProvider);
     final selectedDog = dogs[selectedDogIndex];
 
     // 건강수첩 카테고리 (강아지 전용)
@@ -79,9 +72,6 @@ class HealthScreen extends ConsumerWidget {
         children: [
           // 강아지 선택기
           _buildDogSelector(context, ref, dogs, selectedDogIndex),
-          
-          // 산책 ON/OFF (강아지는 항상 산책 가능)
-          _buildWalkToggle(context, ref, dogs, isWalking),
           
           // 카테고리 탭
           _buildCategoryTabs(context, ref, categories, selectedTab),
@@ -163,203 +153,6 @@ class HealthScreen extends ConsumerWidget {
               ),
             );
           }),
-        ),
-      ),
-    );
-  }
-
-  /// 산책 ON/OFF 토글 (다중 강아지 지원)
-  Widget _buildWalkToggle(BuildContext context, WidgetRef ref, List<_DemoDog> dogs, bool isWalking) {
-    final walkingDogIds = ref.watch(_walkingDogIdsProvider);
-    
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isWalking ? AppColors.walk.withOpacity(0.1) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isWalking ? AppColors.walk : AppColors.divider,
-          width: isWalking ? 2 : 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: isWalking ? AppColors.walk : AppColors.walk.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.directions_walk,
-                  color: isWalking ? Colors.white : AppColors.walk,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      isWalking ? '산책 중' : '산책 시작하기',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: isWalking ? AppColors.walk : AppColors.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      isWalking 
-                          ? '경로가 기록되고 있어요 (본인만 확인 가능)'
-                          : '산책을 시작하면 경로와 시간이 기록돼요',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
-              Switch(
-                value: isWalking,
-                onChanged: (value) {
-                  if (value && walkingDogIds.isEmpty) {
-                    // 산책 시작 시 강아지 선택
-                    _showWalkDogSelector(context, ref, dogs);
-                  } else {
-                    ref.read(_isWalkingProvider.notifier).state = value;
-                    if (!value) {
-                      ref.read(_walkingDogIdsProvider.notifier).state = [];
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('산책이 종료되었어요. 기록이 저장되었습니다.'),
-                          backgroundColor: AppColors.success,
-                        ),
-                      );
-                    }
-                  }
-                },
-                activeColor: AppColors.walk,
-              ),
-            ],
-          ),
-          // 산책 중인 강아지 표시
-          if (isWalking && walkingDogIds.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            const Divider(),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Text(
-                  '산책 중: ',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                ),
-                ...walkingDogIds.map((id) {
-                  final dog = dogs.firstWhere((d) => d.id == id);
-                  return Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.walk.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '🐶 ${dog.name}',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  /// 산책할 강아지 선택 바텀시트
-  void _showWalkDogSelector(BuildContext context, WidgetRef ref, List<_DemoDog> dogs) {
-    final selectedIds = <String>[];
-    
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => Container(
-          padding: const EdgeInsets.all(20),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '산책할 강아지 선택',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                '여러 마리를 동시에 선택할 수 있어요',
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 16),
-              ...dogs.map((dog) {
-                final isSelected = selectedIds.contains(dog.id);
-                return CheckboxListTile(
-                  value: isSelected,
-                  onChanged: (value) {
-                    setState(() {
-                      if (value == true) {
-                        selectedIds.add(dog.id);
-                      } else {
-                        selectedIds.remove(dog.id);
-                      }
-                    });
-                  },
-                  title: Row(
-                    children: [
-                      const Text('🐶', style: TextStyle(fontSize: 24)),
-                      const SizedBox(width: 12),
-                      Text(dog.name, style: const TextStyle(fontWeight: FontWeight.w500)),
-                    ],
-                  ),
-                  activeColor: AppColors.walk,
-                );
-              }),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: selectedIds.isEmpty ? null : () {
-                    ref.read(_walkingDogIdsProvider.notifier).state = selectedIds;
-                    ref.read(_isWalkingProvider.notifier).state = true;
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('산책을 시작했어요! 🐕 경로가 기록됩니다.'),
-                        backgroundColor: AppColors.walk,
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.walk,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    '산책 시작',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

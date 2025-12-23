@@ -49,7 +49,14 @@ class ChatListScreen extends ConsumerWidget {
               tabs: tabs,
               selectedIndex: _getTabIndex(selectedTab),
               onTabSelected: (index) {
-                ref.read(_selectedChatTabProvider.notifier).state = ChatType.values[index];
+                // 탭 인덱스를 ChatType으로 변환 (breeding은 탭에 없음)
+                final chatType = switch (index) {
+                  0 => ChatType.dating,
+                  1 => ChatType.community,
+                  2 => ChatType.market,
+                  _ => ChatType.dating,
+                };
+                ref.read(_selectedChatTabProvider.notifier).state = chatType;
               },
             ),
           ),

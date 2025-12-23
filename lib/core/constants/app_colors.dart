@@ -85,6 +85,7 @@ class AppColors {
   
   /// 교배 - 퍼플 계열
   static const Color breeding = Color(0xFFCE93D8);
+  static const Color breedingLight = Color(0xFFF3E5F5);
   
   /// 커뮤니티/소모임 - 틸 계열
   static const Color community = Color(0xFF4DB6AC);

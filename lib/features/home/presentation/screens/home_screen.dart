@@ -303,6 +303,10 @@ class HomeScreen extends ConsumerWidget {
         ),
         const SizedBox(height: AppSizes.gapM),
         
+        // 산책 시작하기 카드
+        _buildWalkStartCard(context),
+        const SizedBox(height: AppSizes.gapM),
+        
         // 건강 기록 카드
         MingrrCard(
           margin: EdgeInsets.zero,
@@ -455,6 +459,82 @@ class HomeScreen extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// 산책 시작하기 카드
+  Widget _buildWalkStartCard(BuildContext context) {
+    return MingrrCard(
+      margin: EdgeInsets.zero,
+      child: Row(
+        children: [
+          // 아이콘
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.walk.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Center(
+              child: Icon(Icons.directions_walk, size: 28, color: AppColors.walk),
+            ),
+          ),
+          const SizedBox(width: AppSizes.gapM),
+          // 텍스트
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '산책 시작하기',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  '산책을 시작하면 경로와 시간이 기록돼요',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // 토글 스위치
+          GestureDetector(
+            onTap: () => context.push('/walk'),
+            child: Container(
+              width: 52,
+              height: 28,
+              decoration: BoxDecoration(
+                color: AppColors.divider,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    left: 3,
+                    top: 3,
+                    child: Container(
+                      width: 22,
+                      height: 22,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
