@@ -1,9 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
+import '../core/constants/pet_constants.dart';
 
 /// ============================================================
-/// 사용자(보호자) 모델
-/// Firebase Firestore와 연동되는 사용자 데이터 구조
+/// 사용자(보호자) 모델 (V2 리팩토링 - 강아지 전용)
+/// 
+/// 변경사항:
+/// - gender 필드를 UserGender enum으로 변경
+/// - 위치 인증 필드 추가 (isLocationVerified)
+/// - 기본 건강 카테고리 업데이트
 /// ============================================================
 class UserModel extends Equatable {
   /// 고유 ID (Firebase Auth UID)
@@ -21,8 +26,8 @@ class UserModel extends Equatable {
   /// 프로필 이미지 URL
   final String? profileImageUrl;
   
-  /// 성별 (male, female, other)
-  final String? gender;
+  /// 성별 (안전한 만남을 위해 필수)
+  final UserGender? gender;
   
   /// 생년월일
   final DateTime? birthDate;
@@ -36,6 +41,20 @@ class UserModel extends Equatable {
   /// 주소 (표시용)
   final String? address;
   
+  /// 집 주소 (위치 기반 서비스의 기준점)
+  final String? homeAddress;
+  
+  /// 집 위치 (GeoPoint) - 모든 위치 기능의 기준
+  final GeoPoint? homeLocation;
+  
+  /// 메인화면에 표시할 건강기록 카테고리 (1~5개)
+  final List<String> homeHealthCategories;
+  
+  /// 200m 안전구역 기능 활성화 여부 (기본값: true)
+  /// - true: 집 반경 200m 내에서 산책 기능 비활성화
+  /// - false: 안전구역 기능 사용 안 함
+  final bool homeSafetyEnabled;
+  
   /// 로그인 제공자 (phone, kakao, naver, google)
   final String loginProvider;
   
@@ -44,6 +63,9 @@ class UserModel extends Equatable {
   
   /// 본인 인증 여부
   final bool isIdentityVerified;
+  
+  /// 위치 인증 여부 (당근마켓 스타일)
+  final bool isLocationVerified;
   
   /// 산책 중 상태
   final bool isWalking;
@@ -65,6 +87,12 @@ class UserModel extends Equatable {
   
   /// 프리미엄 회원 여부 (수익화 - 현재 숨김)
   final bool isPremium;
+  
+  /// 꼬순내지수 (보호자 평점, 기본값: 50%)
+  final double kkosunnaeScore;
+  
+  /// 받은 평가 수
+  final int ratingCount;
 
   const UserModel({
     required this.id,
@@ -77,9 +105,14 @@ class UserModel extends Equatable {
     this.bio,
     this.location,
     this.address,
+    this.homeAddress,
+    this.homeLocation,
+    this.homeHealthCategories = const ['weight', 'walk', 'play'], // 기본값: 체중, 산책, 놀이
+    this.homeSafetyEnabled = true, // 기본값: 안전구역 기능 ON
     required this.loginProvider,
     this.isVerified = false,
     this.isIdentityVerified = false,
+    this.isLocationVerified = false,
     this.isWalking = false,
     this.walkStartedAt,
     this.petIds = const [],
@@ -87,6 +120,8 @@ class UserModel extends Equatable {
     required this.createdAt,
     required this.lastActiveAt,
     this.isPremium = false,
+    this.kkosunnaeScore = 50.0,
+    this.ratingCount = 0,
   });
 
   /// 나이 계산 (생년월일 기준)
@@ -110,16 +145,28 @@ class UserModel extends Equatable {
       phoneNumber: data['phoneNumber'],
       nickname: data['nickname'] ?? '사용자',
       profileImageUrl: data['profileImageUrl'],
-      gender: data['gender'],
+      gender: data['gender'] != null
+          ? UserGender.values.firstWhere(
+              (e) => e.name == data['gender'],
+              orElse: () => UserGender.male,
+            )
+          : null,
       birthDate: data['birthDate'] != null
           ? (data['birthDate'] as Timestamp).toDate()
           : null,
       bio: data['bio'],
       location: data['location'],
       address: data['address'],
+      homeAddress: data['homeAddress'],
+      homeLocation: data['homeLocation'],
+      homeHealthCategories: List<String>.from(
+        data['homeHealthCategories'] ?? ['weight', 'walk', 'play'],
+      ),
+      homeSafetyEnabled: data['homeSafetyEnabled'] ?? true,
       loginProvider: data['loginProvider'] ?? 'phone',
       isVerified: data['isVerified'] ?? false,
       isIdentityVerified: data['isIdentityVerified'] ?? false,
+      isLocationVerified: data['isLocationVerified'] ?? false,
       isWalking: data['isWalking'] ?? false,
       walkStartedAt: data['walkStartedAt'] != null
           ? (data['walkStartedAt'] as Timestamp).toDate()
@@ -133,6 +180,8 @@ class UserModel extends Equatable {
           ? (data['lastActiveAt'] as Timestamp).toDate()
           : DateTime.now(),
       isPremium: data['isPremium'] ?? false,
+      kkosunnaeScore: (data['kkosunnaeScore'] ?? 50.0).toDouble(),
+      ratingCount: data['ratingCount'] ?? 0,
     );
   }
 
@@ -143,14 +192,19 @@ class UserModel extends Equatable {
       'phoneNumber': phoneNumber,
       'nickname': nickname,
       'profileImageUrl': profileImageUrl,
-      'gender': gender,
+      'gender': gender?.name,
       'birthDate': birthDate != null ? Timestamp.fromDate(birthDate!) : null,
       'bio': bio,
       'location': location,
       'address': address,
+      'homeAddress': homeAddress,
+      'homeLocation': homeLocation,
+      'homeHealthCategories': homeHealthCategories,
+      'homeSafetyEnabled': homeSafetyEnabled,
       'loginProvider': loginProvider,
       'isVerified': isVerified,
       'isIdentityVerified': isIdentityVerified,
+      'isLocationVerified': isLocationVerified,
       'isWalking': isWalking,
       'walkStartedAt': walkStartedAt != null
           ? Timestamp.fromDate(walkStartedAt!)
@@ -160,6 +214,8 @@ class UserModel extends Equatable {
       'createdAt': Timestamp.fromDate(createdAt),
       'lastActiveAt': Timestamp.fromDate(lastActiveAt),
       'isPremium': isPremium,
+      'kkosunnaeScore': kkosunnaeScore,
+      'ratingCount': ratingCount,
     };
   }
 
@@ -170,14 +226,19 @@ class UserModel extends Equatable {
     String? phoneNumber,
     String? nickname,
     String? profileImageUrl,
-    String? gender,
+    UserGender? gender,
     DateTime? birthDate,
     String? bio,
     GeoPoint? location,
     String? address,
+    String? homeAddress,
+    GeoPoint? homeLocation,
+    List<String>? homeHealthCategories,
+    bool? homeSafetyEnabled,
     String? loginProvider,
     bool? isVerified,
     bool? isIdentityVerified,
+    bool? isLocationVerified,
     bool? isWalking,
     DateTime? walkStartedAt,
     List<String>? petIds,
@@ -185,6 +246,8 @@ class UserModel extends Equatable {
     DateTime? createdAt,
     DateTime? lastActiveAt,
     bool? isPremium,
+    double? kkosunnaeScore,
+    int? ratingCount,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -197,9 +260,14 @@ class UserModel extends Equatable {
       bio: bio ?? this.bio,
       location: location ?? this.location,
       address: address ?? this.address,
+      homeAddress: homeAddress ?? this.homeAddress,
+      homeLocation: homeLocation ?? this.homeLocation,
+      homeHealthCategories: homeHealthCategories ?? this.homeHealthCategories,
+      homeSafetyEnabled: homeSafetyEnabled ?? this.homeSafetyEnabled,
       loginProvider: loginProvider ?? this.loginProvider,
       isVerified: isVerified ?? this.isVerified,
       isIdentityVerified: isIdentityVerified ?? this.isIdentityVerified,
+      isLocationVerified: isLocationVerified ?? this.isLocationVerified,
       isWalking: isWalking ?? this.isWalking,
       walkStartedAt: walkStartedAt ?? this.walkStartedAt,
       petIds: petIds ?? this.petIds,
@@ -207,6 +275,8 @@ class UserModel extends Equatable {
       createdAt: createdAt ?? this.createdAt,
       lastActiveAt: lastActiveAt ?? this.lastActiveAt,
       isPremium: isPremium ?? this.isPremium,
+      kkosunnaeScore: kkosunnaeScore ?? this.kkosunnaeScore,
+      ratingCount: ratingCount ?? this.ratingCount,
     );
   }
 
@@ -234,9 +304,14 @@ class UserModel extends Equatable {
         bio,
         location,
         address,
+        homeAddress,
+        homeLocation,
+        homeHealthCategories,
+        homeSafetyEnabled,
         loginProvider,
         isVerified,
         isIdentityVerified,
+        isLocationVerified,
         isWalking,
         walkStartedAt,
         petIds,
@@ -244,5 +319,7 @@ class UserModel extends Equatable {
         createdAt,
         lastActiveAt,
         isPremium,
+        kkosunnaeScore,
+        ratingCount,
       ];
 }

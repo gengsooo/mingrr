@@ -7,7 +7,6 @@ import 'core/constants/app_colors.dart';
 import 'core/constants/app_sizes.dart';
 import 'features/home/presentation/screens/home_screen.dart';
 import 'features/dating/presentation/screens/dating_screen.dart';
-import 'features/walk/presentation/screens/walk_screen.dart';
 import 'features/marketplace/presentation/screens/marketplace_screen.dart';
 import 'features/health/presentation/screens/health_screen.dart';
 import 'features/community/presentation/screens/community_screen.dart';
@@ -15,9 +14,9 @@ import 'features/chat/presentation/screens/chat_list_screen.dart';
 import 'features/profile/presentation/screens/profile_screen.dart';
 
 /// ============================================================
-/// MINGRR 데모 앱
-/// Firebase 없이 UI 테스트를 위한 데모 버전
-/// 모든 화면을 탐색하고 디자인을 확인할 수 있습니다.
+/// MINGRR 데모 앱 (V1 리팩토링)
+/// 바텀 네비게이션: 홈, 데이팅, 채팅, 마켓, 소모임
+/// 프로필은 홈 우상단에서 접근
 /// ============================================================
 
 // ===== 데모용 라우터 =====
@@ -25,7 +24,7 @@ final demoRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
     routes: [
-      // 메인 쉘 (바텀 네비게이션)
+      // 메인 쉘 (바텀 네비게이션: 홈, 데이팅, 채팅, 마켓, 소모임)
       ShellRoute(
         builder: (context, state, child) => DemoMainShell(child: child),
         routes: [
@@ -38,32 +37,28 @@ final demoRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const DatingScreen(),
           ),
           GoRoute(
-            path: '/market',
-            builder: (context, state) => const MarketplaceScreen(),
-          ),
-          GoRoute(
             path: '/chat',
             builder: (context, state) => const ChatListScreen(),
           ),
           GoRoute(
-            path: '/profile',
-            builder: (context, state) => const ProfileScreen(),
+            path: '/market',
+            builder: (context, state) => const MarketplaceScreen(),
+          ),
+          GoRoute(
+            path: '/community',
+            builder: (context, state) => const CommunityScreen(),
           ),
         ],
       ),
       
-      // 독립 화면들
+      // 독립 화면들 (바텀 네비게이션 없음)
       GoRoute(
-        path: '/walk',
-        builder: (context, state) => const WalkScreen(),
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
       ),
       GoRoute(
         path: '/health',
         builder: (context, state) => const HealthScreen(),
-      ),
-      GoRoute(
-        path: '/community',
-        builder: (context, state) => const CommunityScreen(),
       ),
     ],
   );
@@ -104,7 +99,7 @@ class DemoMainShell extends StatelessWidget {
   }
 }
 
-/// 데모용 바텀 네비게이션 바
+/// 데모용 바텀 네비게이션 바 (V1: 홈, 데이팅, 채팅, 마켓, 소모임)
 class DemoBottomNavBar extends StatelessWidget {
   const DemoBottomNavBar({super.key});
 
@@ -152,32 +147,34 @@ class DemoBottomNavBar extends StatelessWidget {
               ),
               _buildNavItem(
                 context: context,
+                icon: Icons.chat_bubble_outline,
+                activeIcon: Icons.chat_bubble,
+                label: '채팅',
+                index: 2,
+                currentIndex: currentIndex,
+                route: '/chat',
+                color: AppColors.chat,
+                badge: 3,
+              ),
+              _buildNavItem(
+                context: context,
                 icon: Icons.store_outlined,
                 activeIcon: Icons.store,
                 label: '마켓',
-                index: 2,
+                index: 3,
                 currentIndex: currentIndex,
                 route: '/market',
                 color: AppColors.market,
               ),
               _buildNavItem(
                 context: context,
-                icon: Icons.chat_bubble_outline,
-                activeIcon: Icons.chat_bubble,
-                label: '채팅',
-                index: 3,
-                currentIndex: currentIndex,
-                route: '/chat',
-                badge: 3,
-              ),
-              _buildNavItem(
-                context: context,
-                icon: Icons.person_outline,
-                activeIcon: Icons.person,
-                label: '프로필',
+                icon: Icons.groups_outlined,
+                activeIcon: Icons.groups,
+                label: '소모임',
                 index: 4,
                 currentIndex: currentIndex,
-                route: '/profile',
+                route: '/community',
+                color: AppColors.community,
               ),
             ],
           ),
@@ -279,11 +276,11 @@ class DemoBottomNavBar extends StatelessWidget {
         return 0;
       case '/dating':
         return 1;
-      case '/market':
-        return 2;
       case '/chat':
+        return 2;
+      case '/market':
         return 3;
-      case '/profile':
+      case '/community':
         return 4;
       default:
         return 0;

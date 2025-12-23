@@ -69,8 +69,9 @@ class AppColors {
   static const Color warning = Color(0xFFFFB74D);
 
   // ===== 기능별 컬러 =====
-  /// 데이팅 - 핑크 계열
+  /// 데이팅 - 핑크/코랄 계열
   static const Color dating = Color(0xFFFF8A80);
+  static const Color datingLight = Color(0xFFFFEBEE);
   
   /// 산책 - 그린 계열
   static const Color walk = Color(0xFF81C784);
@@ -78,14 +79,21 @@ class AppColors {
   /// 건강 - 블루 계열
   static const Color health = Color(0xFF64B5F6);
   
-  /// 마켓 - 오렌지 계열
-  static const Color market = Color(0xFFFFB74D);
+  /// 마켓 - 인디고/블루 계열
+  static const Color market = Color(0xFF5C6BC0);
+  static const Color marketLight = Color(0xFFE8EAF6);
   
   /// 교배 - 퍼플 계열
   static const Color breeding = Color(0xFFCE93D8);
+  static const Color breedingLight = Color(0xFFF3E5F5);
   
-  /// 커뮤니티 - 틸 계열
+  /// 커뮤니티/소모임 - 틸 계열
   static const Color community = Color(0xFF4DB6AC);
+  static const Color communityLight = Color(0xFFE0F2F1);
+  
+  /// 채팅 - 퍼플/라벤더 계열
+  static const Color chat = Color(0xFF9575CD);
+  static const Color chatLight = Color(0xFFEDE7F6);
 
   // ===== 그라데이션 =====
   /// 메인 그라데이션
