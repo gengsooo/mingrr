@@ -30,8 +30,8 @@ class FirebaseService {
       firestore.collection('users');
   
   /// 반려동물 컬렉션
-  CollectionReference<Map<String, dynamic>> get petsCollection =>
-      firestore.collection('pets');
+  CollectionReference<Map<String, dynamic>> get dogsCollection =>
+      firestore.collection('dogs');
   
   /// 채팅방 컬렉션
   CollectionReference<Map<String, dynamic>> get chatRoomsCollection =>
@@ -49,21 +49,13 @@ class FirebaseService {
   CollectionReference<Map<String, dynamic>> get productsCollection =>
       firestore.collection('products');
   
-  /// 예방접종 기록 컬렉션
-  CollectionReference<Map<String, dynamic>> get vaccinationsCollection =>
-      firestore.collection('vaccinations');
+  /// 상품 찜 컬렉션
+  CollectionReference<Map<String, dynamic>> get productLikesCollection =>
+      firestore.collection('productLikes');
   
-  /// 체중 기록 컬렉션
-  CollectionReference<Map<String, dynamic>> get weightRecordsCollection =>
-      firestore.collection('weightRecords');
-  
-  /// 배변 기록 컬렉션
-  CollectionReference<Map<String, dynamic>> get poopRecordsCollection =>
-      firestore.collection('poopRecords');
-  
-  /// 산책 기록 컬렉션
-  CollectionReference<Map<String, dynamic>> get walkRecordsCollection =>
-      firestore.collection('walkRecords');
+  /// 가입 신청 컬렉션
+  CollectionReference<Map<String, dynamic>> get joinRequestsCollection =>
+      firestore.collection('joinRequests');
   
   /// 모임 컬렉션
   CollectionReference<Map<String, dynamic>> get groupsCollection =>
@@ -78,6 +70,10 @@ class FirebaseService {
   /// 특정 채팅방의 메시지 컬렉션
   CollectionReference<Map<String, dynamic>> messagesCollection(String chatRoomId) =>
       chatRoomsCollection.doc(chatRoomId).collection('messages');
+  
+  /// 특정 강아지의 건강 기록 컬렉션
+  CollectionReference<Map<String, dynamic>> healthRecordsCollection(String dogId) =>
+      dogsCollection.doc(dogId).collection('healthRecords');
 
   // ===== Storage 참조 =====
   
@@ -86,8 +82,8 @@ class FirebaseService {
       storage.ref().child('users/$userId/profile');
   
   /// 반려동물 이미지 저장 경로
-  Reference petImageRef(String petId, String fileName) =>
-      storage.ref().child('pets/$petId/$fileName');
+  Reference dogImageRef(String dogId, String fileName) =>
+      storage.ref().child('dogs/$dogId/$fileName');
   
   /// 상품 이미지 저장 경로
   Reference productImageRef(String productId, String fileName) =>

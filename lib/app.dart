@@ -24,6 +24,7 @@ import 'features/health/presentation/screens/health_screen.dart';  // 건강수�
 import 'features/community/presentation/screens/community_screen.dart';  // 소모임 화면
 import 'features/chat/presentation/screens/chat_list_screen.dart';  // 채팅 목록 화면
 import 'features/profile/presentation/screens/profile_screen.dart';  // 프로필 화면
+import 'features/dev/dev_tools_screen.dart';  // 개발자 도구 화면
 
 /// ============================================================
 /// MINGRR 앱 메인 위젯 (Firebase 연동 버전)
@@ -54,10 +55,12 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       // 로그인 상태 확인
       final isLoggedIn = authState.valueOrNull != null;  // 사용자 정보가 있으면 로그인됨
-      final isLoginRoute = state.matchedLocation == '/login';  // 현재 로그인 화면인지 확인
+      final path = state.uri.path;  // 현재 경로 (해시 없이)
+      final isLoginRoute = path == '/login';  // 현재 로그인 화면인지 확인
+      final isDevToolsRoute = path == '/dev-tools';  // 개발자 도구 화면인지 확인
 
-      // 케이스 1: 로그인 안 된 상태에서 로그인 페이지가 아니면 로그인으로 리다이렉트
-      if (!isLoggedIn && !isLoginRoute) {
+      // 케이스 1: 로그인 안 된 상태에서 로그인 페이지나 개발자 도구가 아니면 로그인으로 리다이렉트
+      if (!isLoggedIn && !isLoginRoute && !isDevToolsRoute) {
         return '/login';  // 로그인 화면으로 이동
       }
 
@@ -141,6 +144,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/community',
         builder: (context, state) => const CommunityScreen(),
+      ),
+      
+      // 개발자 도구 화면 (경로: '/dev-tools')
+      GoRoute(
+        path: '/dev-tools',
+        builder: (context, state) => const DevToolsScreen(),
       ),
     ],
   );

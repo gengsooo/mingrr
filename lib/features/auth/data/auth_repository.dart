@@ -107,6 +107,30 @@ class AuthRepository {
     throw UnimplementedError('네이버 로그인은 네이티브 설정 후 사용 가능합니다.');
   }
 
+  // ===== 이메일/비밀번호 로그인 =====
+  
+  /// 이메일로 로그인
+  Future<UserCredential> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    return await _firebase.auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  }
+
+  /// 이메일로 회원가입
+  Future<UserCredential> signUpWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    return await _firebase.auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+  }
+
   // ===== 로그아웃 =====
   
   /// 로그아웃

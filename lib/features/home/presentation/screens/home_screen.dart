@@ -6,6 +6,9 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../models/pet_model.dart';
+import '../../../pet/presentation/providers/pet_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// ============================================================
 /// 홈 화면 (V3 리팩토링 - 강아지 전용)
@@ -15,93 +18,89 @@ import '../../../../core/widgets/common_widgets.dart';
 /// - 산책 기능 메인으로 이동 (건강기록 하위)
 /// - 강아지 선택기 (여러 마리 지원)
 /// - 건강기록 커스터마이징 (1~5개 선택 가능)
+/// - Firebase 데이터 연동
 /// ============================================================
 
-// ===== 데모용 Provider =====
-/// 현재 선택된 강아지 인덱스
-final _selectedDogIndexProvider = StateProvider<int>((ref) => 0);
-
-/// 데모용 강아지 목록
-final _demoDogsProvider = Provider<List<_DemoDog>>((ref) => [
-  _DemoDog(id: '1', name: '뽀삐', breed: '골든 리트리버', isPrimary: true),
-  _DemoDog(id: '2', name: '코코', breed: '푸들', isPrimary: false),
-]);
-
-/// 데모용 메인화면 건강 카테고리 (사용자 설정)
+/// 메인화면 건강 카테고리 (사용자 설정)
 final _homeHealthCategoriesProvider = StateProvider<List<HealthCategory>>((ref) => [
   HealthCategory.weight,
   HealthCategory.walk,
   HealthCategory.grooming,
 ]);
 
-/// 데모용 강아지 클래스
-class _DemoDog {
-  final String id;
-  final String name;
-  final String breed;
-  final bool isPrimary;
-  
-  const _DemoDog({
-    required this.id,
-    required this.name,
-    required this.breed,
-    required this.isPrimary,
-  });
-}
-
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dogs = ref.watch(_demoDogsProvider);
-    final selectedIndex = ref.watch(_selectedDogIndexProvider);
-    final selectedDog = dogs[selectedIndex];
+    final petsAsync = ref.watch(userPetsProvider);
+    final selectedIndex = ref.watch(selectedPetIndexProvider);
     final healthCategories = ref.watch(_homeHealthCategoriesProvider);
+    final allPetsAsync = ref.watch(allPetsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            // ===== 앱바 =====
-            _buildAppBar(context),
+        child: petsAsync.when(
+          data: (pets) {
+            final selectedDog = pets.isNotEmpty && selectedIndex < pets.length 
+                ? pets[selectedIndex] 
+                : null;
 
-            // ===== 컨텐츠 =====
-            SliverPadding(
-              padding: const EdgeInsets.all(AppSizes.paddingM),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  // 강아지 선택기 (여러 마리 지원)
-                  _buildDogSelector(context, ref, dogs, selectedIndex),
-                  const SizedBox(height: AppSizes.gapL),
-                  
-                  // 오늘의 건강 기록 (커스터마이징 가능)
-                  _buildHealthSection(context, ref, selectedDog, healthCategories),
-                  const SizedBox(height: AppSizes.gapXL),
-                  
-                  // AI 추천 친구
-                  const MingrrSectionHeader(
-                    title: 'AI 추천 친구',
-                    actionText: '더보기',
+            return CustomScrollView(
+              slivers: [
+                // ===== 앱바 =====
+                _buildAppBar(context),
+
+                // ===== 컨텐츠 =====
+                SliverPadding(
+                  padding: const EdgeInsets.all(AppSizes.paddingM),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      // 강아지 선택기 (여러 마리 지원)
+                      if (pets.isNotEmpty)
+                        _buildDogSelector(context, ref, pets, selectedIndex),
+                      if (pets.isEmpty)
+                        _buildEmptyPetsCard(context),
+                      const SizedBox(height: AppSizes.gapL),
+                      
+                      // 오늘의 건강 기록 (커스터마이징 가능)
+                      if (selectedDog != null)
+                        _buildHealthSection(context, ref, selectedDog, healthCategories),
+                      const SizedBox(height: AppSizes.gapXL),
+                      
+                      // AI 추천 친구
+                      const MingrrSectionHeader(
+                        title: 'AI 추천 친구',
+                        actionText: '더보기',
+                      ),
+                      const SizedBox(height: AppSizes.gapM),
+                      allPetsAsync.when(
+                        data: (allPets) => _buildAiRecommendSection(context, allPets),
+                        loading: () => const Center(child: CircularProgressIndicator()),
+                        error: (_, __) => const SizedBox(),
+                      ),
+                      const SizedBox(height: AppSizes.gapXL),
+                      
+                      // 인기 소모임
+                      const MingrrSectionHeader(
+                        title: '인기 소모임',
+                        actionText: '더보기',
+                      ),
+                      const SizedBox(height: AppSizes.gapM),
+                      _buildPopularGroupsSection(context),
+                      
+                      const SizedBox(height: AppSizes.gapXXL),
+                    ]),
                   ),
-                  const SizedBox(height: AppSizes.gapM),
-                  _buildAiRecommendSection(context),
-                  const SizedBox(height: AppSizes.gapXL),
-                  
-                  // 인기 소모임
-                  const MingrrSectionHeader(
-                    title: '인기 소모임',
-                    actionText: '더보기',
-                  ),
-                  const SizedBox(height: AppSizes.gapM),
-                  _buildPopularGroupsSection(context),
-                  
-                  const SizedBox(height: AppSizes.gapXXL),
-                ]),
-              ),
-            ),
-          ],
+                ),
+              ],
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stack) => Center(
+            child: Text('데이터를 불러올 수 없습니다: $error'),
+          ),
         ),
       ),
     );
@@ -155,11 +154,38 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  /// 강아지가 없을 때 표시할 카드
+  Widget _buildEmptyPetsCard(BuildContext context) {
+    return MingrrCard(
+      margin: EdgeInsets.zero,
+      child: Column(
+        children: [
+          const Icon(Icons.pets, size: 48, color: AppColors.textHint),
+          const SizedBox(height: AppSizes.gapM),
+          const Text(
+            '등록된 강아지가 없습니다',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: AppSizes.gapS),
+          const Text(
+            '프로필에서 강아지를 추가해보세요',
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: AppSizes.gapM),
+          ElevatedButton(
+            onPressed: () => context.push('/profile'),
+            child: const Text('강아지 추가하기'),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// 강아지 선택기 (여러 마리 지원)
   Widget _buildDogSelector(
     BuildContext context,
     WidgetRef ref,
-    List<_DemoDog> dogs,
+    List<PetModel> dogs,
     int selectedIndex,
   ) {
     return Column(
@@ -193,7 +219,7 @@ class HomeScreen extends ConsumerWidget {
               
               return GestureDetector(
                 onTap: () {
-                  ref.read(_selectedDogIndexProvider.notifier).state = index;
+                  ref.read(selectedPetIndexProvider.notifier).state = index;
                 },
                 child: Container(
                   width: 85,
@@ -258,7 +284,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       // 품종
                       Text(
-                        dog.breed,
+                        dog.breedName,
                         style: const TextStyle(
                           fontSize: 10,
                           color: AppColors.textSecondary,
@@ -281,7 +307,7 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildHealthSection(
     BuildContext context,
     WidgetRef ref,
-    _DemoDog selectedDog,
+    PetModel selectedDog,
     List<HealthCategory> categories,
   ) {
     return Column(
@@ -607,22 +633,27 @@ class HomeScreen extends ConsumerWidget {
   }
 
   /// AI 추천 친구 섹션
-  Widget _buildAiRecommendSection(BuildContext context) {
-    final demoData = [
-      {'name': '뽀삐', 'breed': '골든 리트리버', 'age': '2살', 'score': 95},
-      {'name': '코코', 'breed': '푸들', 'age': '3살', 'score': 88},
-      {'name': '몽실', 'breed': '말티즈', 'age': '1살', 'score': 82},
-      {'name': '초롱', 'breed': '비숑', 'age': '4살', 'score': 78},
-    ];
+  Widget _buildAiRecommendSection(BuildContext context, List<PetModel> allPets) {
+    // 최대 4마리만 표시
+    final displayPets = allPets.take(4).toList();
+    
+    if (displayPets.isEmpty) {
+      return const Center(
+        child: Text(
+          '아직 등록된 강아지가 없습니다',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+      );
+    }
 
     return SizedBox(
       height: 200,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: demoData.length,
+        itemCount: displayPets.length,
         itemBuilder: (context, index) {
-          final pet = demoData[index];
-          final score = pet['score'] as int;
+          final pet = displayPets[index];
+          final score = 95 - (index * 5); // 임시 궁합 점수
           
           return GestureDetector(
             onTap: () {
@@ -656,13 +687,13 @@ class HomeScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: AppSizes.gapS),
                     Text(
-                      pet['name'] as String,
+                      pet.name,
                       style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      '${pet['breed']} · ${pet['age']}',
+                      '${pet.breedName} · ${_calculateAge(pet.birthDate)}',
                       style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: AppSizes.gapS),
@@ -696,6 +727,19 @@ class HomeScreen extends ConsumerWidget {
     if (score >= 75) return AppColors.dating;
     if (score >= 60) return AppColors.warning;
     return AppColors.textHint;
+  }
+
+  String _calculateAge(DateTime birthDate) {
+    final now = DateTime.now();
+    final age = now.year - birthDate.year;
+    final months = now.month - birthDate.month;
+    
+    if (age == 0) {
+      return '${months}개월';
+    } else if (months < 0) {
+      return '${age - 1}살';
+    }
+    return '${age}살';
   }
 
   /// 인기 소모임 섹션

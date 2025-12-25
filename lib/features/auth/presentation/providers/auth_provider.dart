@@ -160,6 +160,60 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  // ===== 이메일/비밀번호 로그인 =====
+  
+  Future<bool> signInWithEmail(String email, String password) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final userCredential = await _authRepository.signInWithEmail(
+        email: email,
+        password: password,
+      );
+      
+      await _handleSignIn(userCredential, 'email');
+      return true;
+    } on FirebaseAuthException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: _getEmailErrorMessage(e),
+      );
+      return false;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: '로그인에 실패했습니다.',
+      );
+      return false;
+    }
+  }
+
+  Future<bool> signUpWithEmail(String email, String password) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final userCredential = await _authRepository.signUpWithEmail(
+        email: email,
+        password: password,
+      );
+      
+      await _handleSignIn(userCredential, 'email');
+      return true;
+    } on FirebaseAuthException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: _getEmailErrorMessage(e),
+      );
+      return false;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: '회원가입에 실패했습니다.',
+      );
+      return false;
+    }
+  }
+
   // ===== 카카오 로그인 (추후 구현) =====
   
   Future<bool> signInWithKakao() async {
@@ -250,6 +304,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return '인증 코드가 올바르지 않습니다.';
       case 'session-expired':
         return '인증 세션이 만료되었습니다. 다시 시도해주세요.';
+      default:
+        return e.message ?? '인증에 실패했습니다.';
+    }
+  }
+
+  String _getEmailErrorMessage(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'user-not-found':
+        return '등록되지 않은 이메일입니다.';
+      case 'wrong-password':
+        return '비밀번호가 올바르지 않습니다.';
+      case 'email-already-in-use':
+        return '이미 사용 중인 이메일입니다.';
+      case 'invalid-email':
+        return '올바른 이메일 형식이 아닙니다.';
+      case 'weak-password':
+        return '비밀번호가 너무 약합니다. 6자 이상 입력해주세요.';
+      case 'too-many-requests':
+        return '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
       default:
         return e.message ?? '인증에 실패했습니다.';
     }

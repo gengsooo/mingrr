@@ -1,0 +1,268 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================================
+    // 헬퍼 함수들
+    // ============================================================
+    
+    // 로그인한 사용자인지 확인
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // 본인의 데이터인지 확인
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    // 문서가 존재하는지 확인
+    function existingData() {
+      return resource.data;
+    }
+    
+    // 새로운 데이터
+    function incomingData() {
+      return request.resource.data;
+    }
+    
+    // 관리자 계정인지 확인 (더미 데이터 생성용)
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == 'test1@mingrr.com';
+    }
+    
+    // ============================================================
+    // users Collection - 사용자(보호자) 정보
+    // ============================================================
+    match /users/{userId} {
+      // 읽기: 로그인한 사용자는 모든 사용자 정보 조회 가능
+      allow read: if isSignedIn();
+      
+      // 생성: 본인 계정만 생성 가능 (또는 관리자)
+      allow create: if isOwner(userId) || isAdmin();
+      
+      // 수정: 본인 계정만 수정 가능 (또는 관리자)
+      allow update: if isOwner(userId) || isAdmin();
+      
+      // 삭제: 본인 계정만 삭제 가능 (또는 관리자)
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+    
+    // ============================================================
+    // dogs Collection - 강아지 정보
+    // ============================================================
+    match /dogs/{dogId} {
+      // 읽기: 로그인한 사용자는 모든 강아지 정보 조회 가능
+      allow read: if isSignedIn();
+      
+      // 생성: 본인 소유의 강아지만 생성 가능 (또는 관리자)
+      allow create: if isAdmin() || (isSignedIn() && incomingData().ownerId == request.auth.uid);
+      
+      // 수정: 본인 소유의 강아지만 수정 가능 (또는 관리자)
+      allow update: if isAdmin() || (isSignedIn() && existingData().ownerId == request.auth.uid);
+      
+      // 삭제: 본인 소유의 강아지만 삭제 가능 (또는 관리자)
+      allow delete: if isAdmin() || (isSignedIn() && existingData().ownerId == request.auth.uid);
+    }
+    
+    // ============================================================
+    // chatRooms Collection - 채팅방
+    // ============================================================
+    match /chatRooms/{chatRoomId} {
+      // 읽기: 채팅방 참여자만 조회 가능
+      allow read: if isSignedIn()
+        && request.auth.uid in resource.data.participantIds;
+      
+      // 생성: 로그인한 사용자가 참여자에 포함되어 있으면 생성 가능
+      allow create: if isSignedIn()
+        && request.auth.uid in incomingData().participantIds
+        && incomingData().createdAt == request.time;
+      
+      // 수정: 채팅방 참여자만 수정 가능
+      allow update: if isSignedIn()
+        && request.auth.uid in existingData().participantIds;
+      
+      // 삭제: 채팅방 참여자만 삭제 가능
+      allow delete: if isSignedIn()
+        && request.auth.uid in existingData().participantIds;
+    }
+    
+    // ============================================================
+    // messages Collection - 메시지 (chatRooms 하위 컬렉션)
+    // ============================================================
+    match /chatRooms/{chatRoomId}/messages/{messageId} {
+      // 읽기: 채팅방 참여자만 조회 가능
+      allow read: if isSignedIn()
+        && request.auth.uid in get(/databases/$(database)/documents/chatRooms/$(chatRoomId)).data.participantIds;
+      
+      // 생성: 본인이 발신자인 메시지만 생성 가능
+      allow create: if isSignedIn()
+        && incomingData().senderId == request.auth.uid
+        && incomingData().chatRoomId == chatRoomId
+        && incomingData().sentAt == request.time;
+      
+      // 수정: 메시지 읽음 상태만 수정 가능
+      allow update: if isSignedIn()
+        && request.auth.uid in get(/databases/$(database)/documents/chatRooms/$(chatRoomId)).data.participantIds;
+      
+      // 삭제: 본인이 보낸 메시지만 삭제 가능
+      allow delete: if isSignedIn()
+        && existingData().senderId == request.auth.uid;
+    }
+    
+    // ============================================================
+    // likes Collection - 데이팅 좋아요
+    // ============================================================
+    match /likes/{likeId} {
+      // 읽기: 본인이 보냈거나 받은 좋아요만 조회 가능
+      allow read: if isSignedIn()
+        && (request.auth.uid == resource.data.fromUserId 
+            || request.auth.uid == resource.data.toUserId);
+      
+      // 생성: 본인이 발신자인 좋아요만 생성 가능
+      allow create: if isSignedIn()
+        && incomingData().fromUserId == request.auth.uid
+        && incomingData().createdAt == request.time;
+      
+      // 수정: 받은 사람만 상태 변경 가능 (수락/거절)
+      allow update: if isSignedIn()
+        && existingData().toUserId == request.auth.uid;
+      
+      // 삭제: 본인이 보낸 좋아요만 삭제 가능
+      allow delete: if isSignedIn()
+        && existingData().fromUserId == request.auth.uid;
+    }
+    
+    // ============================================================
+    // matches Collection - 매칭 성공
+    // ============================================================
+    match /matches/{matchId} {
+      // 읽기: 매칭 참여자만 조회 가능
+      allow read: if isSignedIn()
+        && request.auth.uid in resource.data.userIds;
+      
+      // 생성: 시스템에서만 생성 (클라이언트에서 직접 생성 불가)
+      allow create: if false;
+      
+      // 수정: 매칭 참여자만 수정 가능
+      allow update: if isSignedIn()
+        && request.auth.uid in existingData().userIds;
+      
+      // 삭제: 매칭 참여자만 삭제 가능
+      allow delete: if isSignedIn()
+        && request.auth.uid in existingData().userIds;
+    }
+    
+    // ============================================================
+    // products Collection - 마켓플레이스 상품
+    // ============================================================
+    match /products/{productId} {
+      // 읽기: 로그인한 사용자는 모든 상품 조회 가능
+      allow read: if isSignedIn();
+      
+      // 생성: 본인이 판매자인 상품만 생성 가능 (또는 관리자)
+      allow create: if isAdmin() || (isSignedIn() && incomingData().sellerId == request.auth.uid);
+      
+      // 수정: 본인이 판매자인 상품만 수정 가능 (또는 관리자)
+      allow update: if isAdmin() || (isSignedIn() && existingData().sellerId == request.auth.uid);
+      
+      // 삭제: 본인이 판매자인 상품만 삭제 가능 (또는 관리자)
+      allow delete: if isAdmin() || (isSignedIn() && existingData().sellerId == request.auth.uid);
+    }
+    
+    // ============================================================
+    // productLikes Collection - 상품 찜
+    // ============================================================
+    match /productLikes/{likeId} {
+      // 읽기: 본인이 찜한 상품만 조회 가능
+      allow read: if isSignedIn()
+        && resource.data.userId == request.auth.uid;
+      
+      // 생성: 본인 계정으로만 찜 가능
+      allow create: if isSignedIn()
+        && incomingData().userId == request.auth.uid
+        && incomingData().createdAt == request.time;
+      
+      // 삭제: 본인이 찜한 상품만 삭제 가능
+      allow delete: if isSignedIn()
+        && existingData().userId == request.auth.uid;
+    }
+    
+    // ============================================================
+    // groups Collection - 소모임
+    // ============================================================
+    match /groups/{groupId} {
+      // 읽기: 공개 모임은 모두 조회 가능, 비공개는 멤버만 (관리자는 모두 조회)
+      allow read: if isAdmin() || (isSignedIn() && (resource.data.isPublic == true || request.auth.uid in resource.data.memberIds));
+      
+      // 생성: 로그인한 사용자는 모임 생성 가능 (또는 관리자)
+      allow create: if isAdmin() || (isSignedIn() && incomingData().creatorId == request.auth.uid);
+      
+      // 수정: 관리자만 수정 가능 (또는 시스템 관리자)
+      allow update: if isAdmin() || (isSignedIn() && (request.auth.uid == existingData().creatorId || request.auth.uid in existingData().adminIds));
+      
+      // 삭제: 생성자만 삭제 가능 (또는 시스템 관리자)
+      allow delete: if isAdmin() || (isSignedIn() && existingData().creatorId == request.auth.uid);
+    }
+    
+    // ============================================================
+    // schedules Collection - 모임 일정
+    // ============================================================
+    match /schedules/{scheduleId} {
+      // 읽기: 해당 모임 멤버만 조회 가능 (또는 관리자)
+      allow read: if isAdmin() || isSignedIn();
+      
+      // 생성: 모임 관리자만 생성 가능 (또는 시스템 관리자)
+      allow create: if isAdmin() || (isSignedIn() && incomingData().creatorId == request.auth.uid);
+      
+      // 수정: 생성자 또는 참가자가 수정 가능 (또는 시스템 관리자)
+      allow update: if isAdmin() || (isSignedIn() && (request.auth.uid == existingData().creatorId || request.auth.uid in existingData().participantIds));
+      
+      // 삭제: 생성자만 삭제 가능 (또는 시스템 관리자)
+      allow delete: if isAdmin() || (isSignedIn() && existingData().creatorId == request.auth.uid);
+    }
+    
+    // ============================================================
+    // joinRequests Collection - 모임 가입 신청
+    // ============================================================
+    match /joinRequests/{requestId} {
+      // 읽기: 신청자 또는 모임 관리자만 조회 가능
+      allow read: if isSignedIn();
+      
+      // 생성: 본인 계정으로만 신청 가능
+      allow create: if isSignedIn()
+        && incomingData().userId == request.auth.uid
+        && incomingData().createdAt == request.time;
+      
+      // 수정: 모임 관리자만 승인/거절 가능
+      allow update: if isSignedIn();
+      
+      // 삭제: 신청자 본인만 삭제 가능
+      allow delete: if isSignedIn()
+        && existingData().userId == request.auth.uid;
+    }
+    
+    // ============================================================
+    // healthRecords Collection - 건강 기록 (dogs 하위 컬렉션)
+    // ============================================================
+    match /dogs/{dogId}/healthRecords/{recordId} {
+      // 읽기: 강아지 주인만 조회 가능
+      allow read: if isSignedIn()
+        && get(/databases/$(database)/documents/dogs/$(dogId)).data.ownerId == request.auth.uid;
+      
+      // 생성: 강아지 주인만 생성 가능
+      allow create: if isSignedIn()
+        && get(/databases/$(database)/documents/dogs/$(dogId)).data.ownerId == request.auth.uid
+        && incomingData().createdAt == request.time;
+      
+      // 수정: 강아지 주인만 수정 가능
+      allow update: if isSignedIn()
+        && get(/databases/$(database)/documents/dogs/$(dogId)).data.ownerId == request.auth.uid;
+      
+      // 삭제: 강아지 주인만 삭제 가능
+      allow delete: if isSignedIn()
+        && get(/databases/$(database)/documents/dogs/$(dogId)).data.ownerId == request.auth.uid;
+    }
+  }
+}

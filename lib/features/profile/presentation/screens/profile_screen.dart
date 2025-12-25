@@ -8,6 +8,7 @@ import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/verification_badge.dart';
 import '../../../../core/widgets/warmth_score.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../pet/presentation/providers/pet_provider.dart';
 import 'pet_edit_screen.dart';
 import 'profile_edit_screen.dart';
 
@@ -19,6 +20,7 @@ import 'profile_edit_screen.dart';
 /// - 예방접종 인증 → 위치 인증으로 변경
 /// - 인증/배지 관리 (본인인증, 위치인증, 동물등록)
 /// - 건강수첩 접근
+/// - Firebase 데이터 연동
 /// ============================================================
 
 // 데모용 인증 상태
@@ -258,15 +260,19 @@ class ProfileScreen extends ConsumerWidget {
 
   /// 내 반려동물 목록 (V1: 건강수첩 버튼 포함)
   Widget _buildMyPets(BuildContext context, WidgetRef ref) {
-    return SizedBox(
-      height: 180,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: 3, // 2마리 + 추가 버튼
-        itemBuilder: (context, index) {
-          if (index == 2) {
-            // 추가 버튼
-            return Container(
+    final petsAsync = ref.watch(userPetsProvider);
+    
+    return petsAsync.when(
+      data: (pets) {
+        return SizedBox(
+          height: 180,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: pets.length + 1, // 강아지들 + 추가 버튼
+            itemBuilder: (context, index) {
+              if (index == pets.length) {
+                // 추가 버튼
+                return Container(
               width: 120,
               margin: const EdgeInsets.only(right: AppSizes.gapM),
               child: MingrrCard(
@@ -308,20 +314,20 @@ class ProfileScreen extends ConsumerWidget {
             );
           }
 
-          return _buildPetCard(context, index);
-        },
-      ),
+              final pet = pets[index];
+              return _buildPetCard(context, pet);
+            },
+          ),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (_, __) => const SizedBox(),
     );
   }
 
   /// 강아지 카드 (V2: 건강수첩 버튼 포함)
-  Widget _buildPetCard(BuildContext context, int index) {
-    final dogs = [
-      {'name': '뽀삐', 'breed': '골든 리트리버', 'age': '2살'},
-      {'name': '코코', 'breed': '푸들', 'age': '3살'},
-    ];
-
-    final dog = dogs[index];
+  Widget _buildPetCard(BuildContext context, pet) {
+    final age = _calculateAge(pet.birthDate);
 
     return Container(
       width: 150,
@@ -362,14 +368,14 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppSizes.gapS),
             Text(
-              dog['name'] as String,
+              pet.name,
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
             ),
             Text(
-              '${dog['breed']} · ${dog['age']}',
+              '${pet.breedName} · $age',
               style: const TextStyle(
                 fontSize: 10,
                 color: AppColors.textSecondary,
@@ -719,9 +725,12 @@ class ProfileScreen extends ConsumerWidget {
                 '로그아웃',
                 style: TextStyle(color: AppColors.error),
               ),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(context);
-                ref.read(authNotifierProvider.notifier).signOut();
+                await ref.read(authNotifierProvider.notifier).signOut();
+                if (context.mounted) {
+                  context.go('/login');
+                }
               },
             ),
             
@@ -730,5 +739,18 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String _calculateAge(DateTime birthDate) {
+    final now = DateTime.now();
+    final age = now.year - birthDate.year;
+    final months = now.month - birthDate.month;
+    
+    if (age == 0) {
+      return '${months}개월';
+    } else if (months < 0) {
+      return '${age - 1}살';
+    }
+    return '${age}살';
   }
 }

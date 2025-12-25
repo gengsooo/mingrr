@@ -21,12 +21,17 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _phoneController = TextEditingController();
   final _codeController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _isCodeSent = false;
+  bool _isPhoneLogin = true; // true: 전화번호, false: 이메일
 
   @override
   void dispose() {
     _phoneController.dispose();
     _codeController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -63,8 +68,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               
               const SizedBox(height: AppSizes.gapXXL * 2),
               
+              // ===== 로그인 방법 선택 탭 =====
+              _buildLoginTabs(),
+              
+              const SizedBox(height: AppSizes.gapL),
+              
               // ===== 로그인 폼 =====
-              _buildLoginForm(authState, authNotifier),
+              _isPhoneLogin
+                  ? _buildPhoneLoginForm(authState, authNotifier)
+                  : _buildEmailLoginForm(authState, authNotifier),
               
               const SizedBox(height: AppSizes.gapXL),
               
@@ -138,77 +150,165 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
+  /// 로그인 방법 선택 탭
+  Widget _buildLoginTabs() {
+    return Row(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: () => setState(() {
+              _isPhoneLogin = true;
+              _isCodeSent = false;
+            }),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: _isPhoneLogin ? AppColors.primary : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+              ),
+              child: Text(
+                '전화번호',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: _isPhoneLogin ? FontWeight.w600 : FontWeight.w400,
+                  color: _isPhoneLogin ? AppColors.primary : AppColors.textHint,
+                ),
+              ),
+            ),
+          ),
+        ),
+        Expanded(
+          child: GestureDetector(
+            onTap: () => setState(() => _isPhoneLogin = false),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: !_isPhoneLogin ? AppColors.primary : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+              ),
+              child: Text(
+                '이메일',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: !_isPhoneLogin ? FontWeight.w600 : FontWeight.w400,
+                  color: !_isPhoneLogin ? AppColors.primary : AppColors.textHint,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   /// 전화번호 로그인 폼
-  Widget _buildLoginForm(AuthState authState, AuthNotifier authNotifier) {
-    return MingrrCard(
-      padding: const EdgeInsets.all(AppSizes.paddingL),
-      margin: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '전화번호로 시작하기',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
+  Widget _buildPhoneLoginForm(AuthState authState, AuthNotifier authNotifier) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+          
+        // 전화번호 입력
+        MingrrTextField(
+          controller: _phoneController,
+          hintText: '010-1234-5678',
+          prefixIcon: Icons.phone_android,
+          keyboardType: TextInputType.phone,
+          enabled: !_isCodeSent,
+        ),
+          
+        // 인증 코드 입력 (코드 전송 후 표시)
+        if (_isCodeSent) ...[
           const SizedBox(height: AppSizes.gapM),
-          
-          // 전화번호 입력
           MingrrTextField(
-            controller: _phoneController,
-            hintText: '010-1234-5678',
-            prefixIcon: Icons.phone_android,
-            keyboardType: TextInputType.phone,
-            enabled: !_isCodeSent,
+            controller: _codeController,
+            hintText: '인증번호 6자리',
+            prefixIcon: Icons.lock_outline,
+            keyboardType: TextInputType.number,
           ),
-          
-          // 인증 코드 입력 (코드 전송 후 표시)
-          if (_isCodeSent) ...[
-            const SizedBox(height: AppSizes.gapM),
-            MingrrTextField(
-              controller: _codeController,
-              hintText: '인증번호 6자리',
-              prefixIcon: Icons.lock_outline,
-              keyboardType: TextInputType.number,
-            ),
-          ],
-          
-          const SizedBox(height: AppSizes.gapL),
-          
-          // 버튼
-          if (!_isCodeSent)
-            MingrrButton(
-              text: AppStrings.sendVerificationCode,
-              isLoading: authState.isLoading,
-              onPressed: () => _sendCode(authNotifier),
-            )
-          else
-            Column(
-              children: [
-                MingrrButton(
-                  text: AppStrings.verify,
-                  isLoading: authState.isLoading,
-                  onPressed: () => _verifyCode(authNotifier),
-                ),
-                const SizedBox(height: AppSizes.gapS),
-                TextButton(
-                  onPressed: authState.isLoading
-                      ? null
-                      : () {
-                          setState(() {
-                            _isCodeSent = false;
-                            _codeController.clear();
-                          });
-                        },
-                  child: const Text(AppStrings.resendCode),
-                ),
-              ],
-            ),
         ],
-      ),
+          
+        const SizedBox(height: AppSizes.gapL),
+        
+        // 버튼
+        if (!_isCodeSent)
+          MingrrButton(
+            text: AppStrings.sendVerificationCode,
+            isLoading: authState.isLoading,
+            onPressed: () => _sendCode(authNotifier),
+          )
+        else
+          Column(
+            children: [
+              MingrrButton(
+                text: AppStrings.verify,
+                isLoading: authState.isLoading,
+                onPressed: () => _verifyCode(authNotifier),
+              ),
+              const SizedBox(height: AppSizes.gapS),
+              TextButton(
+                onPressed: authState.isLoading
+                    ? null
+                    : () {
+                        setState(() {
+                          _isCodeSent = false;
+                          _codeController.clear();
+                        });
+                      },
+                child: const Text(AppStrings.resendCode),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  /// 이메일/비밀번호 로그인 폼
+  Widget _buildEmailLoginForm(AuthState authState, AuthNotifier authNotifier) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // 이메일 입력
+        MingrrTextField(
+          controller: _emailController,
+          hintText: 'test@mingrr.com',
+          prefixIcon: Icons.email_outlined,
+          keyboardType: TextInputType.emailAddress,
+        ),
+        const SizedBox(height: AppSizes.gapM),
+        
+        // 비밀번호 입력
+        MingrrTextField(
+          controller: _passwordController,
+          hintText: '비밀번호',
+          prefixIcon: Icons.lock_outline,
+          obscureText: true,
+        ),
+        const SizedBox(height: AppSizes.gapL),
+        
+        // 로그인 버튼
+        MingrrButton(
+          text: '로그인',
+          isLoading: authState.isLoading,
+          onPressed: () => _signInWithEmail(authNotifier),
+        ),
+        const SizedBox(height: AppSizes.gapS),
+        
+        // 회원가입 버튼
+        TextButton(
+          onPressed: authState.isLoading ? null : () => _signUpWithEmail(authNotifier),
+          child: const Text('계정이 없으신가요? 회원가입'),
+        ),
+      ],
     );
   }
 
@@ -319,5 +419,61 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
 
     authNotifier.verifyPhoneCode(code);
+  }
+
+  /// 이메일 로그인
+  void _signInWithEmail(AuthNotifier authNotifier) async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('올바른 이메일을 입력해주세요.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+    
+    if (password.isEmpty || password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('비밀번호는 6자 이상이어야 합니다.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+    
+    authNotifier.signInWithEmail(email, password);
+  }
+
+  /// 이메일 회원가입
+  void _signUpWithEmail(AuthNotifier authNotifier) async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('올바른 이메일을 입력해주세요.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+    
+    if (password.isEmpty || password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('비밀번호는 6자 이상이어야 합니다.'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+    
+    authNotifier.signUpWithEmail(email, password);
   }
 }
