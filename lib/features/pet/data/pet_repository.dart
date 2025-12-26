@@ -6,7 +6,7 @@ class PetRepository {
   final FirebaseService _firebase = FirebaseService();
 
   Stream<List<PetModel>> getUserPets(String userId) {
-    return _firebase.dogsCollection
+    return _firebase.petsCollection
         .where('ownerId', isEqualTo: userId)
         .orderBy('isPrimary', descending: true)
         .snapshots()
@@ -16,27 +16,27 @@ class PetRepository {
   }
 
   Future<PetModel?> getPetById(String petId) async {
-    final doc = await _firebase.dogsCollection.doc(petId).get();
+    final doc = await _firebase.petsCollection.doc(petId).get();
     if (!doc.exists) return null;
     return PetModel.fromFirestore(doc);
   }
 
   Future<List<PetModel>> getAllPets() async {
-    final snapshot = await _firebase.dogsCollection.get();
+    final snapshot = await _firebase.petsCollection.get();
     return snapshot.docs
         .map((doc) => PetModel.fromFirestore(doc))
         .toList();
   }
 
   Future<void> createPet(PetModel pet) async {
-    await _firebase.dogsCollection.doc(pet.id).set(pet.toFirestore());
+    await _firebase.petsCollection.doc(pet.id).set(pet.toFirestore());
   }
 
   Future<void> updatePet(PetModel pet) async {
-    await _firebase.dogsCollection.doc(pet.id).update(pet.toFirestore());
+    await _firebase.petsCollection.doc(pet.id).update(pet.toFirestore());
   }
 
   Future<void> deletePet(String petId) async {
-    await _firebase.dogsCollection.doc(petId).delete();
+    await _firebase.petsCollection.doc(petId).delete();
   }
 }

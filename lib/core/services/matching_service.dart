@@ -18,8 +18,8 @@ class MatchingService {
   /// [isWalking] 상대가 현재 산책중인지
   /// [lastWalkMinutesAgo] 마지막 산책이 몇 분 전인지 (null이면 산책 기록 없음)
   static MatchResult calculateCompatibility({
-    required DogModel myDog,
-    required DogModel otherDog,
+    required PetModel myDog,
+    required PetModel otherDog,
     bool isWalking = false,
     int? lastWalkMinutesAgo,
   }) {
@@ -78,7 +78,7 @@ class MatchingService {
   }
 
   /// 품종 일치 점수 (40점 만점)
-  static double _calculateBreedScore(DogModel myDog, DogModel otherDog) {
+  static double _calculateBreedScore(PetModel myDog, PetModel otherDog) {
     // 품종 정보가 없으면 기본 점수
     if (myDog.breed == null || otherDog.breed == null) {
       return 20;
@@ -98,7 +98,7 @@ class MatchingService {
   }
 
   /// 체중/크기 유사도 점수 (25점 만점)
-  static double _calculateWeightScore(DogModel myDog, DogModel otherDog) {
+  static double _calculateWeightScore(PetModel myDog, PetModel otherDog) {
     // 체중 정보가 없으면 기본 점수
     if (myDog.weight == null || otherDog.weight == null) {
       return 12.5;
@@ -127,7 +127,7 @@ class MatchingService {
   }
 
   /// 특성 궁합 점수 (15점 만점)
-  static double _calculateTraitScore(DogModel myDog, DogModel otherDog) {
+  static double _calculateTraitScore(PetModel myDog, PetModel otherDog) {
     if (myDog.traits.isEmpty || otherDog.traits.isEmpty) {
       return 7.5; // 특성 정보 없으면 기본 점수
     }
@@ -148,18 +148,18 @@ class MatchingService {
   }
 
   /// 상호 보완 특성 점수
-  static double _calculateComplementaryTraits(DogModel myDog, DogModel otherDog) {
+  static double _calculateComplementaryTraits(PetModel myDog, PetModel otherDog) {
     double score = 0;
 
     // 상호 보완되는 특성 쌍
     final complementaryPairs = [
-      {DogTrait.active, DogTrait.playful},
-      {DogTrait.calm, DogTrait.gentle},
-      {DogTrait.friendly, DogTrait.lovesPeople},
-      {DogTrait.affectionate, DogTrait.cuddler},
-      {DogTrait.brave, DogTrait.protective},
-      {DogTrait.shy, DogTrait.gentle},
-      {DogTrait.independent, DogTrait.calm},
+      {PetTrait.active, PetTrait.playful},
+      {PetTrait.calm, PetTrait.gentle},
+      {PetTrait.friendly, PetTrait.lovesPeople},
+      {PetTrait.affectionate, PetTrait.cuddler},
+      {PetTrait.brave, PetTrait.protective},
+      {PetTrait.shy, PetTrait.gentle},
+      {PetTrait.independent, PetTrait.calm},
     ];
 
     for (final pair in complementaryPairs) {
@@ -172,8 +172,8 @@ class MatchingService {
 
     // 상충되는 특성 (감점) - 둘 다 같은 특성을 가진 경우 충돌
     final conflictingSameTraits = [
-      DogTrait.dominant,      // 둘 다 지배적이면 충돌
-      DogTrait.territorial,   // 둘 다 영역의식 강하면 충돌
+      PetTrait.dominant,      // 둘 다 지배적이면 충돌
+      PetTrait.territorial,   // 둘 다 영역의식 강하면 충돌
     ];
     
     for (final trait in conflictingSameTraits) {
@@ -184,8 +184,8 @@ class MatchingService {
     
     // 상충되는 특성 쌍 (서로 다른 특성)
     final conflictingPairs = [
-      [DogTrait.anxious, DogTrait.barksALot],
-      [DogTrait.fearfulOfDogs, DogTrait.dominant],
+      [PetTrait.anxious, PetTrait.barksALot],
+      [PetTrait.fearfulOfPets, PetTrait.dominant],
     ];
 
     for (final pair in conflictingPairs) {
@@ -199,7 +199,7 @@ class MatchingService {
   }
 
   /// 성별 점수 (10점 만점)
-  static double _calculateGenderScore(DogModel myDog, DogModel otherDog) {
+  static double _calculateGenderScore(PetModel myDog, PetModel otherDog) {
     // 교배 목적이면 이성 선호
     if (myDog.isBreedingAvailable && otherDog.isBreedingAvailable) {
       return myDog.gender != otherDog.gender ? 10 : 3;
@@ -215,7 +215,7 @@ class MatchingService {
   }
 
   /// 나이 유사도 점수 (10점 만점)
-  static double _calculateAgeScore(DogModel myDog, DogModel otherDog) {
+  static double _calculateAgeScore(PetModel myDog, PetModel otherDog) {
     final myAge = myDog.ageYears;
     final otherAge = otherDog.ageYears;
 
@@ -233,19 +233,19 @@ class MatchingService {
   }
 
   /// 추천 목록 정렬 (궁합 점수 + 산책 상태 기준)
-  static List<MatchedDog> sortByCompatibility({
-    required DogModel myDog,
-    required List<DogWithStatus> candidates,
+  static List<MatchedPet> sortByCompatibility({
+    required PetModel myDog,
+    required List<PetWithStatus> candidates,
   }) {
     final results = candidates.map((candidate) {
       final result = calculateCompatibility(
         myDog: myDog,
-        otherDog: candidate.dog,
+        otherDog: candidate.pet,
         isWalking: candidate.isWalking,
         lastWalkMinutesAgo: candidate.lastWalkMinutesAgo,
       );
-      return MatchedDog(
-        dog: candidate.dog,
+      return MatchedPet(
+        pet: candidate.pet,
         matchResult: result,
         distance: candidate.distance,
       );
@@ -312,29 +312,29 @@ class MatchResult {
   }
 }
 
-/// 상태 포함 강아지 (후보 목록용)
-class DogWithStatus {
-  final DogModel dog;
+/// 상태 포함 반려동물 (후보 목록용)
+class PetWithStatus {
+  final PetModel pet;
   final bool isWalking;
   final int? lastWalkMinutesAgo;
   final double? distance; // 미터 단위
 
-  const DogWithStatus({
-    required this.dog,
+  const PetWithStatus({
+    required this.pet,
     this.isWalking = false,
     this.lastWalkMinutesAgo,
     this.distance,
   });
 }
 
-/// 매칭된 강아지 (결과용)
-class MatchedDog {
-  final DogModel dog;
+/// 매칭된 반려동물 (결과용)
+class MatchedPet {
+  final PetModel pet;
   final MatchResult matchResult;
   final double? distance;
 
-  const MatchedDog({
-    required this.dog,
+  const MatchedPet({
+    required this.pet,
     required this.matchResult,
     this.distance,
   });

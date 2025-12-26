@@ -22,8 +22,8 @@ class SeedData {
       final userIds = await _seedUsers();
       print('✅ 사용자 ${userIds.length}명 생성 완료');
       
-      await _seedDogs(userIds);
-      print('✅ 강아지 데이터 생성 완료');
+      await _seedPets(userIds);
+      print('✅ 반려동물 데이터 생성 완료');
       
       await _seedProducts(userIds);
       print('✅ 상품 데이터 생성 완료');
@@ -43,6 +43,29 @@ class SeedData {
     final auth = FirebaseAuth.instance;
     final password = 'test1234'; // 6자 이상 필요
     
+    // 1. 관리자 계정 생성
+    try {
+      final adminEmail = 'admin@mingrr.com';
+      final methods = await auth.fetchSignInMethodsForEmail(adminEmail);
+      
+      if (methods.isEmpty) {
+        await auth.createUserWithEmailAndPassword(
+          email: adminEmail,
+          password: 'admin1234',
+        );
+        print('  ✓ $adminEmail 계정 생성 (관리자)');
+      } else {
+        print('  ⊚ $adminEmail 계정 이미 존재 (관리자)');
+      }
+    } catch (e) {
+      if (e is FirebaseAuthException && e.code == 'email-already-in-use') {
+        print('  ⊚ admin@mingrr.com 계정 이미 존재 (관리자)');
+      } else {
+        print('  ✗ admin@mingrr.com 계정 생성 실패: $e');
+      }
+    }
+    
+    // 2. 테스트 계정 생성 (test1~test10)
     for (int i = 1; i <= 10; i++) {
       final email = 'test$i@mingrr.com';
       
@@ -69,15 +92,15 @@ class SeedData {
       }
     }
     
-    // 첫 번째 테스트 계정으로 자동 로그인 (Firestore 쓰기 권한 획득)
+    // 관리자 계정으로 자동 로그인 (Firestore 쓰기 권한 획듍)
     try {
       await auth.signInWithEmailAndPassword(
-        email: 'test1@mingrr.com',
-        password: password,
+        email: 'admin@mingrr.com',
+        password: 'admin1234',
       );
-      print('  ✓ test1@mingrr.com 계정으로 자동 로그인');
+      print('  ✓ admin@mingrr.com 계정으로 자동 로그인 (관리자)');
     } catch (e) {
-      print('  ✗ 자동 로그인 실패: $e');
+      print('  ✗ 관리자 로그인 실패: $e');
     }
   }
   
@@ -176,10 +199,10 @@ class SeedData {
     return userIds;
   }
   
-  Future<void> _seedDogs(List<String> userIds) async {
+  Future<void> _seedPets(List<String> userIds) async {
     final now = DateTime.now();
     
-    final dogs = [
+    final pets = [
       {
         'id': 'dog_001',
         'ownerId': userIds[0],
@@ -188,7 +211,7 @@ class SeedData {
         'gender': 'female',
         'weight': 3.5,
         'isNeutered': true,
-        'traits': [DogTrait.active, DogTrait.friendly, DogTrait.affectionate],
+        'traits': [PetTrait.active, PetTrait.friendly, PetTrait.affectionate],
         'bio': '사람 좋아하는 초코에요!',
       },
       {
@@ -197,9 +220,9 @@ class SeedData {
         'name': '골디',
         'breed': '골든리트리버',
         'gender': 'male',
-        'weight': 32.0,
-        'isNeutered': true,
-        'traits': [DogTrait.gentle, DogTrait.smart, DogTrait.active],
+        'weight': 28.0,
+        'isNeutered': false,
+        'traits': [PetTrait.gentle, PetTrait.loyal, PetTrait.lovesPeople],
         'bio': '착한 골디입니다',
       },
       {
@@ -210,7 +233,7 @@ class SeedData {
         'gender': 'female',
         'weight': 2.8,
         'isNeutered': false,
-        'traits': [DogTrait.affectionate, DogTrait.playful],
+        'traits': [PetTrait.affectionate, PetTrait.playful],
         'bio': '귀여운 쿠키',
       },
       {
@@ -221,7 +244,7 @@ class SeedData {
         'gender': 'male',
         'weight': 3.2,
         'isNeutered': true,
-        'traits': [DogTrait.gentle, DogTrait.calm],
+        'traits': [PetTrait.gentle, PetTrait.calm],
         'bio': '쿠키의 동생 크림이',
       },
       {
@@ -232,7 +255,7 @@ class SeedData {
         'gender': 'male',
         'weight': 12.5,
         'isNeutered': true,
-        'traits': [DogTrait.active, DogTrait.smart, DogTrait.friendly],
+        'traits': [PetTrait.brave, PetTrait.protective, PetTrait.loyal],
         'bio': '에너지 넘치는 코코',
       },
       {
@@ -243,27 +266,27 @@ class SeedData {
         'gender': 'female',
         'weight': 9.0,
         'isNeutered': false,
-        'traits': [DogTrait.independent, DogTrait.calm],
+        'traits': [PetTrait.independent, PetTrait.calm],
         'bio': '도도한 시바',
       },
     ];
     
-    for (final dogData in dogs) {
-      final dog = DogModel(
-        id: dogData['id'] as String,
-        ownerId: dogData['ownerId'] as String,
+    for (final petData in pets) {
+      final pet = PetModel(
+        id: petData['id'] as String,
+        ownerId: petData['ownerId'] as String,
         isPrimary: true,
-        name: dogData['name'] as String,
-        breed: dogData['breed'] as String,
-        gender: dogData['gender'] == 'male' ? DogGender.male : DogGender.female,
-        weight: dogData['weight'] as double,
-        isNeutered: dogData['isNeutered'] as bool,
-        traits: (dogData['traits'] as List<DogTrait>),
-        bio: dogData['bio'] as String,
+        name: petData['name'] as String,
+        breed: petData['breed'] as String,
+        gender: petData['gender'] == 'male' ? PetGender.male : PetGender.female,
+        weight: petData['weight'] as double,
+        isNeutered: petData['isNeutered'] as bool,
+        traits: (petData['traits'] as List<PetTrait>),
+        bio: petData['bio'] as String,
         isRegistrationVerified: true,
         isVaccinationVerified: true,
         hasPedigree: false,
-        isBreedingAvailable: !(dogData['isNeutered'] as bool),
+        isBreedingAvailable: !(petData['isNeutered'] as bool),
         healthBookEnabled: true,
         enabledHealthCategories: [HealthCategory.weight, HealthCategory.vaccination, HealthCategory.walk],
         walkFeatureEnabled: true,
@@ -273,10 +296,10 @@ class SeedData {
         photoUrls: [],
       );
       
-      await _firebase.dogsCollection.doc(dog.id).set(dog.toFirestore());
+      await _firebase.petsCollection.doc(pet.id).set(pet.toFirestore());
       
-      await _firebase.usersCollection.doc(dog.ownerId).update({
-        'petIds': FieldValue.arrayUnion([dog.id]),
+      await _firebase.usersCollection.doc(pet.ownerId).update({
+        'petIds': FieldValue.arrayUnion([pet.id]),
       });
     }
   }
@@ -432,15 +455,22 @@ class SeedData {
     print('🗑️  모든 데이터 삭제 시작...');
     
     try {
+      // 1. Firestore 데이터 삭제
       await _clearCollection(_firebase.usersCollection);
-      await _clearCollection(_firebase.dogsCollection);
+      await _clearCollection(_firebase.petsCollection);
       await _clearCollection(_firebase.productsCollection);
       await _clearCollection(_firebase.groupsCollection);
       await _clearCollection(_firebase.chatRoomsCollection);
       await _clearCollection(_firebase.likesCollection);
       await _clearCollection(_firebase.matchesCollection);
       
-      print('✅ 모든 데이터 삭제 완료');
+      // 2. Firebase Auth 계정 삭제 (admin@mingrr.com 제외)
+      // 주의: 클라이언트에서는 현재 로그인된 계정만 삭제 가능
+      // 다른 계정들은 Firebase Admin SDK나 Firebase Console에서 수동 삭제 필요
+      print('⚠️  Firebase Auth 계정은 Firebase Console에서 수동으로 삭제해주세요');
+      print('   (admin@mingrr.com 제외한 test1~test10@mingrr.com)');
+      
+      print('✅ 모든 Firestore 데이터 삭제 완료');
     } catch (e) {
       print('❌ 데이터 삭제 실패: $e');
       rethrow;

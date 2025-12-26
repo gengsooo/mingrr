@@ -32,11 +32,11 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
   final _weightController = TextEditingController();
   final _bioController = TextEditingController();
   
-  DogGender _selectedGender = DogGender.male;
+  PetGender _selectedGender = PetGender.male;
   DateTime? _birthDate;
   bool _isNeutered = false;
   bool _hasPedigree = false;
-  final Set<DogTrait> _selectedTraits = {};
+  final Set<PetTrait> _selectedTraits = {};
   
   bool get isEditMode => widget.petId != null;
   
@@ -55,16 +55,16 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
     _breedController.text = '골든 리트리버';
     _weightController.text = '28.5';
     _bioController.text = '활발하고 사람을 좋아하는 강아지입니다.';
-    _selectedGender = DogGender.male;
+    _selectedGender = PetGender.male;
     _birthDate = DateTime(2022, 3, 15);
     _isNeutered = true;
     _hasPedigree = false;
     _selectedTraits.addAll([
-      DogTrait.active,
-      DogTrait.friendly,
-      DogTrait.playful,
-      DogTrait.lovesPeople,
-      DogTrait.fetcher,
+      PetTrait.active,
+      PetTrait.friendly,
+      PetTrait.playful,
+      PetTrait.lovesPeople,
+      PetTrait.fetcher,
     ]);
     setState(() {});
   }
@@ -241,15 +241,15 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
             children: [
               const Text('성별 *', style: TextStyle(fontSize: 14)),
               const Spacer(),
-              SegmentedButton<DogGender>(
-                segments: DogGender.values.map((gender) {
-                  return ButtonSegment<DogGender>(
+              SegmentedButton<PetGender>(
+                segments: PetGender.values.map((gender) {
+                  return ButtonSegment<PetGender>(
                     value: gender,
                     label: Text('${gender.symbol} ${gender.label}'),
                   );
                 }).toList(),
                 selected: {_selectedGender},
-                onSelectionChanged: (Set<DogGender> selection) {
+                onSelectionChanged: (Set<PetGender> selection) {
                   setState(() {
                     _selectedGender = selection.first;
                   });
@@ -343,8 +343,8 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           const SizedBox(height: AppSizes.gapM),
           
           // 카테고리별 특성
-          ...DogTraitCategory.values.map((category) {
-            final traits = DogTrait.values.where((t) => t.category == category).toList();
+          ...PetTraitCategory.values.map((category) {
+            final traits = PetTrait.values.where((t) => t.category == category).toList();
             return _buildTraitCategory(category, traits);
           }),
         ],
@@ -352,7 +352,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
     );
   }
 
-  Widget _buildTraitCategory(DogTraitCategory category, List<DogTrait> traits) {
+  Widget _buildTraitCategory(PetTraitCategory category, List<PetTrait> traits) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

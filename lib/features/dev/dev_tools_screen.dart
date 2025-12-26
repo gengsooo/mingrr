@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/utils/seed_data.dart';
+import '../auth/presentation/providers/auth_provider.dart';
 
-class DevToolsScreen extends StatefulWidget {
+class DevToolsScreen extends ConsumerStatefulWidget {
   const DevToolsScreen({super.key});
 
   @override
-  State<DevToolsScreen> createState() => _DevToolsScreenState();
+  ConsumerState<DevToolsScreen> createState() => _DevToolsScreenState();
 }
 
-class _DevToolsScreenState extends State<DevToolsScreen> {
+class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
   final SeedData _seedData = SeedData();
   bool _isLoading = false;
   String _message = '';
@@ -80,6 +83,49 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // admin 계정 접근 제한 확인
+    final currentUser = ref.watch(currentUserProvider).valueOrNull;
+    final isAdmin = currentUser?.email == 'admin@mingrr.com';
+    
+    if (!isAdmin) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('🚫 접근 불가'),
+          backgroundColor: Colors.red,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.lock,
+                size: 80,
+                color: Colors.red,
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                '관리자 전용 페이지입니다',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'admin@mingrr.com 계정으로 로그인해주세요',
+                style: TextStyle(color: Colors.grey),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () => context.go('/'),
+                child: const Text('돌아가기'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('🛠️ 개발자 도구'),
@@ -123,6 +169,32 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
               label: const Text('모든 데이터 삭제'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.all(16),
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            ElevatedButton.icon(
+              onPressed: _isLoading ? null : () async {
+                try {
+                  await ref.read(authNotifierProvider.notifier).signOut();
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('로그아웃 실패: $e')),
+                    );
+                  }
+                }
+              },
+              icon: const Icon(Icons.logout),
+              label: const Text('로그아웃'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey.shade700,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.all(16),
               ),

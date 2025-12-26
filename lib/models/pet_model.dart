@@ -3,34 +3,32 @@ import 'package:equatable/equatable.dart';
 import '../core/constants/pet_constants.dart';
 
 /// ============================================================
-/// 강아지 모델 (V2 리팩토링 - 강아지 전용)
+/// 반려동물 모델 (V2 리팩토링 - 강아지 전용)
 /// 
 /// 변경사항:
 /// - PetType 제거 (강아지 전용 앱)
-/// - PetSize -> DogSize
-/// - PetGender -> DogGender  
-/// - PetTrait -> DogTrait
+/// - 통일된 Pet 명칭 사용 (PetSize, PetGender, PetTrait)
 /// - 50개 특성 시스템, 건강수첩 연동
 /// ============================================================
 
-class DogModel extends Equatable {
+class PetModel extends Equatable {
   /// 고유 ID
   final String id;
   
   /// 보호자(사용자) ID
   final String ownerId;
   
-  /// 대표 강아지 여부 (여러 마리 중 대표로 표시될 강아지)
+  /// 대표 반려동물 여부 (여러 마리 중 대표로 표시될 반려동물)
   final bool isPrimary;
   
-  /// 강아지 이름
+  /// 반려동물 이름
   final String name;
   
   /// 품종 (예: 골든 리트리버, 말티즈 등)
   final String? breed;
   
   /// 성별
-  final DogGender gender;
+  final PetGender gender;
   
   /// 생년월일
   final DateTime? birthDate;
@@ -42,7 +40,7 @@ class DogModel extends Equatable {
   final bool isNeutered;
   
   /// 특성 목록 (최소 5개 이상)
-  final List<DogTrait> traits;
+  final List<PetTrait> traits;
   
   /// 자기소개/특징
   final String? bio;
@@ -92,7 +90,7 @@ class DogModel extends Equatable {
   /// 수정일
   final DateTime updatedAt;
 
-  const DogModel({
+  const PetModel({
     required this.id,
     required this.ownerId,
     this.isPrimary = false,
@@ -151,9 +149,9 @@ class DogModel extends Equatable {
   String get genderSymbol => gender.symbol;
 
   /// 체중 크기 분류
-  DogSize? get size {
+  PetSize? get size {
     if (weight == null) return null;
-    return DogSize.fromWeight(weight!);
+    return PetSize.fromWeight(weight!);
   }
 
   /// 체중 크기 한글 표시
@@ -162,24 +160,24 @@ class DogModel extends Equatable {
   /// 특성 한글 목록
   List<String> get traitLabels => traits.map((t) => t.label).toList();
 
-  /// 산책 가능 여부 (강아지는 항상 산책 가능)
+  /// 산책 가능 여부
   bool get canWalk => walkFeatureEnabled;
 
   /// 특성 유효성 검사 (최소 5개)
   bool get hasValidTraits => traits.length >= 5;
 
-  /// Firestore 문서에서 DogModel 생성
-  factory DogModel.fromFirestore(DocumentSnapshot doc) {
+  /// Firestore 문서에서 PetModel 생성
+  factory PetModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
-    return DogModel(
+    return PetModel(
       id: doc.id,
       ownerId: data['ownerId'] ?? '',
       isPrimary: data['isPrimary'] ?? false,
       name: data['name'] ?? '',
       breed: data['breed'],
-      gender: DogGender.values.firstWhere(
+      gender: PetGender.values.firstWhere(
         (e) => e.name == data['gender'],
-        orElse: () => DogGender.male,
+        orElse: () => PetGender.male,
       ),
       birthDate: data['birthDate'] != null
           ? (data['birthDate'] as Timestamp).toDate()
@@ -187,9 +185,9 @@ class DogModel extends Equatable {
       weight: data['weight']?.toDouble(),
       isNeutered: data['isNeutered'] ?? false,
       traits: (data['traits'] as List<dynamic>?)
-              ?.map((t) => DogTrait.values.firstWhere(
+              ?.map((t) => PetTrait.values.firstWhere(
                     (e) => e.name == t,
-                    orElse: () => DogTrait.friendly,
+                    orElse: () => PetTrait.friendly,
                   ))
               .toList() ??
           [],
@@ -259,17 +257,17 @@ class DogModel extends Equatable {
   }
 
   /// 복사본 생성
-  DogModel copyWith({
+  PetModel copyWith({
     String? id,
     String? ownerId,
     bool? isPrimary,
     String? name,
     String? breed,
-    DogGender? gender,
+    PetGender? gender,
     DateTime? birthDate,
     double? weight,
     bool? isNeutered,
-    List<DogTrait>? traits,
+    List<PetTrait>? traits,
     String? bio,
     String? profileImageUrl,
     List<String>? photoUrls,
@@ -287,7 +285,7 @@ class DogModel extends Equatable {
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
-    return DogModel(
+    return PetModel(
       id: id ?? this.id,
       ownerId: ownerId ?? this.ownerId,
       isPrimary: isPrimary ?? this.isPrimary,
@@ -318,13 +316,13 @@ class DogModel extends Equatable {
   }
 
   /// 빈 모델 생성 (신규 등록 시)
-  factory DogModel.empty(String ownerId) {
+  factory PetModel.empty(String ownerId) {
     final now = DateTime.now();
-    return DogModel(
+    return PetModel(
       id: '',
       ownerId: ownerId,
       name: '',
-      gender: DogGender.male,
+      gender: PetGender.male,
       createdAt: now,
       updatedAt: now,
     );

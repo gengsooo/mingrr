@@ -135,9 +135,13 @@ class AuthRepository {
   
   /// 로그아웃
   Future<void> signOut() async {
-    // 구글 로그아웃
-    if (await _googleSignIn.isSignedIn()) {
-      await _googleSignIn.signOut();
+    // 구글 로그아웃 시도 (실패해도 Firebase 로그아웃은 진행)
+    try {
+      if (await _googleSignIn.isSignedIn()) {
+        await _googleSignIn.signOut();
+      }
+    } catch (_) {
+      // Google Sign-In이 설정되지 않은 경우 무시
     }
     
     // Firebase 로그아웃

@@ -11,12 +11,12 @@ import '../../../pet/presentation/providers/pet_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// ============================================================
-/// 홈 화면 (V3 리팩토링 - 강아지 전용)
+/// 홈 화면 (V3 리팩토링 - 반려동물 전용)
 /// 
 /// 변경사항:
-/// - 강아지 전용 앱으로 변경 (PetType 제거)
+/// - 반려동물 전용 앱으로 변경 (PetType 제거)
 /// - 산책 기능 메인으로 이동 (건강기록 하위)
-/// - 강아지 선택기 (여러 마리 지원)
+/// - 반려동물 선택기 (여러 마리 지원)
 /// - 건강기록 커스터마이징 (1~5개 선택 가능)
 /// - Firebase 데이터 연동
 /// ============================================================
@@ -38,69 +38,66 @@ class HomeScreen extends ConsumerWidget {
     final healthCategories = ref.watch(_homeHealthCategoriesProvider);
     final allPetsAsync = ref.watch(allPetsProvider);
 
+    // 로딩 중에도 기본 레이아웃 유지 (깜빡임 방지)
+    final pets = petsAsync.valueOrNull ?? [];
+    final isLoading = petsAsync.isLoading;
+    final selectedPet = pets.isNotEmpty && selectedIndex < pets.length 
+        ? pets[selectedIndex] 
+        : null;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: petsAsync.when(
-          data: (pets) {
-            final selectedDog = pets.isNotEmpty && selectedIndex < pets.length 
-                ? pets[selectedIndex] 
-                : null;
+        child: CustomScrollView(
+          slivers: [
+            // ===== 앱바 =====
+            _buildAppBar(context),
 
-            return CustomScrollView(
-              slivers: [
-                // ===== 앱바 =====
-                _buildAppBar(context),
-
-                // ===== 컨텐츠 =====
-                SliverPadding(
-                  padding: const EdgeInsets.all(AppSizes.paddingM),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      // 강아지 선택기 (여러 마리 지원)
-                      if (pets.isNotEmpty)
-                        _buildDogSelector(context, ref, pets, selectedIndex),
-                      if (pets.isEmpty)
-                        _buildEmptyPetsCard(context),
-                      const SizedBox(height: AppSizes.gapL),
-                      
-                      // 오늘의 건강 기록 (커스터마이징 가능)
-                      if (selectedDog != null)
-                        _buildHealthSection(context, ref, selectedDog, healthCategories),
-                      const SizedBox(height: AppSizes.gapXL),
-                      
-                      // AI 추천 친구
-                      const MingrrSectionHeader(
-                        title: 'AI 추천 친구',
-                        actionText: '더보기',
-                      ),
-                      const SizedBox(height: AppSizes.gapM),
-                      allPetsAsync.when(
-                        data: (allPets) => _buildAiRecommendSection(context, allPets),
-                        loading: () => const Center(child: CircularProgressIndicator()),
-                        error: (_, __) => const SizedBox(),
-                      ),
-                      const SizedBox(height: AppSizes.gapXL),
-                      
-                      // 인기 소모임
-                      const MingrrSectionHeader(
-                        title: '인기 소모임',
-                        actionText: '더보기',
-                      ),
-                      const SizedBox(height: AppSizes.gapM),
-                      _buildPopularGroupsSection(context),
-                      
-                      const SizedBox(height: AppSizes.gapXXL),
-                    ]),
+            // ===== 컨텐츠 =====
+            SliverPadding(
+              padding: const EdgeInsets.all(AppSizes.paddingM),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  // 반려동물 선택기 (여러 마리 지원)
+                  if (pets.isNotEmpty)
+                    _buildPetSelector(context, ref, pets, selectedIndex),
+                  if (pets.isEmpty && !isLoading)
+                    _buildEmptyPetsCard(context),
+                  if (isLoading && pets.isEmpty)
+                    _buildLoadingPetsCard(),
+                  const SizedBox(height: AppSizes.gapL),
+                  
+                  // 오늘의 건강 기록 (커스터마이징 가능)
+                  if (selectedPet != null)
+                    _buildHealthSection(context, ref, selectedPet, healthCategories),
+                  const SizedBox(height: AppSizes.gapXL),
+                  
+                  // AI 추천 친구
+                  const MingrrSectionHeader(
+                    title: 'AI 추천 친구',
+                    actionText: '더보기',
                   ),
-                ),
-              ],
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) => Center(
-            child: Text('데이터를 불러올 수 없습니다: $error'),
-          ),
+                  const SizedBox(height: AppSizes.gapM),
+                  allPetsAsync.when(
+                    data: (allPets) => _buildAiRecommendSection(context, allPets),
+                    loading: () => _buildLoadingAiSection(),
+                    error: (_, __) => const SizedBox(),
+                  ),
+                  const SizedBox(height: AppSizes.gapXL),
+                  
+                  // 인기 소모임
+                  const MingrrSectionHeader(
+                    title: '인기 소모임',
+                    actionText: '더보기',
+                  ),
+                  const SizedBox(height: AppSizes.gapM),
+                  _buildPopularGroupsSection(context),
+                  
+                  const SizedBox(height: AppSizes.gapXXL),
+                ]),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -154,7 +151,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  /// 강아지가 없을 때 표시할 카드
+  /// 반려동물이 없을 때 표시할 카드
   Widget _buildEmptyPetsCard(BuildContext context) {
     return MingrrCard(
       margin: EdgeInsets.zero,
@@ -163,29 +160,82 @@ class HomeScreen extends ConsumerWidget {
           const Icon(Icons.pets, size: 48, color: AppColors.textHint),
           const SizedBox(height: AppSizes.gapM),
           const Text(
-            '등록된 강아지가 없습니다',
+            '등록된 반려동물이 없습니다',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: AppSizes.gapS),
           const Text(
-            '프로필에서 강아지를 추가해보세요',
+            '프로필에서 반려동물을 추가해보세요',
             style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
           ),
           const SizedBox(height: AppSizes.gapM),
           ElevatedButton(
             onPressed: () => context.push('/profile'),
-            child: const Text('강아지 추가하기'),
+            child: const Text('반려동물 추가하기'),
           ),
         ],
       ),
     );
   }
 
-  /// 강아지 선택기 (여러 마리 지원)
-  Widget _buildDogSelector(
+  /// 로딩 중 반려동물 카드 (Skeleton UI)
+  Widget _buildLoadingPetsCard() {
+    return MingrrCard(
+      margin: EdgeInsets.zero,
+      child: Column(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.divider,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(height: AppSizes.gapM),
+          Container(
+            width: 150,
+            height: 16,
+            decoration: BoxDecoration(
+              color: AppColors.divider,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: AppSizes.gapS),
+          Container(
+            width: 200,
+            height: 12,
+            decoration: BoxDecoration(
+              color: AppColors.divider,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 로딩 중 AI 추천 섹션 (Skeleton UI)
+  Widget _buildLoadingAiSection() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(AppSizes.paddingL),
+        child: Text(
+          '아직 등록된 반려동물이 없습니다',
+          style: TextStyle(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 반려동물 선택기 (여러 마리 지원)
+  Widget _buildPetSelector(
     BuildContext context,
     WidgetRef ref,
-    List<PetModel> dogs,
+    List<PetModel> pets,
     int selectedIndex,
   ) {
     return Column(
@@ -196,7 +246,7 @@ class HomeScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              '내 강아지',
+              '내 반려동물',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             TextButton(
@@ -207,14 +257,14 @@ class HomeScreen extends ConsumerWidget {
         ),
         const SizedBox(height: AppSizes.gapS),
         
-        // 강아지 카드 목록 (가로 스크롤)
+        // 반려동물 카드 목록 (가로 스크롤)
         SizedBox(
           height: 100,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: dogs.length,
+            itemCount: pets.length,
             itemBuilder: (context, index) {
-              final dog = dogs[index];
+              final pet = pets[index];
               final isSelected = index == selectedIndex;
               
               return GestureDetector(
@@ -248,8 +298,8 @@ class HomeScreen extends ConsumerWidget {
                               ),
                             ),
                           ),
-                          // 대표 강아지 표시
-                          if (dog.isPrimary)
+                          // 대표 반려동물 표시
+                          if (pet.isPrimary)
                             Positioned(
                               bottom: 0,
                               right: 0,
@@ -271,7 +321,7 @@ class HomeScreen extends ConsumerWidget {
                       const SizedBox(height: 6),
                       // 이름
                       Text(
-                        dog.name,
+                        pet.name,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
@@ -284,7 +334,7 @@ class HomeScreen extends ConsumerWidget {
                       ),
                       // 품종
                       Text(
-                        dog.breedName,
+                        pet.breed ?? '품종 미상',
                         style: const TextStyle(
                           fontSize: 10,
                           color: AppColors.textSecondary,
@@ -307,7 +357,7 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildHealthSection(
     BuildContext context,
     WidgetRef ref,
-    PetModel selectedDog,
+    PetModel selectedPet,
     List<HealthCategory> categories,
   ) {
     return Column(
@@ -318,7 +368,7 @@ class HomeScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '${selectedDog.name}의 건강 기록',
+              '${selectedPet.name}의 건강 기록',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             TextButton(
@@ -640,7 +690,7 @@ class HomeScreen extends ConsumerWidget {
     if (displayPets.isEmpty) {
       return const Center(
         child: Text(
-          '아직 등록된 강아지가 없습니다',
+          '아직 등록된 반려동물이 없습니다',
           style: TextStyle(color: AppColors.textSecondary),
         ),
       );
@@ -693,7 +743,7 @@ class HomeScreen extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      '${pet.breedName} · ${_calculateAge(pet.birthDate)}',
+                      '${pet.breed ?? '품종 미상'} · ${_calculateAge(pet.birthDate)}',
                       style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: AppSizes.gapS),
@@ -729,7 +779,9 @@ class HomeScreen extends ConsumerWidget {
     return AppColors.textHint;
   }
 
-  String _calculateAge(DateTime birthDate) {
+  String _calculateAge(DateTime? birthDate) {
+    if (birthDate == null) return '나이 미상';
+    
     final now = DateTime.now();
     final age = now.year - birthDate.year;
     final months = now.month - birthDate.month;

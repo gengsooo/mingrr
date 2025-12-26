@@ -13,10 +13,10 @@ import 'pet_edit_screen.dart';
 import 'profile_edit_screen.dart';
 
 /// ============================================================
-/// 프로필 화면 (V2 리팩토링 - 강아지 전용)
+/// 프로필 화면 (V2 리팩토링 - 반려동물 전용)
 /// 
 /// 변경사항:
-/// - 강아지 전용 앱으로 변경 (PetType 제거)
+/// - 반려동물 전용 앱으로 변경 (PetType 제거)
 /// - 예방접종 인증 → 위치 인증으로 변경
 /// - 인증/배지 관리 (본인인증, 위치인증, 동물등록)
 /// - 건강수첩 접근
@@ -344,7 +344,7 @@ class ProfileScreen extends ConsumerWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => PetEditScreen(petId: 'pet_$index'),
+                    builder: (context) => PetEditScreen(petId: pet.id),
                   ),
                 );
               },
@@ -375,7 +375,7 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
             Text(
-              '${pet.breedName} · $age',
+              '${pet.breed ?? '품종 미상'} · $age',
               style: const TextStyle(
                 fontSize: 10,
                 color: AppColors.textSecondary,
@@ -727,10 +727,9 @@ class ProfileScreen extends ConsumerWidget {
               ),
               onTap: () async {
                 Navigator.pop(context);
+                
+                // 로그아웃 실행 - 라우터의 refreshListenable이 자동으로 로그인 화면으로 리다이렉트
                 await ref.read(authNotifierProvider.notifier).signOut();
-                if (context.mounted) {
-                  context.go('/login');
-                }
               },
             ),
             
@@ -741,7 +740,9 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  String _calculateAge(DateTime birthDate) {
+  String _calculateAge(DateTime? birthDate) {
+    if (birthDate == null) return '나이 미상';
+    
     final now = DateTime.now();
     final age = now.year - birthDate.year;
     final months = now.month - birthDate.month;

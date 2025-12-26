@@ -34,46 +34,83 @@ import 'features/dev/dev_tools_screen.dart';  // 개발자 도구 화면
 // ============================================================
 // 📍 라우터 Provider (화면 이동 + 로그인 체크)
 // ============================================================
-// 🔑 app_demo.dart와의 차이점:
-// - authStateProvider를 사용해서 로그인 상태를 확인합니다
-// - 로그인 안 되어 있으면 자동으로 로그인 화면으로 이동시킵니다
-// - 로그인 화면이 추가되어 있습니다
-final routerProvider = Provider<GoRouter>((ref) {
-  // authStateProvider: 현재 로그인 상태를 관리하는 Provider
-  // 로그인되면 사용자 정보가 있고, 로그아웃되면 null입니다
+// 최적화: refreshListenable을 사용하여 라우터 재생성 방지
+// authStateProvider를 watch하면 상태 변경 시 라우터가 재생성되어 깜빡임 발생
+
+/// 인증 상태 변경을 감지하는 Listenable
+class AuthStateNotifier extends ChangeNotifier {
+  AuthStateNotifier(this._ref) {
+    _ref.listen(authStateProvider, (_, __) {
+      notifyListeners();
+    });
+  }
+  final Ref _ref;
+}
+
+final _authStateListenableProvider = Provider<AuthStateNotifier>((ref) {
+  return AuthStateNotifier(ref);
+});
+
+/// 인증 초기화 완료 여부를 추적하는 Provider
+/// 웹에서 Firebase Auth가 세션을 복원할 때까지 대기
+final _authInitializedProvider = FutureProvider<bool>((ref) async {
+  // authStateProvider의 첫 번째 값을 기다림 (로딩 상태 아님)
   final authState = ref.watch(authStateProvider);
+  // 로딩이 아니면 초기화 완료
+  return !authState.isLoading;
+});
+
+final routerProvider = Provider<GoRouter>((ref) {
+  final authStateListenable = ref.watch(_authStateListenableProvider);
 
   return GoRouter(
-    // 앱이 처음 시작될 때 보여줄 화면 경로
-    initialLocation: '/',  // '/' = 홈 화면 (로그인 안 되어 있으면 자동으로 로그인 화면으로 이동)
+    initialLocation: '/splash',
+    refreshListenable: authStateListenable,
     
     // ============================================================
     // redirect: 화면 이동 전에 실행되는 함수 (로그인 체크)
     // ============================================================
-    // 이 함수는 사용자가 화면을 이동할 때마다 실행됩니다
-    // 로그인이 필요한 화면인데 로그인 안 되어 있으면 로그인 화면으로 보냅니다
     redirect: (context, state) {
-      // 로그인 상태 확인
-      final isLoggedIn = authState.valueOrNull != null;  // 사용자 정보가 있으면 로그인됨
-      final path = state.uri.path;  // 현재 경로 (해시 없이)
-      final isLoginRoute = path == '/login';  // 현재 로그인 화면인지 확인
-      final isDevToolsRoute = path == '/dev-tools';  // 개발자 도구 화면인지 확인
+      final authState = ref.read(authStateProvider);
+      final isLoading = authState.isLoading;
+      final isLoggedIn = authState.valueOrNull != null;
+      final path = state.uri.path;
+      final isSplashRoute = path == '/splash';
+      final isLoginRoute = path == '/login';
+      final isDevToolsRoute = path == '/dev-tools';
 
-      // 케이스 1: 로그인 안 된 상태에서 로그인 페이지나 개발자 도구가 아니면 로그인으로 리다이렉트
+      // 로딩 중이면 스플래시 화면으로 (깜빡임 방지)
+      if (isLoading) {
+        return isSplashRoute ? null : '/splash';
+      }
+
+      // 로딩 완료 후 스플래시 화면에 있으면 적절한 화면으로 이동
+      if (isSplashRoute) {
+        return isLoggedIn ? '/' : '/login';
+      }
+
+      // 케이스 1: 로그인 안 된 상태에서 보호된 페이지 접근 시 로그인으로 리다이렉트
       if (!isLoggedIn && !isLoginRoute && !isDevToolsRoute) {
-        return '/login';  // 로그인 화면으로 이동
+        return '/login';
       }
 
       // 케이스 2: 로그인 된 상태에서 로그인 페이지면 홈으로 리다이렉트
       if (isLoggedIn && isLoginRoute) {
-        return '/';  // 홈 화면으로 이동
+        return '/';
       }
 
-      // 그 외의 경우: 리다이렉트 하지 않음 (원래 가려던 화면으로 이동)
       return null;
     },
     // 앱의 모든 화면 경로를 정의합니다
     routes: [
+      // ========================================
+      // 스플래시 화면 (인증 초기화 대기)
+      // ========================================
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+      
       // ========================================
       // 로그인 화면 (바텀 네비게이션 없음)
       // ========================================
@@ -437,5 +474,62 @@ class MingrrBottomNavBar extends StatelessWidget {
       default:  // 그 외의 경우 (산책, 건강수첩, 소모임 등)
         return 0;  // 기본값으로 홈(0) 반환
     }
+  }
+}
+
+// ============================================================
+// 🚀 SplashScreen - 인증 초기화 대기 화면
+// ============================================================
+// 웹에서 Firebase Auth가 세션을 복원할 때까지 보여주는 화면
+// 깜빡거림 방지를 위해 로딩 중에는 이 화면을 표시
+class SplashScreen extends StatelessWidget {
+  const SplashScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // 앱 로고 또는 아이콘
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.pets,
+                size: 50,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // 앱 이름
+            Text(
+              AppStrings.appName,
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(height: 32),
+            // 로딩 인디케이터
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
