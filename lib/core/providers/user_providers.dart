@@ -11,18 +11,20 @@ final currentUserProvider = StreamProvider<UserModel?>((ref) {
   return firestoreService.watchUser(userId);
 });
 
-final userDogsProvider = StreamProvider<List<DogModel>>((ref) {
+final userPetsProvider = StreamProvider<List<PetModel>>((ref) {
   final userId = ref.watch(currentUserIdProvider);
   if (userId == null) return Stream.value([]);
   
   final firestoreService = ref.watch(firestoreServiceProvider);
-  return firestoreService.watchUserDogs(userId);
+  return firestoreService.watchUserPets(userId);
 });
 
-final primaryDogProvider = Provider<DogModel?>((ref) {
-  final dogs = ref.watch(userDogsProvider);
-  return dogs.value?.firstWhere(
-    (dog) => dog.isPrimary,
-    orElse: () => dogs.value!.isNotEmpty ? dogs.value!.first : null as DogModel,
+final primaryPetProvider = Provider<PetModel?>((ref) {
+  final pets = ref.watch(userPetsProvider);
+  final petList = pets.valueOrNull;
+  if (petList == null || petList.isEmpty) return null;
+  return petList.firstWhere(
+    (pet) => pet.isPrimary,
+    orElse: () => petList.first,
   );
 });

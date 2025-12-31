@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'firebase_service.dart';
 
@@ -40,6 +41,30 @@ class StorageService {
       }
       
       return urls;
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  /// 웹용 - bytes로 강아지 이미지 업로드
+  Future<String> uploadDogImageBytes(String dogId, String fileName, Uint8List bytes) async {
+    try {
+      final ref = _firebase.dogImageRef(dogId, fileName);
+      final uploadTask = ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+      final snapshot = await uploadTask;
+      return await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  /// 웹용 - bytes로 사용자 프로필 이미지 업로드
+  Future<String> uploadUserProfileImageBytes(String userId, Uint8List bytes) async {
+    try {
+      final ref = _firebase.userProfileImageRef(userId);
+      final uploadTask = ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
+      final snapshot = await uploadTask;
+      return await snapshot.ref.getDownloadURL();
     } catch (e) {
       rethrow;
     }

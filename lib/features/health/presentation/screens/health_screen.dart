@@ -63,7 +63,7 @@ class HealthScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.settings_outlined),
             onPressed: () {
-              // TODO: 건강수첩 설정
+              // TODO: 건강수첩 설정 화면 구현 예정
             },
           ),
         ],

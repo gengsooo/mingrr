@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/pet_constants.dart';
+import '../../../../core/services/firebase_service.dart';
 import '../../../../core/widgets/verification_badge.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/warmth_score.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
+import '../../../../core/widgets/trait_badge.dart';
+import '../../../../models/pet_model.dart';
+import '../../../../models/user_model.dart';
+import '../../../pet/presentation/providers/pet_provider.dart';
 
 /// ============================================================
 /// 강아지 상세 화면
@@ -34,19 +40,40 @@ class DogDetailScreen extends ConsumerStatefulWidget {
 class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
   bool isLiked = false;
   int likeCount = 42;
+  final FirebaseService _firebase = FirebaseService();
 
   @override
   Widget build(BuildContext context) {
-    final ref = this.ref;
-    // TODO: 실제 데이터 연동 시 dogId로 데이터 조회
-    final dogData = _getDemoData();
+    // Firebase에서 실제 데이터 조회
+    final petAsync = ref.watch(petByIdProvider(widget.dogId));
 
+    return petAsync.when(
+      data: (pet) {
+        if (pet == null) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('반려동물 정보')),
+            body: const Center(child: Text('반려동물 정보를 찾을 수 없습니다')),
+          );
+        }
+        return _buildContent(context, pet);
+      },
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (_, __) => Scaffold(
+        appBar: AppBar(title: const Text('반려동물 정보')),
+        body: const Center(child: Text('데이터를 불러올 수 없습니다')),
+      ),
+    );
+  }
+
+  Widget _buildContent(BuildContext context, PetModel pet) {
     return Scaffold(
       backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
           // 이미지 헤더
-          _buildImageHeader(context, dogData),
+          _buildImageHeader(context, pet),
           
           // 본문 컨텐츠
           SliverToBoxAdapter(
@@ -56,23 +83,23 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 기본 정보
-                  _buildBasicInfo(dogData),
+                  _buildBasicInfo(pet),
                   const SizedBox(height: AppSizes.gapXL),
                   
                   // 특성 태그
-                  _buildTraits(dogData),
+                  _buildTraits(pet),
                   const SizedBox(height: AppSizes.gapXL),
                   
                   // 소개글
-                  _buildIntroduction(dogData),
+                  _buildIntroduction(pet),
                   const SizedBox(height: AppSizes.gapXL),
                   
                   // 보호자 정보
-                  _buildOwnerInfo(context, dogData),
+                  _buildOwnerInfo(context, pet),
                   const SizedBox(height: AppSizes.gapXL),
                   
                   // 인증 배지
-                  _buildVerificationBadges(dogData),
+                  _buildVerificationBadges(pet),
                   
                   // 하단 여백 (버튼 공간)
                   const SizedBox(height: 100),
@@ -87,38 +114,40 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
     );
   }
 
-  /// 데모 데이터
-  Map<String, dynamic> _getDemoData() {
-    return {
-      'name': '뽀삐',
-      'breed': '골든 리트리버',
-      'age': 3,
-      'gender': 'male',
-      'weight': 28.5,
-      'size': '대형',
-      'distance': 1.2,
-      'traits': ['활발함', '친화적', '사람 좋아함', '강아지 좋아함', '산책 좋아함'],
-      'introduction': '안녕하세요! 저희 뽀삐는 3살 골든 리트리버 남아예요. 사람을 정말 좋아하고 다른 강아지들과도 잘 어울려요. 산책을 좋아해서 매일 2번씩 나가고 있어요. 좋은 친구 만나고 싶어요! 🐶',
-      'owner': {
-        'nickname': '뽀삐맘',
-        'gender': '여성',
-        'age': 28,
-        'location': '서울 강남구',
-        'bio': '반려동물과 함께하는 행복한 일상을 보내고 있습니다. 산책 친구를 찾고 있어요! 🐾',
-      },
-      'isIdentityVerified': true,
-      'isPetVerified': true,
-      'isLocationVerified': true,
-      'hasPedigree': true,
-      'matchScore': 95,
-    };
+  /// 대표사진 URL 가져오기
+  String? _getPrimaryPhotoUrl(PetModel pet) {
+    if (pet.photoUrls.isNotEmpty && pet.primaryPhotoIndex < pet.photoUrls.length) {
+      return pet.photoUrls[pet.primaryPhotoIndex];
+    }
+    return pet.profileImageUrl;
+  }
+
+  /// 나이 계산
+  int _calculateAge(DateTime? birthDate) {
+    if (birthDate == null) return 0;
+    final now = DateTime.now();
+    int age = now.year - birthDate.year;
+    if (now.month < birthDate.month || 
+        (now.month == birthDate.month && now.day < birthDate.day)) {
+      age--;
+    }
+    return age > 0 ? age : 0;
+  }
+
+  /// 크기 문자열
+  String _getSizeString(PetSize? size) {
+    switch (size) {
+      case PetSize.small: return '소형';
+      case PetSize.medium: return '중형';
+      case PetSize.large: return '대형';
+      default: return '미상';
+    }
   }
 
   /// 이미지 헤더 (사진 슬라이더)
-  Widget _buildImageHeader(BuildContext context, Map<String, dynamic> data) {
-    final isMale = data['gender'] == 'male';
-    final photos = data['photos'] as List<String>? ?? ['🐶', '🐕', '🦮'];
-    final likeCount = data['likeCount'] as int? ?? 42;
+  Widget _buildImageHeader(BuildContext context, PetModel pet) {
+    final isMale = pet.gender == PetGender.male;
+    final photos = pet.photoUrls.isNotEmpty ? pet.photoUrls : <String>[];
     
     return SliverAppBar(
       expandedHeight: 350,
@@ -152,72 +181,45 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
         background: _DogPhotoSlider(
           photos: photos,
           isMale: isMale,
-          distance: data['distance'] as double,
-          matchScore: !widget.isBreeding ? data['matchScore'] as int? : null,
+          distance: 1.2, // TODO: 실제 거리 계산
+          matchScore: !widget.isBreeding ? 85 : null, // TODO: 실제 궁합 점수
           likeCount: likeCount,
           isBreeding: widget.isBreeding,
+          profileImageUrl: _getPrimaryPhotoUrl(pet),
         ),
       ),
     );
   }
 
   /// 기본 정보
-  Widget _buildBasicInfo(Map<String, dynamic> data) {
+  Widget _buildBasicInfo(PetModel pet) {
+    final age = _calculateAge(pet.birthDate);
+    final sizeStr = _getSizeString(pet.size);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          data['name'],
-          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+          pet.name,
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         Text(
-          '${data['breed']} · ${data['age']}살 · ${data['weight']}kg (${data['size']})',
+          '${pet.breed ?? '품종 미상'} · ${age}살 · ${pet.weight ?? 0}kg ($sizeStr)',
           style: const TextStyle(fontSize: 15, color: AppColors.textSecondary),
         ),
       ],
     );
   }
 
-  /// 특성 태그
-  Widget _buildTraits(Map<String, dynamic> data) {
-    final traits = data['traits'] as List<String>;
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '성격 & 특성',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: traits.map((trait) {
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                trait,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
+  /// 특성 태그 (분홍색 계통 통일 디자인)
+  Widget _buildTraits(PetModel pet) {
+    final traits = pet.traits.map((t) => t.label).toList();
+    return TraitSection(traits: traits);
   }
 
   /// 소개글
-  Widget _buildIntroduction(Map<String, dynamic> data) {
+  Widget _buildIntroduction(PetModel pet) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -233,7 +235,7 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
-            data['introduction'],
+            pet.bio ?? '소개글이 없습니다.',
             style: const TextStyle(fontSize: 14, height: 1.6, color: AppColors.textPrimary),
           ),
         ),
@@ -241,138 +243,187 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
     );
   }
 
+  /// Firebase에서 사용자 정보 조회
+  Future<UserModel?> _getUserById(String userId) async {
+    try {
+      final doc = await _firebase.usersCollection.doc(userId).get();
+      if (!doc.exists || doc.data() == null) return null;
+      return UserModel.fromFirestore(doc.data()!, id: doc.id);
+    } catch (e) {
+      return null;
+    }
+  }
+
   /// 보호자 정보
-  Widget _buildOwnerInfo(BuildContext context, Map<String, dynamic> data) {
-    final owner = data['owner'] as Map<String, dynamic>;
-    final kkosunnaeScore = (owner['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0;
-    final gender = owner['gender'] as String? ?? '여성';
-    final age = owner['age'] as int? ?? 30;
-    
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '보호자 정보',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 12),
-        GestureDetector(
-          onTap: () => _showGuardianProfile(context, owner),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(12),
+  Widget _buildOwnerInfo(BuildContext context, PetModel pet) {
+    return FutureBuilder<UserModel?>(
+      future: _getUserById(pet.ownerId),
+      builder: (context, snapshot) {
+        final owner = snapshot.data;
+        final nickname = owner?.nickname ?? '보호자';
+        final genderEnum = owner?.gender;
+        final gender = genderEnum == UserGender.male ? '남성' : '여성';
+        final age = _calculateUserAge(owner?.birthDate);
+        final kkosunnaeScore = owner?.kkosunnaeScore ?? 50.0;
+        
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '보호자 정보',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
-            child: Row(
-              children: [
-                // 아이콘 (강아지 앱이므로 사진 대신 아이콘)
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.person, size: 24, color: AppColors.primary),
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () => _showGuardianProfile(context, pet, owner),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 12),
-                // 닉네임 + 성별/나이 + 꼬순내지수
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            owner['nickname'],
-                            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: gender == '남성' 
-                                  ? Colors.blue.withOpacity(0.1) 
-                                  : Colors.pink.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              '$gender · ${age}세',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: gender == '남성' ? Colors.blue : Colors.pink,
+                child: Row(
+                  children: [
+                    // 아이콘
+                    Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: owner?.profileImageUrl != null
+                          ? ClipOval(
+                              child: Image.network(
+                                owner!.profileImageUrl!,
+                                width: 50,
+                                height: 50,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                  Icons.person, size: 24, color: AppColors.primary),
                               ),
-                            ),
+                            )
+                          : const Icon(Icons.person, size: 24, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: 12),
+                    // 닉네임 + 성별/나이 + 꼬순내지수
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                nickname,
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: gender == '남성' 
+                                      ? Colors.blue.withOpacity(0.1) 
+                                      : Colors.pink.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  '$gender · ${age}세',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: gender == '남성' ? Colors.blue : Colors.pink,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
+                          const SizedBox(height: 4),
+                          KkosunnaeScoreSmall(score: kkosunnaeScore),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                      KkosunnaeScoreSmall(score: kkosunnaeScore),
-                    ],
-                  ),
+                    ),
+                    // 화살표
+                    const Icon(Icons.chevron_right, color: AppColors.textHint),
+                  ],
                 ),
-                // 화살표
-                const Icon(Icons.chevron_right, color: AppColors.textHint),
-              ],
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
+  /// 사용자 나이 계산
+  int _calculateUserAge(DateTime? birthDate) {
+    if (birthDate == null) return 30;
+    final now = DateTime.now();
+    int age = now.year - birthDate.year;
+    if (now.month < birthDate.month || 
+        (now.month == birthDate.month && now.day < birthDate.day)) {
+      age--;
+    }
+    return age > 0 ? age : 30;
+  }
+
   /// 보호자 프로필 모달 표시
-  void _showGuardianProfile(BuildContext context, Map<String, dynamic> owner) {
-    final genderStr = owner['gender'] as String? ?? '여성';
-    final gender = genderStr == '남성' ? GuardianGender.male : GuardianGender.female;
-    final age = owner['age'] as int? ?? 30;
+  void _showGuardianProfile(BuildContext context, PetModel pet, UserModel? owner) {
+    final genderEnum = owner?.gender;
+    final gender = genderEnum == UserGender.male ? GuardianGender.male : GuardianGender.female;
+    final age = _calculateUserAge(owner?.birthDate);
     
     showGuardianProfileModal(
       context,
-      guardianId: owner['id'] ?? 'demo_user',
-      guardianName: owner['nickname'] ?? '보호자',
-      kkosunnaeScore: (owner['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0,
+      guardianId: pet.ownerId,
+      guardianName: owner?.nickname ?? '보호자',
+      kkosunnaeScore: owner?.kkosunnaeScore ?? 50.0,
+      profileImageUrl: owner?.profileImageUrl,
       gender: gender,
       age: age,
-      isIdentityVerified: owner['isIdentityVerified'] ?? false,
-      isPetVerified: owner['isPetVerified'] ?? false,
-      isLocationVerified: owner['isLocationVerified'] ?? false,
+      isIdentityVerified: owner?.isIdentityVerified ?? false,
+      isPetVerified: owner?.isVerified ?? false,
+      isLocationVerified: owner?.isLocationVerified ?? false,
       dogs: [
         GuardianDogInfo(
-          id: 'dog_1',
-          name: '멍멍이',
-          breed: '골든 리트리버',
-          ageString: '3살',
-          likeCount: 42,
+          id: pet.id,
+          name: pet.name,
+          breed: pet.breed ?? '품종 미상',
+          ageString: '${_calculateAge(pet.birthDate)}살',
+          likeCount: likeCount,
+          profileImageUrl: _getPrimaryPhotoUrl(pet),
         ),
       ],
       activityInfo: const GuardianActivityInfo(
-        walkCount: 128,
-        datingCount: 15,
-        marketCount: 8,
-        communityCount: 23,
+        walkCount: 0,
+        datingCount: 0,
+        marketCount: 0,
+        communityCount: 0,
       ),
     );
   }
 
   /// 인증 배지
-  Widget _buildVerificationBadges(Map<String, dynamic> data) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '인증 현황',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 12),
-        VerificationBadgeRow(
-          isIdentityVerified: data['isIdentityVerified'] == true,
-          isPetVerified: data['isPetVerified'] == true,
-          isLocationVerified: data['isLocationVerified'] == true,
-          useMediumSize: true,
-        ),
-      ],
+  Widget _buildVerificationBadges(PetModel pet) {
+    return FutureBuilder<UserModel?>(
+      future: _getUserById(pet.ownerId),
+      builder: (context, snapshot) {
+        final owner = snapshot.data;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '인증 현황',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+            VerificationBadgeRow(
+              isIdentityVerified: owner?.isIdentityVerified ?? false,
+              isPetVerified: owner?.isVerified ?? false,
+              isLocationVerified: owner?.isLocationVerified ?? false,
+              useMediumSize: true,
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -420,25 +471,15 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
                 borderRadius: BorderRadius.circular(16),
                 side: BorderSide(
                   color: AppColors.dating,
-                  width: 2,
+                  width: isLiked ? 0 : 1,
                 ),
               ),
             ),
             child: Row(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  isLiked ? Icons.favorite : Icons.favorite_border,
-                  size: 24,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '$likeCount',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Icon(isLiked ? Icons.favorite : Icons.favorite_border),
+                const SizedBox(width: 4),
+                Text('$likeCount'),
               ],
             ),
           ),
@@ -570,6 +611,7 @@ class _DogPhotoSlider extends StatefulWidget {
   final int? matchScore;
   final int likeCount;
   final bool isBreeding;
+  final String? profileImageUrl;
 
   const _DogPhotoSlider({
     required this.photos,
@@ -578,6 +620,7 @@ class _DogPhotoSlider extends StatefulWidget {
     this.matchScore,
     required this.likeCount,
     required this.isBreeding,
+    this.profileImageUrl,
   });
 
   @override
@@ -590,6 +633,11 @@ class _DogPhotoSliderState extends State<_DogPhotoSlider> {
 
   @override
   Widget build(BuildContext context) {
+    // 사진이 없으면 기본 이미지 표시
+    if (widget.photos.isEmpty) {
+      return _buildDefaultImage();
+    }
+    
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -598,50 +646,15 @@ class _DogPhotoSliderState extends State<_DogPhotoSlider> {
           itemCount: widget.photos.length,
           onPageChanged: (index) => setState(() => _currentIndex = index),
           itemBuilder: (context, index) {
-            final photo = widget.photos[index];
-            // 데모용: 이모지면 그라데이션 배경, 아니면 이미지
-            if (photo.length <= 2) {
-              return Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppColors.dating.withOpacity(0.3),
-                      AppColors.dating.withOpacity(0.1),
-                    ],
-                  ),
-                ),
-                child: Center(
-                  child: Text(photo, style: const TextStyle(fontSize: 120)),
-                ),
-              );
-            }
-            return Image.network(photo, fit: BoxFit.cover);
+            return Image.network(
+              widget.photos[index],
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _buildDefaultImage(),
+            );
           },
         ),
         
-        // 하단 그라데이션
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 100,
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withOpacity(0.5),
-                ],
-              ),
-            ),
-          ),
-        ),
-        
-        // 사진 인디케이터
+        // 페이지 인디케이터
         if (widget.photos.length > 1)
           Positioned(
             bottom: 60,
@@ -649,43 +662,45 @@ class _DogPhotoSliderState extends State<_DogPhotoSlider> {
             right: 0,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(widget.photos.length, (index) {
-                return Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: _currentIndex == index ? 20 : 8,
+              children: List.generate(
+                widget.photos.length,
+                (index) => Container(
+                  width: 8,
                   height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
-                    color: _currentIndex == index 
-                        ? Colors.white 
+                    shape: BoxShape.circle,
+                    color: _currentIndex == index
+                        ? Colors.white
                         : Colors.white.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(4),
                   ),
-                );
-              }),
+                ),
+              ),
             ),
           ),
         
         // 성별 배지
         Positioned(
-          top: 100,
+          top: MediaQuery.of(context).padding.top + 60,
           left: 16,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: widget.isMale ? Colors.blue : Colors.pink,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  widget.isMale ? '♂' : '♀',
-                  style: const TextStyle(fontSize: 16, color: Colors.white),
+                Icon(
+                  widget.isMale ? Icons.male : Icons.female,
+                  size: 14,
+                  color: Colors.white,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 2),
                 Text(
                   widget.isMale ? '수컷' : '암컷',
-                  style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500),
+                  style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -694,19 +709,19 @@ class _DogPhotoSliderState extends State<_DogPhotoSlider> {
         
         // 거리 배지
         Positioned(
-          top: 100,
+          top: MediaQuery.of(context).padding.top + 60,
           right: 16,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.black.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(Icons.location_on, size: 14, color: Colors.white),
-                const SizedBox(width: 4),
+                const SizedBox(width: 2),
                 Text(
                   '${widget.distance}km',
                   style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500),
@@ -774,6 +789,31 @@ class _DogPhotoSliderState extends State<_DogPhotoSlider> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildDefaultImage() {
+    return Container(
+      color: AppColors.datingLight,
+      child: Center(
+        child: widget.profileImageUrl != null
+            ? Image.network(
+                widget.profileImageUrl!,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.pets,
+                  size: 100,
+                  color: AppColors.dating,
+                ),
+              )
+            : const Icon(
+                Icons.pets,
+                size: 100,
+                color: AppColors.dating,
+              ),
+      ),
     );
   }
 }

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
+import '../services/firebase_service.dart';
 
 /// ============================================================
 /// 꼬순내지수 (보호자 평점 시스템)
@@ -217,6 +220,8 @@ class KkosunnaeScoreRatingSheet extends StatefulWidget {
 class _KkosunnaeScoreRatingSheetState extends State<KkosunnaeScoreRatingSheet> {
   int _selectedRating = 0; // 1-5 별점
   final List<String> _selectedTags = [];
+  bool _isSubmitting = false;
+  final _firebase = FirebaseService();
 
   final List<String> _positiveTags = [
     '친절해요',
@@ -398,17 +403,56 @@ class _KkosunnaeScoreRatingSheetState extends State<KkosunnaeScoreRatingSheet> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: _selectedRating > 0
-                  ? () {
-                      // TODO: Firebase에 평가 저장
-                      Navigator.pop(context);
-                      widget.onSubmit?.call();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('평가가 완료되었습니다!'),
-                          backgroundColor: AppColors.success,
-                        ),
-                      );
+              onPressed: (_selectedRating > 0 && !_isSubmitting)
+                  ? () async {
+                      setState(() => _isSubmitting = true);
+                      try {
+                        final currentUser = FirebaseAuth.instance.currentUser;
+                        if (currentUser == null) throw Exception('로그인이 필요합니다');
+                        
+                        // 평가 저장
+                        await _firebase.ratingsCollection.add({
+                          'raterId': currentUser.uid,
+                          'targetUserId': widget.targetUserId,
+                          'rating': _selectedRating,
+                          'tags': _selectedTags,
+                          'createdAt': FieldValue.serverTimestamp(),
+                        });
+                        
+                        // 대상 사용자의 꼬순내지수 업데이트
+                        final userDoc = await _firebase.usersCollection.doc(widget.targetUserId).get();
+                        if (userDoc.exists) {
+                          final currentScore = (userDoc.data()?['kkosunnaeScore'] ?? 50.0).toDouble();
+                          final ratingCount = (userDoc.data()?['ratingCount'] ?? 0) + 1;
+                          // 새 점수 계산: 기존 점수와 새 평가의 가중 평균
+                          final ratingScore = (_selectedRating / 5) * 100; // 1-5를 0-100으로 변환
+                          final newScore = ((currentScore * (ratingCount - 1)) + ratingScore) / ratingCount;
+                          
+                          await _firebase.usersCollection.doc(widget.targetUserId).update({
+                            'kkosunnaeScore': newScore.clamp(0, 100),
+                            'ratingCount': ratingCount,
+                          });
+                        }
+                        
+                        if (mounted) {
+                          Navigator.pop(context);
+                          widget.onSubmit?.call();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('평가가 완료되었습니다!'),
+                              backgroundColor: AppColors.success,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('평가 실패: $e'), backgroundColor: AppColors.error),
+                          );
+                        }
+                      } finally {
+                        if (mounted) setState(() => _isSubmitting = false);
+                      }
                     }
                   : null,
               style: ElevatedButton.styleFrom(
@@ -485,20 +529,25 @@ class _PawClipper extends CustomClipper<Rect> {
 }
 
 /// 점수에 따른 색상 반환 (0~100%)
+/// 0~49%: 회색 (낮음)
+/// 50~79%: 초록 (보통)
+/// 80~89%: 주황 (좋음)
+/// 90~99%: 빨강 (매우 좋음)
+/// 100%: 골드 (최고)
 Color _getScoreColor(double score) {
-  if (score < 20) return Colors.blue;
-  if (score < 40) return Colors.cyan;
-  if (score < 60) return Colors.green;
-  if (score < 80) return Colors.orange;
-  return Colors.red.shade400;
+  if (score < 50) return Colors.grey;
+  if (score < 80) return Colors.green;
+  if (score < 90) return Colors.orange;
+  if (score < 100) return Colors.redAccent;
+  return const Color(0xFFFFD700); // 골드
 }
 
 /// 점수에 따른 설명 반환 (0~100%)
 String _getScoreDescription(double score) {
-  if (score < 20) return '아직 활동이 적어요';
-  if (score < 40) return '조금 더 활동해보세요';
-  if (score < 60) return '좋은 보호자예요';
-  if (score < 80) return '믿을 수 있는 보호자예요';
+  if (score < 50) return '아직 활동이 적어요';
+  if (score < 80) return '좋은 보호자예요';
+  if (score < 90) return '믿을 수 있는 보호자예요';
+  if (score < 100) return '훌륭한 보호자예요!';
   return '최고의 보호자예요! 🐾';
 }
 

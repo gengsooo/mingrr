@@ -88,7 +88,7 @@ class AuthRepository {
   /// 카카오 계정으로 로그인
   /// 네이티브 SDK 설정 후 활성화 필요
   Future<UserCredential?> signInWithKakao() async {
-    // TODO: 카카오 SDK 설정 후 구현
+    // TODO: 카카오 SDK 설정 후 구현 예정
     // 1. kakao_flutter_sdk 패키지 활성화
     // 2. 카카오 개발자 콘솔에서 앱 등록
     // 3. 네이티브 키 설정
@@ -100,7 +100,7 @@ class AuthRepository {
   /// 네이버 계정으로 로그인
   /// 네이티브 SDK 설정 후 활성화 필요
   Future<UserCredential?> signInWithNaver() async {
-    // TODO: 네이버 SDK 설정 후 구현
+    // TODO: 네이버 SDK 설정 후 구현 예정
     // 1. flutter_naver_login 패키지 활성화
     // 2. 네이버 개발자 센터에서 앱 등록
     // 3. 네이티브 키 설정
@@ -165,7 +165,7 @@ class AuthRepository {
   Future<UserModel?> getUser(String userId) async {
     final doc = await _firebase.usersCollection.doc(userId).get();
     if (!doc.exists) return null;
-    return UserModel.fromFirestore(doc);
+    return UserModel.fromFirestore(doc.data()!, id: doc.id);
   }
 
   /// 사용자 정보 업데이트

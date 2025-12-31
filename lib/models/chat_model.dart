@@ -55,9 +55,7 @@ class ChatRoomModel extends Equatable {
     this.isActive = true,
   });
 
-  factory ChatRoomModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    
+  factory ChatRoomModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
     // 참여자 정보 파싱
     final participantsData = data['participants'] as Map<String, dynamic>? ?? {};
     final participants = participantsData.map(
@@ -68,7 +66,7 @@ class ChatRoomModel extends Equatable {
     );
     
     return ChatRoomModel(
-      id: doc.id,
+      id: id ?? data['id'] ?? '',
       participantIds: List<String>.from(data['participantIds'] ?? []),
       participants: participants,
       lastMessage: data['lastMessage'],
@@ -223,10 +221,9 @@ class MessageModel extends Equatable {
     this.readAt,
   });
 
-  factory MessageModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory MessageModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
     return MessageModel(
-      id: doc.id,
+      id: id ?? data['id'] ?? '',
       chatRoomId: data['chatRoomId'] ?? '',
       senderId: data['senderId'] ?? '',
       type: MessageType.values.firstWhere(

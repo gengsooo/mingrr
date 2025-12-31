@@ -113,10 +113,9 @@ class GroupModel extends Equatable {
   /// 자리 있는지 확인
   bool get hasSpace => maxMembers == 0 || memberCount < maxMembers;
 
-  factory GroupModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory GroupModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
     return GroupModel(
-      id: doc.id,
+      id: id ?? data['id'] ?? '',
       name: data['name'] ?? '',
       description: data['description'] ?? '',
       type: GroupType.values.firstWhere(
@@ -142,6 +141,9 @@ class GroupModel extends Equatable {
           : DateTime.now(),
     );
   }
+  
+  /// 카테고리 문자열 (홈 화면용)
+  String get category => typeString;
 
   Map<String, dynamic> toFirestore() {
     return {
@@ -245,10 +247,9 @@ class ScheduleModel extends Equatable {
   /// 자리 있는지 확인
   bool get hasSpace => maxParticipants == 0 || participantCount < maxParticipants;
 
-  factory ScheduleModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory ScheduleModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
     return ScheduleModel(
-      id: doc.id,
+      id: id ?? data['id'] ?? '',
       groupId: data['groupId'] ?? '',
       title: data['title'] ?? '',
       description: data['description'],

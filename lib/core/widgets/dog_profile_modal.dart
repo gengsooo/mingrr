@@ -5,6 +5,7 @@ import 'common_widgets.dart';
 import 'warmth_score.dart';
 import 'verification_badge.dart';
 import 'guardian_profile_modal.dart';
+import 'trait_badge.dart';
 
 /// ============================================================
 /// 강아지 프로필 모달
@@ -23,6 +24,8 @@ void showDogProfileModal(
   double? weight,
   String? introduction,
   List<String> traits = const [],
+  List<String> photoUrls = const [],
+  String? profileImageUrl,
   int likeCount = 0,
   bool isIdentityVerified = false,
   bool isPetVerified = false,
@@ -42,6 +45,8 @@ void showDogProfileModal(
       weight: weight,
       introduction: introduction,
       traits: traits,
+      photoUrls: photoUrls,
+      profileImageUrl: profileImageUrl,
       likeCount: likeCount,
       isIdentityVerified: isIdentityVerified,
       isPetVerified: isPetVerified,
@@ -84,6 +89,8 @@ class DogProfileModal extends StatefulWidget {
   final double? weight;
   final String? introduction;
   final List<String> traits;
+  final List<String> photoUrls;
+  final String? profileImageUrl;
   final int likeCount;
   final bool isIdentityVerified;
   final bool isPetVerified;
@@ -100,6 +107,8 @@ class DogProfileModal extends StatefulWidget {
     this.weight,
     this.introduction,
     this.traits = const [],
+    this.photoUrls = const [],
+    this.profileImageUrl,
     this.likeCount = 0,
     this.isIdentityVerified = false,
     this.isPetVerified = false,
@@ -167,7 +176,7 @@ class _DogProfileModalState extends State<DogProfileModal> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  '강아지 프로필',
+                  '강아지 정보',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                 ),
                 IconButton(
@@ -194,9 +203,15 @@ class _DogProfileModalState extends State<DogProfileModal> {
                   _buildDogInfo(),
                   const SizedBox(height: AppSizes.gapL),
                   
-                  // 특성 태그
+                  // 사진 갤러리
+                  if (widget.photoUrls.isNotEmpty) ...[
+                    _buildPhotoGallery(),
+                    const SizedBox(height: AppSizes.gapL),
+                  ],
+                  
+                  // 성격&특성 (노란색 계통)
                   if (widget.traits.isNotEmpty) ...[
-                    _buildTraits(),
+                    TraitSection(traits: widget.traits),
                     const SizedBox(height: AppSizes.gapL),
                   ],
                   
@@ -219,6 +234,49 @@ class _DogProfileModalState extends State<DogProfileModal> {
     );
   }
 
+  /// 사진 갤러리
+  Widget _buildPhotoGallery() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '사진',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: AppSizes.gapS),
+        SizedBox(
+          height: 80,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: widget.photoUrls.length,
+            itemBuilder: (context, index) {
+              return Container(
+                width: 80,
+                height: 80,
+                margin: EdgeInsets.only(right: index < widget.photoUrls.length - 1 ? 8 : 0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.divider),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(11),
+                  child: Image.network(
+                    widget.photoUrls[index],
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: AppColors.dating.withOpacity(0.1),
+                      child: const Icon(Icons.pets, color: AppColors.dating),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
   /// 강아지 기본 정보
   Widget _buildDogInfo() {
     final isMale = widget.gender == 'male' || widget.gender == '남아';
@@ -234,11 +292,25 @@ class _DogProfileModalState extends State<DogProfileModal> {
             color: AppColors.dating.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.pets,
-            size: 40,
-            color: AppColors.dating,
-          ),
+          child: widget.profileImageUrl != null && widget.profileImageUrl!.isNotEmpty
+              ? ClipOval(
+                  child: Image.network(
+                    widget.profileImageUrl!,
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.pets,
+                      size: 40,
+                      color: AppColors.dating,
+                    ),
+                  ),
+                )
+              : const Icon(
+                  Icons.pets,
+                  size: 40,
+                  color: AppColors.dating,
+                ),
         ),
         const SizedBox(width: AppSizes.gapM),
         
@@ -306,38 +378,6 @@ class _DogProfileModalState extends State<DogProfileModal> {
               ),
             ],
           ),
-        ),
-      ],
-    );
-  }
-
-  /// 특성 태그 (회색 테마)
-  Widget _buildTraits() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '성격/특성',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: AppSizes.gapS),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: widget.traits.map((trait) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.textHint.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              trait,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          )).toList(),
         ),
       ],
     );

@@ -156,10 +156,9 @@ class ProductModel extends Equatable {
     );
   }
 
-  factory ProductModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory ProductModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
     return ProductModel(
-      id: doc.id,
+      id: id ?? data['id'] ?? '',
       sellerId: data['sellerId'] ?? '',
       title: data['title'] ?? '',
       description: data['description'] ?? '',
@@ -296,10 +295,9 @@ class ProductLikeModel extends Equatable {
     required this.createdAt,
   });
 
-  factory ProductLikeModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory ProductLikeModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
     return ProductLikeModel(
-      id: doc.id,
+      id: id ?? data['id'] ?? '',
       userId: data['userId'] ?? '',
       productId: data['productId'] ?? '',
       createdAt: data['createdAt'] != null
@@ -318,4 +316,171 @@ class ProductLikeModel extends Equatable {
 
   @override
   List<Object?> get props => [id, userId, productId, createdAt];
+}
+
+/// ============================================================
+/// 알바(펫시터/산책 등) 모델
+/// ============================================================
+
+/// 알바 타입
+enum JobType {
+  care,     // 돌봄
+  walk,     // 산책
+  bath,     // 목욕
+  training, // 훈련
+  other,    // 기타
+}
+
+/// 알바 상태
+enum JobStatus {
+  recruiting, // 모집중
+  reserved,   // 예약됨
+  completed,  // 완료
+  cancelled,  // 취소됨
+}
+
+/// 알바 모델
+class JobModel extends Equatable {
+  final String id;
+  final String userId;
+  final String title;
+  final String description;
+  final JobType type;
+  final JobStatus status;
+  final int price;
+  final String priceUnit; // '일', '회', '시간'
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final int? duration; // 시간 단위
+  final GeoPoint? location;
+  final String? address;
+  final List<String> imageUrls;
+  final int chatCount;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  const JobModel({
+    required this.id,
+    required this.userId,
+    required this.title,
+    required this.description,
+    required this.type,
+    this.status = JobStatus.recruiting,
+    required this.price,
+    required this.priceUnit,
+    this.startDate,
+    this.endDate,
+    this.duration,
+    this.location,
+    this.address,
+    this.imageUrls = const [],
+    this.chatCount = 0,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  String get typeString {
+    switch (type) {
+      case JobType.care:
+        return '돌봄';
+      case JobType.walk:
+        return '산책';
+      case JobType.bath:
+        return '목욕';
+      case JobType.training:
+        return '훈련';
+      case JobType.other:
+        return '기타';
+    }
+  }
+
+  String get priceString => '$price원/$priceUnit';
+
+  String get periodString {
+    if (startDate != null && endDate != null) {
+      return '${startDate!.month}/${startDate!.day} ~ ${endDate!.month}/${endDate!.day}';
+    }
+    if (duration != null) {
+      return '$duration시간';
+    }
+    return '';
+  }
+
+  factory JobModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
+    return JobModel(
+      id: id ?? data['id'] ?? '',
+      userId: data['userId'] ?? '',
+      title: data['title'] ?? '',
+      description: data['description'] ?? '',
+      type: JobType.values.firstWhere(
+        (e) => e.name == data['type'],
+        orElse: () => JobType.other,
+      ),
+      status: JobStatus.values.firstWhere(
+        (e) => e.name == data['status'],
+        orElse: () => JobStatus.recruiting,
+      ),
+      price: data['price'] ?? 0,
+      priceUnit: data['priceUnit'] ?? '회',
+      startDate: data['startDate'] != null
+          ? (data['startDate'] as Timestamp).toDate()
+          : null,
+      endDate: data['endDate'] != null
+          ? (data['endDate'] as Timestamp).toDate()
+          : null,
+      duration: data['duration'],
+      location: data['location'],
+      address: data['address'],
+      imageUrls: List<String>.from(data['imageUrls'] ?? []),
+      chatCount: data['chatCount'] ?? 0,
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
+      updatedAt: data['updatedAt'] != null
+          ? (data['updatedAt'] as Timestamp).toDate()
+          : DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'userId': userId,
+      'title': title,
+      'description': description,
+      'type': type.name,
+      'status': status.name,
+      'price': price,
+      'priceUnit': priceUnit,
+      'startDate': startDate != null ? Timestamp.fromDate(startDate!) : null,
+      'endDate': endDate != null ? Timestamp.fromDate(endDate!) : null,
+      'duration': duration,
+      'location': location,
+      'address': address,
+      'imageUrls': imageUrls,
+      'chatCount': chatCount,
+      'createdAt': Timestamp.fromDate(createdAt),
+      'updatedAt': Timestamp.fromDate(updatedAt),
+    };
+  }
+
+  @override
+  List<Object?> get props => [
+        id,
+        userId,
+        title,
+        description,
+        type,
+        status,
+        price,
+        priceUnit,
+        startDate,
+        endDate,
+        duration,
+        location,
+        address,
+        imageUrls,
+        chatCount,
+        createdAt,
+        updatedAt,
+      ];
 }

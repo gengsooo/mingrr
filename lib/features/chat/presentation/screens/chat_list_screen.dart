@@ -11,6 +11,9 @@ import '../../../../core/widgets/dog_profile_modal.dart';
 import '../../../../core/widgets/community_profile_modal.dart';
 import '../../../../core/widgets/top_navigation.dart';
 import '../../../../core/widgets/chat_options_modal.dart';
+import '../../../../models/chat_model.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../providers/chat_provider.dart';
 
 /// ============================================================
 /// 채팅 목록 화면 (V4 - 강아지 전용 + 교배 배지)
@@ -104,20 +107,208 @@ class ChatListScreen extends ConsumerWidget {
     }
   }
 
-  /// 채팅 목록
+  /// 채팅 목록 (Firebase 연동)
   Widget _buildChatList(BuildContext context, ChatType type) {
-    final chats = _getDemoChats(type);
+    return Consumer(
+      builder: (context, ref, child) {
+        final chatRoomsAsync = ref.watch(userChatRoomsProvider);
+        final currentUserId = ref.watch(authStateProvider).valueOrNull?.uid;
+        
+        return chatRoomsAsync.when(
+          data: (allChatRooms) {
+            // 타입별 필터링
+            final filteredRooms = allChatRooms.where((room) {
+              if (type == ChatType.dating) {
+                return room.type == 'dating' || room.type == 'breeding';
+              }
+              return room.type == type.name;
+            }).toList();
+            
+            if (filteredRooms.isEmpty) {
+              return _buildEmptyState(type);
+            }
+            
+            return ListView.builder(
+              padding: const EdgeInsets.all(AppSizes.paddingM),
+              itemCount: filteredRooms.length,
+              itemBuilder: (context, index) {
+                return _buildChatRoomItem(context, filteredRooms[index], type, currentUserId ?? '');
+              },
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) => _buildEmptyState(type),
+        );
+      },
+    );
+  }
+  
+  /// Firebase ChatRoomModel을 사용한 채팅 아이템
+  Widget _buildChatRoomItem(BuildContext context, ChatRoomModel room, ChatType type, String currentUserId) {
+    final otherParticipant = room.getOtherParticipant(currentUserId);
+    final unreadCount = room.unreadCounts[currentUserId] ?? 0;
+    final hasUnread = unreadCount > 0;
+    final isGroup = type == ChatType.community;
+    final isBreeding = room.type == 'breeding';
     
-    if (chats.isEmpty) {
-      return _buildEmptyState(type);
+    // 시간 포맷팅
+    String timeString = '';
+    if (room.lastMessageAt != null) {
+      final now = DateTime.now();
+      final diff = now.difference(room.lastMessageAt!);
+      if (diff.inMinutes < 1) {
+        timeString = '방금';
+      } else if (diff.inHours < 1) {
+        timeString = '${diff.inMinutes}분 전';
+      } else if (diff.inDays < 1) {
+        timeString = '${diff.inHours}시간 전';
+      } else {
+        timeString = '${diff.inDays}일 전';
+      }
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppSizes.paddingM),
-      itemCount: chats.length,
-      itemBuilder: (context, index) {
-        return _buildChatItem(context, chats[index], type);
+    return MingrrCard(
+      margin: const EdgeInsets.only(bottom: AppSizes.gapS),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatRoomScreen(
+              chatId: room.id,
+              chatName: otherParticipant?.petName ?? otherParticipant?.nickname ?? '알 수 없음',
+              chatType: type,
+              isBreeding: isBreeding,
+            ),
+          ),
+        );
       },
+      child: Row(
+        children: [
+          // 프로필 이미지
+          Stack(
+            children: [
+              MingrrAvatar(
+                size: 55,
+                imageUrl: otherParticipant?.petImageUrl ?? otherParticipant?.profileImageUrl,
+                placeholderIcon: isGroup ? Icons.groups : Icons.pets,
+              ),
+              // 채팅 타입 배지
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: _getTabColor(type),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: Icon(
+                    _getChatTypeIcon(type),
+                    size: 10,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: AppSizes.gapM),
+          
+          // 채팅 정보
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              otherParticipant?.petName ?? otherParticipant?.nickname ?? '알 수 없음',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          // 교배 배지
+                          if (isBreeding) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.breeding,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                '교배',
+                                style: TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    Text(
+                      timeString,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: hasUnread ? AppColors.chat : AppColors.textHint,
+                      ),
+                    ),
+                  ],
+                ),
+                // 부가 정보
+                if (otherParticipant?.nickname != null && otherParticipant?.petName != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    otherParticipant!.nickname,
+                    style: const TextStyle(fontSize: 11, color: AppColors.textHint),
+                  ),
+                ],
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        room.lastMessage ?? '',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: hasUnread ? AppColors.textPrimary : AppColors.textSecondary,
+                          fontWeight: hasUnread ? FontWeight.w500 : FontWeight.w400,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (hasUnread)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _getTabColor(type),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$unreadCount',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

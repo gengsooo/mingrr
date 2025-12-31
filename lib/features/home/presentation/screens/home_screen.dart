@@ -7,8 +7,10 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../models/pet_model.dart';
+import '../../../../models/community_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../community/presentation/providers/community_provider.dart';
 
 /// ============================================================
 /// 홈 화면 (V3 리팩토링 - 반려동물 전용)
@@ -136,7 +138,7 @@ class HomeScreen extends ConsumerWidget {
         IconButton(
           icon: const Icon(Icons.notifications_outlined),
           onPressed: () {
-            // TODO: 알림 화면으로 이동
+            // TODO: 알림 화면으로 이동 구현 예정
           },
         ),
         // 프로필 버튼
@@ -707,7 +709,7 @@ class HomeScreen extends ConsumerWidget {
           
           return GestureDetector(
             onTap: () {
-              // TODO: 상세 프로필로 이동
+              // TODO: 반려동물 상세 프로필로 이동 구현 예정
             },
             child: Container(
               width: 140,
@@ -720,7 +722,7 @@ class HomeScreen extends ConsumerWidget {
                   children: [
                     Stack(
                       children: [
-                        const MingrrAvatar(size: 60),
+                        _buildPetProfileImage(pet, 60),
                         Positioned(
                           bottom: 0,
                           right: 0,
@@ -772,6 +774,45 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  /// 반려동물 프로필 이미지 (대표사진 우선)
+  Widget _buildPetProfileImage(PetModel pet, double size) {
+    // 대표사진 URL 가져오기 (photoUrls에서 primaryPhotoIndex 사용)
+    String? imageUrl;
+    if (pet.photoUrls.isNotEmpty && pet.primaryPhotoIndex < pet.photoUrls.length) {
+      imageUrl = pet.photoUrls[pet.primaryPhotoIndex];
+    } else if (pet.profileImageUrl != null && pet.profileImageUrl!.isNotEmpty) {
+      imageUrl = pet.profileImageUrl;
+    }
+    
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.15),
+        shape: BoxShape.circle,
+      ),
+      child: imageUrl != null
+          ? ClipOval(
+              child: Image.network(
+                imageUrl,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.pets,
+                  size: size * 0.5,
+                  color: AppColors.primary,
+                ),
+              ),
+            )
+          : Icon(
+              Icons.pets,
+              size: size * 0.5,
+              color: AppColors.primary,
+            ),
+    );
+  }
+
   Color _getScoreColor(int score) {
     if (score >= 90) return AppColors.success;
     if (score >= 75) return AppColors.dating;
@@ -794,86 +835,121 @@ class HomeScreen extends ConsumerWidget {
     return '${age}살';
   }
 
-  /// 인기 소모임 섹션
+  /// 인기 소모임 섹션 (Firebase 연동)
   Widget _buildPopularGroupsSection(BuildContext context) {
-    final groups = [
-      {'name': '한강 산책 모임', 'members': 28, 'category': '산책', 'district': '영등포구 여의동'},
-      {'name': '강남 댕댕이 모임', 'members': 45, 'category': '친목', 'district': '강남구 역삼동'},
-      {'name': '수제 간식 나눔', 'members': 32, 'category': '나눔', 'district': '마포구 상암동'},
-    ];
-
-    return Column(
-      children: groups.map((group) {
-        return MingrrCard(
-          margin: const EdgeInsets.only(bottom: AppSizes.gapM),
-          onTap: () {
-            // TODO: 소모임 상세로 이동
-          },
-          child: Row(
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: AppColors.community.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusM),
+    return Consumer(
+      builder: (context, ref, child) {
+        final groupsAsync = ref.watch(popularGroupsProvider);
+        
+        return groupsAsync.when(
+          data: (groups) {
+            if (groups.isEmpty) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(AppSizes.paddingL),
+                  child: Text(
+                    '아직 등록된 소모임이 없습니다',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
                 ),
-                child: const Icon(Icons.groups, color: AppColors.community, size: 26),
-              ),
-              const SizedBox(width: AppSizes.gapM),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              );
+            }
+            return Column(
+              children: groups.map((group) => _buildGroupCard(context, group)).toList(),
+            );
+          },
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(AppSizes.paddingL),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          error: (_, __) => const Center(
+            child: Text('데이터를 불러올 수 없습니다'),
+          ),
+        );
+      },
+    );
+  }
+  
+  /// Firebase GroupModel을 사용한 소모임 카드
+  Widget _buildGroupCard(BuildContext context, GroupModel group) {
+    return MingrrCard(
+      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
+      onTap: () {
+        // TODO: 소모임 상세 화면으로 이동 구현 예정
+      },
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: AppColors.community.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(AppSizes.radiusM),
+              image: group.imageUrl != null
+                  ? DecorationImage(
+                      image: NetworkImage(group.imageUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: group.imageUrl == null
+                ? const Icon(Icons.groups, color: AppColors.community, size: 26)
+                : null,
+          ),
+          const SizedBox(width: AppSizes.gapM),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.community.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            group['category'] as String,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: AppColors.community,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.community.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        group.category,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: AppColors.community,
+                          fontWeight: FontWeight.w600,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      group['name'] as String,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                    ),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on, size: 12, color: AppColors.textHint),
-                        const SizedBox(width: 2),
-                        Text(
-                          group['district'] as String,
-                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.people, size: 12, color: AppColors.textHint),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${group['members']}명',
-                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-              const Icon(Icons.chevron_right, color: AppColors.textHint),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  group.name,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 12, color: AppColors.textHint),
+                    const SizedBox(width: 2),
+                    Text(
+                      group.address ?? '위치 미상',
+                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.people, size: 12, color: AppColors.textHint),
+                    const SizedBox(width: 2),
+                    Text(
+                      '${group.memberCount}명',
+                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        );
-      }).toList(),
+          const Icon(Icons.chevron_right, color: AppColors.textHint),
+        ],
+      ),
     );
   }
 }

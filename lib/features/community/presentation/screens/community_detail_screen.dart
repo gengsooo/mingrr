@@ -123,7 +123,7 @@ class CommunityDetailScreen extends StatelessWidget {
             child: const Icon(Icons.share, color: Colors.white, size: 20),
           ),
           onPressed: () {
-            // TODO: 공유 기능
+            // TODO: 소모임 공유 기능 구현 예정
           },
         ),
         IconButton(

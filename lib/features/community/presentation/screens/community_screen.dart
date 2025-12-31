@@ -162,7 +162,7 @@ class CommunityScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // TODO: 소모임 검색
+              // TODO: 소모임 검색 화면 구현 예정
             },
           ),
         ],

@@ -1,9 +1,16 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/image_picker_sheet.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// ============================================================
 /// 보호자 프로필 수정 화면
@@ -32,24 +39,38 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   DateTime? _birthDate;
   DateTime? _lastNicknameChangeDate;
   String _originalNickname = '';
+  bool _isLoading = false;
+  bool _isDataLoaded = false;
+  
+  // 프로필 이미지 관련
+  final StorageService _storageService = StorageService();
+  XFile? _selectedProfileImage;
+  String? _profileImageUrl;
+  DefaultAvatar? _selectedDefaultAvatar;
   
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUserData();
+    });
   }
   
-  void _loadUserData() {
-    // TODO: Firebase에서 데이터 로드
-    // 데모용 데이터
-    _nicknameController.text = '멍멍이아빠';
-    _originalNickname = '멍멍이아빠';
-    _bioController.text = '반려동물과 함께하는 행복한 일상을 보내고 있습니다.';
-    _addressController.text = '서울시 강남구';
-    _selectedGender = UserGender.male;
-    _birthDate = DateTime(1990, 5, 15);
-    // 데모: 마지막 닉네임 변경일 (실제로는 Firebase에서 로드)
-    _lastNicknameChangeDate = DateTime.now().subtract(const Duration(days: 35));
+  Future<void> _loadUserData() async {
+    if (_isDataLoaded) return;
+    
+    final currentUser = ref.read(currentUserProvider).valueOrNull;
+    if (currentUser == null) return;
+    
+    _nicknameController.text = currentUser.nickname ?? '';
+    _originalNickname = currentUser.nickname ?? '';
+    _bioController.text = currentUser.bio ?? '';
+    _addressController.text = currentUser.address ?? '';
+    _selectedGender = currentUser.gender;
+    _birthDate = currentUser.birthDate;
+    _lastNicknameChangeDate = currentUser.nicknameChangedAt;
+    _profileImageUrl = currentUser.profileImageUrl;
+    _isDataLoaded = true;
     setState(() {});
   }
   
@@ -133,19 +154,14 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
 
   Widget _buildProfilePhoto() {
     return Center(
-      child: Stack(
-        children: [
-          const MingrrAvatar(
-            size: 120,
-            showBorder: true,
-            borderColor: AppColors.primary,
-            placeholderIcon: Icons.person,
-          ),
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: GestureDetector(
-              onTap: _pickProfileImage,
+      child: GestureDetector(
+        onTap: _showProfileImagePicker,
+        child: Stack(
+          children: [
+            _buildProfileImageWidget(),
+            Positioned(
+              bottom: 0,
+              right: 0,
               child: Container(
                 width: 36,
                 height: 36,
@@ -161,10 +177,123 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+  
+  Widget _buildProfileImageWidget() {
+    // 새로 선택한 이미지가 있는 경우
+    if (_selectedProfileImage != null) {
+      return Container(
+        width: 120,
+        height: 120,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.primary, width: 3),
+        ),
+        child: ClipOval(
+          child: kIsWeb
+              ? Image.network(
+                  _selectedProfileImage!.path,
+                  width: 120,
+                  height: 120,
+                  fit: BoxFit.cover,
+                )
+              : Image.file(
+                  File(_selectedProfileImage!.path),
+                  width: 120,
+                  height: 120,
+                  fit: BoxFit.cover,
+                ),
+        ),
+      );
+    }
+    
+    // 대표 아이콘을 선택한 경우
+    if (_selectedDefaultAvatar != null) {
+      return Container(
+        width: 120,
+        height: 120,
+        decoration: BoxDecoration(
+          color: _selectedDefaultAvatar!.backgroundColor,
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.primary, width: 3),
+        ),
+        child: Icon(
+          _selectedDefaultAvatar!.icon,
+          size: 60,
+          color: _selectedDefaultAvatar!.iconColor,
+        ),
+      );
+    }
+    
+    // 기존 이미지 URL이 있는 경우
+    if (_profileImageUrl != null && _profileImageUrl!.isNotEmpty) {
+      return Container(
+        width: 120,
+        height: 120,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.primary, width: 3),
+        ),
+        child: ClipOval(
+          child: Image.network(
+            _profileImageUrl!,
+            width: 120,
+            height: 120,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _buildDefaultProfileImage(),
+          ),
+        ),
+      );
+    }
+    
+    return _buildDefaultProfileImage();
+  }
+  
+  Widget _buildDefaultProfileImage() {
+    return Container(
+      width: 120,
+      height: 120,
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.15),
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.primary, width: 3),
+      ),
+      child: const Icon(
+        Icons.person,
+        size: 60,
+        color: AppColors.primary,
+      ),
+    );
+  }
+  
+  Future<void> _showProfileImagePicker() async {
+    final result = await showImagePickerSheet(
+      context,
+      title: '프로필 이미지 선택',
+      avatarType: DefaultAvatarType.person,
+      currentImageUrl: _profileImageUrl,
+      currentDefaultAvatar: _selectedDefaultAvatar,
+    );
+    
+    if (result != null) {
+      setState(() {
+        if (result.cleared) {
+          _selectedProfileImage = null;
+          _profileImageUrl = null;
+          _selectedDefaultAvatar = null;
+        } else if (result.hasImage) {
+          _selectedProfileImage = result.imageFile;
+          _selectedDefaultAvatar = null;
+        } else if (result.hasDefaultAvatar) {
+          _selectedDefaultAvatar = result.defaultAvatar;
+          _selectedProfileImage = null;
+        }
+      });
+    }
   }
 
   Widget _buildBasicInfoSection() {
@@ -215,10 +344,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                     label: Text('${gender.symbol} ${gender.label}'),
                   );
                 }).toList(),
-                selected: _selectedGender != null ? {_selectedGender!} : {},
+                selected: {_selectedGender ?? UserGender.male},
                 onSelectionChanged: (Set<UserGender> selection) {
                   setState(() {
-                    _selectedGender = selection.isNotEmpty ? selection.first : null;
+                    _selectedGender = selection.first;
                   });
                 },
               ),
@@ -329,13 +458,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     );
   }
 
-  void _pickProfileImage() {
-    // TODO: 이미지 피커 구현
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('프로필 사진 선택 기능 (Firebase Storage 연동 예정)')),
-    );
-  }
-
   Future<void> _selectBirthDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -352,14 +474,14 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 
   void _selectLocation() {
-    // TODO: 위치 선택 화면 구현
+    // TODO: 위치 선택 화면 구현 예정 (지도 연동)
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('위치 선택 기능 (지도 연동 예정)')),
     );
   }
 
   void _setCurrentLocation() {
-    // TODO: 현재 위치 가져오기
+    // TODO: GPS로 현재 위치 가져오기 구현 예정
     setState(() {
       _addressController.text = '서울시 강남구 역삼동';
     });
@@ -371,27 +493,97 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     );
   }
 
-  void _saveProfile() {
+  Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
-      // TODO: Firebase에 저장
-      final profileData = {
-        'nickname': _nicknameController.text,
-        'gender': _selectedGender?.name,
-        'birthDate': _birthDate,
-        'bio': _bioController.text,
-        'address': _addressController.text,
-      };
+      setState(() => _isLoading = true);
       
-      debugPrint('Profile data to save: $profileData');
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('프로필이 수정되었습니다!'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-      
-      Navigator.pop(context, true);
+      try {
+        final currentUser = ref.read(currentUserProvider).valueOrNull;
+        final authUser = ref.read(authStateProvider).valueOrNull;
+        
+        if (currentUser == null || authUser == null) {
+          throw Exception('로그인이 필요합니다');
+        }
+        
+        // 닉네임 변경 여부 확인
+        final nicknameChanged = _nicknameController.text.trim() != _originalNickname;
+        
+        // 닉네임 변경 시 30일 제한 체크
+        if (nicknameChanged && !canChangeNickname) {
+          throw Exception('닉네임은 30일에 한 번만 변경할 수 있습니다. ${daysUntilNicknameChange}일 후에 다시 시도해주세요.');
+        }
+        
+        // 프로필 이미지 업로드
+        String? uploadedImageUrl = _profileImageUrl;
+        if (_selectedDefaultAvatar != null) {
+          uploadedImageUrl = 'default_avatar:${_selectedDefaultAvatar!.id}';
+        } else if (_selectedProfileImage != null) {
+          uploadedImageUrl = await _uploadProfileImage(authUser.uid);
+        }
+        
+        final updateData = <String, dynamic>{
+          'nickname': _nicknameController.text.trim(),
+          'gender': _selectedGender?.name,
+          'birthDate': _birthDate != null ? Timestamp.fromDate(_birthDate!) : null,
+          'bio': _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
+          'address': _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
+          'profileImageUrl': uploadedImageUrl,
+          'updatedAt': FieldValue.serverTimestamp(),
+        };
+        
+        // 닉네임이 변경되었으면 변경일 업데이트
+        if (nicknameChanged) {
+          updateData['nicknameChangedAt'] = FieldValue.serverTimestamp();
+        }
+        
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(authUser.uid)
+            .update(updateData);
+        
+        // Provider 리프레시
+        ref.invalidate(currentUserProvider);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('프로필이 수정되었습니다!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          Navigator.pop(context, true);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('저장 실패: $e'), backgroundColor: AppColors.error),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
+    }
+  }
+  
+  Future<String> _uploadProfileImage(String userId) async {
+    if (_selectedProfileImage == null) {
+      throw Exception('이미지가 선택되지 않았습니다');
+    }
+    
+    if (kIsWeb) {
+      try {
+        final bytes = await _selectedProfileImage!.readAsBytes();
+        return await _storageService.uploadUserProfileImageBytes(userId, bytes);
+      } catch (e) {
+        throw Exception('프로필 이미지 업로드 실패: $e');
+      }
+    }
+    
+    try {
+      final file = File(_selectedProfileImage!.path);
+      return await _storageService.uploadUserProfileImage(userId, file);
+    } catch (e) {
+      throw Exception('프로필 이미지 업로드 실패: $e');
     }
   }
 }

@@ -244,6 +244,40 @@ service cloud.firestore {
     }
     
     // ============================================================
+    // jobs Collection - 알바 (펫시터/산책 등)
+    // ============================================================
+    match /jobs/{jobId} {
+      // 읽기: 로그인한 사용자는 모든 알바 조회 가능 (관리자는 무조건 가능)
+      allow read: if isAdmin() || isSignedIn();
+      
+      // 생성: 본인이 작성자인 알바만 생성 가능 (또는 관리자)
+      allow create: if isAdmin() || (isSignedIn() && incomingData().authorId == request.auth.uid);
+      
+      // 수정: 본인이 작성자인 알바만 수정 가능 (또는 관리자)
+      allow update: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
+      
+      // 삭제: 본인이 작성자인 알바만 삭제 가능 (또는 관리자)
+      allow delete: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
+    }
+    
+    // ============================================================
+    // walks Collection - 산책 기록
+    // ============================================================
+    match /walks/{walkId} {
+      // 읽기: 본인의 산책 기록만 조회 가능 (관리자는 무조건 가능)
+      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      
+      // 생성: 본인 계정으로만 산책 기록 생성 가능 (또는 관리자)
+      allow create: if isAdmin() || (isSignedIn() && incomingData().userId == request.auth.uid);
+      
+      // 수정: 본인의 산책 기록만 수정 가능 (또는 관리자)
+      allow update: if isAdmin() || (isSignedIn() && existingData().userId == request.auth.uid);
+      
+      // 삭제: 본인의 산책 기록만 삭제 가능 (또는 관리자)
+      allow delete: if isAdmin() || (isSignedIn() && existingData().userId == request.auth.uid);
+    }
+    
+    // ============================================================
     // healthRecords Collection - 건강 기록 (pets 하위 컴렉션)
     // ============================================================
     match /pets/{petId}/healthRecords/{recordId} {

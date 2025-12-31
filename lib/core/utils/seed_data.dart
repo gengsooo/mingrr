@@ -164,6 +164,61 @@ class SeedData {
         'isVerified': false,
         'kkosunnaeScore': 65,
       },
+      {
+        'id': 'user_006',
+        'email': 'test6@mingrr.com',
+        'nickname': '비숑프리제맘',
+        'gender': 'female',
+        'bio': '비숑프리제와 함께하는 행복한 일상 ☁️',
+        'location': const GeoPoint(37.4833, 127.0322),
+        'address': '서울시 서초구',
+        'isVerified': true,
+        'kkosunnaeScore': 90,
+      },
+      {
+        'id': 'user_007',
+        'email': 'test7@mingrr.com',
+        'nickname': '말티즈아빠',
+        'gender': 'male',
+        'bio': '말티즈 2마리 키우는 아빠입니다',
+        'location': const GeoPoint(37.5585, 126.9368),
+        'address': '서울시 서대문구',
+        'isVerified': true,
+        'kkosunnaeScore': 82,
+      },
+      {
+        'id': 'user_008',
+        'email': 'test8@mingrr.com',
+        'nickname': '포메러버',
+        'gender': 'female',
+        'bio': '포메라니안 산책 친구 구해요 🐾',
+        'location': const GeoPoint(37.5509, 127.0407),
+        'address': '서울시 광진구',
+        'isVerified': true,
+        'kkosunnaeScore': 75,
+      },
+      {
+        'id': 'user_009',
+        'email': 'test9@mingrr.com',
+        'nickname': '진돗개집사',
+        'gender': 'male',
+        'bio': '진돗개와 함께 등산 다녀요 🏔️',
+        'location': const GeoPoint(37.4954, 126.8882),
+        'address': '서울시 구로구',
+        'isVerified': false,
+        'kkosunnaeScore': 70,
+      },
+      {
+        'id': 'user_010',
+        'email': 'test10@mingrr.com',
+        'nickname': '슈나우저맘',
+        'gender': 'female',
+        'bio': '미니어처 슈나우저 키워요',
+        'location': const GeoPoint(37.5271, 126.8561),
+        'address': '서울시 양천구',
+        'isVerified': true,
+        'kkosunnaeScore': 88,
+      },
     ];
     
     for (final userData in users) {
@@ -455,22 +510,16 @@ class SeedData {
     print('🗑️  모든 데이터 삭제 시작...');
     
     try {
-      // 1. Firestore 데이터 삭제
-      await _clearCollection(_firebase.usersCollection);
+      // Firestore 데이터 삭제 (users 컬렉션은 제외 - 로그인 세션 유지를 위해)
       await _clearCollection(_firebase.petsCollection);
       await _clearCollection(_firebase.productsCollection);
       await _clearCollection(_firebase.groupsCollection);
       await _clearCollection(_firebase.chatRoomsCollection);
       await _clearCollection(_firebase.likesCollection);
       await _clearCollection(_firebase.matchesCollection);
+      await _clearCollection(_firebase.jobsCollection);
       
-      // 2. Firebase Auth 계정 삭제 (admin@mingrr.com 제외)
-      // 주의: 클라이언트에서는 현재 로그인된 계정만 삭제 가능
-      // 다른 계정들은 Firebase Admin SDK나 Firebase Console에서 수동 삭제 필요
-      print('⚠️  Firebase Auth 계정은 Firebase Console에서 수동으로 삭제해주세요');
-      print('   (admin@mingrr.com 제외한 test1~test10@mingrr.com)');
-      
-      print('✅ 모든 Firestore 데이터 삭제 완료');
+      print('✅ 모든 Firestore 데이터 삭제 완료 (users 컬렉션 제외)');
     } catch (e) {
       print('❌ 데이터 삭제 실패: $e');
       rethrow;
@@ -486,5 +535,183 @@ class SeedData {
     }
     
     await batch.commit();
+  }
+  
+  // ===== 항목별 생성 메서드 =====
+  
+  /// 사용자 데이터만 생성
+  Future<void> seedUsers() async {
+    await _createTestAccounts();
+    await _seedUsers();
+  }
+  
+  /// 반려동물 데이터만 생성
+  Future<void> seedPets() async {
+    final userIds = await _getExistingUserIds();
+    if (userIds.isEmpty) {
+      throw Exception('사용자 데이터가 없습니다. 먼저 사용자를 생성해주세요.');
+    }
+    await _seedPets(userIds);
+  }
+  
+  /// 상품 데이터만 생성
+  Future<void> seedProducts() async {
+    final userIds = await _getExistingUserIds();
+    if (userIds.isEmpty) {
+      throw Exception('사용자 데이터가 없습니다. 먼저 사용자를 생성해주세요.');
+    }
+    await _seedProducts(userIds);
+  }
+  
+  /// 소모임 데이터만 생성
+  Future<void> seedGroups() async {
+    final userIds = await _getExistingUserIds();
+    if (userIds.isEmpty) {
+      throw Exception('사용자 데이터가 없습니다. 먼저 사용자를 생성해주세요.');
+    }
+    await _seedGroups(userIds);
+  }
+  
+  /// 알바 데이터만 생성
+  Future<void> seedJobs() async {
+    final userIds = await _getExistingUserIds();
+    if (userIds.isEmpty) {
+      throw Exception('사용자 데이터가 없습니다. 먼저 사용자를 생성해주세요.');
+    }
+    await _seedJobs(userIds);
+  }
+  
+  /// 좋아요/매칭 데이터만 생성
+  Future<void> seedLikesAndMatches() async {
+    final userIds = await _getExistingUserIds();
+    if (userIds.isEmpty) {
+      throw Exception('사용자 데이터가 없습니다. 먼저 사용자를 생성해주세요.');
+    }
+    await _seedLikesAndMatches(userIds);
+  }
+  
+  /// 채팅 데이터만 생성
+  Future<void> seedChats() async {
+    final userIds = await _getExistingUserIds();
+    if (userIds.isEmpty) {
+      throw Exception('사용자 데이터가 없습니다. 먼저 사용자를 생성해주세요.');
+    }
+    await _seedChats(userIds);
+  }
+  
+  // ===== 항목별 삭제 메서드 =====
+  
+  Future<void> clearUsers() async {
+    await _clearCollection(_firebase.usersCollection);
+  }
+  
+  Future<void> clearPets() async {
+    await _clearCollection(_firebase.petsCollection);
+  }
+  
+  Future<void> clearProducts() async {
+    await _clearCollection(_firebase.productsCollection);
+  }
+  
+  Future<void> clearGroups() async {
+    await _clearCollection(_firebase.groupsCollection);
+  }
+  
+  Future<void> clearJobs() async {
+    await _clearCollection(_firebase.jobsCollection);
+  }
+  
+  Future<void> clearLikesAndMatches() async {
+    await _clearCollection(_firebase.likesCollection);
+    await _clearCollection(_firebase.matchesCollection);
+  }
+  
+  Future<void> clearChats() async {
+    await _clearCollection(_firebase.chatRoomsCollection);
+  }
+  
+  // ===== 헬퍼 메서드 =====
+  
+  Future<List<String>> _getExistingUserIds() async {
+    final snapshot = await _firebase.usersCollection.limit(10).get();
+    return snapshot.docs.map((doc) => doc.id).toList();
+  }
+  
+  Future<void> _seedJobs(List<String> userIds) async {
+    final now = DateTime.now();
+    
+    final jobs = [
+      {
+        'userId': userIds[0],
+        'title': '여행 중 우리 아이 돌봐주실 분',
+        'description': '12월 25일부터 28일까지 3박 4일 동안 돌봐주실 분 구해요',
+        'type': 'care',
+        'price': 50000,
+        'priceUnit': '일',
+        'startDate': now.add(const Duration(days: 5)),
+        'endDate': now.add(const Duration(days: 8)),
+        'address': '서울시 강남구 역삼동',
+      },
+      {
+        'userId': userIds[1],
+        'title': '평일 오전 산책 도우미 구해요',
+        'description': '월~금 오전 8시~9시 산책 부탁드려요',
+        'type': 'walk',
+        'price': 15000,
+        'priceUnit': '회',
+        'duration': 1,
+        'address': '서울시 마포구 상암동',
+      },
+      {
+        'userId': userIds[2],
+        'title': '대형견 목욕 도와주실 분',
+        'description': '골든리트리버 목욕 도와주실 분 구해요',
+        'type': 'bath',
+        'price': 30000,
+        'priceUnit': '회',
+        'duration': 2,
+        'address': '서울시 송파구 잠실동',
+      },
+      {
+        'userId': userIds.length > 3 ? userIds[3] : userIds[0],
+        'title': '기본 훈련 도와주실 분',
+        'description': '앉아, 기다려 등 기본 훈련 도와주세요',
+        'type': 'training',
+        'price': 40000,
+        'priceUnit': '회',
+        'duration': 1,
+        'address': '서울시 용산구 이태원동',
+      },
+    ];
+    
+    for (int i = 0; i < jobs.length; i++) {
+      final jobData = jobs[i];
+      final job = JobModel(
+        id: 'job_${(i + 1).toString().padLeft(3, '0')}',
+        userId: jobData['userId'] as String,
+        title: jobData['title'] as String,
+        description: jobData['description'] as String,
+        type: JobType.values.firstWhere((e) => e.name == jobData['type']),
+        status: JobStatus.recruiting,
+        price: jobData['price'] as int,
+        priceUnit: jobData['priceUnit'] as String,
+        startDate: jobData['startDate'] as DateTime?,
+        endDate: jobData['endDate'] as DateTime?,
+        duration: jobData['duration'] as int?,
+        address: jobData['address'] as String,
+        createdAt: now.subtract(Duration(hours: i)),
+        updatedAt: now.subtract(Duration(hours: i)),
+      );
+      
+      await _firebase.jobsCollection.doc(job.id).set(job.toFirestore());
+    }
+  }
+  
+  Future<void> _seedLikesAndMatches(List<String> userIds) async {
+    // TODO: 좋아요/매칭 테스트 데이터 생성 로직 구현 예정
+  }
+  
+  Future<void> _seedChats(List<String> userIds) async {
+    // TODO: 채팅 테스트 데이터 생성 로직 구현 예정
   }
 }

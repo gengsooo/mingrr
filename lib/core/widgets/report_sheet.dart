@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
+import '../services/firebase_service.dart';
 
 /// ============================================================
 /// 신고 기능 위젯
@@ -55,6 +58,8 @@ class ReportSheet extends StatefulWidget {
 class _ReportSheetState extends State<ReportSheet> {
   ReportType? _selectedType;
   final TextEditingController _detailController = TextEditingController();
+  bool _isSubmitting = false;
+  final _firebase = FirebaseService();
 
   @override
   void dispose() {
@@ -178,17 +183,42 @@ class _ReportSheetState extends State<ReportSheet> {
             width: double.infinity,
             height: 52,
             child: ElevatedButton(
-              onPressed: _selectedType != null
-                  ? () {
-                      // TODO: Firebase에 신고 저장
-                      Navigator.pop(context);
-                      widget.onSubmit?.call();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('신고가 접수되었습니다. 검토 후 조치하겠습니다.'),
-                          backgroundColor: AppColors.textSecondary,
-                        ),
-                      );
+              onPressed: (_selectedType != null && !_isSubmitting)
+                  ? () async {
+                      setState(() => _isSubmitting = true);
+                      try {
+                        final currentUser = FirebaseAuth.instance.currentUser;
+                        if (currentUser == null) throw Exception('로그인이 필요합니다');
+                        
+                        await _firebase.reportsCollection.add({
+                          'reporterId': currentUser.uid,
+                          'targetId': widget.targetId,
+                          'targetType': widget.targetType.name,
+                          'reportType': _selectedType!.name,
+                          'detail': _detailController.text.trim(),
+                          'status': 'pending',
+                          'createdAt': FieldValue.serverTimestamp(),
+                        });
+                        
+                        if (mounted) {
+                          Navigator.pop(context);
+                          widget.onSubmit?.call();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('신고가 접수되었습니다. 검토 후 조치하겠습니다.'),
+                              backgroundColor: AppColors.textSecondary,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('신고 실패: $e'), backgroundColor: AppColors.error),
+                          );
+                        }
+                      } finally {
+                        if (mounted) setState(() => _isSubmitting = false);
+                      }
                     }
                   : null,
               style: ElevatedButton.styleFrom(

@@ -117,7 +117,7 @@ class ProductDetailScreen extends StatelessWidget {
             child: const Icon(Icons.share, color: Colors.white, size: 20),
           ),
           onPressed: () {
-            // TODO: 공유 기능
+            // TODO: 상품 공유 기능 구현 예정
           },
         ),
         IconButton(
@@ -300,7 +300,7 @@ class ProductDetailScreen extends StatelessWidget {
           // 좋아요 버튼
           GestureDetector(
             onTap: () {
-              // TODO: 좋아요 토글
+              // TODO: 좋아요 토글 기능 구현 예정
             },
             child: Container(
               padding: const EdgeInsets.all(8),
@@ -334,7 +334,7 @@ class ProductDetailScreen extends StatelessWidget {
             width: 100,
             child: ElevatedButton(
               onPressed: () {
-                // TODO: 채팅 화면으로 이동
+                // TODO: 판매자와 채팅 화면으로 이동 구현 예정
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(

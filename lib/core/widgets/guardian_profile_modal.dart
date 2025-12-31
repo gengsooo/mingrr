@@ -39,6 +39,7 @@ void showGuardianProfileModal(
   required String guardianId,
   required String guardianName,
   required double kkosunnaeScore,
+  String? profileImageUrl,
   GuardianGender gender = GuardianGender.unknown,
   int? age,
   bool isIdentityVerified = false,
@@ -55,6 +56,7 @@ void showGuardianProfileModal(
       guardianId: guardianId,
       guardianName: guardianName,
       kkosunnaeScore: kkosunnaeScore,
+      profileImageUrl: profileImageUrl,
       gender: gender,
       age: age,
       isIdentityVerified: isIdentityVerified,
@@ -105,6 +107,7 @@ class GuardianProfileModal extends StatelessWidget {
   final String guardianId;
   final String guardianName;
   final double kkosunnaeScore;
+  final String? profileImageUrl;
   final GuardianGender gender;
   final int? age;
   final bool isIdentityVerified;
@@ -118,6 +121,7 @@ class GuardianProfileModal extends StatelessWidget {
     required this.guardianId,
     required this.guardianName,
     required this.kkosunnaeScore,
+    this.profileImageUrl,
     this.gender = GuardianGender.unknown,
     this.age,
     this.isIdentityVerified = false,
@@ -283,7 +287,7 @@ class GuardianProfileModal extends StatelessWidget {
     
     return Row(
       children: [
-        // 아바타 (강아지 앱이므로 기본 아이콘)
+        // 아바타 (프로필 이미지 또는 기본 아이콘)
         Container(
           width: 60,
           height: 60,
@@ -291,11 +295,25 @@ class GuardianProfileModal extends StatelessWidget {
             color: AppColors.primary.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.person,
-            size: 30,
-            color: AppColors.primary,
-          ),
+          child: profileImageUrl != null && profileImageUrl!.isNotEmpty
+              ? ClipOval(
+                  child: Image.network(
+                    profileImageUrl!,
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.person,
+                      size: 30,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                )
+              : const Icon(
+                  Icons.person,
+                  size: 30,
+                  color: AppColors.primary,
+                ),
         ),
         const SizedBox(width: AppSizes.gapM),
         

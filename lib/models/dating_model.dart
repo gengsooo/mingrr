@@ -58,10 +58,9 @@ class LikeModel extends Equatable {
     this.respondedAt,
   });
 
-  factory LikeModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory LikeModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
     return LikeModel(
-      id: doc.id,
+      id: id ?? data['id'] ?? '',
       fromUserId: data['fromUserId'] ?? '',
       fromPetId: data['fromPetId'] ?? '',
       toUserId: data['toUserId'] ?? '',
@@ -153,10 +152,9 @@ class MatchModel extends Equatable {
     this.isActive = true,
   });
 
-  factory MatchModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory MatchModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
     return MatchModel(
-      id: doc.id,
+      id: id ?? data['id'] ?? '',
       userIds: List<String>.from(data['userIds'] ?? []),
       petIds: List<String>.from(data['petIds'] ?? []),
       chatRoomId: data['chatRoomId'],

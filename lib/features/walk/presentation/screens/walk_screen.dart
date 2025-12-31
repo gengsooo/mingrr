@@ -241,7 +241,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                   icon: const Icon(Icons.history, size: 18),
                   label: const Text('산책 기록'),
                   onPressed: () {
-                    // TODO: 산책 기록 화면으로 이동
+                    // TODO: 산책 기록 화면으로 이동 구현 예정
                   },
                 ),
               ),
@@ -437,7 +437,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                     isOutlined: true,
                     backgroundColor: AppColors.primary,
                     onPressed: () {
-                      // TODO: 발자국 남기기
+                      // TODO: 발자국 남기기 기능 구현 예정
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('발자국을 남겼습니다! 🐾'),

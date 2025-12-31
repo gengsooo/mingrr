@@ -51,6 +51,9 @@ class PetModel extends Equatable {
   /// 추가 사진 URL 목록
   final List<String> photoUrls;
   
+  /// 대표 사진 인덱스 (photoUrls 중 대표로 사용할 사진)
+  final int primaryPhotoIndex;
+  
   /// 동물등록번호
   final String? registrationNumber;
   
@@ -104,6 +107,7 @@ class PetModel extends Equatable {
     this.bio,
     this.profileImageUrl,
     this.photoUrls = const [],
+    this.primaryPhotoIndex = 0,
     this.registrationNumber,
     this.isRegistrationVerified = false,
     this.isVaccinationVerified = false,
@@ -194,6 +198,7 @@ class PetModel extends Equatable {
       bio: data['bio'],
       profileImageUrl: data['profileImageUrl'],
       photoUrls: List<String>.from(data['photoUrls'] ?? []),
+      primaryPhotoIndex: data['primaryPhotoIndex'] ?? 0,
       registrationNumber: data['registrationNumber'],
       isRegistrationVerified: data['isRegistrationVerified'] ?? false,
       isVaccinationVerified: data['isVaccinationVerified'] ?? false,
@@ -238,6 +243,7 @@ class PetModel extends Equatable {
       'bio': bio,
       'profileImageUrl': profileImageUrl,
       'photoUrls': photoUrls,
+      'primaryPhotoIndex': primaryPhotoIndex,
       'registrationNumber': registrationNumber,
       'isRegistrationVerified': isRegistrationVerified,
       'isVaccinationVerified': isVaccinationVerified,
@@ -271,6 +277,7 @@ class PetModel extends Equatable {
     String? bio,
     String? profileImageUrl,
     List<String>? photoUrls,
+    int? primaryPhotoIndex,
     String? registrationNumber,
     bool? isRegistrationVerified,
     bool? isVaccinationVerified,
@@ -299,6 +306,7 @@ class PetModel extends Equatable {
       bio: bio ?? this.bio,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       photoUrls: photoUrls ?? this.photoUrls,
+      primaryPhotoIndex: primaryPhotoIndex ?? this.primaryPhotoIndex,
       registrationNumber: registrationNumber ?? this.registrationNumber,
       isRegistrationVerified: isRegistrationVerified ?? this.isRegistrationVerified,
       isVaccinationVerified: isVaccinationVerified ?? this.isVaccinationVerified,
@@ -343,6 +351,7 @@ class PetModel extends Equatable {
         bio,
         profileImageUrl,
         photoUrls,
+        primaryPhotoIndex,
         registrationNumber,
         isRegistrationVerified,
         isVaccinationVerified,

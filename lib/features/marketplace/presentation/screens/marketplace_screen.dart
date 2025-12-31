@@ -5,6 +5,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/top_navigation.dart';
 import '../../../../models/marketplace_model.dart';
+import '../providers/marketplace_provider.dart';
 import 'product_detail_screen.dart';
 
 /// ============================================================
@@ -134,15 +135,182 @@ class MarketplaceScreen extends ConsumerWidget {
     );
   }
 
-  /// 상품 목록
+  /// 상품 목록 (Firebase 연동)
   Widget _buildProductList(BuildContext context, ProductType type) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppSizes.paddingM),
-      itemCount: 10,
-      itemBuilder: (ctx, index) {
-        return _buildProductItem(context, index, type);
+    return Consumer(
+      builder: (context, ref, child) {
+        final productsAsync = ref.watch(filteredProductsProvider(type));
+        
+        return productsAsync.when(
+          data: (products) {
+            if (products.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      type == ProductType.sell ? Icons.sell : Icons.volunteer_activism,
+                      size: 48,
+                      color: AppColors.textHint,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      type == ProductType.sell ? '등록된 판매 상품이 없습니다' : '등록된 나눔 상품이 없습니다',
+                      style: const TextStyle(color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              );
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.all(AppSizes.paddingM),
+              itemCount: products.length,
+              itemBuilder: (ctx, index) {
+                return _buildProductModelItem(context, products[index]);
+              },
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+        );
       },
     );
+  }
+  
+  /// Firebase ProductModel을 사용한 상품 아이템
+  Widget _buildProductModelItem(BuildContext context, ProductModel product) {
+    final isShare = product.type == ProductType.share;
+    
+    return MingrrCard(
+      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProductDetailScreen(
+              productId: product.id,
+              isShare: isShare,
+            ),
+          ),
+        );
+      },
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 이미지
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: AppColors.marketLight,
+              borderRadius: BorderRadius.circular(AppSizes.radiusM),
+              image: product.imageUrls.isNotEmpty
+                  ? DecorationImage(
+                      image: NetworkImage(product.imageUrls.first),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: Stack(
+              children: [
+                if (product.imageUrls.isEmpty)
+                  const Center(
+                    child: Icon(Icons.image, size: 40, color: AppColors.market),
+                  ),
+                if (product.status == ProductStatus.reserved)
+                  Positioned(
+                    top: 4,
+                    left: 4,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.textSecondary,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        '예약중',
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSizes.gapM),
+          
+          // 정보
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  product.title,
+                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${product.address ?? '위치 미상'} · ${_formatTime(product.createdAt)}',
+                  style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  product.priceString,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: isShare ? AppColors.walk : AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.market.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        product.categoryString,
+                        style: const TextStyle(fontSize: 10, color: AppColors.market),
+                      ),
+                    ),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        const Icon(Icons.favorite_border, size: 14, color: AppColors.textHint),
+                        const SizedBox(width: 2),
+                        Text('${product.likeCount}', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.chat_bubble_outline, size: 14, color: AppColors.textHint),
+                        const SizedBox(width: 2),
+                        Text('${product.chatCount}', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  /// 시간 포맷팅
+  String _formatTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+    if (diff.inMinutes < 1) return '방금';
+    if (diff.inHours < 1) return '${diff.inMinutes}분 전';
+    if (diff.inDays < 1) return '${diff.inHours}시간 전';
+    return '${diff.inDays}일 전';
   }
 
   /// 상품 아이템
@@ -276,38 +444,50 @@ class MarketplaceScreen extends ConsumerWidget {
     );
   }
 
-  /// 알바 목록
+  /// 알바 목록 (Firebase 연동)
   Widget _buildJobList(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppSizes.paddingM),
-      itemCount: 8,
-      itemBuilder: (ctx, index) {
-        return _buildJobItem(context, index);
+    return Consumer(
+      builder: (context, ref, child) {
+        final jobsAsync = ref.watch(jobsProvider);
+        
+        return jobsAsync.when(
+          data: (jobs) {
+            if (jobs.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.work_outline, size: 48, color: AppColors.textHint),
+                    const SizedBox(height: 16),
+                    const Text(
+                      '등록된 알바가 없습니다',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              );
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.all(AppSizes.paddingM),
+              itemCount: jobs.length,
+              itemBuilder: (ctx, index) {
+                return _buildJobModelItem(context, jobs[index]);
+              },
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+        );
       },
     );
   }
 
-  /// 알바 아이템
-  Widget _buildJobItem(BuildContext context, int index) {
-    final jobTypes = ['돌봄', '산책', '목욕', '훈련'];
-    final jobType = jobTypes[index % 4];
-    final jobDescriptions = {
-      '돌봄': '여행 중 우리 아이 돌봐주실 분',
-      '산책': '평일 오전 산책 도우미 구해요',
-      '목욕': '대형견 목욕 도와주실 분',
-      '훈련': '기본 훈련 도와주실 분',
-    };
-    final jobPrices = {
-      '돌봄': '50,000원/일',
-      '산책': '15,000원/회',
-      '목욕': '30,000원/회',
-      '훈련': '40,000원/회',
-    };
-    
+  /// Firebase JobModel을 사용한 알바 아이템
+  Widget _buildJobModelItem(BuildContext context, JobModel job) {
     return MingrrCard(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       onTap: () {
-        // TODO: 알바 상세 화면
+        // TODO: 알바 상세 화면 구현 예정
       },
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,7 +502,7 @@ class MarketplaceScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  jobType,
+                  job.typeString,
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -332,27 +512,28 @@ class MarketplaceScreen extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               // 기간
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.divider,
-                  borderRadius: BorderRadius.circular(12),
+              if (job.periodString.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.divider,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.schedule, size: 12, color: AppColors.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        job.periodString,
+                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.schedule, size: 12, color: AppColors.textSecondary),
-                    const SizedBox(width: 4),
-                    Text(
-                      jobType == '돌봄' ? '12/25 ~ 12/28' : '${index + 1}시간',
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
               const Spacer(),
               Text(
-                '${index + 1}시간 전',
+                _formatJobTime(job.createdAt),
                 style: const TextStyle(fontSize: 11, color: AppColors.textHint),
               ),
             ],
@@ -360,7 +541,7 @@ class MarketplaceScreen extends ConsumerWidget {
           const SizedBox(height: 12),
           // 제목
           Text(
-            '${jobDescriptions[jobType]} ${index + 1}',
+            job.title,
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -372,7 +553,7 @@ class MarketplaceScreen extends ConsumerWidget {
               const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textSecondary),
               const SizedBox(width: 4),
               Text(
-                '강남구 역삼동',
+                job.address ?? '위치 미상',
                 style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
             ],
@@ -383,7 +564,7 @@ class MarketplaceScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                jobPrices[jobType]!,
+                job.priceString,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
@@ -394,7 +575,7 @@ class MarketplaceScreen extends ConsumerWidget {
                 children: [
                   const Icon(Icons.chat_bubble_outline, size: 14, color: AppColors.textHint),
                   const SizedBox(width: 4),
-                  Text('${index + 2}', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
+                  Text('${job.chatCount}', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
                 ],
               ),
             ],
@@ -402,6 +583,16 @@ class MarketplaceScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+  
+  /// 알바 시간 포맷팅
+  String _formatJobTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+    if (diff.inMinutes < 1) return '방금';
+    if (diff.inHours < 1) return '${diff.inMinutes}분 전';
+    if (diff.inDays < 1) return '${diff.inHours}시간 전';
+    return '${diff.inDays}일 전';
   }
 }
 
@@ -676,7 +867,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                  // TODO: 날짜 선택
+                  // TODO: 시작 날짜 선택 구현 예정
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
@@ -701,7 +892,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
             Expanded(
               child: GestureDetector(
                 onTap: () {
-                  // TODO: 날짜 선택
+                  // TODO: 종료 날짜 선택 구현 예정
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),

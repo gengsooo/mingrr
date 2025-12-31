@@ -24,7 +24,7 @@ class FirestoreService {
     try {
       final doc = await _firebase.usersCollection.doc(userId).get();
       if (!doc.exists) return null;
-      return UserModel.fromFirestore(doc.data()!);
+      return UserModel.fromFirestore(doc.data()!, id: doc.id);
     } catch (e) {
       rethrow;
     }
@@ -52,64 +52,64 @@ class FirestoreService {
         .snapshots()
         .map((doc) {
           if (!doc.exists) return null;
-          return UserModel.fromFirestore(doc.data()!);
+          return UserModel.fromFirestore(doc.data()!, id: doc.id);
         });
   }
   
-  Future<void> createDog(DogModel dog) async {
+  Future<void> createPet(PetModel pet) async {
     try {
-      await _firebase.dogsCollection.doc(dog.id).set(dog.toFirestore());
+      await _firebase.petsCollection.doc(pet.id).set(pet.toFirestore());
     } catch (e) {
       rethrow;
     }
   }
   
-  Future<DogModel?> getDog(String dogId) async {
+  Future<PetModel?> getPet(String petId) async {
     try {
-      final doc = await _firebase.dogsCollection.doc(dogId).get();
+      final doc = await _firebase.petsCollection.doc(petId).get();
       if (!doc.exists) return null;
-      return DogModel.fromFirestore(doc.data()!);
+      return PetModel.fromFirestore(doc);
     } catch (e) {
       rethrow;
     }
   }
   
-  Future<void> updateDog(DogModel dog) async {
+  Future<void> updatePet(PetModel pet) async {
     try {
-      await _firebase.dogsCollection.doc(dog.id).update(dog.toFirestore());
+      await _firebase.petsCollection.doc(pet.id).update(pet.toFirestore());
     } catch (e) {
       rethrow;
     }
   }
   
-  Future<void> deleteDog(String dogId) async {
+  Future<void> deletePet(String petId) async {
     try {
-      await _firebase.dogsCollection.doc(dogId).delete();
+      await _firebase.petsCollection.doc(petId).delete();
     } catch (e) {
       rethrow;
     }
   }
   
-  Future<List<DogModel>> getUserDogs(String userId) async {
+  Future<List<PetModel>> getUserPets(String userId) async {
     try {
-      final snapshot = await _firebase.dogsCollection
+      final snapshot = await _firebase.petsCollection
           .where('ownerId', isEqualTo: userId)
           .get();
       
       return snapshot.docs
-          .map((doc) => DogModel.fromFirestore(doc.data()))
+          .map((doc) => PetModel.fromFirestore(doc))
           .toList();
     } catch (e) {
       rethrow;
     }
   }
   
-  Stream<List<DogModel>> watchUserDogs(String userId) {
-    return _firebase.dogsCollection
+  Stream<List<PetModel>> watchUserPets(String userId) {
+    return _firebase.petsCollection
         .where('ownerId', isEqualTo: userId)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => DogModel.fromFirestore(doc.data()))
+            .map((doc) => PetModel.fromFirestore(doc))
             .toList());
   }
   
@@ -125,7 +125,7 @@ class FirestoreService {
     try {
       final doc = await _firebase.chatRoomsCollection.doc(chatRoomId).get();
       if (!doc.exists) return null;
-      return ChatRoomModel.fromFirestore(doc.data()!);
+      return ChatRoomModel.fromFirestore(doc.data()!, id: doc.id);
     } catch (e) {
       rethrow;
     }
@@ -145,7 +145,7 @@ class FirestoreService {
         .orderBy('lastMessageAt', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => ChatRoomModel.fromFirestore(doc.data()))
+            .map((doc) => ChatRoomModel.fromFirestore(doc.data(), id: doc.id))
             .toList());
   }
   
@@ -178,7 +178,7 @@ class FirestoreService {
         .orderBy('sentAt', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => MessageModel.fromFirestore(doc.data()))
+            .map((doc) => MessageModel.fromFirestore(doc.data(), id: doc.id))
             .toList());
   }
   
@@ -207,7 +207,7 @@ class FirestoreService {
           .get();
       
       return snapshot.docs
-          .map((doc) => LikeModel.fromFirestore(doc.data()))
+          .map((doc) => LikeModel.fromFirestore(doc.data(), id: doc.id))
           .toList();
     } catch (e) {
       rethrow;
@@ -221,7 +221,7 @@ class FirestoreService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => LikeModel.fromFirestore(doc.data()))
+            .map((doc) => LikeModel.fromFirestore(doc.data(), id: doc.id))
             .toList());
   }
   
@@ -242,7 +242,7 @@ class FirestoreService {
           .get();
       
       return snapshot.docs
-          .map((doc) => MatchModel.fromFirestore(doc.data()))
+          .map((doc) => MatchModel.fromFirestore(doc.data(), id: doc.id))
           .toList();
     } catch (e) {
       rethrow;
@@ -261,7 +261,7 @@ class FirestoreService {
     try {
       final doc = await _firebase.productsCollection.doc(productId).get();
       if (!doc.exists) return null;
-      return ProductModel.fromFirestore(doc.data()!);
+      return ProductModel.fromFirestore(doc.data()!, id: doc.id);
     } catch (e) {
       rethrow;
     }
@@ -305,7 +305,7 @@ class FirestoreService {
           .get();
       
       return snapshot.docs
-          .map((doc) => ProductModel.fromFirestore(doc.data()))
+          .map((doc) => ProductModel.fromFirestore(doc.data(), id: doc.id))
           .toList();
     } catch (e) {
       rethrow;
@@ -324,7 +324,7 @@ class FirestoreService {
     try {
       final doc = await _firebase.groupsCollection.doc(groupId).get();
       if (!doc.exists) return null;
-      return GroupModel.fromFirestore(doc.data()!);
+      return GroupModel.fromFirestore(doc.data()!, id: doc.id);
     } catch (e) {
       rethrow;
     }
@@ -347,7 +347,7 @@ class FirestoreService {
           .get();
       
       return snapshot.docs
-          .map((doc) => GroupModel.fromFirestore(doc.data()))
+          .map((doc) => GroupModel.fromFirestore(doc.data(), id: doc.id))
           .toList();
     } catch (e) {
       rethrow;
@@ -370,7 +370,7 @@ class FirestoreService {
           .get();
       
       return snapshot.docs
-          .map((doc) => ScheduleModel.fromFirestore(doc.data()))
+          .map((doc) => ScheduleModel.fromFirestore(doc.data(), id: doc.id))
           .toList();
     } catch (e) {
       rethrow;
@@ -405,5 +405,131 @@ class FirestoreService {
     } catch (e) {
       rethrow;
     }
+  }
+  
+  // ===== 알바(Job) 관련 =====
+  
+  Future<void> createJob(JobModel job) async {
+    try {
+      await _firebase.jobsCollection.doc(job.id).set(job.toFirestore());
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  Future<JobModel?> getJob(String jobId) async {
+    try {
+      final doc = await _firebase.jobsCollection.doc(jobId).get();
+      if (!doc.exists) return null;
+      return JobModel.fromFirestore(doc.data()!, id: doc.id);
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  Future<List<JobModel>> getJobs({int limit = 20, JobType? type}) async {
+    try {
+      Query<Map<String, dynamic>> query = _firebase.jobsCollection
+          .where('status', isEqualTo: 'recruiting');
+      
+      if (type != null) {
+        query = query.where('type', isEqualTo: type.name);
+      }
+      
+      final snapshot = await query
+          .orderBy('createdAt', descending: true)
+          .limit(limit)
+          .get();
+      
+      return snapshot.docs
+          .map((doc) => JobModel.fromFirestore(doc.data(), id: doc.id))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  Stream<List<JobModel>> watchJobs({JobType? type}) {
+    Query<Map<String, dynamic>> query = _firebase.jobsCollection
+        .where('status', isEqualTo: 'recruiting');
+    
+    if (type != null) {
+      query = query.where('type', isEqualTo: type.name);
+    }
+    
+    return query
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => JobModel.fromFirestore(doc.data(), id: doc.id))
+            .toList());
+  }
+  
+  Future<void> deleteJob(String jobId) async {
+    try {
+      await _firebase.jobsCollection.doc(jobId).delete();
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  // ===== 활동 기록 관련 =====
+  
+  /// 사용자의 매칭 수 조회
+  Future<int> getUserMatchCount(String userId) async {
+    final snapshot = await _firebase.matchesCollection
+        .where('user1Id', isEqualTo: userId)
+        .get();
+    final snapshot2 = await _firebase.matchesCollection
+        .where('user2Id', isEqualTo: userId)
+        .get();
+    return snapshot.docs.length + snapshot2.docs.length;
+  }
+  
+  /// 사용자의 산책 횟수 조회
+  Future<int> getUserWalkCount(String userId) async {
+    final snapshot = await _firebase.walksCollection
+        .where('userId', isEqualTo: userId)
+        .get();
+    return snapshot.docs.length;
+  }
+  
+  /// 사용자의 거래 수 조회 (판매 완료 + 구매)
+  Future<int> getUserTransactionCount(String userId) async {
+    // 판매 완료
+    final soldSnapshot = await _firebase.productsCollection
+        .where('sellerId', isEqualTo: userId)
+        .where('status', isEqualTo: 'sold')
+        .get();
+    // 구매
+    final boughtSnapshot = await _firebase.productsCollection
+        .where('buyerId', isEqualTo: userId)
+        .get();
+    return soldSnapshot.docs.length + boughtSnapshot.docs.length;
+  }
+  
+  /// 사용자가 참여한 모임 수 조회
+  Future<int> getUserGroupCount(String userId) async {
+    final snapshot = await _firebase.groupsCollection
+        .where('memberIds', arrayContains: userId)
+        .get();
+    return snapshot.docs.length;
+  }
+  
+  /// 사용자의 전체 활동 기록 조회
+  Future<Map<String, int>> getUserActivityStats(String userId) async {
+    final results = await Future.wait([
+      getUserMatchCount(userId),
+      getUserWalkCount(userId),
+      getUserTransactionCount(userId),
+      getUserGroupCount(userId),
+    ]);
+    
+    return {
+      'matches': results[0],
+      'walks': results[1],
+      'transactions': results[2],
+      'groups': results[3],
+    };
   }
 }

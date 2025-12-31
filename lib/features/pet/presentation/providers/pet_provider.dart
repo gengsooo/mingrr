@@ -41,3 +41,9 @@ final selectedPetProvider = Provider.autoDispose<PetModel?>((ref) {
   
   return pets[selectedIndex];
 });
+
+/// 특정 ID로 반려동물 조회
+final petByIdProvider = FutureProvider.autoDispose.family<PetModel?, String>((ref, petId) async {
+  final repository = ref.watch(petRepositoryProvider);
+  return repository.getPetById(petId);
+});

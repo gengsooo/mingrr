@@ -1,16 +1,28 @@
+import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/image_picker_sheet.dart';
 import '../../../../core/widgets/verification_badge.dart';
 import '../../../../core/widgets/warmth_score.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
+import '../../../../models/pet_model.dart';
+import 'activity_history_screen.dart';
 import 'pet_edit_screen.dart';
 import 'profile_edit_screen.dart';
+import 'received_likes_screen.dart';
+import 'transaction_history_screen.dart';
+import 'wishlist_screen.dart';
+import '../../../dating/presentation/providers/dating_provider.dart';
+import '../providers/profile_provider.dart';
 
 /// ============================================================
 /// 프로필 화면 (V2 리팩토링 - 반려동물 전용)
@@ -44,7 +56,7 @@ class ProfileScreen extends ConsumerWidget {
         slivers: [
           // ===== 프로필 헤더 =====
           SliverAppBar(
-            expandedHeight: 260,
+            expandedHeight: 330,
             pinned: true,
             backgroundColor: AppColors.primary,
             leading: IconButton(
@@ -52,7 +64,7 @@ class ProfileScreen extends ConsumerWidget {
               onPressed: () => context.pop(),
             ),
             flexibleSpace: FlexibleSpaceBar(
-              background: _buildProfileHeader(context, currentUser),
+              background: _buildProfileHeader(context, ref, currentUser),
             ),
             actions: [
               // 설정 버튼 (우상단 톱니바퀴)
@@ -86,12 +98,12 @@ class ProfileScreen extends ConsumerWidget {
                 // 활동 통계
                 const MingrrSectionHeader(title: '활동 기록'),
                 const SizedBox(height: AppSizes.gapM),
-                _buildActivityStats(),
+                _buildActivityStats(ref),
                 
                 const SizedBox(height: AppSizes.gapXL),
                 
                 // 메뉴 목록
-                _buildMenuList(context),
+                _buildMenuList(context, ref),
                 
                 const SizedBox(height: AppSizes.gapXXL),
               ]),
@@ -103,7 +115,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   /// 프로필 헤더 (보호자 사진 선택적 업로드 가능)
-  Widget _buildProfileHeader(BuildContext context, AsyncValue<dynamic> currentUser) {
+  Widget _buildProfileHeader(BuildContext context, WidgetRef ref, AsyncValue<dynamic> currentUser) {
     return Container(
       decoration: const BoxDecoration(
         gradient: AppColors.warmGradient,
@@ -115,61 +127,80 @@ class ProfileScreen extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // 프로필 이미지 (선택적 - 없으면 기본 아이콘)
-              Stack(
-                children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.15),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
+              GestureDetector(
+                onTap: () => _showProfileImagePicker(context, ref),
+                child: Stack(
+                  children: [
+                    currentUser.when(
+                      data: (user) => _buildProfileImage(user?.profileImageUrl),
+                      loading: () => _buildProfileImage(null),
+                      error: (_, __) => _buildProfileImage(null),
                     ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 50,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: const Icon(
-                        Icons.camera_alt,
-                        size: 16,
-                        color: Colors.white,
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Icon(
+                          Icons.camera_alt,
+                          size: 16,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
               const SizedBox(height: AppSizes.gapM),
               
-              // 닉네임
+              // 닉네임 + 수정 버튼
               currentUser.when(
-                data: (user) => Text(
-                  user?.nickname ?? '사용자',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
+                data: (user) => Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      user?.nickname ?? '사용자',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => _showNicknameEditDialog(context, ref, user),
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.5),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.edit,
+                          size: 16,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 loading: () => const Text('로딩 중...'),
                 error: (_, __) => const Text('사용자'),
               ),
               const SizedBox(height: 8),
               
-              // 꼬순내지수
-              const KkosunnaeScoreMedium(score: 50.0),
+              // 꼬순내지수 (개선된 디자인)
+              currentUser.when(
+                data: (user) => _buildKkosunnaeScore(user?.kkosunnaeScore ?? 50.0),
+                loading: () => const SizedBox(),
+                error: (_, __) => const SizedBox(),
+              ),
               const SizedBox(height: AppSizes.gapM),
               
               // 프로필 수정 버튼
@@ -335,36 +366,37 @@ class ProfileScreen extends ConsumerWidget {
       child: MingrrCard(
         margin: EdgeInsets.zero,
         padding: const EdgeInsets.all(AppSizes.paddingS),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PetEditScreen(petId: pet.id),
+            ),
+          );
+        },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 프로필 이미지
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PetEditScreen(petId: pet.id),
-                  ),
-                );
-              },
-              child: Stack(
-                children: [
-                  const MingrrAvatar(size: 55),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(
-                        color: AppColors.success,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.verified, size: 12, color: Colors.white),
+            // 프로필 이미지 (대표사진 우선)
+            Stack(
+              children: [
+                MingrrAvatar(
+                  size: 55,
+                  imageUrl: _getPetPrimaryPhotoUrl(pet),
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      color: AppColors.success,
+                      shape: BoxShape.circle,
                     ),
+                    child: const Icon(Icons.verified, size: 12, color: Colors.white),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
             const SizedBox(height: AppSizes.gapS),
             Text(
@@ -415,21 +447,63 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  /// 활동 통계
-  Widget _buildActivityStats() {
-    return MingrrCard(
-      margin: EdgeInsets.zero,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildStatItem('매칭', '12'),
-          _buildStatDivider(),
-          _buildStatItem('산책', '28회'),
-          _buildStatDivider(),
-          _buildStatItem('거래', '5'),
-          _buildStatDivider(),
-          _buildStatItem('모임', '3'),
-        ],
+  /// 반려동물 대표사진 URL 가져오기
+  String? _getPetPrimaryPhotoUrl(PetModel pet) {
+    if (pet.photoUrls.isNotEmpty && pet.primaryPhotoIndex < pet.photoUrls.length) {
+      return pet.photoUrls[pet.primaryPhotoIndex];
+    }
+    return pet.profileImageUrl;
+  }
+
+  /// 활동 통계 (Firebase 연동)
+  Widget _buildActivityStats(WidgetRef ref) {
+    final statsAsync = ref.watch(userActivityStatsProvider);
+    
+    return statsAsync.when(
+      data: (stats) => MingrrCard(
+        margin: EdgeInsets.zero,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildStatItem('매칭', '${stats['matches'] ?? 0}'),
+            _buildStatDivider(),
+            _buildStatItem('산책', '${stats['walks'] ?? 0}회'),
+            _buildStatDivider(),
+            _buildStatItem('거래', '${stats['transactions'] ?? 0}'),
+            _buildStatDivider(),
+            _buildStatItem('모임', '${stats['groups'] ?? 0}'),
+          ],
+        ),
+      ),
+      loading: () => MingrrCard(
+        margin: EdgeInsets.zero,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildStatItem('매칭', '-'),
+            _buildStatDivider(),
+            _buildStatItem('산책', '-'),
+            _buildStatDivider(),
+            _buildStatItem('거래', '-'),
+            _buildStatDivider(),
+            _buildStatItem('모임', '-'),
+          ],
+        ),
+      ),
+      error: (_, __) => MingrrCard(
+        margin: EdgeInsets.zero,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildStatItem('매칭', '0'),
+            _buildStatDivider(),
+            _buildStatItem('산책', '0회'),
+            _buildStatDivider(),
+            _buildStatItem('거래', '0'),
+            _buildStatDivider(),
+            _buildStatItem('모임', '0'),
+          ],
+        ),
       ),
     );
   }
@@ -468,15 +542,52 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   /// 메뉴 목록
-  Widget _buildMenuList(BuildContext context) {
+  Widget _buildMenuList(BuildContext context, WidgetRef ref) {
+    final likesCount = ref.watch(receivedLikesCountProvider);
+    
     final menus = [
-      {'icon': Icons.favorite, 'label': '받은 좋아요', 'badge': '3'},
-      {'icon': Icons.history, 'label': '활동 내역', 'badge': null},
-      {'icon': Icons.bookmark, 'label': '찜한 목록', 'badge': null},
-      {'icon': Icons.receipt_long, 'label': '거래 내역', 'badge': null},
-      {'icon': Icons.notifications, 'label': '알림 설정', 'badge': null},
-      {'icon': Icons.help_outline, 'label': '고객센터', 'badge': null},
-      {'icon': Icons.info_outline, 'label': '앱 정보', 'badge': null},
+      {
+        'icon': Icons.favorite,
+        'label': '받은 좋아요',
+        'badge': likesCount > 0 ? '$likesCount' : null,
+        'screen': const ReceivedLikesScreen(),
+      },
+      {
+        'icon': Icons.history,
+        'label': '활동 내역',
+        'badge': null,
+        'screen': const ActivityHistoryScreen(),
+      },
+      {
+        'icon': Icons.bookmark,
+        'label': '찜한 목록',
+        'badge': null,
+        'screen': const WishlistScreen(),
+      },
+      {
+        'icon': Icons.receipt_long,
+        'label': '거래 내역',
+        'badge': null,
+        'screen': const TransactionHistoryScreen(),
+      },
+      {
+        'icon': Icons.notifications,
+        'label': '알림 설정',
+        'badge': null,
+        'screen': null,
+      },
+      {
+        'icon': Icons.help_outline,
+        'label': '고객센터',
+        'badge': null,
+        'screen': null,
+      },
+      {
+        'icon': Icons.info_outline,
+        'label': '앱 정보',
+        'badge': null,
+        'screen': null,
+      },
     ];
 
     return MingrrCard(
@@ -531,7 +642,17 @@ class ProfileScreen extends ConsumerWidget {
                   ],
                 ),
                 onTap: () {
-                  // TODO: 각 메뉴 화면으로 이동
+                  final screen = menu['screen'] as Widget?;
+                  if (screen != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => screen),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('준비 중인 기능입니다')),
+                    );
+                  }
                 },
               ),
               if (!isLast)
@@ -753,5 +874,277 @@ class ProfileScreen extends ConsumerWidget {
       return '${age - 1}살';
     }
     return '${age}살';
+  }
+  
+  /// 꼬순내지수 디자인 (공통 위젯 사용)
+  Widget _buildKkosunnaeScore(double score) {
+    return KkosunnaeScoreMedium(score: score);
+  }
+  
+  /// 프로필 이미지 위젯
+  Widget _buildProfileImage(String? imageUrl) {
+    // 대표 아이콘인 경우
+    if (imageUrl != null && imageUrl.startsWith('default_avatar:')) {
+      final avatarId = imageUrl.replaceFirst('default_avatar:', '');
+      final avatar = personDefaultAvatars.firstWhere(
+        (a) => a.id == avatarId,
+        orElse: () => personDefaultAvatars.first,
+      );
+      return Container(
+        width: 100,
+        height: 100,
+        decoration: BoxDecoration(
+          color: avatar.backgroundColor,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 3),
+        ),
+        child: Icon(
+          avatar.icon,
+          size: 50,
+          color: avatar.iconColor,
+        ),
+      );
+    }
+    
+    // 실제 이미지 URL인 경우
+    if (imageUrl != null && imageUrl.isNotEmpty) {
+      return Container(
+        width: 100,
+        height: 100,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 3),
+        ),
+        child: ClipOval(
+          child: Image.network(
+            imageUrl,
+            width: 100,
+            height: 100,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _buildDefaultProfileImage(),
+          ),
+        ),
+      );
+    }
+    
+    // 기본 이미지
+    return _buildDefaultProfileImage();
+  }
+  
+  Widget _buildDefaultProfileImage() {
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.15),
+        shape: BoxShape.circle,
+        border: Border.all(color: Colors.white, width: 3),
+      ),
+      child: const Icon(
+        Icons.person,
+        size: 50,
+        color: AppColors.primary,
+      ),
+    );
+  }
+  
+  /// 프로필 이미지 피커 표시
+  Future<void> _showProfileImagePicker(BuildContext context, WidgetRef ref) async {
+    final currentUser = ref.read(currentUserProvider).valueOrNull;
+    final authUser = ref.read(authStateProvider).valueOrNull;
+    
+    if (authUser == null) return;
+    
+    final result = await showImagePickerSheet(
+      context,
+      title: '프로필 이미지 선택',
+      avatarType: DefaultAvatarType.person,
+      currentImageUrl: currentUser?.profileImageUrl,
+    );
+    
+    if (result != null) {
+      try {
+        String? uploadedImageUrl;
+        
+        if (result.cleared) {
+          uploadedImageUrl = null;
+        } else if (result.hasDefaultAvatar) {
+          uploadedImageUrl = 'default_avatar:${result.defaultAvatar!.id}';
+        } else if (result.hasImage) {
+          // 이미지 업로드
+          final storageService = StorageService();
+          if (kIsWeb) {
+            final bytes = await result.imageFile!.readAsBytes();
+            uploadedImageUrl = await storageService.uploadUserProfileImageBytes(authUser.uid, bytes);
+          } else {
+            final file = File(result.imageFile!.path);
+            uploadedImageUrl = await storageService.uploadUserProfileImage(authUser.uid, file);
+          }
+        }
+        
+        // Firestore 업데이트
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(authUser.uid)
+            .update({
+              'profileImageUrl': uploadedImageUrl,
+              'updatedAt': FieldValue.serverTimestamp(),
+            });
+        
+        // Provider 리프레시
+        ref.invalidate(currentUserProvider);
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('프로필 이미지가 변경되었습니다!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('이미지 변경 실패: $e'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    }
+  }
+  
+  /// 닉네임 수정 다이얼로그
+  void _showNicknameEditDialog(BuildContext context, WidgetRef ref, dynamic user) {
+    if (user == null) return;
+    
+    // 30일 제한 체크
+    final lastChanged = user.nicknameChangedAt;
+    if (lastChanged != null) {
+      final daysSinceChange = DateTime.now().difference(lastChanged).inDays;
+      if (daysSinceChange < 30) {
+        final daysRemaining = 30 - daysSinceChange;
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Row(
+              children: [
+                Icon(Icons.info_outline, color: AppColors.warning),
+                SizedBox(width: 8),
+                Text('닉네임 변경 제한'),
+              ],
+            ),
+            content: Text(
+              '닉네임은 30일에 한 번만 변경할 수 있습니다.\n\n$daysRemaining일 후에 다시 변경할 수 있습니다.',
+              style: const TextStyle(height: 1.5),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('확인'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+    }
+    
+    final controller = TextEditingController(text: user.nickname);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('닉네임 변경'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                hintText: '새 닉네임 입력',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+              maxLength: 10,
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.warning.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.info_outline, size: 16, color: AppColors.warning),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '닉네임은 30일에 한 번만 변경할 수 있습니다.',
+                      style: TextStyle(fontSize: 12, color: AppColors.warning),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newNickname = controller.text.trim();
+              if (newNickname.isEmpty || newNickname == user.nickname) {
+                Navigator.pop(context);
+                return;
+              }
+              
+              try {
+                // Firebase 업데이트
+                final firestore = FirebaseFirestore.instance;
+                await firestore.collection('users').doc(user.id).update({
+                  'nickname': newNickname,
+                  'nicknameChangedAt': Timestamp.now(),
+                });
+                
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('닉네임이 변경되었습니다!'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('닉네임 변경 실패: $e'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('변경', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 }

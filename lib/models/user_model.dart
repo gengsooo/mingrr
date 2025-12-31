@@ -93,6 +93,9 @@ class UserModel extends Equatable {
   
   /// 받은 평가 수
   final int ratingCount;
+  
+  /// 닉네임 마지막 수정일 (30일 제한용)
+  final DateTime? nicknameChangedAt;
 
   const UserModel({
     required this.id,
@@ -122,6 +125,7 @@ class UserModel extends Equatable {
     this.isPremium = false,
     this.kkosunnaeScore = 50.0,
     this.ratingCount = 0,
+    this.nicknameChangedAt,
   });
 
   /// 나이 계산 (생년월일 기준)
@@ -137,10 +141,9 @@ class UserModel extends Equatable {
   }
 
   /// Firestore 문서에서 UserModel 생성
-  factory UserModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory UserModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
     return UserModel(
-      id: doc.id,
+      id: id ?? data['id'] ?? '',
       email: data['email'],
       phoneNumber: data['phoneNumber'],
       nickname: data['nickname'] ?? '사용자',
@@ -182,6 +185,9 @@ class UserModel extends Equatable {
       isPremium: data['isPremium'] ?? false,
       kkosunnaeScore: (data['kkosunnaeScore'] ?? 50.0).toDouble(),
       ratingCount: data['ratingCount'] ?? 0,
+      nicknameChangedAt: data['nicknameChangedAt'] != null
+          ? (data['nicknameChangedAt'] as Timestamp).toDate()
+          : null,
     );
   }
 
@@ -216,6 +222,9 @@ class UserModel extends Equatable {
       'isPremium': isPremium,
       'kkosunnaeScore': kkosunnaeScore,
       'ratingCount': ratingCount,
+      'nicknameChangedAt': nicknameChangedAt != null
+          ? Timestamp.fromDate(nicknameChangedAt!)
+          : null,
     };
   }
 
@@ -248,6 +257,7 @@ class UserModel extends Equatable {
     bool? isPremium,
     double? kkosunnaeScore,
     int? ratingCount,
+    DateTime? nicknameChangedAt,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -277,6 +287,7 @@ class UserModel extends Equatable {
       isPremium: isPremium ?? this.isPremium,
       kkosunnaeScore: kkosunnaeScore ?? this.kkosunnaeScore,
       ratingCount: ratingCount ?? this.ratingCount,
+      nicknameChangedAt: nicknameChangedAt ?? this.nicknameChangedAt,
     );
   }
 

@@ -69,6 +69,22 @@ class FirebaseService {
   /// 일정 컬렉션
   CollectionReference<Map<String, dynamic>> get schedulesCollection =>
       firestore.collection('schedules');
+  
+  /// 알바 컬렉션
+  CollectionReference<Map<String, dynamic>> get jobsCollection =>
+      firestore.collection('jobs');
+  
+  /// 산책 기록 컬렉션
+  CollectionReference<Map<String, dynamic>> get walksCollection =>
+      firestore.collection('walks');
+  
+  /// 신고 컬렉션
+  CollectionReference<Map<String, dynamic>> get reportsCollection =>
+      firestore.collection('reports');
+  
+  /// 평가(꼬순내지수) 컬렉션
+  CollectionReference<Map<String, dynamic>> get ratingsCollection =>
+      firestore.collection('ratings');
 
   // ===== 메시지 서브컬렉션 접근 =====
   
