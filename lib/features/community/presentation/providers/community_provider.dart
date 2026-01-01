@@ -31,3 +31,6 @@ final groupDetailProvider = FutureProvider.autoDispose.family<GroupModel?, Strin
   final firestoreService = ref.watch(_firestoreServiceProvider);
   return firestoreService.getGroup(groupId);
 });
+
+// 소모임 상세 (alias)
+final groupByIdProvider = groupDetailProvider;

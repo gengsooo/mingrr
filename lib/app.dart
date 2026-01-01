@@ -18,10 +18,12 @@ import 'features/auth/presentation/screens/login_screen.dart';  // 로그인 화
 // 각 기능별 화면들
 import 'features/home/presentation/screens/home_screen.dart';  // 홈 화면
 import 'features/dating/presentation/screens/dating_screen.dart';  // 데이팅 화면
+import 'features/dating/presentation/screens/pet_detail_screen.dart';  // 반려동물 상세 화면
 import 'features/walk/presentation/screens/walk_screen.dart';  // 산책 화면
 import 'features/marketplace/presentation/screens/marketplace_screen.dart';  // 마켓 화면
 import 'features/health/presentation/screens/health_screen.dart';  // 건강수첩 화면
 import 'features/community/presentation/screens/community_screen.dart';  // 소모임 화면
+import 'features/community/presentation/screens/group_detail_screen.dart';  // 소모임 상세 화면
 import 'features/chat/presentation/screens/chat_list_screen.dart';  // 채팅 목록 화면
 import 'features/profile/presentation/screens/profile_screen.dart';  // 프로필 화면
 import 'features/dev/dev_tools_screen.dart';  // 개발자 도구 화면
@@ -152,10 +154,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ChatListScreen(),
           ),
           
-          // 5️⃣ 프로필 화면 (경로: '/profile')
+          // 5️⃣ 소모임 화면 (경로: '/community') - 바텀바에서 접근
           GoRoute(
-            path: '/profile',
-            builder: (context, state) => const ProfileScreen(),
+            path: '/community',
+            builder: (context, state) => const CommunityScreen(),
           ),
         ],
       ),
@@ -177,10 +179,28 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const HealthScreen(),
       ),
       
-      // 소모임 화면 (경로: '/community')
+      // 프로필 화면 (경로: '/profile') - 독립 화면
       GoRoute(
-        path: '/community',
-        builder: (context, state) => const CommunityScreen(),
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
+      
+      // 반려동물 상세 화면 (경로: '/dating/detail/:id')
+      GoRoute(
+        path: '/dating/detail/:id',
+        builder: (context, state) {
+          final petId = state.pathParameters['id'] ?? '';
+          return PetDetailScreen(petId: petId);
+        },
+      ),
+      
+      // 소모임 상세 화면 (경로: '/community/group/:id')
+      GoRoute(
+        path: '/community/group/:id',
+        builder: (context, state) {
+          final groupId = state.pathParameters['id'] ?? '';
+          return GroupDetailScreen(groupId: groupId);
+        },
       ),
       
       // 개발자 도구 화면 (경로: '/dev-tools')
@@ -326,15 +346,16 @@ class MingrrBottomNavBar extends StatelessWidget {
                 badge: 3,  // 배지 숫자 (읽지 않은 메시지 3개)
               ),
               
-              // 5️⃣ 프로필 버튼
+              // 5️⃣ 소모임 버튼
               _buildNavItem(
                 context: context,
-                icon: Icons.person_outline,
-                activeIcon: Icons.person,
-                label: '프로필',
+                icon: Icons.groups_outlined,
+                activeIcon: Icons.groups,
+                label: '소모임',
                 index: 4,
                 currentIndex: currentIndex,
-                route: '/profile',
+                route: '/community',
+                color: AppColors.community,
               ),
             ],
           ),
@@ -469,9 +490,9 @@ class MingrrBottomNavBar extends StatelessWidget {
         return 2;
       case '/chat':  // 채팅 화면
         return 3;
-      case '/profile':  // 프로필 화면
+      case '/community':  // 소모임 화면
         return 4;
-      default:  // 그 외의 경우 (산책, 건강수첩, 소모임 등)
+      default:  // 그 외의 경우 (산책, 건강수첩, 프로필 등)
         return 0;  // 기본값으로 홈(0) 반환
     }
   }

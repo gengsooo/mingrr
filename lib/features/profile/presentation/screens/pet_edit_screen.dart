@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
+import '../../../../core/services/image_crop_service.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/image_picker_sheet.dart';
@@ -835,6 +836,26 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       );
       
       if (image != null) {
+        // 웹에서는 크롭 미지원, 모바일에서만 크롭 적용
+        if (!kIsWeb) {
+          final croppedPath = await ImageCropService().cropImage(
+            imagePath: image.path,
+            style: ImageCropStyle.circle,
+            context: context,
+            maxWidth: 800,
+            maxHeight: 800,
+            compressQuality: 85,
+          );
+          
+          if (croppedPath != null) {
+            setState(() {
+              _selectedProfileImage = XFile(croppedPath);
+            });
+            return;
+          }
+        }
+        
+        // 웹이거나 크롭 취소 시 원본 사용
         setState(() {
           _selectedProfileImage = image;
         });
@@ -857,6 +878,33 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       );
       
       if (images.isNotEmpty) {
+        // 웹에서는 크롭 미지원, 모바일에서만 크롭 적용
+        if (!kIsWeb) {
+          final List<XFile> croppedImages = [];
+          for (final image in images) {
+            final croppedPath = await ImageCropService().cropImage(
+              imagePath: image.path,
+              style: ImageCropStyle.square,
+              context: context,
+              maxWidth: 800,
+              maxHeight: 800,
+              compressQuality: 85,
+            );
+            
+            if (croppedPath != null) {
+              croppedImages.add(XFile(croppedPath));
+            }
+          }
+          
+          if (croppedImages.isNotEmpty) {
+            setState(() {
+              _selectedAdditionalPhotos.addAll(croppedImages);
+            });
+            return;
+          }
+        }
+        
+        // 웹이거나 크롭 취소 시 원본 사용
         setState(() {
           _selectedAdditionalPhotos.addAll(images);
         });

@@ -75,9 +75,10 @@ class HomeScreen extends ConsumerWidget {
                   const SizedBox(height: AppSizes.gapXL),
                   
                   // AI 추천 친구
-                  const MingrrSectionHeader(
+                  MingrrSectionHeader(
                     title: 'AI 추천 친구',
                     actionText: '더보기',
+                    onActionTap: () => context.go('/dating'),
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   allPetsAsync.when(
@@ -88,9 +89,10 @@ class HomeScreen extends ConsumerWidget {
                   const SizedBox(height: AppSizes.gapXL),
                   
                   // 인기 소모임
-                  const MingrrSectionHeader(
+                  MingrrSectionHeader(
                     title: '인기 소모임',
                     actionText: '더보기',
+                    onActionTap: () => context.push('/community'),
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   _buildPopularGroupsSection(context),
@@ -285,20 +287,18 @@ class HomeScreen extends ConsumerWidget {
                             width: 60,
                             height: 60,
                             decoration: BoxDecoration(
-                              color: isSelected 
-                                  ? AppColors.primary 
-                                  : AppColors.primaryLight,
+                              color: AppColors.primaryLight,
                               shape: BoxShape.circle,
                               border: isSelected 
                                   ? Border.all(color: AppColors.primary, width: 3)
                                   : null,
+                              image: _getPetProfileImage(pet),
                             ),
-                            child: const Center(
-                              child: Text(
-                                '🐶',
-                                style: TextStyle(fontSize: 28),
-                              ),
-                            ),
+                            child: _getPetProfileImage(pet) == null
+                                ? const Center(
+                                    child: Text('🐶', style: TextStyle(fontSize: 28)),
+                                  )
+                                : null,
                           ),
                           // 대표 반려동물 표시
                           if (pet.isPrimary)
@@ -321,7 +321,7 @@ class HomeScreen extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      // 이름
+                      // 이름만 표시
                       Text(
                         pet.name,
                         style: TextStyle(
@@ -330,16 +330,6 @@ class HomeScreen extends ConsumerWidget {
                           color: isSelected 
                               ? AppColors.primary 
                               : AppColors.textPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      // 품종
-                      Text(
-                        pet.breed ?? '품종 미상',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: AppColors.textSecondary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -708,9 +698,7 @@ class HomeScreen extends ConsumerWidget {
           final score = 95 - (index * 5); // 임시 궁합 점수
           
           return GestureDetector(
-            onTap: () {
-              // TODO: 반려동물 상세 프로필로 이동 구현 예정
-            },
+            onTap: () => context.push('/dating/detail/${pet.id}'),
             child: Container(
               width: 140,
               margin: const EdgeInsets.only(right: AppSizes.gapM),
@@ -720,23 +708,7 @@ class HomeScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Stack(
-                      children: [
-                        _buildPetProfileImage(pet, 60),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
-                              color: AppColors.success,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.verified, size: 14, color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
+                    _buildPetProfileImage(pet, 60),
                     const SizedBox(height: AppSizes.gapS),
                     Text(
                       pet.name,
@@ -876,9 +848,7 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildGroupCard(BuildContext context, GroupModel group) {
     return MingrrCard(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
-      onTap: () {
-        // TODO: 소모임 상세 화면으로 이동 구현 예정
-      },
+      onTap: () => context.push('/community/group/${group.id}'),
       child: Row(
         children: [
           Container(
@@ -951,5 +921,28 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  /// 반려동물 프로필 이미지 가져오기
+  DecorationImage? _getPetProfileImage(PetModel pet) {
+    // 대표 사진이 있으면 사용
+    if (pet.photoUrls.isNotEmpty && pet.primaryPhotoIndex < pet.photoUrls.length) {
+      return DecorationImage(
+        image: NetworkImage(pet.photoUrls[pet.primaryPhotoIndex]),
+        fit: BoxFit.cover,
+      );
+    }
+    // 프로필 이미지 URL이 있으면 사용
+    if (pet.profileImageUrl != null && pet.profileImageUrl!.isNotEmpty) {
+      // 기본 아바타인 경우 null 반환
+      if (pet.profileImageUrl!.startsWith('default_avatar:')) {
+        return null;
+      }
+      return DecorationImage(
+        image: NetworkImage(pet.profileImageUrl!),
+        fit: BoxFit.cover,
+      );
+    }
+    return null;
   }
 }

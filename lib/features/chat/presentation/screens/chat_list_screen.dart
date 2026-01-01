@@ -984,26 +984,33 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   /// 강아지 프로필 모달 표시
   void _showDogProfile() {
+    // TODO: 실제 Firebase 데이터로 교체 필요
     showDogProfileModal(
       context,
       dogId: widget.chatId,
       dogName: widget.chatName,
-      breed: '골든 리트리버',
+      breed: '몰라용',
       age: 3,
       gender: 'male',
-      weight: 28.5,
-      introduction: '안녕하세요! 저는 뽀삐예요. 사람을 정말 좋아하고 다른 강아지들과도 잘 어울려요. 산책을 좋아해서 매일 2번씩 나가고 있어요!',
-      traits: ['활발함', '친화적', '사람 좋아함', '강아지 좋아함'],
+      weight: 5.0,
+      introduction: '안녕하세요! 저는 강쥐예요.',
+      traits: ['활발함', '친화적', '사람 좋아함', '강아지 좋아함', '산책 좋아함'],
+      photoUrls: [
+        'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400',
+        'https://images.unsplash.com/photo-1552053831-71594a27632d?w=400',
+        'https://images.unsplash.com/photo-1518717758536-85ae29035b6d?w=400',
+      ],
+      profileImageUrl: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400',
       likeCount: 42,
       isIdentityVerified: true,
       isPetVerified: true,
       isLocationVerified: false,
       guardianInfo: const GuardianInfo(
         id: 'guardian_1',
-        nickname: '뽀삐맘',
-        kkosunnaeScore: 65.0,
+        nickname: '보호자',
+        kkosunnaeScore: 50.0,
         gender: GuardianGender.female,
-        age: 28,
+        age: 30,
         isIdentityVerified: true,
         isPetVerified: true,
         isLocationVerified: false,

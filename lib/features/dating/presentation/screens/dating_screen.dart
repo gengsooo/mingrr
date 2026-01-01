@@ -9,7 +9,7 @@ import '../../../../core/widgets/trait_badge.dart';
 import '../../../../core/widgets/verification_badge.dart';
 import '../../../../models/pet_model.dart';
 import '../providers/dating_provider.dart';
-import 'dog_detail_screen.dart';
+import 'pet_detail_screen.dart';
 
 /// ============================================================
 /// 데이팅 화면 (V2 리팩토링 - 강아지 전용)
@@ -132,12 +132,12 @@ class DatingScreen extends ConsumerWidget {
   }
 
   /// 상세화면으로 이동
-  void _navigateToDetail(BuildContext context, String dogId, {bool isBreeding = false}) {
+  void _navigateToDetail(BuildContext context, String petId, {bool isBreeding = false}) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DogDetailScreen(
-          dogId: dogId,
+        builder: (context) => PetDetailScreen(
+          petId: petId,
           isBreeding: isBreeding,
         ),
       ),
@@ -1480,7 +1480,7 @@ class DatingScreen extends ConsumerWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // 배경 이미지 (플레이스홀더)
+              // 배경 이미지
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -1491,10 +1491,18 @@ class DatingScreen extends ConsumerWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
+                  image: _getPetPrimaryPhotoUrl(pet) != null
+                      ? DecorationImage(
+                          image: NetworkImage(_getPetPrimaryPhotoUrl(pet)!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
-                child: const Center(
-                  child: Text('🐶', style: TextStyle(fontSize: 80)),
-                ),
+                child: _getPetPrimaryPhotoUrl(pet) == null
+                    ? const Center(
+                        child: Text('🐶', style: TextStyle(fontSize: 80)),
+                      )
+                    : null,
               ),
               
               // 그라데이션 오버레이

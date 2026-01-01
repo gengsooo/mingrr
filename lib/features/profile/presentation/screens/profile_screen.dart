@@ -61,7 +61,13 @@ class ProfileScreen extends ConsumerWidget {
             backgroundColor: AppColors.primary,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
-              onPressed: () => context.pop(),
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.go('/');
+                }
+              },
             ),
             flexibleSpace: FlexibleSpaceBar(
               background: _buildProfileHeader(context, ref, currentUser),
@@ -358,8 +364,6 @@ class ProfileScreen extends ConsumerWidget {
 
   /// 강아지 카드 (V2: 건강수첩 버튼 포함)
   Widget _buildPetCard(BuildContext context, pet) {
-    final age = _calculateAge(pet.birthDate);
-
     return Container(
       width: 150,
       margin: const EdgeInsets.only(right: AppSizes.gapM),
@@ -406,35 +410,28 @@ class ProfileScreen extends ConsumerWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            Text(
-              '${pet.breed ?? '품종 미상'} · $age',
-              style: const TextStyle(
-                fontSize: 10,
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
             const SizedBox(height: AppSizes.gapS),
-            // 건강수첩 버튼
+            // 건강수첩 버튼 (확대)
             GestureDetector(
               onTap: () => context.push('/health'),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
                   color: AppColors.health.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.health.withOpacity(0.3)),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.medical_services, size: 12, color: AppColors.health),
-                    SizedBox(width: 4),
+                    Icon(Icons.medical_services, size: 16, color: AppColors.health),
+                    SizedBox(width: 6),
                     Text(
                       '건강수첩',
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 12,
                         color: AppColors.health,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],

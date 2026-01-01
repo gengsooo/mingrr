@@ -14,30 +14,30 @@ import '../../../../models/user_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 
 /// ============================================================
-/// 강아지 상세 화면
+/// 반려동물 상세 화면
 /// 
 /// 데이팅(AI추천/근처검색) 및 교배찾기에서 사용
-/// - 강아지 정보 (성별, 나이, 특성 등)
+/// - 반려동물 정보 (성별, 나이, 특성 등)
 /// - 보호자 정보
 /// - 거리 정보
 /// - 데이트 신청 / 교배 신청 버튼
 /// ============================================================
 
-class DogDetailScreen extends ConsumerStatefulWidget {
-  final String dogId;
+class PetDetailScreen extends ConsumerStatefulWidget {
+  final String petId;
   final bool isBreeding; // true: 교배찾기, false: 데이팅
 
-  const DogDetailScreen({
+  const PetDetailScreen({
     super.key,
-    required this.dogId,
+    required this.petId,
     this.isBreeding = false,
   });
 
   @override
-  ConsumerState<DogDetailScreen> createState() => _DogDetailScreenState();
+  ConsumerState<PetDetailScreen> createState() => _PetDetailScreenState();
 }
 
-class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
+class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
   bool isLiked = false;
   int likeCount = 42;
   final FirebaseService _firebase = FirebaseService();
@@ -45,7 +45,7 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
   @override
   Widget build(BuildContext context) {
     // Firebase에서 실제 데이터 조회
-    final petAsync = ref.watch(petByIdProvider(widget.dogId));
+    final petAsync = ref.watch(petByIdProvider(widget.petId));
 
     return petAsync.when(
       data: (pet) {
@@ -94,12 +94,8 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
                   _buildIntroduction(pet),
                   const SizedBox(height: AppSizes.gapXL),
                   
-                  // 보호자 정보
-                  _buildOwnerInfo(context, pet),
-                  const SizedBox(height: AppSizes.gapXL),
-                  
-                  // 인증 배지
-                  _buildVerificationBadges(pet),
+                  // 보호자 정보 (인증 정보 포함)
+                  _buildOwnerInfoWithVerification(context, pet),
                   
                   // 하단 여백 (버튼 공간)
                   const SizedBox(height: 100),
@@ -147,7 +143,11 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
   /// 이미지 헤더 (사진 슬라이더)
   Widget _buildImageHeader(BuildContext context, PetModel pet) {
     final isMale = pet.gender == PetGender.male;
-    final photos = pet.photoUrls.isNotEmpty ? pet.photoUrls : <String>[];
+    // photoUrls가 비어있으면 profileImageUrl을 사용
+    List<String> photos = pet.photoUrls.isNotEmpty ? pet.photoUrls : <String>[];
+    if (photos.isEmpty && pet.profileImageUrl != null && pet.profileImageUrl!.isNotEmpty) {
+      photos = [pet.profileImageUrl!];
+    }
     
     return SliverAppBar(
       expandedHeight: 350,
@@ -178,7 +178,7 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
-        background: _DogPhotoSlider(
+        background: _PetPhotoSlider(
           photos: photos,
           isMale: isMale,
           distance: 1.2, // TODO: 실제 거리 계산
@@ -254,8 +254,8 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
     }
   }
 
-  /// 보호자 정보
-  Widget _buildOwnerInfo(BuildContext context, PetModel pet) {
+  /// 보호자 정보 (인증 정보 포함)
+  Widget _buildOwnerInfoWithVerification(BuildContext context, PetModel pet) {
     return FutureBuilder<UserModel?>(
       future: _getUserById(pet.ownerId),
       builder: (context, snapshot) {
@@ -282,67 +282,95 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
                   color: AppColors.background,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(
+                child: Column(
                   children: [
-                    // 아이콘
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: owner?.profileImageUrl != null
-                          ? ClipOval(
-                              child: Image.network(
-                                owner!.profileImageUrl!,
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const Icon(
-                                  Icons.person, size: 24, color: AppColors.primary),
-                              ),
-                            )
-                          : const Icon(Icons.person, size: 24, color: AppColors.primary),
-                    ),
-                    const SizedBox(width: 12),
-                    // 닉네임 + 성별/나이 + 꼬순내지수
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                nickname,
-                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                              ),
-                              const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: gender == '남성' 
-                                      ? Colors.blue.withOpacity(0.1) 
-                                      : Colors.pink.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Text(
-                                  '$gender · ${age}세',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: gender == '남성' ? Colors.blue : Colors.pink,
+                    Row(
+                      children: [
+                        // 아이콘
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: owner?.profileImageUrl != null
+                              ? ClipOval(
+                                  child: Image.network(
+                                    owner!.profileImageUrl!,
+                                    width: 50,
+                                    height: 50,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const Icon(
+                                      Icons.person, size: 24, color: AppColors.primary),
                                   ),
-                                ),
+                                )
+                              : const Icon(Icons.person, size: 24, color: AppColors.primary),
+                        ),
+                        const SizedBox(width: 12),
+                        // 닉네임 + 성별/나이 + 꼬순내지수
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    nickname,
+                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: gender == '남성' 
+                                          ? Colors.blue.withOpacity(0.1) 
+                                          : Colors.pink.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      '$gender · ${age}세',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: gender == '남성' ? Colors.blue : Colors.pink,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
+                              const SizedBox(height: 4),
+                              KkosunnaeScoreSmall(score: kkosunnaeScore),
                             ],
                           ),
-                          const SizedBox(height: 4),
-                          KkosunnaeScoreSmall(score: kkosunnaeScore),
-                        ],
-                      ),
+                        ),
+                        // 화살표
+                        const Icon(Icons.chevron_right, color: AppColors.textHint),
+                      ],
                     ),
-                    // 화살표
-                    const Icon(Icons.chevron_right, color: AppColors.textHint),
+                    // 인증 배지 (소형)
+                    const SizedBox(height: 12),
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildSmallVerificationBadge(
+                          icon: Icons.verified_user_outlined,
+                          label: '본인인증',
+                          isVerified: owner?.isIdentityVerified ?? false,
+                        ),
+                        _buildSmallVerificationBadge(
+                          icon: Icons.pets_outlined,
+                          label: '동물등록',
+                          isVerified: owner?.isVerified ?? false,
+                        ),
+                        _buildSmallVerificationBadge(
+                          icon: Icons.location_on_outlined,
+                          label: '위치인증',
+                          isVerified: owner?.isLocationVerified ?? false,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -350,6 +378,33 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
           ],
         );
       },
+    );
+  }
+
+  /// 소형 인증 배지
+  Widget _buildSmallVerificationBadge({
+    required IconData icon,
+    required String label,
+    required bool isVerified,
+  }) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          size: 20,
+          color: isVerified ? AppColors.success : AppColors.textHint,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: isVerified ? AppColors.textPrimary : AppColors.textHint,
+          ),
+        ),
+        if (!isVerified)
+          const Icon(Icons.close, size: 12, color: AppColors.textHint),
+      ],
     );
   }
 
@@ -390,6 +445,9 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
           ageString: '${_calculateAge(pet.birthDate)}살',
           likeCount: likeCount,
           profileImageUrl: _getPrimaryPhotoUrl(pet),
+          photoUrls: pet.photoUrls,
+          traits: pet.traits.map((t) => t.label).toList(),
+          introduction: pet.bio,
         ),
       ],
       activityInfo: const GuardianActivityInfo(
@@ -398,32 +456,6 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
         marketCount: 0,
         communityCount: 0,
       ),
-    );
-  }
-
-  /// 인증 배지
-  Widget _buildVerificationBadges(PetModel pet) {
-    return FutureBuilder<UserModel?>(
-      future: _getUserById(pet.ownerId),
-      builder: (context, snapshot) {
-        final owner = snapshot.data;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              '인증 현황',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            VerificationBadgeRow(
-              isIdentityVerified: owner?.isIdentityVerified ?? false,
-              isPetVerified: owner?.isVerified ?? false,
-              isLocationVerified: owner?.isLocationVerified ?? false,
-              useMediumSize: true,
-            ),
-          ],
-        );
-      },
     );
   }
 
@@ -589,7 +621,7 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
                 Navigator.pop(context);
                 showReportSheet(
                   context,
-                  targetId: widget.dogId,
+                  targetId: widget.petId,
                   targetName: '이 사용자',
                   targetType: ReportTargetType.user,
                 );
@@ -603,8 +635,8 @@ class _DogDetailScreenState extends ConsumerState<DogDetailScreen> {
   }
 }
 
-/// 강아지 사진 슬라이더 위젯
-class _DogPhotoSlider extends StatefulWidget {
+/// 반려동물 사진 슬라이더 위젯
+class _PetPhotoSlider extends StatefulWidget {
   final List<String> photos;
   final bool isMale;
   final double distance;
@@ -613,7 +645,7 @@ class _DogPhotoSlider extends StatefulWidget {
   final bool isBreeding;
   final String? profileImageUrl;
 
-  const _DogPhotoSlider({
+  const _PetPhotoSlider({
     required this.photos,
     required this.isMale,
     required this.distance,
@@ -624,10 +656,10 @@ class _DogPhotoSlider extends StatefulWidget {
   });
 
   @override
-  State<_DogPhotoSlider> createState() => _DogPhotoSliderState();
+  State<_PetPhotoSlider> createState() => _PetPhotoSliderState();
 }
 
-class _DogPhotoSliderState extends State<_DogPhotoSlider> {
+class _PetPhotoSliderState extends State<_PetPhotoSlider> {
   int _currentIndex = 0;
   bool _isLiked = false;
 

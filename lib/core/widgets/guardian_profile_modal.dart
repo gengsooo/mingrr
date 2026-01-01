@@ -75,6 +75,9 @@ class GuardianDogInfo {
   final String? breed;
   final String? ageString;
   final String? profileImageUrl;
+  final List<String> photoUrls;
+  final List<String> traits;
+  final String? introduction;
   final int likeCount;
 
   const GuardianDogInfo({
@@ -83,6 +86,9 @@ class GuardianDogInfo {
     this.breed,
     this.ageString,
     this.profileImageUrl,
+    this.photoUrls = const [],
+    this.traits = const [],
+    this.introduction,
     this.likeCount = 0,
   });
 }
@@ -421,7 +427,10 @@ class GuardianProfileModal extends StatelessWidget {
           breed: dog.breed,
           age: dog.ageString != null ? int.tryParse(dog.ageString!.replaceAll(RegExp(r'[^0-9]'), '')) : null,
           gender: 'male',
-          introduction: '안녕하세요! 저는 ${dog.name}예요.',
+          introduction: dog.introduction ?? '안녕하세요! 저는 ${dog.name}예요.',
+          traits: dog.traits,
+          photoUrls: dog.photoUrls,
+          profileImageUrl: dog.profileImageUrl,
           likeCount: dog.likeCount,
           guardianInfo: GuardianInfo(
             id: guardianId,
