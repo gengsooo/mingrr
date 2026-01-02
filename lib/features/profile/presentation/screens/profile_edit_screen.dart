@@ -309,7 +309,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             controller: _nicknameController,
             enabled: canChangeNickname,
             decoration: InputDecoration(
-              labelText: '닉네임 *',
+              labelText: '닉네임',
               hintText: '닉네임을 입력해주세요',
               border: const OutlineInputBorder(),
               helperText: canChangeNickname 

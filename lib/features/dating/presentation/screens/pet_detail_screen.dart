@@ -6,6 +6,7 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/widgets/verification_badge.dart';
 import '../../../../core/widgets/report_sheet.dart';
+import '../../../../core/widgets/request_sheet.dart';
 import '../../../../core/widgets/warmth_score.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
 import '../../../../core/widgets/trait_badge.dart';
@@ -46,6 +47,8 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
   Widget build(BuildContext context) {
     // Firebase에서 실제 데이터 조회
     final petAsync = ref.watch(petByIdProvider(widget.petId));
+    // 내 반려동물 목록 미리 로드 (신청 시 사용)
+    ref.watch(userPetsProvider);
 
     return petAsync.when(
       data: (pet) {
@@ -544,55 +547,46 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
     );
   }
 
-  /// 신청 확인 다이얼로그
+  /// 신청 확인 바텀시트 (공통 디자인)
   void _showRequestConfirmation(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(
-              widget.isBreeding ? Icons.pets : Icons.favorite,
-              color: AppColors.dating,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              widget.isBreeding ? '교배 신청' : '데이트 신청',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-        content: Text(
-          widget.isBreeding
-              ? '상대방에게 교배 신청을 보낼까요?\n수락되면 채팅이 시작됩니다.'
-              : '상대방에게 데이트 신청을 보낼까요?\n수락되면 채팅이 시작됩니다.',
-          style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(widget.isBreeding ? '교배 신청을 보냈어요! 🐶' : '데이트 신청을 보냈어요! 💕'),
-                  backgroundColor: AppColors.dating,
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
+    // 내 반려동물 목록 가져오기
+    final myPets = ref.read(userPetsProvider).valueOrNull ?? [];
+    
+    if (widget.isBreeding) {
+      showBreedingRequestSheet(
+        context,
+        myPets: myPets,
+        onConfirm: (message, {selectedPet}) {
+          // TODO: message, selectedPet을 DB에 저장
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(selectedPet != null 
+                  ? '${selectedPet.name}(으)로 교배 신청을 보냈어요! 🐶' 
+                  : '교배 신청을 보냈어요! 🐶'),
               backgroundColor: AppColors.dating,
             ),
-            child: const Text('신청하기', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
+          );
+        },
+      );
+    } else {
+      showDateRequestSheet(
+        context,
+        myPets: myPets,
+        onConfirm: (message, {selectedPet}) {
+          // TODO: message, selectedPet을 DB에 저장
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(selectedPet != null 
+                  ? '${selectedPet.name}(으)로 데이트 신청을 보냈어요! 💕' 
+                  : '데이트 신청을 보냈어요! 💕'),
+              backgroundColor: AppColors.dating,
+            ),
+          );
+        },
+      );
+    }
   }
 
   /// 더보기 옵션 메뉴

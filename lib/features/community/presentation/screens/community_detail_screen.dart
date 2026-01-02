@@ -16,13 +16,28 @@ import '../../../../core/widgets/guardian_profile_modal.dart';
 /// - 신고 기능
 /// ============================================================
 
-class CommunityDetailScreen extends StatelessWidget {
+class CommunityDetailScreen extends StatefulWidget {
   final String communityId;
+  final bool isJoined;
 
   const CommunityDetailScreen({
     super.key,
     required this.communityId,
+    this.isJoined = false,
   });
+
+  @override
+  State<CommunityDetailScreen> createState() => _CommunityDetailScreenState();
+}
+
+class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
+  late bool _isJoined;
+
+  @override
+  void initState() {
+    super.initState();
+    _isJoined = widget.isJoined;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +106,7 @@ class CommunityDetailScreen extends StatelessWidget {
         'warmthScore': 42.5,
       },
       'recentMembers': ['초코맘', '몽이아빠', '코코언니', '두부맘', '콩이아빠'],
-      'isJoined': false,
+      'isJoined': _isJoined,
     };
   }
 
@@ -519,6 +534,15 @@ class CommunityDetailScreen extends StatelessWidget {
               title: const Text('알림 끄기'),
               onTap: () => Navigator.pop(context),
             ),
+            if (_isJoined)
+              ListTile(
+                leading: const Icon(Icons.exit_to_app, color: AppColors.error),
+                title: const Text('모임 탈퇴하기', style: TextStyle(color: AppColors.error)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showLeaveConfirmDialog(context);
+                },
+              ),
             ListTile(
               leading: const Icon(Icons.report_outlined, color: AppColors.error),
               title: const Text('신고하기', style: TextStyle(color: AppColors.error)),
@@ -526,7 +550,7 @@ class CommunityDetailScreen extends StatelessWidget {
                 Navigator.pop(context);
                 showReportSheet(
                   context,
-                  targetId: communityId,
+                  targetId: widget.communityId,
                   targetName: '이 모임',
                   targetType: ReportTargetType.community,
                 );
@@ -535,6 +559,38 @@ class CommunityDetailScreen extends StatelessWidget {
             SizedBox(height: MediaQuery.of(context).padding.bottom),
           ],
         ),
+      ),
+    );
+  }
+
+  /// 탈퇴 확인 다이얼로그
+  void _showLeaveConfirmDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('모임 탈퇴'),
+        content: const Text('정말 이 모임에서 탈퇴하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('취소'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              setState(() => _isJoined = false);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('모임에서 탈퇴했습니다.'),
+                  backgroundColor: AppColors.community,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: const Text('탈퇴하기', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }

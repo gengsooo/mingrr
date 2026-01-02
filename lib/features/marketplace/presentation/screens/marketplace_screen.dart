@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/search_screen.dart';
 import '../../../../core/widgets/top_navigation.dart';
+import '../../../../core/widgets/profile_icon.dart';
 import '../../../../models/marketplace_model.dart';
 import '../providers/marketplace_provider.dart';
 import 'product_detail_screen.dart';
+import 'product_write_screen.dart';
 
 /// ============================================================
 /// 마켓플레이스 화면
@@ -74,9 +78,18 @@ class MarketplaceScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // TODO: 검색 화면
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SearchScreen(
+                    searchType: SearchType.market,
+                    accentColor: AppColors.market,
+                  ),
+                ),
+              );
             },
           ),
+          buildProfileAction(),
         ],
       ),
       body: Column(
@@ -189,7 +202,7 @@ class MarketplaceScreen extends ConsumerWidget {
           MaterialPageRoute(
             builder: (context) => ProductDetailScreen(
               productId: product.id,
-              isShare: isShare,
+              product: product,
             ),
           ),
         );
@@ -284,7 +297,7 @@ class MarketplaceScreen extends ConsumerWidget {
                     const Spacer(),
                     Row(
                       children: [
-                        const Icon(Icons.favorite_border, size: 14, color: AppColors.textHint),
+                        const Icon(Icons.bookmark_border, size: 14, color: AppColors.textHint),
                         const SizedBox(width: 2),
                         Text('${product.likeCount}', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
                         const SizedBox(width: 8),
@@ -325,7 +338,6 @@ class MarketplaceScreen extends ConsumerWidget {
           MaterialPageRoute(
             builder: (context) => ProductDetailScreen(
               productId: 'product_$index',
-              isShare: isShare,
             ),
           ),
         );
@@ -415,7 +427,7 @@ class MarketplaceScreen extends ConsumerWidget {
                     const Spacer(),
                     Row(
                       children: [
-                        const Icon(Icons.favorite_border, size: 14, color: AppColors.textHint),
+                        const Icon(Icons.bookmark_border, size: 14, color: AppColors.textHint),
                         const SizedBox(width: 2),
                         Text('${index + 3}', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
                         const SizedBox(width: 8),
@@ -434,14 +446,35 @@ class MarketplaceScreen extends ConsumerWidget {
     );
   }
 
-  /// 통합 글쓰기 모달
-  void _showAddSheet(BuildContext context, int tabIndex) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _MarketWriteSheet(initialType: tabIndex),
+  /// 통합 글쓰기 화면 이동
+  void _showAddSheet(BuildContext context, int tabIndex) async {
+    // 모든 탭에서 ProductWriteScreen 사용 (통합)
+    final ProductType initialType;
+    switch (tabIndex) {
+      case 0:
+        initialType = ProductType.sell;
+        break;
+      case 1:
+        initialType = ProductType.share;
+        break;
+      case 2:
+        initialType = ProductType.job;
+        break;
+      default:
+        initialType = ProductType.sell;
+    }
+    
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProductWriteScreen(initialType: initialType),
+      ),
     );
+    
+    // 등록 성공 시 목록 새로고침
+    if (result == true && context.mounted) {
+      // Provider가 autoDispose이므로 자동으로 새로고침됨
+    }
   }
 
   /// 알바 목록 (Firebase 연동)

@@ -7,8 +7,12 @@ import '../../../../core/widgets/top_navigation.dart';
 import '../../../../core/widgets/info_badge.dart';
 import '../../../../core/widgets/trait_badge.dart';
 import '../../../../core/widgets/verification_badge.dart';
+import '../../../../core/widgets/request_sheet.dart';
+import '../../../../core/widgets/profile_icon.dart';
 import '../../../../models/pet_model.dart';
 import '../providers/dating_provider.dart';
+import '../../../pet/presentation/providers/pet_provider.dart';
+import 'breeding_write_screen.dart';
 import 'pet_detail_screen.dart';
 
 /// ============================================================
@@ -48,6 +52,9 @@ final _breedingIdentityVerifiedFilterProvider = StateProvider<bool?>((ref) => nu
 final _breedingPetVerifiedFilterProvider = StateProvider<bool?>((ref) => null);
 final _breedingLocationVerifiedFilterProvider = StateProvider<bool?>((ref) => null);
 
+/// 교배찾기 검색어 필터
+final _breedingSearchQueryProvider = StateProvider<String>((ref) => '');
+
 class DatingScreen extends ConsumerWidget {
   const DatingScreen({super.key});
 
@@ -55,6 +62,8 @@ class DatingScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedTab = ref.watch(_selectedTabProvider);
     final distanceFilter = ref.watch(_distanceFilterProvider);
+    // 내 반려동물 목록 미리 로드 (교배 신청 시 사용)
+    ref.watch(userPetsProvider);
 
     // 탭 정의 (AI추천 / 근처 검색 / 교배찾기)
     final tabs = [
@@ -69,6 +78,7 @@ class DatingScreen extends ConsumerWidget {
         title: const Text('데이팅'),
         backgroundColor: Colors.white,
         elevation: 0,
+        actions: [buildProfileAction()],
       ),
       body: Column(
         children: [
@@ -151,6 +161,26 @@ class DatingScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 검색 바
+          Padding(
+            padding: const EdgeInsets.fromLTRB(AppSizes.paddingM, AppSizes.paddingS, AppSizes.paddingM, 0),
+            child: TextField(
+              onChanged: (value) => ref.read(_breedingSearchQueryProvider.notifier).state = value,
+              decoration: InputDecoration(
+                hintText: '제목으로 검색',
+                hintStyle: const TextStyle(fontSize: 14, color: AppColors.textHint),
+                prefixIcon: const Icon(Icons.search, color: AppColors.textHint, size: 20),
+                filled: true,
+                fillColor: AppColors.background,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           // 1행: 성별 + 품종
           _buildFilterRow(
             context, ref,
@@ -533,7 +563,7 @@ class DatingScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(AppSizes.paddingM),
           itemCount: filteredPets.length,
           itemBuilder: (context, index) {
-            return _buildBreedingPetCard(context, filteredPets[index], index);
+            return _buildBreedingPetCard(context, ref, filteredPets[index], index);
           },
         );
       },
@@ -543,7 +573,7 @@ class DatingScreen extends ConsumerWidget {
   }
   
   /// Firebase PetModel을 사용한 교배찾기 카드
-  Widget _buildBreedingPetCard(BuildContext context, PetModel pet, int index) {
+  Widget _buildBreedingPetCard(BuildContext context, WidgetRef ref, PetModel pet, int index) {
     final distance = (index + 1) * 1.5;
     final isMale = pet.gender == PetGender.male;
     
@@ -646,7 +676,7 @@ class DatingScreen extends ConsumerWidget {
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () => _showBreedingRequestSheet(context, pet.id),
+                        onPressed: () => _showBreedingRequestSheet(context, ref, pet.id),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.dating,
                           padding: const EdgeInsets.symmetric(vertical: 8),
@@ -836,302 +866,36 @@ class DatingScreen extends ConsumerWidget {
   }
 
   /// 교배 신청 바톰시트
-  void _showBreedingRequestSheet(BuildContext context, String petId) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(AppSizes.paddingL),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXL)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: AppSizes.gapXL),
-            const Icon(Icons.pets, size: 48, color: AppColors.dating),
-            const SizedBox(height: AppSizes.gapM),
-            const Text(
-              '교배 신청',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: AppSizes.gapS),
-            const Text(
-              '상대방에게 교배 신청을 보낼까요?\n수락되면 채팅이 시작됩니다.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: AppSizes.gapXL),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: AppColors.divider),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('취소'),
-                  ),
-                ),
-                const SizedBox(width: AppSizes.gapM),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('교배 신청을 보냈어요! 🐶'),
-                          backgroundColor: AppColors.dating,
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.dating,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      '신청하기',
-                      style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
-          ],
-        ),
-      ),
+  void _showBreedingRequestSheet(BuildContext context, WidgetRef ref, String petId) {
+    final myPets = ref.read(userPetsProvider).valueOrNull ?? [];
+    showBreedingRequestSheet(
+      context,
+      myPets: myPets,
+      onConfirm: (message, {selectedPet}) {
+        // TODO: message, selectedPet을 DB에 저장
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(selectedPet != null 
+                ? '${selectedPet.name}(으)로 교배 신청을 보냈어요! 🐶' 
+                : '교배 신청을 보냈어요! 🐶'),
+            backgroundColor: AppColors.dating,
+          ),
+        );
+      },
     );
   }
 
-  /// 교배 글쓰기 바텀시트
-  void _showBreedingWriteSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.85,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXL)),
-        ),
-        child: Column(
-          children: [
-            // 헤더
-            Container(
-              padding: const EdgeInsets.all(AppSizes.paddingM),
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: AppColors.divider)),
-              ),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Expanded(
-                    child: Text(
-                      '교배 글쓰기',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('교배 글이 등록되었어요! 🐶'),
-                          backgroundColor: AppColors.dating,
-                        ),
-                      );
-                    },
-                    child: const Text('등록', style: TextStyle(fontWeight: FontWeight.w600)),
-                  ),
-                ],
-              ),
-            ),
-            // 본문
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSizes.paddingL),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 강아지 선택
-                    const Text('교배할 강아지', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.datingLight,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.dating.withOpacity(0.3)),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: AppColors.dating.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Center(child: Text('🐶', style: TextStyle(fontSize: 24))),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('뽀삐', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                                Text('골든 리트리버 · 수컷 · 3살', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // 제목
-                    const Text('제목', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      decoration: InputDecoration(
-                        hintText: '예) 건강한 골든 리트리버 교배 원해요',
-                        hintStyle: const TextStyle(color: AppColors.textHint),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.divider),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.divider),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.dating),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // 내용
-                    const Text('상세 내용', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      maxLines: 5,
-                      decoration: InputDecoration(
-                        hintText: '교배 조건, 원하는 상대 조건 등을 자세히 적어주세요',
-                        hintStyle: const TextStyle(color: AppColors.textHint),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.divider),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.divider),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: AppColors.dating),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // 원하는 상대 크기
-                    const Text('원하는 상대 크기 (중복 선택 가능)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _buildWriteSizeChip('초소형 (0~4kg)'),
-                        _buildWriteSizeChip('소형 (4~10kg)'),
-                        _buildWriteSizeChip('중형 (10~25kg)'),
-                        _buildWriteSizeChip('대형 (25~45kg)'),
-                        _buildWriteSizeChip('초대형 (45kg~)'),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // 추가 조건
-                    const Text('추가 조건', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        _buildWriteConditionChip('건강검진 완료', Icons.health_and_safety_outlined),
-                        _buildWriteConditionChip('같은 품종만', Icons.pets),
-                        _buildWriteConditionChip('혈통서 필수', Icons.verified_outlined),
-                      ],
-                    ),
-                    const SizedBox(height: 40),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+  /// 교배 글쓰기 화면 이동
+  void _showBreedingWriteSheet(BuildContext context) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const BreedingWriteScreen()),
     );
-  }
-
-  /// 글쓰기 크기 칩
-  Widget _buildWriteSizeChip(String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
-      ),
-    );
-  }
-
-  /// 글쓰기 조건 칩
-  Widget _buildWriteConditionChip(String label, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: AppColors.textSecondary),
-          const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textPrimary)),
-        ],
-      ),
-    );
+    
+    // 등록 성공 시 목록 새로고침
+    if (result == true && context.mounted) {
+      // Provider가 autoDispose이므로 자동으로 새로고침됨
+    }
   }
 
   /// 근처 검색 그리드 뷰 (Firebase 연동)

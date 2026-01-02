@@ -369,13 +369,13 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           TextFormField(
             controller: _nameController,
             decoration: const InputDecoration(
-              labelText: '이름 *',
-              hintText: '강아지 이름을 입력해주세요',
+              labelText: '이름',
+              hintText: '반려동물 이름을 입력해주세요',
               border: OutlineInputBorder(),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return '이름을 입력해주세요';
+                return '반려동물 이름을 입력해주세요';
               }
               return null;
             },
@@ -396,7 +396,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           // 성별
           Row(
             children: [
-              const Text('성별 *', style: TextStyle(fontSize: 14)),
+              const Text('성별', style: TextStyle(fontSize: 14)),
               const Spacer(),
               SegmentedButton<PetGender>(
                 segments: PetGender.values.map((gender) {

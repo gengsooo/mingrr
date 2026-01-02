@@ -128,3 +128,20 @@ final wishlistProductsProvider = FutureProvider.autoDispose<List<ProductModel>>(
   
   return products;
 });
+
+/// 사용자 인증 상태 Provider
+final userVerificationsProvider = StreamProvider.autoDispose<Map<String, bool>>((ref) {
+  final authState = ref.watch(authStateProvider);
+  final userId = authState.valueOrNull?.uid;
+  
+  if (userId == null) {
+    return Stream.value({
+      'identity': false,
+      'location': false,
+      'petRegistration': false,
+    });
+  }
+  
+  final firestoreService = ref.watch(_firestoreServiceProvider);
+  return firestoreService.watchUserVerifications(userId);
+});

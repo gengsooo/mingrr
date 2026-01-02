@@ -18,6 +18,7 @@ enum ProductStatus {
 enum ProductType {
   sell,   // 판매
   share,  // 나눔
+  job,    // 알바
 }
 
 /// 상품 카테고리

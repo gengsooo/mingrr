@@ -4,6 +4,7 @@ import '../../models/user_model.dart';
 import '../../models/pet_model.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/community_model.dart';
+import '../../models/breeding_model.dart';
 import '../services/firebase_service.dart';
 import '../constants/pet_constants.dart';
 
@@ -498,6 +499,7 @@ class SeedData {
         isPublic: groupData['isPublic'] as bool,
         requireApproval: false,
         tags: [],
+        likeCount: (i + 1) * 5, // 더미 좋아요 수
         createdAt: now,
         updatedAt: now,
       );
@@ -514,10 +516,12 @@ class SeedData {
       await _clearCollection(_firebase.petsCollection);
       await _clearCollection(_firebase.productsCollection);
       await _clearCollection(_firebase.groupsCollection);
+      await _clearCollection(_firebase.groupLikesCollection);
       await _clearCollection(_firebase.chatRoomsCollection);
       await _clearCollection(_firebase.likesCollection);
       await _clearCollection(_firebase.matchesCollection);
       await _clearCollection(_firebase.jobsCollection);
+      await _clearCollection(_firebase.breedingPostsCollection);
       
       print('✅ 모든 Firestore 데이터 삭제 완료 (users 컬렉션 제외)');
     } catch (e) {
@@ -599,6 +603,87 @@ class SeedData {
     await _seedChats(userIds);
   }
   
+  /// 교배 글 데이터만 생성
+  Future<void> seedBreedingPosts() async {
+    final userIds = await _getExistingUserIds();
+    if (userIds.isEmpty) {
+      throw Exception('사용자 데이터가 없습니다. 먼저 사용자를 생성해주세요.');
+    }
+    await _seedBreedingPosts(userIds);
+  }
+  
+  Future<void> _seedBreedingPosts(List<String> userIds) async {
+    final now = DateTime.now();
+    
+    // 기존 펫 ID 가져오기
+    final petsSnapshot = await _firebase.petsCollection.limit(5).get();
+    final petIds = petsSnapshot.docs.map((doc) => doc.id).toList();
+    
+    if (petIds.isEmpty) {
+      print('  ⚠️ 반려동물 데이터가 없어서 교배 글을 생성할 수 없습니다.');
+      return;
+    }
+    
+    final posts = [
+      {
+        'userId': userIds[0],
+        'petId': petIds.isNotEmpty ? petIds[0] : 'pet_001',
+        'title': '건강한 골든 리트리버 교배 원해요',
+        'description': '3살 수컷 골든 리트리버입니다. 건강검진 완료했고, 성격이 온순해요. 같은 품종 또는 대형견 암컷 찾습니다.',
+        'preferredGender': 'female',
+        'preferredSizes': ['large', 'giant'],
+        'sameBreedOnly': false,
+        'maxAge': 5,
+      },
+      {
+        'userId': userIds.length > 1 ? userIds[1] : userIds[0],
+        'petId': petIds.length > 1 ? petIds[1] : petIds[0],
+        'title': '말티즈 교배 상대 구합니다',
+        'description': '2살 암컷 말티즈예요. 혈통서 있고 건강해요. 같은 품종 수컷 원합니다.',
+        'preferredGender': 'male',
+        'preferredSizes': ['tiny', 'small'],
+        'sameBreedOnly': true,
+        'maxAge': 3,
+      },
+      {
+        'userId': userIds.length > 2 ? userIds[2] : userIds[0],
+        'petId': petIds.length > 2 ? petIds[2] : petIds[0],
+        'title': '푸들 교배 파트너 찾아요',
+        'description': '토이푸들 수컷 4살입니다. 성격 좋고 건강해요. 소형견 암컷 구합니다.',
+        'preferredGender': 'female',
+        'preferredSizes': ['tiny', 'small'],
+        'sameBreedOnly': false,
+        'maxAge': 5,
+      },
+    ];
+    
+    for (int i = 0; i < posts.length; i++) {
+      final postData = posts[i];
+      
+      final post = BreedingPostModel(
+        id: 'breeding_${(i + 1).toString().padLeft(3, '0')}',
+        userId: postData['userId'] as String,
+        petId: postData['petId'] as String,
+        title: postData['title'] as String,
+        description: postData['description'] as String,
+        status: BreedingStatus.active,
+        preferredGender: postData['preferredGender'] as String?,
+        preferredSizes: List<String>.from(postData['preferredSizes'] as List),
+        sameBreedOnly: postData['sameBreedOnly'] as bool,
+        maxAge: postData['maxAge'] as int?,
+        viewCount: (i + 1) * 10,
+        likeCount: (i + 1) * 3,
+        chatCount: i,
+        createdAt: now.subtract(Duration(days: i)),
+        updatedAt: now.subtract(Duration(days: i)),
+      );
+      
+      await _firebase.breedingPostsCollection.doc(post.id).set(post.toFirestore());
+    }
+    
+    print('  ✓ 교배 글 ${posts.length}개 생성 완료');
+  }
+  
   // ===== 항목별 삭제 메서드 =====
   
   Future<void> clearUsers() async {
@@ -628,6 +713,10 @@ class SeedData {
   
   Future<void> clearChats() async {
     await _clearCollection(_firebase.chatRoomsCollection);
+  }
+  
+  Future<void> clearBreedingPosts() async {
+    await _clearCollection(_firebase.breedingPostsCollection);
   }
   
   // ===== 헬퍼 메서드 =====

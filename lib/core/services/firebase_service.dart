@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 
 /// ============================================================
 /// Firebase 서비스
@@ -74,9 +76,17 @@ class FirebaseService {
   CollectionReference<Map<String, dynamic>> get jobsCollection =>
       firestore.collection('jobs');
   
+  /// 교배 글 컬렉션
+  CollectionReference<Map<String, dynamic>> get breedingPostsCollection =>
+      firestore.collection('breedingPosts');
+  
   /// 산책 기록 컬렉션
   CollectionReference<Map<String, dynamic>> get walksCollection =>
       firestore.collection('walks');
+  
+  /// 소모임 좋아요 컬렉션
+  CollectionReference<Map<String, dynamic>> get groupLikesCollection =>
+      firestore.collection('groupLikes');
   
   /// 신고 컬렉션
   CollectionReference<Map<String, dynamic>> get reportsCollection =>
@@ -133,4 +143,24 @@ class FirebaseService {
   
   /// 로그인 상태 스트림
   Stream<User?> get authStateChanges => auth.authStateChanges();
+
+  // ===== 이미지 업로드 =====
+  
+  /// 이미지 파일 업로드 및 URL 반환
+  Future<String> uploadImage(dynamic file, String path) async {
+    try {
+      final ref = storage.ref().child(path);
+      
+      // File 타입인 경우
+      if (file is File) {
+        final snapshot = await ref.putFile(file);
+        return await snapshot.ref.getDownloadURL();
+      }
+      
+      throw Exception('Invalid file type: ${file.runtimeType}');
+    } catch (e) {
+      debugPrint('이미지 업로드 오류: $e');
+      rethrow;
+    }
+  }
 }

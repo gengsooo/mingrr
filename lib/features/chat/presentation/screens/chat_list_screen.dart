@@ -11,8 +11,11 @@ import '../../../../core/widgets/dog_profile_modal.dart';
 import '../../../../core/widgets/community_profile_modal.dart';
 import '../../../../core/widgets/top_navigation.dart';
 import '../../../../core/widgets/chat_options_modal.dart';
+import '../../../../core/widgets/profile_icon.dart';
 import '../../../../models/chat_model.dart';
+import '../../../../models/dating_request_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../dating/presentation/providers/dating_request_provider.dart';
 import '../providers/chat_provider.dart';
 
 /// ============================================================
@@ -42,13 +45,20 @@ class ChatListScreen extends ConsumerWidget {
       TopNavTab(label: '소모임', icon: Icons.groups, color: AppColors.community),
     ];
 
+    // 탭별 배경색
+    final backgroundColor = switch (selectedTab) {
+      ChatType.dating || ChatType.breeding => AppColors.datingLight,
+      ChatType.community => AppColors.communityLight,
+      ChatType.market => AppColors.marketLight,
+    };
+
     return Scaffold(
-      backgroundColor: AppColors.chatLight,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
         title: const Text('채팅'),
         backgroundColor: Colors.white,
         elevation: 0,
-        // 검색 아이콘 제거됨
+        actions: [buildProfileAction()],
       ),
       body: Column(
         children: [
@@ -109,6 +119,11 @@ class ChatListScreen extends ConsumerWidget {
 
   /// 채팅 목록 (Firebase 연동)
   Widget _buildChatList(BuildContext context, ChatType type) {
+    // 데이팅 탭인 경우 신청 목록도 함께 표시
+    if (type == ChatType.dating) {
+      return _buildDatingTabContent(context);
+    }
+    
     return Consumer(
       builder: (context, ref, child) {
         final chatRoomsAsync = ref.watch(userChatRoomsProvider);
@@ -118,9 +133,6 @@ class ChatListScreen extends ConsumerWidget {
           data: (allChatRooms) {
             // 타입별 필터링
             final filteredRooms = allChatRooms.where((room) {
-              if (type == ChatType.dating) {
-                return room.type == 'dating' || room.type == 'breeding';
-              }
               return room.type == type.name;
             }).toList();
             
@@ -140,6 +152,388 @@ class ChatListScreen extends ConsumerWidget {
           error: (_, __) => _buildEmptyState(type),
         );
       },
+    );
+  }
+
+  /// 데이팅 탭 콘텐츠 (신청 목록 + 채팅 목록)
+  Widget _buildDatingTabContent(BuildContext context) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final receivedRequests = ref.watch(receivedRequestsProvider);
+        final pendingRequests = receivedRequests.where((r) => r.status == DatingRequestStatus.pending).toList();
+        final chatRoomsAsync = ref.watch(userChatRoomsProvider);
+        final currentUserId = ref.watch(authStateProvider).valueOrNull?.uid;
+
+        return ListView(
+          padding: const EdgeInsets.all(AppSizes.paddingM),
+          children: [
+            // 대기 중인 신청이 있으면 표시
+            if (pendingRequests.isNotEmpty) ...[
+              _buildRequestsSection(context, ref, pendingRequests),
+              const SizedBox(height: AppSizes.gapL),
+            ],
+            
+            // 채팅 목록
+            chatRoomsAsync.when(
+              data: (allChatRooms) {
+                final filteredRooms = allChatRooms.where((room) {
+                  return room.type == 'dating' || room.type == 'breeding';
+                }).toList();
+                
+                if (filteredRooms.isEmpty && pendingRequests.isEmpty) {
+                  return _buildEmptyState(ChatType.dating);
+                }
+                
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (filteredRooms.isNotEmpty) ...[
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: AppSizes.gapS),
+                        child: Text(
+                          '채팅',
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                        ),
+                      ),
+                      ...filteredRooms.map((room) => _buildChatRoomItem(context, room, ChatType.dating, currentUserId ?? '')),
+                    ],
+                  ],
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (_, __) => const SizedBox.shrink(),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// 신청 목록 섹션
+  Widget _buildRequestsSection(BuildContext context, WidgetRef ref, List<DatingRequestModel> requests) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              '받은 신청',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.dating,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '${requests.length}',
+                style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSizes.gapS),
+        ...requests.map((request) => _buildRequestItem(context, ref, request)),
+      ],
+    );
+  }
+
+  /// 신청 아이템
+  Widget _buildRequestItem(BuildContext context, WidgetRef ref, DatingRequestModel request) {
+    final isBreeding = request.type == DatingRequestType.breeding;
+    // 데이트/교배 모두 동일한 색상 사용
+    const accentColor = AppColors.dating;
+    
+    return MingrrCard(
+      margin: const EdgeInsets.only(bottom: AppSizes.gapS),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // 프로필 이미지
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    isBreeding ? Icons.pets : Icons.favorite,
+                    color: accentColor,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                // 정보
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: accentColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              isBreeding ? '교배' : '데이트',
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: accentColor),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              '${request.senderPetName} · ${request.senderName}',
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _formatRequestTime(request.createdAt),
+                            style: const TextStyle(fontSize: 11, color: AppColors.textHint),
+                          ),
+                        ],
+                      ),
+                      if (request.message != null && request.message!.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.background,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            request.message!,
+                            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // 수락/거절 버튼
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 36,
+                    child: OutlinedButton(
+                      onPressed: () => _showRejectConfirmation(context, ref, request),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.textSecondary,
+                        side: const BorderSide(color: AppColors.divider),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('거절', style: TextStyle(fontSize: 14)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: SizedBox(
+                    height: 36,
+                    child: ElevatedButton(
+                      onPressed: () => _showAcceptConfirmation(context, ref, request),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accentColor,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('수락', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 신청 시간 포맷
+  String _formatRequestTime(DateTime time) {
+    final now = DateTime.now();
+    final diff = now.difference(time);
+    if (diff.inMinutes < 1) return '방금';
+    if (diff.inHours < 1) return '${diff.inMinutes}분 전';
+    if (diff.inDays < 1) return '${diff.inHours}시간 전';
+    return '${diff.inDays}일 전';
+  }
+
+  /// 수락 확인 다이얼로그
+  void _showAcceptConfirmation(BuildContext context, WidgetRef ref, DatingRequestModel request) {
+    final isBreeding = request.type == DatingRequestType.breeding;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(AppSizes.paddingL),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.divider,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Icon(
+              isBreeding ? Icons.pets : Icons.favorite,
+              size: 48,
+              color: AppColors.dating,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '${request.typeLabel} 수락',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${request.senderName}님의 ${request.senderPetName}와\n${isBreeding ? '교배' : '데이트'}를 시작할까요?',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: const BorderSide(color: AppColors.divider),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('취소'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      ref.read(receivedRequestsProvider.notifier).acceptRequest(request.id);
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${request.senderPetName}의 ${request.typeLabel}을 수락했어요! 💕'),
+                          backgroundColor: AppColors.dating,
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.dating,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('수락하기', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: MediaQuery.of(ctx).padding.bottom),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 거절 확인 다이얼로그
+  void _showRejectConfirmation(BuildContext context, WidgetRef ref, DatingRequestModel request) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(AppSizes.paddingL),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.divider,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Icon(Icons.close, size: 48, color: AppColors.textHint),
+            const SizedBox(height: 16),
+            Text(
+              '${request.typeLabel} 거절',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${request.senderName}님의 신청을 거절할까요?',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: const BorderSide(color: AppColors.divider),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('취소'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      ref.read(receivedRequestsProvider.notifier).rejectRequest(request.id);
+                      Navigator.pop(ctx);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('신청을 거절했어요'),
+                          backgroundColor: AppColors.textSecondary,
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.textSecondary,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('거절하기', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: MediaQuery.of(ctx).padding.bottom),
+          ],
+        ),
+      ),
     );
   }
   

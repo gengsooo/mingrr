@@ -322,28 +322,28 @@ class MingrrBottomNavBar extends StatelessWidget {
                 color: AppColors.dating,  // 커스텀 색상 (핑크)
               ),
               
-              // 3️⃣ 마켓 버튼
-              _buildNavItem(
-                context: context,
-                icon: Icons.store_outlined,
-                activeIcon: Icons.store,
-                label: '마켓',
-                index: 2,
-                currentIndex: currentIndex,
-                route: '/market',
-                color: AppColors.market,  // 커스텀 색상 (주황)
-              ),
-              
-              // 4️⃣ 채팅 버튼
+              // 3️⃣ 채팅 버튼
               _buildNavItem(
                 context: context,
                 icon: Icons.chat_bubble_outline,
                 activeIcon: Icons.chat_bubble,
                 label: '채팅',
-                index: 3,
+                index: 2,
                 currentIndex: currentIndex,
                 route: '/chat',
                 badge: 3,  // 배지 숫자 (읽지 않은 메시지 3개)
+              ),
+              
+              // 4️⃣ 마켓 버튼
+              _buildNavItem(
+                context: context,
+                icon: Icons.store_outlined,
+                activeIcon: Icons.store,
+                label: '마켓',
+                index: 3,
+                currentIndex: currentIndex,
+                route: '/market',
+                color: AppColors.market,  // 커스텀 색상 (주황)
               ),
               
               // 5️⃣ 소모임 버튼
@@ -477,7 +477,7 @@ class MingrrBottomNavBar extends StatelessWidget {
   // ============================================================
   // 🔢 _getIndexFromLocation - URL 경로를 인덱스 번호로 변환
   // ============================================================
-  // 예: '/' -> 0, '/dating' -> 1, '/market' -> 2 등
+  // 예: '/' -> 0, '/dating' -> 1, '/chat' -> 2, '/market' -> 3, '/community' -> 4
   // 이 함수는 현재 어느 화면에 있는지 알아내기 위해 사용됩니다
   int _getIndexFromLocation(String location) {
     // switch: 여러 경우의 수를 처리하는 문법
@@ -486,9 +486,9 @@ class MingrrBottomNavBar extends StatelessWidget {
         return 0;
       case '/dating':  // 데이팅 화면
         return 1;
-      case '/market':  // 마켓 화면
-        return 2;
       case '/chat':  // 채팅 화면
+        return 2;
+      case '/market':  // 마켓 화면
         return 3;
       case '/community':  // 소모임 화면
         return 4;

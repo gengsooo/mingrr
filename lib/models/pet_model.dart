@@ -170,6 +170,18 @@ class PetModel extends Equatable {
   /// 특성 유효성 검사 (최소 5개)
   bool get hasValidTraits => traits.length >= 5;
 
+  /// 대표 사진 URL (profileImageUrl 우선, 없으면 photoUrls의 첫번째)
+  String? get primaryPhotoUrl {
+    if (profileImageUrl != null && profileImageUrl!.isNotEmpty) {
+      return profileImageUrl;
+    }
+    if (photoUrls.isNotEmpty) {
+      final index = primaryPhotoIndex < photoUrls.length ? primaryPhotoIndex : 0;
+      return photoUrls[index];
+    }
+    return null;
+  }
+
   /// Firestore 문서에서 PetModel 생성
   factory PetModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;

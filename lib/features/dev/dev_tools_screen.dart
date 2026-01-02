@@ -12,6 +12,7 @@ enum DataCategory {
   products('상품', Icons.shopping_bag),
   groups('소모임', Icons.groups),
   jobs('알바', Icons.work),
+  breeding('교배', Icons.favorite_border),
   likesMatches('좋아요/매칭', Icons.favorite),
   chats('채팅', Icons.chat);
 
@@ -32,6 +33,7 @@ final collectionCountsProvider = StreamProvider.autoDispose<Map<DataCategory, in
     counts[DataCategory.products] = (await _firebaseService.productsCollection.get()).docs.length;
     counts[DataCategory.groups] = (await _firebaseService.groupsCollection.get()).docs.length;
     counts[DataCategory.jobs] = (await _firebaseService.jobsCollection.get()).docs.length;
+    counts[DataCategory.breeding] = (await _firebaseService.breedingPostsCollection.get()).docs.length;
     
     final likesCount = (await _firebaseService.likesCollection.get()).docs.length;
     final matchesCount = (await _firebaseService.matchesCollection.get()).docs.length;
@@ -90,6 +92,8 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
         return '모임 ${count}개';
       case DataCategory.jobs:
         return '알바 ${count}개';
+      case DataCategory.breeding:
+        return '교배 글 ${count}개';
       case DataCategory.likesMatches:
         return '좋아요/매칭 ${count}개';
       case DataCategory.chats:
@@ -125,6 +129,9 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
         }
         if (_selectedCategories[DataCategory.jobs]!) {
           await _seedData.seedJobs();
+        }
+        if (_selectedCategories[DataCategory.breeding]!) {
+          await _seedData.seedBreedingPosts();
         }
         if (_selectedCategories[DataCategory.likesMatches]!) {
           await _seedData.seedLikesAndMatches();
@@ -204,6 +211,9 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
         }
         if (_selectedCategories[DataCategory.jobs]!) {
           await _seedData.clearJobs();
+        }
+        if (_selectedCategories[DataCategory.breeding]!) {
+          await _seedData.clearBreedingPosts();
         }
         if (_selectedCategories[DataCategory.likesMatches]!) {
           await _seedData.clearLikesAndMatches();

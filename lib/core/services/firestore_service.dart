@@ -5,6 +5,7 @@ import '../../models/chat_model.dart';
 import '../../models/dating_model.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/community_model.dart';
+import '../../models/breeding_model.dart';
 import 'firebase_service.dart';
 
 class FirestoreService {
@@ -531,5 +532,319 @@ class FirestoreService {
       'transactions': results[2],
       'groups': results[3],
     };
+  }
+  
+  // ===== 소모임 좋아요 관련 =====
+  
+  /// 소모임 좋아요 토글
+  Future<bool> toggleGroupLike(String groupId, String userId) async {
+    try {
+      final likeId = '${userId}_$groupId';
+      final likeDoc = await _firebase.groupLikesCollection.doc(likeId).get();
+      
+      if (likeDoc.exists) {
+        // 좋아요 취소
+        await _firebase.groupLikesCollection.doc(likeId).delete();
+        await _firebase.groupsCollection.doc(groupId).update({
+          'likeCount': FieldValue.increment(-1),
+        });
+        return false;
+      } else {
+        // 좋아요 추가
+        await _firebase.groupLikesCollection.doc(likeId).set({
+          'userId': userId,
+          'groupId': groupId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        await _firebase.groupsCollection.doc(groupId).update({
+          'likeCount': FieldValue.increment(1),
+        });
+        return true;
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  /// 소모임 좋아요 여부 확인
+  Future<bool> isGroupLiked(String groupId, String userId) async {
+    try {
+      final likeId = '${userId}_$groupId';
+      final doc = await _firebase.groupLikesCollection.doc(likeId).get();
+      return doc.exists;
+    } catch (e) {
+      return false;
+    }
+  }
+  
+  /// 사용자가 좋아요한 소모임 목록
+  Future<List<String>> getUserLikedGroupIds(String userId) async {
+    try {
+      final snapshot = await _firebase.groupLikesCollection
+          .where('userId', isEqualTo: userId)
+          .get();
+      return snapshot.docs.map((doc) => doc.data()['groupId'] as String).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+  
+  /// 소모임 삭제
+  Future<void> deleteGroup(String groupId) async {
+    try {
+      await _firebase.groupsCollection.doc(groupId).delete();
+      // 관련 좋아요도 삭제
+      final likes = await _firebase.groupLikesCollection
+          .where('groupId', isEqualTo: groupId)
+          .get();
+      for (final doc in likes.docs) {
+        await doc.reference.delete();
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  // ===== 검색 관련 =====
+  
+  /// 상품 검색
+  Future<List<ProductModel>> searchProducts(String query) async {
+    try {
+      // Firestore는 전문 검색을 지원하지 않으므로 제목 기반 검색
+      final snapshot = await _firebase.productsCollection
+          .where('status', isEqualTo: 'available')
+          .orderBy('createdAt', descending: true)
+          .limit(50)
+          .get();
+      
+      final lowerQuery = query.toLowerCase();
+      return snapshot.docs
+          .map((doc) => ProductModel.fromFirestore(doc.data(), id: doc.id))
+          .where((p) => 
+              p.title.toLowerCase().contains(lowerQuery) ||
+              p.description.toLowerCase().contains(lowerQuery))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  /// 소모임 검색
+  Future<List<GroupModel>> searchGroups(String query) async {
+    try {
+      final snapshot = await _firebase.groupsCollection
+          .where('isPublic', isEqualTo: true)
+          .orderBy('createdAt', descending: true)
+          .limit(50)
+          .get();
+      
+      final lowerQuery = query.toLowerCase();
+      return snapshot.docs
+          .map((doc) => GroupModel.fromFirestore(doc.data(), id: doc.id))
+          .where((g) => 
+              g.name.toLowerCase().contains(lowerQuery) ||
+              g.description.toLowerCase().contains(lowerQuery) ||
+              g.tags.any((t) => t.toLowerCase().contains(lowerQuery)))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  /// 알바 검색
+  Future<List<JobModel>> searchJobs(String query) async {
+    try {
+      final snapshot = await _firebase.jobsCollection
+          .where('status', isEqualTo: 'recruiting')
+          .orderBy('createdAt', descending: true)
+          .limit(50)
+          .get();
+      
+      final lowerQuery = query.toLowerCase();
+      return snapshot.docs
+          .map((doc) => JobModel.fromFirestore(doc.data(), id: doc.id))
+          .where((j) => 
+              j.title.toLowerCase().contains(lowerQuery) ||
+              j.description.toLowerCase().contains(lowerQuery))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  // ===== 교배 글 관련 =====
+  
+  /// 교배 글 생성
+  Future<void> createBreedingPost(BreedingPostModel post) async {
+    try {
+      await _firebase.breedingPostsCollection.doc(post.id).set(post.toFirestore());
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  /// 교배 글 조회
+  Future<BreedingPostModel?> getBreedingPost(String postId) async {
+    try {
+      final doc = await _firebase.breedingPostsCollection.doc(postId).get();
+      if (!doc.exists) return null;
+      return BreedingPostModel.fromFirestore(doc.data()!, id: doc.id);
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  /// 교배 글 수정
+  Future<void> updateBreedingPost(BreedingPostModel post) async {
+    try {
+      await _firebase.breedingPostsCollection.doc(post.id).update(post.toFirestore());
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  /// 교배 글 삭제
+  Future<void> deleteBreedingPost(String postId) async {
+    try {
+      await _firebase.breedingPostsCollection.doc(postId).delete();
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  /// 활성 교배 글 목록 조회
+  Future<List<BreedingPostModel>> getActiveBreedingPosts({int limit = 20}) async {
+    try {
+      final snapshot = await _firebase.breedingPostsCollection
+          .where('status', isEqualTo: 'active')
+          .orderBy('createdAt', descending: true)
+          .limit(limit)
+          .get();
+      
+      return snapshot.docs
+          .map((doc) => BreedingPostModel.fromFirestore(doc.data(), id: doc.id))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  /// 교배 글 검색
+  Future<List<BreedingPostModel>> searchBreedingPosts(String query) async {
+    try {
+      final snapshot = await _firebase.breedingPostsCollection
+          .where('status', isEqualTo: 'active')
+          .orderBy('createdAt', descending: true)
+          .limit(50)
+          .get();
+      
+      final lowerQuery = query.toLowerCase();
+      return snapshot.docs
+          .map((doc) => BreedingPostModel.fromFirestore(doc.data(), id: doc.id))
+          .where((p) => 
+              p.title.toLowerCase().contains(lowerQuery) ||
+              p.description.toLowerCase().contains(lowerQuery))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // ============================================================
+  // 인증 관련 메서드
+  // ============================================================
+
+  /// 사용자 인증 상태 조회
+  Future<Map<String, bool>> getUserVerifications(String userId) async {
+    try {
+      final doc = await _firebase.usersCollection.doc(userId).get();
+      if (!doc.exists) {
+        return {
+          'identity': false,
+          'location': false,
+          'petRegistration': false,
+        };
+      }
+      
+      final data = doc.data()!;
+      final verifications = data['verifications'] as Map<String, dynamic>?;
+      
+      return {
+        'identity': verifications?['identity'] ?? false,
+        'location': verifications?['location'] ?? false,
+        'petRegistration': verifications?['petRegistration'] ?? false,
+      };
+    } catch (e) {
+      return {
+        'identity': false,
+        'location': false,
+        'petRegistration': false,
+      };
+    }
+  }
+
+  /// 인증 상태 업데이트
+  Future<void> updateUserVerification(String userId, String verificationType, bool isVerified) async {
+    try {
+      await _firebase.usersCollection.doc(userId).update({
+        'verifications.$verificationType': isVerified,
+        'verifications.${verificationType}At': isVerified ? FieldValue.serverTimestamp() : null,
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 본인 인증 처리
+  Future<void> verifyIdentity(String userId) async {
+    await updateUserVerification(userId, 'identity', true);
+  }
+
+  /// 위치 인증 처리
+  Future<void> verifyLocation(String userId, String location) async {
+    try {
+      await _firebase.usersCollection.doc(userId).update({
+        'verifications.location': true,
+        'verifications.locationAt': FieldValue.serverTimestamp(),
+        'verifications.locationAddress': location,
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 동물등록 인증 처리
+  Future<void> verifyPetRegistration(String userId, String registrationNumber) async {
+    try {
+      await _firebase.usersCollection.doc(userId).update({
+        'verifications.petRegistration': true,
+        'verifications.petRegistrationAt': FieldValue.serverTimestamp(),
+        'verifications.petRegistrationNumber': registrationNumber,
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 인증 상태 스트림
+  Stream<Map<String, bool>> watchUserVerifications(String userId) {
+    return _firebase.usersCollection.doc(userId).snapshots().map((doc) {
+      if (!doc.exists) {
+        return {
+          'identity': false,
+          'location': false,
+          'petRegistration': false,
+        };
+      }
+      
+      final data = doc.data()!;
+      final verifications = data['verifications'] as Map<String, dynamic>?;
+      
+      return {
+        'identity': verifications?['identity'] ?? false,
+        'location': verifications?['location'] ?? false,
+        'petRegistration': verifications?['petRegistration'] ?? false,
+      };
+    });
   }
 }

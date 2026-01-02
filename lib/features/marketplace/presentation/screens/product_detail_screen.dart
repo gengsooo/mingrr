@@ -1,9 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/services/firebase_service.dart';
+import '../../../../core/services/firestore_service.dart';
+import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/warmth_score.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
+import '../../../../models/marketplace_model.dart';
+import 'product_write_screen.dart';
 
 /// ============================================================
 /// 상품 상세 화면
@@ -14,28 +20,117 @@ import '../../../../core/widgets/guardian_profile_modal.dart';
 /// - 판매자 정보
 /// - 채팅하기 버튼
 /// - 신고 기능
+/// - 본인 글일 경우 수정/삭제 기능
 /// ============================================================
 
-class ProductDetailScreen extends StatelessWidget {
+class ProductDetailScreen extends ConsumerStatefulWidget {
   final String productId;
-  final bool isShare; // true: 나눔, false: 판매
+  final ProductModel? product; // 직접 전달받은 상품 데이터
 
   const ProductDetailScreen({
     super.key,
     required this.productId,
-    this.isShare = false,
+    this.product,
   });
 
   @override
+  ConsumerState<ProductDetailScreen> createState() => _ProductDetailScreenState();
+}
+
+class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
+  final FirestoreService _firestoreService = FirestoreService();
+  final FirebaseService _firebaseService = FirebaseService();
+  
+  ProductModel? _product;
+  bool _isLoading = true;
+  bool _isDeleting = false;
+  bool _isWishlisted = false;
+  String? _sellerNickname;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.product != null) {
+      _product = widget.product;
+      _isLoading = false;
+      _loadSellerNickname();
+    } else {
+      _loadProduct();
+    }
+  }
+
+  Future<void> _loadProduct() async {
+    try {
+      final product = await _firestoreService.getProduct(widget.productId);
+      if (mounted) {
+        setState(() {
+          _product = product;
+          _isLoading = false;
+        });
+        _loadSellerNickname();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+  
+  Future<void> _loadSellerNickname() async {
+    if (_product?.sellerId == null) return;
+    try {
+      final user = await _firestoreService.getUser(_product!.sellerId);
+      if (mounted && user != null) {
+        setState(() => _sellerNickname = user.nickname);
+      }
+    } catch (e) {
+      // 닉네임 로드 실패 시 무시
+    }
+  }
+
+  bool get _isOwner {
+    final currentUserId = _firebaseService.currentUserId;
+    return currentUserId != null && _product?.sellerId == currentUserId;
+  }
+
+  /// 찜하기 토글
+  void _toggleWishlist() {
+    setState(() => _isWishlisted = !_isWishlisted);
+    
+    // TODO: 백엔드 연동 - 찜 목록에 추가/제거
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_isWishlisted ? '찜 목록에 추가했어요' : '찜 목록에서 제거했어요'),
+        backgroundColor: AppColors.market,
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final productData = _getDemoData();
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(backgroundColor: Colors.white, elevation: 0),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_product == null) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(backgroundColor: Colors.white, elevation: 0),
+        body: const Center(child: Text('상품을 찾을 수 없습니다')),
+      );
+    }
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: CustomScrollView(
         slivers: [
           // 이미지 헤더
-          _buildImageHeader(context, productData),
+          _buildImageHeader(context),
           
           // 본문 컨텐츠
           SliverToBoxAdapter(
@@ -45,15 +140,15 @@ class ProductDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 판매자 정보
-                  _buildSellerInfo(context, productData),
+                  _buildSellerInfo(context),
                   const Divider(height: 32),
                   
                   // 상품 정보
-                  _buildProductInfo(productData),
+                  _buildProductInfo(),
                   const SizedBox(height: AppSizes.gapXL),
                   
                   // 상품 설명
-                  _buildDescription(productData),
+                  _buildDescription(),
                   
                   // 하단 여백 (버튼 공간)
                   const SizedBox(height: 100),
@@ -64,33 +159,14 @@ class ProductDetailScreen extends StatelessWidget {
         ],
       ),
       // 하단 고정 버튼
-      bottomNavigationBar: _buildBottomButton(context, productData),
+      bottomNavigationBar: _buildBottomButton(context),
     );
   }
 
-  /// 데모 데이터
-  Map<String, dynamic> _getDemoData() {
-    return {
-      'title': isShare ? '안 먹는 간식 나눔해요' : '강아지 옷 팔아요',
-      'price': isShare ? 0 : 15000,
-      'description': '우리 아이가 안 먹어서 나눔합니다.\n유통기한 넉넉하고 개봉만 했어요.\n직거래 원해요!',
-      'category': isShare ? '사료/간식' : '의류',
-      'location': '서울 강남구',
-      'createdAt': '3시간 전',
-      'viewCount': 42,
-      'likeCount': 5,
-      'chatCount': 3,
-      'seller': {
-        'nickname': '뽀삐맘',
-        'warmthScore': 38.5,
-        'location': '서울 강남구',
-      },
-      'status': 'available', // available, reserved, sold
-    };
-  }
+  bool get _isShare => _product?.type == ProductType.share;
 
   /// 이미지 헤더
-  Widget _buildImageHeader(BuildContext context, Map<String, dynamic> data) {
+  Widget _buildImageHeader(BuildContext context) {
     return SliverAppBar(
       expandedHeight: 300,
       pinned: true,
@@ -144,12 +220,9 @@ class ProductDetailScreen extends StatelessWidget {
   }
 
   /// 판매자 정보
-  Widget _buildSellerInfo(BuildContext context, Map<String, dynamic> data) {
-    final seller = data['seller'] as Map<String, dynamic>;
-    final kkosunnaeScore = (seller['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0;
-    
+  Widget _buildSellerInfo(BuildContext context) {
     return GestureDetector(
-      onTap: () => _showSellerProfile(context, seller),
+      onTap: () => _showSellerProfile(context),
       child: Row(
         children: [
           // 아이콘 (강아지 앱이므로 사진 대신)
@@ -171,11 +244,11 @@ class ProductDetailScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  seller['nickname'],
+                  _sellerNickname ?? '판매자',
                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 4),
-                KkosunnaeScoreSmall(score: kkosunnaeScore),
+                const KkosunnaeScoreSmall(score: 50.0),
               ],
             ),
           ),
@@ -187,12 +260,12 @@ class ProductDetailScreen extends StatelessWidget {
   }
 
   /// 판매자 프로필 모달 표시
-  void _showSellerProfile(BuildContext context, Map<String, dynamic> seller) {
+  void _showSellerProfile(BuildContext context) {
     showGuardianProfileModal(
       context,
-      guardianId: seller['id'] ?? 'seller_1',
-      guardianName: seller['nickname'] ?? '판매자',
-      kkosunnaeScore: (seller['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0,
+      guardianId: _product?.sellerId ?? 'seller_1',
+      guardianName: _sellerNickname ?? '판매자',
+      kkosunnaeScore: 50.0,
       isIdentityVerified: true,
       isPetVerified: true,
       isLocationVerified: false,
@@ -215,7 +288,7 @@ class ProductDetailScreen extends StatelessWidget {
   }
 
   /// 상품 정보
-  Widget _buildProductInfo(Map<String, dynamic> data) {
+  Widget _buildProductInfo() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -227,30 +300,30 @@ class ProductDetailScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
-            data['category'],
+            _product?.categoryString ?? '기타',
             style: const TextStyle(fontSize: 12, color: AppColors.market),
           ),
         ),
         const SizedBox(height: 12),
         // 제목
         Text(
-          data['title'],
+          _product?.title ?? '',
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         // 시간, 조회수
         Text(
-          '${data['location']} · ${data['createdAt']} · 조회 ${data['viewCount']}',
+          '${_product?.location ?? ''} · ${formatRelativeTime(_product?.createdAt ?? DateTime.now())} · 조회 ${_product?.viewCount ?? 0}',
           style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 16),
         // 가격
         Text(
-          isShare ? '무료나눔' : '${_formatPrice(data['price'])}원',
+          _isShare ? '무료나눔' : '${formatPrice(_product?.price ?? 0)}원',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w700,
-            color: isShare ? AppColors.walk : AppColors.textPrimary,
+            color: _isShare ? AppColors.walk : AppColors.textPrimary,
           ),
         ),
       ],
@@ -258,7 +331,7 @@ class ProductDetailScreen extends StatelessWidget {
   }
 
   /// 상품 설명
-  Widget _buildDescription(Map<String, dynamic> data) {
+  Widget _buildDescription() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -268,7 +341,7 @@ class ProductDetailScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Text(
-          data['description'],
+          _product?.description ?? '',
           style: const TextStyle(fontSize: 14, height: 1.6, color: AppColors.textPrimary),
         ),
       ],
@@ -276,7 +349,7 @@ class ProductDetailScreen extends StatelessWidget {
   }
 
   /// 하단 고정 버튼
-  Widget _buildBottomButton(BuildContext context, Map<String, dynamic> data) {
+  Widget _buildBottomButton(BuildContext context) {
     return Container(
       padding: EdgeInsets.only(
         left: AppSizes.paddingL,
@@ -297,20 +370,22 @@ class ProductDetailScreen extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.max,
         children: [
-          // 좋아요 버튼
+          // 찜하기 버튼
           GestureDetector(
-            onTap: () {
-              // TODO: 좋아요 토글 기능 구현 예정
-            },
+            onTap: _toggleWishlist,
             child: Container(
               padding: const EdgeInsets.all(8),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.favorite_border, color: AppColors.textSecondary, size: 24),
+                  Icon(
+                    _isWishlisted ? Icons.bookmark : Icons.bookmark_border,
+                    color: _isWishlisted ? AppColors.market : AppColors.textSecondary,
+                    size: 24,
+                  ),
                   const SizedBox(height: 2),
                   Text(
-                    '${data['likeCount']}',
+                    '${_product?.likeCount ?? 0}',
                     style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                   ),
                 ],
@@ -321,11 +396,11 @@ class ProductDetailScreen extends StatelessWidget {
           // 가격 표시
           Expanded(
             child: Text(
-              isShare ? '무료나눔' : '${_formatPrice(data['price'])}원',
+              _isShare ? '무료나눔' : '${formatPrice(_product?.price ?? 0)}원',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: isShare ? AppColors.walk : AppColors.textPrimary,
+                color: _isShare ? AppColors.walk : AppColors.textPrimary,
               ),
             ),
           ),
@@ -370,7 +445,7 @@ class ProductDetailScreen extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
+      builder: (ctx) => Container(
         padding: const EdgeInsets.all(20),
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -379,24 +454,47 @@ class ProductDetailScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.block_outlined),
-              title: const Text('이 판매자 차단하기'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.report_outlined, color: AppColors.error),
-              title: const Text('신고하기', style: TextStyle(color: AppColors.error)),
-              onTap: () {
-                Navigator.pop(context);
-                showReportSheet(
-                  context,
-                  targetId: productId,
-                  targetName: '이 상품',
-                  targetType: ReportTargetType.product,
-                );
-              },
-            ),
+            // 본인 글일 경우 수정/삭제 옵션 표시
+            if (_isOwner) ...[
+              ListTile(
+                leading: const Icon(Icons.edit_outlined, color: AppColors.market),
+                title: const Text('수정하기'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _editProduct();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: AppColors.error),
+                title: const Text('삭제하기', style: TextStyle(color: AppColors.error)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _confirmDelete();
+                },
+              ),
+              const Divider(),
+            ],
+            // 다른 사람 글일 경우 차단/신고 옵션
+            if (!_isOwner) ...[
+              ListTile(
+                leading: const Icon(Icons.block_outlined),
+                title: const Text('이 판매자 차단하기'),
+                onTap: () => Navigator.pop(ctx),
+              ),
+              ListTile(
+                leading: const Icon(Icons.report_outlined, color: AppColors.error),
+                title: const Text('신고하기', style: TextStyle(color: AppColors.error)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  showReportSheet(
+                    context,
+                    targetId: widget.productId,
+                    targetName: '이 상품',
+                    targetType: ReportTargetType.product,
+                  );
+                },
+              ),
+            ],
             SizedBox(height: MediaQuery.of(context).padding.bottom),
           ],
         ),
@@ -404,11 +502,83 @@ class ProductDetailScreen extends StatelessWidget {
     );
   }
 
-  /// 가격 포맷팅
-  String _formatPrice(int price) {
-    return price.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]},',
+  /// 상품 수정
+  void _editProduct() async {
+    if (_product == null) return;
+    
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProductWriteScreen(
+          product: _product,
+          initialType: _product!.type,
+        ),
+      ),
+    );
+    
+    // 수정 성공 시 데이터 새로고침
+    if (result == true) {
+      _loadProduct();
+    }
+  }
+
+  /// 삭제 확인 다이얼로그
+  void _confirmDelete() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('상품 삭제'),
+        content: const Text('이 상품을 삭제하시겠습니까?\n삭제된 상품은 복구할 수 없습니다.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _deleteProduct();
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
     );
   }
+
+  /// 상품 삭제
+  Future<void> _deleteProduct() async {
+    if (_product == null) return;
+    
+    setState(() => _isDeleting = true);
+    
+    try {
+      await _firestoreService.deleteProduct(_product!.id);
+      
+      if (mounted) {
+        Navigator.pop(context, true); // 삭제 성공 알림
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('상품이 삭제되었습니다'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('삭제 실패: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
+    }
+  }
+
 }

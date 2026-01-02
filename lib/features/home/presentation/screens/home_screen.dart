@@ -6,6 +6,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/profile_icon.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../models/community_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
@@ -144,12 +145,9 @@ class HomeScreen extends ConsumerWidget {
           },
         ),
         // 프로필 버튼
-        GestureDetector(
-          onTap: () => context.push('/profile'),
-          child: Container(
-            margin: const EdgeInsets.only(right: AppSizes.paddingM),
-            child: const MingrrAvatar(size: 36, placeholderIcon: Icons.person),
-          ),
+        Padding(
+          padding: const EdgeInsets.only(right: AppSizes.paddingM),
+          child: const ProfileButton(size: 36),
         ),
       ],
     );

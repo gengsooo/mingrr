@@ -24,7 +24,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
         elevation: 0,
       ),
       body: DefaultTabController(
-        length: 4,
+        length: 3,
         child: Column(
           children: [
             // 탭바
@@ -36,7 +36,6 @@ class ActivityHistoryScreen extends ConsumerWidget {
                 indicatorColor: AppColors.primary,
                 tabs: [
                   Tab(text: '매칭'),
-                  Tab(text: '산책'),
                   Tab(text: '거래'),
                   Tab(text: '모임'),
                 ],
@@ -47,7 +46,6 @@ class ActivityHistoryScreen extends ConsumerWidget {
               child: TabBarView(
                 children: [
                   _buildMatchingHistory(matchesAsync),
-                  _buildWalkHistory(),
                   _buildTransactionHistory(transactionsAsync),
                   _buildGroupHistory(groupsAsync),
                 ],
@@ -89,14 +87,6 @@ class ActivityHistoryScreen extends ConsumerWidget {
     );
   }
   
-  Widget _buildWalkHistory() {
-    // TODO: Firebase 산책 기록 연동 예정
-    return _buildEmptyState(
-      icon: Icons.directions_walk,
-      title: '산책 기록이 없어요',
-      subtitle: '산책을 시작해보세요!',
-    );
-  }
   
   Widget _buildTransactionHistory(AsyncValue<dynamic> transactionsAsync) {
     return transactionsAsync.when(

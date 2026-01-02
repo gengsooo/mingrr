@@ -8,6 +8,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/services/firestore_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/image_picker_sheet.dart';
 import '../../../../core/widgets/verification_badge.dart';
@@ -35,20 +36,32 @@ import '../providers/profile_provider.dart';
 /// - Firebase 데이터 연동
 /// ============================================================
 
-// 데모용 인증 상태
-final _demoVerificationProvider = StateProvider<Map<BadgeType, bool>>((ref) => {
-  BadgeType.identity: true,
-  BadgeType.location: false,
-  BadgeType.petRegistration: false,
-});
-
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = ref.watch(currentUserProvider);
-    final verifications = ref.watch(_demoVerificationProvider);
+    final verificationsAsync = ref.watch(userVerificationsProvider);
+    
+    // 백엔드 인증 상태를 BadgeType 맵으로 변환
+    final verifications = verificationsAsync.when(
+      data: (data) => {
+        BadgeType.identity: data['identity'] ?? false,
+        BadgeType.location: data['location'] ?? false,
+        BadgeType.petRegistration: data['petRegistration'] ?? false,
+      },
+      loading: () => {
+        BadgeType.identity: false,
+        BadgeType.location: false,
+        BadgeType.petRegistration: false,
+      },
+      error: (_, __) => {
+        BadgeType.identity: false,
+        BadgeType.location: false,
+        BadgeType.petRegistration: false,
+      },
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -382,25 +395,9 @@ class ProfileScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // 프로필 이미지 (대표사진 우선)
-            Stack(
-              children: [
-                MingrrAvatar(
-                  size: 55,
-                  imageUrl: _getPetPrimaryPhotoUrl(pet),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    padding: const EdgeInsets.all(2),
-                    decoration: const BoxDecoration(
-                      color: AppColors.success,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.verified, size: 12, color: Colors.white),
-                  ),
-                ),
-              ],
+            MingrrAvatar(
+              size: 55,
+              imageUrl: _getPetPrimaryPhotoUrl(pet),
             ),
             const SizedBox(height: AppSizes.gapS),
             Text(
@@ -769,24 +766,186 @@ class ProfileScreen extends ConsumerWidget {
       trailing: isVerified
           ? const Icon(Icons.check_circle, color: AppColors.success)
           : TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
-                // 데모: 인증 완료 처리
-                final current = ref.read(_demoVerificationProvider);
-                ref.read(_demoVerificationProvider.notifier).state = {
-                  ...current,
-                  badgeType: true,
-                };
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${badgeType.label} 인증이 완료되었습니다! ${badgeType.emoji}'),
-                    backgroundColor: AppColors.success,
-                  ),
-                );
+                await _processVerification(context, ref, badgeType);
               },
               child: const Text('인증하기'),
             ),
     );
+  }
+
+  /// 인증 처리 (백엔드 연동)
+  Future<void> _processVerification(BuildContext context, WidgetRef ref, BadgeType badgeType) async {
+    final authState = ref.read(authStateProvider);
+    final userId = authState.valueOrNull?.uid;
+    
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인이 필요합니다'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    final firestoreService = FirestoreService();
+
+    try {
+      switch (badgeType) {
+        case BadgeType.identity:
+          // 본인인증 - 실제로는 PASS 등 본인인증 서비스 연동 필요
+          await _showIdentityVerificationDialog(context, firestoreService, userId);
+          break;
+        case BadgeType.location:
+          // 위치인증 - 현재 위치 기반 인증
+          await _showLocationVerificationDialog(context, firestoreService, userId);
+          break;
+        case BadgeType.petRegistration:
+          // 동물등록 인증 - 동물등록번호 입력
+          await _showPetRegistrationDialog(context, firestoreService, userId);
+          break;
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('인증 처리 중 오류가 발생했습니다: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  /// 본인인증 다이얼로그
+  Future<void> _showIdentityVerificationDialog(BuildContext context, FirestoreService firestoreService, String userId) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('본인인증'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('본인인증을 진행하시겠습니까?'),
+            SizedBox(height: 12),
+            Text(
+              '※ 실제 서비스에서는 PASS, 카카오 인증 등의 본인인증 서비스가 연동됩니다.',
+              style: TextStyle(fontSize: 12, color: AppColors.textHint),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('취소')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            child: const Text('인증하기', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true && context.mounted) {
+      await firestoreService.verifyIdentity(userId);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('본인인증이 완료되었습니다! 🪪'), backgroundColor: AppColors.success),
+      );
+    }
+  }
+
+  /// 위치인증 다이얼로그
+  Future<void> _showLocationVerificationDialog(BuildContext context, FirestoreService firestoreService, String userId) async {
+    final locationController = TextEditingController();
+    
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('위치인증'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('현재 위치를 인증해주세요.'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: locationController,
+              decoration: const InputDecoration(
+                hintText: '예: 서울특별시 강남구',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.location_on),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '※ 실제 서비스에서는 GPS 기반 자동 위치 인증이 적용됩니다.',
+              style: TextStyle(fontSize: 12, color: AppColors.textHint),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, locationController.text),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            child: const Text('인증하기', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result.isNotEmpty && context.mounted) {
+      await firestoreService.verifyLocation(userId, result);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('위치인증이 완료되었습니다! 📍'), backgroundColor: AppColors.success),
+      );
+    }
+  }
+
+  /// 동물등록 인증 다이얼로그
+  Future<void> _showPetRegistrationDialog(BuildContext context, FirestoreService firestoreService, String userId) async {
+    final registrationController = TextEditingController();
+    
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('동물등록 인증'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('동물등록번호를 입력해주세요.'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: registrationController,
+              decoration: const InputDecoration(
+                hintText: '15자리 동물등록번호',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.pets),
+              ),
+              keyboardType: TextInputType.number,
+              maxLength: 15,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '※ 동물등록번호는 동물보호관리시스템에서 확인할 수 있습니다.',
+              style: TextStyle(fontSize: 12, color: AppColors.textHint),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, registrationController.text),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            child: const Text('인증하기', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null && result.isNotEmpty && context.mounted) {
+      await firestoreService.verifyPetRegistration(userId, result);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('동물등록 인증이 완료되었습니다! 🐕'), backgroundColor: AppColors.success),
+      );
+    }
   }
 
   /// 설정 바텀시트
@@ -1063,7 +1222,7 @@ class ProfileScreen extends ConsumerWidget {
             TextField(
               controller: controller,
               decoration: InputDecoration(
-                hintText: '새 닉네임 입력',
+                hintText: '새 닉네임을 입력해주세요',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

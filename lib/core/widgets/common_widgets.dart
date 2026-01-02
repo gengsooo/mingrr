@@ -376,27 +376,44 @@ class MingrrTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscureText,
-      keyboardType: keyboardType,
-      validator: validator,
-      onChanged: onChanged,
-      maxLines: maxLines,
-      enabled: enabled,
-      focusNode: focusNode,
-      style: const TextStyle(
-        fontSize: 15,
-        color: AppColors.textPrimary,
-      ),
-      decoration: InputDecoration(
-        hintText: hintText,
-        labelText: labelText,
-        prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, color: AppColors.textHint)
-            : null,
-        suffixIcon: suffixIcon,
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 타이틀 (labelText가 있을 때만 표시)
+        if (labelText != null) ...[
+          Text(
+            labelText!,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: AppSizes.gapS),
+        ],
+        // 입력 필드
+        TextFormField(
+          controller: controller,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          validator: validator,
+          onChanged: onChanged,
+          maxLines: maxLines,
+          enabled: enabled,
+          focusNode: focusNode,
+          style: const TextStyle(
+            fontSize: 15,
+            color: AppColors.textPrimary,
+          ),
+          decoration: InputDecoration(
+            hintText: hintText,
+            prefixIcon: prefixIcon != null
+                ? Icon(prefixIcon, color: AppColors.textHint)
+                : null,
+            suffixIcon: suffixIcon,
+          ),
+        ),
+      ],
     );
   }
 }
