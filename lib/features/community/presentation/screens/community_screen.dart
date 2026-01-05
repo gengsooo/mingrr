@@ -7,7 +7,9 @@ import '../../../../core/widgets/search_screen.dart';
 import '../../../../core/widgets/top_navigation.dart';
 import '../../../../core/widgets/request_sheet.dart';
 import '../../../../core/widgets/profile_icon.dart';
+import '../../../../core/widgets/common_widgets.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
+import '../providers/community_provider.dart';
 import 'community_detail_screen.dart';
 import 'group_write_screen.dart';
 
@@ -27,19 +29,7 @@ final _selectedLocationsProvider = StateProvider<List<String>>((ref) => []);
 /// 선택된 카테고리 인덱스
 final _selectedCategoryProvider = StateProvider<int>((ref) => 0);
 
-/// 정렬 옵션
-enum GroupSortOption {
-  recommended('추천순'),
-  members('멤버순'),
-  latest('최신순'),
-  likes('좋아요순');
-
-  final String label;
-  const GroupSortOption(this.label);
-}
-
-/// 선택된 정렬 옵션
-final _selectedSortProvider = StateProvider<GroupSortOption>((ref) => GroupSortOption.recommended);
+// 정렬 옵션은 community_provider.dart에서 import
 
 /// 한국 지역 데이터 (특별시/광역시/특례시 정식 명칭 사용)
 class KoreaLocationData {
@@ -287,6 +277,7 @@ class CommunityScreen extends ConsumerWidget {
               );
             },
           ),
+          const NotificationIconButton(),
           buildProfileAction(),
         ],
       ),
@@ -333,9 +324,23 @@ class CommunityScreen extends ConsumerWidget {
     );
   }
 
-  /// 정렬 옵션 바
+  /// 정렬 옵션 라벨
+  String _getSortLabel(GroupSortOption option) {
+    switch (option) {
+      case GroupSortOption.recommended:
+        return '추천순';
+      case GroupSortOption.members:
+        return '멤버순';
+      case GroupSortOption.latest:
+        return '최신순';
+      case GroupSortOption.likes:
+        return '좋아요순';
+    }
+  }
+
+  /// 정렬 옵션 바 (오름차순/내림차순 토글 아이콘 포함)
   Widget _buildSortOptions(BuildContext context, WidgetRef ref) {
-    final selectedSort = ref.watch(_selectedSortProvider);
+    final sortState = ref.watch(groupSortStateProvider);
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -344,13 +349,27 @@ class CommunityScreen extends ConsumerWidget {
       ),
       child: Row(
         children: GroupSortOption.values.map((option) {
-          final isSelected = selectedSort == option;
+          final isSelected = sortState.option == option;
+          final isAsc = sortState.direction == SortDirection.ascending;
+          
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
-              onTap: () => ref.read(_selectedSortProvider.notifier).state = option,
+              onTap: () {
+                final notifier = ref.read(groupSortStateProvider.notifier);
+                if (isSelected) {
+                  // 같은 옵션 클릭 시 방향 토글
+                  notifier.state = sortState.toggleDirection();
+                } else {
+                  // 다른 옵션 클릭 시 해당 옵션으로 변경 (기본 내림차순)
+                  notifier.state = GroupSortState(
+                    option: option,
+                    direction: SortDirection.descending,
+                  );
+                }
+              },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: isSelected ? AppColors.community : Colors.transparent,
                   borderRadius: BorderRadius.circular(14),
@@ -358,13 +377,26 @@ class CommunityScreen extends ConsumerWidget {
                     color: isSelected ? AppColors.community : AppColors.divider,
                   ),
                 ),
-                child: Text(
-                  option.label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? Colors.white : AppColors.textSecondary,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _getSortLabel(option),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isSelected ? Colors.white : AppColors.textSecondary,
+                      ),
+                    ),
+                    if (isSelected) ...[
+                      const SizedBox(width: 2),
+                      Icon(
+                        isAsc ? Icons.arrow_upward : Icons.arrow_downward,
+                        size: 12,
+                        color: Colors.white,
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
@@ -495,17 +527,18 @@ class CommunityScreen extends ConsumerWidget {
     );
   }
 
-  /// 모임 목록
+  /// 모임 목록 (Firebase 연동 + 정렬 적용)
   Widget _buildGroupList(BuildContext context, WidgetRef ref, List<String> locationFilter) {
-    final groups = [
-      {'name': '주말 한강 산책 모임', 'category': '산책', 'members': 28, 'district': '서울 영등포구'},
-      {'name': '강아지 수제 간식 만들기', 'category': '나눔', 'members': 15, 'district': '서울 강남구'},
-      {'name': '소형견 친목 모임', 'category': '친목', 'members': 42, 'district': '서울 마포구'},
-      {'name': '반려견 훈련 스터디', 'category': '훈련', 'members': 18, 'district': '서울 송파구'},
-      {'name': '시니어 반려견 케어 모임', 'category': '건강', 'members': 23, 'district': '서울 서초구'},
-      {'name': '분당 댕댕이 모임', 'category': '친목', 'members': 35, 'district': '경기 성남시'},
-      {'name': '용인 산책 친구들', 'category': '산책', 'members': 20, 'district': '경기 용인시'},
-    ];
+    final sortedGroups = ref.watch(sortedGroupsProvider);
+    final sortState = ref.watch(groupSortStateProvider);
+    
+    // 지역 필터 적용
+    final filteredGroups = locationFilter.isEmpty 
+        ? sortedGroups 
+        : sortedGroups.where((g) {
+            final address = g.group.address ?? '';
+            return locationFilter.any((loc) => address.contains(loc));
+          }).toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -517,7 +550,18 @@ class CommunityScreen extends ConsumerWidget {
         // 추천 모임 헤더
         Row(
           children: [
-            const Text('추천 모임', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(
+              '${_getSortLabel(sortState.option)} 모임',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              sortState.direction == SortDirection.ascending 
+                  ? Icons.arrow_upward 
+                  : Icons.arrow_downward,
+              size: 14,
+              color: AppColors.textSecondary,
+            ),
             if (locationFilter.isNotEmpty) ...[
               const SizedBox(width: 8),
               Text(
@@ -525,21 +569,54 @@ class CommunityScreen extends ConsumerWidget {
                 style: const TextStyle(fontSize: 12, color: AppColors.community, fontWeight: FontWeight.w500),
               ),
             ],
+            const Spacer(),
+            Text(
+              '${filteredGroups.length}개',
+              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            ),
           ],
         ),
         const SizedBox(height: 12),
         
         // 모임 카드들
-        ...groups.map((group) => _buildGroupCard(
-          context: context,
-          name: group['name'] as String,
-          category: group['category'] as String,
-          members: group['members'] as int,
-          district: group['district'] as String,
-        )),
+        if (filteredGroups.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(32),
+            child: const Column(
+              children: [
+                Icon(Icons.groups_outlined, size: 48, color: AppColors.textHint),
+                SizedBox(height: 12),
+                Text('등록된 모임이 없습니다', style: TextStyle(color: AppColors.textSecondary)),
+              ],
+            ),
+          )
+        else
+          ...filteredGroups.map((groupWithDistance) => _buildGroupCardFromModel(
+            context: context,
+            groupWithDistance: groupWithDistance,
+          )),
         
         const SizedBox(height: 80),
       ],
+    );
+  }
+  
+  /// GroupWithDistance를 사용한 모임 카드
+  Widget _buildGroupCardFromModel({
+    required BuildContext context,
+    required GroupWithDistance groupWithDistance,
+  }) {
+    final group = groupWithDistance.group;
+    return _buildGroupCard(
+      context: context,
+      id: group.id,
+      name: group.name,
+      category: group.typeString,
+      members: group.memberCount,
+      district: group.address ?? '지역 미설정',
+      likeCount: group.likeCount,
+      distance: groupWithDistance.distanceString,
+      recommendScore: groupWithDistance.recommendScore,
     );
   }
 
@@ -727,10 +804,14 @@ class CommunityScreen extends ConsumerWidget {
   /// 모임 카드
   Widget _buildGroupCard({
     required BuildContext context,
+    String? id,
     required String name,
     required String category,
     required int members,
     required String district,
+    int likeCount = 0,
+    String? distance,
+    double recommendScore = 0,
     bool isJoined = false,
   }) {
     return GestureDetector(
@@ -739,7 +820,7 @@ class CommunityScreen extends ConsumerWidget {
           context,
           MaterialPageRoute(
             builder: (context) => CommunityDetailScreen(
-              communityId: name.hashCode.toString(),
+              communityId: id ?? name.hashCode.toString(),
             ),
           ),
         );
@@ -787,10 +868,22 @@ class CommunityScreen extends ConsumerWidget {
                     const Icon(Icons.location_on, size: 12, color: AppColors.textHint),
                     const SizedBox(width: 2),
                     Text(district, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                    const SizedBox(width: 8),
+                    if (distance != null && distance != '거리 정보 없음') ...[
+                      const SizedBox(width: 4),
+                      Text('· $distance', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
                     const Icon(Icons.people, size: 12, color: AppColors.textHint),
                     const SizedBox(width: 2),
                     Text('$members명', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.favorite, size: 12, color: AppColors.textHint),
+                    const SizedBox(width: 2),
+                    Text('$likeCount', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                   ],
                 ),
               ],
@@ -845,7 +938,7 @@ class CommunityScreen extends ConsumerWidget {
     
     // 등록 성공 시 목록 새로고침
     if (result == true && context.mounted) {
-      // Provider가 autoDispose이므로 자동으로 새로고침됨
+      // 상태 관리가 자동 해제 모드이므로 자동으로 새로고침됨
     }
   }
 }

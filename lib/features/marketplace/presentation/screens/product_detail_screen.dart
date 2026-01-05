@@ -4,11 +4,15 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
+import '../../../../core/services/chat_service.dart';
 import '../../../../core/utils/format_utils.dart';
+import '../../../../core/widgets/confirm_bottom_sheet.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/warmth_score.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
 import '../../../../models/marketplace_model.dart';
+import '../../../../models/chat_model.dart';
+import '../../../chat/presentation/screens/chat_detail_screen.dart';
 import 'product_write_screen.dart';
 
 /// ============================================================
@@ -408,16 +412,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           SizedBox(
             width: 100,
             child: ElevatedButton(
-              onPressed: () {
-                // TODO: 판매자와 채팅 화면으로 이동 구현 예정
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('채팅이 시작되었습니다!'),
-                    backgroundColor: AppColors.market,
-                  ),
-                );
-              },
+              onPressed: _isOwner ? null : () => _startChat(),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.market,
                 shape: RoundedRectangleBorder(
@@ -522,28 +517,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     }
   }
 
-  /// 삭제 확인 다이얼로그
+  /// 삭제 확인 바텀시트
   void _confirmDelete() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('상품 삭제'),
-        content: const Text('이 상품을 삭제하시겠습니까?\n삭제된 상품은 복구할 수 없습니다.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _deleteProduct();
-            },
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('삭제'),
-          ),
-        ],
-      ),
+    if (_isDeleting) return; // 이미 삭제 중이면 무시
+    
+    showConfirmBottomSheet(
+      context,
+      type: ConfirmType.productDelete,
+      onConfirm: _deleteProduct,
     );
   }
 
@@ -581,4 +562,72 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     }
   }
 
+  /// 판매자와 채팅 시작
+  Future<void> _startChat() async {
+    if (_product == null) return;
+    
+    final myUserId = _firebaseService.currentUserId;
+    if (myUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인이 필요합니다')),
+      );
+      return;
+    }
+
+    // 본인 상품이면 채팅 불가
+    if (_product!.sellerId == myUserId) return;
+
+    try {
+      final chatService = ChatService();
+      
+      // 내 정보 가져오기
+      final myUserDoc = await _firebaseService.usersCollection.doc(myUserId).get();
+      final myUserData = myUserDoc.data();
+      
+      // 판매자 정보 가져오기
+      final sellerDoc = await _firebaseService.usersCollection.doc(_product!.sellerId).get();
+      final sellerData = sellerDoc.data();
+
+      final myInfo = ChatParticipant(
+        id: myUserId,
+        nickname: myUserData?['nickname'] ?? '사용자',
+        profileImageUrl: myUserData?['profileImageUrl'],
+      );
+
+      final sellerInfo = ChatParticipant(
+        id: _product!.sellerId,
+        nickname: sellerData?['nickname'] ?? '판매자',
+        profileImageUrl: sellerData?['profileImageUrl'],
+      );
+
+      // 채팅방 생성 또는 기존 채팅방 찾기
+      final chatRoom = await chatService.getOrCreateChatRoom(
+        myUserId: myUserId,
+        otherUserId: _product!.sellerId,
+        type: 'market',
+        myInfo: myInfo,
+        otherInfo: sellerInfo,
+        relatedId: _product!.id,
+      );
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatDetailScreen(
+              chatRoomId: chatRoom.id,
+              otherUserName: sellerInfo.nickname,
+              otherUserImageUrl: sellerInfo.profileImageUrl,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('채팅 시작 실패: $e')),
+        );
+      }
+    }
+  }
 }

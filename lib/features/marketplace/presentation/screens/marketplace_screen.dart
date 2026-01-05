@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/product_card.dart';
 import '../../../../core/widgets/search_screen.dart';
 import '../../../../core/widgets/top_navigation.dart';
 import '../../../../core/widgets/profile_icon.dart';
@@ -11,6 +12,7 @@ import '../../../../models/marketplace_model.dart';
 import '../providers/marketplace_provider.dart';
 import 'product_detail_screen.dart';
 import 'product_write_screen.dart';
+import 'job_detail_screen.dart';
 
 /// ============================================================
 /// 마켓플레이스 화면
@@ -89,6 +91,7 @@ class MarketplaceScreen extends ConsumerWidget {
               );
             },
           ),
+          const NotificationIconButton(),
           buildProfileAction(),
         ],
       ),
@@ -148,301 +151,64 @@ class MarketplaceScreen extends ConsumerWidget {
     );
   }
 
-  /// 상품 목록 (Firebase 연동)
+  /// 상품 목록 (Firebase 연동 + 거리 필터링)
   Widget _buildProductList(BuildContext context, ProductType type) {
     return Consumer(
       builder: (context, ref, child) {
-        final productsAsync = ref.watch(filteredProductsProvider(type));
+        final distanceFilter = ref.watch(_distanceFilterProvider);
+        final products = ref.watch(filteredProductsProvider((type: type, radiusKm: distanceFilter)));
         
-        return productsAsync.when(
-          data: (products) {
-            if (products.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      type == ProductType.sell ? Icons.sell : Icons.volunteer_activism,
-                      size: 48,
-                      color: AppColors.textHint,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      type == ProductType.sell ? '등록된 판매 상품이 없습니다' : '등록된 나눔 상품이 없습니다',
-                      style: const TextStyle(color: AppColors.textSecondary),
-                    ),
-                  ],
+        if (products.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  type == ProductType.sell ? Icons.sell : Icons.volunteer_activism,
+                  size: 48,
+                  color: AppColors.textHint,
                 ),
-              );
-            }
-            return ListView.builder(
-              padding: const EdgeInsets.all(AppSizes.paddingM),
-              itemCount: products.length,
-              itemBuilder: (ctx, index) {
-                return _buildProductModelItem(context, products[index]);
-              },
-            );
+                const SizedBox(height: 16),
+                Text(
+                  '${distanceFilter.toInt()}km 내에 ${type == ProductType.sell ? '판매' : '나눔'} 상품이 없습니다',
+                  style: const TextStyle(color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '거리를 늘려보세요',
+                  style: TextStyle(fontSize: 12, color: AppColors.textHint),
+                ),
+              ],
+            ),
+          );
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.all(AppSizes.paddingM),
+          itemCount: products.length,
+          itemBuilder: (ctx, index) {
+            return _buildProductModelItem(context, products[index]);
           },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
         );
       },
     );
   }
   
-  /// Firebase ProductModel을 사용한 상품 아이템
-  Widget _buildProductModelItem(BuildContext context, ProductModel product) {
-    final isShare = product.type == ProductType.share;
-    
-    return MingrrCard(
-      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
+  /// Firebase ProductWithDistance를 사용한 상품 아이템
+  Widget _buildProductModelItem(BuildContext context, ProductWithDistance productWithDistance) {
+    return ProductCard(
+      product: productWithDistance.product,
+      distanceString: productWithDistance.distanceString,
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ProductDetailScreen(
-              productId: product.id,
-              product: product,
+              productId: productWithDistance.product.id,
+              product: productWithDistance.product,
             ),
           ),
         );
       },
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 이미지
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: AppColors.marketLight,
-              borderRadius: BorderRadius.circular(AppSizes.radiusM),
-              image: product.imageUrls.isNotEmpty
-                  ? DecorationImage(
-                      image: NetworkImage(product.imageUrls.first),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
-            ),
-            child: Stack(
-              children: [
-                if (product.imageUrls.isEmpty)
-                  const Center(
-                    child: Icon(Icons.image, size: 40, color: AppColors.market),
-                  ),
-                if (product.status == ProductStatus.reserved)
-                  Positioned(
-                    top: 4,
-                    left: 4,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.textSecondary,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        '예약중',
-                        style: TextStyle(
-                          fontSize: 9,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSizes.gapM),
-          
-          // 정보
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  product.title,
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${product.address ?? '위치 미상'} · ${_formatTime(product.createdAt)}',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textHint),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  product.priceString,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: isShare ? AppColors.walk : AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.market.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        product.categoryString,
-                        style: const TextStyle(fontSize: 10, color: AppColors.market),
-                      ),
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        const Icon(Icons.bookmark_border, size: 14, color: AppColors.textHint),
-                        const SizedBox(width: 2),
-                        Text('${product.likeCount}', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.chat_bubble_outline, size: 14, color: AppColors.textHint),
-                        const SizedBox(width: 2),
-                        Text('${product.chatCount}', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  /// 시간 포맷팅
-  String _formatTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final diff = now.difference(dateTime);
-    if (diff.inMinutes < 1) return '방금';
-    if (diff.inHours < 1) return '${diff.inMinutes}분 전';
-    if (diff.inDays < 1) return '${diff.inHours}시간 전';
-    return '${diff.inDays}일 전';
-  }
-
-  /// 상품 아이템
-  Widget _buildProductItem(BuildContext context, int index, ProductType type) {
-    final isShare = type == ProductType.share;
-    
-    return MingrrCard(
-      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProductDetailScreen(
-              productId: 'product_$index',
-            ),
-          ),
-        );
-      },
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 이미지
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: AppColors.marketLight,
-              borderRadius: BorderRadius.circular(AppSizes.radiusM),
-            ),
-            child: Stack(
-              children: [
-                const Center(
-                  child: Icon(Icons.image, size: 40, color: AppColors.market),
-                ),
-                if (index % 5 == 0)
-                  Positioned(
-                    top: 4,
-                    left: 4,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.textSecondary,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        '예약중',
-                        style: TextStyle(
-                          fontSize: 9,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSizes.gapM),
-          
-          // 정보
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isShare
-                      ? '안 먹는 간식 나눔해요 ${index + 1}'
-                      : '강아지 옷 팔아요 ${index + 1}',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '강남구 · ${index + 1}시간 전',
-                  style: const TextStyle(fontSize: 12, color: AppColors.textHint),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  isShare ? '무료나눔' : '${(index + 1) * 5000}원',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: isShare ? AppColors.walk : AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: AppColors.market.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        ['사료/간식', '의류', '장난감', '용품'][index % 4],
-                        style: const TextStyle(fontSize: 10, color: AppColors.market),
-                      ),
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        const Icon(Icons.bookmark_border, size: 14, color: AppColors.textHint),
-                        const SizedBox(width: 2),
-                        Text('${index + 3}', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.chat_bubble_outline, size: 14, color: AppColors.textHint),
-                        const SizedBox(width: 2),
-                        Text('${index + 1}', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -473,7 +239,7 @@ class MarketplaceScreen extends ConsumerWidget {
     
     // 등록 성공 시 목록 새로고침
     if (result == true && context.mounted) {
-      // Provider가 autoDispose이므로 자동으로 새로고침됨
+      // 상태 관리가 자동 해제 모드이므로 자동으로 새로고침됨
     }
   }
 
@@ -517,115 +283,17 @@ class MarketplaceScreen extends ConsumerWidget {
 
   /// Firebase JobModel을 사용한 알바 아이템
   Widget _buildJobModelItem(BuildContext context, JobModel job) {
-    return MingrrCard(
-      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
+    return JobCard(
+      job: job,
       onTap: () {
-        // TODO: 알바 상세 화면 구현 예정
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => JobDetailScreen(jobId: job.id),
+          ),
+        );
       },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              // 알바 타입 배지
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.market,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  job.typeString,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              // 기간
-              if (job.periodString.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.divider,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.schedule, size: 12, color: AppColors.textSecondary),
-                      const SizedBox(width: 4),
-                      Text(
-                        job.periodString,
-                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                      ),
-                    ],
-                  ),
-                ),
-              const Spacer(),
-              Text(
-                _formatJobTime(job.createdAt),
-                style: const TextStyle(fontSize: 11, color: AppColors.textHint),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // 제목
-          Text(
-            job.title,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 8),
-          // 위치
-          Row(
-            children: [
-              const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textSecondary),
-              const SizedBox(width: 4),
-              Text(
-                job.address ?? '위치 미상',
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // 가격
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                job.priceString,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.market,
-                ),
-              ),
-              Row(
-                children: [
-                  const Icon(Icons.chat_bubble_outline, size: 14, color: AppColors.textHint),
-                  const SizedBox(width: 4),
-                  Text('${job.chatCount}', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
     );
-  }
-  
-  /// 알바 시간 포맷팅
-  String _formatJobTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final diff = now.difference(dateTime);
-    if (diff.inMinutes < 1) return '방금';
-    if (diff.inHours < 1) return '${diff.inMinutes}분 전';
-    if (diff.inDays < 1) return '${diff.inHours}시간 전';
-    return '${diff.inDays}일 전';
   }
 }
 

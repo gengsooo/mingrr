@@ -290,35 +290,7 @@ class MingrrAvatar extends StatelessWidget {
               ],
             ),
             child: ClipOval(
-              child: imageUrl != null && imageUrl!.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: imageUrl!,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: AppColors.primaryLight,
-                        child: Icon(
-                          placeholderIcon,
-                          size: size * 0.5,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: AppColors.primaryLight,
-                        child: Icon(
-                          placeholderIcon,
-                          size: size * 0.5,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    )
-                  : Container(
-                      color: AppColors.primaryLight,
-                      child: Icon(
-                        placeholderIcon,
-                        size: size * 0.5,
-                        color: AppColors.primary,
-                      ),
-                    ),
+              child: _buildAvatarContent(),
             ),
           ),
           // 온라인 상태 표시
@@ -337,6 +309,37 @@ class MingrrAvatar extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+  
+  Widget _buildAvatarContent() {
+    // URL이 없거나 빈 문자열인 경우 기본 아이콘
+    if (imageUrl == null || imageUrl!.isEmpty) {
+      return _buildPlaceholder();
+    }
+    
+    // default_avatar: 형식인 경우 기본 아바타 아이콘 표시
+    if (imageUrl!.startsWith('default_avatar:')) {
+      return _buildPlaceholder();
+    }
+    
+    // 일반 URL인 경우 네트워크 이미지
+    return CachedNetworkImage(
+      imageUrl: imageUrl!,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => _buildPlaceholder(),
+      errorWidget: (context, url, error) => _buildPlaceholder(),
+    );
+  }
+  
+  Widget _buildPlaceholder() {
+    return Container(
+      color: AppColors.primaryLight,
+      child: Icon(
+        placeholderIcon,
+        size: size * 0.5,
+        color: AppColors.primary,
       ),
     );
   }
@@ -604,6 +607,90 @@ class MingrrBadge extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ===== 알림 아이콘 버튼 =====
+/// AppBar에서 사용하는 알림 아이콘 (배지 포함)
+class NotificationIconButton extends StatelessWidget {
+  final int badgeCount;
+  final VoidCallback? onPressed;
+
+  const NotificationIconButton({
+    super.key,
+    this.badgeCount = 0,
+    this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          const Icon(Icons.notifications_outlined),
+          if (badgeCount > 0)
+            Positioned(
+              top: -4,
+              right: -4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: AppColors.error,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                child: Text(
+                  badgeCount > 99 ? '99+' : '$badgeCount',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+        ],
+      ),
+      onPressed: onPressed ?? () {
+        // TODO: 알림 화면으로 이동
+      },
+    );
+  }
+}
+
+// ===== 기본 반려동물 이미지 플레이스홀더 =====
+/// 추가사진이 없을 때 표시하는 기본 강아지 아이콘
+/// 모든 화면에서 통일된 스타일로 사용 (🐶 이모지)
+class DefaultPetImage extends StatelessWidget {
+  final double? width;
+  final double? height;
+  final BorderRadius? borderRadius;
+
+  const DefaultPetImage({
+    super.key,
+    this.width,
+    this.height,
+    this.borderRadius,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: AppColors.dating.withOpacity(0.15),
+        borderRadius: borderRadius,
+      ),
+      child: Center(
+        child: Text(
+          '🐶',
+          style: TextStyle(fontSize: (height ?? 100) * 0.4),
+        ),
       ),
     );
   }

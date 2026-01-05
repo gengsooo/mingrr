@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
+import '../services/image_crop_service.dart';
 
 /// ============================================================
 /// 이미지 선택 바텀시트
@@ -163,6 +164,8 @@ Future<ImagePickerResult?> showImagePickerSheet(
   String? currentImageUrl,
   DefaultAvatar? currentDefaultAvatar,
   bool allowClear = true,
+  bool enableCrop = true,
+  ImageCropStyle cropStyle = ImageCropStyle.circle,
 }) async {
   return showModalBottomSheet<ImagePickerResult>(
     context: context,
@@ -174,6 +177,8 @@ Future<ImagePickerResult?> showImagePickerSheet(
       currentImageUrl: currentImageUrl,
       currentDefaultAvatar: currentDefaultAvatar,
       allowClear: allowClear,
+      enableCrop: enableCrop,
+      cropStyle: cropStyle,
     ),
   );
 }
@@ -185,6 +190,8 @@ class ImagePickerSheet extends StatefulWidget {
   final String? currentImageUrl;
   final DefaultAvatar? currentDefaultAvatar;
   final bool allowClear;
+  final bool enableCrop;
+  final ImageCropStyle cropStyle;
   
   const ImagePickerSheet({
     super.key,
@@ -193,6 +200,8 @@ class ImagePickerSheet extends StatefulWidget {
     this.currentImageUrl,
     this.currentDefaultAvatar,
     this.allowClear = true,
+    this.enableCrop = true,
+    this.cropStyle = ImageCropStyle.circle,
   });
 
   @override
@@ -509,16 +518,12 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.camera,
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 85,
+        maxWidth: 2000,
+        maxHeight: 2000,
       );
       
       if (image != null) {
-        setState(() {
-          _selectedImage = image;
-          _selectedDefaultAvatar = null; // 대표 아이콘 선택 해제
-        });
+        await _processImage(image);
       }
     } catch (e) {
       if (mounted) {
@@ -533,16 +538,12 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 85,
+        maxWidth: 2000,
+        maxHeight: 2000,
       );
       
       if (image != null) {
-        setState(() {
-          _selectedImage = image;
-          _selectedDefaultAvatar = null; // 대표 아이콘 선택 해제
-        });
+        await _processImage(image);
       }
     } catch (e) {
       if (mounted) {
@@ -551,5 +552,33 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
         );
       }
     }
+  }
+  
+  Future<void> _processImage(XFile image) async {
+    // 크롭 기능 활성화 & 모바일인 경우만 크롭 적용
+    if (widget.enableCrop && !kIsWeb) {
+      final croppedPath = await ImageCropService().cropImage(
+        imagePath: image.path,
+        style: widget.cropStyle,
+        context: context,
+        maxWidth: 800,
+        maxHeight: 800,
+        compressQuality: 85,
+      );
+      
+      if (croppedPath != null) {
+        setState(() {
+          _selectedImage = XFile(croppedPath);
+          _selectedDefaultAvatar = null;
+        });
+        return;
+      }
+    }
+    
+    // 크롭 비활성화, 웹, 또는 크롭 취소 시 원본 사용
+    setState(() {
+      _selectedImage = image;
+      _selectedDefaultAvatar = null;
+    });
   }
 }

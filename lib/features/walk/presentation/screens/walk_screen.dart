@@ -1,8 +1,13 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+// TODO: 실제 기기 테스트 시 주석 해제
+// import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../pet/presentation/providers/pet_provider.dart';
 
 /// ============================================================
 /// 산책 화면
@@ -20,69 +25,234 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
   bool _isWalking = false;
   int _walkDuration = 0; // 초 단위
   double _walkDistance = 0; // 미터 단위
+  
+  // TODO: 실제 기기 테스트 시 주석 해제
+  // 카카오 맵 컨트롤러
+  // KakaoMapController? _mapController;
+  // LatLng? _currentPosition;
+  // bool _isMapReady = false;
+  
+  // 임시 위치 (에뮬레이터용)
+  Position? _currentPosition;
+  
+  // 선택된 반려동물 ID 목록 (중복 선택 가능)
+  final Set<String> _selectedPetIds = {};
+  
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation();
+  }
+  
+  /// 현재 위치 가져오기
+  Future<void> _getCurrentLocation() async {
+    try {
+      // 위치 서비스 활성화 확인
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() => _currentPosition = null);
+        return;
+      }
+      
+      // 위치 권한 확인
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() => _currentPosition = null);
+          return;
+        }
+      }
+      
+      if (permission == LocationPermission.deniedForever) {
+        setState(() => _currentPosition = null);
+        return;
+      }
+      
+      // 현재 위치 가져오기 (타임아웃 5초)
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+        timeLimit: const Duration(seconds: 5),
+      );
+      
+      setState(() {
+        _currentPosition = position;
+      });
+    } catch (e) {
+      debugPrint('위치 가져오기 실패: $e');
+      setState(() => _currentPosition = null);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: Stack(
+      body: Column(
         children: [
-          // ===== 지도 영역 (플레이스홀더) =====
-          _buildMapPlaceholder(),
+          // ===== 상단 영역 (SafeArea + 반려동물 선택) =====
+          SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                // 상단 바
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.paddingM,
+                    vertical: AppSizes.paddingS,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                            ),
+                          ],
+                        ),
+                        child: TextButton.icon(
+                          icon: const Icon(Icons.history, size: 18),
+                          label: const Text('산책 기록'),
+                          onPressed: () {},
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // 반려동물 선택 패널 (산책 중이 아닐 때만)
+                if (!_isWalking) _buildPetSelectionPanel(),
+                
+                // 산책 중 정보 패널
+                if (_isWalking) _buildWalkingInfoPanel(),
+              ],
+            ),
+          ),
           
-          // ===== 상단 정보 바 =====
-          _buildTopBar(),
-          
-          // ===== 근처 산책 중인 친구들 =====
-          if (!_isWalking) _buildNearbyWalkersPanel(),
-          
-          // ===== 산책 중 정보 패널 =====
-          if (_isWalking) _buildWalkingInfoPanel(),
+          // ===== 지도 영역 =====
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppSizes.radiusXL),
+              ),
+              child: _buildKakaoMap(),
+            ),
+          ),
           
           // ===== 하단 컨트롤 =====
-          _buildBottomControls(),
+          _buildBottomControlsSimple(),
         ],
       ),
     );
   }
 
-  /// 지도 플레이스홀더 (실제 구현 시 GoogleMap 위젯으로 교체)
-  Widget _buildMapPlaceholder() {
+  /// 지도 위젯 (플랫폼별 분기)
+  Widget _buildKakaoMap() {
+    // 웹에서는 단순 플레이스홀더 표시
+    if (kIsWeb) {
+      return _buildWebMapPlaceholder();
+    }
+    
+    // 모바일에서는 카카오맵 (설정 전에는 플레이스홀더)
+    return _buildMobileMapPlaceholder();
+  }
+  
+  /// 웹용 지도 플레이스홀더
+  Widget _buildWebMapPlaceholder() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.divider.withOpacity(0.3),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.map_outlined,
+              size: 64,
+              color: AppColors.textHint,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              '지도 영역',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '모바일 앱에서 확인 가능',
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textHint,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  /// 모바일용 지도 플레이스홀더 (카카오맵 SDK 설정 전)
+  Widget _buildMobileMapPlaceholder() {
     return Container(
       width: double.infinity,
       height: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            AppColors.walk.withOpacity(0.1),
-            AppColors.primaryLight,
-          ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
+          colors: [
+            AppColors.walk.withOpacity(0.1),
+            AppColors.walk.withOpacity(0.2),
+          ],
         ),
       ),
       child: Stack(
         children: [
-          // 그리드 패턴 (지도 느낌)
+          // 격자 패턴 (지도 느낌)
           CustomPaint(
             size: Size.infinite,
-            painter: _GridPainter(),
+            painter: _MapGridPainter(),
           ),
-          
-          // 중앙 마커 (현재 위치)
+          // 중앙 마커
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 60,
-                  height: 60,
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.walk,
+                    color: Colors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.walk.withOpacity(0.4),
+                        color: AppColors.walk.withOpacity(0.3),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),
@@ -90,16 +260,13 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                   ),
                   child: const Icon(
                     Icons.pets,
-                    color: Colors.white,
-                    size: 30,
+                    size: 40,
+                    color: AppColors.walk,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -110,229 +277,176 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                       ),
                     ],
                   ),
-                  child: const Text(
-                    '현재 위치',
-                    style: TextStyle(
+                  child: Text(
+                    _currentPosition != null
+                        ? '위치: ${_currentPosition!.latitude.toStringAsFixed(4)}, ${_currentPosition!.longitude.toStringAsFixed(4)}'
+                        : '위치를 가져오는 중...',
+                    style: const TextStyle(
                       fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: AppColors.textSecondary,
                     ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '카카오맵 SDK 설정 후 지도가 표시됩니다',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textHint,
                   ),
                 ),
               ],
             ),
           ),
-          
-          // 데모용 다른 반려동물 마커들
-          ..._buildDemoMarkers(),
         ],
       ),
     );
   }
 
-  /// 데모용 마커들
-  List<Widget> _buildDemoMarkers() {
-    final markers = [
-      {'top': 150.0, 'left': 80.0, 'name': '뽀삐'},
-      {'top': 200.0, 'right': 60.0, 'name': '초코'},
-      {'bottom': 250.0, 'left': 120.0, 'name': '콩이'},
-      {'bottom': 300.0, 'right': 100.0, 'name': '몽이'},
-    ];
-
-    return markers.map((marker) {
-      return Positioned(
-        top: marker['top'] as double?,
-        left: marker['left'] as double?,
-        right: marker['right'] as double?,
-        bottom: marker['bottom'] as double?,
-        child: _buildPetMarker(marker['name'] as String),
-      );
-    }).toList();
-  }
-
-  /// 반려동물 마커
-  Widget _buildPetMarker(String name) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 45,
-          height: 45,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 3),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 8,
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.pets,
-            color: Colors.white,
-            size: 22,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            name,
-            style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// 상단 정보 바
-  Widget _buildTopBar() {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.paddingM),
-          child: Row(
-            children: [
-              // 뒤로가기 / 메뉴
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-              
-              const Spacer(),
-              
-              // 산책 기록 버튼
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                    ),
-                  ],
-                ),
-                child: TextButton.icon(
-                  icon: const Icon(Icons.history, size: 18),
-                  label: const Text('산책 기록'),
-                  onPressed: () {
-                    // TODO: 산책 기록 화면으로 이동 구현 예정
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 근처 산책 중인 친구들 패널
-  Widget _buildNearbyWalkersPanel() {
-    return Positioned(
-      top: 100,
-      left: AppSizes.paddingM,
-      right: AppSizes.paddingM,
-      child: MingrrCard(
-        margin: EdgeInsets.zero,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+  /// 반려동물 선택 패널
+  Widget _buildPetSelectionPanel() {
+    final petsAsync = ref.watch(userPetsProvider);
+    
+    return petsAsync.when(
+      data: (pets) {
+        if (pets.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        
+        // 첫 로드 시 모든 반려동물 선택
+        if (_selectedPetIds.isEmpty && pets.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            setState(() {
+              _selectedPetIds.addAll(pets.map((p) => p.id));
+            });
+          });
+        }
+        
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
+          child: MingrrCard(
+            margin: EdgeInsets.zero,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: AppColors.walk,
-                    shape: BoxShape.circle,
-                  ),
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: AppColors.walk,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: AppSizes.gapS),
+                    const Text(
+                      '함께 산책할 반려동물',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${_selectedPetIds.length}마리 선택',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: AppColors.walk,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: AppSizes.gapS),
-                const Text(
-                  '근처에서 산책 중인 친구들',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  '4마리',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.walk,
-                    fontWeight: FontWeight.w600,
+                const SizedBox(height: AppSizes.gapM),
+                SizedBox(
+                  height: 80,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: pets.length,
+                    itemBuilder: (context, index) {
+                      final pet = pets[index];
+                      final isSelected = _selectedPetIds.contains(pet.id);
+                      
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            if (isSelected) {
+                              _selectedPetIds.remove(pet.id);
+                            } else {
+                              _selectedPetIds.add(pet.id);
+                            }
+                          });
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(right: AppSizes.gapM),
+                          child: Column(
+                            children: [
+                              Stack(
+                                children: [
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isSelected ? AppColors.walk : Colors.transparent,
+                                        width: 3,
+                                      ),
+                                    ),
+                                    child: MingrrAvatar(
+                                      size: 50,
+                                      imageUrl: pet.profileImageUrl,
+                                    ),
+                                  ),
+                                  if (isSelected)
+                                    Positioned(
+                                      right: 0,
+                                      bottom: 0,
+                                      child: Container(
+                                        width: 20,
+                                        height: 20,
+                                        decoration: const BoxDecoration(
+                                          color: AppColors.walk,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.check,
+                                          color: Colors.white,
+                                          size: 14,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                pet.name,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                  color: isSelected ? AppColors.walk : AppColors.textPrimary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: AppSizes.gapM),
-            SizedBox(
-              height: 70,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: 4,
-                itemBuilder: (context, index) {
-                  return Container(
-                    margin: const EdgeInsets.only(right: AppSizes.gapM),
-                    child: Column(
-                      children: [
-                        const MingrrAvatar(
-                          size: 45,
-                          isOnline: true,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          ['뽀삐', '초코', '콩이', '몽이'][index],
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 
   /// 산책 중 정보 패널
   Widget _buildWalkingInfoPanel() {
-    return Positioned(
-      top: 100,
-      left: AppSizes.paddingM,
-      right: AppSizes.paddingM,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
       child: MingrrCard(
         margin: EdgeInsets.zero,
         backgroundColor: AppColors.walk,
@@ -403,80 +517,60 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
     );
   }
 
-  /// 하단 컨트롤
-  Widget _buildBottomControls() {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: SafeArea(
-        child: Container(
-          padding: const EdgeInsets.all(AppSizes.paddingL),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(AppSizes.radiusXL),
+  /// 하단 컨트롤 (Column용)
+  Widget _buildBottomControlsSimple() {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.all(AppSizes.paddingL),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, -5),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 발자국 남기기 버튼
-              if (_isWalking)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: AppSizes.gapM),
-                  child: MingrrButton(
-                    text: '🐾 발자국 남기기',
-                    isOutlined: true,
-                    backgroundColor: AppColors.primary,
-                    onPressed: () {
-                      // TODO: 발자국 남기기 기능 구현 예정
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('발자국을 남겼습니다! 🐾'),
-                          backgroundColor: AppColors.walk,
-                        ),
-                      );
-                    },
-                  ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 발자국 남기기 버튼
+            if (_isWalking)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSizes.gapM),
+                child: MingrrButton(
+                  text: '🐾 발자국 남기기',
+                  isOutlined: true,
+                  backgroundColor: AppColors.primary,
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('발자국을 남겼습니다! 🐾'),
+                        backgroundColor: AppColors.walk,
+                      ),
+                    );
+                  },
                 ),
-              
-              // 산책 시작/종료 버튼
-              MingrrButton(
-                text: _isWalking ? '산책 종료' : '산책 시작',
-                backgroundColor: _isWalking ? AppColors.error : AppColors.walk,
-                textColor: Colors.white,
-                icon: _isWalking ? Icons.stop : Icons.play_arrow,
-                onPressed: () {
-                  setState(() {
-                    _isWalking = !_isWalking;
-                    if (!_isWalking) {
-                      // 산책 종료 시 기록 저장
-                      _showWalkSummary();
-                    }
-                  });
-                },
               ),
-              
-              if (!_isWalking) ...[
-                const SizedBox(height: AppSizes.gapM),
-                Text(
-                  '산책을 시작하면 근처 친구들에게 알림이 갑니다',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textHint,
-                  ),
-                ),
-              ],
-            ],
-          ),
+            
+            // 산책 시작/종료 버튼
+            MingrrButton(
+              text: _isWalking ? '산책 종료' : '산책 시작',
+              backgroundColor: _isWalking ? AppColors.error : AppColors.walk,
+              textColor: Colors.white,
+              icon: _isWalking ? Icons.stop : Icons.play_arrow,
+              onPressed: () {
+                setState(() {
+                  _isWalking = !_isWalking;
+                  if (!_isWalking) {
+                    _showWalkSummary();
+                  }
+                });
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -562,24 +656,24 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
   }
 }
 
-/// 그리드 패턴 페인터 (지도 느낌)
-class _GridPainter extends CustomPainter {
+/// 지도 격자 패턴 페인터 (플레이스홀더용)
+class _MapGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.divider.withOpacity(0.3)
+      ..color = AppColors.walk.withOpacity(0.1)
       ..strokeWidth = 1;
 
-    const spacing = 50.0;
-
-    // 수직선
-    for (double x = 0; x < size.width; x += spacing) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
-    }
-
-    // 수평선
+    const spacing = 40.0;
+    
+    // 가로선
     for (double y = 0; y < size.height; y += spacing) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+    
+    // 세로선
+    for (double x = 0; x < size.width; x += spacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
     }
   }
 

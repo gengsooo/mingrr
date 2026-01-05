@@ -1,10 +1,18 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/services/chat_service.dart';
+import '../../../../core/services/firebase_service.dart';
+import '../../../../core/services/notification_service.dart';
+import '../../../../models/chat_model.dart';
 import '../../../../models/dating_request_model.dart';
 
 /// ============================================================
 /// 데이팅/교배 신청 Provider
-/// 로컬 상태 관리 (Firebase 연동 전 임시)
+/// Firebase 연동 + 채팅방 자동 생성
 /// ============================================================
+
+final _chatService = ChatService();
+final _firebaseService = FirebaseService();
+final _notificationService = NotificationService();
 
 /// 받은 신청 목록 (로컬 상태)
 final receivedRequestsProvider = StateNotifierProvider<ReceivedRequestsNotifier, List<DatingRequestModel>>((ref) {
@@ -26,17 +34,84 @@ final pendingRequestCountProvider = Provider<int>((ref) {
 class ReceivedRequestsNotifier extends StateNotifier<List<DatingRequestModel>> {
   ReceivedRequestsNotifier() : super(_mockReceivedRequests);
 
-  /// 신청 수락
-  void acceptRequest(String requestId) {
+  /// 신청 수락 + 채팅방 자동 생성
+  Future<String?> acceptRequest(String requestId) async {
+    DatingRequestModel? acceptedRequest;
+    
     state = state.map((request) {
       if (request.id == requestId) {
-        return request.copyWith(
+        acceptedRequest = request.copyWith(
           status: DatingRequestStatus.accepted,
           respondedAt: DateTime.now(),
         );
+        return acceptedRequest!;
       }
       return request;
     }).toList();
+
+    // 채팅방 자동 생성
+    if (acceptedRequest != null) {
+      try {
+        final myUserId = _firebaseService.currentUserId;
+        if (myUserId == null) return null;
+
+        // 내 정보 가져오기
+        final myUserDoc = await _firebaseService.usersCollection.doc(myUserId).get();
+        final myUserData = myUserDoc.data();
+
+        // 상대방 정보
+        final senderDoc = await _firebaseService.usersCollection.doc(acceptedRequest!.senderId).get();
+        final senderData = senderDoc.data();
+
+        final myInfo = ChatParticipant(
+          id: myUserId,
+          nickname: myUserData?['nickname'] ?? '사용자',
+          profileImageUrl: myUserData?['profileImageUrl'],
+          petName: acceptedRequest!.receiverPetId,
+        );
+
+        final senderInfo = ChatParticipant(
+          id: acceptedRequest!.senderId,
+          nickname: senderData?['nickname'] ?? acceptedRequest!.senderName,
+          profileImageUrl: senderData?['profileImageUrl'],
+          petName: acceptedRequest!.senderPetName,
+          petImageUrl: acceptedRequest!.senderPetImageUrl,
+        );
+
+        // 채팅방 생성
+        final chatType = acceptedRequest!.type == DatingRequestType.breeding ? 'breeding' : 'dating';
+        final chatRoom = await _chatService.getOrCreateChatRoom(
+          myUserId: myUserId,
+          otherUserId: acceptedRequest!.senderId,
+          type: chatType,
+          myInfo: myInfo,
+          otherInfo: senderInfo,
+          relatedId: requestId,
+        );
+
+        // 시스템 메시지 전송
+        final isBreeding = acceptedRequest!.type == DatingRequestType.breeding;
+        await _chatService.sendSystemMessage(
+          chatRoomId: chatRoom.id,
+          content: '${isBreeding ? '교배' : '데이팅'} 신청이 수락되었습니다! 대화를 시작해보세요 💕',
+        );
+
+        // 상대방에게 알림 전송
+        await _notificationService.sendDatingAcceptedNotification(
+          recipientId: acceptedRequest!.senderId,
+          accepterName: myUserData?['nickname'] ?? '사용자',
+          accepterPetName: acceptedRequest!.receiverPetId ?? '',
+          chatRoomId: chatRoom.id,
+          isBreeding: isBreeding,
+        );
+
+        return chatRoom.id;
+      } catch (e) {
+        // 에러 발생해도 상태는 유지
+        return null;
+      }
+    }
+    return null;
   }
 
   /// 신청 거절

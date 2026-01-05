@@ -14,7 +14,9 @@ enum DataCategory {
   jobs('알바', Icons.work),
   breeding('교배', Icons.favorite_border),
   likesMatches('좋아요/매칭', Icons.favorite),
-  chats('채팅', Icons.chat);
+  chats('채팅', Icons.chat),
+  ratings('꼬순내 평가', Icons.star),
+  healthRecords('건강수첩', Icons.medical_services);
 
   final String label;
   final IconData icon;
@@ -40,6 +42,19 @@ final collectionCountsProvider = StreamProvider.autoDispose<Map<DataCategory, in
     counts[DataCategory.likesMatches] = likesCount + matchesCount;
     
     counts[DataCategory.chats] = (await _firebaseService.chatRoomsCollection.get()).docs.length;
+    
+    // 꼬순내 평가 데이터 개수
+    counts[DataCategory.ratings] = (await _firebaseService.ratingsCollection.get()).docs.length;
+    
+    // 건강수첩 데이터 개수 (여러 컬렉션 합산)
+    int healthCount = 0;
+    healthCount += (await _firebaseService.firestore.collection('weight_records').get()).docs.length;
+    healthCount += (await _firebaseService.firestore.collection('walk_records').get()).docs.length;
+    healthCount += (await _firebaseService.firestore.collection('grooming_records').get()).docs.length;
+    healthCount += (await _firebaseService.firestore.collection('vaccination_records').get()).docs.length;
+    healthCount += (await _firebaseService.firestore.collection('checkup_records').get()).docs.length;
+    healthCount += (await _firebaseService.firestore.collection('medication_records').get()).docs.length;
+    counts[DataCategory.healthRecords] = healthCount;
     
     return counts;
   });
@@ -98,6 +113,10 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
         return '좋아요/매칭 ${count}개';
       case DataCategory.chats:
         return '채팅방 ${count}개';
+      case DataCategory.ratings:
+        return '꼬순내 평가 ${count}개';
+      case DataCategory.healthRecords:
+        return '건강수첩 기록 ${count}개';
     }
   }
 
@@ -139,9 +158,15 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
         if (_selectedCategories[DataCategory.chats]!) {
           await _seedData.seedChats();
         }
+        if (_selectedCategories[DataCategory.ratings]!) {
+          await _seedData.seedRatings();
+        }
+        if (_selectedCategories[DataCategory.healthRecords]!) {
+          await _seedData.seedHealthRecords();
+        }
       }
       
-      // Provider 리프레시
+      // 상태 관리 새로고침
       ref.invalidate(collectionCountsProvider);
       
       setState(() {
@@ -221,9 +246,15 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
         if (_selectedCategories[DataCategory.chats]!) {
           await _seedData.clearChats();
         }
+        if (_selectedCategories[DataCategory.ratings]!) {
+          await _seedData.clearRatings();
+        }
+        if (_selectedCategories[DataCategory.healthRecords]!) {
+          await _seedData.clearHealthRecords();
+        }
       }
       
-      // Provider 리프레시
+      // 상태 관리 새로고침
       ref.invalidate(collectionCountsProvider);
       
       setState(() {

@@ -29,6 +29,19 @@ final allPetsProvider = FutureProvider.autoDispose<List<PetModel>>((ref) async {
   return repository.getAllPets();
 });
 
+/// 내 반려동물을 제외한 다른 사람의 반려동물 목록 (추천친구용)
+final otherPetsProvider = FutureProvider.autoDispose<List<PetModel>>((ref) async {
+  final authState = ref.watch(authStateProvider);
+  final userId = authState.valueOrNull?.uid;
+  
+  final repository = ref.watch(petRepositoryProvider);
+  final allPets = await repository.getAllPets();
+  
+  // 내 반려동물 제외
+  if (userId == null) return allPets;
+  return allPets.where((pet) => pet.ownerId != userId).toList();
+});
+
 final selectedPetIndexProvider = StateProvider<int>((ref) => 0);
 
 final selectedPetProvider = Provider.autoDispose<PetModel?>((ref) {

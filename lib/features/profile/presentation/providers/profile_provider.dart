@@ -5,7 +5,7 @@ import '../../../../models/community_model.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
-/// FirestoreService Provider
+/// 데이터베이스 서비스 상태 관리
 final _firestoreServiceProvider = Provider<FirestoreService>((ref) {
   return FirestoreService();
 });

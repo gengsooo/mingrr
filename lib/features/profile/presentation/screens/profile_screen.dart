@@ -10,6 +10,8 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/alert_dialog.dart';
+import '../../../../core/widgets/confirm_bottom_sheet.dart';
 import '../../../../core/widgets/image_picker_sheet.dart';
 import '../../../../core/widgets/verification_badge.dart';
 import '../../../../core/widgets/warmth_score.dart';
@@ -141,7 +143,7 @@ class ProfileScreen extends ConsumerWidget {
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -212,7 +214,7 @@ class ProfileScreen extends ConsumerWidget {
                 loading: () => const Text('로딩 중...'),
                 error: (_, __) => const Text('사용자'),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               
               // 꼬순내지수 (개선된 디자인)
               currentUser.when(
@@ -220,7 +222,7 @@ class ProfileScreen extends ConsumerWidget {
                 loading: () => const SizedBox(),
                 error: (_, __) => const SizedBox(),
               ),
-              const SizedBox(height: AppSizes.gapM),
+              const SizedBox(height: AppSizes.gapS),
               
               // 프로필 수정 버튼
               OutlinedButton(
@@ -284,22 +286,28 @@ class ProfileScreen extends ConsumerWidget {
           const SizedBox(height: AppSizes.gapM),
           Row(
             children: [
-              VerificationBadgeLarge(
-                type: VerificationBadgeType.identity,
-                isVerified: verifications[BadgeType.identity] ?? false,
-                onTap: () => _showVerificationSheet(context, ref, verifications),
+              Expanded(
+                child: VerificationBadgeLarge(
+                  type: VerificationBadgeType.identity,
+                  isVerified: verifications[BadgeType.identity] ?? false,
+                  onTap: () => _showVerificationSheet(context, ref, verifications),
+                ),
               ),
-              const SizedBox(width: AppSizes.gapM),
-              VerificationBadgeLarge(
-                type: VerificationBadgeType.pet,
-                isVerified: verifications[BadgeType.petRegistration] ?? false,
-                onTap: () => _showVerificationSheet(context, ref, verifications),
+              const SizedBox(width: AppSizes.gapS),
+              Expanded(
+                child: VerificationBadgeLarge(
+                  type: VerificationBadgeType.pet,
+                  isVerified: verifications[BadgeType.petRegistration] ?? false,
+                  onTap: () => _showVerificationSheet(context, ref, verifications),
+                ),
               ),
-              const SizedBox(width: AppSizes.gapM),
-              VerificationBadgeLarge(
-                type: VerificationBadgeType.location,
-                isVerified: verifications[BadgeType.location] ?? false,
-                onTap: () => _showVerificationSheet(context, ref, verifications),
+              const SizedBox(width: AppSizes.gapS),
+              Expanded(
+                child: VerificationBadgeLarge(
+                  type: VerificationBadgeType.location,
+                  isVerified: verifications[BadgeType.location] ?? false,
+                  onTap: () => _showVerificationSheet(context, ref, verifications),
+                ),
               ),
             ],
           ),
@@ -394,10 +402,10 @@ class ProfileScreen extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 프로필 이미지 (대표사진 우선)
+            // 프로필 이미지 (프로필 이미지만 사용, 없으면 기본 아이콘)
             MingrrAvatar(
               size: 55,
-              imageUrl: _getPetPrimaryPhotoUrl(pet),
+              imageUrl: pet.profileImageUrl,
             ),
             const SizedBox(height: AppSizes.gapS),
             Text(
@@ -443,10 +451,7 @@ class ProfileScreen extends ConsumerWidget {
 
   /// 반려동물 대표사진 URL 가져오기
   String? _getPetPrimaryPhotoUrl(PetModel pet) {
-    if (pet.photoUrls.isNotEmpty && pet.primaryPhotoIndex < pet.photoUrls.length) {
-      return pet.photoUrls[pet.primaryPhotoIndex];
-    }
-    return pet.profileImageUrl;
+    return pet.primaryPhotoUrl;
   }
 
   /// 활동 통계 (Firebase 연동)
@@ -1002,11 +1007,15 @@ class ProfileScreen extends ConsumerWidget {
                 '로그아웃',
                 style: TextStyle(color: AppColors.error),
               ),
-              onTap: () async {
+              onTap: () {
                 Navigator.pop(context);
-                
-                // 로그아웃 실행 - 라우터의 refreshListenable이 자동으로 로그인 화면으로 리다이렉트
-                await ref.read(authNotifierProvider.notifier).signOut();
+                showConfirmBottomSheet(
+                  context,
+                  type: ConfirmType.accountLogout,
+                  onConfirm: () async {
+                    await ref.read(authNotifierProvider.notifier).signOut();
+                  },
+                );
               },
             ),
             
@@ -1138,7 +1147,7 @@ class ProfileScreen extends ConsumerWidget {
           }
         }
         
-        // Firestore 업데이트
+        // 데이터베이스 업데이트
         await FirebaseFirestore.instance
             .collection('users')
             .doc(authUser.uid)
@@ -1147,7 +1156,7 @@ class ProfileScreen extends ConsumerWidget {
               'updatedAt': FieldValue.serverTimestamp(),
             });
         
-        // Provider 리프레시
+        // 상태 관리 새로고침
         ref.invalidate(currentUserProvider);
         
         if (context.mounted) {
@@ -1181,28 +1190,11 @@ class ProfileScreen extends ConsumerWidget {
       final daysSinceChange = DateTime.now().difference(lastChanged).inDays;
       if (daysSinceChange < 30) {
         final daysRemaining = 30 - daysSinceChange;
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Row(
-              children: [
-                Icon(Icons.info_outline, color: AppColors.warning),
-                SizedBox(width: 8),
-                Text('닉네임 변경 제한'),
-              ],
-            ),
-            content: Text(
-              '닉네임은 30일에 한 번만 변경할 수 있습니다.\n\n$daysRemaining일 후에 다시 변경할 수 있습니다.',
-              style: const TextStyle(height: 1.5),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('확인'),
-              ),
-            ],
-          ),
+        showAppAlert(
+          context,
+          type: AlertType.warning,
+          title: '닉네임 변경 제한',
+          message: '닉네임은 30일에 한 번만 변경할 수 있습니다.\n\n$daysRemaining일 후에 다시 변경할 수 있습니다.',
         );
         return;
       }
@@ -1212,94 +1204,164 @@ class ProfileScreen extends ConsumerWidget {
     
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('닉네임 변경'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: controller,
-              decoration: InputDecoration(
-                hintText: '새 닉네임을 입력해주세요',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              ),
-              maxLength: 10,
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.warning.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Row(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 헤더
+              Row(
                 children: [
-                  Icon(Icons.info_outline, size: 16, color: AppColors.warning),
-                  SizedBox(width: 8),
-                  Expanded(
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.edit, size: 20, color: AppColors.primary),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
                     child: Text(
-                      '닉네임은 30일에 한 번만 변경할 수 있습니다.',
-                      style: TextStyle(fontSize: 12, color: AppColors.warning),
+                      '닉네임 변경',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final newNickname = controller.text.trim();
-              if (newNickname.isEmpty || newNickname == user.nickname) {
-                Navigator.pop(context);
-                return;
-              }
+              const SizedBox(height: 20),
               
-              try {
-                // Firebase 업데이트
-                final firestore = FirebaseFirestore.instance;
-                await firestore.collection('users').doc(user.id).update({
-                  'nickname': newNickname,
-                  'nicknameChangedAt': Timestamp.now(),
-                });
-                
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('닉네임이 변경되었습니다!'),
-                      backgroundColor: AppColors.success,
+              // 입력 필드
+              TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  hintText: '새 닉네임을 입력해주세요',
+                  filled: true,
+                  fillColor: AppColors.background,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                  ),
+                  contentPadding: const EdgeInsets.all(16),
+                  counterText: '',
+                ),
+                maxLength: 10,
+              ),
+              const SizedBox(height: 12),
+              
+              // 경고 메시지
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.warning.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 16, color: AppColors.warning),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '닉네임은 30일에 한 번만 변경할 수 있습니다.',
+                        style: TextStyle(fontSize: 12, color: AppColors.warning),
+                      ),
                     ),
-                  );
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('닉네임 변경 실패: $e'),
-                      backgroundColor: AppColors.error,
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              
+              // 버튼
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: const BorderSide(color: AppColors.divider),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        '취소',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
                     ),
-                  );
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            child: const Text('변경', style: TextStyle(color: Colors.white)),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final newNickname = controller.text.trim();
+                        if (newNickname.isEmpty || newNickname == user.nickname) {
+                          Navigator.pop(context);
+                          return;
+                        }
+                        
+                        try {
+                          final firestore = FirebaseFirestore.instance;
+                          await firestore.collection('users').doc(user.id).update({
+                            'nickname': newNickname,
+                            'nicknameChangedAt': Timestamp.now(),
+                          });
+                          
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('닉네임이 변경되었습니다!'),
+                                backgroundColor: AppColors.success,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('닉네임 변경 실패: $e'),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        '변경',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

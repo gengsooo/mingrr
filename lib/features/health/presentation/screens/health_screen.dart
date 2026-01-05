@@ -1,53 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../models/pet_model.dart';
+import '../../../../models/health_model.dart';
+import '../../../pet/presentation/providers/pet_provider.dart';
+import '../providers/health_provider.dart';
+import 'walk_record_detail_screen.dart';
+import 'health_record_detail_screens.dart';
+import 'medication_screen.dart';
+import 'health_record_add_screens.dart';
 
 /// ============================================================
-/// 건강수첩 화면 (V4 리팩토링 - 강아지 전용)
-/// 
-/// 변경사항:
-/// - 강아지 전용 앱으로 변경 (PetType 제거)
-/// - 대변/소변/음수 카테고리 제거 (사용자 요청)
-/// - 산책 ON/OFF 기능 유지
-/// - 다중 강아지 동시 산책 지원
-/// - 경로 기록 (본인만 확인 가능)
+/// 건강수첩 화면 (Firebase 연동 버전)
 /// ============================================================
-
-// ===== Provider =====
-/// 선택된 강아지 인덱스
-final _selectedDogProvider = StateProvider<int>((ref) => 0);
-
-/// 선택된 탭 인덱스
-final _selectedTabProvider = StateProvider<int>((ref) => 0);
-
-/// 데모용 강아지 목록
-final _demoDogsProvider = Provider<List<_DemoDog>>((ref) => [
-  _DemoDog(id: '1', name: '뽀삐', breed: '골든 리트리버', isPrimary: true),
-  _DemoDog(id: '2', name: '코코', breed: '푸들', isPrimary: false),
-]);
-
-/// 데모용 강아지 클래스
-class _DemoDog {
-  final String id;
-  final String name;
-  final String breed;
-  final bool isPrimary;
-  const _DemoDog({required this.id, required this.name, required this.breed, required this.isPrimary});
-}
 
 class HealthScreen extends ConsumerWidget {
   const HealthScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dogs = ref.watch(_demoDogsProvider);
-    final selectedDogIndex = ref.watch(_selectedDogProvider);
-    final selectedTab = ref.watch(_selectedTabProvider);
-    final selectedDog = dogs[selectedDogIndex];
+    final petsAsync = ref.watch(userPetsProvider);
+    final selectedPetId = ref.watch(selectedPetIdProvider);
+    final selectedTab = ref.watch(selectedHealthTabProvider);
 
-    // 건강수첩 카테고리 (강아지 전용)
     final categories = _getCategories();
 
     return Scaffold(
@@ -59,107 +37,166 @@ class HealthScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            onPressed: () {
-              // TODO: 건강수첩 설정 화면 구현 예정
-            },
-          ),
-        ],
       ),
-      body: Column(
-        children: [
-          // 강아지 선택기
-          _buildDogSelector(context, ref, dogs, selectedDogIndex),
-          
-          // 카테고리 탭
-          _buildCategoryTabs(context, ref, categories, selectedTab),
-          
-          // 탭 컨텐츠
-          Expanded(
-            child: _buildTabContent(context, ref, categories[selectedTab], selectedDog),
-          ),
-        ],
+      body: petsAsync.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('오류: $e')),
+        data: (pets) {
+          if (pets.isEmpty) {
+            return _buildNoPetsView(context);
+          }
+
+          final selectedPet = pets.firstWhere(
+            (p) => p.id == selectedPetId,
+            orElse: () => pets.first,
+          );
+
+          return Column(
+            children: [
+              // 반려동물 선택기
+              _buildPetSelector(context, ref, pets, selectedPet),
+              
+              // 카테고리 탭
+              _buildCategoryTabs(context, ref, categories, selectedTab),
+              
+              // 탭 컨텐츠
+              Expanded(
+                child: _buildTabContent(context, ref, categories[selectedTab], selectedPet),
+              ),
+            ],
+          );
+        },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddRecordSheet(context, ref, categories[selectedTab]),
-        backgroundColor: AppColors.health,
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: petsAsync.maybeWhen(
+        data: (pets) => pets.isNotEmpty
+            ? FloatingActionButton(
+                onPressed: () {
+                  final selectedPet = pets.firstWhere(
+                    (p) => p.id == selectedPetId,
+                    orElse: () => pets.first,
+                  );
+                  _showAddRecordSheet(context, ref, categories[selectedTab], selectedPet);
+                },
+                backgroundColor: AppColors.health,
+                child: const Icon(Icons.add, color: Colors.white),
+              )
+            : null,
+        orElse: () => null,
       ),
     );
   }
 
-  /// 강아지 건강수첩 카테고리 목록
-  /// - 대변/소변/음수 제거 (사용자 요청)
-  /// - 놀이 제거, 그루밍 추가
   List<HealthCategory> _getCategories() {
     return [
       HealthCategory.weight,
       HealthCategory.walk,
-      HealthCategory.grooming,
+      HealthCategory.grooming,  // 양치/치석은 그루밍 하위로 이동
       HealthCategory.medication,
       HealthCategory.vaccination,
       HealthCategory.checkup,
-      HealthCategory.teethCare,
       HealthCategory.special,
     ];
   }
 
-  /// 강아지 선택기
-  Widget _buildDogSelector(BuildContext context, WidgetRef ref, List<_DemoDog> dogs, int selectedIndex) {
+  Widget _buildNoPetsView(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('🐶', style: TextStyle(fontSize: 60)),
+          const SizedBox(height: 16),
+          const Text(
+            '등록된 반려동물이 없습니다',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            '반려동물을 먼저 등록해주세요',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.health,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('돌아가기'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 반려동물 선택기 (동그란 프로필 + 이름만)
+  Widget _buildPetSelector(BuildContext context, WidgetRef ref, List<PetModel> pets, PetModel selectedPet) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
-          children: List.generate(dogs.length, (index) {
-            final dog = dogs[index];
-            final isSelected = index == selectedIndex;
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: pets.map((pet) {
+            final isSelected = pet.id == selectedPet.id;
             
             return GestureDetector(
-              onTap: () => ref.read(_selectedDogProvider.notifier).state = index,
+              onTap: () => ref.read(selectedPetIdProvider.notifier).state = pet.id,
               child: Container(
-                margin: const EdgeInsets.only(right: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.health : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected ? AppColors.health : AppColors.divider,
-                  ),
-                ),
-                child: Row(
+                margin: const EdgeInsets.only(right: 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('🐶', style: TextStyle(fontSize: 18)),
-                    const SizedBox(width: 8),
+                    // 동그란 프로필 이미지
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.health.withOpacity(0.1),
+                        border: Border.all(
+                          color: isSelected ? AppColors.health : AppColors.divider,
+                          width: isSelected ? 3 : 1,
+                        ),
+                        boxShadow: isSelected ? [
+                          BoxShadow(
+                            color: AppColors.health.withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ] : null,
+                        image: (pet.profileImageUrl != null && pet.profileImageUrl!.isNotEmpty)
+                            ? DecorationImage(
+                                image: NetworkImage(pet.profileImageUrl!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                      ),
+                      child: (pet.profileImageUrl == null || pet.profileImageUrl!.isEmpty)
+                          ? const Center(
+                              child: Text('🐶', style: TextStyle(fontSize: 24)),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(height: 6),
+                    // 이름
                     Text(
-                      dog.name,
+                      pet.name,
                       style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: isSelected ? Colors.white : AppColors.textPrimary,
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isSelected ? AppColors.health : AppColors.textPrimary,
                       ),
                     ),
-                    if (dog.isPrimary) ...[
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.star,
-                        size: 14,
-                        color: isSelected ? Colors.white : AppColors.warning,
-                      ),
-                    ],
                   ],
                 ),
               ),
             );
-          }),
+          }).toList(),
         ),
       ),
     );
   }
 
-  /// 카테고리 탭
   Widget _buildCategoryTabs(BuildContext context, WidgetRef ref, List<HealthCategory> categories, int selectedTab) {
     return Container(
       height: 50,
@@ -173,7 +210,7 @@ class HealthScreen extends ConsumerWidget {
           final isSelected = index == selectedTab;
           
           return GestureDetector(
-            onTap: () => ref.read(_selectedTabProvider.notifier).state = index,
+            onTap: () => ref.read(selectedHealthTabProvider.notifier).state = index,
             child: Container(
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -206,43 +243,29 @@ class HealthScreen extends ConsumerWidget {
     );
   }
 
-  /// 탭 컨텐츠
-  Widget _buildTabContent(BuildContext context, WidgetRef ref, HealthCategory category, _DemoDog dog) {
+  Widget _buildTabContent(BuildContext context, WidgetRef ref, HealthCategory category, PetModel pet) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 카테고리별 요약 카드
-          _buildSummaryCard(category, dog),
+          // 요약 카드
+          _buildSummaryCard(context, ref, category, pet),
           const SizedBox(height: 20),
           
           // 최근 기록
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                '최근 기록',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-              GestureDetector(
-                onTap: () => _showAllRecords(context, category),
-                child: const Text(
-                  '더보기',
-                  style: TextStyle(fontSize: 14, color: AppColors.health),
-                ),
-              ),
-            ],
+          const Text(
+            '최근 기록',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 12),
-          _buildRecentRecords(category),
+          _buildRecentRecords(context, ref, category, pet),
         ],
       ),
     );
   }
 
-  /// 요약 카드
-  Widget _buildSummaryCard(HealthCategory category, _DemoDog dog) {
+  Widget _buildSummaryCard(BuildContext context, WidgetRef ref, HealthCategory category, PetModel pet) {
     return MingrrCard(
       margin: EdgeInsets.zero,
       child: Column(
@@ -267,7 +290,7 @@ class HealthScreen extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${dog.name}의 ${category.label}',
+                      '${pet.name}의 ${category.label}',
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                     Text(
@@ -282,57 +305,86 @@ class HealthScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           const Divider(),
           const SizedBox(height: 12),
-          // 카테고리별 요약 정보
-          _buildCategorySummary(category),
+          _buildCategorySummary(ref, category, pet),
         ],
       ),
     );
   }
 
-  /// 카테고리별 요약 정보
-  Widget _buildCategorySummary(HealthCategory category) {
+  Widget _buildCategorySummary(WidgetRef ref, HealthCategory category, PetModel pet) {
     switch (category) {
       case HealthCategory.weight:
-        return _buildWeightSummary();
+        return _buildWeightSummary(ref, pet);
       case HealthCategory.walk:
-        return _buildWalkSummary();
-      case HealthCategory.grooming:
-        return _buildGroomingSummary();
+        return _buildWalkSummary(ref, pet);
       default:
         return _buildDefaultSummary(category);
     }
   }
 
-  Widget _buildWeightSummary() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildSummaryItem('현재', '5.2kg', AppColors.health),
-        _buildSummaryItem('변화', '+0.1kg', AppColors.warning),
-        _buildSummaryItem('목표', '5.0kg', AppColors.success),
-      ],
+  Widget _buildWeightSummary(WidgetRef ref, PetModel pet) {
+    final recordsAsync = ref.watch(weightRecordsProvider(pet.id));
+    
+    return recordsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Text('오류: $e'),
+      data: (records) {
+        if (records.isEmpty) {
+          return const Center(
+            child: Text('기록이 없습니다', style: TextStyle(color: AppColors.textSecondary)),
+          );
+        }
+        
+        final latest = records.first;
+        final previous = records.length > 1 ? records[1] : null;
+        final change = previous != null ? latest.weight - previous.weight : 0.0;
+        
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildSummaryItem('현재', '${latest.weight.toStringAsFixed(1)}kg', AppColors.health),
+            _buildSummaryItem(
+              '변화',
+              '${change >= 0 ? '+' : ''}${change.toStringAsFixed(1)}kg',
+              change > 0 ? AppColors.warning : AppColors.success,
+            ),
+            _buildSummaryItem('기록 수', '${records.length}회', AppColors.textSecondary),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildWalkSummary() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildSummaryItem('오늘', '0회', AppColors.walk),
-        _buildSummaryItem('이번주', '5회', AppColors.walk),
-        _buildSummaryItem('총 거리', '12.5km', AppColors.walk),
-      ],
-    );
-  }
-
-  Widget _buildGroomingSummary() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
-        _buildSummaryItem('최근 샤워', '3일 전', AppColors.health),
-        _buildSummaryItem('최근 빗질', '오늘', AppColors.health),
-        _buildSummaryItem('이번달', '8회', AppColors.health),
-      ],
+  Widget _buildWalkSummary(WidgetRef ref, PetModel pet) {
+    final recordsAsync = ref.watch(walkRecordsProvider(pet.id));
+    
+    return recordsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Text('오류: $e'),
+      data: (records) {
+        if (records.isEmpty) {
+          return const Center(
+            child: Text('기록이 없습니다', style: TextStyle(color: AppColors.textSecondary)),
+          );
+        }
+        
+        // 이번 주 산책 통계
+        final now = DateTime.now();
+        final weekStart = now.subtract(Duration(days: now.weekday - 1));
+        final thisWeekRecords = records.where((r) => r.startTime.isAfter(weekStart)).toList();
+        
+        final totalDistance = thisWeekRecords.fold<double>(0, (sum, r) => sum + r.distance);
+        final totalMinutes = thisWeekRecords.fold<int>(0, (sum, r) => sum + r.durationMinutes);
+        
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildSummaryItem('이번 주', '${thisWeekRecords.length}회', AppColors.health),
+            _buildSummaryItem('총 거리', '${(totalDistance / 1000).toStringAsFixed(1)}km', AppColors.walk),
+            _buildSummaryItem('총 시간', '${totalMinutes}분', AppColors.success),
+          ],
+        );
+      },
     );
   }
 
@@ -340,9 +392,9 @@ class HealthScreen extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
+        _buildSummaryItem('총 기록', '-', AppColors.health),
         _buildSummaryItem('최근', '-', AppColors.textSecondary),
-        _buildSummaryItem('이번달', '0회', AppColors.textSecondary),
-        _buildSummaryItem('다음', '-', AppColors.textSecondary),
+        _buildSummaryItem('다음', '-', AppColors.success),
       ],
     );
   }
@@ -352,7 +404,7 @@ class HealthScreen extends ConsumerWidget {
       children: [
         Text(
           value,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: color),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
         ),
         const SizedBox(height: 4),
         Text(
@@ -363,150 +415,234 @@ class HealthScreen extends ConsumerWidget {
     );
   }
 
-  /// 최근 기록 목록
-  Widget _buildRecentRecords(HealthCategory category) {
-    // 데모 데이터
-    final records = List.generate(5, (index) {
-      final date = DateTime.now().subtract(Duration(days: index));
-      return {
-        'date': '${date.month}/${date.day}',
-        'time': '${14 - index}:30',
-        'value': _getDemoRecordValue(category, index),
-      };
-    });
-
-    return Column(
-      children: records.map((record) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.divider),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppColors.health.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Center(
-                  child: Text(category.emoji, style: const TextStyle(fontSize: 18)),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      record['value']!,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
-                    Text(
-                      '${record['date']} ${record['time']}',
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.chevron_right, color: AppColors.textHint),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  String _getDemoRecordValue(HealthCategory category, int index) {
+  Widget _buildRecentRecords(BuildContext context, WidgetRef ref, HealthCategory category, PetModel pet) {
     switch (category) {
       case HealthCategory.weight:
-        return '${5.2 - index * 0.1}kg';
+        return _buildWeightRecords(context, ref, pet);
       case HealthCategory.walk:
-        return '${30 + index * 5}분, ${(1.2 + index * 0.3).toStringAsFixed(1)}km';
+        return _buildWalkRecords(context, ref, pet);
       case HealthCategory.grooming:
-        final types = ['샤워', '빗질', '발톱정리', '이발', '귀청소'];
-        return types[index % types.length];
+        return _buildGroomingRecords(context, ref, pet);
+      case HealthCategory.vaccination:
+        return _buildVaccinationRecords(context, ref, pet);
+      case HealthCategory.checkup:
+        return _buildCheckupRecords(context, ref, pet);
+      case HealthCategory.medication:
+        return _buildMedicationRecords(context, ref, pet);
       default:
-        return '기록됨';
+        return _buildEmptyRecords();
     }
   }
 
-  /// 모든 기록 보기 화면
-  void _showAllRecords(BuildContext context, HealthCategory category) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => _AllRecordsScreen(
-          category: category,
-          getDemoRecordValue: _getDemoRecordValue,
-        ),
-      ),
+  Widget _buildWeightRecords(BuildContext context, WidgetRef ref, PetModel pet) {
+    final recordsAsync = ref.watch(weightRecordsProvider(pet.id));
+    
+    return recordsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Text('오류: $e'),
+      data: (records) {
+        if (records.isEmpty) return _buildEmptyRecords();
+        
+        return Column(
+          children: records.take(5).map((record) {
+            return _buildRecordItem(
+              context,
+              emoji: '⚖️',
+              title: '${record.weight.toStringAsFixed(1)}kg',
+              subtitle: _formatDate(record.recordDate),
+              onTap: () {
+                // TODO: 상세 화면으로 이동
+              },
+            );
+          }).toList(),
+        );
+      },
     );
   }
 
-  /// 기록 추가 바텀시트
-  void _showAddRecordSheet(BuildContext context, WidgetRef ref, HealthCategory category) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
+  Widget _buildWalkRecords(BuildContext context, WidgetRef ref, PetModel pet) {
+    final recordsAsync = ref.watch(walkRecordsProvider(pet.id));
+    
+    return recordsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Text('오류: $e'),
+      data: (records) {
+        if (records.isEmpty) return _buildEmptyRecords();
+        
+        return Column(
+          children: records.take(5).map((record) {
+            return _buildRecordItem(
+              context,
+              emoji: '🚶',
+              title: '${record.durationMinutes}분, ${record.distanceString}',
+              subtitle: _formatDateTime(record.startTime),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => WalkRecordDetailScreen(
+                      record: WalkRecord(
+                        id: record.id,
+                        date: record.startTime,
+                        startTime: record.startTime,
+                        endTime: record.endTime ?? record.startTime,
+                        duration: record.durationMinutes,
+                        distance: record.distance,
+                        calories: record.calories?.toInt() ?? 0,
+                        avgSpeed: record.durationMinutes > 0 ? record.distance / (record.durationMinutes * 60) : 0,
+                        maxSpeed: 0,
+                        steps: 0,
+                        restTime: 0,
+                        weather: '맑음',
+                        temperature: 20,
+                        petNames: [pet.name],
+                        routePoints: [],
+                        memo: record.notes,
+                        photos: record.photoUrls,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildGroomingRecords(BuildContext context, WidgetRef ref, PetModel pet) {
+    final recordsAsync = ref.watch(groomingRecordsProvider(pet.id));
+    
+    return recordsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Text('오류: $e'),
+      data: (records) {
+        if (records.isEmpty) return _buildEmptyRecords();
+        
+        return Column(
+          children: records.take(5).map((record) {
+            return _buildRecordItem(
+              context,
+              emoji: '✨',
+              title: record.groomingType.label,
+              subtitle: '${_formatDate(record.recordDate)} • ${record.location ?? ""}',
+              onTap: () {},
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildVaccinationRecords(BuildContext context, WidgetRef ref, PetModel pet) {
+    final recordsAsync = ref.watch(vaccinationRecordsProvider(pet.id));
+    
+    return recordsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Text('오류: $e'),
+      data: (records) {
+        if (records.isEmpty) return _buildEmptyRecords();
+        
+        return Column(
+          children: records.take(5).map((record) {
+            return _buildRecordItem(
+              context,
+              emoji: '💉',
+              title: record.vaccineName,
+              subtitle: '${_formatDate(record.vaccinationDate)} • ${record.hospitalName ?? ""}',
+              onTap: () {},
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildCheckupRecords(BuildContext context, WidgetRef ref, PetModel pet) {
+    final recordsAsync = ref.watch(checkupRecordsProvider(pet.id));
+    
+    return recordsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Text('오류: $e'),
+      data: (records) {
+        if (records.isEmpty) return _buildEmptyRecords();
+        
+        return Column(
+          children: records.take(5).map((record) {
+            return _buildRecordItem(
+              context,
+              emoji: '🏥',
+              title: record.diagnosis ?? '정기 검진',
+              subtitle: '${_formatDate(record.checkupDate)} • ${record.hospitalName ?? ""}',
+              onTap: () {},
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildMedicationRecords(BuildContext context, WidgetRef ref, PetModel pet) {
+    final recordsAsync = ref.watch(medicationRecordsProvider(pet.id));
+    
+    return recordsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Text('오류: $e'),
+      data: (records) {
+        if (records.isEmpty) return _buildEmptyRecords();
+        
+        return Column(
+          children: records.take(5).map((record) {
+            final isActive = record.endDate == null || record.endDate!.isAfter(DateTime.now());
+            return _buildRecordItem(
+              context,
+              emoji: '💊',
+              title: record.medicationName,
+              subtitle: '${record.dosage ?? ""} • ${record.intervalString}',
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isActive ? AppColors.success.withOpacity(0.1) : AppColors.textHint.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  isActive ? '복용 중' : '완료',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isActive ? AppColors.success : AppColors.textHint,
+                  ),
+                ),
+              ),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MedicationScreen()),
+                );
+              },
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyRecords() {
+    return Container(
+      padding: const EdgeInsets.all(32),
+      child: const Center(
         child: Column(
           children: [
-            // 핸들
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(2),
-              ),
+            Text('📝', style: TextStyle(fontSize: 40)),
+            SizedBox(height: 12),
+            Text(
+              '아직 기록이 없습니다',
+              style: TextStyle(color: AppColors.textSecondary),
             ),
-            // 헤더
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Text(category.emoji, style: const TextStyle(fontSize: 24)),
-                  const SizedBox(width: 12),
-                  Text(
-                    '${category.label} 기록 추가',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${category.label} 기록이 저장되었습니다'),
-                          backgroundColor: AppColors.success,
-                        ),
-                      );
-                    },
-                    child: const Text('저장'),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            // 입력 폼 (카테고리별로 다름)
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: _buildRecordForm(category),
-              ),
+            SizedBox(height: 4),
+            Text(
+              '+ 버튼을 눌러 첫 기록을 추가해보세요',
+              style: TextStyle(fontSize: 12, color: AppColors.textHint),
             ),
           ],
         ),
@@ -514,385 +650,94 @@ class HealthScreen extends ConsumerWidget {
     );
   }
 
-  /// 카테고리별 입력 폼
-  Widget _buildRecordForm(HealthCategory category) {
-    switch (category) {
-      case HealthCategory.weight:
-        return _buildWeightForm();
-      case HealthCategory.grooming:
-        return _buildGroomingForm();
-      default:
-        return _buildDefaultForm(category);
-    }
-  }
-
-  Widget _buildWeightForm() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('체중 (kg)', style: TextStyle(fontWeight: FontWeight.w500)),
-        const SizedBox(height: 8),
-        const TextField(
-          keyboardType: TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            hintText: '예: 5.2',
-            suffixText: 'kg',
-            border: OutlineInputBorder(),
-          ),
+  Widget _buildRecordItem(
+    BuildContext context, {
+    required String emoji,
+    required String title,
+    required String subtitle,
+    Widget? trailing,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.divider),
         ),
-        const SizedBox(height: 16),
-        const Text('메모 (선택)', style: TextStyle(fontWeight: FontWeight.w500)),
-        const SizedBox(height: 8),
-        const TextField(
-          maxLines: 3,
-          decoration: InputDecoration(
-            hintText: '특이사항을 입력하세요',
-            border: OutlineInputBorder(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGroomingForm() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('그루밍 종류', style: TextStyle(fontWeight: FontWeight.w500)),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        child: Row(
           children: [
-            '샤워 🚿', 
-            '빗질 🪮', 
-            '발톱정리 ✂️', 
-            '이발 💇', 
-            '귀청소 👂',
-            '눈물자국 👁️',
-            '항문낭 🔘',
-            '발바닥 🐾',
-          ].map((label) => ChoiceChip(
-                label: Text(label),
-                selected: label.startsWith('샤워'),
-                onSelected: (value) {},
-              ))
-              .toList(),
-        ),
-        const SizedBox(height: 16),
-        const Text('장소', style: TextStyle(fontWeight: FontWeight.w500)),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: ['집에서', '미용실', '동물병원']
-              .map((label) => ChoiceChip(
-                    label: Text(label),
-                    selected: label == '집에서',
-                    onSelected: (value) {},
-                  ))
-              .toList(),
-        ),
-        const SizedBox(height: 16),
-        const Text('메모 (선택)', style: TextStyle(fontWeight: FontWeight.w500)),
-        const SizedBox(height: 8),
-        const TextField(
-          maxLines: 3,
-          decoration: InputDecoration(
-            hintText: '특이사항을 입력하세요',
-            border: OutlineInputBorder(),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDefaultForm(HealthCategory category) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('${category.label} 기록', style: const TextStyle(fontWeight: FontWeight.w500)),
-        const SizedBox(height: 8),
-        const TextField(
-          maxLines: 5,
-          decoration: InputDecoration(
-            hintText: '내용을 입력하세요',
-            border: OutlineInputBorder(),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// 기간 필터 타입
-enum _DateFilterType {
-  oneWeek('1주일'),
-  oneMonth('1개월'),
-  threeMonths('3개월'),
-  sixMonths('6개월'),
-  oneYear('1년'),
-  all('전체');
-
-  final String label;
-  const _DateFilterType(this.label);
-  
-  int? get days => switch (this) {
-    _DateFilterType.oneWeek => 7,
-    _DateFilterType.oneMonth => 30,
-    _DateFilterType.threeMonths => 90,
-    _DateFilterType.sixMonths => 180,
-    _DateFilterType.oneYear => 365,
-    _DateFilterType.all => null,
-  };
-}
-
-/// 전체 기록 보기 화면
-class _AllRecordsScreen extends StatefulWidget {
-  final HealthCategory category;
-  final String Function(HealthCategory, int) getDemoRecordValue;
-
-  const _AllRecordsScreen({
-    required this.category,
-    required this.getDemoRecordValue,
-  });
-
-  @override
-  State<_AllRecordsScreen> createState() => _AllRecordsScreenState();
-}
-
-class _AllRecordsScreenState extends State<_AllRecordsScreen> {
-  _DateFilterType _selectedFilter = _DateFilterType.oneMonth; // 기본값: 1개월
-  DateTime? _customStartDate;
-  DateTime? _customEndDate;
-
-  /// 필터에 따른 데모 데이터 생성
-  List<Map<String, String>> _getFilteredRecords() {
-    final int totalDays = _selectedFilter.days ?? 365; // 전체는 1년치 데이터
-    final records = <Map<String, String>>[];
-    
-    for (int i = 0; i < totalDays; i += 2) { // 2일에 1개씩 기록
-      final date = DateTime.now().subtract(Duration(days: i));
-      
-      // 커스텀 날짜 범위 체크
-      if (_customStartDate != null && date.isBefore(_customStartDate!)) continue;
-      if (_customEndDate != null && date.isAfter(_customEndDate!)) continue;
-      
-      records.add({
-        'date': '${date.year}.${date.month}.${date.day}',
-        'time': '${(14 - i % 12).abs()}:${(i * 7) % 60}0',
-        'value': widget.getDemoRecordValue(widget.category, i ~/ 2),
-        'rawDate': date.toIso8601String(),
-      });
-    }
-    
-    return records;
-  }
-
-  void _showDateRangePicker() async {
-    final picked = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime.now().subtract(const Duration(days: 365 * 2)),
-      lastDate: DateTime.now(),
-      initialDateRange: _customStartDate != null && _customEndDate != null
-          ? DateTimeRange(start: _customStartDate!, end: _customEndDate!)
-          : DateTimeRange(
-              start: DateTime.now().subtract(const Duration(days: 30)),
-              end: DateTime.now(),
-            ),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.health,
-              onPrimary: Colors.white,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      setState(() {
-        _customStartDate = picked.start;
-        _customEndDate = picked.end;
-        _selectedFilter = _DateFilterType.all; // 커스텀 날짜 선택 시 필터 해제
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final records = _getFilteredRecords();
-    
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text('${widget.category.label} 기록'),
-        backgroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.calendar_month),
-            onPressed: _showDateRangePicker,
-            tooltip: '날짜 선택',
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // 기간 필터 탭
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: _DateFilterType.values.map((filter) {
-                  final isSelected = _selectedFilter == filter && 
-                      _customStartDate == null && _customEndDate == null;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: ChoiceChip(
-                      label: Text(filter.label),
-                      selected: isSelected,
-                      selectedColor: AppColors.health.withOpacity(0.2),
-                      onSelected: (selected) {
-                        if (selected) {
-                          setState(() {
-                            _selectedFilter = filter;
-                            _customStartDate = null;
-                            _customEndDate = null;
-                          });
-                        }
-                      },
-                    ),
-                  );
-                }).toList(),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.health.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Center(
+                child: Text(emoji, style: const TextStyle(fontSize: 18)),
               ),
             ),
-          ),
-          
-          // 선택된 날짜 범위 표시
-          if (_customStartDate != null && _customEndDate != null)
-            Container(
-              color: Colors.white,
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: Row(
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.date_range, size: 16, color: AppColors.health),
-                  const SizedBox(width: 8),
                   Text(
-                    '${_customStartDate!.year}.${_customStartDate!.month}.${_customStartDate!.day} ~ '
-                    '${_customEndDate!.year}.${_customEndDate!.month}.${_customEndDate!.day}',
-                    style: const TextStyle(fontSize: 13, color: AppColors.health),
+                    title,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                   ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _customStartDate = null;
-                        _customEndDate = null;
-                        _selectedFilter = _DateFilterType.oneMonth;
-                      });
-                    },
-                    child: const Icon(Icons.close, size: 18, color: AppColors.textHint),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                   ),
                 ],
               ),
             ),
-          
-          // 기록 개수 표시
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            alignment: Alignment.centerLeft,
-            child: Text(
-              '총 ${records.length}개의 기록',
-              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-            ),
-          ),
-          
-          // 기록 목록
-          Expanded(
-            child: records.isEmpty
-                ? const Center(
-                    child: Text(
-                      '해당 기간에 기록이 없습니다',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: records.length,
-                    itemBuilder: (context, index) {
-                      final record = records[index];
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.divider),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: AppColors.health.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  widget.category.emoji,
-                                  style: const TextStyle(fontSize: 18),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    record['value']!,
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${record['date']} ${record['time']}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: const Icon(
-                                Icons.delete_outline,
-                                color: AppColors.textHint,
-                                size: 20,
-                              ),
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('기록이 삭제되었습니다')),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
+            if (trailing != null) trailing,
+            const Icon(Icons.chevron_right, color: AppColors.textHint),
+          ],
+        ),
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.month}/${date.day}';
+  }
+
+  String _formatDateTime(DateTime date) {
+    return '${date.month}/${date.day} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  void _showAddRecordSheet(BuildContext context, WidgetRef ref, HealthCategory category, PetModel pet) {
+    switch (category) {
+      case HealthCategory.weight:
+        AddWeightRecordScreen.show(context, pet.id, pet.name);
+        break;
+      case HealthCategory.walk:
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('산책은 산책 화면에서 시작해주세요')));
+        break;
+      case HealthCategory.grooming:
+        AddGroomingRecordScreen.show(context, pet.id, pet.name);
+        break;
+      case HealthCategory.medication:
+        AddMedicationRecordScreen.show(context, pet.id, pet.name);
+        break;
+      case HealthCategory.vaccination:
+        AddVaccinationRecordScreen.show(context, pet.id, pet.name);
+        break;
+      case HealthCategory.checkup:
+        AddCheckupRecordScreen.show(context, pet.id, pet.name);
+        break;
+      case HealthCategory.special:
+      case HealthCategory.teethCare:
+      case HealthCategory.skinCare:
+        AddSpecialRecordScreen.show(context, pet.id, pet.name);
+        break;
+    }
   }
 }

@@ -40,6 +40,15 @@ class ProductModel extends Equatable {
   /// 판매자 ID
   final String sellerId;
   
+  /// 판매자 닉네임 (비정규화 - 추가 쿼리 방지)
+  final String? sellerName;
+  
+  /// 판매자 프로필 이미지 (비정규화)
+  final String? sellerImageUrl;
+  
+  /// 판매자 꼬순내 지수 (비정규화)
+  final double sellerKkosunnaeScore;
+  
   /// 제목
   final String title;
   
@@ -91,6 +100,9 @@ class ProductModel extends Equatable {
   const ProductModel({
     required this.id,
     required this.sellerId,
+    this.sellerName,
+    this.sellerImageUrl,
+    this.sellerKkosunnaeScore = 50.0,
     required this.title,
     required this.description,
     required this.price,
@@ -161,6 +173,9 @@ class ProductModel extends Equatable {
     return ProductModel(
       id: id ?? data['id'] ?? '',
       sellerId: data['sellerId'] ?? '',
+      sellerName: data['sellerName'],
+      sellerImageUrl: data['sellerImageUrl'],
+      sellerKkosunnaeScore: (data['sellerKkosunnaeScore'] ?? 50.0).toDouble(),
       title: data['title'] ?? '',
       description: data['description'] ?? '',
       price: data['price'] ?? 0,
@@ -198,6 +213,9 @@ class ProductModel extends Equatable {
   Map<String, dynamic> toFirestore() {
     return {
       'sellerId': sellerId,
+      'sellerName': sellerName,
+      'sellerImageUrl': sellerImageUrl,
+      'sellerKkosunnaeScore': sellerKkosunnaeScore,
       'title': title,
       'description': description,
       'price': price,
@@ -220,6 +238,9 @@ class ProductModel extends Equatable {
   ProductModel copyWith({
     String? id,
     String? sellerId,
+    String? sellerName,
+    String? sellerImageUrl,
+    double? sellerKkosunnaeScore,
     String? title,
     String? description,
     int? price,
@@ -240,6 +261,9 @@ class ProductModel extends Equatable {
     return ProductModel(
       id: id ?? this.id,
       sellerId: sellerId ?? this.sellerId,
+      sellerName: sellerName ?? this.sellerName,
+      sellerImageUrl: sellerImageUrl ?? this.sellerImageUrl,
+      sellerKkosunnaeScore: sellerKkosunnaeScore ?? this.sellerKkosunnaeScore,
       title: title ?? this.title,
       description: description ?? this.description,
       price: price ?? this.price,
@@ -263,6 +287,8 @@ class ProductModel extends Equatable {
   List<Object?> get props => [
         id,
         sellerId,
+        sellerName,
+        sellerImageUrl,
         title,
         description,
         price,

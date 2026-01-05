@@ -25,8 +25,11 @@ import 'features/health/presentation/screens/health_screen.dart';  // 건강수�
 import 'features/community/presentation/screens/community_screen.dart';  // 소모임 화면
 import 'features/community/presentation/screens/group_detail_screen.dart';  // 소모임 상세 화면
 import 'features/chat/presentation/screens/chat_list_screen.dart';  // 채팅 목록 화면
+import 'features/chat/presentation/providers/chat_provider.dart';  // 채팅 Provider
 import 'features/profile/presentation/screens/profile_screen.dart';  // 프로필 화면
 import 'features/dev/dev_tools_screen.dart';  // 개발자 도구 화면
+import 'features/notification/presentation/screens/notification_screen.dart';  // 알림 화면
+import 'features/marketplace/presentation/screens/job_detail_screen.dart';  // 알바 상세 화면
 
 /// ============================================================
 /// MINGRR 앱 메인 위젯 (Firebase 연동 버전)
@@ -208,6 +211,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/dev-tools',
         builder: (context, state) => const DevToolsScreen(),
       ),
+      
+      // 알림 화면 (경로: '/notifications')
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationScreen(),
+      ),
+      
+      // 알바 상세 화면 (경로: '/market/job/:id')
+      GoRoute(
+        path: '/market/job/:id',
+        builder: (context, state) {
+          final jobId = state.pathParameters['id'] ?? '';
+          return JobDetailScreen(jobId: jobId);
+        },
+      ),
     ],
   );
 });
@@ -265,16 +283,19 @@ class MainShell extends StatelessWidget {
 // 📊 MingrrBottomNavBar - 하단 네비게이션 바 (5개 탭)
 // ============================================================
 // 홈, 데이팅, 마켓, 채팅, 프로필 5개 버튼을 표시합니다
-class MingrrBottomNavBar extends StatelessWidget {
+class MingrrBottomNavBar extends ConsumerWidget {
   const MingrrBottomNavBar({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // 현재 URL 경로를 가져옵니다
     final location = GoRouterState.of(context).matchedLocation;
     
     // URL 경로를 숫자 인덱스로 변환 (0=홈, 1=데이팅, 2=마켓, 3=채팅, 4=프로필)
     final currentIndex = _getIndexFromLocation(location);
+    
+    // 읽지 않은 채팅 메시지 수 가져오기
+    final unreadCount = ref.watch(totalUnreadCountProvider);
 
     // Container: 박스 형태의 위젯
     return Container(
@@ -331,7 +352,7 @@ class MingrrBottomNavBar extends StatelessWidget {
                 index: 2,
                 currentIndex: currentIndex,
                 route: '/chat',
-                badge: 3,  // 배지 숫자 (읽지 않은 메시지 3개)
+                badge: unreadCount,  // 실제 읽지 않은 메시지 수
               ),
               
               // 4️⃣ 마켓 버튼

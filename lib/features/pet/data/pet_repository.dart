@@ -28,6 +28,17 @@ class PetRepository {
         .toList();
   }
 
+  /// 특정 사용자의 반려동물 목록 (Future 버전)
+  Future<List<PetModel>> getUserPetsOnce(String userId) async {
+    final snapshot = await _firebase.petsCollection
+        .where('ownerId', isEqualTo: userId)
+        .orderBy('isPrimary', descending: true)
+        .get();
+    return snapshot.docs
+        .map((doc) => PetModel.fromFirestore(doc))
+        .toList();
+  }
+
   Future<void> createPet(PetModel pet) async {
     await _firebase.petsCollection.doc(pet.id).set(pet.toFirestore());
   }

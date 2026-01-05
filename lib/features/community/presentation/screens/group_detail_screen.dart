@@ -3,8 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/services/chat_service.dart';
+import '../../../../core/services/firebase_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/confirm_bottom_sheet.dart';
+import '../../../../models/chat_model.dart';
 import '../../../../models/community_model.dart';
+import '../../../chat/presentation/screens/chat_detail_screen.dart';
 import '../providers/community_provider.dart';
 
 /// ============================================================
@@ -410,6 +415,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   }
 
   Widget _buildBottomButton(BuildContext context, GroupModel group) {
+    // TODO: 실제 가입 여부 확인 로직 필요
+    final isJoined = false; // 임시
+
     return Container(
       padding: EdgeInsets.only(
         left: AppSizes.paddingL,
@@ -427,83 +435,142 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           ),
         ],
       ),
-      child: SizedBox(
-        height: 56,
-        child: ElevatedButton(
-          onPressed: () => _showJoinConfirmation(context, group),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.community,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-          child: const Text(
-            '모임 가입하기',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showJoinConfirmation(BuildContext context, GroupModel group) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            const Icon(Icons.groups, color: AppColors.community),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                group.name,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+      child: Row(
+        children: [
+          // 채팅 버튼 (가입한 경우에만)
+          if (isJoined) ...[
+            SizedBox(
+              height: 56,
+              width: 56,
+              child: OutlinedButton(
+                onPressed: () => _openGroupChat(context, group),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppColors.community),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: EdgeInsets.zero,
+                ),
+                child: const Icon(Icons.chat_bubble_outline, color: AppColors.community),
               ),
             ),
+            const SizedBox(width: 12),
           ],
-        ),
-        content: Text(
-          group.requireApproval
-              ? '이 모임은 가입 승인이 필요합니다.\n가입 신청을 보내시겠습니까?'
-              : '이 모임에 가입하시겠습니까?',
-          style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    group.requireApproval
-                        ? '가입 신청을 보냈습니다! 승인을 기다려주세요.'
-                        : '모임에 가입했습니다! 🎉',
-                  ),
+          // 가입/채팅 버튼
+          Expanded(
+            child: SizedBox(
+              height: 56,
+              child: ElevatedButton(
+                onPressed: isJoined
+                    ? () => _openGroupChat(context, group)
+                    : () => _showJoinConfirmation(context, group),
+                style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.community,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.community,
-            ),
-            child: Text(
-              group.requireApproval ? '신청하기' : '가입하기',
-              style: const TextStyle(color: Colors.white),
+                child: Text(
+                  isJoined ? '채팅하기' : '모임 가입하기',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  /// 소모임 채팅 열기
+  Future<void> _openGroupChat(BuildContext context, GroupModel group) async {
+    final firebaseService = FirebaseService();
+    final chatService = ChatService();
+    final myUserId = firebaseService.currentUserId;
+    
+    if (myUserId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인이 필요합니다')),
+      );
+      return;
+    }
+
+    try {
+      // 내 정보 가져오기
+      final myUserDoc = await firebaseService.usersCollection.doc(myUserId).get();
+      final myUserData = myUserDoc.data();
+
+      final myInfo = ChatParticipant(
+        id: myUserId,
+        nickname: myUserData?['nickname'] ?? '사용자',
+        profileImageUrl: myUserData?['profileImageUrl'],
+      );
+
+      // 소모임 채팅방은 그룹 ID를 relatedId로 사용
+      // 소모임 대표와의 1:1 채팅으로 구현 (그룹 채팅은 별도 구현 필요)
+      final creatorDoc = await firebaseService.usersCollection.doc(group.creatorId).get();
+      final creatorData = creatorDoc.data();
+      
+      final leaderInfo = ChatParticipant(
+        id: group.creatorId,
+        nickname: creatorData?['nickname'] ?? '모임장',
+        profileImageUrl: creatorData?['profileImageUrl'],
+      );
+
+      final chatRoom = await chatService.getOrCreateChatRoom(
+        myUserId: myUserId,
+        otherUserId: group.creatorId,
+        type: 'community',
+        myInfo: myInfo,
+        otherInfo: leaderInfo,
+        relatedId: group.id,
+      );
+
+      if (context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatDetailScreen(
+              chatRoomId: chatRoom.id,
+              otherUserName: group.name,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('채팅 시작 실패: $e')),
+        );
+      }
+    }
+  }
+
+  void _showJoinConfirmation(BuildContext context, GroupModel group) {
+    showConfirmBottomSheet(
+      context,
+      type: ConfirmType.groupJoin,
+      title: group.name,
+      message: group.requireApproval
+          ? '이 모임은 가입 승인이 필요합니다.\n가입 신청을 보내시겠습니까?'
+          : '이 모임에 가입하시겠습니까?',
+      confirmText: group.requireApproval ? '신청하기' : '가입하기',
+      onConfirm: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              group.requireApproval
+                  ? '가입 신청을 보냈습니다! 승인을 기다려주세요.'
+                  : '모임에 가입했습니다! 🎉',
+            ),
+            backgroundColor: AppColors.community,
+          ),
+        );
+      },
     );
   }
 

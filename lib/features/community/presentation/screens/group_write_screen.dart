@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,6 +10,7 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/utils/image_utils.dart';
+import '../../../../core/widgets/alert_dialog.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/location_selector.dart';
 import '../../../../models/community_model.dart';
@@ -41,6 +43,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
   final List<String> _tags = [];
   bool _isLoading = false;
   String? _selectedLocation; // 활동 지역
+  GeoPoint? _selectedGeoPoint; // 활동 지역 좌표
 
   final FirestoreService _firestoreService = FirestoreService();
   final FirebaseService _firebaseService = FirebaseService();
@@ -62,6 +65,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
       _requireApproval = group.requireApproval;
       _tags.addAll(group.tags);
       _selectedLocation = group.address;
+      _selectedGeoPoint = group.location;
     }
   }
 
@@ -204,12 +208,15 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
 
   Widget _buildLocationSelector() {
     return GestureDetector(
-      onTap: () => showLocationSelector(
+      onTap: () => showLocationSelectorWithCoordinates(
         context: context,
         initialLocation: _selectedLocation,
         accentColor: AppColors.community,
-        onLocationSelected: (location) {
-          setState(() => _selectedLocation = location);
+        onLocationResultSelected: (result) {
+          setState(() {
+            _selectedLocation = result.address;
+            _selectedGeoPoint = result.location;
+          });
         },
       ),
       child: Container(
@@ -356,38 +363,18 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
     );
   }
 
-  void _showAddTagDialog() {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('태그 추가'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: '태그를 입력해주세요',
-            prefixText: '#',
-          ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () {
-              final tag = controller.text.trim();
-              if (tag.isNotEmpty && !_tags.contains(tag)) {
-                setState(() => _tags.add(tag));
-              }
-              Navigator.pop(ctx);
-            },
-            child: const Text('추가'),
-          ),
-        ],
-      ),
+  void _showAddTagDialog() async {
+    final tag = await showInputDialog(
+      context,
+      type: AlertType.community,
+      title: '태그 추가',
+      hintText: '태그를 입력해주세요',
+      confirmText: '추가',
     );
+    
+    if (tag != null && tag.isNotEmpty && !_tags.contains(tag)) {
+      setState(() => _tags.add(tag));
+    }
   }
 
   Widget _buildSettingsSection() {
@@ -538,6 +525,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
         adminIds: _isEditMode ? widget.group!.adminIds : [currentUser.uid],
         memberIds: _isEditMode ? widget.group!.memberIds : [currentUser.uid],
         maxMembers: maxMembers,
+        location: _selectedGeoPoint,
         address: _selectedLocation,
         isPublic: _isPublic,
         requireApproval: _requireApproval,

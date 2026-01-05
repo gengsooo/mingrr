@@ -8,7 +8,11 @@ import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/confirm_dialog.dart';
+import '../../../../core/widgets/confirm_bottom_sheet.dart';
+// TODO: 실제 기기 테스트 시 주석 해제
+// import '../../../../core/widgets/map_location_picker.dart';
+// import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
+import '../../../../core/widgets/map_location_picker_placeholder.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import 'product_write_screen.dart';
@@ -39,6 +43,10 @@ class _JobWriteScreenState extends ConsumerState<JobWriteScreen> {
   DateTime? _endDate;
   final List<String> _selectedPetIds = [];
   bool _isLoading = false;
+  
+  // 근무 지역
+  String? _selectedLocation;
+  LocationCoord? _selectedLocationLatLng;
 
   final FirestoreService _firestoreService = FirestoreService();
   final FirebaseService _firebaseService = FirebaseService();
@@ -135,6 +143,12 @@ class _JobWriteScreenState extends ConsumerState<JobWriteScreen> {
               _buildPriceField(),
               const SizedBox(height: AppSizes.gapL),
 
+              // 근무 지역
+              const Text('근무 지역', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              const SizedBox(height: AppSizes.gapS),
+              _buildLocationSelector(),
+              const SizedBox(height: AppSizes.gapL),
+
               // 상세 설명
               MingrrTextField(
                 controller: _descriptionController,
@@ -219,13 +233,10 @@ class _JobWriteScreenState extends ConsumerState<JobWriteScreen> {
     if (newType == ProductType.job) return; // 이미 알바 화면
     
     if (_hasInputData) {
-      final confirmed = await showConfirmDialog(
+      final confirmed = await showConfirmBottomSheetWithResult(
         context,
-        icon: Icons.swap_horiz,
-        themeColor: AppColors.market,
-        title: '종류 변경',
-        description: '${newType == ProductType.sell ? '판매' : '나눔'} 등록 화면으로 이동합니다.\n현재 입력된 정보가 사라집니다.\n계속하시겠습니까?',
-        cancelText: '취소',
+        type: ConfirmType.productTypeChange,
+        message: '${newType == ProductType.sell ? '판매' : '나눔'} 등록 화면으로 이동합니다.\n현재 입력된 정보가 사라집니다.\n계속하시겠습니까?',
         confirmText: '이동',
       );
       if (confirmed != true) return;
@@ -602,6 +613,88 @@ class _JobWriteScreenState extends ConsumerState<JobWriteScreen> {
         }
         return null;
       },
+    );
+  }
+
+  Widget _buildLocationSelector() {
+    // 지도에서 직접 선택만 가능
+    return GestureDetector(
+      onTap: () async {
+        final result = await showMapLocationPicker(
+          context: context,
+          initialPosition: _selectedLocationLatLng,
+          accentColor: AppColors.market,
+          title: '근무 지역 선택',
+        );
+        if (result != null) {
+          setState(() {
+            _selectedLocationLatLng = result;
+            _selectedLocation = '위도: ${result.latitude.toStringAsFixed(4)}, 경도: ${result.longitude.toStringAsFixed(4)}';
+          });
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: _selectedLocationLatLng != null ? AppColors.market.withOpacity(0.1) : Colors.white,
+          border: Border.all(
+            color: _selectedLocationLatLng != null ? AppColors.market : AppColors.divider,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              _selectedLocationLatLng != null ? Icons.location_on : Icons.map_outlined,
+              size: 20,
+              color: _selectedLocationLatLng != null ? AppColors.market : AppColors.textHint,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _selectedLocationLatLng != null 
+                        ? '위치가 선택되었습니다'
+                        : '근무 지역을 선택해주세요',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: _selectedLocationLatLng != null ? FontWeight.w500 : FontWeight.w400,
+                      color: _selectedLocationLatLng != null ? AppColors.textPrimary : AppColors.textHint,
+                    ),
+                  ),
+                  if (_selectedLocationLatLng != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      _selectedLocation ?? '',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: _selectedLocationLatLng != null ? AppColors.market : AppColors.background,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                _selectedLocationLatLng != null ? '변경' : '지도에서 선택',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: _selectedLocationLatLng != null ? Colors.white : AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

@@ -610,7 +610,7 @@ class FirestoreService {
   /// 상품 검색
   Future<List<ProductModel>> searchProducts(String query) async {
     try {
-      // Firestore는 전문 검색을 지원하지 않으므로 제목 기반 검색
+      // 데이터베이스는 전문 검색을 지원하지 않으므로 제목 기반 검색
       final snapshot = await _firebase.productsCollection
           .where('status', isEqualTo: 'available')
           .orderBy('createdAt', descending: true)

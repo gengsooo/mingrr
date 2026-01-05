@@ -1,8 +1,19 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    
+    <!-- 위치 권한 -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    
     <application
         android:label="mingrr"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        
+        <!-- 카카오 지도 API 키 -->
+        <meta-data
+            android:name="com.kakao.vectormap.APP_KEY"
+            android:value="9d259b071721f1a6c369c9074076c657"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -25,6 +36,13 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        
+        <!-- image_cropper UCrop Activity -->
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+        
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

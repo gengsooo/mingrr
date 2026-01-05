@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import 'guardian_profile_modal.dart';
+import 'warmth_score.dart';
 
 /// ============================================================
 /// 소모임 프로필 모달
@@ -276,19 +277,7 @@ class CommunityProfileModal extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      const Icon(Icons.pets, size: 12, color: AppColors.primary),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${member.kkosunnaeScore.toInt()}%',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
+                  KkosunnaeScoreSmall(score: member.kkosunnaeScore),
                 ],
               ),
             ),

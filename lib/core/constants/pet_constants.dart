@@ -195,7 +195,10 @@ enum GroomingType {
   earCleaning('귀청소', '👂', '귀 청소'),
   eyeCleaning('눈물자국', '👁️', '눈물자국 닦기'),
   analGland('항문낭', '🔘', '항문낭 짜기'),
-  pawCare('발바닥', '🐾', '발바닥 관리');
+  pawCare('발바닥', '🐾', '발바닥 관리'),
+  teethBrushing('양치', '🦷', '양치질'),
+  teethScaling('치석제거', '🪥', '치석 제거/스케일링'),
+  other('기타', '✨', '기타 그루밍');
 
   final String label;
   final String emoji;

@@ -10,6 +10,7 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/image_picker_sheet.dart';
+import '../../../../core/widgets/map_location_picker_placeholder.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// ============================================================
@@ -405,29 +406,33 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       margin: EdgeInsets.zero,
       child: Column(
         children: [
-          // 주소
+          // 주소 (지도에서 선택)
           TextFormField(
             controller: _addressController,
             decoration: const InputDecoration(
-              labelText: '주소',
-              hintText: '예: 서울시 강남구',
+              labelText: '위치',
+              hintText: '지도에서 위치를 선택해주세요',
               border: OutlineInputBorder(),
               prefixIcon: Icon(Icons.location_on),
+              suffixIcon: Icon(Icons.map_outlined),
             ),
             readOnly: true,
             onTap: _selectLocation,
           ),
-          const SizedBox(height: AppSizes.gapM),
+          const SizedBox(height: AppSizes.gapS),
           
-          // 현재 위치로 설정
-          OutlinedButton.icon(
-            onPressed: _setCurrentLocation,
-            icon: const Icon(Icons.my_location),
-            label: const Text('현재 위치로 설정'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              side: const BorderSide(color: AppColors.primary),
-            ),
+          // 안내 텍스트
+          const Row(
+            children: [
+              Icon(Icons.info_outline, size: 14, color: AppColors.textHint),
+              SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  '지도에서 핀을 이동하여 위치를 선택해주세요',
+                  style: TextStyle(fontSize: 12, color: AppColors.textHint),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -439,21 +444,31 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: _saveProfile,
+        onPressed: _isLoading ? null : _saveProfile,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
+          disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusM),
           ),
         ),
-        child: const Text(
-          '저장하기',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
+        child: _isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : const Text(
+                '저장하기',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
       ),
     );
   }
@@ -473,24 +488,18 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     }
   }
 
-  void _selectLocation() {
-    // TODO: 위치 선택 화면 구현 예정 (지도 연동)
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('위치 선택 기능 (지도 연동 예정)')),
+  Future<void> _selectLocation() async {
+    final result = await showMapLocationPicker(
+      context: context,
+      accentColor: AppColors.primary,
+      title: '내 위치 선택',
     );
-  }
-
-  void _setCurrentLocation() {
-    // TODO: GPS로 현재 위치 가져오기 구현 예정
-    setState(() {
-      _addressController.text = '서울시 강남구 역삼동';
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('현재 위치로 설정되었습니다'),
-        backgroundColor: AppColors.success,
-      ),
-    );
+    
+    if (result != null) {
+      setState(() {
+        _addressController.text = '위도: ${result.latitude.toStringAsFixed(4)}, 경도: ${result.longitude.toStringAsFixed(4)}';
+      });
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -541,7 +550,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             .doc(authUser.uid)
             .update(updateData);
         
-        // Provider 리프레시
+        // 상태 관리 새로고침
         ref.invalidate(currentUserProvider);
         
         if (mounted) {

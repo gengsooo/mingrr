@@ -368,15 +368,15 @@ class _DogProfileModalState extends State<DogProfileModal> {
     
     return Row(
       children: [
-        // 프로필 이미지
+        // 프로필 이미지 (프로필 이미지만 사용, default_avatar 제외)
         Container(
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: AppColors.dating.withOpacity(0.1),
+            color: AppColors.primaryLight,
             shape: BoxShape.circle,
           ),
-          child: widget.profileImageUrl != null && widget.profileImageUrl!.isNotEmpty
+          child: _hasValidProfileImage()
               ? ClipOval(
                   child: Image.network(
                     widget.profileImageUrl!,
@@ -386,14 +386,14 @@ class _DogProfileModalState extends State<DogProfileModal> {
                     errorBuilder: (_, __, ___) => const Icon(
                       Icons.pets,
                       size: 40,
-                      color: AppColors.dating,
+                      color: AppColors.primary,
                     ),
                   ),
                 )
               : const Icon(
                   Icons.pets,
                   size: 40,
-                  color: AppColors.dating,
+                  color: AppColors.primary,
                 ),
         ),
         const SizedBox(width: AppSizes.gapM),
@@ -656,5 +656,12 @@ class _DogProfileModalState extends State<DogProfileModal> {
           const Icon(Icons.close, size: 10, color: AppColors.textHint),
       ],
     );
+  }
+  
+  /// 유효한 프로필 이미지가 있는지 확인
+  bool _hasValidProfileImage() {
+    return widget.profileImageUrl != null && 
+           widget.profileImageUrl!.isNotEmpty && 
+           !widget.profileImageUrl!.startsWith('default_avatar:');
   }
 }

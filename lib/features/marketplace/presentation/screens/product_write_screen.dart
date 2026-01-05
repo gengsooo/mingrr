@@ -11,7 +11,11 @@ import '../../../../core/services/firestore_service.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/utils/image_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/confirm_dialog.dart';
+import '../../../../core/widgets/confirm_bottom_sheet.dart';
+// TODO: 실제 기기 테스트 시 주석 해제
+// import '../../../../core/widgets/map_location_picker.dart';
+// import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
+import '../../../../core/widgets/map_location_picker_placeholder.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../../models/pet_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
@@ -54,6 +58,14 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
   DateTime? _startDate;
   DateTime? _endDate;
   final List<String> _selectedPetIds = [];
+  
+  // 희망지역 (판매/나눔)
+  String? _selectedLocation;
+  LocationCoord? _selectedLocationLatLng;
+  
+  // 알바 지역
+  String? _selectedJobLocation;
+  LocationCoord? _selectedJobLocationLatLng;
 
   final FirestoreService _firestoreService = FirestoreService();
   final FirebaseService _firebaseService = FirebaseService();
@@ -122,6 +134,12 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
 
               // === 알바 전용 UI ===
               if (isJob) ...[
+                // 사진 (선택)
+                const Text('사진 (선택)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                const SizedBox(height: AppSizes.gapS),
+                _buildImagePicker(),
+                const SizedBox(height: AppSizes.gapXL),
+                
                 // 알바 유형
                 const Text('알바 유형', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: AppSizes.gapS),
@@ -160,6 +178,12 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
                 _buildPriceUnitSelector(),
                 const SizedBox(height: AppSizes.gapS),
                 _buildJobPriceField(),
+                const SizedBox(height: AppSizes.gapL),
+
+                // 근무 지역
+                const Text('근무 지역', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                const SizedBox(height: AppSizes.gapS),
+                _buildLocationSelector(),
                 const SizedBox(height: AppSizes.gapL),
 
                 // 상세 설명
@@ -210,6 +234,12 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
                   _buildPriceField(),
                   const SizedBox(height: AppSizes.gapL),
                 ],
+
+                // 희망지역
+                const Text('희망지역', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                const SizedBox(height: AppSizes.gapS),
+                _buildLocationSelector(),
+                const SizedBox(height: AppSizes.gapL),
 
                 // 설명
                 MingrrTextField(
@@ -292,14 +322,10 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
         ProductType.job => '알바',
       };
       
-      final confirmed = await showConfirmDialog(
+      final confirmed = await showConfirmBottomSheetWithResult(
         context,
-        icon: Icons.swap_horiz,
-        themeColor: AppColors.market,
-        title: '종류 변경',
-        description: '$newTypeLabel 등록으로 변경합니다.\n현재 입력된 정보가 초기화됩니다.\n계속하시겠습니까?',
-        cancelText: '취소',
-        confirmText: '변경',
+        type: ConfirmType.productTypeChange,
+        message: '$newTypeLabel 등록으로 변경합니다.\n현재 입력된 정보가 초기화됩니다.\n계속하시겠습니까?',
       );
       
       if (confirmed != true) return;
@@ -745,6 +771,97 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
   // 판매/나눔 전용 위젯들
   // ============================================================
 
+  Widget _buildLocationSelector() {
+    final isJob = _selectedType == ProductType.job;
+    final location = isJob ? _selectedJobLocation : _selectedLocation;
+    final latLng = isJob ? _selectedJobLocationLatLng : _selectedLocationLatLng;
+    
+    // 지도에서 직접 선택만 가능
+    return GestureDetector(
+      onTap: () async {
+        final result = await showMapLocationPicker(
+          context: context,
+          initialPosition: latLng,
+          accentColor: AppColors.market,
+          title: isJob ? '근무 지역 선택' : '희망 지역 선택',
+        );
+        if (result != null) {
+          setState(() {
+            if (isJob) {
+              _selectedJobLocationLatLng = result;
+              _selectedJobLocation = '위도: ${result.latitude.toStringAsFixed(4)}, 경도: ${result.longitude.toStringAsFixed(4)}';
+            } else {
+              _selectedLocationLatLng = result;
+              _selectedLocation = '위도: ${result.latitude.toStringAsFixed(4)}, 경도: ${result.longitude.toStringAsFixed(4)}';
+            }
+          });
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: latLng != null ? AppColors.market.withOpacity(0.1) : Colors.white,
+          border: Border.all(
+            color: latLng != null ? AppColors.market : AppColors.divider,
+          ),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              latLng != null ? Icons.location_on : Icons.map_outlined,
+              size: 20,
+              color: latLng != null ? AppColors.market : AppColors.textHint,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    latLng != null 
+                        ? '위치가 선택되었습니다'
+                        : (isJob ? '근무 지역을 선택해주세요' : '희망 지역을 선택해주세요'),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: latLng != null ? FontWeight.w500 : FontWeight.w400,
+                      color: latLng != null ? AppColors.textPrimary : AppColors.textHint,
+                    ),
+                  ),
+                  if (latLng != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      location ?? '',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: latLng != null ? AppColors.market : AppColors.background,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                latLng != null ? '변경' : '지도에서 선택',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: latLng != null ? Colors.white : AppColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildPriceField() {
     final isJob = _selectedType == ProductType.job;
     return Column(
@@ -893,6 +1010,18 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
 
       // 알바 타입일 때 JobModel로 저장
       if (isJob) {
+        // 이미지 업로드
+        final List<String> imageUrls = [..._existingImageUrls];
+        for (final image in _selectedImages) {
+          final url = await _firebaseService.uploadImage(
+            File(image.path),
+            'jobs/${const Uuid().v4()}',
+          );
+          if (url != null) {
+            imageUrls.add(url);
+          }
+        }
+        
         final job = JobModel(
           id: const Uuid().v4(),
           userId: currentUser.uid,
@@ -904,6 +1033,8 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
           priceUnit: _priceUnit,
           startDate: _startDate,
           endDate: _endDate,
+          address: _selectedJobLocation,
+          imageUrls: imageUrls,
           chatCount: 0,
           createdAt: now,
           updatedAt: now,

@@ -27,7 +27,7 @@ dependencies:
 
   # ===== 위치 기반 =====
   geolocator: ^13.0.2
-  google_maps_flutter: ^2.10.0
+  kakao_maps_flutter: ^0.1.2
   # geoflutterfire_plus: ^0.0.28  # 위치 기반 쿼리
 
   # ===== UI/UX =====

@@ -29,7 +29,10 @@ service cloud.firestore {
     
     // 관리자 계정인지 확인 (더미 데이터 생성용)
     function isAdmin() {
-      return isSignedIn() && request.auth.token.email == 'admin@mingrr.com';
+      return isSignedIn() && (
+        request.auth.token.email == 'admin@mingrr.com' ||
+        request.auth.token.email == 'gengsooo@gmail.com'
+      );
     }
     
     // ============================================================
@@ -74,14 +77,13 @@ service cloud.firestore {
       allow read: if isAdmin() || (isSignedIn()
         && request.auth.uid in resource.data.participantIds);
       
-      // 생성: 로그인한 사용자가 참여자에 포함되어 있으면 생성 가능
-      allow create: if isSignedIn()
-        && request.auth.uid in incomingData().participantIds
-        && incomingData().createdAt == request.time;
+      // 생성: 로그인한 사용자가 참여자에 포함되어 있으면 생성 가능 (또는 관리자)
+      allow create: if isAdmin() || (isSignedIn()
+        && request.auth.uid in incomingData().participantIds);
       
-      // 수정: 채팅방 참여자만 수정 가능
-      allow update: if isSignedIn()
-        && request.auth.uid in existingData().participantIds;
+      // 수정: 채팅방 참여자만 수정 가능 (또는 관리자)
+      allow update: if isAdmin() || (isSignedIn()
+        && request.auth.uid in existingData().participantIds);
       
       // 삭제: 채팅방 참여자 또는 관리자만 삭제 가능
       allow delete: if isAdmin() || (isSignedIn()
@@ -96,15 +98,14 @@ service cloud.firestore {
       allow read: if isAdmin() || (isSignedIn()
         && request.auth.uid in get(/databases/$(database)/documents/chatRooms/$(chatRoomId)).data.participantIds);
       
-      // 생성: 본인이 발신자인 메시지만 생성 가능
-      allow create: if isSignedIn()
+      // 생성: 본인이 발신자인 메시지만 생성 가능 (또는 관리자)
+      allow create: if isAdmin() || (isSignedIn()
         && incomingData().senderId == request.auth.uid
-        && incomingData().chatRoomId == chatRoomId
-        && incomingData().sentAt == request.time;
+        && incomingData().chatRoomId == chatRoomId);
       
-      // 수정: 메시지 읽음 상태만 수정 가능
-      allow update: if isSignedIn()
-        && request.auth.uid in get(/databases/$(database)/documents/chatRooms/$(chatRoomId)).data.participantIds;
+      // 수정: 메시지 읽음 상태만 수정 가능 (또는 관리자)
+      allow update: if isAdmin() || (isSignedIn()
+        && request.auth.uid in get(/databases/$(database)/documents/chatRooms/$(chatRoomId)).data.participantIds);
       
       // 삭제: 본인이 보낸 메시지 또는 관리자만 삭제 가능
       allow delete: if isAdmin() || (isSignedIn()
@@ -120,14 +121,13 @@ service cloud.firestore {
         && (request.auth.uid == resource.data.fromUserId 
             || request.auth.uid == resource.data.toUserId));
       
-      // 생성: 본인이 발신자인 좋아요만 생성 가능
-      allow create: if isSignedIn()
-        && incomingData().fromUserId == request.auth.uid
-        && incomingData().createdAt == request.time;
+      // 생성: 본인이 발신자인 좋아요만 생성 가능 (또는 관리자)
+      allow create: if isAdmin() || (isSignedIn()
+        && incomingData().fromUserId == request.auth.uid);
       
-      // 수정: 받은 사람만 상태 변경 가능 (수락/거절)
-      allow update: if isSignedIn()
-        && existingData().toUserId == request.auth.uid;
+      // 수정: 받은 사람만 상태 변경 가능 (수락/거절) (또는 관리자)
+      allow update: if isAdmin() || (isSignedIn()
+        && existingData().toUserId == request.auth.uid);
       
       // 삭제: 본인이 보낸 좋아요 또는 관리자만 삭제 가능
       allow delete: if isAdmin() || (isSignedIn()
@@ -142,12 +142,12 @@ service cloud.firestore {
       allow read: if isAdmin() || (isSignedIn()
         && request.auth.uid in resource.data.userIds);
       
-      // 생성: 시스템에서만 생성 (클라이언트에서 직접 생성 불가)
-      allow create: if false;
+      // 생성: 관리자만 생성 가능
+      allow create: if isAdmin();
       
-      // 수정: 매칭 참여자만 수정 가능
-      allow update: if isSignedIn()
-        && request.auth.uid in existingData().userIds;
+      // 수정: 매칭 참여자만 수정 가능 (또는 관리자)
+      allow update: if isAdmin() || (isSignedIn()
+        && request.auth.uid in existingData().userIds);
       
       // 삭제: 매칭 참여자 또는 관리자만 삭제 가능
       allow delete: if isAdmin() || (isSignedIn()
@@ -179,14 +179,23 @@ service cloud.firestore {
       allow read: if isAdmin() || (isSignedIn()
         && resource.data.userId == request.auth.uid);
       
-      // 생성: 본인 계정으로만 찜 가능
-      allow create: if isSignedIn()
-        && incomingData().userId == request.auth.uid
-        && incomingData().createdAt == request.time;
+      // 생성: 본인 계정으로만 찜 가능 (또는 관리자)
+      allow create: if isAdmin() || (isSignedIn()
+        && incomingData().userId == request.auth.uid);
       
       // 삭제: 본인이 찜한 상품 또는 관리자만 삭제 가능
       allow delete: if isAdmin() || (isSignedIn()
         && existingData().userId == request.auth.uid);
+    }
+    
+    // ============================================================
+    // groupLikes Collection - 소모임 좋아요
+    // ============================================================
+    match /groupLikes/{likeId} {
+      allow read: if isAdmin() || isSignedIn();
+      allow create: if isAdmin() || isSignedIn();
+      allow update: if isAdmin() || isSignedIn();
+      allow delete: if isAdmin() || isSignedIn();
     }
     
     // ============================================================
@@ -230,13 +239,12 @@ service cloud.firestore {
       // 읽기: 신청자 또는 모임 관리자 또는 시스템 관리자만 조회 가능
       allow read: if isAdmin() || isSignedIn();
       
-      // 생성: 본인 계정으로만 신청 가능
-      allow create: if isSignedIn()
-        && incomingData().userId == request.auth.uid
-        && incomingData().createdAt == request.time;
+      // 생성: 본인 계정으로만 신청 가능 (또는 관리자)
+      allow create: if isAdmin() || (isSignedIn()
+        && incomingData().userId == request.auth.uid);
       
-      // 수정: 모임 관리자만 승인/거절 가능
-      allow update: if isSignedIn();
+      // 수정: 모임 관리자만 승인/거절 가능 (또는 시스템 관리자)
+      allow update: if isAdmin() || isSignedIn();
       
       // 삭제: 신청자 본인 또는 관리자만 삭제 가능
       allow delete: if isAdmin() || (isSignedIn()
@@ -278,25 +286,106 @@ service cloud.firestore {
     }
     
     // ============================================================
-    // healthRecords Collection - 건강 기록 (pets 하위 컴렉션)
+    // healthRecords Collection - 건강 기록 (pets 하위 컬렉션)
     // ============================================================
     match /pets/{petId}/healthRecords/{recordId} {
       // 읽기: 반려동물 주인 또는 관리자만 조회 가능
       allow read: if isAdmin() || (isSignedIn()
         && get(/databases/$(database)/documents/pets/$(petId)).data.ownerId == request.auth.uid);
       
-      // 생성: 반려동물 주인만 생성 가능
-      allow create: if isSignedIn()
-        && get(/databases/$(database)/documents/pets/$(petId)).data.ownerId == request.auth.uid
-        && incomingData().createdAt == request.time;
+      // 생성: 반려동물 주인만 생성 가능 (또는 관리자)
+      allow create: if isAdmin() || (isSignedIn()
+        && get(/databases/$(database)/documents/pets/$(petId)).data.ownerId == request.auth.uid);
       
-      // 수정: 반려동물 주인만 수정 가능
-      allow update: if isSignedIn()
-        && get(/databases/$(database)/documents/pets/$(petId)).data.ownerId == request.auth.uid;
+      // 수정: 반려동물 주인만 수정 가능 (또는 관리자)
+      allow update: if isAdmin() || (isSignedIn()
+        && get(/databases/$(database)/documents/pets/$(petId)).data.ownerId == request.auth.uid);
       
       // 삭제: 반려동물 주인 또는 관리자만 삭제 가능
       allow delete: if isAdmin() || (isSignedIn()
         && get(/databases/$(database)/documents/pets/$(petId)).data.ownerId == request.auth.uid);
+    }
+    
+    // ============================================================
+    // 건강수첩 컬렉션들 (체중, 산책, 그루밍, 예방접종, 검진, 약, 특이사항)
+    // ============================================================
+    match /weight_records/{recordId} {
+      allow read: if isAdmin() || isSignedIn();
+      allow create: if isAdmin() || isSignedIn();
+      allow update: if isAdmin() || isSignedIn();
+      allow delete: if isAdmin() || isSignedIn();
+    }
+    
+    match /walk_records/{recordId} {
+      allow read: if isAdmin() || isSignedIn();
+      allow create: if isAdmin() || isSignedIn();
+      allow update: if isAdmin() || isSignedIn();
+      allow delete: if isAdmin() || isSignedIn();
+    }
+    
+    match /grooming_records/{recordId} {
+      allow read: if isAdmin() || isSignedIn();
+      allow create: if isAdmin() || isSignedIn();
+      allow update: if isAdmin() || isSignedIn();
+      allow delete: if isAdmin() || isSignedIn();
+    }
+    
+    match /vaccination_records/{recordId} {
+      allow read: if isAdmin() || isSignedIn();
+      allow create: if isAdmin() || isSignedIn();
+      allow update: if isAdmin() || isSignedIn();
+      allow delete: if isAdmin() || isSignedIn();
+    }
+    
+    match /checkup_records/{recordId} {
+      allow read: if isAdmin() || isSignedIn();
+      allow create: if isAdmin() || isSignedIn();
+      allow update: if isAdmin() || isSignedIn();
+      allow delete: if isAdmin() || isSignedIn();
+    }
+    
+    match /medication_records/{recordId} {
+      allow read: if isAdmin() || isSignedIn();
+      allow create: if isAdmin() || isSignedIn();
+      allow update: if isAdmin() || isSignedIn();
+      allow delete: if isAdmin() || isSignedIn();
+    }
+    
+    match /special_notes/{recordId} {
+      allow read: if isAdmin() || isSignedIn();
+      allow create: if isAdmin() || isSignedIn();
+      allow update: if isAdmin() || isSignedIn();
+      allow delete: if isAdmin() || isSignedIn();
+    }
+    
+    // ============================================================
+    // breedingPosts Collection - 교배 게시글
+    // ============================================================
+    match /breedingPosts/{postId} {
+      allow read: if isAdmin() || isSignedIn();
+      allow create: if isAdmin() || isSignedIn();
+      allow update: if isAdmin() || isSignedIn();
+      allow delete: if isAdmin() || isSignedIn();
+    }
+    
+    // ============================================================
+    // ratings Collection - 꼬순내 평가
+    // ============================================================
+    match /ratings/{ratingId} {
+      allow read: if isAdmin() || isSignedIn();
+      allow create: if isAdmin() || isSignedIn();
+      allow update: if isAdmin() || isSignedIn();
+      allow delete: if isAdmin() || isSignedIn();
+    }
+    
+    // ============================================================
+    // transaction_statuses Collection - 거래 상태
+    // ============================================================
+    match /transaction_statuses/{statusId} {
+      allow read: if isAdmin() || isSignedIn();
+      allow create: if isAdmin() || isSignedIn();
+      allow update: if isAdmin() || isSignedIn();
+      allow delete: if isAdmin() || isSignedIn();
     }
   }
 }

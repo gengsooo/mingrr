@@ -10,6 +10,7 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/image_crop_service.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/confirm_bottom_sheet.dart';
 import '../../../../core/widgets/image_picker_sheet.dart';
 import '../../../../models/pet_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -28,7 +29,7 @@ import '../../../pet/presentation/providers/pet_provider.dart';
 /// ============================================================
 
 class PetEditScreen extends ConsumerStatefulWidget {
-  final String? petId; // null이면 추가, 있으면 수정
+  final String? petId; // null이면 신규 추가, 값이 있으면 수정 모드
   
   const PetEditScreen({super.key, this.petId});
 
@@ -61,10 +62,9 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
   String? _profileImageUrl;
   DefaultAvatar? _selectedDefaultAvatar;
   
-  // 추가 사진 관련 (최대 5장, 그 중 1장이 대표사진)
+  // 추가 사진 관련 (최대 5장, 첫 번째가 대표사진)
   List<XFile> _selectedAdditionalPhotos = [];
   List<String> _additionalPhotoUrls = [];
-  int _primaryPhotoIndex = 0; // 대표사진 인덱스
   
   bool get isEditMode => widget.petId != null;
   
@@ -599,20 +599,20 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),
               Text(
-                '${_getTotalPhotoCount()}/5장 (대표사진 1장 선택)',
+                '${_getTotalPhotoCount()}/5장',
                 style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
               ),
             ],
           ),
           const SizedBox(height: AppSizes.gapS),
           const Text(
-            '⭐ 표시된 사진이 대표사진입니다. 탭하여 대표사진을 변경하세요.',
+            '길게 누르고 드래그하여 순서를 변경하세요. 가장 왼쪽 사진이 대표사진으로 사용됩니다.',
             style: TextStyle(fontSize: 11, color: AppColors.textHint),
           ),
           const SizedBox(height: AppSizes.gapM),
           
-          // 사진 그리드
-          _buildPhotoGrid(),
+          // 사진 리스트 (드래그 가능)
+          _buildDraggablePhotoList(),
         ],
       ),
     );
@@ -622,116 +622,155 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
     return _additionalPhotoUrls.length + _selectedAdditionalPhotos.length;
   }
   
-  Widget _buildPhotoGrid() {
+  /// 드래그 가능한 사진 리스트 (첫 번째가 대표사진)
+  Widget _buildDraggablePhotoList() {
     final totalPhotos = _getTotalPhotoCount();
     final canAddMore = totalPhotos < 5;
     
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        // 기존 업로드된 사진들
-        ...List.generate(_additionalPhotoUrls.length, (index) {
-          return _buildPhotoItem(
-            index: index,
-            isExisting: true,
-            imageUrl: _additionalPhotoUrls[index],
-          );
-        }),
-        
-        // 새로 선택한 사진들
-        ...List.generate(_selectedAdditionalPhotos.length, (index) {
-          final actualIndex = _additionalPhotoUrls.length + index;
-          return _buildPhotoItem(
-            index: actualIndex,
-            isExisting: false,
-            imageFile: _selectedAdditionalPhotos[index],
-          );
-        }),
-        
-        // 추가 버튼
-        if (canAddMore)
-          _buildAddPhotoButton(),
-      ],
+    // 모든 사진을 하나의 리스트로 통합 (URL + XFile)
+    final List<dynamic> allPhotos = [
+      ..._additionalPhotoUrls,
+      ..._selectedAdditionalPhotos,
+    ];
+    
+    return SizedBox(
+      height: 90,
+      child: Row(
+        children: [
+          // 드래그 가능한 사진 리스트
+          Expanded(
+            child: ReorderableListView.builder(
+              scrollDirection: Axis.horizontal,
+              buildDefaultDragHandles: false,
+              itemCount: allPhotos.length,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (newIndex > oldIndex) newIndex--;
+                  
+                  // URL과 로컬 파일(XFile)을 분리하여 처리
+                  final urlCount = _additionalPhotoUrls.length;
+                  
+                  if (oldIndex < urlCount && newIndex < urlCount) {
+                    // 둘 다 서버 URL인 경우
+                    final item = _additionalPhotoUrls.removeAt(oldIndex);
+                    _additionalPhotoUrls.insert(newIndex, item);
+                  } else if (oldIndex >= urlCount && newIndex >= urlCount) {
+                    // 둘 다 로컬 파일(XFile)인 경우
+                    final xOld = oldIndex - urlCount;
+                    final xNew = newIndex - urlCount;
+                    final item = _selectedAdditionalPhotos.removeAt(xOld);
+                    _selectedAdditionalPhotos.insert(xNew, item);
+                  } else {
+                    // URL과 로컬 파일 간 이동 - 전체 리스트로 처리
+                    final item = allPhotos.removeAt(oldIndex);
+                    allPhotos.insert(newIndex, item);
+                    
+                    // 다시 분리
+                    _additionalPhotoUrls.clear();
+                    _selectedAdditionalPhotos.clear();
+                    for (final photo in allPhotos) {
+                      if (photo is String) {
+                        _additionalPhotoUrls.add(photo);
+                      } else if (photo is XFile) {
+                        _selectedAdditionalPhotos.add(photo);
+                      }
+                    }
+                  }
+                });
+              },
+              itemBuilder: (context, index) {
+                final isPrimary = index == 0;
+                final photo = allPhotos[index];
+                final isUrl = photo is String;
+                
+                return ReorderableDragStartListener(
+                  key: ValueKey('photo_$index'),
+                  index: index,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: _buildDraggablePhotoItem(
+                      index: index,
+                      isPrimary: isPrimary,
+                      isUrl: isUrl,
+                      imageUrl: isUrl ? photo : null,
+                      imageFile: isUrl ? null : photo as XFile,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          
+          // 추가 버튼
+          if (canAddMore) _buildAddPhotoButton(),
+        ],
+      ),
     );
   }
   
-  Widget _buildPhotoItem({
+  Widget _buildDraggablePhotoItem({
     required int index,
-    required bool isExisting,
+    required bool isPrimary,
+    required bool isUrl,
     String? imageUrl,
     XFile? imageFile,
   }) {
-    final isPrimary = index == _primaryPhotoIndex;
-    
-    return GestureDetector(
-      onTap: () {
-        // 대표사진으로 설정
-        setState(() {
-          _primaryPhotoIndex = index;
-        });
-      },
-      onLongPress: () {
-        // 삭제 확인
-        _showDeletePhotoDialog(index, isExisting);
-      },
-      child: Stack(
-        children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isPrimary ? AppColors.primary : AppColors.divider,
-                width: isPrimary ? 3 : 1,
-              ),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: isExisting
-                  ? Image.network(
-                      imageUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
-                    )
-                  : kIsWeb
-                      ? Image.network(imageFile!.path, fit: BoxFit.cover)
-                      : Image.file(File(imageFile!.path), fit: BoxFit.cover),
+    return Stack(
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isPrimary ? AppColors.primary : AppColors.divider,
+              width: isPrimary ? 3 : 1,
             ),
           ),
-          // 대표사진 표시
-          if (isPrimary)
-            Positioned(
-              top: 4,
-              left: 4,
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.star, size: 14, color: Colors.white),
-              ),
-            ),
-          // 삭제 버튼
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: isUrl
+                ? Image.network(
+                    imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
+                  )
+                : kIsWeb
+                    ? Image.network(imageFile!.path, fit: BoxFit.cover)
+                    : Image.file(File(imageFile!.path), fit: BoxFit.cover),
+          ),
+        ),
+        // 대표사진 표시
+        if (isPrimary)
           Positioned(
             top: 4,
-            right: 4,
-            child: GestureDetector(
-              onTap: () => _showDeletePhotoDialog(index, isExisting),
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.5),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.close, size: 14, color: Colors.white),
+            left: 4,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: const BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
               ),
+              child: const Icon(Icons.star, size: 14, color: Colors.white),
             ),
           ),
-        ],
-      ),
+        // 삭제 버튼
+        Positioned(
+          top: 4,
+          right: 4,
+          child: GestureDetector(
+            onTap: () => _deletePhotoAt(index),
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.5),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close, size: 14, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
     );
   }
   
@@ -761,52 +800,31 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
     );
   }
   
-  void _showDeletePhotoDialog(int index, bool isExisting) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('사진 삭제'),
-        content: const Text('이 사진을 삭제하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _deletePhoto(index, isExisting);
-            },
-            child: const Text('삭제', style: TextStyle(color: AppColors.error)),
-          ),
-        ],
-      ),
+  void _deletePhotoAt(int index) {
+    showConfirmBottomSheet(
+      context,
+      type: ConfirmType.photoDelete,
+      onConfirm: () {
+        setState(() {
+          final urlCount = _additionalPhotoUrls.length;
+          if (index < urlCount) {
+            _additionalPhotoUrls.removeAt(index);
+          } else {
+            _selectedAdditionalPhotos.removeAt(index - urlCount);
+          }
+        });
+      },
     );
-  }
-  
-  void _deletePhoto(int index, bool isExisting) {
-    setState(() {
-      if (isExisting) {
-        _additionalPhotoUrls.removeAt(index);
-      } else {
-        final newIndex = index - _additionalPhotoUrls.length;
-        _selectedAdditionalPhotos.removeAt(newIndex);
-      }
-      
-      // 대표사진 인덱스 조정
-      final totalPhotos = _getTotalPhotoCount();
-      if (_primaryPhotoIndex >= totalPhotos) {
-        _primaryPhotoIndex = totalPhotos > 0 ? totalPhotos - 1 : 0;
-      }
-    });
   }
 
   Widget _buildSaveButton() {
+    final canSubmit = _selectedTraits.length >= 5 && !_isLoading;
+    
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: _selectedTraits.length >= 5 ? _savePet : null,
+        onPressed: canSubmit ? _savePet : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           disabledBackgroundColor: AppColors.divider,
@@ -814,14 +832,23 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
             borderRadius: BorderRadius.circular(AppSizes.radiusM),
           ),
         ),
-        child: Text(
-          isEditMode ? '수정 완료' : '등록하기',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
+        child: _isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Text(
+                isEditMode ? '수정 완료' : '등록하기',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
       ),
     );
   }
@@ -1053,7 +1080,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           await petRepository.createPet(pet);
         }
         
-        // Provider 리프레시
+        // 상태 관리 새로고침
         ref.invalidate(userPetsProvider);
         
         if (mounted) {
@@ -1078,25 +1105,10 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
   }
 
   void _showDeleteConfirmation() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('반려동물 삭제'),
-        content: const Text('정말 삭제하시겠습니까?\n삭제된 정보는 복구할 수 없습니다.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _deletePet();
-            },
-            child: const Text('삭제', style: TextStyle(color: AppColors.error)),
-          ),
-        ],
-      ),
+    showConfirmBottomSheet(
+      context,
+      type: ConfirmType.petDelete,
+      onConfirm: _deletePet,
     );
   }
   

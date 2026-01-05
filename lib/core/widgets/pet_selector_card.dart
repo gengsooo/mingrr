@@ -40,22 +40,17 @@ class PetSelectorCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // 프로필 이미지 (동그라미)
+            // 프로필 이미지 (동그라미) - 프로필 이미지만 사용
             Container(
               width: 48,
               height: 48,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: color.withOpacity(0.2),
-                image: pet.primaryPhotoUrl != null
-                    ? DecorationImage(
-                        image: NetworkImage(pet.primaryPhotoUrl!),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
+                image: _getProfileImage(),
               ),
-              child: pet.primaryPhotoUrl == null
-                  ? const Center(child: Text('🐶', style: TextStyle(fontSize: 20)))
+              child: _getProfileImage() == null
+                  ? Icon(Icons.pets, size: 22, color: accentColor ?? AppColors.dating)
                   : null,
             ),
             const SizedBox(width: 12),
@@ -109,6 +104,18 @@ class PetSelectorCard extends StatelessWidget {
         ),
       ),
     );
+  }
+  
+  /// 프로필 이미지만 가져오기 (대표사진 제외)
+  DecorationImage? _getProfileImage() {
+    final url = pet.profileImageUrl;
+    if (url != null && url.isNotEmpty && !url.startsWith('default_avatar:')) {
+      return DecorationImage(
+        image: NetworkImage(url),
+        fit: BoxFit.cover,
+      );
+    }
+    return null;
   }
 }
 

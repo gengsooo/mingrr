@@ -269,7 +269,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
     }
 
-    // Provider 새로고침
+    // 상태 관리 새로고침
     _ref.invalidate(currentUserProvider);
   }
 

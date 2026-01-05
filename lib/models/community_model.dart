@@ -351,7 +351,7 @@ class JoinRequestModel extends Equatable {
   final String groupId;
   final String userId;
   final String? message;
-  final String status; // pending, approved, rejected
+  final String status; // 대기중(pending), 승인됨(approved), 거절됨(rejected)
   final DateTime createdAt;
   final DateTime? respondedAt;
 

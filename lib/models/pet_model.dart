@@ -48,11 +48,8 @@ class PetModel extends Equatable {
   /// 프로필 이미지 URL
   final String? profileImageUrl;
   
-  /// 추가 사진 URL 목록
+  /// 추가 사진 URL 목록 (첫 번째가 대표사진)
   final List<String> photoUrls;
-  
-  /// 대표 사진 인덱스 (photoUrls 중 대표로 사용할 사진)
-  final int primaryPhotoIndex;
   
   /// 동물등록번호
   final String? registrationNumber;
@@ -107,7 +104,6 @@ class PetModel extends Equatable {
     this.bio,
     this.profileImageUrl,
     this.photoUrls = const [],
-    this.primaryPhotoIndex = 0,
     this.registrationNumber,
     this.isRegistrationVerified = false,
     this.isVaccinationVerified = false,
@@ -170,17 +166,19 @@ class PetModel extends Equatable {
   /// 특성 유효성 검사 (최소 5개)
   bool get hasValidTraits => traits.length >= 5;
 
-  /// 대표 사진 URL (profileImageUrl 우선, 없으면 photoUrls의 첫번째)
-  String? get primaryPhotoUrl {
-    if (profileImageUrl != null && profileImageUrl!.isNotEmpty) {
-      return profileImageUrl;
-    }
+  /// 표시용 이미지 URL (추가사진 대표 > null)
+  /// 리스트, 카드, 상세화면 등에서 사각형 이미지로 사용
+  /// 추가사진이 없으면 null 반환 (기본 아이콘 표시)
+  String? get displayImageUrl {
     if (photoUrls.isNotEmpty) {
-      final index = primaryPhotoIndex < photoUrls.length ? primaryPhotoIndex : 0;
-      return photoUrls[index];
+      return photoUrls.first;
     }
     return null;
   }
+  
+  /// 하위 호환성을 위한 alias
+  @Deprecated('Use displayImageUrl instead')
+  String? get primaryPhotoUrl => displayImageUrl;
 
   /// Firestore 문서에서 PetModel 생성
   factory PetModel.fromFirestore(DocumentSnapshot doc) {
@@ -210,7 +208,6 @@ class PetModel extends Equatable {
       bio: data['bio'],
       profileImageUrl: data['profileImageUrl'],
       photoUrls: List<String>.from(data['photoUrls'] ?? []),
-      primaryPhotoIndex: data['primaryPhotoIndex'] ?? 0,
       registrationNumber: data['registrationNumber'],
       isRegistrationVerified: data['isRegistrationVerified'] ?? false,
       isVaccinationVerified: data['isVaccinationVerified'] ?? false,
@@ -255,7 +252,6 @@ class PetModel extends Equatable {
       'bio': bio,
       'profileImageUrl': profileImageUrl,
       'photoUrls': photoUrls,
-      'primaryPhotoIndex': primaryPhotoIndex,
       'registrationNumber': registrationNumber,
       'isRegistrationVerified': isRegistrationVerified,
       'isVaccinationVerified': isVaccinationVerified,
@@ -289,7 +285,6 @@ class PetModel extends Equatable {
     String? bio,
     String? profileImageUrl,
     List<String>? photoUrls,
-    int? primaryPhotoIndex,
     String? registrationNumber,
     bool? isRegistrationVerified,
     bool? isVaccinationVerified,
@@ -318,7 +313,6 @@ class PetModel extends Equatable {
       bio: bio ?? this.bio,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       photoUrls: photoUrls ?? this.photoUrls,
-      primaryPhotoIndex: primaryPhotoIndex ?? this.primaryPhotoIndex,
       registrationNumber: registrationNumber ?? this.registrationNumber,
       isRegistrationVerified: isRegistrationVerified ?? this.isRegistrationVerified,
       isVaccinationVerified: isVaccinationVerified ?? this.isVaccinationVerified,
@@ -363,7 +357,6 @@ class PetModel extends Equatable {
         bio,
         profileImageUrl,
         photoUrls,
-        primaryPhotoIndex,
         registrationNumber,
         isRegistrationVerified,
         isVaccinationVerified,

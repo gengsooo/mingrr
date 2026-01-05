@@ -1,5 +1,17 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
+
+/// 지역 선택 결과 (주소 + 좌표)
+class LocationResult {
+  final String address;
+  final GeoPoint? location;
+  
+  const LocationResult({
+    required this.address,
+    this.location,
+  });
+}
 
 /// ============================================================
 /// 한국 지역 데이터 (특별시/광역시/특례시 정식 명칭 사용)
@@ -208,6 +220,169 @@ class KoreaLocationData {
   static List<String> getCities(String province) => data[province]?.keys.toList() ?? [];
   
   static List<String> getDistricts(String province, String city) => data[province]?[city] ?? [];
+  
+  /// 지역별 대표 좌표 (시/군/구청 기준)
+  /// 키: "도/광역시 시/군" 또는 "도/광역시 시/군 구"
+  static const Map<String, List<double>> coordinates = {
+    // 서울특별시
+    '서울특별시 서울특별시 강남구': [37.5172, 127.0473],
+    '서울특별시 서울특별시 서초구': [37.4837, 127.0324],
+    '서울특별시 서울특별시 송파구': [37.5145, 127.1066],
+    '서울특별시 서울특별시 강동구': [37.5301, 127.1238],
+    '서울특별시 서울특별시 마포구': [37.5663, 126.9014],
+    '서울특별시 서울특별시 영등포구': [37.5264, 126.8963],
+    '서울특별시 서울특별시 용산구': [37.5324, 126.9906],
+    '서울특별시 서울특별시 종로구': [37.5735, 126.9790],
+    '서울특별시 서울특별시 중구': [37.5641, 126.9979],
+    '서울특별시 서울특별시 성동구': [37.5634, 127.0369],
+    '서울특별시 서울특별시 광진구': [37.5385, 127.0823],
+    '서울특별시 서울특별시 동대문구': [37.5744, 127.0396],
+    '서울특별시 서울특별시 중랑구': [37.6066, 127.0927],
+    '서울특별시 서울특별시 성북구': [37.5894, 127.0167],
+    '서울특별시 서울특별시 강북구': [37.6397, 127.0255],
+    '서울특별시 서울특별시 도봉구': [37.6688, 127.0471],
+    '서울특별시 서울특별시 노원구': [37.6542, 127.0568],
+    '서울특별시 서울특별시 은평구': [37.6027, 126.9291],
+    '서울특별시 서울특별시 서대문구': [37.5791, 126.9368],
+    '서울특별시 서울특별시 양천구': [37.5170, 126.8667],
+    '서울특별시 서울특별시 강서구': [37.5509, 126.8495],
+    '서울특별시 서울특별시 구로구': [37.4954, 126.8874],
+    '서울특별시 서울특별시 금천구': [37.4569, 126.8956],
+    '서울특별시 서울특별시 동작구': [37.5124, 126.9393],
+    '서울특별시 서울특별시 관악구': [37.4784, 126.9516],
+    
+    // 경기도 주요 지역
+    '경기도 수원특례시 장안구': [37.3039, 127.0097],
+    '경기도 수원특례시 권선구': [37.2578, 126.9717],
+    '경기도 수원특례시 팔달구': [37.2825, 127.0201],
+    '경기도 수원특례시 영통구': [37.2596, 127.0465],
+    '경기도 성남시 수정구': [37.4503, 127.1457],
+    '경기도 성남시 중원구': [37.4315, 127.1370],
+    '경기도 성남시 분당구': [37.3825, 127.1188],
+    '경기도 용인특례시 처인구': [37.2346, 127.2090],
+    '경기도 용인특례시 기흥구': [37.2804, 127.1150],
+    '경기도 용인특례시 수지구': [37.3220, 127.0980],
+    '경기도 고양특례시 덕양구': [37.6376, 126.8320],
+    '경기도 고양특례시 일산동구': [37.6586, 126.7740],
+    '경기도 고양특례시 일산서구': [37.6753, 126.7510],
+    '경기도 부천시': [37.5034, 126.7660],
+    '경기도 안산시 상록구': [37.3006, 126.8468],
+    '경기도 안산시 단원구': [37.3180, 126.7980],
+    '경기도 안양시 만안구': [37.3866, 126.9324],
+    '경기도 안양시 동안구': [37.3925, 126.9512],
+    '경기도 남양주시': [37.6360, 127.2165],
+    '경기도 화성시': [37.1996, 126.8312],
+    '경기도 평택시': [36.9921, 127.1126],
+    '경기도 의정부시': [37.7381, 127.0337],
+    '경기도 시흥시': [37.3800, 126.8030],
+    '경기도 파주시': [37.7600, 126.7800],
+    '경기도 김포시': [37.6152, 126.7156],
+    '경기도 광명시': [37.4786, 126.8644],
+    '경기도 광주시': [37.4295, 127.2550],
+    '경기도 군포시': [37.3617, 126.9352],
+    '경기도 하남시': [37.5393, 127.2148],
+    '경기도 오산시': [37.1498, 127.0770],
+    '경기도 이천시': [37.2720, 127.4350],
+    '경기도 안성시': [37.0080, 127.2800],
+    '경기도 의왕시': [37.3446, 126.9687],
+    '경기도 양주시': [37.7852, 127.0456],
+    '경기도 포천시': [37.8949, 127.2003],
+    '경기도 구리시': [37.5943, 127.1295],
+    '경기도 여주시': [37.2983, 127.6375],
+    '경기도 동두천시': [37.9034, 127.0605],
+    '경기도 과천시': [37.4292, 126.9876],
+    '경기도 가평군': [37.8315, 127.5095],
+    '경기도 양평군': [37.4917, 127.4875],
+    '경기도 연천군': [38.0966, 127.0748],
+    
+    // 인천광역시
+    '인천광역시 인천광역시 중구': [37.4738, 126.6217],
+    '인천광역시 인천광역시 동구': [37.4737, 126.6432],
+    '인천광역시 인천광역시 미추홀구': [37.4635, 126.6502],
+    '인천광역시 인천광역시 연수구': [37.4102, 126.6783],
+    '인천광역시 인천광역시 남동구': [37.4488, 126.7317],
+    '인천광역시 인천광역시 부평구': [37.5076, 126.7219],
+    '인천광역시 인천광역시 계양구': [37.5372, 126.7377],
+    '인천광역시 인천광역시 서구': [37.5456, 126.6760],
+    '인천광역시 인천광역시 강화군': [37.7469, 126.4878],
+    '인천광역시 인천광역시 옹진군': [37.4467, 126.6367],
+    
+    // 부산광역시
+    '부산광역시 부산광역시 중구': [35.1064, 129.0324],
+    '부산광역시 부산광역시 서구': [35.0977, 129.0241],
+    '부산광역시 부산광역시 동구': [35.1294, 129.0455],
+    '부산광역시 부산광역시 영도구': [35.0912, 129.0678],
+    '부산광역시 부산광역시 부산진구': [35.1629, 129.0532],
+    '부산광역시 부산광역시 동래구': [35.1979, 129.0858],
+    '부산광역시 부산광역시 남구': [35.1365, 129.0849],
+    '부산광역시 부산광역시 북구': [35.1972, 128.9903],
+    '부산광역시 부산광역시 해운대구': [35.1631, 129.1635],
+    '부산광역시 부산광역시 사하구': [35.1046, 128.9747],
+    '부산광역시 부산광역시 금정구': [35.2431, 129.0924],
+    '부산광역시 부산광역시 강서구': [35.2122, 128.9808],
+    '부산광역시 부산광역시 연제구': [35.1760, 129.0799],
+    '부산광역시 부산광역시 수영구': [35.1457, 129.1133],
+    '부산광역시 부산광역시 사상구': [35.1526, 128.9913],
+    '부산광역시 부산광역시 기장군': [35.2445, 129.2222],
+    
+    // 대구광역시
+    '대구광역시 대구광역시 중구': [35.8694, 128.6062],
+    '대구광역시 대구광역시 동구': [35.8863, 128.6357],
+    '대구광역시 대구광역시 서구': [35.8718, 128.5592],
+    '대구광역시 대구광역시 남구': [35.8460, 128.5974],
+    '대구광역시 대구광역시 북구': [35.8858, 128.5828],
+    '대구광역시 대구광역시 수성구': [35.8584, 128.6308],
+    '대구광역시 대구광역시 달서구': [35.8299, 128.5327],
+    '대구광역시 대구광역시 달성군': [35.7746, 128.4314],
+    '대구광역시 대구광역시 군위군': [36.2428, 128.5728],
+    
+    // 대전광역시
+    '대전광역시 대전광역시 동구': [36.3121, 127.4549],
+    '대전광역시 대전광역시 중구': [36.3256, 127.4212],
+    '대전광역시 대전광역시 서구': [36.3555, 127.3836],
+    '대전광역시 대전광역시 유성구': [36.3622, 127.3561],
+    '대전광역시 대전광역시 대덕구': [36.3467, 127.4156],
+    
+    // 광주광역시
+    '광주광역시 광주광역시 동구': [35.1461, 126.9231],
+    '광주광역시 광주광역시 서구': [35.1523, 126.8895],
+    '광주광역시 광주광역시 남구': [35.1328, 126.9025],
+    '광주광역시 광주광역시 북구': [35.1743, 126.9120],
+    '광주광역시 광주광역시 광산구': [35.1396, 126.7936],
+    
+    // 울산광역시
+    '울산광역시 울산광역시 중구': [35.5684, 129.3328],
+    '울산광역시 울산광역시 남구': [35.5444, 129.3302],
+    '울산광역시 울산광역시 동구': [35.5050, 129.4165],
+    '울산광역시 울산광역시 북구': [35.5828, 129.3612],
+    '울산광역시 울산광역시 울주군': [35.5225, 129.2414],
+    
+    // 세종특별자치시
+    '세종특별자치시 세종특별자치시': [36.4800, 127.2890],
+    
+    // 제주특별자치도
+    '제주특별자치도 제주시': [33.4996, 126.5312],
+    '제주특별자치도 서귀포시': [33.2541, 126.5600],
+  };
+  
+  /// 주소로 좌표 가져오기
+  static GeoPoint? getCoordinates(String address) {
+    // 정확한 주소로 먼저 검색
+    if (coordinates.containsKey(address)) {
+      final coords = coordinates[address]!;
+      return GeoPoint(coords[0], coords[1]);
+    }
+    
+    // 부분 매칭 시도 (구가 없는 경우)
+    for (final key in coordinates.keys) {
+      if (key.startsWith(address) || address.startsWith(key)) {
+        final coords = coordinates[key]!;
+        return GeoPoint(coords[0], coords[1]);
+      }
+    }
+    
+    return null;
+  }
 }
 
 /// ============================================================
@@ -216,13 +391,15 @@ class KoreaLocationData {
 class LocationSelectorSheet extends StatefulWidget {
   final String? initialLocation;
   final Color accentColor;
-  final Function(String location) onLocationSelected;
+  final Function(String location)? onLocationSelected;
+  final Function(LocationResult result)? onLocationResultSelected;
 
   const LocationSelectorSheet({
     super.key,
     this.initialLocation,
     this.accentColor = AppColors.community,
-    required this.onLocationSelected,
+    this.onLocationSelected,
+    this.onLocationResultSelected,
   });
 
   @override
@@ -364,7 +541,12 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
                                         if (cityDistricts.isEmpty) {
                                           // 구가 없으면 바로 선택 완료
                                           final location = '$selectedProvince $city';
-                                          widget.onLocationSelected(location);
+                                          final geoPoint = KoreaLocationData.getCoordinates(location);
+                                          widget.onLocationSelected?.call(location);
+                                          widget.onLocationResultSelected?.call(LocationResult(
+                                            address: location,
+                                            location: geoPoint,
+                                          ));
                                           Navigator.pop(context);
                                         } else {
                                           setState(() {
@@ -429,7 +611,12 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
                                   return GestureDetector(
                                     onTap: () {
                                       final location = '$selectedProvince $selectedCity $district';
-                                      widget.onLocationSelected(location);
+                                      final geoPoint = KoreaLocationData.getCoordinates(location);
+                                      widget.onLocationSelected?.call(location);
+                                      widget.onLocationResultSelected?.call(LocationResult(
+                                        address: location,
+                                        location: geoPoint,
+                                      ));
                                       Navigator.pop(context);
                                     },
                                     child: Container(
@@ -471,7 +658,7 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
   }
 }
 
-/// 지역 선택 바텀시트 표시 헬퍼 함수
+/// 지역 선택 바텀시트 표시 헬퍼 함수 (기존 호환)
 void showLocationSelector({
   required BuildContext context,
   String? initialLocation,
@@ -486,6 +673,25 @@ void showLocationSelector({
       initialLocation: initialLocation,
       accentColor: accentColor,
       onLocationSelected: onLocationSelected,
+    ),
+  );
+}
+
+/// 지역 선택 바텀시트 표시 헬퍼 함수 (좌표 포함)
+void showLocationSelectorWithCoordinates({
+  required BuildContext context,
+  String? initialLocation,
+  Color accentColor = AppColors.community,
+  required Function(LocationResult result) onLocationResultSelected,
+}) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => LocationSelectorSheet(
+      initialLocation: initialLocation,
+      accentColor: accentColor,
+      onLocationResultSelected: onLocationResultSelected,
     ),
   );
 }

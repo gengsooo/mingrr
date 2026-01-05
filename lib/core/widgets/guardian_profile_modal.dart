@@ -450,22 +450,22 @@ class GuardianProfileModal extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // 강아지 사진
+            // 강아지 프로필 이미지 (원형)
             Container(
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(12),
-                image: dog.profileImageUrl != null
+                color: AppColors.primaryLight,
+                shape: BoxShape.circle,
+                image: dog.profileImageUrl != null && !dog.profileImageUrl!.startsWith('default_avatar:')
                     ? DecorationImage(
                         image: NetworkImage(dog.profileImageUrl!),
                         fit: BoxFit.cover,
                       )
                     : null,
               ),
-              child: dog.profileImageUrl == null
-                  ? const Icon(Icons.pets, color: AppColors.textHint)
+              child: dog.profileImageUrl == null || dog.profileImageUrl!.startsWith('default_avatar:')
+                  ? const Icon(Icons.pets, size: 24, color: AppColors.primary)
                   : null,
             ),
             const SizedBox(width: 12),

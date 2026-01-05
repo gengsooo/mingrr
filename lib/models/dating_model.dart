@@ -125,7 +125,7 @@ class MatchModel extends Equatable {
   /// 채팅방 ID
   final String? chatRoomId;
   
-  /// 매칭 타입 (dating, breeding)
+  /// 매칭 타입 (dating: 데이팅, breeding: 교배)
   final String type;
   
   /// AI 궁합 점수 (0-100)
