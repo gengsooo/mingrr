@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'app_demo.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+// TODO: 실제 기기 테스트 시 주석 해제
+// import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
+import 'firebase_options.dart';
+import 'app.dart';
+import 'core/services/notification_service.dart';
 
 /// ============================================================
 /// MINGRR - 반려동물 커뮤니티 앱
@@ -17,33 +23,31 @@ import 'app_demo.dart';
 /// - Frontend: Flutter
 /// - Backend: Firebase (Auth, Firestore, Storage, Messaging)
 /// - State Management: Riverpod
-/// 
-/// 참고: 현재 데모 모드로 실행됩니다.
-/// Firebase 연동 시 app.dart를 import하고 MingrrApp()을 사용하세요.
 /// ============================================================
 
 void main() async {
   // Flutter 바인딩 초기화
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 앱 실행 (데모 모드 - Firebase 없이 UI 테스트 가능)
+  // Firebase 초기화
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  // FCM 백그라운드 핸들러 등록
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // 푸시 알림 서비스 초기화
+  await NotificationService().initialize();
+  
+  // TODO: 실제 기기 테스트 시 주석 해제
+  // 카카오 지도 SDK 초기화
+  // await KakaoMapsFlutter.init('9d259b071721f1a6c369c9074076c657');
+  
+  // 앱 실행
   runApp(
     const ProviderScope(
-      child: MingrrDemoApp(),
+      child: MingrrApp(),
     ),
   );
 }
-
-/// ============================================================
-/// Firebase 연동 시 아래 코드로 교체:
-/// ============================================================
-/// 
-/// import 'package:firebase_core/firebase_core.dart';
-/// import 'app.dart';
-/// 
-/// void main() async {
-///   WidgetsFlutterBinding.ensureInitialized();
-///   await Firebase.initializeApp();
-///   runApp(const ProviderScope(child: MingrrApp()));
-/// }
-/// ============================================================

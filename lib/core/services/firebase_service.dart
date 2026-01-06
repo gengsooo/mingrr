@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 
 /// ============================================================
 /// Firebase 서비스
@@ -33,6 +35,11 @@ class FirebaseService {
   CollectionReference<Map<String, dynamic>> get petsCollection =>
       firestore.collection('pets');
   
+  /// 반려동물 컬렉션 (하위 호환성)
+  @Deprecated('Use petsCollection instead')
+  CollectionReference<Map<String, dynamic>> get dogsCollection =>
+      firestore.collection('pets');
+  
   /// 채팅방 컬렉션
   CollectionReference<Map<String, dynamic>> get chatRoomsCollection =>
       firestore.collection('chatRooms');
@@ -49,21 +56,13 @@ class FirebaseService {
   CollectionReference<Map<String, dynamic>> get productsCollection =>
       firestore.collection('products');
   
-  /// 예방접종 기록 컬렉션
-  CollectionReference<Map<String, dynamic>> get vaccinationsCollection =>
-      firestore.collection('vaccinations');
+  /// 상품 찜 컬렉션
+  CollectionReference<Map<String, dynamic>> get productLikesCollection =>
+      firestore.collection('productLikes');
   
-  /// 체중 기록 컬렉션
-  CollectionReference<Map<String, dynamic>> get weightRecordsCollection =>
-      firestore.collection('weightRecords');
-  
-  /// 배변 기록 컬렉션
-  CollectionReference<Map<String, dynamic>> get poopRecordsCollection =>
-      firestore.collection('poopRecords');
-  
-  /// 산책 기록 컬렉션
-  CollectionReference<Map<String, dynamic>> get walkRecordsCollection =>
-      firestore.collection('walkRecords');
+  /// 가입 신청 컬렉션
+  CollectionReference<Map<String, dynamic>> get joinRequestsCollection =>
+      firestore.collection('joinRequests');
   
   /// 모임 컬렉션
   CollectionReference<Map<String, dynamic>> get groupsCollection =>
@@ -72,12 +71,40 @@ class FirebaseService {
   /// 일정 컬렉션
   CollectionReference<Map<String, dynamic>> get schedulesCollection =>
       firestore.collection('schedules');
+  
+  /// 알바 컬렉션
+  CollectionReference<Map<String, dynamic>> get jobsCollection =>
+      firestore.collection('jobs');
+  
+  /// 교배 글 컬렉션
+  CollectionReference<Map<String, dynamic>> get breedingPostsCollection =>
+      firestore.collection('breedingPosts');
+  
+  /// 산책 기록 컬렉션
+  CollectionReference<Map<String, dynamic>> get walksCollection =>
+      firestore.collection('walks');
+  
+  /// 소모임 좋아요 컬렉션
+  CollectionReference<Map<String, dynamic>> get groupLikesCollection =>
+      firestore.collection('groupLikes');
+  
+  /// 신고 컬렉션
+  CollectionReference<Map<String, dynamic>> get reportsCollection =>
+      firestore.collection('reports');
+  
+  /// 평가(꼬순내지수) 컬렉션
+  CollectionReference<Map<String, dynamic>> get ratingsCollection =>
+      firestore.collection('ratings');
 
   // ===== 메시지 서브컬렉션 접근 =====
   
   /// 특정 채팅방의 메시지 컬렉션
   CollectionReference<Map<String, dynamic>> messagesCollection(String chatRoomId) =>
       chatRoomsCollection.doc(chatRoomId).collection('messages');
+  
+  /// 특정 반려동물의 건강 기록 컬렉션
+  CollectionReference<Map<String, dynamic>> healthRecordsCollection(String petId) =>
+      petsCollection.doc(petId).collection('healthRecords');
 
   // ===== Storage 참조 =====
   
@@ -87,6 +114,11 @@ class FirebaseService {
   
   /// 반려동물 이미지 저장 경로
   Reference petImageRef(String petId, String fileName) =>
+      storage.ref().child('pets/$petId/$fileName');
+  
+  /// 반려동물 이미지 저장 경로 (하위 호환성)
+  @Deprecated('Use petImageRef instead')
+  Reference dogImageRef(String petId, String fileName) =>
       storage.ref().child('pets/$petId/$fileName');
   
   /// 상품 이미지 저장 경로
@@ -111,4 +143,24 @@ class FirebaseService {
   
   /// 로그인 상태 스트림
   Stream<User?> get authStateChanges => auth.authStateChanges();
+
+  // ===== 이미지 업로드 =====
+  
+  /// 이미지 파일 업로드 및 URL 반환
+  Future<String> uploadImage(dynamic file, String path) async {
+    try {
+      final ref = storage.ref().child(path);
+      
+      // File 타입인 경우
+      if (file is File) {
+        final snapshot = await ref.putFile(file);
+        return await snapshot.ref.getDownloadURL();
+      }
+      
+      throw Exception('Invalid file type: ${file.runtimeType}');
+    } catch (e) {
+      debugPrint('이미지 업로드 오류: $e');
+      rethrow;
+    }
+  }
 }

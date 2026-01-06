@@ -5,6 +5,7 @@ import 'common_widgets.dart';
 import 'warmth_score.dart';
 import 'verification_badge.dart';
 import 'guardian_profile_modal.dart';
+import 'trait_badge.dart';
 
 /// ============================================================
 /// 강아지 프로필 모달
@@ -23,6 +24,8 @@ void showDogProfileModal(
   double? weight,
   String? introduction,
   List<String> traits = const [],
+  List<String> photoUrls = const [],
+  String? profileImageUrl,
   int likeCount = 0,
   bool isIdentityVerified = false,
   bool isPetVerified = false,
@@ -42,6 +45,8 @@ void showDogProfileModal(
       weight: weight,
       introduction: introduction,
       traits: traits,
+      photoUrls: photoUrls,
+      profileImageUrl: profileImageUrl,
       likeCount: likeCount,
       isIdentityVerified: isIdentityVerified,
       isPetVerified: isPetVerified,
@@ -84,6 +89,8 @@ class DogProfileModal extends StatefulWidget {
   final double? weight;
   final String? introduction;
   final List<String> traits;
+  final List<String> photoUrls;
+  final String? profileImageUrl;
   final int likeCount;
   final bool isIdentityVerified;
   final bool isPetVerified;
@@ -100,6 +107,8 @@ class DogProfileModal extends StatefulWidget {
     this.weight,
     this.introduction,
     this.traits = const [],
+    this.photoUrls = const [],
+    this.profileImageUrl,
     this.likeCount = 0,
     this.isIdentityVerified = false,
     this.isPetVerified = false,
@@ -162,13 +171,16 @@ class _DogProfileModalState extends State<DogProfileModal> {
           
           // 헤더
           Padding(
-            padding: const EdgeInsets.all(AppSizes.paddingL),
+            padding: const EdgeInsets.all(AppSizes.paddingM),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  '강아지 프로필',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                const SizedBox(width: 40),
+                const Expanded(
+                  child: Text(
+                    '강아지 정보',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -178,15 +190,12 @@ class _DogProfileModalState extends State<DogProfileModal> {
             ),
           ),
           
+          const Divider(height: 1),
+          
           // 본문
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSizes.paddingL,
-                0,
-                AppSizes.paddingL,
-                AppSizes.paddingL,
-              ),
+              padding: const EdgeInsets.all(AppSizes.paddingL),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -194,9 +203,15 @@ class _DogProfileModalState extends State<DogProfileModal> {
                   _buildDogInfo(),
                   const SizedBox(height: AppSizes.gapL),
                   
-                  // 특성 태그
+                  // 사진 갤러리
+                  if (widget.photoUrls.isNotEmpty) ...[
+                    _buildPhotoGallery(),
+                    const SizedBox(height: AppSizes.gapL),
+                  ],
+                  
+                  // 성격&특성 (노란색 계통)
                   if (widget.traits.isNotEmpty) ...[
-                    _buildTraits(),
+                    TraitSection(traits: widget.traits),
                     const SizedBox(height: AppSizes.gapL),
                   ],
                   
@@ -219,6 +234,133 @@ class _DogProfileModalState extends State<DogProfileModal> {
     );
   }
 
+  /// 사진 갤러리
+  Widget _buildPhotoGallery() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              '사진',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            ),
+            Text(
+              '${widget.photoUrls.length}장',
+              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSizes.gapS),
+        SizedBox(
+          height: 80,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: widget.photoUrls.length,
+            itemBuilder: (context, index) {
+              return GestureDetector(
+                onTap: () => _showFullScreenImage(context, index),
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  margin: EdgeInsets.only(right: index < widget.photoUrls.length - 1 ? 8 : 0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.divider),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(11),
+                    child: Image.network(
+                      widget.photoUrls[index],
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: AppColors.dating.withOpacity(0.1),
+                        child: const Icon(Icons.pets, color: AppColors.dating),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 전체 화면 이미지 보기
+  void _showFullScreenImage(BuildContext context, int initialIndex) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.black,
+        insetPadding: EdgeInsets.zero,
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: PageController(initialPage: initialIndex),
+              itemCount: widget.photoUrls.length,
+              itemBuilder: (context, index) {
+                return InteractiveViewer(
+                  child: Center(
+                    child: Image.network(
+                      widget.photoUrls[index],
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) => const Icon(
+                        Icons.image_not_supported,
+                        color: Colors.white54,
+                        size: 60,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            // 닫기 버튼
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 8,
+              right: 8,
+              child: IconButton(
+                icon: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.close, color: Colors.white, size: 24),
+                ),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+            // 페이지 인디케이터
+            if (widget.photoUrls.length > 1)
+              Positioned(
+                bottom: MediaQuery.of(context).padding.bottom + 20,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    widget.photoUrls.length,
+                    (index) => Container(
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.5),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// 강아지 기본 정보
   Widget _buildDogInfo() {
     final isMale = widget.gender == 'male' || widget.gender == '남아';
@@ -226,19 +368,33 @@ class _DogProfileModalState extends State<DogProfileModal> {
     
     return Row(
       children: [
-        // 프로필 이미지
+        // 프로필 이미지 (프로필 이미지만 사용, default_avatar 제외)
         Container(
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            color: AppColors.dating.withOpacity(0.1),
+            color: AppColors.primaryLight,
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.pets,
-            size: 40,
-            color: AppColors.dating,
-          ),
+          child: _hasValidProfileImage()
+              ? ClipOval(
+                  child: Image.network(
+                    widget.profileImageUrl!,
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.pets,
+                      size: 40,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                )
+              : const Icon(
+                  Icons.pets,
+                  size: 40,
+                  color: AppColors.primary,
+                ),
         ),
         const SizedBox(width: AppSizes.gapM),
         
@@ -306,38 +462,6 @@ class _DogProfileModalState extends State<DogProfileModal> {
               ),
             ],
           ),
-        ),
-      ],
-    );
-  }
-
-  /// 특성 태그 (회색 테마)
-  Widget _buildTraits() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '성격/특성',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: AppSizes.gapS),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: widget.traits.map((trait) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.textHint.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              trait,
-              style: const TextStyle(
-                fontSize: 13,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          )).toList(),
         ),
       ],
     );
@@ -417,65 +541,127 @@ class _DogProfileModalState extends State<DogProfileModal> {
               color: AppColors.background,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
+            child: Column(
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.person, size: 22, color: AppColors.primary),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.person, size: 22, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            guardian.nickname,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          if (genderAgeText.isNotEmpty) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: guardian.gender == GuardianGender.male
-                                    ? Colors.blue.withOpacity(0.1)
-                                    : Colors.pink.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                genderAgeText,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: guardian.gender == GuardianGender.male
-                                      ? Colors.blue
-                                      : Colors.pink,
+                          Row(
+                            children: [
+                              Text(
+                                guardian.nickname,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ),
-                          ],
+                              if (genderAgeText.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: guardian.gender == GuardianGender.male
+                                        ? Colors.blue.withOpacity(0.1)
+                                        : Colors.pink.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    genderAgeText,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: guardian.gender == GuardianGender.male
+                                          ? Colors.blue
+                                          : Colors.pink,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          KkosunnaeScoreSmall(score: guardian.kkosunnaeScore),
                         ],
                       ),
-                      const SizedBox(height: 2),
-                      KkosunnaeScoreSmall(score: guardian.kkosunnaeScore),
-                    ],
-                  ),
+                    ),
+                    const Icon(Icons.chevron_right, color: AppColors.textHint),
+                  ],
                 ),
-                const Icon(Icons.chevron_right, color: AppColors.textHint),
+                // 인증 배지 (소형)
+                const SizedBox(height: 10),
+                const Divider(height: 1),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _buildSmallVerificationBadge(
+                      icon: Icons.verified_user_outlined,
+                      label: '본인인증',
+                      isVerified: guardian.isIdentityVerified,
+                    ),
+                    _buildSmallVerificationBadge(
+                      icon: Icons.pets_outlined,
+                      label: '동물등록',
+                      isVerified: guardian.isPetVerified,
+                    ),
+                    _buildSmallVerificationBadge(
+                      icon: Icons.location_on_outlined,
+                      label: '위치인증',
+                      isVerified: guardian.isLocationVerified,
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
         ),
       ],
     );
+  }
+
+  /// 소형 인증 배지
+  Widget _buildSmallVerificationBadge({
+    required IconData icon,
+    required String label,
+    required bool isVerified,
+  }) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          size: 18,
+          color: isVerified ? AppColors.success : AppColors.textHint,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            color: isVerified ? AppColors.textPrimary : AppColors.textHint,
+          ),
+        ),
+        if (!isVerified)
+          const Icon(Icons.close, size: 10, color: AppColors.textHint),
+      ],
+    );
+  }
+  
+  /// 유효한 프로필 이미지가 있는지 확인
+  bool _hasValidProfileImage() {
+    return widget.profileImageUrl != null && 
+           widget.profileImageUrl!.isNotEmpty && 
+           !widget.profileImageUrl!.startsWith('default_avatar:');
   }
 }

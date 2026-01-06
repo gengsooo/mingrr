@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/services/share_service.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/widgets/confirm_bottom_sheet.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/warmth_score.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
@@ -16,13 +20,28 @@ import '../../../../core/widgets/guardian_profile_modal.dart';
 /// - 신고 기능
 /// ============================================================
 
-class CommunityDetailScreen extends StatelessWidget {
+class CommunityDetailScreen extends StatefulWidget {
   final String communityId;
+  final bool isJoined;
 
   const CommunityDetailScreen({
     super.key,
     required this.communityId,
+    this.isJoined = false,
   });
+
+  @override
+  State<CommunityDetailScreen> createState() => _CommunityDetailScreenState();
+}
+
+class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
+  late bool _isJoined;
+
+  @override
+  void initState() {
+    super.initState();
+    _isJoined = widget.isJoined;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,7 +110,7 @@ class CommunityDetailScreen extends StatelessWidget {
         'warmthScore': 42.5,
       },
       'recentMembers': ['초코맘', '몽이아빠', '코코언니', '두부맘', '콩이아빠'],
-      'isJoined': false,
+      'isJoined': _isJoined,
     };
   }
 
@@ -122,9 +141,7 @@ class CommunityDetailScreen extends StatelessWidget {
             ),
             child: const Icon(Icons.share, color: Colors.white, size: 20),
           ),
-          onPressed: () {
-            // TODO: 공유 기능
-          },
+          onPressed: () => _shareGroup(context, data),
         ),
         IconButton(
           icon: Container(
@@ -473,26 +490,44 @@ class CommunityDetailScreen extends StatelessWidget {
         height: 56,
         child: ElevatedButton(
           onPressed: () {
-            Navigator.pop(context);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(isJoined ? '모임에서 탈퇴했습니다.' : '모임에 가입했습니다! 🎉'),
-                backgroundColor: AppColors.community,
-              ),
-            );
+            if (isJoined) {
+              // 탈퇴 시 확인 바텀시트 표시
+              showConfirmBottomSheet(
+                context,
+                type: ConfirmType.groupLeave,
+                onConfirm: () {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('모임에서 탈퇴했습니다.'),
+                      backgroundColor: AppColors.community,
+                    ),
+                  );
+                },
+              );
+            } else {
+              // 가입 시 바로 처리
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('모임에 가입했습니다! 🎉'),
+                  backgroundColor: AppColors.community,
+                ),
+              );
+            }
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: isJoined ? AppColors.divider : AppColors.community,
+            backgroundColor: isJoined ? AppColors.error : AppColors.community,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
           ),
           child: Text(
             isJoined ? '모임 탈퇴하기' : '모임 가입하기',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: isJoined ? AppColors.textSecondary : Colors.white,
+              color: Colors.white,
             ),
           ),
         ),
@@ -519,6 +554,15 @@ class CommunityDetailScreen extends StatelessWidget {
               title: const Text('알림 끄기'),
               onTap: () => Navigator.pop(context),
             ),
+            if (_isJoined)
+              ListTile(
+                leading: const Icon(Icons.exit_to_app, color: AppColors.error),
+                title: const Text('모임 탈퇴하기', style: TextStyle(color: AppColors.error)),
+                onTap: () {
+                  Navigator.pop(context);
+                  _showLeaveConfirmDialog(context);
+                },
+              ),
             ListTile(
               leading: const Icon(Icons.report_outlined, color: AppColors.error),
               title: const Text('신고하기', style: TextStyle(color: AppColors.error)),
@@ -526,7 +570,7 @@ class CommunityDetailScreen extends StatelessWidget {
                 Navigator.pop(context);
                 showReportSheet(
                   context,
-                  targetId: communityId,
+                  targetId: widget.communityId,
                   targetName: '이 모임',
                   targetType: ReportTargetType.community,
                 );
@@ -535,6 +579,135 @@ class CommunityDetailScreen extends StatelessWidget {
             SizedBox(height: MediaQuery.of(context).padding.bottom),
           ],
         ),
+      ),
+    );
+  }
+
+  /// 탈퇴 확인 바텀시트
+  void _showLeaveConfirmDialog(BuildContext context) {
+    showConfirmBottomSheet(
+      context,
+      type: ConfirmType.groupLeave,
+      onConfirm: () {
+        setState(() => _isJoined = false);
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('모임에서 탈퇴했습니다.'),
+            backgroundColor: AppColors.community,
+          ),
+        );
+      },
+    );
+  }
+  
+  /// 소모임 공유
+  void _shareGroup(BuildContext context, Map<String, dynamic> data) {
+    final text = '${data['name']}\n'
+        '${data['description']}\n\n'
+        '멤버 ${data['memberCount']}명이 함께하고 있어요!\n'
+        'MINGRR에서 확인하기:\nhttps://mingrr.app/group/${widget.communityId}';
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const Text(
+              '공유하기',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildShareOption(
+                  icon: Icons.copy,
+                  label: '링크 복사',
+                  onTap: () async {
+                    await Clipboard.setData(ClipboardData(text: text));
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('복사되었습니다')),
+                      );
+                    }
+                  },
+                ),
+                _buildShareOption(
+                  icon: Icons.chat_bubble,
+                  label: '카카오톡',
+                  onTap: () {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('카카오톡 공유는 SDK 설정 후 사용 가능합니다')),
+                    );
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                text,
+                style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 10),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildShareOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 24, color: Colors.grey[700]),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+          ),
+        ],
       ),
     );
   }

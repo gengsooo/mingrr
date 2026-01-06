@@ -1,341 +1,449 @@
 import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../constants/pet_constants.dart';
+import '../services/location_service.dart';
 import '../../models/pet_model.dart';
+import '../../models/user_model.dart';
 
 /// ============================================================
-/// AI 매칭 알고리즘 서비스 (V2 - 강아지 전용)
+/// 추천 매칭 알고리즘 서비스 (V3)
 /// 
-/// 우선순위: 품종 > 체중 > 특성 > 성별 > 나이
-/// 산책중인 강아지 우선 추천
+/// 점수 배분 (총 100점):
+/// - 체형 궁합: 18점 (크기 10점 + 체중 8점)
+/// - 나이 궁합: 15점 (나이차 9점 + 생애단계 6점)
+/// - 성격 궁합: 15점 (보완 6점 + 동일 5점 + 에너지 4점)
+/// - 거리: 14점
+/// - 보호자 인증: 12점
+/// - 꼬순내 지수: 10점
+/// - 품종 궁합: 6점
+/// - 인기도: 6점
+/// - 앱 활성도: 4점
 /// ============================================================
 
 class MatchingService {
   MatchingService._();
 
   /// 궁합 점수 계산 (0~100)
-  /// [myDog] 내 강아지
-  /// [otherDog] 상대 강아지
-  /// [isWalking] 상대가 현재 산책중인지
-  /// [lastWalkMinutesAgo] 마지막 산책이 몇 분 전인지 (null이면 산책 기록 없음)
   static MatchResult calculateCompatibility({
-    required DogModel myDog,
-    required DogModel otherDog,
-    bool isWalking = false,
-    int? lastWalkMinutesAgo,
+    required PetModel myPet,
+    required PetModel otherPet,
+    required UserModel? myUser,
+    required UserModel? otherUser,
+    double? distanceMeters,
   }) {
     double totalScore = 0;
     final details = <String, double>{};
 
-    // ===== 1. 품종 일치 (최우선, 40점) =====
-    final breedScore = _calculateBreedScore(myDog, otherDog);
-    details['breed'] = breedScore;
-    totalScore += breedScore;
+    // ===== 1. 체형 궁합 (18점) =====
+    final bodyScore = _calculateBodyScore(myPet, otherPet);
+    details['body'] = bodyScore;
+    totalScore += bodyScore;
 
-    // ===== 2. 체중/크기 유사도 (2순위, 25점) =====
-    final weightScore = _calculateWeightScore(myDog, otherDog);
-    details['weight'] = weightScore;
-    totalScore += weightScore;
-
-    // ===== 3. 특성 궁합 (15점) =====
-    final traitScore = _calculateTraitScore(myDog, otherDog);
-    details['traits'] = traitScore;
-    totalScore += traitScore;
-
-    // ===== 4. 성별 (10점) =====
-    final genderScore = _calculateGenderScore(myDog, otherDog);
-    details['gender'] = genderScore;
-    totalScore += genderScore;
-
-    // ===== 5. 나이 유사도 (10점) =====
-    final ageScore = _calculateAgeScore(myDog, otherDog);
+    // ===== 2. 나이 궁합 (15점) =====
+    final ageScore = _calculateAgeScore(myPet, otherPet);
     details['age'] = ageScore;
     totalScore += ageScore;
 
-    // ===== 산책 보너스 (추가 점수, 최대 +10) =====
-    double walkBonus = 0;
-    if (isWalking) {
-      walkBonus = 10; // 현재 산책중이면 +10
-    } else if (lastWalkMinutesAgo != null) {
-      if (lastWalkMinutesAgo <= 30) {
-        walkBonus = 8; // 30분 이내 산책
-      } else if (lastWalkMinutesAgo <= 60) {
-        walkBonus = 5; // 1시간 이내 산책
-      } else if (lastWalkMinutesAgo <= 180) {
-        walkBonus = 2; // 3시간 이내 산책
-      }
-    }
-    details['walkBonus'] = walkBonus;
+    // ===== 3. 성격 궁합 (15점) =====
+    final traitScore = _calculateTraitScore(myPet, otherPet);
+    details['traits'] = traitScore;
+    totalScore += traitScore;
 
-    // 최종 점수 (100점 만점으로 정규화)
-    final finalScore = min(100, totalScore + walkBonus);
+    // ===== 4. 거리 (14점) =====
+    final distanceScore = _calculateDistanceScore(distanceMeters);
+    details['distance'] = distanceScore;
+    totalScore += distanceScore;
+
+    // ===== 5. 보호자 인증 (12점) =====
+    final verificationScore = _calculateVerificationScore(otherUser);
+    details['verification'] = verificationScore;
+    totalScore += verificationScore;
+
+    // ===== 6. 꼬순내 지수 (10점) =====
+    final activityScore = _calculateActivityScore(otherUser);
+    details['activity'] = activityScore;
+    totalScore += activityScore;
+
+    // ===== 7. 품종 궁합 (6점) =====
+    final breedScore = _calculateBreedScore(myPet, otherPet);
+    details['breed'] = breedScore;
+    totalScore += breedScore;
+
+    // ===== 8. 인기도 (6점) =====
+    final popularityScore = _calculatePopularityScore(otherPet);
+    details['popularity'] = popularityScore;
+    totalScore += popularityScore;
+
+    // ===== 9. 앱 활성도 (4점) =====
+    final activeScore = _calculateActiveScore(otherUser);
+    details['active'] = activeScore;
+    totalScore += activeScore;
 
     return MatchResult(
-      score: finalScore.round(),
+      score: min(100, totalScore.round()),
       details: details,
-      isWalking: isWalking,
-      lastWalkMinutesAgo: lastWalkMinutesAgo,
+      distanceMeters: distanceMeters,
     );
   }
 
-  /// 품종 일치 점수 (40점 만점)
-  static double _calculateBreedScore(DogModel myDog, DogModel otherDog) {
-    // 품종 정보가 없으면 기본 점수
-    if (myDog.breed == null || otherDog.breed == null) {
-      return 20;
-    }
+  // ===== 1. 체형 궁합 (18점) =====
+  static double _calculateBodyScore(PetModel myPet, PetModel otherPet) {
+    double score = 0;
+
+    // A. 크기 매칭 (10점)
+    final mySize = myPet.size;
+    final otherSize = otherPet.size;
     
-    // 같은 품종이면 만점
-    if (myDog.breed == otherDog.breed) {
-      return 40;
+    if (mySize != null && otherSize != null) {
+      if (mySize == otherSize) {
+        score += 10;
+      } else {
+        final sizeDiff = (mySize.index - otherSize.index).abs();
+        if (sizeDiff == 1) score += 5;
+        else if (sizeDiff == 2) score += 2;
+      }
+    } else {
+      score += 5; // 정보 없으면 중간 점수
     }
-    
-    // 비슷한 크기의 품종이면 부분 점수
-    if (myDog.size == otherDog.size) {
-      return 25;
+
+    // B. 체중 차이 (8점)
+    if (myPet.weight != null && otherPet.weight != null) {
+      final weightDiff = (myPet.weight! - otherPet.weight!).abs();
+      if (weightDiff <= 1) score += 8;
+      else if (weightDiff <= 2) score += 6;
+      else if (weightDiff <= 3) score += 4;
+      else if (weightDiff <= 5) score += 2;
+    } else {
+      score += 4; // 정보 없으면 중간 점수
     }
-    
-    return 15; // 다른 품종
+
+    return score;
   }
 
-  /// 체중/크기 유사도 점수 (25점 만점)
-  static double _calculateWeightScore(DogModel myDog, DogModel otherDog) {
-    // 체중 정보가 없으면 기본 점수
-    if (myDog.weight == null || otherDog.weight == null) {
-      return 12.5;
+  // ===== 2. 나이 궁합 (15점) =====
+  static double _calculateAgeScore(PetModel myPet, PetModel otherPet) {
+    double score = 0;
+    final myAge = myPet.ageYears;
+    final otherAge = otherPet.ageYears;
+
+    // A. 나이 차이 (9점)
+    if (myAge != null && otherAge != null) {
+      final ageDiff = (myAge - otherAge).abs();
+      if (ageDiff == 0) score += 9;
+      else if (ageDiff == 1) score += 7;
+      else if (ageDiff == 2) score += 5;
+      else if (ageDiff == 3) score += 3;
+      else score += 1;
+
+      // B. 생애 단계 매칭 (6점)
+      final myStage = _getLifeStage(myAge);
+      final otherStage = _getLifeStage(otherAge);
+      final stageDiff = (myStage - otherStage).abs();
+      
+      if (stageDiff == 0) score += 6;
+      else if (stageDiff == 1) score += 3;
+      else score += 1;
+    } else {
+      score += 7.5; // 정보 없으면 중간 점수
     }
 
-    final mySize = myDog.size;
-    final otherSize = otherDog.size;
-
-    // 같은 크기 분류면 만점
-    if (mySize == otherSize) {
-      return 25;
-    }
-
-    // 크기 차이에 따른 점수
-    final sizeDiff = (mySize!.index - otherSize!.index).abs();
-    switch (sizeDiff) {
-      case 1:
-        return 18; // 한 단계 차이
-      case 2:
-        return 10; // 두 단계 차이
-      case 3:
-        return 5;  // 세 단계 차이
-      default:
-        return 2;  // 그 이상
-    }
+    return score;
   }
 
-  /// 특성 궁합 점수 (15점 만점)
-  static double _calculateTraitScore(DogModel myDog, DogModel otherDog) {
-    if (myDog.traits.isEmpty || otherDog.traits.isEmpty) {
-      return 7.5; // 특성 정보 없으면 기본 점수
+  /// 생애 단계 (0: 퍼피, 1: 청년, 2: 성견, 3: 시니어)
+  static int _getLifeStage(int ageYears) {
+    if (ageYears < 1) return 0;
+    if (ageYears < 3) return 1;
+    if (ageYears < 7) return 2;
+    return 3;
+  }
+
+  // ===== 3. 성격 궁합 (15점) =====
+  static double _calculateTraitScore(PetModel myPet, PetModel otherPet) {
+    if (myPet.traits.isEmpty || otherPet.traits.isEmpty) {
+      return 7.5;
     }
 
     double score = 0;
 
-    // 1. 공통 특성 점수 (최대 8점)
-    final commonTraits = myDog.traits
-        .where((t) => otherDog.traits.contains(t))
-        .length;
-    score += min(8, commonTraits * 2);
+    // A. 상호 보완 특성 (6점)
+    final synergyPairs = [
+      (PetTrait.active, PetTrait.calm, 3.0),
+      (PetTrait.curious, PetTrait.gentle, 2.0),
+      (PetTrait.playful, PetTrait.gentle, 2.0),
+      (PetTrait.independent, PetTrait.affectionate, 1.5),
+      (PetTrait.brave, PetTrait.shy, 1.5),
+    ];
 
-    // 2. 상호 보완 특성 점수 (최대 7점)
-    final complementaryScore = _calculateComplementaryTraits(myDog, otherDog);
-    score += complementaryScore;
+    for (final (trait1, trait2, points) in synergyPairs) {
+      if ((myPet.traits.contains(trait1) && otherPet.traits.contains(trait2)) ||
+          (myPet.traits.contains(trait2) && otherPet.traits.contains(trait1))) {
+        score += points;
+        if (score >= 6) break;
+      }
+    }
+    score = min(6, score);
 
-    return min(15, score);
+    // B. 같은 특성 매칭 (5점)
+    final commonCount = myPet.traits.where((t) => otherPet.traits.contains(t)).length;
+    score += min(5, commonCount * 1.0);
+
+    // C. 에너지 레벨 매칭 (4점)
+    final myEnergy = _getEnergyLevel(myPet.traits);
+    final otherEnergy = _getEnergyLevel(otherPet.traits);
+    if (myEnergy == otherEnergy) {
+      score += 4;
+    } else if ((myEnergy - otherEnergy).abs() == 1) {
+      score += 2;
+    }
+
+    // D. 충돌 특성 감점
+    final conflictPairs = [
+      (PetTrait.dominant, PetTrait.dominant, -2.0),
+      (PetTrait.territorial, PetTrait.territorial, -2.0),
+      (PetTrait.fearfulOfPets, PetTrait.dominant, -1.5),
+    ];
+
+    for (final (trait1, trait2, penalty) in conflictPairs) {
+      if (myPet.traits.contains(trait1) && otherPet.traits.contains(trait2)) {
+        score += penalty;
+      }
+    }
+
+    return max(0, min(15, score));
   }
 
-  /// 상호 보완 특성 점수
-  static double _calculateComplementaryTraits(DogModel myDog, DogModel otherDog) {
+  /// 에너지 레벨 (0: 낮음, 1: 보통, 2: 높음)
+  static int _getEnergyLevel(List<PetTrait> traits) {
+    final highEnergy = [PetTrait.active, PetTrait.playful, PetTrait.highEnergy];
+    final lowEnergy = [PetTrait.calm, PetTrait.lazy, PetTrait.lowEnergy];
+
+    int highCount = traits.where((t) => highEnergy.contains(t)).length;
+    int lowCount = traits.where((t) => lowEnergy.contains(t)).length;
+
+    if (highCount > lowCount) return 2;
+    if (lowCount > highCount) return 0;
+    return 1;
+  }
+
+  // ===== 4. 거리 (14점) =====
+  static double _calculateDistanceScore(double? distanceMeters) {
+    if (distanceMeters == null) return 7;
+
+    if (distanceMeters <= 300) return 14;
+    if (distanceMeters <= 500) return 12;
+    if (distanceMeters <= 1000) return 10;
+    if (distanceMeters <= 2000) return 8;
+    if (distanceMeters <= 3000) return 6;
+    if (distanceMeters <= 5000) return 4;
+    if (distanceMeters <= 10000) return 2;
+    return 1;
+  }
+
+  // ===== 5. 보호자 인증 (12점) =====
+  static double _calculateVerificationScore(UserModel? user) {
+    if (user == null) return 0;
+
     double score = 0;
-
-    // 상호 보완되는 특성 쌍
-    final complementaryPairs = [
-      {DogTrait.active, DogTrait.playful},
-      {DogTrait.calm, DogTrait.gentle},
-      {DogTrait.friendly, DogTrait.lovesPeople},
-      {DogTrait.affectionate, DogTrait.cuddler},
-      {DogTrait.brave, DogTrait.protective},
-      {DogTrait.shy, DogTrait.gentle},
-      {DogTrait.independent, DogTrait.calm},
-    ];
-
-    for (final pair in complementaryPairs) {
-      final pairList = pair.toList();
-      if ((myDog.traits.contains(pairList[0]) && otherDog.traits.contains(pairList[1])) ||
-          (myDog.traits.contains(pairList[1]) && otherDog.traits.contains(pairList[0]))) {
-        score += 1.5;
-      }
-    }
-
-    // 상충되는 특성 (감점) - 둘 다 같은 특성을 가진 경우 충돌
-    final conflictingSameTraits = [
-      DogTrait.dominant,      // 둘 다 지배적이면 충돌
-      DogTrait.territorial,   // 둘 다 영역의식 강하면 충돌
-    ];
-    
-    for (final trait in conflictingSameTraits) {
-      if (myDog.traits.contains(trait) && otherDog.traits.contains(trait)) {
-        score -= 1;
-      }
-    }
-    
-    // 상충되는 특성 쌍 (서로 다른 특성)
-    final conflictingPairs = [
-      [DogTrait.anxious, DogTrait.barksALot],
-      [DogTrait.fearfulOfDogs, DogTrait.dominant],
-    ];
-
-    for (final pair in conflictingPairs) {
-      final pairList = pair.toList();
-      if (myDog.traits.contains(pairList[0]) && otherDog.traits.contains(pairList[1])) {
-        score -= 1;
-      }
-    }
-
-    return max(0, min(7, score));
+    if (user.isIdentityVerified) score += 5;
+    if (user.isLocationVerified) score += 4;
+    if (user.isVerified) score += 3; // 동물등록 인증
+    return min(12, score);
   }
 
-  /// 성별 점수 (10점 만점)
-  static double _calculateGenderScore(DogModel myDog, DogModel otherDog) {
-    // 교배 목적이면 이성 선호
-    if (myDog.isBreedingAvailable && otherDog.isBreedingAvailable) {
-      return myDog.gender != otherDog.gender ? 10 : 3;
-    }
+  // ===== 6. 꼬순내 지수 (10점) =====
+  static double _calculateActivityScore(UserModel? user) {
+    if (user == null) return 0;
 
-    // 일반적인 경우 동성/이성 상관없이 기본 점수
-    // 중성화 여부에 따라 조정
-    if (myDog.isNeutered && otherDog.isNeutered) {
-      return 8; // 둘 다 중성화면 성별 무관
-    }
+    // 활동 점수 계산
+    final activityPoints = 
+        (user.matchCount * 4) + 
+        (user.walkCount * 2) + 
+        (user.transactionCount * 3) + 
+        (user.groupCount * 1);
 
-    return 6; // 기본 점수
-  }
-
-  /// 나이 유사도 점수 (10점 만점)
-  static double _calculateAgeScore(DogModel myDog, DogModel otherDog) {
-    final myAge = myDog.ageYears;
-    final otherAge = otherDog.ageYears;
-
-    if (myAge == null || otherAge == null) {
-      return 5; // 나이 정보 없으면 기본 점수
-    }
-
-    final ageDiff = (myAge - otherAge).abs();
-
-    if (ageDiff == 0) return 10;
-    if (ageDiff == 1) return 8;
-    if (ageDiff == 2) return 6;
-    if (ageDiff <= 4) return 4;
+    // 상위 퍼센트 기준 점수 (임시 기준값)
+    if (activityPoints >= 50) return 10;  // 상위 5%
+    if (activityPoints >= 30) return 8;   // 상위 15%
+    if (activityPoints >= 15) return 6;   // 상위 30%
+    if (activityPoints >= 5) return 4;    // 상위 50%
     return 2;
   }
 
-  /// 추천 목록 정렬 (궁합 점수 + 산책 상태 기준)
-  static List<MatchedDog> sortByCompatibility({
-    required DogModel myDog,
-    required List<DogWithStatus> candidates,
+  // ===== 7. 품종 궁합 (6점) =====
+  static double _calculateBreedScore(PetModel myPet, PetModel otherPet) {
+    double score = 0;
+
+    // A. 품종 매칭 (4점)
+    if (myPet.breed == null || otherPet.breed == null) {
+      score += 2;
+    } else if (myPet.breed == otherPet.breed) {
+      score += 4;
+    } else if (_isSameBreedGroup(myPet.breed!, otherPet.breed!)) {
+      score += 2;
+    } else {
+      score += 1;
+    }
+
+    // B. 털 타입 매칭 (2점) - 품종으로 추정
+    // 같은 품종이면 같은 털 타입
+    if (myPet.breed == otherPet.breed) {
+      score += 2;
+    } else {
+      score += 1;
+    }
+
+    return score;
+  }
+
+  /// 같은 품종 그룹인지 확인
+  static bool _isSameBreedGroup(String breed1, String breed2) {
+    final breedGroups = {
+      'toy': ['말티즈', '치와와', '푸들', '비숑프리제', '시츄', '요크셔테리어', '포메라니안', '파피용'],
+      'terrier': ['요크셔테리어', '웨스트하이랜드', '스코티시테리어', '잭러셀테리어', '불테리어'],
+      'spitz': ['포메라니안', '사모예드', '시바이누', '스피츠', '허스키', '말라뮤트'],
+      'retriever': ['골든리트리버', '래브라도리트리버', '플랫코티드리트리버'],
+      'herding': ['보더콜리', '셔틀랜드쉽독', '웰시코기', '저먼셰퍼드', '벨지안셰퍼드'],
+      'hound': ['비글', '바셋하운드', '닥스훈트', '그레이하운드', '아프간하운드'],
+      'bulldog': ['프렌치불독', '잉글리시불독', '보스턴테리어', '퍼그'],
+    };
+
+    for (final group in breedGroups.values) {
+      if (group.contains(breed1) && group.contains(breed2)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // ===== 8. 인기도 (6점) =====
+  static double _calculatePopularityScore(PetModel pet) {
+    final likes = pet.likeCount;
+    if (likes >= 100) return 6;
+    if (likes >= 50) return 5;
+    if (likes >= 20) return 4;
+    if (likes >= 10) return 3;
+    if (likes >= 5) return 2;
+    if (likes >= 1) return 1;
+    return 0;
+  }
+
+  // ===== 9. 앱 활성도 (4점) =====
+  static double _calculateActiveScore(UserModel? user) {
+    if (user == null) return 0;
+
+    final lastActive = user.lastActiveAt;
+    if (lastActive == null) return 0;
+
+    final minutesAgo = DateTime.now().difference(lastActive).inMinutes;
+
+    if (minutesAgo <= 5) return 4;      // 현재 온라인
+    if (minutesAgo <= 60) return 3;     // 1시간 내
+    if (minutesAgo <= 1440) return 2;   // 24시간 내
+    if (minutesAgo <= 10080) return 1;  // 7일 내
+    return 0;
+  }
+
+  /// 추천 목록 생성 (점수순 정렬 + 다양성 확보)
+  static List<MatchedPet> generateRecommendations({
+    required PetModel myPet,
+    required UserModel? myUser,
+    required List<PetCandidate> candidates,
+    int maxResults = 15,
   }) {
     final results = candidates.map((candidate) {
       final result = calculateCompatibility(
-        myDog: myDog,
-        otherDog: candidate.dog,
-        isWalking: candidate.isWalking,
-        lastWalkMinutesAgo: candidate.lastWalkMinutesAgo,
+        myPet: myPet,
+        otherPet: candidate.pet,
+        myUser: myUser,
+        otherUser: candidate.owner,
+        distanceMeters: candidate.distanceMeters,
       );
-      return MatchedDog(
-        dog: candidate.dog,
+      return MatchedPet(
+        pet: candidate.pet,
+        owner: candidate.owner,
         matchResult: result,
-        distance: candidate.distance,
+        distanceMeters: candidate.distanceMeters,
       );
     }).toList();
 
-    // 정렬: 산책중 > 궁합점수 > 거리
-    results.sort((a, b) {
-      // 1. 산책중인 반려동물 우선
-      if (a.matchResult.isWalking && !b.matchResult.isWalking) return -1;
-      if (!a.matchResult.isWalking && b.matchResult.isWalking) return 1;
+    // 점수순 정렬
+    results.sort((a, b) => b.matchResult.score.compareTo(a.matchResult.score));
 
-      // 2. 최근 산책한 반려동물 우선
-      final aWalk = a.matchResult.lastWalkMinutesAgo ?? 9999;
-      final bWalk = b.matchResult.lastWalkMinutesAgo ?? 9999;
-      if (aWalk < 60 && bWalk >= 60) return -1;
-      if (aWalk >= 60 && bWalk < 60) return 1;
+    // 다양성 확보: 상위 30개 중 랜덤 선택
+    if (results.length > maxResults * 2) {
+      final topCandidates = results.take(maxResults * 2).toList();
+      topCandidates.shuffle(Random());
+      return topCandidates.take(maxResults).toList();
+    }
 
-      // 3. 궁합 점수 높은 순
-      final scoreCompare = b.matchResult.score.compareTo(a.matchResult.score);
-      if (scoreCompare != 0) return scoreCompare;
-
-      // 4. 거리 가까운 순
-      if (a.distance != null && b.distance != null) {
-        return a.distance!.compareTo(b.distance!);
-      }
-
-      return 0;
-    });
-
-    return results;
+    return results.take(maxResults).toList();
   }
 }
 
 /// 매칭 결과
 class MatchResult {
-  final int score; // 0~100
+  final int score;
   final Map<String, double> details;
-  final bool isWalking;
-  final int? lastWalkMinutesAgo;
+  final double? distanceMeters;
 
   const MatchResult({
     required this.score,
     required this.details,
-    this.isWalking = false,
-    this.lastWalkMinutesAgo,
+    this.distanceMeters,
   });
 
-  /// 궁합 등급
   String get grade {
-    if (score >= 90) return '최고';
-    if (score >= 75) return '좋음';
-    if (score >= 60) return '보통';
+    if (score >= 85) return '최고';
+    if (score >= 70) return '좋음';
+    if (score >= 55) return '보통';
     if (score >= 40) return '낮음';
     return '매우 낮음';
   }
 
-  /// 궁합 설명
   String get description {
-    if (score >= 90) return '환상의 궁합이에요! 🎉';
-    if (score >= 75) return '잘 맞는 친구예요! 😊';
-    if (score >= 60) return '괜찮은 친구가 될 수 있어요';
+    if (score >= 85) return '환상의 궁합이에요! 🎉';
+    if (score >= 70) return '잘 맞는 친구예요! 😊';
+    if (score >= 55) return '괜찮은 친구가 될 수 있어요';
     if (score >= 40) return '조금 맞춰가야 할 수 있어요';
     return '서로 다른 점이 많아요';
   }
+
+  String get distanceString {
+    if (distanceMeters == null) return '';
+    return LocationService.formatDistance(distanceMeters!);
+  }
 }
 
-/// 상태 포함 강아지 (후보 목록용)
-class DogWithStatus {
-  final DogModel dog;
-  final bool isWalking;
-  final int? lastWalkMinutesAgo;
-  final double? distance; // 미터 단위
+/// 후보 반려동물 (주인 정보 포함)
+class PetCandidate {
+  final PetModel pet;
+  final UserModel? owner;
+  final double? distanceMeters;
 
-  const DogWithStatus({
-    required this.dog,
-    this.isWalking = false,
-    this.lastWalkMinutesAgo,
-    this.distance,
+  const PetCandidate({
+    required this.pet,
+    this.owner,
+    this.distanceMeters,
   });
 }
 
-/// 매칭된 강아지 (결과용)
-class MatchedDog {
-  final DogModel dog;
+/// 매칭된 반려동물 (결과용)
+class MatchedPet {
+  final PetModel pet;
+  final UserModel? owner;
   final MatchResult matchResult;
-  final double? distance;
+  final double? distanceMeters;
 
-  const MatchedDog({
-    required this.dog,
+  const MatchedPet({
+    required this.pet,
+    this.owner,
     required this.matchResult,
-    this.distance,
+    this.distanceMeters,
   });
+
+  String get distanceString {
+    if (distanceMeters == null) return '';
+    return LocationService.formatDistance(distanceMeters!);
+  }
 }

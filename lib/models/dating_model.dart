@@ -58,10 +58,9 @@ class LikeModel extends Equatable {
     this.respondedAt,
   });
 
-  factory LikeModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory LikeModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
     return LikeModel(
-      id: doc.id,
+      id: id ?? data['id'] ?? '',
       fromUserId: data['fromUserId'] ?? '',
       fromPetId: data['fromPetId'] ?? '',
       toUserId: data['toUserId'] ?? '',
@@ -126,7 +125,7 @@ class MatchModel extends Equatable {
   /// 채팅방 ID
   final String? chatRoomId;
   
-  /// 매칭 타입 (dating, breeding)
+  /// 매칭 타입 (dating: 데이팅, breeding: 교배)
   final String type;
   
   /// AI 궁합 점수 (0-100)
@@ -153,10 +152,9 @@ class MatchModel extends Equatable {
     this.isActive = true,
   });
 
-  factory MatchModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory MatchModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
     return MatchModel(
-      id: doc.id,
+      id: id ?? data['id'] ?? '',
       userIds: List<String>.from(data['userIds'] ?? []),
       petIds: List<String>.from(data['petIds'] ?? []),
       chatRoomId: data['chatRoomId'],

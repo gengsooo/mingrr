@@ -27,13 +27,14 @@ dependencies:
 
   # ===== 위치 기반 =====
   geolocator: ^13.0.2
-  google_maps_flutter: ^2.10.0
+  kakao_maps_flutter: ^0.1.2
   # geoflutterfire_plus: ^0.0.28  # 위치 기반 쿼리
 
   # ===== UI/UX =====
   cupertino_icons: ^1.0.8
   cached_network_image: ^3.4.1
   image_picker: ^1.1.2
+  image_cropper: ^8.0.2
   flutter_animate: ^4.5.2
   shimmer: ^3.0.0
   flutter_staggered_grid_view: ^0.7.0

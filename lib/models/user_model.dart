@@ -93,6 +93,30 @@ class UserModel extends Equatable {
   
   /// 받은 평가 수
   final int ratingCount;
+  
+  /// 닉네임 마지막 수정일 (30일 제한용)
+  final DateTime? nicknameChangedAt;
+  
+  /// 활동 통계 - 매칭 성사 횟수
+  final int matchCount;
+  
+  /// 활동 통계 - 산책 완료 횟수
+  final int walkCount;
+  
+  /// 활동 통계 - 거래 완료 횟수
+  final int transactionCount;
+  
+  /// 활동 통계 - 소모임 활동 횟수
+  final int groupCount;
+  
+  /// 신고 받은 횟수
+  final int reportCount;
+  
+  /// 노쇼 횟수
+  final int noShowCount;
+  
+  /// 평균 평점 (1~5)
+  final double averageRating;
 
   const UserModel({
     required this.id,
@@ -122,6 +146,14 @@ class UserModel extends Equatable {
     this.isPremium = false,
     this.kkosunnaeScore = 50.0,
     this.ratingCount = 0,
+    this.nicknameChangedAt,
+    this.matchCount = 0,
+    this.walkCount = 0,
+    this.transactionCount = 0,
+    this.groupCount = 0,
+    this.reportCount = 0,
+    this.noShowCount = 0,
+    this.averageRating = 0.0,
   });
 
   /// 나이 계산 (생년월일 기준)
@@ -137,10 +169,9 @@ class UserModel extends Equatable {
   }
 
   /// Firestore 문서에서 UserModel 생성
-  factory UserModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory UserModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
     return UserModel(
-      id: doc.id,
+      id: id ?? data['id'] ?? '',
       email: data['email'],
       phoneNumber: data['phoneNumber'],
       nickname: data['nickname'] ?? '사용자',
@@ -182,6 +213,16 @@ class UserModel extends Equatable {
       isPremium: data['isPremium'] ?? false,
       kkosunnaeScore: (data['kkosunnaeScore'] ?? 50.0).toDouble(),
       ratingCount: data['ratingCount'] ?? 0,
+      nicknameChangedAt: data['nicknameChangedAt'] != null
+          ? (data['nicknameChangedAt'] as Timestamp).toDate()
+          : null,
+      matchCount: data['matchCount'] ?? 0,
+      walkCount: data['walkCount'] ?? 0,
+      transactionCount: data['transactionCount'] ?? 0,
+      groupCount: data['groupCount'] ?? 0,
+      reportCount: data['reportCount'] ?? 0,
+      noShowCount: data['noShowCount'] ?? 0,
+      averageRating: (data['averageRating'] ?? 0.0).toDouble(),
     );
   }
 
@@ -216,6 +257,16 @@ class UserModel extends Equatable {
       'isPremium': isPremium,
       'kkosunnaeScore': kkosunnaeScore,
       'ratingCount': ratingCount,
+      'nicknameChangedAt': nicknameChangedAt != null
+          ? Timestamp.fromDate(nicknameChangedAt!)
+          : null,
+      'matchCount': matchCount,
+      'walkCount': walkCount,
+      'transactionCount': transactionCount,
+      'groupCount': groupCount,
+      'reportCount': reportCount,
+      'noShowCount': noShowCount,
+      'averageRating': averageRating,
     };
   }
 
@@ -248,6 +299,14 @@ class UserModel extends Equatable {
     bool? isPremium,
     double? kkosunnaeScore,
     int? ratingCount,
+    DateTime? nicknameChangedAt,
+    int? matchCount,
+    int? walkCount,
+    int? transactionCount,
+    int? groupCount,
+    int? reportCount,
+    int? noShowCount,
+    double? averageRating,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -277,6 +336,14 @@ class UserModel extends Equatable {
       isPremium: isPremium ?? this.isPremium,
       kkosunnaeScore: kkosunnaeScore ?? this.kkosunnaeScore,
       ratingCount: ratingCount ?? this.ratingCount,
+      nicknameChangedAt: nicknameChangedAt ?? this.nicknameChangedAt,
+      matchCount: matchCount ?? this.matchCount,
+      walkCount: walkCount ?? this.walkCount,
+      transactionCount: transactionCount ?? this.transactionCount,
+      groupCount: groupCount ?? this.groupCount,
+      reportCount: reportCount ?? this.reportCount,
+      noShowCount: noShowCount ?? this.noShowCount,
+      averageRating: averageRating ?? this.averageRating,
     );
   }
 

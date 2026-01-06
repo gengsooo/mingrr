@@ -115,7 +115,7 @@ class VaccinationModel extends Equatable {
 class WeightRecordModel extends Equatable {
   final String id;
   final String petId;
-  final double weight; // kg
+  final double weight; // 킬로그램(kg)
   final DateTime recordDate;
   final String? notes;
   final DateTime createdAt;

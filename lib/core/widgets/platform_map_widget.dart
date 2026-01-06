@@ -1,0 +1,346 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
+import '../constants/app_colors.dart';
+
+/// ============================================================
+/// 플랫폼별 지도 위젯
+/// 
+/// - 웹: 플레이스홀더 (카카오맵 JS SDK 또는 Google Maps 사용 가능)
+/// - 모바일: 카카오맵 Flutter SDK
+/// 
+/// 사용 방법:
+/// 1. 모바일에서 카카오맵 사용 시:
+///    - pubspec.yaml에서 kakao_maps_flutter 주석 해제
+///    - main.dart에서 KakaoMapsFlutter.init() 호출
+///    - 이 파일의 _MobileMapWidget에서 카카오맵 코드 주석 해제
+/// ============================================================
+
+class PlatformMapWidget extends StatelessWidget {
+  final double? latitude;
+  final double? longitude;
+  final double zoom;
+  final bool showCurrentLocation;
+  final Function(double lat, double lng)? onMapTap;
+  final Function(dynamic controller)? onMapCreated;
+  final List<MapMarker> markers;
+  final List<MapPolyline> polylines;
+
+  const PlatformMapWidget({
+    super.key,
+    this.latitude,
+    this.longitude,
+    this.zoom = 15.0,
+    this.showCurrentLocation = true,
+    this.onMapTap,
+    this.onMapCreated,
+    this.markers = const [],
+    this.polylines = const [],
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (kIsWeb) {
+      return _WebMapWidget(
+        latitude: latitude,
+        longitude: longitude,
+        zoom: zoom,
+        markers: markers,
+      );
+    } else {
+      return _MobileMapWidget(
+        latitude: latitude,
+        longitude: longitude,
+        zoom: zoom,
+        showCurrentLocation: showCurrentLocation,
+        onMapTap: onMapTap,
+        onMapCreated: onMapCreated,
+        markers: markers,
+        polylines: polylines,
+      );
+    }
+  }
+}
+
+/// 웹용 지도 위젯 (단순 플레이스홀더)
+class _WebMapWidget extends StatelessWidget {
+  final double? latitude;
+  final double? longitude;
+  final double zoom;
+  final List<MapMarker> markers;
+
+  const _WebMapWidget({
+    this.latitude,
+    this.longitude,
+    this.zoom = 15.0,
+    this.markers = const [],
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.divider.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.map_outlined,
+              size: 48,
+              color: AppColors.textHint,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '지도 영역',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '모바일 앱에서 확인 가능',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.textHint,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 모바일용 지도 위젯 (카카오맵)
+class _MobileMapWidget extends StatefulWidget {
+  final double? latitude;
+  final double? longitude;
+  final double zoom;
+  final bool showCurrentLocation;
+  final Function(double lat, double lng)? onMapTap;
+  final Function(dynamic controller)? onMapCreated;
+  final List<MapMarker> markers;
+  final List<MapPolyline> polylines;
+
+  const _MobileMapWidget({
+    this.latitude,
+    this.longitude,
+    this.zoom = 15.0,
+    this.showCurrentLocation = true,
+    this.onMapTap,
+    this.onMapCreated,
+    this.markers = const [],
+    this.polylines = const [],
+  });
+
+  @override
+  State<_MobileMapWidget> createState() => _MobileMapWidgetState();
+}
+
+class _MobileMapWidgetState extends State<_MobileMapWidget> {
+  // 카카오맵 사용 시 아래 코드 주석 해제
+  // KakaoMapController? _controller;
+  
+  @override
+  Widget build(BuildContext context) {
+    // ============================================================
+    // 카카오맵 사용 시 아래 코드로 교체
+    // ============================================================
+    // return KakaoMap(
+    //   onMapCreated: (controller) {
+    //     _controller = controller;
+    //     widget.onMapCreated?.call(controller);
+    //   },
+    //   center: LatLng(
+    //     widget.latitude ?? 37.5665,
+    //     widget.longitude ?? 126.9780,
+    //   ),
+    //   currentLevel: widget.zoom.toInt(),
+    //   onMapTap: (latLng) {
+    //     widget.onMapTap?.call(latLng.latitude, latLng.longitude);
+    //   },
+    //   markers: widget.markers.map((m) => Marker(
+    //     markerId: m.id,
+    //     latLng: LatLng(m.latitude, m.longitude),
+    //   )).toList(),
+    //   polylines: widget.polylines.map((p) => Polyline(
+    //     polylineId: p.id,
+    //     points: p.points.map((pt) => LatLng(pt.latitude, pt.longitude)).toList(),
+    //     strokeColor: p.color,
+    //     strokeWidth: p.width.toInt(),
+    //   )).toList(),
+    // );
+    
+    // 플레이스홀더 (카카오맵 SDK 설정 전)
+    return _buildPlaceholder();
+  }
+  
+  Widget _buildPlaceholder() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.divider,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Stack(
+        children: [
+          // 배경 그리드
+          CustomPaint(
+            size: Size.infinite,
+            painter: _MapGridPainter(),
+          ),
+          
+          // 중앙 안내
+          Center(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.map,
+                    size: 48,
+                    color: AppColors.walk.withOpacity(0.7),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '카카오맵',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '카카오맵 SDK 설정 후\n지도가 표시됩니다',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  if (widget.latitude != null && widget.longitude != null) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.walk.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${widget.latitude!.toStringAsFixed(4)}, ${widget.longitude!.toStringAsFixed(4)}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: AppColors.walk,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          
+          // 현재 위치 버튼
+          if (widget.showCurrentLocation)
+            Positioned(
+              right: 12,
+              bottom: 12,
+              child: FloatingActionButton.small(
+                heroTag: 'currentLocation',
+                backgroundColor: Colors.white,
+                onPressed: () {
+                  // 현재 위치로 이동
+                },
+                child: const Icon(Icons.my_location, color: AppColors.walk),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 지도 그리드 페인터
+class _MapGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.grey.withOpacity(0.2)
+      ..strokeWidth = 1;
+    
+    const spacing = 30.0;
+    
+    // 수직선
+    for (double x = 0; x < size.width; x += spacing) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
+    }
+    
+    // 수평선
+    for (double y = 0; y < size.height; y += spacing) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+  
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// 지도 마커 모델
+class MapMarker {
+  final String id;
+  final double latitude;
+  final double longitude;
+  final String? title;
+  final String? snippet;
+  final Color? color;
+
+  const MapMarker({
+    required this.id,
+    required this.latitude,
+    required this.longitude,
+    this.title,
+    this.snippet,
+    this.color,
+  });
+}
+
+/// 지도 폴리라인 모델
+class MapPolyline {
+  final String id;
+  final List<MapPoint> points;
+  final Color color;
+  final double width;
+
+  const MapPolyline({
+    required this.id,
+    required this.points,
+    this.color = Colors.blue,
+    this.width = 4.0,
+  });
+}
+
+/// 지도 포인트 모델
+class MapPoint {
+  final double latitude;
+  final double longitude;
+
+  const MapPoint({
+    required this.latitude,
+    required this.longitude,
+  });
+}

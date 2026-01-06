@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
+import '../../../../core/widgets/search_screen.dart';
 import '../../../../core/widgets/top_navigation.dart';
+import '../../../../core/widgets/request_sheet.dart';
+import '../../../../core/widgets/profile_icon.dart';
+import '../../../../core/widgets/common_widgets.dart';
+import '../../../profile/presentation/providers/profile_provider.dart';
+import '../providers/community_provider.dart';
 import 'community_detail_screen.dart';
+import 'group_write_screen.dart';
 
 /// ============================================================
 /// 소모임 화면
@@ -21,46 +29,69 @@ final _selectedLocationsProvider = StateProvider<List<String>>((ref) => []);
 /// 선택된 카테고리 인덱스
 final _selectedCategoryProvider = StateProvider<int>((ref) => 0);
 
-/// 한국 지역 데이터
+// 정렬 옵션은 community_provider.dart에서 import
+
+/// 한국 지역 데이터 (특별시/광역시/특례시 정식 명칭 사용)
 class KoreaLocationData {
   static const Map<String, Map<String, List<String>>> data = {
-    '서울': {
-      '서울시': ['강남구', '서초구', '송파구', '강동구', '마포구', '영등포구', '용산구', '종로구', '중구', '성동구', '광진구', '동대문구', '중랑구', '성북구', '강북구', '도봉구', '노원구', '은평구', '서대문구', '양천구', '강서구', '구로구', '금천구', '동작구', '관악구'],
+    '서울특별시': {
+      '서울특별시': ['강남구', '서초구', '송파구', '강동구', '마포구', '영등포구', '용산구', '종로구', '중구', '성동구', '광진구', '동대문구', '중랑구', '성북구', '강북구', '도봉구', '노원구', '은평구', '서대문구', '양천구', '강서구', '구로구', '금천구', '동작구', '관악구'],
     },
-    '경기': {
-      '성남시': ['분당구', '수정구', '중원구'],
-      '용인시': ['수지구', '기흥구', '처인구'],
-      '수원시': ['영통구', '권선구', '장안구', '팔달구'],
-      '고양시': ['일산동구', '일산서구', '덕양구'],
-      '부천시': ['원미구', '소사구', '오정구'],
-      '안양시': ['동안구', '만안구'],
+    '경기도': {
+      '수원특례시': ['장안구', '권선구', '팔달구', '영통구'],
+      '성남시': ['수정구', '중원구', '분당구'],
+      '용인특례시': ['처인구', '기흥구', '수지구'],
+      '고양특례시': ['덕양구', '일산동구', '일산서구'],
+      '부천시': [],
+      '안산시': ['상록구', '단원구'],
+      '안양시': ['만안구', '동안구'],
+      '남양주시': [],
       '화성시': [],
       '평택시': [],
       '의정부시': [],
       '시흥시': [],
+      '파주시': [],
+      '김포시': [],
+      '광명시': [],
+      '광주시': [],
+      '군포시': [],
+      '하남시': [],
+      '오산시': [],
+      '이천시': [],
+      '안성시': [],
+      '의왕시': [],
+      '양주시': [],
+      '포천시': [],
+      '구리시': [],
+      '여주시': [],
+      '동두천시': [],
+      '과천시': [],
+      '가평군': [],
+      '양평군': [],
+      '연천군': [],
     },
-    '인천': {
-      '인천시': ['중구', '동구', '미추홀구', '연수구', '남동구', '부평구', '계양구', '서구', '강화군', '옹진군'],
+    '인천광역시': {
+      '인천광역시': ['중구', '동구', '미추홀구', '연수구', '남동구', '부평구', '계양구', '서구', '강화군', '옹진군'],
     },
-    '부산': {
-      '부산시': ['중구', '서구', '동구', '영도구', '부산진구', '동래구', '남구', '북구', '해운대구', '사하구', '금정구', '강서구', '연제구', '수영구', '사상구', '기장군'],
+    '부산광역시': {
+      '부산광역시': ['중구', '서구', '동구', '영도구', '부산진구', '동래구', '남구', '북구', '해운대구', '사하구', '금정구', '강서구', '연제구', '수영구', '사상구', '기장군'],
     },
-    '대구': {
-      '대구시': ['중구', '동구', '서구', '남구', '북구', '수성구', '달서구', '달성군'],
+    '대구광역시': {
+      '대구광역시': ['중구', '동구', '서구', '남구', '북구', '수성구', '달서구', '달성군', '군위군'],
     },
-    '대전': {
-      '대전시': ['동구', '중구', '서구', '유성구', '대덕구'],
+    '대전광역시': {
+      '대전광역시': ['동구', '중구', '서구', '유성구', '대덕구'],
     },
-    '광주': {
-      '광주시': ['동구', '서구', '남구', '북구', '광산구'],
+    '광주광역시': {
+      '광주광역시': ['동구', '서구', '남구', '북구', '광산구'],
     },
-    '울산': {
-      '울산시': ['중구', '남구', '동구', '북구', '울주군'],
+    '울산광역시': {
+      '울산광역시': ['중구', '남구', '동구', '북구', '울주군'],
     },
-    '세종': {
-      '세종시': [],
+    '세종특별자치시': {
+      '세종특별자치시': [],
     },
-    '강원': {
+    '강원특별자치도': {
       '춘천시': [],
       '원주시': [],
       '강릉시': [],
@@ -68,13 +99,32 @@ class KoreaLocationData {
       '태백시': [],
       '속초시': [],
       '삼척시': [],
+      '홍천군': [],
+      '횡성군': [],
+      '영월군': [],
+      '평창군': [],
+      '정선군': [],
+      '철원군': [],
+      '화천군': [],
+      '양구군': [],
+      '인제군': [],
+      '고성군': [],
+      '양양군': [],
     },
-    '충북': {
+    '충청북도': {
       '청주시': ['상당구', '서원구', '흥덕구', '청원구'],
       '충주시': [],
       '제천시': [],
+      '보은군': [],
+      '옥천군': [],
+      '영동군': [],
+      '증평군': [],
+      '진천군': [],
+      '괴산군': [],
+      '음성군': [],
+      '단양군': [],
     },
-    '충남': {
+    '충청남도': {
       '천안시': ['동남구', '서북구'],
       '공주시': [],
       '보령시': [],
@@ -83,23 +133,55 @@ class KoreaLocationData {
       '논산시': [],
       '계룡시': [],
       '당진시': [],
+      '금산군': [],
+      '부여군': [],
+      '서천군': [],
+      '청양군': [],
+      '홍성군': [],
+      '예산군': [],
+      '태안군': [],
     },
-    '전북': {
+    '전북특별자치도': {
       '전주시': ['완산구', '덕진구'],
       '군산시': [],
       '익산시': [],
       '정읍시': [],
       '남원시': [],
       '김제시': [],
+      '완주군': [],
+      '진안군': [],
+      '무주군': [],
+      '장수군': [],
+      '임실군': [],
+      '순창군': [],
+      '고창군': [],
+      '부안군': [],
     },
-    '전남': {
+    '전라남도': {
       '목포시': [],
       '여수시': [],
       '순천시': [],
       '나주시': [],
       '광양시': [],
+      '담양군': [],
+      '곡성군': [],
+      '구례군': [],
+      '고흥군': [],
+      '보성군': [],
+      '화순군': [],
+      '장흥군': [],
+      '강진군': [],
+      '해남군': [],
+      '영암군': [],
+      '무안군': [],
+      '함평군': [],
+      '영광군': [],
+      '장성군': [],
+      '완도군': [],
+      '진도군': [],
+      '신안군': [],
     },
-    '경북': {
+    '경상북도': {
       '포항시': ['남구', '북구'],
       '경주시': [],
       '김천시': [],
@@ -110,9 +192,21 @@ class KoreaLocationData {
       '상주시': [],
       '문경시': [],
       '경산시': [],
+      '의성군': [],
+      '청송군': [],
+      '영양군': [],
+      '영덕군': [],
+      '청도군': [],
+      '고령군': [],
+      '성주군': [],
+      '칠곡군': [],
+      '예천군': [],
+      '봉화군': [],
+      '울진군': [],
+      '울릉군': [],
     },
-    '경남': {
-      '창원시': ['의창구', '성산구', '마산합포구', '마산회원구', '진해구'],
+    '경상남도': {
+      '창원특례시': ['의창구', '성산구', '마산합포구', '마산회원구', '진해구'],
       '진주시': [],
       '통영시': [],
       '사천시': [],
@@ -120,8 +214,18 @@ class KoreaLocationData {
       '밀양시': [],
       '거제시': [],
       '양산시': [],
+      '의령군': [],
+      '함안군': [],
+      '창녕군': [],
+      '고성군': [],
+      '남해군': [],
+      '하동군': [],
+      '산청군': [],
+      '함양군': [],
+      '거창군': [],
+      '합천군': [],
     },
-    '제주': {
+    '제주특별자치도': {
       '제주시': [],
       '서귀포시': [],
     },
@@ -162,9 +266,19 @@ class CommunityScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // TODO: 소모임 검색
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SearchScreen(
+                    searchType: SearchType.community,
+                    accentColor: AppColors.community,
+                  ),
+                ),
+              );
             },
           ),
+          const NotificationIconButton(),
+          buildProfileAction(),
         ],
       ),
       body: Column(
@@ -172,17 +286,23 @@ class CommunityScreen extends ConsumerWidget {
           // 지역 필터 바
           _buildLocationFilterBar(context, ref, selectedLocations),
           
-          // 카테고리 필터
+          // 카테고리 필터 + 정렬
           Container(
             color: Colors.white,
-            child: CategoryFilterChips(
-              categories: categories.map((c) => (label: c.label, emoji: c.emoji, icon: c.icon)).toList(),
-              selectedIndex: selectedCategory,
-              onSelected: (index) {
-                ref.read(_selectedCategoryProvider.notifier).state = index;
-              },
-              accentColor: AppColors.community,
-              showDropdownIcon: false,
+            child: Column(
+              children: [
+                CategoryFilterChips(
+                  categories: categories.map((c) => (label: c.label, emoji: c.emoji, icon: c.icon)).toList(),
+                  selectedIndex: selectedCategory,
+                  onSelected: (index) {
+                    ref.read(_selectedCategoryProvider.notifier).state = index;
+                  },
+                  accentColor: AppColors.community,
+                  showDropdownIcon: false,
+                ),
+                // 정렬 옵션
+                _buildSortOptions(context, ref),
+              ],
             ),
           ),
           
@@ -200,6 +320,88 @@ class CommunityScreen extends ConsumerWidget {
           '모임 만들기',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
+      ),
+    );
+  }
+
+  /// 정렬 옵션 라벨
+  String _getSortLabel(GroupSortOption option) {
+    switch (option) {
+      case GroupSortOption.recommended:
+        return '추천순';
+      case GroupSortOption.members:
+        return '멤버순';
+      case GroupSortOption.latest:
+        return '최신순';
+      case GroupSortOption.likes:
+        return '좋아요순';
+    }
+  }
+
+  /// 정렬 옵션 바 (오름차순/내림차순 토글 아이콘 포함)
+  Widget _buildSortOptions(BuildContext context, WidgetRef ref) {
+    final sortState = ref.watch(groupSortStateProvider);
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.divider.withOpacity(0.3))),
+      ),
+      child: Row(
+        children: GroupSortOption.values.map((option) {
+          final isSelected = sortState.option == option;
+          final isAsc = sortState.direction == SortDirection.ascending;
+          
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: GestureDetector(
+              onTap: () {
+                final notifier = ref.read(groupSortStateProvider.notifier);
+                if (isSelected) {
+                  // 같은 옵션 클릭 시 방향 토글
+                  notifier.state = sortState.toggleDirection();
+                } else {
+                  // 다른 옵션 클릭 시 해당 옵션으로 변경 (기본 내림차순)
+                  notifier.state = GroupSortState(
+                    option: option,
+                    direction: SortDirection.descending,
+                  );
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.community : Colors.transparent,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isSelected ? AppColors.community : AppColors.divider,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _getSortLabel(option),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isSelected ? Colors.white : AppColors.textSecondary,
+                      ),
+                    ),
+                    if (isSelected) ...[
+                      const SizedBox(width: 2),
+                      Icon(
+                        isAsc ? Icons.arrow_upward : Icons.arrow_downward,
+                        size: 12,
+                        color: Colors.white,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -325,29 +527,41 @@ class CommunityScreen extends ConsumerWidget {
     );
   }
 
-  /// 모임 목록
+  /// 모임 목록 (Firebase 연동 + 정렬 적용)
   Widget _buildGroupList(BuildContext context, WidgetRef ref, List<String> locationFilter) {
-    final groups = [
-      {'name': '주말 한강 산책 모임', 'category': '산책', 'members': 28, 'district': '서울 영등포구'},
-      {'name': '강아지 수제 간식 만들기', 'category': '나눔', 'members': 15, 'district': '서울 강남구'},
-      {'name': '소형견 친목 모임', 'category': '친목', 'members': 42, 'district': '서울 마포구'},
-      {'name': '반려견 훈련 스터디', 'category': '훈련', 'members': 18, 'district': '서울 송파구'},
-      {'name': '시니어 반려견 케어 모임', 'category': '건강', 'members': 23, 'district': '서울 서초구'},
-      {'name': '분당 댕댕이 모임', 'category': '친목', 'members': 35, 'district': '경기 성남시'},
-      {'name': '용인 산책 친구들', 'category': '산책', 'members': 20, 'district': '경기 용인시'},
-    ];
+    final sortedGroups = ref.watch(sortedGroupsProvider);
+    final sortState = ref.watch(groupSortStateProvider);
+    
+    // 지역 필터 적용
+    final filteredGroups = locationFilter.isEmpty 
+        ? sortedGroups 
+        : sortedGroups.where((g) {
+            final address = g.group.address ?? '';
+            return locationFilter.any((loc) => address.contains(loc));
+          }).toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         // 내 모임 섹션
-        _buildMyGroupsSection(),
+        _buildMyGroupsSection(context),
         const SizedBox(height: 24),
         
         // 추천 모임 헤더
         Row(
           children: [
-            const Text('추천 모임', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(
+              '${_getSortLabel(sortState.option)} 모임',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              sortState.direction == SortDirection.ascending 
+                  ? Icons.arrow_upward 
+                  : Icons.arrow_downward,
+              size: 14,
+              color: AppColors.textSecondary,
+            ),
             if (locationFilter.isNotEmpty) ...[
               const SizedBox(width: 8),
               Text(
@@ -355,104 +569,234 @@ class CommunityScreen extends ConsumerWidget {
                 style: const TextStyle(fontSize: 12, color: AppColors.community, fontWeight: FontWeight.w500),
               ),
             ],
+            const Spacer(),
+            Text(
+              '${filteredGroups.length}개',
+              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            ),
           ],
         ),
         const SizedBox(height: 12),
         
         // 모임 카드들
-        ...groups.map((group) => _buildGroupCard(
-          context: context,
-          name: group['name'] as String,
-          category: group['category'] as String,
-          members: group['members'] as int,
-          district: group['district'] as String,
-        )),
+        if (filteredGroups.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(32),
+            child: const Column(
+              children: [
+                Icon(Icons.groups_outlined, size: 48, color: AppColors.textHint),
+                SizedBox(height: 12),
+                Text('등록된 모임이 없습니다', style: TextStyle(color: AppColors.textSecondary)),
+              ],
+            ),
+          )
+        else
+          ...filteredGroups.map((groupWithDistance) => _buildGroupCardFromModel(
+            context: context,
+            groupWithDistance: groupWithDistance,
+          )),
         
         const SizedBox(height: 80),
       ],
     );
   }
+  
+  /// GroupWithDistance를 사용한 모임 카드
+  Widget _buildGroupCardFromModel({
+    required BuildContext context,
+    required GroupWithDistance groupWithDistance,
+  }) {
+    final group = groupWithDistance.group;
+    return _buildGroupCard(
+      context: context,
+      id: group.id,
+      name: group.name,
+      category: group.typeString,
+      members: group.memberCount,
+      district: group.address ?? '지역 미설정',
+      likeCount: group.likeCount,
+      distance: groupWithDistance.distanceString,
+      recommendScore: groupWithDistance.recommendScore,
+    );
+  }
 
   /// 내 모임 섹션
-  Widget _buildMyGroupsSection() {
-    final myGroups = [
-      {'name': '한강 산책 모임', 'district': '서울 영등포구', 'members': 12},
-      {'name': '수제 간식 클럽', 'district': '서울 강남구', 'members': 24},
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text('내 모임', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            TextButton(onPressed: () {}, child: const Text('전체보기', style: TextStyle(fontSize: 13))),
-          ],
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 100,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: myGroups.length,
-            itemBuilder: (context, index) {
-              final group = myGroups[index];
-              return _buildMyGroupCard(
-                name: group['name'] as String,
-                district: group['district'] as String,
-                members: group['members'] as int,
+  Widget _buildMyGroupsSection(BuildContext context) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final myGroupsAsync = ref.watch(userGroupsProvider);
+        
+        return myGroupsAsync.when(
+          data: (myGroups) {
+            if (myGroups.isEmpty) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('내 모임', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Column(
+                      children: [
+                        Icon(Icons.groups_outlined, size: 40, color: AppColors.textHint),
+                        SizedBox(height: 8),
+                        Text('가입한 모임이 없습니다', style: TextStyle(color: AppColors.textSecondary)),
+                      ],
+                    ),
+                  ),
+                ],
               );
-            },
+            }
+            
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('내 모임', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    TextButton(
+                      onPressed: () => _showMyGroupsFullScreenFromProvider(context, ref),
+                      child: const Text('전체보기', style: TextStyle(fontSize: 13)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: 100,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: myGroups.length,
+                    itemBuilder: (context, index) {
+                      final group = myGroups[index];
+                      return _buildMyGroupCard(
+                        context: context,
+                        id: group.id,
+                        name: group.name,
+                        district: group.address ?? '지역 미설정',
+                        members: group.memberCount,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('오류: $e')),
+        );
+      },
+    );
+  }
+  
+  /// 내 모임 전체보기 화면 (Provider 사용)
+  void _showMyGroupsFullScreenFromProvider(BuildContext context, WidgetRef ref) {
+    final myGroups = ref.read(userGroupsProvider).valueOrNull ?? [];
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          backgroundColor: AppColors.communityLight,
+          appBar: AppBar(
+            title: const Text('내 모임'),
+            backgroundColor: Colors.white,
+            elevation: 0,
           ),
+          body: myGroups.isEmpty
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.groups_outlined, size: 64, color: AppColors.textHint),
+                      SizedBox(height: 16),
+                      Text('가입한 모임이 없습니다', style: TextStyle(color: AppColors.textSecondary)),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: myGroups.length,
+                  itemBuilder: (context, index) {
+                    final group = myGroups[index];
+                    return _buildGroupCard(
+                      context: context,
+                      name: group.name,
+                      category: group.typeString,
+                      members: group.memberCount,
+                      district: group.address ?? '지역 미설정',
+                      isJoined: true,
+                    );
+                  },
+                ),
         ),
-      ],
+      ),
     );
   }
 
   /// 내 모임 카드
-  Widget _buildMyGroupCard({required String name, required String district, required int members}) {
-    return Container(
-      width: 180,
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: AppColors.community.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.groups, color: AppColors.community, size: 16),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  name,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+  Widget _buildMyGroupCard({
+    required BuildContext context,
+    required String id,
+    required String name,
+    required String district,
+    required int members,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CommunityDetailScreen(communityId: id, isJoined: true),
           ),
-          const SizedBox(height: 8),
-          Text(
-            '$district · $members명',
-            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-          ),
-        ],
+        );
+      },
+      child: Container(
+        width: 180,
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.community.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.groups, color: AppColors.community, size: 16),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    name,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '$district · $members명',
+              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -460,10 +804,15 @@ class CommunityScreen extends ConsumerWidget {
   /// 모임 카드
   Widget _buildGroupCard({
     required BuildContext context,
+    String? id,
     required String name,
     required String category,
     required int members,
     required String district,
+    int likeCount = 0,
+    String? distance,
+    double recommendScore = 0,
+    bool isJoined = false,
   }) {
     return GestureDetector(
       onTap: () {
@@ -471,7 +820,7 @@ class CommunityScreen extends ConsumerWidget {
           context,
           MaterialPageRoute(
             builder: (context) => CommunityDetailScreen(
-              communityId: name.hashCode.toString(),
+              communityId: id ?? name.hashCode.toString(),
             ),
           ),
         );
@@ -519,104 +868,89 @@ class CommunityScreen extends ConsumerWidget {
                     const Icon(Icons.location_on, size: 12, color: AppColors.textHint),
                     const SizedBox(width: 2),
                     Text(district, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-                    const SizedBox(width: 8),
+                    if (distance != null && distance != '거리 정보 없음') ...[
+                      const SizedBox(width: 4),
+                      Text('· $distance', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
                     const Icon(Icons.people, size: 12, color: AppColors.textHint),
                     const SizedBox(width: 2),
                     Text('$members명', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.favorite, size: 12, color: AppColors.textHint),
+                    const SizedBox(width: 2),
+                    Text('$likeCount', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                   ],
                 ),
               ],
             ),
           ),
-          TextButton(
-            onPressed: () {},
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.community,
+          if (isJoined)
+            Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.community.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Text('가입중', style: TextStyle(fontSize: 12, color: AppColors.community, fontWeight: FontWeight.w600)),
+            )
+          else
+            TextButton(
+              onPressed: () => _showGroupJoinSheet(context, name),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.community,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              ),
+              child: const Text('가입', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
             ),
-            child: const Text('가입', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-          ),
         ],
       ),
       ),
     );
   }
 
-  /// 모임 만들기 바텀시트
-  void _showCreateGroupSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.85,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2)),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context)),
-                  const Expanded(
-                    child: Text('모임 만들기', textAlign: TextAlign.center, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('모임이 생성되었습니다!'), backgroundColor: AppColors.success),
-                      );
-                    },
-                    child: const Text('완료'),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  const Text('모임 이름 *', style: TextStyle(fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 8),
-                  const TextField(decoration: InputDecoration(hintText: '모임 이름을 입력해주세요', border: OutlineInputBorder())),
-                  const SizedBox(height: 16),
-                  const Text('활동 지역 *', style: TextStyle(fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 8),
-                  const TextField(
-                    decoration: InputDecoration(
-                      hintText: '예: 서울 강남구',
-                      prefixIcon: Icon(Icons.location_on),
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text('모임 소개', style: TextStyle(fontWeight: FontWeight.w500)),
-                  const SizedBox(height: 8),
-                  const TextField(maxLines: 3, decoration: InputDecoration(hintText: '모임에 대해 소개해주세요', border: OutlineInputBorder())),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+  /// 소모임 가입 알림창
+  void _showGroupJoinSheet(BuildContext context, String groupName) {
+    showGroupJoinSheet(
+      context,
+      groupName: groupName,
+      onConfirm: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$groupName에 가입 신청을 보냈어요!'),
+            backgroundColor: AppColors.community,
+          ),
+        );
+      },
     );
+  }
+
+  /// 모임 만들기 화면 이동
+  void _showCreateGroupSheet(BuildContext context) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const GroupWriteScreen()),
+    );
+    
+    // 등록 성공 시 목록 새로고침
+    if (result == true && context.mounted) {
+      // 상태 관리가 자동 해제 모드이므로 자동으로 새로고침됨
+    }
   }
 }
 
 /// ============================================================
 /// 지역 선택 바텀시트 (도/시/구 단계별 선택)
+/// 
+/// 로직:
+/// - 임시 선택 상태(tempSelectedLocations)와 적용된 상태(_selectedLocationsProvider) 분리
+/// - + 버튼 클릭 시 임시 상태에 추가
+/// - 적용 버튼 클릭 시에만 Provider에 반영
+/// - 초기화는 임시 상태만 초기화
 /// ============================================================
 class _LocationSelectorSheet extends ConsumerStatefulWidget {
   final WidgetRef ref;
@@ -630,10 +964,17 @@ class _LocationSelectorSheet extends ConsumerStatefulWidget {
 class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> {
   String? selectedProvince;
   String? selectedCity;
+  late List<String> tempSelectedLocations;
+
+  @override
+  void initState() {
+    super.initState();
+    // 현재 적용된 지역을 임시 상태로 복사
+    tempSelectedLocations = List.from(widget.ref.read(_selectedLocationsProvider));
+  }
 
   @override
   Widget build(BuildContext context) {
-    final selectedLocations = widget.ref.watch(_selectedLocationsProvider);
     final provinces = KoreaLocationData.getProvinces();
     final cities = selectedProvince != null ? KoreaLocationData.getCities(selectedProvince!) : <String>[];
     final districts = (selectedProvince != null && selectedCity != null) 
@@ -660,17 +1001,21 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                 const Spacer(),
                 TextButton(
                   onPressed: () {
-                    widget.ref.read(_selectedLocationsProvider.notifier).state = [];
-                    Navigator.pop(context);
+                    // 임시 상태만 초기화 (적용된 상태는 유지)
+                    setState(() {
+                      tempSelectedLocations = [];
+                      selectedProvince = null;
+                      selectedCity = null;
+                    });
                   },
-                  child: const Text('전체 지역'),
+                  child: const Text('초기화'),
                 ),
               ],
             ),
           ),
           
-          // 선택된 지역 표시
-          if (selectedLocations.isNotEmpty)
+          // 선택된 지역 표시 (임시 상태 기준)
+          if (tempSelectedLocations.isNotEmpty)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
@@ -678,7 +1023,7 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
               child: Wrap(
                 spacing: 8,
                 runSpacing: 6,
-                children: selectedLocations.map((location) {
+                children: tempSelectedLocations.map((location) {
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
@@ -695,9 +1040,9 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                         const SizedBox(width: 4),
                         GestureDetector(
                           onTap: () {
-                            final current = widget.ref.read(_selectedLocationsProvider);
-                            widget.ref.read(_selectedLocationsProvider.notifier).state = 
-                              current.where((l) => l != location).toList();
+                            setState(() {
+                              tempSelectedLocations = tempSelectedLocations.where((l) => l != location).toList();
+                            });
                           },
                           child: const Icon(Icons.close, size: 14, color: Colors.white),
                         ),
@@ -785,12 +1130,21 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                                     final city = cities[index];
                                     final isSelected = city == selectedCity;
                                     final cityDistricts = KoreaLocationData.getDistricts(selectedProvince!, city);
+                                    final cityLocation = '$selectedProvince $city';
+                                    final isAdded = cityDistricts.isEmpty && tempSelectedLocations.contains(cityLocation);
+                                    final hasHighlight = isSelected || isAdded;
                                     
                                     return GestureDetector(
                                       onTap: () {
                                         if (cityDistricts.isEmpty) {
-                                          // 구가 없으면 바로 추가
-                                          _addLocation('$selectedProvince $city');
+                                          // 구가 없는 시/군은 로우 전체 클릭 시 추가/제거
+                                          setState(() {
+                                            if (isAdded) {
+                                              tempSelectedLocations = tempSelectedLocations.where((l) => l != cityLocation).toList();
+                                            } else {
+                                              tempSelectedLocations = [...tempSelectedLocations, cityLocation];
+                                            }
+                                          });
                                         } else {
                                           setState(() {
                                             selectedCity = city;
@@ -799,7 +1153,7 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                        color: isSelected ? AppColors.community.withOpacity(0.1) : Colors.transparent,
+                                        color: hasHighlight ? AppColors.community.withOpacity(0.1) : Colors.transparent,
                                         child: Row(
                                           children: [
                                             Expanded(
@@ -807,13 +1161,17 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                                                 city,
                                                 style: TextStyle(
                                                   fontSize: 14,
-                                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                                  color: isSelected ? AppColors.community : AppColors.textPrimary,
+                                                  fontWeight: hasHighlight ? FontWeight.w600 : FontWeight.w400,
+                                                  color: hasHighlight ? AppColors.community : AppColors.textPrimary,
                                                 ),
                                               ),
                                             ),
                                             if (cityDistricts.isEmpty)
-                                              const Icon(Icons.add, size: 16, color: AppColors.community),
+                                              Icon(
+                                                isAdded ? Icons.check : Icons.add,
+                                                size: 16,
+                                                color: AppColors.community,
+                                              ),
                                           ],
                                         ),
                                       ),
@@ -845,16 +1203,22 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                                 itemBuilder: (context, index) {
                                   final district = districts[index];
                                   final fullLocation = '$selectedProvince $selectedCity $district';
-                                  final isAdded = selectedLocations.contains(fullLocation);
+                                  final isAdded = tempSelectedLocations.contains(fullLocation);
                                   
                                   return GestureDetector(
                                     onTap: () {
-                                      if (!isAdded) {
-                                        _addLocation(fullLocation);
-                                      }
+                                      // 로우 전체 클릭 시 추가/제거
+                                      setState(() {
+                                        if (isAdded) {
+                                          tempSelectedLocations = tempSelectedLocations.where((l) => l != fullLocation).toList();
+                                        } else {
+                                          tempSelectedLocations = [...tempSelectedLocations, fullLocation];
+                                        }
+                                      });
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                      color: isAdded ? AppColors.community.withOpacity(0.1) : Colors.transparent,
                                       child: Row(
                                         children: [
                                           Expanded(
@@ -862,14 +1226,16 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                                               district,
                                               style: TextStyle(
                                                 fontSize: 14,
-                                                color: isAdded ? AppColors.textHint : AppColors.textPrimary,
+                                                fontWeight: isAdded ? FontWeight.w600 : FontWeight.w400,
+                                                color: isAdded ? AppColors.community : AppColors.textPrimary,
                                               ),
                                             ),
                                           ),
-                                          if (isAdded)
-                                            const Icon(Icons.check, size: 16, color: AppColors.community)
-                                          else
-                                            const Icon(Icons.add, size: 16, color: AppColors.community),
+                                          Icon(
+                                            isAdded ? Icons.check : Icons.add,
+                                            size: 16,
+                                            color: AppColors.community,
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -899,14 +1265,18 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  // 적용 버튼 클릭 시에만 Provider에 반영
+                  widget.ref.read(_selectedLocationsProvider.notifier).state = tempSelectedLocations;
+                  Navigator.pop(context);
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.community,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 child: Text(
-                  selectedLocations.isEmpty ? '전체 지역으로 검색' : '${selectedLocations.length}개 지역 선택 완료',
+                  tempSelectedLocations.isEmpty ? '적용' : '${tempSelectedLocations.length}개 지역 적용',
                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
                 ),
               ),
@@ -915,12 +1285,5 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
         ],
       ),
     );
-  }
-
-  void _addLocation(String location) {
-    final current = widget.ref.read(_selectedLocationsProvider);
-    if (!current.contains(location)) {
-      widget.ref.read(_selectedLocationsProvider.notifier).state = [...current, location];
-    }
   }
 }

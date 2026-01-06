@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "355588618342",
+    "project_id": "mingrr",
+    "storage_bucket": "mingrr.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:355588618342:android:ee38434c08c8871be255a7",
+        "android_client_info": {
+          "package_name": "com.mingrr.mingrr"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB2yPNjvVCxq2rx209085EqfL8fNbGn5mQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

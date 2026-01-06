@@ -103,9 +103,9 @@ class AppColors {
     end: Alignment.bottomRight,
   );
   
-  /// 따뜻한 그라데이션
+  /// 따뜻한 그라데이션 (프로필 헤더용 - 연한 톤)
   static const LinearGradient warmGradient = LinearGradient(
-    colors: [Color(0xFFFFE082), Color(0xFFFFCC80)],
+    colors: [Color(0xFFFFF3E0), Color(0xFFFFECB3)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );

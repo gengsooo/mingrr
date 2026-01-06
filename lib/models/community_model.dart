@@ -63,6 +63,9 @@ class GroupModel extends Equatable {
   /// 태그 목록
   final List<String> tags;
   
+  /// 좋아요 수
+  final int likeCount;
+  
   /// 생성일
   final DateTime createdAt;
   
@@ -85,6 +88,7 @@ class GroupModel extends Equatable {
     this.isPublic = true,
     this.requireApproval = false,
     this.tags = const [],
+    this.likeCount = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -113,10 +117,9 @@ class GroupModel extends Equatable {
   /// 자리 있는지 확인
   bool get hasSpace => maxMembers == 0 || memberCount < maxMembers;
 
-  factory GroupModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory GroupModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
     return GroupModel(
-      id: doc.id,
+      id: id ?? data['id'] ?? '',
       name: data['name'] ?? '',
       description: data['description'] ?? '',
       type: GroupType.values.firstWhere(
@@ -134,6 +137,7 @@ class GroupModel extends Equatable {
       isPublic: data['isPublic'] ?? true,
       requireApproval: data['requireApproval'] ?? false,
       tags: List<String>.from(data['tags'] ?? []),
+      likeCount: data['likeCount'] ?? 0,
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
@@ -142,6 +146,9 @@ class GroupModel extends Equatable {
           : DateTime.now(),
     );
   }
+  
+  /// 카테고리 문자열 (홈 화면용)
+  String get category => typeString;
 
   Map<String, dynamic> toFirestore() {
     return {
@@ -159,6 +166,7 @@ class GroupModel extends Equatable {
       'isPublic': isPublic,
       'requireApproval': requireApproval,
       'tags': tags,
+      'likeCount': likeCount,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -181,9 +189,47 @@ class GroupModel extends Equatable {
         isPublic,
         requireApproval,
         tags,
+        likeCount,
         createdAt,
         updatedAt,
       ];
+}
+
+/// 소모임 좋아요 모델
+class GroupLikeModel extends Equatable {
+  final String id;
+  final String userId;
+  final String groupId;
+  final DateTime createdAt;
+
+  const GroupLikeModel({
+    required this.id,
+    required this.userId,
+    required this.groupId,
+    required this.createdAt,
+  });
+
+  factory GroupLikeModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
+    return GroupLikeModel(
+      id: id ?? data['id'] ?? '',
+      userId: data['userId'] ?? '',
+      groupId: data['groupId'] ?? '',
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'userId': userId,
+      'groupId': groupId,
+      'createdAt': Timestamp.fromDate(createdAt),
+    };
+  }
+
+  @override
+  List<Object?> get props => [id, userId, groupId, createdAt];
 }
 
 /// 모임 일정 모델
@@ -245,10 +291,9 @@ class ScheduleModel extends Equatable {
   /// 자리 있는지 확인
   bool get hasSpace => maxParticipants == 0 || participantCount < maxParticipants;
 
-  factory ScheduleModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  factory ScheduleModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
     return ScheduleModel(
-      id: doc.id,
+      id: id ?? data['id'] ?? '',
       groupId: data['groupId'] ?? '',
       title: data['title'] ?? '',
       description: data['description'],
@@ -306,7 +351,7 @@ class JoinRequestModel extends Equatable {
   final String groupId;
   final String userId;
   final String? message;
-  final String status; // pending, approved, rejected
+  final String status; // 대기중(pending), 승인됨(approved), 거절됨(rejected)
   final DateTime createdAt;
   final DateTime? respondedAt;
 

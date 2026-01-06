@@ -39,6 +39,7 @@ void showGuardianProfileModal(
   required String guardianId,
   required String guardianName,
   required double kkosunnaeScore,
+  String? profileImageUrl,
   GuardianGender gender = GuardianGender.unknown,
   int? age,
   bool isIdentityVerified = false,
@@ -55,6 +56,7 @@ void showGuardianProfileModal(
       guardianId: guardianId,
       guardianName: guardianName,
       kkosunnaeScore: kkosunnaeScore,
+      profileImageUrl: profileImageUrl,
       gender: gender,
       age: age,
       isIdentityVerified: isIdentityVerified,
@@ -73,6 +75,9 @@ class GuardianDogInfo {
   final String? breed;
   final String? ageString;
   final String? profileImageUrl;
+  final List<String> photoUrls;
+  final List<String> traits;
+  final String? introduction;
   final int likeCount;
 
   const GuardianDogInfo({
@@ -81,6 +86,9 @@ class GuardianDogInfo {
     this.breed,
     this.ageString,
     this.profileImageUrl,
+    this.photoUrls = const [],
+    this.traits = const [],
+    this.introduction,
     this.likeCount = 0,
   });
 }
@@ -105,6 +113,7 @@ class GuardianProfileModal extends StatelessWidget {
   final String guardianId;
   final String guardianName;
   final double kkosunnaeScore;
+  final String? profileImageUrl;
   final GuardianGender gender;
   final int? age;
   final bool isIdentityVerified;
@@ -118,6 +127,7 @@ class GuardianProfileModal extends StatelessWidget {
     required this.guardianId,
     required this.guardianName,
     required this.kkosunnaeScore,
+    this.profileImageUrl,
     this.gender = GuardianGender.unknown,
     this.age,
     this.isIdentityVerified = false,
@@ -283,7 +293,7 @@ class GuardianProfileModal extends StatelessWidget {
     
     return Row(
       children: [
-        // 아바타 (강아지 앱이므로 기본 아이콘)
+        // 아바타 (프로필 이미지 또는 기본 아이콘)
         Container(
           width: 60,
           height: 60,
@@ -291,11 +301,25 @@ class GuardianProfileModal extends StatelessWidget {
             color: AppColors.primary.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: const Icon(
-            Icons.person,
-            size: 30,
-            color: AppColors.primary,
-          ),
+          child: profileImageUrl != null && profileImageUrl!.isNotEmpty
+              ? ClipOval(
+                  child: Image.network(
+                    profileImageUrl!,
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(
+                      Icons.person,
+                      size: 30,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                )
+              : const Icon(
+                  Icons.person,
+                  size: 30,
+                  color: AppColors.primary,
+                ),
         ),
         const SizedBox(width: AppSizes.gapM),
         
@@ -403,7 +427,10 @@ class GuardianProfileModal extends StatelessWidget {
           breed: dog.breed,
           age: dog.ageString != null ? int.tryParse(dog.ageString!.replaceAll(RegExp(r'[^0-9]'), '')) : null,
           gender: 'male',
-          introduction: '안녕하세요! 저는 ${dog.name}예요.',
+          introduction: dog.introduction ?? '안녕하세요! 저는 ${dog.name}예요.',
+          traits: dog.traits,
+          photoUrls: dog.photoUrls,
+          profileImageUrl: dog.profileImageUrl,
           likeCount: dog.likeCount,
           guardianInfo: GuardianInfo(
             id: guardianId,
@@ -423,22 +450,22 @@ class GuardianProfileModal extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // 강아지 사진
+            // 강아지 프로필 이미지 (원형)
             Container(
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(12),
-                image: dog.profileImageUrl != null
+                color: AppColors.primaryLight,
+                shape: BoxShape.circle,
+                image: dog.profileImageUrl != null && !dog.profileImageUrl!.startsWith('default_avatar:')
                     ? DecorationImage(
                         image: NetworkImage(dog.profileImageUrl!),
                         fit: BoxFit.cover,
                       )
                     : null,
               ),
-              child: dog.profileImageUrl == null
-                  ? const Icon(Icons.pets, color: AppColors.textHint)
+              child: dog.profileImageUrl == null || dog.profileImageUrl!.startsWith('default_avatar:')
+                  ? const Icon(Icons.pets, size: 24, color: AppColors.primary)
                   : null,
             ),
             const SizedBox(width: 12),

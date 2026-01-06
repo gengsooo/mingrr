@@ -6,58 +6,47 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/profile_icon.dart';
+import '../../../../models/pet_model.dart';
+import '../../../../models/community_model.dart';
+import '../../../pet/presentation/providers/pet_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../community/presentation/providers/community_provider.dart';
 
 /// ============================================================
-/// 홈 화면 (V3 리팩토링 - 강아지 전용)
+/// 홈 화면 (V3 리팩토링 - 반려동물 전용)
 /// 
 /// 변경사항:
-/// - 강아지 전용 앱으로 변경 (PetType 제거)
+/// - 반려동물 전용 앱으로 변경 (PetType 제거)
 /// - 산책 기능 메인으로 이동 (건강기록 하위)
-/// - 강아지 선택기 (여러 마리 지원)
+/// - 반려동물 선택기 (여러 마리 지원)
 /// - 건강기록 커스터마이징 (1~5개 선택 가능)
+/// - Firebase 데이터 연동
 /// ============================================================
 
-// ===== 데모용 Provider =====
-/// 현재 선택된 강아지 인덱스
-final _selectedDogIndexProvider = StateProvider<int>((ref) => 0);
-
-/// 데모용 강아지 목록
-final _demoDogsProvider = Provider<List<_DemoDog>>((ref) => [
-  _DemoDog(id: '1', name: '뽀삐', breed: '골든 리트리버', isPrimary: true),
-  _DemoDog(id: '2', name: '코코', breed: '푸들', isPrimary: false),
-]);
-
-/// 데모용 메인화면 건강 카테고리 (사용자 설정)
+/// 메인화면 건강 카테고리 (사용자 설정)
 final _homeHealthCategoriesProvider = StateProvider<List<HealthCategory>>((ref) => [
   HealthCategory.weight,
   HealthCategory.walk,
   HealthCategory.grooming,
 ]);
 
-/// 데모용 강아지 클래스
-class _DemoDog {
-  final String id;
-  final String name;
-  final String breed;
-  final bool isPrimary;
-  
-  const _DemoDog({
-    required this.id,
-    required this.name,
-    required this.breed,
-    required this.isPrimary,
-  });
-}
-
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final dogs = ref.watch(_demoDogsProvider);
-    final selectedIndex = ref.watch(_selectedDogIndexProvider);
-    final selectedDog = dogs[selectedIndex];
+    final petsAsync = ref.watch(userPetsProvider);
+    final selectedIndex = ref.watch(selectedPetIndexProvider);
     final healthCategories = ref.watch(_homeHealthCategoriesProvider);
+    final otherPetsAsync = ref.watch(otherPetsProvider);
+
+    // 로딩 중에도 기본 레이아웃 유지 (깜빡임 방지)
+    final pets = petsAsync.valueOrNull ?? [];
+    final isLoading = petsAsync.isLoading;
+    final selectedPet = pets.isNotEmpty && selectedIndex < pets.length 
+        ? pets[selectedIndex] 
+        : null;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -72,27 +61,39 @@ class HomeScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(AppSizes.paddingM),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  // 강아지 선택기 (여러 마리 지원)
-                  _buildDogSelector(context, ref, dogs, selectedIndex),
+                  // 반려동물 선택기 (여러 마리 지원)
+                  if (pets.isNotEmpty)
+                    _buildPetSelector(context, ref, pets, selectedIndex),
+                  if (pets.isEmpty && !isLoading)
+                    _buildEmptyPetsCard(context),
+                  if (isLoading && pets.isEmpty)
+                    _buildLoadingPetsCard(),
                   const SizedBox(height: AppSizes.gapL),
                   
                   // 오늘의 건강 기록 (커스터마이징 가능)
-                  _buildHealthSection(context, ref, selectedDog, healthCategories),
+                  if (selectedPet != null)
+                    _buildHealthSection(context, ref, selectedPet, healthCategories),
                   const SizedBox(height: AppSizes.gapXL),
                   
-                  // AI 추천 친구
-                  const MingrrSectionHeader(
-                    title: 'AI 추천 친구',
+                  // 추천친구
+                  MingrrSectionHeader(
+                    title: '추천친구',
                     actionText: '더보기',
+                    onActionTap: () => context.go('/dating'),
                   ),
                   const SizedBox(height: AppSizes.gapM),
-                  _buildAiRecommendSection(context),
+                  otherPetsAsync.when(
+                    data: (otherPets) => _buildAiRecommendSection(context, otherPets),
+                    loading: () => _buildLoadingAiSection(),
+                    error: (_, __) => const SizedBox(),
+                  ),
                   const SizedBox(height: AppSizes.gapXL),
                   
                   // 인기 소모임
-                  const MingrrSectionHeader(
+                  MingrrSectionHeader(
                     title: '인기 소모임',
                     actionText: '더보기',
+                    onActionTap: () => context.push('/community'),
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   _buildPopularGroupsSection(context),
@@ -139,27 +140,102 @@ class HomeScreen extends ConsumerWidget {
         // 알림 버튼
         IconButton(
           icon: const Icon(Icons.notifications_outlined),
-          onPressed: () {
-            // TODO: 알림 화면으로 이동
-          },
+          onPressed: () => context.push('/notifications'),
         ),
         // 프로필 버튼
-        GestureDetector(
-          onTap: () => context.push('/profile'),
-          child: Container(
-            margin: const EdgeInsets.only(right: AppSizes.paddingM),
-            child: const MingrrAvatar(size: 36, placeholderIcon: Icons.person),
-          ),
+        Padding(
+          padding: const EdgeInsets.only(right: AppSizes.paddingM),
+          child: const ProfileButton(size: 36),
         ),
       ],
     );
   }
 
-  /// 강아지 선택기 (여러 마리 지원)
-  Widget _buildDogSelector(
+  /// 반려동물이 없을 때 표시할 카드
+  Widget _buildEmptyPetsCard(BuildContext context) {
+    return MingrrCard(
+      margin: EdgeInsets.zero,
+      child: Column(
+        children: [
+          const Icon(Icons.pets, size: 48, color: AppColors.textHint),
+          const SizedBox(height: AppSizes.gapM),
+          const Text(
+            '등록된 반려동물이 없습니다',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: AppSizes.gapS),
+          const Text(
+            '프로필에서 반려동물을 추가해보세요',
+            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: AppSizes.gapM),
+          ElevatedButton(
+            onPressed: () => context.push('/profile'),
+            child: const Text('반려동물 추가하기'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 로딩 중 반려동물 카드 (Skeleton UI)
+  Widget _buildLoadingPetsCard() {
+    return MingrrCard(
+      margin: EdgeInsets.zero,
+      child: Column(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: AppColors.divider,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(height: AppSizes.gapM),
+          Container(
+            width: 150,
+            height: 16,
+            decoration: BoxDecoration(
+              color: AppColors.divider,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: AppSizes.gapS),
+          Container(
+            width: 200,
+            height: 12,
+            decoration: BoxDecoration(
+              color: AppColors.divider,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 로딩 중 AI 추천 섹션 (Skeleton UI)
+  Widget _buildLoadingAiSection() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(AppSizes.paddingL),
+        child: Text(
+          '아직 등록된 반려동물이 없습니다',
+          style: TextStyle(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 반려동물 선택기 (여러 마리 지원)
+  Widget _buildPetSelector(
     BuildContext context,
     WidgetRef ref,
-    List<_DemoDog> dogs,
+    List<PetModel> pets,
     int selectedIndex,
   ) {
     return Column(
@@ -170,7 +246,7 @@ class HomeScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              '내 강아지',
+              '내 반려동물',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             TextButton(
@@ -181,87 +257,55 @@ class HomeScreen extends ConsumerWidget {
         ),
         const SizedBox(height: AppSizes.gapS),
         
-        // 강아지 카드 목록 (가로 스크롤)
+        // 반려동물 카드 목록 (가로 스크롤)
         SizedBox(
           height: 100,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: dogs.length,
+            itemCount: pets.length,
             itemBuilder: (context, index) {
-              final dog = dogs[index];
+              final pet = pets[index];
               final isSelected = index == selectedIndex;
               
               return GestureDetector(
                 onTap: () {
-                  ref.read(_selectedDogIndexProvider.notifier).state = index;
+                  ref.read(selectedPetIndexProvider.notifier).state = index;
                 },
                 child: Container(
                   width: 85,
                   margin: const EdgeInsets.only(right: AppSizes.gapM),
                   child: Column(
                     children: [
-                      // 프로필 이미지
-                      Stack(
-                        children: [
-                          Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              color: isSelected 
-                                  ? AppColors.primary 
-                                  : AppColors.primaryLight,
-                              shape: BoxShape.circle,
-                              border: isSelected 
-                                  ? Border.all(color: AppColors.primary, width: 3)
-                                  : null,
-                            ),
-                            child: const Center(
-                              child: Text(
-                                '🐶',
-                                style: TextStyle(fontSize: 28),
-                              ),
-                            ),
-                          ),
-                          // 대표 강아지 표시
-                          if (dog.isPrimary)
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: const BoxDecoration(
-                                  color: AppColors.warning,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(
-                                  Icons.star,
-                                  size: 12,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                        ],
+                      // 프로필 이미지 (프로필 이미지만 사용, 없으면 기본 아이콘)
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryLight,
+                          shape: BoxShape.circle,
+                          border: isSelected 
+                              ? Border.all(color: AppColors.primary, width: 3)
+                              : null,
+                          image: _getPetProfileImageOnly(pet),
+                        ),
+                        child: _getPetProfileImageOnly(pet) == null
+                            ? const Icon(
+                                Icons.pets,
+                                size: 28,
+                                color: AppColors.primary,
+                              )
+                            : null,
                       ),
                       const SizedBox(height: 6),
-                      // 이름
+                      // 이름만 표시
                       Text(
-                        dog.name,
+                        pet.name,
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                           color: isSelected 
                               ? AppColors.primary 
                               : AppColors.textPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      // 품종
-                      Text(
-                        dog.breed,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: AppColors.textSecondary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -281,7 +325,7 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildHealthSection(
     BuildContext context,
     WidgetRef ref,
-    _DemoDog selectedDog,
+    PetModel selectedPet,
     List<HealthCategory> categories,
   ) {
     return Column(
@@ -292,7 +336,7 @@ class HomeScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '${selectedDog.name}의 건강 기록',
+              '${selectedPet.name}의 건강 기록',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             TextButton(
@@ -606,78 +650,78 @@ class HomeScreen extends ConsumerWidget {
     }
   }
 
-  /// AI 추천 친구 섹션
-  Widget _buildAiRecommendSection(BuildContext context) {
-    final demoData = [
-      {'name': '뽀삐', 'breed': '골든 리트리버', 'age': '2살', 'score': 95},
-      {'name': '코코', 'breed': '푸들', 'age': '3살', 'score': 88},
-      {'name': '몽실', 'breed': '말티즈', 'age': '1살', 'score': 82},
-      {'name': '초롱', 'breed': '비숑', 'age': '4살', 'score': 78},
-    ];
+  /// 추천친구 섹션 (사각형 카드)
+  Widget _buildAiRecommendSection(BuildContext context, List<PetModel> otherPets) {
+    // 최대 4마리만 표시
+    final displayPets = otherPets.take(4).toList();
+    
+    if (displayPets.isEmpty) {
+      return const Center(
+        child: Text(
+          '아직 등록된 반려동물이 없습니다',
+          style: TextStyle(color: AppColors.textSecondary),
+        ),
+      );
+    }
 
     return SizedBox(
       height: 200,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: demoData.length,
+        itemCount: displayPets.length,
         itemBuilder: (context, index) {
-          final pet = demoData[index];
-          final score = pet['score'] as int;
+          final pet = displayPets[index];
+          final score = 95 - (index * 5); // 임시 궁합 점수
           
           return GestureDetector(
-            onTap: () {
-              // TODO: 상세 프로필로 이동
-            },
+            onTap: () => context.push('/dating/detail/${pet.id}'),
             child: Container(
               width: 140,
               margin: const EdgeInsets.only(right: AppSizes.gapM),
               child: MingrrCard(
                 margin: EdgeInsets.zero,
-                padding: const EdgeInsets.all(AppSizes.paddingM),
+                padding: EdgeInsets.zero,
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Stack(
-                      children: [
-                        const MingrrAvatar(size: 60),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
-                              color: AppColors.success,
-                              shape: BoxShape.circle,
+                    // 사각형 이미지 영역
+                    _buildPetSquareImage(pet, 110),
+                    // 정보 영역
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSizes.paddingS),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              pet.name,
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            child: const Icon(Icons.verified, size: 14, color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSizes.gapS),
-                    Text(
-                      pet['name'] as String,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      '${pet['breed']} · ${pet['age']}',
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: AppSizes.gapS),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: _getScoreColor(score).withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '궁합 $score%',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: _getScoreColor(score),
+                            Text(
+                              '${pet.breed ?? '품종 미상'} · ${_calculateAge(pet.birthDate)}',
+                              style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: _getScoreColor(score).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '궁합 $score%',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: _getScoreColor(score),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -691,6 +735,69 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  /// 반려동물 사각형 이미지 (추가사진 > 기본 아이콘)
+  Widget _buildPetSquareImage(PetModel pet, double height) {
+    final imageUrl = pet.displayImageUrl;
+    
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusM)),
+      child: Container(
+        height: height,
+        color: AppColors.datingLight,
+        child: imageUrl != null
+            ? Image.network(
+                imageUrl,
+                width: double.infinity,
+                height: height,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _buildDefaultPetIcon(height),
+              )
+            : _buildDefaultPetIcon(height),
+      ),
+    );
+  }
+
+  /// 기본 강아지 아이콘 (사각형 배경) - 공통 위젯 사용
+  Widget _buildDefaultPetIcon(double height) {
+    return DefaultPetImage(
+      height: height,
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusM)),
+    );
+  }
+
+  /// 반려동물 프로필 이미지 (원형, 내 반려동물 선택기용)
+  Widget _buildPetProfileImage(PetModel pet, double size) {
+    final imageUrl = pet.profileImageUrl ?? pet.displayImageUrl;
+    
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.15),
+        shape: BoxShape.circle,
+      ),
+      child: imageUrl != null
+          ? ClipOval(
+              child: Image.network(
+                imageUrl,
+                width: size,
+                height: size,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.pets,
+                  size: size * 0.5,
+                  color: AppColors.primary,
+                ),
+              ),
+            )
+          : Icon(
+              Icons.pets,
+              size: size * 0.5,
+              color: AppColors.primary,
+            ),
+    );
+  }
+
   Color _getScoreColor(int score) {
     if (score >= 90) return AppColors.success;
     if (score >= 75) return AppColors.dating;
@@ -698,86 +805,150 @@ class HomeScreen extends ConsumerWidget {
     return AppColors.textHint;
   }
 
-  /// 인기 소모임 섹션
-  Widget _buildPopularGroupsSection(BuildContext context) {
-    final groups = [
-      {'name': '한강 산책 모임', 'members': 28, 'category': '산책', 'district': '영등포구 여의동'},
-      {'name': '강남 댕댕이 모임', 'members': 45, 'category': '친목', 'district': '강남구 역삼동'},
-      {'name': '수제 간식 나눔', 'members': 32, 'category': '나눔', 'district': '마포구 상암동'},
-    ];
+  String _calculateAge(DateTime? birthDate) {
+    if (birthDate == null) return '나이 미상';
+    
+    final now = DateTime.now();
+    final age = now.year - birthDate.year;
+    final months = now.month - birthDate.month;
+    
+    if (age == 0) {
+      return '${months}개월';
+    } else if (months < 0) {
+      return '${age - 1}살';
+    }
+    return '${age}살';
+  }
 
-    return Column(
-      children: groups.map((group) {
-        return MingrrCard(
-          margin: const EdgeInsets.only(bottom: AppSizes.gapM),
-          onTap: () {
-            // TODO: 소모임 상세로 이동
-          },
-          child: Row(
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: AppColors.community.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusM),
+  /// 인기 소모임 섹션 (Firebase 연동)
+  Widget _buildPopularGroupsSection(BuildContext context) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final groupsAsync = ref.watch(popularGroupsProvider);
+        
+        return groupsAsync.when(
+          data: (groups) {
+            if (groups.isEmpty) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(AppSizes.paddingL),
+                  child: Text(
+                    '아직 등록된 소모임이 없습니다',
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
                 ),
-                child: const Icon(Icons.groups, color: AppColors.community, size: 26),
-              ),
-              const SizedBox(width: AppSizes.gapM),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              );
+            }
+            return Column(
+              children: groups.map((group) => _buildGroupCard(context, group)).toList(),
+            );
+          },
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(AppSizes.paddingL),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          error: (_, __) => const Center(
+            child: Text('데이터를 불러올 수 없습니다'),
+          ),
+        );
+      },
+    );
+  }
+  
+  /// Firebase GroupModel을 사용한 소모임 카드
+  Widget _buildGroupCard(BuildContext context, GroupModel group) {
+    return MingrrCard(
+      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
+      onTap: () => context.push('/community/group/${group.id}'),
+      child: Row(
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              color: AppColors.community.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(AppSizes.radiusM),
+              image: group.imageUrl != null
+                  ? DecorationImage(
+                      image: NetworkImage(group.imageUrl!),
+                      fit: BoxFit.cover,
+                    )
+                  : null,
+            ),
+            child: group.imageUrl == null
+                ? const Icon(Icons.groups, color: AppColors.community, size: 26)
+                : null,
+          ),
+          const SizedBox(width: AppSizes.gapM),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppColors.community.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            group['category'] as String,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: AppColors.community,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: AppColors.community.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        group.category,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: AppColors.community,
+                          fontWeight: FontWeight.w600,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      group['name'] as String,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                    ),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on, size: 12, color: AppColors.textHint),
-                        const SizedBox(width: 2),
-                        Text(
-                          group['district'] as String,
-                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.people, size: 12, color: AppColors.textHint),
-                        const SizedBox(width: 2),
-                        Text(
-                          '${group['members']}명',
-                          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-              const Icon(Icons.chevron_right, color: AppColors.textHint),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  group.name,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 12, color: AppColors.textHint),
+                    const SizedBox(width: 2),
+                    Text(
+                      group.address ?? '위치 미상',
+                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.people, size: 12, color: AppColors.textHint),
+                    const SizedBox(width: 2),
+                    Text(
+                      '${group.memberCount}명',
+                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        );
-      }).toList(),
+          const Icon(Icons.chevron_right, color: AppColors.textHint),
+        ],
+      ),
     );
+  }
+
+  /// 반려동물 프로필 이미지만 가져오기 (대표사진 제외)
+  DecorationImage? _getPetProfileImageOnly(PetModel pet) {
+    // 프로필 이미지만 사용 (대표사진 제외)
+    if (pet.profileImageUrl != null && pet.profileImageUrl!.isNotEmpty) {
+      // 기본 아바타인 경우 null 반환
+      if (pet.profileImageUrl!.startsWith('default_avatar:')) {
+        return null;
+      }
+      return DecorationImage(
+        image: NetworkImage(pet.profileImageUrl!),
+        fit: BoxFit.cover,
+      );
+    }
+    return null;
   }
 }

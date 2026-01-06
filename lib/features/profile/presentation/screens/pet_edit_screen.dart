@@ -1,9 +1,21 @@
+import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:uuid/uuid.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
+import '../../../../core/services/image_crop_service.dart';
+import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/confirm_bottom_sheet.dart';
+import '../../../../core/widgets/image_picker_sheet.dart';
+import '../../../../models/pet_model.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../pet/data/pet_repository.dart';
+import '../../../pet/presentation/providers/pet_provider.dart';
 
 /// ============================================================
 /// 반려동물 추가/수정 화면
@@ -17,7 +29,7 @@ import '../../../../core/widgets/common_widgets.dart';
 /// ============================================================
 
 class PetEditScreen extends ConsumerStatefulWidget {
-  final String? petId; // null이면 추가, 있으면 수정
+  final String? petId; // null이면 신규 추가, 값이 있으면 수정 모드
   
   const PetEditScreen({super.key, this.petId});
 
@@ -32,11 +44,27 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
   final _weightController = TextEditingController();
   final _bioController = TextEditingController();
   
-  DogGender _selectedGender = DogGender.male;
+  PetGender _selectedGender = PetGender.male;
   DateTime? _birthDate;
   bool _isNeutered = false;
   bool _hasPedigree = false;
-  final Set<DogTrait> _selectedTraits = {};
+  final Set<PetTrait> _selectedTraits = {};
+  
+  bool _isLoading = false;
+  bool _isDataLoaded = false;
+  PetModel? _existingPet;
+  
+  final ImagePicker _imagePicker = ImagePicker();
+  final StorageService _storageService = StorageService();
+  
+  // 프로필 이미지 관련
+  XFile? _selectedProfileImage;
+  String? _profileImageUrl;
+  DefaultAvatar? _selectedDefaultAvatar;
+  
+  // 추가 사진 관련 (최대 5장, 첫 번째가 대표사진)
+  List<XFile> _selectedAdditionalPhotos = [];
+  List<String> _additionalPhotoUrls = [];
   
   bool get isEditMode => widget.petId != null;
   
@@ -48,25 +76,40 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
     }
   }
   
-  void _loadPetData() {
-    // TODO: Firebase에서 데이터 로드
-    // 데모용 데이터
-    _nameController.text = '뽀삐';
-    _breedController.text = '골든 리트리버';
-    _weightController.text = '28.5';
-    _bioController.text = '활발하고 사람을 좋아하는 강아지입니다.';
-    _selectedGender = DogGender.male;
-    _birthDate = DateTime(2022, 3, 15);
-    _isNeutered = true;
-    _hasPedigree = false;
-    _selectedTraits.addAll([
-      DogTrait.active,
-      DogTrait.friendly,
-      DogTrait.playful,
-      DogTrait.lovesPeople,
-      DogTrait.fetcher,
-    ]);
-    setState(() {});
+  Future<void> _loadPetData() async {
+    if (_isDataLoaded || widget.petId == null) return;
+    
+    setState(() => _isLoading = true);
+    
+    try {
+      final petRepository = PetRepository();
+      final pet = await petRepository.getPetById(widget.petId!);
+      
+      if (pet != null && mounted) {
+        _existingPet = pet;
+        _nameController.text = pet.name;
+        _breedController.text = pet.breed ?? '';
+        _weightController.text = pet.weight?.toString() ?? '';
+        _bioController.text = pet.bio ?? '';
+        _selectedGender = pet.gender;
+        _birthDate = pet.birthDate;
+        _isNeutered = pet.isNeutered;
+        _hasPedigree = pet.hasPedigree;
+        _selectedTraits.addAll(pet.traits);
+        _profileImageUrl = pet.profileImageUrl;
+        _additionalPhotoUrls = List.from(pet.photoUrls);
+        _isDataLoaded = true;
+        setState(() {});
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('데이터 로드 실패: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
   
   @override
@@ -87,14 +130,16 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
-          if (isEditMode)
+          if (isEditMode && !_isLoading)
             IconButton(
               icon: const Icon(Icons.delete_outline, color: AppColors.error),
               onPressed: _showDeleteConfirmation,
             ),
         ],
       ),
-      body: Form(
+      body: _isLoading && isEditMode && !_isDataLoaded
+          ? const Center(child: CircularProgressIndicator())
+          : Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(AppSizes.paddingM),
@@ -170,18 +215,16 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
 
   Widget _buildProfilePhoto() {
     return Center(
-      child: Stack(
-        children: [
-          const MingrrAvatar(
-            size: 120,
-            showBorder: true,
-            borderColor: AppColors.primary,
-          ),
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: GestureDetector(
-              onTap: _pickProfileImage,
+      child: GestureDetector(
+        onTap: _showProfileImagePicker,
+        child: Stack(
+          children: [
+            // 프로필 이미지 표시
+            _buildProfileImageWidget(),
+            // 카메라 아이콘
+            Positioned(
+              bottom: 0,
+              right: 0,
               child: Container(
                 width: 36,
                 height: 36,
@@ -197,10 +240,124 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
+  }
+  
+  Widget _buildProfileImageWidget() {
+    // 새로 선택한 이미지가 있는 경우
+    if (_selectedProfileImage != null) {
+      return Container(
+        width: 120,
+        height: 120,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.primary, width: 3),
+        ),
+        child: ClipOval(
+          child: kIsWeb
+              ? Image.network(
+                  _selectedProfileImage!.path,
+                  width: 120,
+                  height: 120,
+                  fit: BoxFit.cover,
+                )
+              : Image.file(
+                  File(_selectedProfileImage!.path),
+                  width: 120,
+                  height: 120,
+                  fit: BoxFit.cover,
+                ),
+        ),
+      );
+    }
+    
+    // 대표 아이콘을 선택한 경우
+    if (_selectedDefaultAvatar != null) {
+      return Container(
+        width: 120,
+        height: 120,
+        decoration: BoxDecoration(
+          color: _selectedDefaultAvatar!.backgroundColor,
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.primary, width: 3),
+        ),
+        child: Icon(
+          _selectedDefaultAvatar!.icon,
+          size: 60,
+          color: _selectedDefaultAvatar!.iconColor,
+        ),
+      );
+    }
+    
+    // 기존 이미지 URL이 있는 경우
+    if (_profileImageUrl != null && _profileImageUrl!.isNotEmpty) {
+      return Container(
+        width: 120,
+        height: 120,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: AppColors.primary, width: 3),
+        ),
+        child: ClipOval(
+          child: Image.network(
+            _profileImageUrl!,
+            width: 120,
+            height: 120,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => _buildDefaultProfileImage(),
+          ),
+        ),
+      );
+    }
+    
+    // 기본 이미지
+    return _buildDefaultProfileImage();
+  }
+  
+  Widget _buildDefaultProfileImage() {
+    return Container(
+      width: 120,
+      height: 120,
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.15),
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.primary, width: 3),
+      ),
+      child: const Icon(
+        Icons.pets,
+        size: 60,
+        color: AppColors.primary,
+      ),
+    );
+  }
+  
+  Future<void> _showProfileImagePicker() async {
+    final result = await showImagePickerSheet(
+      context,
+      title: '프로필 이미지 선택',
+      avatarType: DefaultAvatarType.dog,
+      currentImageUrl: _profileImageUrl,
+      currentDefaultAvatar: _selectedDefaultAvatar,
+    );
+    
+    if (result != null) {
+      setState(() {
+        if (result.cleared) {
+          _selectedProfileImage = null;
+          _profileImageUrl = null;
+          _selectedDefaultAvatar = null;
+        } else if (result.hasImage) {
+          _selectedProfileImage = result.imageFile;
+          _selectedDefaultAvatar = null;
+        } else if (result.hasDefaultAvatar) {
+          _selectedDefaultAvatar = result.defaultAvatar;
+          _selectedProfileImage = null;
+        }
+      });
+    }
   }
 
   Widget _buildBasicInfoSection() {
@@ -212,13 +369,13 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           TextFormField(
             controller: _nameController,
             decoration: const InputDecoration(
-              labelText: '이름 *',
-              hintText: '강아지 이름을 입력해주세요',
+              labelText: '이름',
+              hintText: '반려동물 이름을 입력해주세요',
               border: OutlineInputBorder(),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return '이름을 입력해주세요';
+                return '반려동물 이름을 입력해주세요';
               }
               return null;
             },
@@ -239,17 +396,17 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           // 성별
           Row(
             children: [
-              const Text('성별 *', style: TextStyle(fontSize: 14)),
+              const Text('성별', style: TextStyle(fontSize: 14)),
               const Spacer(),
-              SegmentedButton<DogGender>(
-                segments: DogGender.values.map((gender) {
-                  return ButtonSegment<DogGender>(
+              SegmentedButton<PetGender>(
+                segments: PetGender.values.map((gender) {
+                  return ButtonSegment<PetGender>(
                     value: gender,
                     label: Text('${gender.symbol} ${gender.label}'),
                   );
                 }).toList(),
                 selected: {_selectedGender},
-                onSelectionChanged: (Set<DogGender> selection) {
+                onSelectionChanged: (Set<PetGender> selection) {
                   setState(() {
                     _selectedGender = selection.first;
                   });
@@ -343,8 +500,8 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           const SizedBox(height: AppSizes.gapM),
           
           // 카테고리별 특성
-          ...DogTraitCategory.values.map((category) {
-            final traits = DogTrait.values.where((t) => t.category == category).toList();
+          ...PetTraitCategory.values.map((category) {
+            final traits = PetTrait.values.where((t) => t.category == category).toList();
             return _buildTraitCategory(category, traits);
           }),
         ],
@@ -352,7 +509,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
     );
   }
 
-  Widget _buildTraitCategory(DogTraitCategory category, List<DogTrait> traits) {
+  Widget _buildTraitCategory(PetTraitCategory category, List<PetTrait> traits) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -382,11 +539,11 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
                   }
                 });
               },
-              selectedColor: AppColors.primary.withOpacity(0.2),
+              selectedColor: AppColors.background,
               checkmarkColor: AppColors.primary,
               labelStyle: TextStyle(
                 fontSize: 12,
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                color: isSelected ? AppColors.primary : AppColors.textPrimary,
               ),
             );
           }).toList(),
@@ -415,6 +572,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
     return MingrrCard(
       margin: EdgeInsets.zero,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 혈통서 보유 여부
           SwitchListTile(
@@ -430,27 +588,243 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
             activeColor: AppColors.primary,
           ),
           const Divider(),
+          const SizedBox(height: AppSizes.gapM),
           
-          // 추가 사진
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.photo_library, color: AppColors.primary),
-            title: const Text('추가 사진'),
-            subtitle: const Text('최대 5장까지 등록 가능'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: _pickAdditionalPhotos,
+          // 추가 사진 섹션
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                '추가 사진',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              Text(
+                '${_getTotalPhotoCount()}/5장',
+                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ],
           ),
+          const SizedBox(height: AppSizes.gapS),
+          const Text(
+            '길게 누르고 드래그하여 순서를 변경하세요. 가장 왼쪽 사진이 대표사진으로 사용됩니다.',
+            style: TextStyle(fontSize: 11, color: AppColors.textHint),
+          ),
+          const SizedBox(height: AppSizes.gapM),
+          
+          // 사진 리스트 (드래그 가능)
+          _buildDraggablePhotoList(),
         ],
       ),
     );
   }
+  
+  int _getTotalPhotoCount() {
+    return _additionalPhotoUrls.length + _selectedAdditionalPhotos.length;
+  }
+  
+  /// 드래그 가능한 사진 리스트 (첫 번째가 대표사진)
+  Widget _buildDraggablePhotoList() {
+    final totalPhotos = _getTotalPhotoCount();
+    final canAddMore = totalPhotos < 5;
+    
+    // 모든 사진을 하나의 리스트로 통합 (URL + XFile)
+    final List<dynamic> allPhotos = [
+      ..._additionalPhotoUrls,
+      ..._selectedAdditionalPhotos,
+    ];
+    
+    return SizedBox(
+      height: 90,
+      child: Row(
+        children: [
+          // 드래그 가능한 사진 리스트
+          Expanded(
+            child: ReorderableListView.builder(
+              scrollDirection: Axis.horizontal,
+              buildDefaultDragHandles: false,
+              itemCount: allPhotos.length,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (newIndex > oldIndex) newIndex--;
+                  
+                  // URL과 로컬 파일(XFile)을 분리하여 처리
+                  final urlCount = _additionalPhotoUrls.length;
+                  
+                  if (oldIndex < urlCount && newIndex < urlCount) {
+                    // 둘 다 서버 URL인 경우
+                    final item = _additionalPhotoUrls.removeAt(oldIndex);
+                    _additionalPhotoUrls.insert(newIndex, item);
+                  } else if (oldIndex >= urlCount && newIndex >= urlCount) {
+                    // 둘 다 로컬 파일(XFile)인 경우
+                    final xOld = oldIndex - urlCount;
+                    final xNew = newIndex - urlCount;
+                    final item = _selectedAdditionalPhotos.removeAt(xOld);
+                    _selectedAdditionalPhotos.insert(xNew, item);
+                  } else {
+                    // URL과 로컬 파일 간 이동 - 전체 리스트로 처리
+                    final item = allPhotos.removeAt(oldIndex);
+                    allPhotos.insert(newIndex, item);
+                    
+                    // 다시 분리
+                    _additionalPhotoUrls.clear();
+                    _selectedAdditionalPhotos.clear();
+                    for (final photo in allPhotos) {
+                      if (photo is String) {
+                        _additionalPhotoUrls.add(photo);
+                      } else if (photo is XFile) {
+                        _selectedAdditionalPhotos.add(photo);
+                      }
+                    }
+                  }
+                });
+              },
+              itemBuilder: (context, index) {
+                final isPrimary = index == 0;
+                final photo = allPhotos[index];
+                final isUrl = photo is String;
+                
+                return ReorderableDragStartListener(
+                  key: ValueKey('photo_$index'),
+                  index: index,
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: _buildDraggablePhotoItem(
+                      index: index,
+                      isPrimary: isPrimary,
+                      isUrl: isUrl,
+                      imageUrl: isUrl ? photo : null,
+                      imageFile: isUrl ? null : photo as XFile,
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          
+          // 추가 버튼
+          if (canAddMore) _buildAddPhotoButton(),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildDraggablePhotoItem({
+    required int index,
+    required bool isPrimary,
+    required bool isUrl,
+    String? imageUrl,
+    XFile? imageFile,
+  }) {
+    return Stack(
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isPrimary ? AppColors.primary : AppColors.divider,
+              width: isPrimary ? 3 : 1,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: isUrl
+                ? Image.network(
+                    imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
+                  )
+                : kIsWeb
+                    ? Image.network(imageFile!.path, fit: BoxFit.cover)
+                    : Image.file(File(imageFile!.path), fit: BoxFit.cover),
+          ),
+        ),
+        // 대표사진 표시
+        if (isPrimary)
+          Positioned(
+            top: 4,
+            left: 4,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: const BoxDecoration(
+                color: AppColors.primary,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.star, size: 14, color: Colors.white),
+            ),
+          ),
+        // 삭제 버튼
+        Positioned(
+          top: 4,
+          right: 4,
+          child: GestureDetector(
+            onTap: () => _deletePhotoAt(index),
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.5),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close, size: 14, color: Colors.white),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildAddPhotoButton() {
+    return GestureDetector(
+      onTap: _pickAdditionalPhotos,
+      child: Container(
+        width: 80,
+        height: 80,
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_photo_alternate, color: AppColors.primary, size: 28),
+            SizedBox(height: 4),
+            Text(
+              '추가',
+              style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  void _deletePhotoAt(int index) {
+    showConfirmBottomSheet(
+      context,
+      type: ConfirmType.photoDelete,
+      onConfirm: () {
+        setState(() {
+          final urlCount = _additionalPhotoUrls.length;
+          if (index < urlCount) {
+            _additionalPhotoUrls.removeAt(index);
+          } else {
+            _selectedAdditionalPhotos.removeAt(index - urlCount);
+          }
+        });
+      },
+    );
+  }
 
   Widget _buildSaveButton() {
+    final canSubmit = _selectedTraits.length >= 5 && !_isLoading;
+    
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: _selectedTraits.length >= 5 ? _savePet : null,
+        onPressed: canSubmit ? _savePet : null,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.primary,
           disabledBackgroundColor: AppColors.divider,
@@ -458,30 +832,178 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
             borderRadius: BorderRadius.circular(AppSizes.radiusM),
           ),
         ),
-        child: Text(
-          isEditMode ? '수정 완료' : '등록하기',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
+        child: _isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Text(
+                isEditMode ? '수정 완료' : '등록하기',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
       ),
     );
   }
 
-  void _pickProfileImage() {
-    // TODO: 이미지 피커 구현
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('프로필 사진 선택 기능 (Firebase Storage 연동 예정)')),
-    );
+  Future<void> _pickProfileImage() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+      
+      if (image != null) {
+        // 웹에서는 크롭 미지원, 모바일에서만 크롭 적용
+        if (!kIsWeb) {
+          final croppedPath = await ImageCropService().cropImage(
+            imagePath: image.path,
+            style: ImageCropStyle.circle,
+            context: context,
+            maxWidth: 800,
+            maxHeight: 800,
+            compressQuality: 85,
+          );
+          
+          if (croppedPath != null) {
+            setState(() {
+              _selectedProfileImage = XFile(croppedPath);
+            });
+            return;
+          }
+        }
+        
+        // 웹이거나 크롭 취소 시 원본 사용
+        setState(() {
+          _selectedProfileImage = image;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('이미지 선택 실패: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
   }
 
-  void _pickAdditionalPhotos() {
-    // TODO: 다중 이미지 피커 구현
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('추가 사진 선택 기능 (Firebase Storage 연동 예정)')),
-    );
+  Future<void> _pickAdditionalPhotos() async {
+    try {
+      final List<XFile> images = await _imagePicker.pickMultiImage(
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+      
+      if (images.isNotEmpty) {
+        // 웹에서는 크롭 미지원, 모바일에서만 크롭 적용
+        if (!kIsWeb) {
+          final List<XFile> croppedImages = [];
+          for (final image in images) {
+            final croppedPath = await ImageCropService().cropImage(
+              imagePath: image.path,
+              style: ImageCropStyle.square,
+              context: context,
+              maxWidth: 800,
+              maxHeight: 800,
+              compressQuality: 85,
+            );
+            
+            if (croppedPath != null) {
+              croppedImages.add(XFile(croppedPath));
+            }
+          }
+          
+          if (croppedImages.isNotEmpty) {
+            setState(() {
+              _selectedAdditionalPhotos.addAll(croppedImages);
+            });
+            return;
+          }
+        }
+        
+        // 웹이거나 크롭 취소 시 원본 사용
+        setState(() {
+          _selectedAdditionalPhotos.addAll(images);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('이미지 선택 실패: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    }
+  }
+  
+  Future<String?> _uploadProfileImage(String petId) async {
+    // 대표 아이콘을 선택한 경우 - 아이콘 ID를 URL로 저장
+    if (_selectedDefaultAvatar != null) {
+      return 'default_avatar:${_selectedDefaultAvatar!.id}';
+    }
+    
+    // 새로 선택한 이미지가 없으면 기존 URL 반환
+    if (_selectedProfileImage == null) return _profileImageUrl;
+    
+    if (kIsWeb) {
+      // 웹에서는 bytes로 업로드
+      try {
+        final bytes = await _selectedProfileImage!.readAsBytes();
+        final url = await _storageService.uploadDogImageBytes(petId, 'profile.jpg', bytes);
+        return url;
+      } catch (e) {
+        throw Exception('프로필 이미지 업로드 실패: $e');
+      }
+    }
+    
+    try {
+      final file = File(_selectedProfileImage!.path);
+      final url = await _storageService.uploadDogImage(petId, 'profile.jpg', file);
+      return url;
+    } catch (e) {
+      throw Exception('프로필 이미지 업로드 실패: $e');
+    }
+  }
+  
+  Future<List<String>> _uploadAdditionalPhotos(String petId) async {
+    if (_selectedAdditionalPhotos.isEmpty) return _additionalPhotoUrls;
+    
+    final List<String> uploadedUrls = List.from(_additionalPhotoUrls);
+    
+    if (kIsWeb) {
+      // 웹에서는 bytes로 업로드
+      try {
+        for (int i = 0; i < _selectedAdditionalPhotos.length; i++) {
+          final bytes = await _selectedAdditionalPhotos[i].readAsBytes();
+          final url = await _storageService.uploadDogImageBytes(
+            petId, 
+            'photo_${DateTime.now().millisecondsSinceEpoch}_$i.jpg', 
+            bytes,
+          );
+          uploadedUrls.add(url);
+        }
+        return uploadedUrls;
+      } catch (e) {
+        throw Exception('추가 이미지 업로드 실패: $e');
+      }
+    }
+    
+    try {
+      final files = _selectedAdditionalPhotos.map((x) => File(x.path)).toList();
+      final urls = await _storageService.uploadDogImages(petId, files);
+      return [..._additionalPhotoUrls, ...urls];
+    } catch (e) {
+      throw Exception('추가 이미지 업로드 실패: $e');
+    }
   }
 
   Future<void> _selectBirthDate() async {
@@ -499,7 +1021,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
     }
   }
 
-  void _savePet() {
+  Future<void> _savePet() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedTraits.length < 5) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -511,59 +1033,114 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         return;
       }
       
-      // TODO: Firebase에 저장
-      final petData = {
-        'name': _nameController.text,
-        'breed': _breedController.text,
-        'gender': _selectedGender.name,
-        'birthDate': _birthDate,
-        'weight': double.tryParse(_weightController.text),
-        'isNeutered': _isNeutered,
-        'hasPedigree': _hasPedigree,
-        'bio': _bioController.text,
-        'traits': _selectedTraits.map((t) => t.name).toList(),
-      };
+      setState(() => _isLoading = true);
       
-      debugPrint('Pet data to save: $petData');
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(isEditMode ? '반려동물 정보가 수정되었습니다!' : '반려동물이 등록되었습니다!'),
-          backgroundColor: AppColors.success,
-        ),
-      );
-      
-      Navigator.pop(context, true);
+      try {
+        final currentUser = ref.read(authStateProvider).valueOrNull;
+        if (currentUser == null) {
+          throw Exception('로그인이 필요합니다');
+        }
+        
+        final petRepository = PetRepository();
+        final now = DateTime.now();
+        
+        // 기존 반려동물이 있는지 확인 (첫 번째 반려동물이면 isPrimary = true)
+        final existingPets = await petRepository.getAllPets();
+        final userPets = existingPets.where((p) => p.ownerId == currentUser.uid).toList();
+        final isFirstPet = userPets.isEmpty;
+        
+        final petId = isEditMode ? widget.petId! : const Uuid().v4();
+        
+        // 이미지 업로드
+        final uploadedProfileUrl = await _uploadProfileImage(petId);
+        final uploadedPhotoUrls = await _uploadAdditionalPhotos(petId);
+        
+        final pet = PetModel(
+          id: petId,
+          ownerId: currentUser.uid,
+          isPrimary: isEditMode ? (_existingPet?.isPrimary ?? isFirstPet) : isFirstPet,
+          name: _nameController.text.trim(),
+          breed: _breedController.text.trim().isEmpty ? null : _breedController.text.trim(),
+          gender: _selectedGender,
+          birthDate: _birthDate,
+          weight: double.tryParse(_weightController.text),
+          isNeutered: _isNeutered,
+          hasPedigree: _hasPedigree,
+          bio: _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
+          traits: _selectedTraits.toList(),
+          profileImageUrl: uploadedProfileUrl,
+          photoUrls: uploadedPhotoUrls,
+          createdAt: isEditMode ? (_existingPet?.createdAt ?? now) : now,
+          updatedAt: now,
+        );
+        
+        if (isEditMode) {
+          await petRepository.updatePet(pet);
+        } else {
+          await petRepository.createPet(pet);
+        }
+        
+        // 상태 관리 새로고침
+        ref.invalidate(userPetsProvider);
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(isEditMode ? '반려동물 정보가 수정되었습니다!' : '반려동물이 등록되었습니다!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          Navigator.pop(context, true);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('저장 실패: $e'), backgroundColor: AppColors.error),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
   void _showDeleteConfirmation() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('반려동물 삭제'),
-        content: const Text('정말 삭제하시겠습니까?\n삭제된 정보는 복구할 수 없습니다.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Firebase에서 삭제
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('반려동물이 삭제되었습니다'),
-                  backgroundColor: AppColors.error,
-                ),
-              );
-              Navigator.pop(context, true);
-            },
-            child: const Text('삭제', style: TextStyle(color: AppColors.error)),
-          ),
-        ],
-      ),
+    showConfirmBottomSheet(
+      context,
+      type: ConfirmType.petDelete,
+      onConfirm: _deletePet,
     );
+  }
+  
+  Future<void> _deletePet() async {
+    if (widget.petId == null) return;
+    
+    setState(() => _isLoading = true);
+    
+    try {
+      final petRepository = PetRepository();
+      await petRepository.deletePet(widget.petId!);
+      
+      // Provider 리프레시
+      ref.invalidate(userPetsProvider);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('반려동물이 삭제되었습니다'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('삭제 실패: $e'), backgroundColor: AppColors.error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 }

@@ -21,19 +21,16 @@ final authStateProvider = StreamProvider<User?>((ref) {
 });
 
 // ===== 현재 사용자 Provider =====
-/// 현재 로그인된 사용자 정보를 가져오는 FutureProvider
-final currentUserProvider = FutureProvider<UserModel?>((ref) async {
-  final authState = ref.watch(authStateProvider);
+/// 현재 로그인된 사용자 정보를 가져오는 StreamProvider
+/// FutureProvider 대신 StreamProvider를 사용하여 깜빡임 방지
+final currentUserProvider = StreamProvider<UserModel?>((ref) {
+  final authRepo = ref.watch(authRepositoryProvider);
   
-  return authState.when(
-    data: (user) async {
-      if (user == null) return null;
-      final authRepo = ref.read(authRepositoryProvider);
-      return await authRepo.getUser(user.uid);
-    },
-    loading: () => null,
-    error: (_, __) => null,
-  );
+  // Firebase Auth 상태 변경을 직접 구독하여 사용자 정보 스트림 생성
+  return authRepo.authStateChanges.asyncMap((user) async {
+    if (user == null) return null;
+    return await authRepo.getUser(user.uid);
+  });
 });
 
 // ===== 인증 상태 Notifier =====
@@ -160,6 +157,60 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  // ===== 이메일/비밀번호 로그인 =====
+  
+  Future<bool> signInWithEmail(String email, String password) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final userCredential = await _authRepository.signInWithEmail(
+        email: email,
+        password: password,
+      );
+      
+      await _handleSignIn(userCredential, 'email');
+      return true;
+    } on FirebaseAuthException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: _getEmailErrorMessage(e),
+      );
+      return false;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: '로그인에 실패했습니다.',
+      );
+      return false;
+    }
+  }
+
+  Future<bool> signUpWithEmail(String email, String password) async {
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final userCredential = await _authRepository.signUpWithEmail(
+        email: email,
+        password: password,
+      );
+      
+      await _handleSignIn(userCredential, 'email');
+      return true;
+    } on FirebaseAuthException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: _getEmailErrorMessage(e),
+      );
+      return false;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: '회원가입에 실패했습니다.',
+      );
+      return false;
+    }
+  }
+
   // ===== 카카오 로그인 (추후 구현) =====
   
   Future<bool> signInWithKakao() async {
@@ -218,7 +269,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
     }
 
-    // Provider 새로고침
+    // 상태 관리 새로고침
     _ref.invalidate(currentUserProvider);
   }
 
@@ -228,8 +279,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true);
     try {
       await _authRepository.signOut();
+      // Firebase signOut이 완료되면 authStateChanges 스트림이 자동으로 null을 emit
+      // 따라서 별도의 invalidate 불필요 (중복 처리 및 깜빡임 방지)
       state = AuthState.initial();
-      _ref.invalidate(currentUserProvider);
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -250,6 +302,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return '인증 코드가 올바르지 않습니다.';
       case 'session-expired':
         return '인증 세션이 만료되었습니다. 다시 시도해주세요.';
+      default:
+        return e.message ?? '인증에 실패했습니다.';
+    }
+  }
+
+  String _getEmailErrorMessage(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'user-not-found':
+        return '등록되지 않은 이메일입니다.';
+      case 'wrong-password':
+        return '비밀번호가 올바르지 않습니다.';
+      case 'email-already-in-use':
+        return '이미 사용 중인 이메일입니다.';
+      case 'invalid-email':
+        return '올바른 이메일 형식이 아닙니다.';
+      case 'weak-password':
+        return '비밀번호가 너무 약합니다. 6자 이상 입력해주세요.';
+      case 'too-many-requests':
+        return '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
       default:
         return e.message ?? '인증에 실패했습니다.';
     }
