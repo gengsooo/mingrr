@@ -1,13 +1,18 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// TODO: 실제 기기 테스트 시 주석 해제
-// import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+// TODO: iOS 테스트 시 주석 해제
+import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/services/location_service.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../health/presentation/providers/health_provider.dart';
 
 /// ============================================================
 /// 산책 화면
@@ -26,14 +31,22 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
   int _walkDuration = 0; // 초 단위
   double _walkDistance = 0; // 미터 단위
   
-  // TODO: 실제 기기 테스트 시 주석 해제
+  // TODO: iOS 테스트 시 주석 해제
   // 카카오 맵 컨트롤러
   // KakaoMapController? _mapController;
   // LatLng? _currentPosition;
   // bool _isMapReady = false;
   
-  // 임시 위치 (에뮬레이터용)
+  // 위치 추적
   Position? _currentPosition;
+  StreamSubscription<Position>? _positionStreamSubscription;
+  Timer? _walkTimer;
+  
+  // 산책 기록
+  String? _currentWalkRecordId;
+  final List<GeoPoint> _routePoints = [];
+  final List<GeoPoint> _footprints = [];
+  Position? _lastPosition;
   
   // 선택된 반려동물 ID 목록 (중복 선택 가능)
   final Set<String> _selectedPetIds = {};
@@ -42,6 +55,13 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
   void initState() {
     super.initState();
     _getCurrentLocation();
+  }
+  
+  @override
+  void dispose() {
+    _positionStreamSubscription?.cancel();
+    _walkTimer?.cancel();
+    super.dispose();
   }
   
   /// 현재 위치 가져오기
@@ -544,14 +564,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                   text: '🐾 발자국 남기기',
                   isOutlined: true,
                   backgroundColor: AppColors.primary,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('발자국을 남겼습니다! 🐾'),
-                        backgroundColor: AppColors.walk,
-                      ),
-                    );
-                  },
+                  onPressed: _addFootprint,
                 ),
               ),
             
@@ -561,14 +574,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
               backgroundColor: _isWalking ? AppColors.error : AppColors.walk,
               textColor: Colors.white,
               icon: _isWalking ? Icons.stop : Icons.play_arrow,
-              onPressed: () {
-                setState(() {
-                  _isWalking = !_isWalking;
-                  if (!_isWalking) {
-                    _showWalkSummary();
-                  }
-                });
-              },
+              onPressed: _isWalking ? _stopWalk : _startWalk,
             ),
           ],
         ),
@@ -576,6 +582,187 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
     );
   }
 
+  /// 산책 시작
+  Future<void> _startWalk() async {
+    if (_selectedPetIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('함께 산책할 반려동물을 선택해주세요')),
+      );
+      return;
+    }
+    
+    if (_currentPosition == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('위치 정보를 가져오는 중입니다. 잠시 후 다시 시도해주세요')),
+      );
+      return;
+    }
+    
+    try {
+      final user = ref.read(authStateProvider).value;
+      if (user == null) return;
+      
+      final healthService = ref.read(healthServiceProvider);
+      final startLocation = GeoPoint(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+      );
+      
+      // Firebase에 산책 기록 시작
+      final recordId = await healthService.startWalkRecord(
+        userId: user.uid,
+        petId: _selectedPetIds.first,
+        petIds: _selectedPetIds.toList(),
+        startLocation: startLocation,
+      );
+      
+      setState(() {
+        _isWalking = true;
+        _currentWalkRecordId = recordId;
+        _walkDuration = 0;
+        _walkDistance = 0;
+        _routePoints.clear();
+        _routePoints.add(startLocation);
+        _footprints.clear();
+        _lastPosition = _currentPosition;
+      });
+      
+      // 타이머 시작 (1초마다)
+      _walkTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        setState(() {
+          _walkDuration++;
+        });
+      });
+      
+      // 위치 추적 시작 (10초마다)
+      _positionStreamSubscription = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 10, // 10미터 이상 이동 시 업데이트
+        ),
+      ).listen((Position position) {
+        _updateWalkRoute(position);
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('산책을 시작했습니다! 🐾'),
+          backgroundColor: AppColors.walk,
+        ),
+      );
+    } catch (e) {
+      debugPrint('산책 시작 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('산책 시작 중 오류가 발생했습니다: $e')),
+      );
+    }
+  }
+  
+  /// 산책 경로 업데이트
+  Future<void> _updateWalkRoute(Position position) async {
+    if (!_isWalking || _currentWalkRecordId == null) return;
+    
+    try {
+      final newLocation = GeoPoint(position.latitude, position.longitude);
+      
+      // 이전 위치와의 거리 계산
+      if (_lastPosition != null) {
+        final distance = LocationService.calculateDistance(
+          _lastPosition!.latitude,
+          _lastPosition!.longitude,
+          position.latitude,
+          position.longitude,
+        );
+        
+        setState(() {
+          _walkDistance += distance;
+          _currentPosition = position;
+          _lastPosition = position;
+          _routePoints.add(newLocation);
+        });
+        
+        // Firebase 업데이트
+        final healthService = ref.read(healthServiceProvider);
+        await healthService.updateWalkRoute(
+          recordId: _currentWalkRecordId!,
+          newLocation: newLocation,
+          totalDistance: _walkDistance,
+        );
+      }
+    } catch (e) {
+      debugPrint('경로 업데이트 오류: $e');
+    }
+  }
+  
+  /// 발자국 남기기
+  Future<void> _addFootprint() async {
+    if (!_isWalking || _currentWalkRecordId == null || _currentPosition == null) {
+      return;
+    }
+    
+    try {
+      final location = GeoPoint(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+      );
+      
+      setState(() {
+        _footprints.add(location);
+      });
+      
+      final healthService = ref.read(healthServiceProvider);
+      await healthService.addFootprint(
+        recordId: _currentWalkRecordId!,
+        location: location,
+      );
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('발자국을 남겼습니다! 🐾'),
+          backgroundColor: AppColors.walk,
+          duration: Duration(seconds: 1),
+        ),
+      );
+    } catch (e) {
+      debugPrint('발자국 추가 오류: $e');
+    }
+  }
+  
+  /// 산책 종료
+  Future<void> _stopWalk() async {
+    if (!_isWalking || _currentWalkRecordId == null) return;
+    
+    try {
+      // 타이머 및 위치 추적 중지
+      _walkTimer?.cancel();
+      _positionStreamSubscription?.cancel();
+      
+      // 칼로리 계산 (간단한 공식: 거리(km) * 50)
+      final calories = (_walkDistance / 1000) * 50;
+      
+      // Firebase에 산책 종료 저장
+      final healthService = ref.read(healthServiceProvider);
+      await healthService.endWalkRecord(
+        recordId: _currentWalkRecordId!,
+        totalDistance: _walkDistance,
+        calories: calories,
+      );
+      
+      // 요약 다이얼로그 표시
+      _showWalkSummary();
+      
+      setState(() {
+        _isWalking = false;
+        _currentWalkRecordId = null;
+      });
+    } catch (e) {
+      debugPrint('산책 종료 오류: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('산책 종료 중 오류가 발생했습니다: $e')),
+      );
+    }
+  }
+  
   /// 산책 종료 요약 다이얼로그
   void _showWalkSummary() {
     showDialog(
@@ -596,7 +783,8 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
           children: [
             _buildSummaryRow('시간', _formatDuration(_walkDuration)),
             _buildSummaryRow('거리', _formatDistance(_walkDistance)),
-            _buildSummaryRow('칼로리', '${(_walkDistance * 0.05).toInt()} kcal'),
+            _buildSummaryRow('칼로리', '${(_walkDistance / 1000 * 50).toInt()} kcal'),
+            _buildSummaryRow('발자국', '${_footprints.length}개'),
             const SizedBox(height: AppSizes.gapM),
             const Text(
               '오늘도 건강한 산책 완료! 🎉',

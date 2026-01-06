@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/confirm_bottom_sheet.dart';
+import '../../../../models/health_model.dart';
 
 /// ============================================================
 /// 산책 기록 상세 화면
@@ -9,11 +11,13 @@ import '../../../../core/widgets/confirm_bottom_sheet.dart';
 /// ============================================================
 
 class WalkRecordDetailScreen extends StatelessWidget {
-  final WalkRecord record;
+  final WalkRecordModel record;
+  final List<String> petNames;
 
   const WalkRecordDetailScreen({
     super.key,
     required this.record,
+    this.petNames = const [],
   });
 
   @override
@@ -42,7 +46,7 @@ class WalkRecordDetailScreen extends StatelessWidget {
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
-              background: _buildMapArea(),
+              background: _buildMapArea(context),
             ),
           ),
           
@@ -60,11 +64,11 @@ class WalkRecordDetailScreen extends StatelessWidget {
                 _buildPetInfo(),
                 
                 // 메모
-                if (record.memo != null && record.memo!.isNotEmpty)
+                if (record.notes != null && record.notes!.isNotEmpty)
                   _buildMemoSection(),
                 
                 // 사진
-                if (record.photos.isNotEmpty)
+                if (record.photoUrls.isNotEmpty)
                   _buildPhotosSection(),
                 
                 const SizedBox(height: 100),
@@ -77,7 +81,7 @@ class WalkRecordDetailScreen extends StatelessWidget {
   }
 
   /// 지도 영역 (경로 표시)
-  Widget _buildMapArea() {
+  Widget _buildMapArea(BuildContext context) {
     return Stack(
       children: [
         // 지도 플레이스홀더 (실제 기기에서는 카카오 지도로 대체)
@@ -114,23 +118,54 @@ class WalkRecordDetailScreen extends StatelessWidget {
           ),
         ),
         
-        // 경로 시뮬레이션 (데모용)
-        CustomPaint(
-          size: const Size(double.infinity, 300),
-          painter: _RoutePathPainter(record.routePoints),
-        ),
+        // 실제 경로 표시
+        if (record.routePoints.isNotEmpty)
+          CustomPaint(
+            size: const Size(double.infinity, 300),
+            painter: _RoutePathPainter(
+              record.routePoints.map((gp) => Offset(
+                (gp.longitude + 180) / 360, // 경도를 0~1로 정규화
+                (90 - gp.latitude) / 180,    // 위도를 0~1로 정규화
+              )).toList(),
+            ),
+          ),
+        
+        // 발자국 표시
+        ...record.footprints.asMap().entries.map((entry) {
+          final index = entry.key;
+          final footprint = entry.value;
+          return Positioned(
+            left: ((footprint.longitude + 180) / 360) * MediaQuery.of(context).size.width,
+            top: ((90 - footprint.latitude) / 180) * 300,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: AppColors.walk,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.pets,
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+          );
+        }).toList(),
         
         // 시작/종료 마커
-        Positioned(
-          left: 50,
-          top: 100,
-          child: _buildMarker('출발', AppColors.success),
-        ),
-        Positioned(
-          right: 50,
-          bottom: 80,
-          child: _buildMarker('도착', AppColors.error),
-        ),
+        if (record.routePoints.isNotEmpty) ...[  
+          Positioned(
+            left: ((record.routePoints.first.longitude + 180) / 360) * MediaQuery.of(context).size.width - 30,
+            top: ((90 - record.routePoints.first.latitude) / 180) * 300 - 40,
+            child: _buildMarker('출발', AppColors.success),
+          ),
+          if (record.routePoints.length > 1)
+            Positioned(
+              left: ((record.routePoints.last.longitude + 180) / 360) * MediaQuery.of(context).size.width - 30,
+              top: ((90 - record.routePoints.last.latitude) / 180) * 300 - 40,
+              child: _buildMarker('도착', AppColors.error),
+            ),
+        ],
       ],
     );
   }
@@ -201,14 +236,16 @@ class WalkRecordDetailScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _formatDate(record.date),
+                      _formatDate(record.startTime),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     Text(
-                      '${_formatTime(record.startTime)} ~ ${_formatTime(record.endTime)}',
+                      record.endTime != null
+                          ? '${_formatTime(record.startTime)} ~ ${_formatTime(record.endTime!)}'
+                          : '${_formatTime(record.startTime)} (진행 중)',
                       style: const TextStyle(
                         fontSize: 13,
                         color: AppColors.textSecondary,
@@ -230,19 +267,19 @@ class WalkRecordDetailScreen extends StatelessWidget {
             children: [
               _buildStatItem(
                 icon: Icons.timer_outlined,
-                value: _formatDuration(record.duration),
+                value: record.durationString,
                 label: '시간',
                 color: AppColors.walk,
               ),
               _buildStatItem(
                 icon: Icons.straighten,
-                value: _formatDistance(record.distance),
+                value: record.distanceString,
                 label: '거리',
                 color: AppColors.primary,
               ),
               _buildStatItem(
                 icon: Icons.local_fire_department_outlined,
-                value: '${record.calories}',
+                value: '${record.calories?.toInt() ?? 0}',
                 label: 'kcal',
                 color: AppColors.error,
               ),
@@ -303,12 +340,16 @@ class WalkRecordDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _buildDetailRow('평균 속도', '${record.avgSpeed.toStringAsFixed(1)} km/h'),
-          _buildDetailRow('최고 속도', '${record.maxSpeed.toStringAsFixed(1)} km/h'),
-          _buildDetailRow('걸음 수', '${record.steps} 걸음'),
-          _buildDetailRow('휴식 시간', _formatDuration(record.restTime)),
-          _buildDetailRow('날씨', record.weather),
-          _buildDetailRow('기온', '${record.temperature}°C'),
+          _buildDetailRow('경로 포인트', '${record.routePoints.length}개'),
+          _buildDetailRow('발자국', '${record.footprints.length}개'),
+          if (record.durationMinutes > 0)
+            _buildDetailRow(
+              '평균 속도',
+              '${((record.distance / 1000) / (record.durationMinutes / 60)).toStringAsFixed(1)} km/h',
+            ),
+          _buildDetailRow('시작 시간', _formatTime(record.startTime)),
+          if (record.endTime != null)
+            _buildDetailRow('종료 시간', _formatTime(record.endTime!)),
         ],
       ),
     );
@@ -357,7 +398,7 @@ class WalkRecordDetailScreen extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: record.petNames.map((name) {
+            children: (petNames.isNotEmpty ? petNames : ['반려동물']).map((name) {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
@@ -410,7 +451,7 @@ class WalkRecordDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            record.memo!,
+            record.notes!,
             style: const TextStyle(
               fontSize: 14,
               color: AppColors.textPrimary,
@@ -440,7 +481,7 @@ class WalkRecordDetailScreen extends StatelessWidget {
                 ),
               ),
               Text(
-                '${record.photos.length}장',
+                '${record.photoUrls.length}장',
                 style: const TextStyle(
                   fontSize: 13,
                   color: AppColors.textSecondary,
@@ -453,7 +494,7 @@ class WalkRecordDetailScreen extends StatelessWidget {
             height: 100,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              itemCount: record.photos.length,
+              itemCount: record.photoUrls.length,
               itemBuilder: (context, index) {
                 return Container(
                   width: 100,
@@ -553,85 +594,6 @@ class WalkRecordDetailScreen extends StatelessWidget {
   }
 }
 
-/// 산책 기록 데이터 모델
-class WalkRecord {
-  final String id;
-  final DateTime date;
-  final DateTime startTime;
-  final DateTime endTime;
-  final int duration; // 분
-  final double distance; // 미터
-  final int calories;
-  final double avgSpeed;
-  final double maxSpeed;
-  final int steps;
-  final int restTime; // 분
-  final String weather;
-  final int temperature;
-  final List<String> petNames;
-  final String? memo;
-  final List<String> photos;
-  final List<Offset> routePoints;
-
-  const WalkRecord({
-    required this.id,
-    required this.date,
-    required this.startTime,
-    required this.endTime,
-    required this.duration,
-    required this.distance,
-    required this.calories,
-    required this.avgSpeed,
-    required this.maxSpeed,
-    required this.steps,
-    required this.restTime,
-    required this.weather,
-    required this.temperature,
-    required this.petNames,
-    this.memo,
-    this.photos = const [],
-    this.routePoints = const [],
-  });
-
-  /// 데모용 산책 기록 생성
-  factory WalkRecord.demo({int index = 0}) {
-    final now = DateTime.now().subtract(Duration(days: index));
-    final startTime = DateTime(now.year, now.month, now.day, 14 - index % 8, 0);
-    final duration = 30 + index * 5;
-    
-    return WalkRecord(
-      id: 'walk_$index',
-      date: now,
-      startTime: startTime,
-      endTime: startTime.add(Duration(minutes: duration)),
-      duration: duration,
-      distance: 1200 + index * 300,
-      calories: 80 + index * 15,
-      avgSpeed: 3.5 + index * 0.2,
-      maxSpeed: 5.0 + index * 0.3,
-      steps: 2500 + index * 500,
-      restTime: 5 + index,
-      weather: ['맑음', '흐림', '구름 조금'][index % 3],
-      temperature: 15 + index % 10,
-      petNames: index % 2 == 0 ? ['뽀삐'] : ['뽀삐', '코코'],
-      memo: index % 3 == 0 ? '오늘 산책은 정말 좋았어요! 뽀삐가 신나게 뛰어다녔습니다.' : null,
-      photos: List.generate(index % 4, (i) => 'photo_$i'),
-      routePoints: _generateDemoRoute(),
-    );
-  }
-
-  static List<Offset> _generateDemoRoute() {
-    return [
-      const Offset(0.2, 0.3),
-      const Offset(0.3, 0.4),
-      const Offset(0.4, 0.35),
-      const Offset(0.5, 0.5),
-      const Offset(0.6, 0.45),
-      const Offset(0.7, 0.6),
-      const Offset(0.8, 0.7),
-    ];
-  }
-}
 
 /// 경로 그리기 페인터
 class _RoutePathPainter extends CustomPainter {

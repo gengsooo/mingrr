@@ -481,25 +481,8 @@ class HealthScreen extends ConsumerWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => WalkRecordDetailScreen(
-                      record: WalkRecord(
-                        id: record.id,
-                        date: record.startTime,
-                        startTime: record.startTime,
-                        endTime: record.endTime ?? record.startTime,
-                        duration: record.durationMinutes,
-                        distance: record.distance,
-                        calories: record.calories?.toInt() ?? 0,
-                        avgSpeed: record.durationMinutes > 0 ? record.distance / (record.durationMinutes * 60) : 0,
-                        maxSpeed: 0,
-                        steps: 0,
-                        restTime: 0,
-                        weather: '맑음',
-                        temperature: 20,
-                        petNames: [pet.name],
-                        routePoints: [],
-                        memo: record.notes,
-                        photos: record.photoUrls,
-                      ),
+                      record: record,
+                      petNames: [pet.name],
                     ),
                   ),
                 );
