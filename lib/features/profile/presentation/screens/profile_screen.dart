@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
@@ -855,51 +856,133 @@ class ProfileScreen extends ConsumerWidget {
     }
   }
 
-  /// 위치인증 다이얼로그
+  /// 위치인증 다이얼로그 (GPS 기반)
   Future<void> _showLocationVerificationDialog(BuildContext context, FirestoreService firestoreService, String userId) async {
-    final locationController = TextEditingController();
-    
-    final result = await showDialog<String>(
+    // 로딩 다이얼로그 표시
+    showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('위치인증'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+      barrierDismissible: false,
+      builder: (ctx) => const AlertDialog(
+        content: Row(
           children: [
-            const Text('현재 위치를 인증해주세요.'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: locationController,
-              decoration: const InputDecoration(
-                hintText: '예: 서울특별시 강남구',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.location_on),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              '※ 실제 서비스에서는 GPS 기반 자동 위치 인증이 적용됩니다.',
-              style: TextStyle(fontSize: 12, color: AppColors.textHint),
-            ),
+            CircularProgressIndicator(),
+            SizedBox(width: 16),
+            Text('현재 위치를 확인하고 있습니다...'),
           ],
         ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, locationController.text),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            child: const Text('인증하기', style: TextStyle(color: Colors.white)),
-          ),
-        ],
       ),
     );
 
-    if (result != null && result.isNotEmpty && context.mounted) {
-      await firestoreService.verifyLocation(userId, result);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('위치인증이 완료되었습니다! 📍'), backgroundColor: AppColors.success),
+    try {
+      // 위치 권한 확인
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (context.mounted) Navigator.pop(context);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('위치 권한이 필요합니다'), backgroundColor: Colors.red),
+            );
+          }
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (context.mounted) Navigator.pop(context);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('설정에서 위치 권한을 허용해주세요'), backgroundColor: Colors.red),
+          );
+        }
+        return;
+      }
+
+      // 현재 위치 가져오기
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
       );
+
+      if (context.mounted) Navigator.pop(context); // 로딩 다이얼로그 닫기
+
+      // 위치 확인 다이얼로그 표시
+      final geoPoint = GeoPoint(position.latitude, position.longitude);
+      final addressText = '위도: ${position.latitude.toStringAsFixed(4)}, 경도: ${position.longitude.toStringAsFixed(4)}';
+
+      if (!context.mounted) return;
+
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.location_on, color: AppColors.primary),
+              SizedBox(width: 8),
+              Text('위치 인증'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('현재 위치를 내 동네로 인증하시겠습니까?'),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.my_location, color: AppColors.primary, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        addressText,
+                        style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '※ 인증된 위치는 내 동네로 설정되며, 주변 사용자에게 표시됩니다.',
+                style: TextStyle(fontSize: 12, color: AppColors.textHint),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('취소'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              child: const Text('인증하기', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed == true && context.mounted) {
+        await firestoreService.verifyLocation(userId, addressText, geoPoint: geoPoint);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('위치인증이 완료되었습니다! 📍'), backgroundColor: AppColors.success),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) Navigator.pop(context);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('위치 확인 실패: $e'), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 

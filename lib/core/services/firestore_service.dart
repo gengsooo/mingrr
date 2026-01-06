@@ -800,14 +800,22 @@ class FirestoreService {
     await updateUserVerification(userId, 'identity', true);
   }
 
-  /// 위치 인증 처리
-  Future<void> verifyLocation(String userId, String location) async {
+  /// 위치 인증 처리 (GPS 기반)
+  Future<void> verifyLocation(String userId, String location, {GeoPoint? geoPoint}) async {
     try {
-      await _firebase.usersCollection.doc(userId).update({
+      final updateData = <String, dynamic>{
         'verifications.location': true,
         'verifications.locationAt': FieldValue.serverTimestamp(),
         'verifications.locationAddress': location,
-      });
+      };
+      
+      if (geoPoint != null) {
+        updateData['verifications.locationGeoPoint'] = geoPoint;
+        updateData['homeLocation'] = geoPoint;
+        updateData['homeAddress'] = location;
+      }
+      
+      await _firebase.usersCollection.doc(userId).update(updateData);
     } catch (e) {
       rethrow;
     }
