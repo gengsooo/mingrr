@@ -860,7 +860,9 @@ class _PetPhotoSliderState extends State<_PetPhotoSlider> {
                 const Icon(Icons.location_on, size: 14, color: Colors.white),
                 const SizedBox(width: 2),
                 Text(
-                  '${widget.distance}km',
+                  widget.distance > 0 && widget.distance.isFinite 
+                    ? '${widget.distance.toStringAsFixed(1)}km'
+                    : '위치정보 없음',
                   style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500),
                 ),
               ],

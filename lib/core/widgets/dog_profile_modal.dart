@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import 'common_widgets.dart';
@@ -36,6 +37,8 @@ void showDogProfileModal(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
+    isDismissible: true,
+    enableDrag: true,
     builder: (context) => DogProfileModal(
       dogId: dogId,
       dogName: dogName,
@@ -131,18 +134,40 @@ class _DogProfileModalState extends State<DogProfileModal> {
     currentLikeCount = widget.likeCount;
   }
 
-  void _toggleLike() {
+  Future<void> _toggleLike() async {
     setState(() {
       isLiked = !isLiked;
       currentLikeCount = isLiked ? currentLikeCount + 1 : currentLikeCount - 1;
     });
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(isLiked ? '${widget.dogName}에게 좋아요를 보냈어요! ❤️' : '좋아요를 취소했어요'),
-        duration: const Duration(seconds: 1),
-      ),
-    );
+    try {
+      // Firebase에 좋아요 수 업데이트
+      final petRef = FirebaseFirestore.instance.collection('pets').doc(widget.dogId);
+      await petRef.update({
+        'likeCount': FieldValue.increment(isLiked ? 1 : -1),
+      });
+    } catch (e) {
+      // 오류 발생 시 원래 상태로 복구
+      setState(() {
+        isLiked = !isLiked;
+        currentLikeCount = isLiked ? currentLikeCount + 1 : currentLikeCount - 1;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('좋아요 처리 중 오류가 발생했습니다')),
+        );
+      }
+      return;
+    }
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isLiked ? '${widget.dogName}에게 좋아요를 보냈어요! ❤️' : '좋아요를 취소했어요'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
   }
 
   @override
@@ -177,14 +202,31 @@ class _DogProfileModalState extends State<DogProfileModal> {
                 const SizedBox(width: 40),
                 const Expanded(
                   child: Text(
-                    '강아지 정보',
+                    '반려동물 정보',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
                     textAlign: TextAlign.center,
                   ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    if (widget.guardianInfo != null) {
+                      Future.delayed(const Duration(milliseconds: 300), () {
+                        showGuardianProfileModal(
+                          context,
+                          guardianId: widget.guardianInfo!.id,
+                          guardianName: widget.guardianInfo!.nickname,
+                          kkosunnaeScore: widget.guardianInfo!.kkosunnaeScore,
+                          gender: widget.guardianInfo!.gender,
+                          age: widget.guardianInfo!.age,
+                          isIdentityVerified: widget.guardianInfo!.isIdentityVerified,
+                          isPetVerified: widget.guardianInfo!.isPetVerified,
+                          isLocationVerified: widget.guardianInfo!.isLocationVerified,
+                        );
+                      });
+                    }
+                  },
                 ),
               ],
             ),

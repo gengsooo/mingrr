@@ -52,6 +52,8 @@ void showGuardianProfileModal(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
+    isDismissible: true,
+    enableDrag: true,
     builder: (context) => GuardianProfileModal(
       guardianId: guardianId,
       guardianName: guardianName,

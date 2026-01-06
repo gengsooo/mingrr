@@ -318,65 +318,75 @@ class MingrrBottomNavBar extends ConsumerWidget {
           
           // Row: 자식 위젯들을 가로로 나열
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,  // 균등하게 배치
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               // 1️⃣ 홈 버튼
-              _buildNavItem(
-                context: context,
-                icon: Icons.home_outlined,  // 비활성 상태 아이콘
-                activeIcon: Icons.home,  // 활성 상태 아이콘
-                label: '홈',
-                index: 0,
-                currentIndex: currentIndex,
-                route: '/',
+              Expanded(
+                child: _buildNavItem(
+                  context: context,
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home,
+                  label: '홈',
+                  index: 0,
+                  currentIndex: currentIndex,
+                  route: '/',
+                ),
               ),
               
               // 2️⃣ 데이팅 버튼
-              _buildNavItem(
-                context: context,
-                icon: Icons.favorite_outline,
-                activeIcon: Icons.favorite,
-                label: '데이팅',
-                index: 1,
-                currentIndex: currentIndex,
-                route: '/dating',
-                color: AppColors.dating,  // 커스텀 색상 (핑크)
+              Expanded(
+                child: _buildNavItem(
+                  context: context,
+                  icon: Icons.favorite_outline,
+                  activeIcon: Icons.favorite,
+                  label: '데이팅',
+                  index: 1,
+                  currentIndex: currentIndex,
+                  route: '/dating',
+                  color: AppColors.dating,
+                ),
               ),
               
               // 3️⃣ 채팅 버튼
-              _buildNavItem(
-                context: context,
-                icon: Icons.chat_bubble_outline,
-                activeIcon: Icons.chat_bubble,
-                label: '채팅',
-                index: 2,
-                currentIndex: currentIndex,
-                route: '/chat',
-                badge: unreadCount,  // 실제 읽지 않은 메시지 수
+              Expanded(
+                child: _buildNavItem(
+                  context: context,
+                  icon: Icons.chat_bubble_outline,
+                  activeIcon: Icons.chat_bubble,
+                  label: '채팅',
+                  index: 2,
+                  currentIndex: currentIndex,
+                  route: '/chat',
+                  badge: unreadCount,
+                ),
               ),
               
               // 4️⃣ 마켓 버튼
-              _buildNavItem(
-                context: context,
-                icon: Icons.store_outlined,
-                activeIcon: Icons.store,
-                label: '마켓',
-                index: 3,
-                currentIndex: currentIndex,
-                route: '/market',
-                color: AppColors.market,  // 커스텀 색상 (주황)
+              Expanded(
+                child: _buildNavItem(
+                  context: context,
+                  icon: Icons.store_outlined,
+                  activeIcon: Icons.store,
+                  label: '마켓',
+                  index: 3,
+                  currentIndex: currentIndex,
+                  route: '/market',
+                  color: AppColors.market,
+                ),
               ),
               
               // 5️⃣ 소모임 버튼
-              _buildNavItem(
-                context: context,
-                icon: Icons.groups_outlined,
-                activeIcon: Icons.groups,
-                label: '소모임',
-                index: 4,
-                currentIndex: currentIndex,
-                route: '/community',
-                color: AppColors.community,
+              Expanded(
+                child: _buildNavItem(
+                  context: context,
+                  icon: Icons.groups_outlined,
+                  activeIcon: Icons.groups,
+                  label: '소모임',
+                  index: 4,
+                  currentIndex: currentIndex,
+                  route: '/community',
+                  color: AppColors.community,
+                ),
               ),
             ],
           ),
@@ -419,8 +429,8 @@ class MingrrBottomNavBar extends ConsumerWidget {
       
       child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.paddingM,  // 좌우 여백
-          vertical: AppSizes.paddingS,  // 상하 여백
+          horizontal: 4,
+          vertical: AppSizes.paddingS,
         ),
         
         // Column: 자식 위젯들을 세로로 나열 (아이콘 + 텍스트)

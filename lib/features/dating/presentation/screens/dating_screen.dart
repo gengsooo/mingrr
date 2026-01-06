@@ -125,8 +125,8 @@ class DatingScreen extends ConsumerWidget {
           ? FloatingActionButton.extended(
               onPressed: () => _showBreedingWriteSheet(context),
               backgroundColor: AppColors.dating,
-              icon: const Icon(Icons.edit, color: Colors.white),
-              label: const Text('교배 글쓰기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              icon: const Icon(Icons.edit, color: Colors.white, size: 20),
+              label: const Text('글쓰기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
             )
           : null,
     );

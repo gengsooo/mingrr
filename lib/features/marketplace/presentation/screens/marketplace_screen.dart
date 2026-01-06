@@ -142,10 +142,10 @@ class MarketplaceScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showAddSheet(context, selectedTab),
         backgroundColor: AppColors.market,
-        icon: const Icon(Icons.add, color: Colors.white),
+        icon: const Icon(Icons.add, color: Colors.white, size: 20),
         label: const Text(
           '글쓰기',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
         ),
       ),
     );

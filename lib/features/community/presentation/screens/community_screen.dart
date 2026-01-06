@@ -315,10 +315,10 @@ class CommunityScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCreateGroupSheet(context),
         backgroundColor: AppColors.community,
-        icon: const Icon(Icons.add, color: Colors.white),
+        icon: const Icon(Icons.add, color: Colors.white, size: 20),
         label: const Text(
-          '모임 만들기',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          '만들기',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
         ),
       ),
     );

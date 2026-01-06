@@ -179,56 +179,74 @@ class DistanceBottomSheet extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 헤더
-          const Text(
-            '거리 설정',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            '집 주소 기준으로 필터링합니다',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          // 거리 옵션 목록
-          ...distanceOptions.map((option) {
-            final isSelected = currentDistance == option.km;
-            return ListTile(
-              onTap: () => onDistanceSelected(option.km),
-              contentPadding: EdgeInsets.zero,
-              leading: Icon(
-                isSelected ? Icons.check_circle : Icons.circle_outlined,
-                color: isSelected ? accentColor : AppColors.textHint,
-              ),
-              title: Text(
-                option.label,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected ? accentColor : AppColors.textPrimary,
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 드래그 핸들
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.divider,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              subtitle: Text(
-                option.description,
-                style: const TextStyle(fontSize: 12),
+            ),
+            // 헤더
+            const Text(
+              '거리 설정',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
               ),
-            );
-          }),
-          
-          // 하단 안전 영역
-          SizedBox(height: MediaQuery.of(context).padding.bottom),
-        ],
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              '집 주소 기준으로 필터링합니다',
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // 거리 옵션 목록 (스크롤 가능)
+            Flexible(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: distanceOptions.map((option) {
+                    final isSelected = currentDistance == option.km;
+                    return ListTile(
+                      onTap: () => onDistanceSelected(option.km),
+                      contentPadding: EdgeInsets.zero,
+                      leading: Icon(
+                        isSelected ? Icons.check_circle : Icons.circle_outlined,
+                        color: isSelected ? accentColor : AppColors.textHint,
+                      ),
+                      title: Text(
+                        option.label,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                          color: isSelected ? accentColor : AppColors.textPrimary,
+                        ),
+                      ),
+                      subtitle: Text(
+                        option.description,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }

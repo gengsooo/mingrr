@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-// TODO: iOS 테스트 시 주석 해제
 import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -31,11 +30,10 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
   int _walkDuration = 0; // 초 단위
   double _walkDistance = 0; // 미터 단위
   
-  // TODO: iOS 테스트 시 주석 해제
   // 카카오 맵 컨트롤러
-  // KakaoMapController? _mapController;
-  // LatLng? _currentPosition;
-  // bool _isMapReady = false;
+  KakaoMapController? _mapController;
+  LatLng? _currentMapPosition;
+  bool _isMapReady = false;
   
   // 위치 추적
   Position? _currentPosition;
@@ -194,7 +192,54 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       return _buildWebMapPlaceholder();
     }
     
-    // 모바일에서는 카카오맵 (설정 전에는 플레이스홀더)
+    // 모바일에서는 카카오맵
+    if (_currentPosition != null) {
+      return KakaoMap(
+        onMapCreated: (controller) {
+          setState(() {
+            _mapController = controller;
+            _isMapReady = true;
+          });
+        },
+        markers: [
+          // 현재 위치 마커
+          Marker(
+            markerId: 'current_location',
+            latLng: LatLng(
+              latitude: _currentPosition!.latitude,
+              longitude: _currentPosition!.longitude,
+            ),
+          ),
+          // 발자국 마커들
+          ..._footprints.asMap().entries.map((entry) {
+            return Marker(
+              markerId: 'footprint_${entry.key}',
+              latLng: LatLng(
+                latitude: entry.value.latitude,
+                longitude: entry.value.longitude,
+              ),
+            );
+          }),
+        ],
+        polylines: _routePoints.length > 1
+            ? [
+                Polyline(
+                  polylineId: 'walk_route',
+                  points: _routePoints
+                      .map((p) => LatLng(
+                            latitude: p.latitude,
+                            longitude: p.longitude,
+                          ))
+                      .toList(),
+                  strokeColor: AppColors.walk,
+                  strokeWidth: 5,
+                ),
+              ]
+            : [],
+      );
+    }
+    
+    // 위치 정보가 없으면 플레이스홀더
     return _buildMobileMapPlaceholder();
   }
   
@@ -238,7 +283,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
     );
   }
   
-  /// 모바일용 지도 플레이스홀더 (카카오맵 SDK 설정 전)
+  /// 모바일용 카카오맵
   Widget _buildMobileMapPlaceholder() {
     return Container(
       width: double.infinity,
@@ -309,7 +354,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  '카카오맵 SDK 설정 후 지도가 표시됩니다',
+                  '현재 위치를 중심으로 지도가 표시됩니다',
                   style: TextStyle(
                     fontSize: 11,
                     color: AppColors.textHint,
