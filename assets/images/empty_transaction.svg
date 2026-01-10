@@ -1,0 +1,13 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 원형 배경 -->
+  <circle cx="60" cy="60" r="50" fill="#F5F5F5" stroke="#E0E0E0" stroke-width="2" stroke-dasharray="8 4"/>
+  
+  <!-- 쇼핑백 -->
+  <rect x="35" y="45" width="50" height="40" rx="5" fill="#BDBDBD"/>
+  <path d="M45 45 L45 35 Q60 25 75 35 L75 45" stroke="#9E9E9E" stroke-width="4" fill="none" stroke-linecap="round"/>
+  
+  <!-- 영수증 라인 -->
+  <line x1="45" y1="58" x2="75" y2="58" stroke="#9E9E9E" stroke-width="2" stroke-dasharray="4 2"/>
+  <line x1="45" y1="68" x2="65" y2="68" stroke="#9E9E9E" stroke-width="2" stroke-dasharray="4 2"/>
+  <line x1="45" y1="78" x2="70" y2="78" stroke="#9E9E9E" stroke-width="2" stroke-dasharray="4 2"/>
+</svg>

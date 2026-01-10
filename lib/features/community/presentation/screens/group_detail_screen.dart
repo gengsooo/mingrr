@@ -6,6 +6,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../models/chat_model.dart';
 import '../../../../models/community_model.dart';
@@ -324,7 +325,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       padding: const EdgeInsets.all(AppSizes.paddingM),
       children: [
         _buildEmptyState(
-          icon: Icons.article_outlined,
+          svgAsset: SvgAssets.emptyList,
           title: '아직 게시글이 없습니다',
           subtitle: '첫 번째 게시글을 작성해보세요!',
         ),
@@ -337,7 +338,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       padding: const EdgeInsets.all(AppSizes.paddingM),
       children: [
         _buildEmptyState(
-          icon: Icons.event_outlined,
+          svgAsset: SvgAssets.emptySchedule,
           title: '예정된 일정이 없습니다',
           subtitle: '새로운 모임 일정을 만들어보세요!',
         ),
@@ -373,7 +374,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           ),
         ),
         _buildEmptyState(
-          icon: Icons.people_outline,
+          svgAsset: SvgAssets.emptyGroup,
           title: '다른 멤버가 없습니다',
           subtitle: '친구를 초대해보세요!',
         ),
@@ -382,7 +383,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   }
 
   Widget _buildEmptyState({
-    required IconData icon,
+    required String svgAsset,
     required String title,
     required String subtitle,
   }) {
@@ -391,7 +392,11 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 60, color: AppColors.textHint),
+          MingrrSvgIcon(
+            assetPath: svgAsset,
+            width: 100,
+            height: 100,
+          ),
           const SizedBox(height: 16),
           Text(
             title,

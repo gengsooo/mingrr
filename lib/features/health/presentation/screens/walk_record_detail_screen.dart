@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
 import '../../../../core/widgets/map/map_loading_widget.dart';
@@ -483,7 +484,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text('🐶', style: TextStyle(fontSize: 16)),
+                    const DefaultPetIcon(size: 16),
                     const SizedBox(width: 6),
                     Text(
                       name,

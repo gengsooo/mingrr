@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/services/firebase_service.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -91,7 +92,7 @@ class TransactionHistoryScreen extends ConsumerWidget {
       data: (products) {
         if (products.isEmpty) {
           return _buildEmptyState(
-            icon: Icons.sell,
+            svgAsset: SvgAssets.emptyTransaction,
             title: '판매 내역이 없어요',
             subtitle: '마켓에서 물건을 판매해보세요!',
           );
@@ -108,7 +109,7 @@ class TransactionHistoryScreen extends ConsumerWidget {
       data: (products) {
         if (products.isEmpty) {
           return _buildEmptyState(
-            icon: Icons.shopping_cart,
+            svgAsset: SvgAssets.emptyTransaction,
             title: '구매 내역이 없어요',
             subtitle: '마켓에서 필요한 물건을 구매해보세요!',
           );
@@ -170,7 +171,7 @@ class TransactionHistoryScreen extends ConsumerWidget {
   }
   
   Widget _buildEmptyState({
-    required IconData icon,
+    required String svgAsset,
     required String title,
     required String subtitle,
   }) {
@@ -178,7 +179,11 @@ class TransactionHistoryScreen extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 64, color: AppColors.textHint),
+          MingrrSvgIcon(
+            assetPath: svgAsset,
+            width: 120,
+            height: 120,
+          ),
           const SizedBox(height: 16),
           Text(
             title,

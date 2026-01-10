@@ -11,6 +11,7 @@ import '../../../../core/widgets/verification_badge.dart';
 import '../../../../core/widgets/request_sheet.dart';
 import '../../../../core/widgets/profile_icon.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../../../../models/pet_model.dart';
 import '../providers/dating_provider.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
@@ -617,7 +618,7 @@ class DatingScreen extends ConsumerWidget {
                 children: [
                   if (_getPetPrimaryPhotoUrl(pet) == null)
                     const Center(
-                      child: Text('🐶', style: TextStyle(fontSize: 50)),
+                      child: DefaultPetIcon(size: 50),
                     ),
                   // 성별 배지
                   Positioned(
@@ -744,7 +745,7 @@ class DatingScreen extends ConsumerWidget {
               child: Stack(
                 children: [
                   const Center(
-                    child: Text('🐶', style: TextStyle(fontSize: 50)),
+                    child: DefaultPetIcon(size: 50),
                   ),
                   // 성별 배지
                   Positioned(
@@ -1025,7 +1026,7 @@ class DatingScreen extends ConsumerWidget {
                   children: [
                     if (_getPetPrimaryPhotoUrl(pet) == null)
                       const Center(
-                        child: Text('🐶', style: TextStyle(fontSize: 50)),
+                        child: DefaultPetIcon(size: 50),
                       ),
                     Positioned(
                       top: 8,
@@ -1133,7 +1134,7 @@ class DatingScreen extends ConsumerWidget {
                   fit: StackFit.expand,
                   children: [
                     const Center(
-                      child: Text('🐶', style: TextStyle(fontSize: 50)),
+                      child: DefaultPetIcon(size: 50),
                     ),
                     Positioned(
                       top: 8,
@@ -1349,7 +1350,7 @@ class DatingScreen extends ConsumerWidget {
                 ),
                 child: _getPetPrimaryPhotoUrl(pet) == null
                     ? const Center(
-                        child: Text('🐶', style: TextStyle(fontSize: 80)),
+                        child: DefaultPetIcon(size: 80),
                       )
                     : null,
               ),

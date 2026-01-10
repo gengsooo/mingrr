@@ -1,0 +1,19 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 원형 배경 -->
+  <circle cx="60" cy="60" r="50" fill="#FFF3E0"/>
+  
+  <!-- 자물쇠 몸통 -->
+  <rect x="40" y="55" width="40" height="30" rx="5" fill="#FF9800"/>
+  
+  <!-- 자물쇠 고리 -->
+  <path d="M48 55 L48 45 C48 35 52 30 60 30 C68 30 72 35 72 45 L72 55" stroke="#E65100" stroke-width="6" fill="none" stroke-linecap="round"/>
+  
+  <!-- 열쇠 구멍 -->
+  <circle cx="60" cy="68" r="5" fill="#E65100"/>
+  <rect x="58" y="68" width="4" height="10" rx="2" fill="#E65100"/>
+  
+  <!-- 느낌표 -->
+  <circle cx="85" cy="35" r="15" fill="#F57C00"/>
+  <path d="M85 26 L85 38" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="85" cy="44" r="2" fill="white"/>
+</svg>

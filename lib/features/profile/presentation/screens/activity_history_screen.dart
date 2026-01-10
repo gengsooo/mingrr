@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../../../dating/presentation/providers/dating_provider.dart';
 import '../providers/profile_provider.dart';
 
@@ -62,7 +63,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
       data: (matches) {
         if (matches.isEmpty) {
           return _buildEmptyState(
-            icon: Icons.favorite,
+            svgAsset: SvgAssets.emptyMatch,
             title: '매칭 내역이 없어요',
             subtitle: '데이팅에서 새로운 친구를 만나보세요!',
           );
@@ -93,7 +94,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
       data: (transactions) {
         if (transactions.isEmpty) {
           return _buildEmptyState(
-            icon: Icons.shopping_bag,
+            svgAsset: SvgAssets.emptyTransaction,
             title: '거래 내역이 없어요',
             subtitle: '마켓에서 거래해보세요!',
           );
@@ -123,7 +124,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
       data: (groups) {
         if (groups.isEmpty) {
           return _buildEmptyState(
-            icon: Icons.groups,
+            svgAsset: SvgAssets.emptyGroup,
             title: '모임 활동이 없어요',
             subtitle: '소모임에 참여해보세요!',
           );
@@ -149,7 +150,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
   }
   
   Widget _buildEmptyState({
-    required IconData icon,
+    required String svgAsset,
     required String title,
     required String subtitle,
   }) {
@@ -157,7 +158,11 @@ class ActivityHistoryScreen extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 64, color: AppColors.textHint),
+          MingrrSvgIcon(
+            assetPath: svgAsset,
+            width: 120,
+            height: 120,
+          ),
           const SizedBox(height: 16),
           Text(
             title,

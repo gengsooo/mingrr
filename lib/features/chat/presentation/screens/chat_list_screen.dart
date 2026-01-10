@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/warmth_score.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
@@ -715,7 +716,11 @@ class ChatListScreen extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(type.emoji, style: const TextStyle(fontSize: 48)),
+          const MingrrSvgIcon(
+            assetPath: SvgAssets.emptyChat,
+            width: 120,
+            height: 120,
+          ),
           const SizedBox(height: 16),
           Text(
             '${type.label} 채팅이 없어요',

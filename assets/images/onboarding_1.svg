@@ -1,0 +1,38 @@
+<svg width="280" height="280" viewBox="0 0 280 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 배경 원 -->
+  <circle cx="140" cy="140" r="130" fill="#E8F5E9"/>
+  
+  <!-- 강아지 1 -->
+  <circle cx="100" cy="150" r="35" fill="#FF9800"/>
+  <ellipse cx="75" cy="125" rx="12" ry="20" fill="#E65100"/>
+  <ellipse cx="125" cy="125" rx="12" ry="20" fill="#E65100"/>
+  <circle cx="90" cy="145" r="5" fill="#212121"/>
+  <circle cx="110" cy="145" r="5" fill="#212121"/>
+  <ellipse cx="100" cy="158" rx="5" ry="4" fill="#212121"/>
+  <path d="M92 168 Q100 175 108 168" stroke="#5D4037" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <!-- 강아지 2 -->
+  <circle cx="180" cy="150" r="35" fill="#8D6E63"/>
+  <ellipse cx="155" cy="125" rx="12" ry="20" fill="#5D4037"/>
+  <ellipse cx="205" cy="125" rx="12" ry="20" fill="#5D4037"/>
+  <circle cx="170" cy="145" r="5" fill="#212121"/>
+  <circle cx="190" cy="145" r="5" fill="#212121"/>
+  <ellipse cx="180" cy="158" rx="5" ry="4" fill="#212121"/>
+  <path d="M172 168 Q180 175 188 168" stroke="#3E2723" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <!-- 하트들 -->
+  <path d="M140 100 C135 95 125 95 125 105 C125 115 140 125 140 125 C140 125 155 115 155 105 C155 95 145 95 140 100" fill="#E91E63"/>
+  <path d="M60 90 C57 87 52 87 52 92 C52 97 60 102 60 102 C60 102 68 97 68 92 C68 87 63 87 60 90" fill="#F48FB1"/>
+  <path d="M220 90 C217 87 212 87 212 92 C212 97 220 102 220 102 C220 102 228 97 228 92 C228 87 223 87 220 90" fill="#F48FB1"/>
+  
+  <!-- 발바닥 -->
+  <ellipse cx="80" cy="210" rx="8" ry="6" fill="#FFCC80"/>
+  <circle cx="72" cy="200" r="4" fill="#FFCC80"/>
+  <circle cx="80" cy="197" r="4" fill="#FFCC80"/>
+  <circle cx="88" cy="200" r="4" fill="#FFCC80"/>
+  
+  <ellipse cx="200" cy="210" rx="8" ry="6" fill="#BCAAA4"/>
+  <circle cx="192" cy="200" r="4" fill="#BCAAA4"/>
+  <circle cx="200" cy="197" r="4" fill="#BCAAA4"/>
+  <circle cx="208" cy="200" r="4" fill="#BCAAA4"/>
+</svg>

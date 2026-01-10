@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import '../services/firestore_service.dart';
+import 'svg_icons.dart';
 import '../utils/format_utils.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/community_model.dart';
@@ -132,7 +133,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 64, color: AppColors.textHint),
+          const MingrrSvgIcon(
+            assetPath: SvgAssets.emptySearch,
+            width: 120,
+            height: 120,
+          ),
           const SizedBox(height: 16),
           Text(message, style: const TextStyle(color: AppColors.textSecondary)),
         ],

@@ -63,20 +63,20 @@ class LocationHelper {
     // ============================================================
     // 
     // // 📌 테스트 1: 각 단계별 딜레이 추가 (로딩 애니메이션 확인용)
-    onProgress?.call(LocationProgress.checkingPermission);
-    await Future.delayed(const Duration(seconds: 2));
-    onProgress?.call(LocationProgress.checkingCache);
-    await Future.delayed(const Duration(seconds: 2));
-    onProgress?.call(LocationProgress.gettingGpsMedium);
-    await Future.delayed(const Duration(seconds: 3));
-    onProgress?.call(LocationProgress.gettingGpsLow);
-    await Future.delayed(const Duration(seconds: 2));
+    // onProgress?.call(LocationProgress.checkingPermission);
+    // await Future.delayed(const Duration(seconds: 2));
+    // onProgress?.call(LocationProgress.checkingCache);
+    // await Future.delayed(const Duration(seconds: 2));
+    // onProgress?.call(LocationProgress.gettingGpsMedium);
+    // await Future.delayed(const Duration(seconds: 3));
+    // onProgress?.call(LocationProgress.gettingGpsLow);
+    // await Future.delayed(const Duration(seconds: 2));
     // 
     // // 📌 테스트 2: 강제 실패 (오류 팝업 테스트용)
-    return LocationResult.failure(
-      errorType: LocationErrorType.timeout,
-      message: 'GPS 신호를 받을 수 없습니다 (테스트)',
-    );
+    // return LocationResult.failure(
+    //   errorType: LocationErrorType.timeout,
+    //   message: 'GPS 신호를 받을 수 없습니다 (테스트)',
+    // );
     
     // ============================================================
     

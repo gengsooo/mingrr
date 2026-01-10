@@ -1,0 +1,22 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 원형 배경 -->
+  <circle cx="60" cy="60" r="50" fill="#F5F5F5" stroke="#E0E0E0" stroke-width="2" stroke-dasharray="8 4"/>
+  
+  <!-- 강아지 실루엣 -->
+  <ellipse cx="60" cy="68" rx="22" ry="16" fill="#BDBDBD"/>
+  <circle cx="60" cy="48" r="18" fill="#BDBDBD"/>
+  
+  <!-- 귀 -->
+  <ellipse cx="44" cy="36" rx="7" ry="12" fill="#9E9E9E"/>
+  <ellipse cx="76" cy="36" rx="7" ry="12" fill="#9E9E9E"/>
+  
+  <!-- 눈 (닫힌 눈) -->
+  <path d="M50 48 Q54 52 58 48" stroke="#757575" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M62 48 Q66 52 70 48" stroke="#757575" stroke-width="2" fill="none" stroke-linecap="round"/>
+  
+  <!-- 코 -->
+  <ellipse cx="60" cy="56" rx="4" ry="3" fill="#757575"/>
+  
+  <!-- 물음표 -->
+  <text x="85" y="35" font-family="Arial" font-size="24" font-weight="bold" fill="#9E9E9E">?</text>
+</svg>

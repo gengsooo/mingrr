@@ -5,6 +5,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../providers/auth_provider.dart';
 
 /// ============================================================
@@ -104,27 +105,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        // 로고 아이콘 (귀여운 발바닥 모양)
-        Container(
-          width: 120,
-          height: 120,
-          decoration: BoxDecoration(
-            gradient: AppColors.warmGradient,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.pets,
-            size: 60,
-            color: AppColors.textPrimary,
-          ),
-        ),
+        // 로고 아이콘
+        const AppLogoIcon(size: 120),
         const SizedBox(height: AppSizes.gapXL),
         
         // 앱 이름

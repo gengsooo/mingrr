@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../providers/profile_provider.dart';
 
 /// 찜한 목록 화면
@@ -57,7 +58,7 @@ class WishlistScreen extends ConsumerWidget {
       data: (products) {
         if (products.isEmpty) {
           return _buildEmptyState(
-            icon: Icons.shopping_bag_outlined,
+            svgAsset: SvgAssets.emptyWishlist,
             title: '찜한 상품이 없어요',
             subtitle: '마켓에서 마음에 드는 상품을 찜해보세요!',
           );
@@ -100,14 +101,14 @@ class WishlistScreen extends ConsumerWidget {
   Widget _buildPetWishlist() {
     // 반려동물 찜 기능은 추후 구현
     return _buildEmptyState(
-      icon: Icons.pets,
+      svgAsset: SvgAssets.emptyHeart,
       title: '찜한 반려동물이 없어요',
       subtitle: '데이팅에서 마음에 드는 친구를 찜해보세요!',
     );
   }
   
   Widget _buildEmptyState({
-    required IconData icon,
+    required String svgAsset,
     required String title,
     required String subtitle,
   }) {
@@ -115,7 +116,11 @@ class WishlistScreen extends ConsumerWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 64, color: AppColors.textHint),
+          MingrrSvgIcon(
+            assetPath: svgAsset,
+            width: 120,
+            height: 120,
+          ),
           const SizedBox(height: 16),
           Text(
             title,

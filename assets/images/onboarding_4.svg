@@ -1,0 +1,38 @@
+<svg width="280" height="280" viewBox="0 0 280 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 배경 원 -->
+  <circle cx="140" cy="140" r="130" fill="#FFF8E1"/>
+  
+  <!-- 큰 체크 원 -->
+  <circle cx="140" cy="120" r="60" fill="#4CAF50"/>
+  <path d="M110 120 L130 140 L170 100" stroke="white" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- 행복한 강아지 -->
+  <ellipse cx="140" cy="230" rx="35" ry="20" fill="#FF9800"/>
+  <circle cx="140" cy="200" r="30" fill="#FF9800"/>
+  <ellipse cx="115" cy="178" rx="10" ry="18" fill="#E65100"/>
+  <ellipse cx="165" cy="178" rx="10" ry="18" fill="#E65100"/>
+  
+  <!-- 눈 (행복한 표정) -->
+  <path d="M125 195 Q130 190 135 195" stroke="#212121" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M145 195 Q150 190 155 195" stroke="#212121" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+  <!-- 코 -->
+  <ellipse cx="140" cy="208" rx="5" ry="4" fill="#212121"/>
+  
+  <!-- 입 (웃는) -->
+  <path d="M128 218 Q140 230 152 218" stroke="#5D4037" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+  <!-- 볼터치 -->
+  <ellipse cx="115" cy="210" rx="8" ry="5" fill="#FFCDD2" opacity="0.6"/>
+  <ellipse cx="165" cy="210" rx="8" ry="5" fill="#FFCDD2" opacity="0.6"/>
+  
+  <!-- 반짝이 효과 -->
+  <circle cx="70" cy="80" r="5" fill="#FFC107"/>
+  <circle cx="210" cy="80" r="5" fill="#FFC107"/>
+  <circle cx="60" cy="160" r="4" fill="#FFC107"/>
+  <circle cx="220" cy="160" r="4" fill="#FFC107"/>
+  
+  <!-- 하트 -->
+  <path d="M70 120 C67 117 62 117 62 122 C62 127 70 132 70 132 C70 132 78 127 78 122 C78 117 73 117 70 120" fill="#E91E63"/>
+  <path d="M210 120 C207 117 202 117 202 122 C202 127 210 132 210 132 C210 132 218 127 218 122 C218 117 213 117 210 120" fill="#E91E63"/>
+</svg>

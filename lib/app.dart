@@ -30,6 +30,7 @@ import 'features/profile/presentation/screens/profile_screen.dart';  // 프로�
 import 'features/dev/dev_tools_screen.dart';  // 개발자 도구 화면
 import 'features/notification/presentation/screens/notification_screen.dart';  // 알림 화면
 import 'features/marketplace/presentation/screens/job_detail_screen.dart';  // 알바 상세 화면
+import 'features/onboarding/presentation/screens/onboarding_screen.dart';  // 온보딩 화면
 
 /// ============================================================
 /// MINGRR 앱 메인 위젯 (Firebase 연동 버전)
@@ -83,6 +84,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isSplashRoute = path == '/splash';
       final isLoginRoute = path == '/login';
       final isDevToolsRoute = path == '/dev-tools';
+      final isOnboardingRoute = path == '/onboarding';
 
       // 로딩 중이면 스플래시 화면으로 (깜빡임 방지)
       if (isLoading) {
@@ -90,12 +92,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       // 로딩 완료 후 스플래시 화면에 있으면 적절한 화면으로 이동
+      // (온보딩 체크는 SplashScreen에서 비동기로 처리)
       if (isSplashRoute) {
-        return isLoggedIn ? '/' : '/login';
+        return null; // SplashScreen에서 직접 처리
       }
 
       // 케이스 1: 로그인 안 된 상태에서 보호된 페이지 접근 시 로그인으로 리다이렉트
-      if (!isLoggedIn && !isLoginRoute && !isDevToolsRoute) {
+      if (!isLoggedIn && !isLoginRoute && !isDevToolsRoute && !isOnboardingRoute) {
         return '/login';
       }
 
@@ -114,6 +117,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/splash',
         builder: (context, state) => const SplashScreen(),
+      ),
+      
+      // ========================================
+      // 온보딩 화면 (처음 실행 시)
+      // ========================================
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => OnboardingScreen(
+          onComplete: () {
+            // 온보딩 완료 후 로그인 화면으로 이동
+            GoRouter.of(context).go('/login');
+          },
+        ),
       ),
       
       // ========================================
@@ -534,8 +550,49 @@ class MingrrBottomNavBar extends ConsumerWidget {
 // ============================================================
 // 웹에서 Firebase Auth가 세션을 복원할 때까지 보여주는 화면
 // 깜빡거림 방지를 위해 로딩 중에는 이 화면을 표시
-class SplashScreen extends StatelessWidget {
+// 온보딩 완료 여부도 체크하여 적절한 화면으로 이동
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends ConsumerState<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkAndNavigate();
+  }
+
+  Future<void> _checkAndNavigate() async {
+    // 인증 상태가 로딩 완료될 때까지 대기
+    await Future.doWhile(() async {
+      await Future.delayed(const Duration(milliseconds: 100));
+      final authState = ref.read(authStateProvider);
+      return authState.isLoading;
+    });
+
+    if (!mounted) return;
+
+    final authState = ref.read(authStateProvider);
+    final isLoggedIn = authState.valueOrNull != null;
+
+    if (isLoggedIn) {
+      // 로그인 되어 있으면 홈으로
+      context.go('/');
+    } else {
+      // 온보딩 완료 여부 체크
+      final onboardingCompleted = await isOnboardingCompleted();
+      if (!mounted) return;
+      
+      if (onboardingCompleted) {
+        context.go('/login');
+      } else {
+        context.go('/onboarding');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -9,6 +9,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/map/map_loading_widget.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../../core/services/location_helper.dart';
@@ -843,7 +844,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('🐾', style: TextStyle(fontSize: 16)),
+                    const PawPrintIcon(size: 16),
                     const SizedBox(width: 6),
                     Text(
                       '발바닥 ${_footprints.length}개 남김',

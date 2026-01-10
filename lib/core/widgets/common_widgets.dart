@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
+import 'svg_icons.dart';
 
 /// ============================================================
 /// MINGRR 공통 위젯 모음
@@ -422,9 +423,10 @@ class MingrrTextField extends StatelessWidget {
 }
 
 // ===== 빈 상태 위젯 =====
-/// 데이터가 없을 때 표시하는 위젯
+/// 데이터가 없을 때 표시하는 위젯 (SVG 이미지 지원)
 class MingrrEmptyState extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+  final String? svgAsset;
   final String title;
   final String? subtitle;
   final String? buttonText;
@@ -432,12 +434,13 @@ class MingrrEmptyState extends StatelessWidget {
 
   const MingrrEmptyState({
     super.key,
-    required this.icon,
+    this.icon,
+    this.svgAsset,
     required this.title,
     this.subtitle,
     this.buttonText,
     this.onButtonPressed,
-  });
+  }) : assert(icon != null || svgAsset != null, 'icon 또는 svgAsset 중 하나는 필수입니다');
 
   @override
   Widget build(BuildContext context) {
@@ -447,19 +450,26 @@ class MingrrEmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                shape: BoxShape.circle,
+            if (svgAsset != null)
+              MingrrSvgIcon(
+                assetPath: svgAsset!,
+                width: 120,
+                height: 120,
+              )
+            else
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  size: 48,
+                  color: AppColors.primary,
+                ),
               ),
-              child: Icon(
-                icon,
-                size: 48,
-                color: AppColors.primary,
-              ),
-            ),
             const SizedBox(height: AppSizes.gapXL),
             Text(
               title,

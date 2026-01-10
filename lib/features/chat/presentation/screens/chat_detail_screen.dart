@@ -7,6 +7,7 @@ import '../../../../core/services/chat_service.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/rating_service.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/kkosunnae_badge.dart';
 import '../../../../core/widgets/rating_sheet.dart';
@@ -178,7 +179,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey[300]),
+          const MingrrSvgIcon(
+            assetPath: SvgAssets.emptyMessage,
+            width: 120,
+            height: 120,
+          ),
           const SizedBox(height: 16),
           Text('대화를 시작해보세요!', style: TextStyle(color: Colors.grey[500], fontSize: 16)),
         ],

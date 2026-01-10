@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../models/health_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
@@ -103,7 +104,7 @@ class HealthScreen extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('🐶', style: TextStyle(fontSize: 60)),
+          const DefaultPetIcon(size: 60),
           const SizedBox(height: 16),
           const Text(
             '등록된 반려동물이 없습니다',
@@ -173,7 +174,7 @@ class HealthScreen extends ConsumerWidget {
                       ),
                       child: (pet.profileImageUrl == null || pet.profileImageUrl!.isEmpty)
                           ? const Center(
-                              child: Text('🐶', style: TextStyle(fontSize: 24)),
+                              child: DefaultPetIcon(size: 24),
                             )
                           : null,
                     ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 
 /// ============================================================
@@ -571,7 +572,7 @@ class MedicationDetailScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Text('🐶', style: TextStyle(fontSize: 24)),
+                      const DefaultPetIcon(size: 24),
                       const SizedBox(width: 12),
                       Text(
                         medication.petName,

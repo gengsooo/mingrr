@@ -1,0 +1,12 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 원형 배경 -->
+  <circle cx="60" cy="60" r="50" fill="#F5F5F5" stroke="#E0E0E0" stroke-width="2" stroke-dasharray="8 4"/>
+  
+  <!-- 하트 아웃라인 -->
+  <path d="M60 85 C30 65 25 45 40 35 C50 28 60 38 60 38 C60 38 70 28 80 35 C95 45 90 65 60 85 Z" 
+        fill="none" stroke="#BDBDBD" stroke-width="4" stroke-dasharray="6 3"/>
+  
+  <!-- 작은 하트들 -->
+  <path d="M35 55 C32 52 32 48 35 46 C37 44 40 46 40 46 C40 46 43 44 45 46 C48 48 48 52 45 55 L40 60 Z" fill="#E0E0E0"/>
+  <path d="M80 50 C77 47 77 43 80 41 C82 39 85 41 85 41 C85 41 88 39 90 41 C93 43 93 47 90 50 L85 55 Z" fill="#E0E0E0"/>
+</svg>

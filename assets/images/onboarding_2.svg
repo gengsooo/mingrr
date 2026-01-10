@@ -1,0 +1,37 @@
+<svg width="280" height="280" viewBox="0 0 280 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 배경 원 -->
+  <circle cx="140" cy="140" r="130" fill="#E3F2FD"/>
+  
+  <!-- 지도/경로 배경 -->
+  <rect x="60" y="80" width="160" height="120" rx="15" fill="#BBDEFB"/>
+  
+  <!-- 경로 선 -->
+  <path d="M80 160 Q100 120 130 140 Q160 160 180 130 Q200 100 200 120" stroke="#4CAF50" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="8 4"/>
+  
+  <!-- 시작점 마커 -->
+  <circle cx="80" cy="160" r="10" fill="#4CAF50"/>
+  <circle cx="80" cy="160" r="5" fill="white"/>
+  
+  <!-- 끝점 마커 -->
+  <path d="M200 100 C190 100 185 108 185 115 C185 125 200 140 200 140 C200 140 215 125 215 115 C215 108 210 100 200 100 Z" fill="#F44336"/>
+  <circle cx="200" cy="113" r="5" fill="white"/>
+  
+  <!-- 걷는 강아지 -->
+  <ellipse cx="140" cy="220" rx="25" ry="15" fill="#FF9800"/>
+  <circle cx="155" cy="210" r="18" fill="#FF9800"/>
+  <ellipse cx="145" cy="198" rx="6" ry="10" fill="#E65100"/>
+  <ellipse cx="165" cy="198" rx="6" ry="10" fill="#E65100"/>
+  <circle cx="150" cy="208" r="3" fill="#212121"/>
+  <circle cx="160" cy="208" r="3" fill="#212121"/>
+  <ellipse cx="158" cy="215" rx="3" ry="2" fill="#212121"/>
+  
+  <!-- 다리 -->
+  <rect x="120" y="230" width="8" height="15" rx="4" fill="#FF9800"/>
+  <rect x="135" y="230" width="8" height="15" rx="4" fill="#FF9800"/>
+  <rect x="150" y="230" width="8" height="15" rx="4" fill="#FF9800"/>
+  
+  <!-- 발자국들 -->
+  <ellipse cx="70" cy="250" rx="5" ry="4" fill="#FFCC80" opacity="0.6"/>
+  <ellipse cx="95" cy="245" rx="5" ry="4" fill="#FFCC80" opacity="0.7"/>
+  <ellipse cx="115" cy="255" rx="5" ry="4" fill="#FFCC80" opacity="0.8"/>
+</svg>

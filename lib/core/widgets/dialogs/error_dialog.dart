@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
+import '../svg_icons.dart';
 
 /// ============================================================
 /// ErrorDialog - 오류 다이얼로그
@@ -25,6 +26,7 @@ enum ErrorType {
   /// 위치/GPS 오류
   location(
     icon: Icons.location_off_outlined,
+    svgAsset: SvgAssets.errorLocation,
     color: AppColors.error,
     title: '위치를 가져올 수 없습니다',
     message: 'GPS 신호가 약하거나 위치 서비스가 비활성화되어 있습니다.\n설정에서 위치 서비스를 확인해주세요.',
@@ -33,6 +35,7 @@ enum ErrorType {
   /// 네트워크 오류
   network(
     icon: Icons.wifi_off_outlined,
+    svgAsset: SvgAssets.errorNetwork,
     color: AppColors.error,
     title: '네트워크 연결 오류',
     message: '인터넷 연결이 불안정합니다.\nWi-Fi 또는 모바일 데이터 연결을 확인해주세요.',
@@ -41,6 +44,7 @@ enum ErrorType {
   /// 서버/API 오류
   server(
     icon: Icons.cloud_off_outlined,
+    svgAsset: SvgAssets.errorServer,
     color: AppColors.error,
     title: '서버 연결 오류',
     message: '서버와 연결할 수 없습니다.\n잠시 후 다시 시도해주세요.',
@@ -49,6 +53,7 @@ enum ErrorType {
   /// 데이터베이스 오류
   database(
     icon: Icons.storage_outlined,
+    svgAsset: SvgAssets.errorDatabase,
     color: AppColors.error,
     title: '데이터 처리 오류',
     message: '데이터를 처리하는 중 문제가 발생했습니다.\n다시 시도해주세요.',
@@ -57,6 +62,7 @@ enum ErrorType {
   /// 권한 오류
   permission(
     icon: Icons.lock_outline,
+    svgAsset: SvgAssets.errorPermission,
     color: AppColors.warning,
     title: '권한이 필요합니다',
     message: '이 기능을 사용하려면 권한이 필요합니다.\n설정에서 권한을 허용해주세요.',
@@ -65,6 +71,7 @@ enum ErrorType {
   /// 데이터 로드 오류
   dataLoad(
     icon: Icons.error_outline,
+    svgAsset: SvgAssets.errorServer,
     color: AppColors.error,
     title: '데이터를 불러올 수 없습니다',
     message: '데이터를 가져오는 중 문제가 발생했습니다.\n다시 시도해주세요.',
@@ -73,6 +80,7 @@ enum ErrorType {
   /// 이미지 업로드 오류
   imageUpload(
     icon: Icons.image_not_supported_outlined,
+    svgAsset: SvgAssets.errorServer,
     color: AppColors.error,
     title: '이미지 업로드 실패',
     message: '이미지를 업로드하는 중 문제가 발생했습니다.\n다시 시도해주세요.',
@@ -81,6 +89,7 @@ enum ErrorType {
   /// 인증 오류
   auth(
     icon: Icons.person_off_outlined,
+    svgAsset: SvgAssets.errorPermission,
     color: AppColors.error,
     title: '인증 오류',
     message: '로그인 정보가 만료되었습니다.\n다시 로그인해주세요.',
@@ -89,6 +98,7 @@ enum ErrorType {
   /// 타임아웃 오류
   timeout(
     icon: Icons.timer_off_outlined,
+    svgAsset: SvgAssets.errorNetwork,
     color: AppColors.warning,
     title: '요청 시간 초과',
     message: '요청 처리 시간이 초과되었습니다.\n다시 시도해주세요.',
@@ -97,18 +107,21 @@ enum ErrorType {
   /// 일반 오류
   general(
     icon: Icons.warning_amber_outlined,
+    svgAsset: SvgAssets.errorServer,
     color: AppColors.error,
     title: '오류가 발생했습니다',
     message: '예기치 않은 오류가 발생했습니다.\n다시 시도해주세요.',
   );
 
   final IconData icon;
+  final String svgAsset;
   final Color color;
   final String title;
   final String message;
 
   const ErrorType({
     required this.icon,
+    required this.svgAsset,
     required this.color,
     required this.title,
     required this.message,
@@ -182,15 +195,11 @@ class ErrorDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 아이콘
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(type.icon, size: 32, color: color),
+            // SVG 일러스트
+            MingrrSvgIcon(
+              assetPath: type.svgAsset,
+              width: 100,
+              height: 100,
             ),
             const SizedBox(height: AppSizes.gapM),
             

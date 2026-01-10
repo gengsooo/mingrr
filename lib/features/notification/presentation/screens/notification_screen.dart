@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../../../../models/notification_model.dart';
 import '../providers/notification_provider.dart';
 
@@ -153,10 +154,10 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.notifications_none,
-            size: 64,
-            color: AppColors.textHint.withOpacity(0.5),
+          const MingrrSvgIcon(
+            assetPath: SvgAssets.emptyNotification,
+            width: 120,
+            height: 120,
           ),
           const SizedBox(height: 16),
           const Text(

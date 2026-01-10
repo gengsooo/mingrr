@@ -1,0 +1,17 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 원형 배경 -->
+  <circle cx="60" cy="60" r="50" fill="#F5F5F5" stroke="#E0E0E0" stroke-width="2" stroke-dasharray="8 4"/>
+  
+  <!-- 알림 벨 -->
+  <path d="M60 30 C45 30 38 42 38 55 L38 65 L32 72 L88 72 L82 65 L82 55 C82 42 75 30 60 30 Z" fill="#BDBDBD"/>
+  
+  <!-- 벨 손잡이 -->
+  <circle cx="60" cy="26" r="4" fill="#9E9E9E"/>
+  
+  <!-- 벨 아래 둥근 부분 -->
+  <ellipse cx="60" cy="80" rx="10" ry="6" fill="#9E9E9E"/>
+  
+  <!-- X 표시 (알림 없음) -->
+  <circle cx="80" cy="40" r="12" fill="#EF5350"/>
+  <path d="M75 35 L85 45 M85 35 L75 45" stroke="white" stroke-width="3" stroke-linecap="round"/>
+</svg>
