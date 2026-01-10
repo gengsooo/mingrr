@@ -6,7 +6,7 @@ class AppStrings {
   AppStrings._();
 
   // ===== 앱 정보 =====
-  static const String appName = 'MINGRR';
+  static const String appName = '밍그르르';
   static const String appSlogan = '반려동물과 함께하는 특별한 만남';
 
   // ===== 인증 관련 =====

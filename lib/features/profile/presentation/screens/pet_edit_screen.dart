@@ -338,7 +338,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
     final result = await showImagePickerSheet(
       context,
       title: '프로필 이미지 선택',
-      avatarType: DefaultAvatarType.dog,
+      avatarType: DefaultAvatarType.pet,
       currentImageUrl: _profileImageUrl,
       currentDefaultAvatar: _selectedDefaultAvatar,
     );
@@ -561,7 +561,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         maxLines: 4,
         maxLength: 200,
         decoration: const InputDecoration(
-          hintText: '강아지를 소개해주세요\n예: 활발하고 사람을 좋아하는 강아지입니다.',
+          hintText: '반려동물을 소개해주세요\n예: 활발하고 사람을 좋아하는 아이입니다.',
           border: OutlineInputBorder(),
         ),
       ),

@@ -160,18 +160,14 @@ enum PetTraitCategory {
 /// - 메인화면 표시 가능 여부 (canShowOnHome)
 /// ============================================================
 enum HealthCategory {
-  // ===== 메인화면 표시 가능한 카테고리 =====
+  // ===== 건강수첩 카테고리 (건강수첩 화면과 동기화) =====
   weight('체중', '⚖️', '체중 변화를 기록해요', true),
   walk('산책', '🚶', '산책 시간과 거리를 기록해요', true),
-  medication('약', '💊', '복용 중인 약을 관리해요', true),
   grooming('그루밍', '✨', '미용/위생 관리를 기록해요', true),
-  
-  // ===== 메인화면 표시 불가능한 카테고리 =====
-  vaccination('예방접종', '💉', '예방접종 일정을 관리해요', false),
-  checkup('정기검진', '🏥', '정기검진 일정을 관리해요', false),
-  teethCare('양치/치석', '🦷', '구강 관리 기록이에요', false),
-  skinCare('피부 관리', '🧴', '피부 상태를 기록해요', false),
-  special('특이사항', '📝', '기타 특이사항을 기록해요', false);
+  medication('약', '💊', '복용 중인 약을 관리해요', true),
+  vaccination('예방접종', '💉', '예방접종 일정을 관리해요', true),
+  checkup('정기검진', '🏥', '정기검진 일정을 관리해요', true),
+  special('특이사항', '📝', '기타 특이사항을 기록해요', true);
 
   final String label;
   final String emoji;

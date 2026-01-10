@@ -225,8 +225,11 @@ class LocationDistanceBar extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -235,42 +238,85 @@ class LocationDistanceBar extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '거리 설정',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              '집 주소 기준으로 필터링합니다',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 16),
-            ...distanceOptions.map((distance) {
-              final isSelected = currentDistance == distance;
-              return ListTile(
-                onTap: () {
-                  onDistanceChanged(distance);
-                  Navigator.pop(context);
-                },
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(
-                  isSelected ? Icons.check_circle : Icons.circle_outlined,
-                  color: isSelected ? accentColor : AppColors.textHint,
+            // 드래그 핸들
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.divider,
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                title: Text(
-                  '${distance.toInt()}km',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? accentColor : AppColors.textPrimary,
+              ),
+            ),
+            // 헤더 (타이틀 + X 버튼)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [
+                  const SizedBox(width: 40),
+                  const Expanded(
+                    child: Text(
+                      '거리 설정',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                ),
-                subtitle: Text(
-                  _getDistanceDescription(distance),
-                  style: const TextStyle(fontSize: 12),
-                ),
-              );
-            }),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                  ),
+                ],
+              ),
+            ),
+            // 안내 문구
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                '집 주소 기준으로 필터링합니다',
+                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // 구분선
+            const Divider(height: 1),
+            // 스크롤 가능한 리스트
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                children: distanceOptions.map((distance) {
+                  final isSelected = currentDistance == distance;
+                  return ListTile(
+                    onTap: () {
+                      onDistanceChanged(distance);
+                      Navigator.pop(context);
+                    },
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    leading: Icon(
+                      isSelected ? Icons.check_circle : Icons.circle_outlined,
+                      color: isSelected ? accentColor : AppColors.textHint,
+                    ),
+                    title: Text(
+                      '${distance.toInt()}km',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isSelected ? accentColor : AppColors.textPrimary,
+                      ),
+                    ),
+                    subtitle: Text(
+                      _getDistanceDescription(distance),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
             SizedBox(height: MediaQuery.of(context).padding.bottom),
           ],
         ),

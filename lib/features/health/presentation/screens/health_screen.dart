@@ -34,7 +34,7 @@ class HealthScreen extends ConsumerWidget {
         title: const Text('건강수첩'),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -717,8 +717,6 @@ class HealthScreen extends ConsumerWidget {
         AddCheckupRecordScreen.show(context, pet.id, pet.name);
         break;
       case HealthCategory.special:
-      case HealthCategory.teethCare:
-      case HealthCategory.skinCare:
         AddSpecialRecordScreen.show(context, pet.id, pet.name);
         break;
     }

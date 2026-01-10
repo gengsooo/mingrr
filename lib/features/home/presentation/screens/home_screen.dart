@@ -425,33 +425,36 @@ class HomeScreen extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            // 헤더
+            // 헤더 (X 버튼 포함)
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
+                  const SizedBox(width: 40),
                   const Expanded(
                     child: Text(
                       '메인화면 건강기록 설정',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                  TextButton(
+                  IconButton(
+                    icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('완료'),
                   ),
                 ],
               ),
             ),
-            const Divider(height: 1),
             // 안내 문구
             const Padding(
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 '메인화면에 표시할 건강기록을 선택하세요 (최소 1개, 최대 5개)',
                 style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
               ),
             ),
+            const SizedBox(height: 12),
+            const Divider(height: 1),
             // 카테고리 목록
             Expanded(
               child: ListView.builder(
@@ -509,76 +512,83 @@ class HomeScreen extends ConsumerWidget {
 
   /// 산책 시작하기 카드
   Widget _buildWalkStartCard(BuildContext context) {
-    return MingrrCard(
-      margin: EdgeInsets.zero,
-      child: Row(
-        children: [
-          // 아이콘
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.walk.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(
-              child: Icon(Icons.directions_walk, size: 28, color: AppColors.walk),
-            ),
+    return GestureDetector(
+      onTap: () => context.push('/walk'),
+      child: Container(
+        padding: const EdgeInsets.all(AppSizes.paddingM),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.walk,
+              AppColors.walk.withOpacity(0.8),
+            ],
           ),
-          const SizedBox(width: AppSizes.gapM),
-          // 텍스트
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '산책 시작하기',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  '산책을 시작하면 경로와 시간이 기록돼요',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.walk.withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
             ),
-          ),
-          // 토글 스위치
-          GestureDetector(
-            onTap: () => context.push('/walk'),
-            child: Container(
-              width: 52,
-              height: 28,
+          ],
+        ),
+        child: Row(
+          children: [
+            // 아이콘
+            Container(
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(14),
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(16),
               ),
-              child: Stack(
+              child: const Center(
+                child: Icon(Icons.pets, size: 32, color: Colors.white),
+              ),
+            ),
+            const SizedBox(width: AppSizes.gapM),
+            // 텍스트
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Positioned(
-                    left: 3,
-                    top: 3,
-                    child: Container(
-                      width: 22,
-                      height: 22,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
+                  Text(
+                    '산책하러 가기',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    '오늘도 반려동물과 함께 건강한 산책을!',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white70,
                     ),
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+            // 화살표
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_forward_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

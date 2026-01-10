@@ -104,7 +104,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             color: Colors.black.withOpacity(0.3),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+          child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
         ),
         onPressed: () {
           if (context.canPop()) {

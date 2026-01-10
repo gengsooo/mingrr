@@ -211,9 +211,9 @@ class CommunityProfileModal extends StatelessWidget {
           isIdentityVerified: true,
           isPetVerified: true,
           isLocationVerified: false,
-          dogs: [
-            GuardianDogInfo(
-              id: 'dog_${member.id}',
+          pets: [
+            GuardianPetInfo(
+              id: 'pet_${member.id}',
               name: '멍멍이',
               breed: '골든 리트리버',
               ageString: '3살',

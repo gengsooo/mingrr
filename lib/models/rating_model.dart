@@ -139,7 +139,7 @@ class PositiveRatingTags {
   static const List<String> dating = [
     '시간 약속을 잘 지켜요',
     '친절하고 매너가 좋아요',
-    '강아지를 잘 돌봐요',
+    '반려동물을 잘 돌봐요',
     '대화가 즐거웠어요',
     '다음에도 만나고 싶어요',
   ];
@@ -155,7 +155,7 @@ class PositiveRatingTags {
   static const List<String> breeding = [
     '시간 약속을 잘 지켜요',
     '친절하고 매너가 좋아요',
-    '강아지 건강 상태가 좋아요',
+    '반려동물 건강 상태가 좋아요',
     '정확한 정보를 제공해요',
     '책임감이 있어요',
   ];
@@ -166,7 +166,7 @@ class NegativeRatingTags {
   static const List<String> dating = [
     '시간 약속을 안 지켜요',
     '불친절해요',
-    '강아지 관리가 부족해요',
+    '반려동물 관리가 부족해요',
     '연락이 안 돼요',
     '노쇼했어요',
   ];
@@ -182,7 +182,7 @@ class NegativeRatingTags {
   static const List<String> breeding = [
     '시간 약속을 안 지켜요',
     '불친절해요',
-    '강아지 건강 정보가 부정확해요',
+    '반려동물 건강 정보가 부정확해요',
     '연락이 안 돼요',
     '노쇼했어요',
   ];

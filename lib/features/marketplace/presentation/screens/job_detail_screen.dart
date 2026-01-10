@@ -113,7 +113,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
             color: Colors.black.withOpacity(0.3),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+          child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
         ),
         onPressed: () => Navigator.pop(context),
       ),
@@ -278,9 +278,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       isIdentityVerified: true,
       isPetVerified: true,
       isLocationVerified: false,
-      dogs: [
-        GuardianDogInfo(
-          id: 'dog_1',
+      pets: [
+        GuardianPetInfo(
+          id: 'pet_1',
           name: '뿐삐',
           breed: '골든 리트리버',
           ageString: '3살',

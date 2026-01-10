@@ -127,7 +127,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             color: Colors.black.withOpacity(0.3),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+          child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
         ),
         onPressed: () => Navigator.pop(context),
       ),
@@ -290,9 +290,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       isIdentityVerified: true,
       isPetVerified: true,
       isLocationVerified: true,
-      dogs: [
-        GuardianDogInfo(
-          id: 'dog_1',
+      pets: [
+        GuardianPetInfo(
+          id: 'pet_1',
           name: '뽀삐',
           breed: '골든 리트리버',
           ageString: '3살',
@@ -446,9 +446,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       isIdentityVerified: index % 2 == 0,
       isPetVerified: true,
       isLocationVerified: index % 3 == 0,
-      dogs: [
-        GuardianDogInfo(
-          id: 'dog_$index',
+      pets: [
+        GuardianPetInfo(
+          id: 'pet_$index',
           name: index == 0 ? '초코' : '콩이',
           breed: index == 0 ? '말티즈' : '포메라니안',
           ageString: '${2 + index}살',

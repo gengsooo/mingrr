@@ -139,6 +139,9 @@ class DistanceFilterBar extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isDismissible: true,
+      enableDrag: true,
+      isScrollControlled: true,
       builder: (context) => DistanceBottomSheet(
         accentColor: accentColor,
         currentDistance: currentDistance,
@@ -174,79 +177,106 @@ class DistanceBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.5,
+      ),
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 드래그 핸들
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.divider,
-                  borderRadius: BorderRadius.circular(2),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 드래그 핸들
+          Center(
+            child: Container(
+              margin: const EdgeInsets.only(top: 12, bottom: 8),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.divider,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          // 헤더 (타이틀 + X 버튼)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                const SizedBox(width: 40), // X 버튼과 균형 맞추기
+                const Expanded(
+                  child: Text(
+                    '거리 설정',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-              ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                ),
+              ],
             ),
-            // 헤더
-            const Text(
-              '거리 설정',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
+          ),
+          // 안내 문구
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
               '집 주소 기준으로 필터링합니다',
               style: TextStyle(
                 fontSize: 13,
                 color: AppColors.textSecondary,
               ),
             ),
-            const SizedBox(height: 16),
-            
-            // 거리 옵션 목록 (스크롤 가능)
-            Flexible(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: distanceOptions.map((option) {
-                    final isSelected = currentDistance == option.km;
-                    return ListTile(
-                      onTap: () => onDistanceSelected(option.km),
-                      contentPadding: EdgeInsets.zero,
-                      leading: Icon(
-                        isSelected ? Icons.check_circle : Icons.circle_outlined,
-                        color: isSelected ? accentColor : AppColors.textHint,
-                      ),
-                      title: Text(
-                        option.label,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                          color: isSelected ? accentColor : AppColors.textPrimary,
-                        ),
-                      ),
-                      subtitle: Text(
-                        option.description,
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
+          ),
+          const SizedBox(height: 12),
+          // 구분선
+          const Divider(height: 1),
+          
+          // 거리 옵션 목록 (스크롤 가능)
+          Flexible(
+            child: ListView.builder(
+              shrinkWrap: true,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              itemCount: distanceOptions.length,
+              itemBuilder: (context, index) {
+                final option = distanceOptions[index];
+                final isSelected = currentDistance == option.km;
+                return ListTile(
+                  dense: true,
+                  visualDensity: VisualDensity.compact,
+                  onTap: () => onDistanceSelected(option.km),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                  leading: Icon(
+                    isSelected ? Icons.check_circle : Icons.circle_outlined,
+                    color: isSelected ? accentColor : AppColors.textHint,
+                    size: 22,
+                  ),
+                  title: Text(
+                    option.label,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      color: isSelected ? accentColor : AppColors.textPrimary,
+                    ),
+                  ),
+                  subtitle: Text(
+                    option.description,
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                );
+              },
             ),
-            const SizedBox(height: 16),
-          ],
-        ),
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+        ],
       ),
     );
   }
@@ -368,6 +398,8 @@ class LocationFilterBar extends StatelessWidget {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      isDismissible: true,
+      enableDrag: true,
       builder: (context) => LocationBottomSheet(
         accentColor: accentColor,
         selectedCity: selectedCity,

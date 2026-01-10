@@ -166,8 +166,8 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
                 _buildDateSelector(),
                 const SizedBox(height: AppSizes.gapL),
 
-                // 돌봄 대상 강아지
-                const Text('돌봄 대상 강아지', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                // 돌봄 대상 반려동물
+                const Text('돌봄 대상 반려동물', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: AppSizes.gapS),
                 _buildPetSelector(),
                 const SizedBox(height: AppSizes.gapL),
@@ -669,7 +669,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
                     Icon(Icons.add, size: 20, color: AppColors.market),
                     SizedBox(width: 8),
                     Text(
-                      '강아지 추가',
+                      '반려동물 추가',
                       style: TextStyle(color: AppColors.market, fontWeight: FontWeight.w500),
                     ),
                   ],
@@ -680,7 +680,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Text('강아지 목록을 불러올 수 없습니다'),
+      error: (_, __) => const Text('반려동물 목록을 불러올 수 없습니다'),
     );
   }
 
@@ -688,8 +688,8 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
     showPetSelectorSheet(
       context,
       pets: pets.cast<PetModel>(),
-      title: '강아지 선택',
-      description: '프로필에 등록된 강아지 중 선택해주세요',
+      title: '반려동물 선택',
+      description: '프로필에 등록된 반려동물 중 선택해주세요',
       accentColor: AppColors.market,
       onSelect: (pet) {
         if (!_selectedPetIds.contains(pet.id)) {

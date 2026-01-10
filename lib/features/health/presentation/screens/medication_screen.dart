@@ -9,18 +9,18 @@ import '../../../../core/widgets/confirm_bottom_sheet.dart';
 /// 약 종류별 아이콘 선택 및 관리 기능
 /// ============================================================
 
-/// 약 종류 enum
+/// 약 종류 enum - 모든 아이콘을 약 관련으로 통일
 enum MedicationType {
   pill('알약', Icons.medication, '💊'),
-  liquid('물약', Icons.water_drop, '🧪'),
+  capsule('캡슐', Icons.medication_liquid, '💊'),
+  liquid('물약', Icons.vaccines, '💧'),
   injection('주사', Icons.vaccines, '💉'),
-  ointment('연고', Icons.sanitizer, '🧴'),
-  eyeDrop('안약', Icons.remove_red_eye, '👁️'),
-  earDrop('귀약', Icons.hearing, '👂'),
-  powder('가루약', Icons.grain, '🌾'),
-  chewable('츄어블', Icons.cookie, '🍪'),
-  patch('패치', Icons.healing, '🩹'),
-  supplement('영양제', Icons.local_pharmacy, '💎');
+  ointment('연고', Icons.medication, '🧴'),
+  eyeDrop('안약', Icons.medication_liquid, '💧'),
+  earDrop('귀약', Icons.medication_liquid, '💧'),
+  powder('가루약', Icons.medication, '💊'),
+  chewable('츄어블', Icons.medication, '💊'),
+  supplement('영양제', Icons.local_pharmacy, '💊');
 
   final String label;
   final IconData icon;
@@ -915,34 +915,83 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   }
 
   Widget _buildEmojiSelector() {
-    final emojis = ['💊', '💉', '🧪', '🧴', '💎', '🌿', '🍀', '❤️', '⭐', '🔵', '🟢', '🟡'];
+    // 약 아이콘만 색상별로 제공 (알약 형태만)
+    final medicationIcons = [
+      {'icon': Icons.medication, 'color': AppColors.health, 'label': '기본'},
+      {'icon': Icons.medication, 'color': Colors.red, 'label': '빨강'},
+      {'icon': Icons.medication, 'color': Colors.orange, 'label': '주황'},
+      {'icon': Icons.medication, 'color': Colors.amber, 'label': '노랑'},
+      {'icon': Icons.medication, 'color': Colors.green, 'label': '초록'},
+      {'icon': Icons.medication, 'color': Colors.blue, 'label': '파랑'},
+      {'icon': Icons.medication, 'color': Colors.purple, 'label': '보라'},
+      {'icon': Icons.medication, 'color': Colors.pink, 'label': '분홍'},
+      {'icon': Icons.medication, 'color': Colors.teal, 'label': '청록'},
+      {'icon': Icons.medication, 'color': Colors.brown, 'label': '갈색'},
+      {'icon': Icons.medication, 'color': Colors.indigo, 'label': '남색'},
+      {'icon': Icons.medication, 'color': Colors.grey, 'label': '회색'},
+    ];
     
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: emojis.map((emoji) {
-        final isSelected = _customEmoji == emoji;
-        return GestureDetector(
-          onTap: () => setState(() {
-            _customEmoji = isSelected ? null : emoji;
-          }),
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: isSelected ? AppColors.health.withOpacity(0.15) : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected ? AppColors.health : AppColors.divider,
-                width: isSelected ? 2 : 1,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '약 아이콘 색상을 선택하세요',
+          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: medicationIcons.asMap().entries.map((entry) {
+            final index = entry.key;
+            final item = entry.value;
+            final isSelected = _customEmoji == index.toString();
+            return GestureDetector(
+              onTap: () => setState(() {
+                _customEmoji = isSelected ? null : index.toString();
+              }),
+              child: Column(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: isSelected 
+                          ? (item['color'] as Color).withOpacity(0.2) 
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected 
+                            ? (item['color'] as Color) 
+                            : AppColors.divider,
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        item['icon'] as IconData,
+                        size: 28,
+                        color: item['color'] as Color,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item['label'] as String,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isSelected 
+                          ? (item['color'] as Color) 
+                          : AppColors.textSecondary,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            child: Center(
-              child: Text(emoji, style: const TextStyle(fontSize: 20)),
-            ),
-          ),
-        );
-      }).toList(),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 

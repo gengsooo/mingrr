@@ -139,14 +139,10 @@ class MarketplaceScreen extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddSheet(context, selectedTab),
         backgroundColor: AppColors.market,
-        icon: const Icon(Icons.add, color: Colors.white, size: 20),
-        label: const Text(
-          '글쓰기',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
-        ),
+        child: const Icon(Icons.edit, color: Colors.white),
       ),
     );
   }
@@ -332,7 +328,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
   late MarketWriteType _selectedType;
   String? _selectedJobCategory;
   JobPayType _payType = JobPayType.total;
-  final List<Map<String, String>> _selectedDogs = [];
+  final List<Map<String, String>> _selectedPets = [];
 
   @override
   void initState() {
@@ -615,13 +611,13 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
         ),
         const SizedBox(height: AppSizes.gapL),
 
-        // 강아지 추가
-        const Text('돌봄 대상 강아지', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        // 반려동물 추가
+        const Text('돌봄 대상 반려동물', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         const SizedBox(height: AppSizes.gapS),
-        // 추가된 강아지 목록
-        if (_selectedDogs.isNotEmpty) ...[
-          ...List.generate(_selectedDogs.length, (index) {
-            final dog = _selectedDogs[index];
+        // 추가된 반려동물 목록
+        if (_selectedPets.isNotEmpty) ...[
+          ...List.generate(_selectedPets.length, (index) {
+            final pet = _selectedPets[index];
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(12),
@@ -638,18 +634,18 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          dog['name'] ?? '',
+                          pet['name'] ?? '',
                           style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
                         Text(
-                          '${dog['breed']} · ${dog['weight']}kg',
+                          '${pet['breed']} · ${pet['weight']}kg',
                           style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                         ),
                       ],
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => setState(() => _selectedDogs.removeAt(index)),
+                    onTap: () => setState(() => _selectedPets.removeAt(index)),
                     child: const Icon(Icons.close, size: 18, color: AppColors.textHint),
                   ),
                 ],
@@ -657,9 +653,9 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
             );
           }),
         ],
-        // 강아지 추가 버튼
+        // 반려동물 추가 버튼
         GestureDetector(
-          onTap: _showAddDogDialog,
+          onTap: _showAddPetDialog,
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -672,7 +668,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                 Icon(Icons.add, size: 20, color: AppColors.market),
                 SizedBox(width: 8),
                 Text(
-                  '강아지 추가',
+                  '반려동물 추가',
                   style: TextStyle(color: AppColors.market, fontWeight: FontWeight.w500),
                 ),
               ],
@@ -739,13 +735,13 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
     );
   }
 
-  /// 등록된 강아지에서 선택하는 바텀시트
-  void _showAddDogDialog() {
-    // 데모용 등록된 강아지 목록 (실제로는 Provider에서 가져옴)
-    final myDogs = [
-      {'id': 'dog_1', 'name': '뽀삐', 'breed': '골든 리트리버', 'weight': '28.5'},
-      {'id': 'dog_2', 'name': '초코', 'breed': '말티즈', 'weight': '3.2'},
-      {'id': 'dog_3', 'name': '콩이', 'breed': '포메라니안', 'weight': '4.5'},
+  /// 등록된 반려동물에서 선택하는 바텀시트
+  void _showAddPetDialog() {
+    // 데모용 등록된 반려동물 목록 (실제로는 Provider에서 가져옴)
+    final myPets = [
+      {'id': 'pet_1', 'name': '뽀삐', 'breed': '골든 리트리버', 'weight': '28.5'},
+      {'id': 'pet_2', 'name': '초코', 'breed': '말티즈', 'weight': '3.2'},
+      {'id': 'pet_3', 'name': '콩이', 'breed': '포메라니안', 'weight': '4.5'},
     ];
 
     showModalBottomSheet(
@@ -773,22 +769,22 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
             ),
             const SizedBox(height: 16),
             const Text(
-              '강아지 선택',
+              '반려동물 선택',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
             const Text(
-              '프로필에 등록된 강아지 중 선택해주세요',
+              '프로필에 등록된 반려동물 중 선택해주세요',
               style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
-            // 등록된 강아지 목록
-            ...myDogs.map((dog) {
-              final isAlreadySelected = _selectedDogs.any((d) => d['id'] == dog['id']);
+            // 등록된 반려동물 목록
+            ...myPets.map((pet) {
+              final isAlreadySelected = _selectedPets.any((d) => d['id'] == pet['id']);
               return GestureDetector(
                 onTap: isAlreadySelected ? null : () {
                   setState(() {
-                    _selectedDogs.add(dog);
+                    _selectedPets.add(pet);
                   });
                   Navigator.pop(ctx);
                 },
@@ -821,7 +817,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              dog['name']!,
+                              pet['name']!,
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 color: isAlreadySelected 
@@ -831,7 +827,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${dog['breed']} · ${dog['weight']}kg',
+                              '${pet['breed']} · ${pet['weight']}kg',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: isAlreadySelected 

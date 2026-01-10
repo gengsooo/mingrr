@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
-import 'common_widgets.dart';
 import 'warmth_score.dart';
-import 'verification_badge.dart';
 import 'guardian_profile_modal.dart';
 import 'trait_badge.dart';
 
 /// ============================================================
-/// 강아지 프로필 모달
+/// 반려동물 프로필 모달
 /// 
-/// 데이팅 채팅에서 강아지 프로필을 표시할 때 사용
+/// 데이팅 채팅에서 반려동물 프로필을 표시할 때 사용
 /// ============================================================
 
-/// 강아지 프로필 모달 표시 함수
-void showDogProfileModal(
+/// 반려동물 프로필 모달 표시 함수
+void showPetProfileModal(
   BuildContext context, {
-  required String dogId,
-  required String dogName,
+  required String petId,
+  required String petName,
   String? breed,
   int? age,
   String? gender,
@@ -33,15 +32,19 @@ void showDogProfileModal(
   bool isLocationVerified = false,
   GuardianInfo? guardianInfo,
 }) {
-  showModalBottomSheet(
+  // 상위 컨텍스트의 ScaffoldMessenger 저장 (바텀시트 닫힌 후에도 스낵바 표시 가능)
+  final rootScaffoldMessenger = ScaffoldMessenger.of(context);
+  
+  showModalBottomSheet<Map<String, dynamic>>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     isDismissible: true,
     enableDrag: true,
-    builder: (context) => DogProfileModal(
-      dogId: dogId,
-      dogName: dogName,
+    builder: (sheetContext) => PetProfileModal(
+      rootScaffoldMessenger: rootScaffoldMessenger,
+      petId: petId,
+      petName: petName,
       breed: breed,
       age: age,
       gender: gender,
@@ -56,7 +59,52 @@ void showDogProfileModal(
       isLocationVerified: isLocationVerified,
       guardianInfo: guardianInfo,
     ),
-  );
+  ).then((result) async {
+    // 바텀시트가 닫힌 후 보호자 정보 모달 다시 열기
+    if (guardianInfo != null) {
+      // Firebase에서 최신 pets 정보 로드
+      List<GuardianPetInfo> updatedPets = [];
+      for (final pet in guardianInfo.pets) {
+        try {
+          final petDoc = await FirebaseFirestore.instance
+              .collection('pets')
+              .doc(pet.id)
+              .get();
+          final updatedLikeCount = petDoc.exists 
+              ? (petDoc.data()?['likeCount'] ?? pet.likeCount) 
+              : pet.likeCount;
+          updatedPets.add(GuardianPetInfo(
+            id: pet.id,
+            name: pet.name,
+            breed: pet.breed,
+            ageString: pet.ageString,
+            introduction: pet.introduction,
+            traits: pet.traits,
+            photoUrls: pet.photoUrls,
+            profileImageUrl: pet.profileImageUrl,
+            likeCount: updatedLikeCount,
+          ));
+        } catch (e) {
+          updatedPets.add(pet);
+        }
+      }
+      
+      Future.delayed(const Duration(milliseconds: 100), () {
+        showGuardianProfileModal(
+          context,
+          guardianId: guardianInfo.id,
+          guardianName: guardianInfo.nickname,
+          kkosunnaeScore: guardianInfo.kkosunnaeScore,
+          gender: guardianInfo.gender,
+          age: guardianInfo.age,
+          isIdentityVerified: guardianInfo.isIdentityVerified,
+          isPetVerified: guardianInfo.isPetVerified,
+          isLocationVerified: guardianInfo.isLocationVerified,
+          pets: updatedPets,
+        );
+      });
+    }
+  });
 }
 
 /// 보호자 정보
@@ -69,6 +117,7 @@ class GuardianInfo {
   final bool isIdentityVerified;
   final bool isPetVerified;
   final bool isLocationVerified;
+  final List<GuardianPetInfo> pets;
 
   const GuardianInfo({
     required this.id,
@@ -79,13 +128,15 @@ class GuardianInfo {
     this.isIdentityVerified = false,
     this.isPetVerified = false,
     this.isLocationVerified = false,
+    this.pets = const [],
   });
 }
 
-/// 강아지 프로필 모달 위젯
-class DogProfileModal extends StatefulWidget {
-  final String dogId;
-  final String dogName;
+/// 반려동물 프로필 모달 위젯
+class PetProfileModal extends StatefulWidget {
+  final ScaffoldMessengerState? rootScaffoldMessenger;
+  final String petId;
+  final String petName;
   final String? breed;
   final int? age;
   final String? gender;
@@ -100,10 +151,11 @@ class DogProfileModal extends StatefulWidget {
   final bool isLocationVerified;
   final GuardianInfo? guardianInfo;
 
-  const DogProfileModal({
+  const PetProfileModal({
     super.key,
-    required this.dogId,
-    required this.dogName,
+    this.rootScaffoldMessenger,
+    required this.petId,
+    required this.petName,
     this.breed,
     this.age,
     this.gender,
@@ -120,53 +172,115 @@ class DogProfileModal extends StatefulWidget {
   });
 
   @override
-  State<DogProfileModal> createState() => _DogProfileModalState();
+  State<PetProfileModal> createState() => _PetProfileModalState();
 }
 
-class _DogProfileModalState extends State<DogProfileModal> {
-  late bool isLiked;
-  late int currentLikeCount;
+class _PetProfileModalState extends State<PetProfileModal> {
+  bool _isLiked = false;
+  int _currentLikeCount = 0;
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    isLiked = false;
-    currentLikeCount = widget.likeCount;
+    _currentLikeCount = widget.likeCount;
+    _loadLikeStatus();
   }
 
-  Future<void> _toggleLike() async {
-    setState(() {
-      isLiked = !isLiked;
-      currentLikeCount = isLiked ? currentLikeCount + 1 : currentLikeCount - 1;
-    });
-    
+  /// Firebase에서 좋아요 상태 로드
+  Future<void> _loadLikeStatus() async {
     try {
-      // Firebase에 좋아요 수 업데이트
-      final petRef = FirebaseFirestore.instance.collection('pets').doc(widget.dogId);
-      await petRef.update({
-        'likeCount': FieldValue.increment(isLiked ? 1 : -1),
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // 반려동물의 좋아요 수 조회
+      final petDoc = await FirebaseFirestore.instance
+          .collection('pets')
+          .doc(widget.petId)
+          .get();
+      if (petDoc.exists) {
+        final data = petDoc.data();
+        setState(() {
+          _currentLikeCount = data?['likeCount'] ?? widget.likeCount;
+        });
+      }
+
+      // 내가 좋아요 했는지 확인
+      final likeDoc = await FirebaseFirestore.instance
+          .collection('likes')
+          .doc('${currentUser.uid}_${widget.petId}')
+          .get();
+      
+      setState(() {
+        _isLiked = likeDoc.exists;
+        _isLoading = false;
       });
     } catch (e) {
-      // 오류 발생 시 원래 상태로 복구
-      setState(() {
-        isLiked = !isLiked;
-        currentLikeCount = isLiked ? currentLikeCount + 1 : currentLikeCount - 1;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('좋아요 처리 중 오류가 발생했습니다')),
-        );
-      }
+      debugPrint('좋아요 상태 로드 오류: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  /// 좋아요 토글
+  Future<void> _toggleLike() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('로그인이 필요합니다')),
+      );
       return;
     }
-    
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
+
+    final likeDocId = '${currentUser.uid}_${widget.petId}';
+    final wasLiked = _isLiked;
+
+    // 낙관적 업데이트
+    setState(() {
+      _isLiked = !_isLiked;
+      _currentLikeCount += _isLiked ? 1 : -1;
+    });
+
+    try {
+      if (wasLiked) {
+        // 좋아요 취소
+        await FirebaseFirestore.instance.collection('likes').doc(likeDocId).delete();
+        await FirebaseFirestore.instance.collection('pets').doc(widget.petId).update({
+          'likeCount': FieldValue.increment(-1),
+        });
+      } else {
+        // 좋아요 추가
+        await FirebaseFirestore.instance.collection('likes').doc(likeDocId).set({
+          'userId': currentUser.uid,
+          'petId': widget.petId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        await FirebaseFirestore.instance.collection('pets').doc(widget.petId).update({
+          'likeCount': FieldValue.increment(1),
+        });
+      }
+      
+      // 스낵바 표시 (rootScaffoldMessenger 사용하여 바텀시트에서도 표시)
+      final messenger = widget.rootScaffoldMessenger ?? ScaffoldMessenger.of(context);
+      messenger.showSnackBar(
         SnackBar(
-          content: Text(isLiked ? '${widget.dogName}에게 좋아요를 보냈어요! ❤️' : '좋아요를 취소했어요'),
+          content: Text(_isLiked ? '${widget.petName}에게 좋아요를 보냈어요! ❤️' : '좋아요를 취소했어요'),
           duration: const Duration(seconds: 1),
         ),
       );
+    } catch (e) {
+      // 실패 시 롤백
+      setState(() {
+        _isLiked = wasLiked;
+        _currentLikeCount += wasLiked ? 1 : -1;
+      });
+      final messenger = widget.rootScaffoldMessenger ?? ScaffoldMessenger.of(context);
+      messenger.showSnackBar(
+        const SnackBar(content: Text('좋아요 처리 중 오류가 발생했습니다')),
+      );
+      debugPrint('좋아요 토글 오류: $e');
     }
   }
 
@@ -209,24 +323,7 @@ class _DogProfileModalState extends State<DogProfileModal> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    if (widget.guardianInfo != null) {
-                      Future.delayed(const Duration(milliseconds: 300), () {
-                        showGuardianProfileModal(
-                          context,
-                          guardianId: widget.guardianInfo!.id,
-                          guardianName: widget.guardianInfo!.nickname,
-                          kkosunnaeScore: widget.guardianInfo!.kkosunnaeScore,
-                          gender: widget.guardianInfo!.gender,
-                          age: widget.guardianInfo!.age,
-                          isIdentityVerified: widget.guardianInfo!.isIdentityVerified,
-                          isPetVerified: widget.guardianInfo!.isPetVerified,
-                          isLocationVerified: widget.guardianInfo!.isLocationVerified,
-                        );
-                      });
-                    }
-                  },
+                  onPressed: () => Navigator.pop(context),
                 ),
               ],
             ),
@@ -241,8 +338,8 @@ class _DogProfileModalState extends State<DogProfileModal> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 강아지 기본 정보
-                  _buildDogInfo(),
+                  // 반려동물 기본 정보
+                  _buildPetInfo(),
                   const SizedBox(height: AppSizes.gapL),
                   
                   // 사진 갤러리
@@ -403,8 +500,8 @@ class _DogProfileModalState extends State<DogProfileModal> {
     );
   }
 
-  /// 강아지 기본 정보
-  Widget _buildDogInfo() {
+  /// 반려동물 기본 정보
+  Widget _buildPetInfo() {
     final isMale = widget.gender == 'male' || widget.gender == '남아';
     final genderText = isMale ? '남아' : '여아';
     
@@ -448,7 +545,7 @@ class _DogProfileModalState extends State<DogProfileModal> {
               Row(
                 children: [
                   Text(
-                    widget.dogName,
+                    widget.petName,
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
@@ -470,13 +567,13 @@ class _DogProfileModalState extends State<DogProfileModal> {
                       child: Row(
                         children: [
                           Icon(
-                            isLiked ? Icons.favorite : Icons.favorite_border,
+                            _isLiked ? Icons.favorite : Icons.favorite_border,
                             size: 24,
                             color: AppColors.dating,
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '$currentLikeCount',
+                            '$_currentLikeCount',
                             style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,

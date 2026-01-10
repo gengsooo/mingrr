@@ -32,7 +32,7 @@ class WalkRecordDetailScreen extends StatelessWidget {
             pinned: true,
             backgroundColor: AppColors.walk,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
               onPressed: () => Navigator.pop(context),
             ),
             actions: [

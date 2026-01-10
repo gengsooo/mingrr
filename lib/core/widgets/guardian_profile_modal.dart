@@ -4,7 +4,7 @@ import '../constants/app_sizes.dart';
 import 'common_widgets.dart';
 import 'warmth_score.dart';
 import 'verification_badge.dart';
-import 'dog_profile_modal.dart';
+import 'pet_profile_modal.dart';
 import 'rating_modal.dart';
 /// ============================================================
 /// 보호자 프로필 모달 (공통 위젯)
@@ -19,7 +19,7 @@ import 'rating_modal.dart';
 /// - 닉네임
 /// - 꼬순내지수
 /// - 인증 배지
-/// - 등록된 강아지 정보
+/// - 등록된 반려동물 정보
 /// - 활동 기록 (횟수만)
 /// ============================================================
 
@@ -45,7 +45,7 @@ void showGuardianProfileModal(
   bool isIdentityVerified = false,
   bool isPetVerified = false,
   bool isLocationVerified = false,
-  List<GuardianDogInfo> dogs = const [],
+  List<GuardianPetInfo> pets = const [],
   GuardianActivityInfo? activityInfo,
 }) {
   showModalBottomSheet(
@@ -64,14 +64,14 @@ void showGuardianProfileModal(
       isIdentityVerified: isIdentityVerified,
       isPetVerified: isPetVerified,
       isLocationVerified: isLocationVerified,
-      dogs: dogs,
+      pets: pets,
       activityInfo: activityInfo,
     ),
   );
 }
 
-/// 보호자의 강아지 정보
-class GuardianDogInfo {
+/// 보호자의 반려동물 정보
+class GuardianPetInfo {
   final String id;
   final String name;
   final String? breed;
@@ -82,7 +82,7 @@ class GuardianDogInfo {
   final String? introduction;
   final int likeCount;
 
-  const GuardianDogInfo({
+  const GuardianPetInfo({
     required this.id,
     required this.name,
     this.breed,
@@ -121,7 +121,7 @@ class GuardianProfileModal extends StatelessWidget {
   final bool isIdentityVerified;
   final bool isPetVerified;
   final bool isLocationVerified;
-  final List<GuardianDogInfo> dogs;
+  final List<GuardianPetInfo> pets;
   final GuardianActivityInfo? activityInfo;
 
   const GuardianProfileModal({
@@ -135,7 +135,7 @@ class GuardianProfileModal extends StatelessWidget {
     this.isIdentityVerified = false,
     this.isPetVerified = false,
     this.isLocationVerified = false,
-    this.dogs = const [],
+    this.pets = const [],
     this.activityInfo,
   });
 
@@ -152,9 +152,9 @@ class GuardianProfileModal extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 핸들
+          // 드래그 핸들
           Container(
-            margin: const EdgeInsets.only(top: 12),
+            margin: const EdgeInsets.only(top: 12, bottom: 8),
             width: 40,
             height: 4,
             decoration: BoxDecoration(
@@ -165,7 +165,7 @@ class GuardianProfileModal extends StatelessWidget {
           
           // 헤더
           Padding(
-            padding: const EdgeInsets.all(AppSizes.paddingM),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
             child: Row(
               children: [
                 const SizedBox(width: 40),
@@ -203,8 +203,8 @@ class GuardianProfileModal extends StatelessWidget {
                   
                   const SizedBox(height: AppSizes.gapXL),
                   
-                  // 등록된 강아지 (항상 표시)
-                  _buildDogsSection(context),
+                  // 등록된 반려동물 (항상 표시)
+                  _buildPetsSection(context),
                   const SizedBox(height: AppSizes.gapXL),
                   
                   // 활동 기록 (항상 표시)
@@ -402,46 +402,58 @@ class GuardianProfileModal extends StatelessWidget {
     );
   }
 
-  /// 등록된 강아지 섹션
-  Widget _buildDogsSection(BuildContext context) {
+  /// 등록된 반려동물 섹션
+  Widget _buildPetsSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '반려동물 (${dogs.length})',
+          '반려동물 (${pets.length})',
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: AppSizes.gapS),
-        ...dogs.map((dog) => _buildDogItem(context, dog)),
+        ...pets.map((pet) => _buildPetItem(context, pet)),
       ],
     );
   }
 
-  /// 강아지 아이템 (클릭 시 강아지 프로필 모달)
-  Widget _buildDogItem(BuildContext context, GuardianDogInfo dog) {
+  /// 반려동물 아이템 (클릭 시 반려동물 프로필 모달)
+  Widget _buildPetItem(BuildContext context, GuardianPetInfo pet) {
+    // 상위 Navigator context 저장 (pop 후에도 사용 가능)
+    final rootContext = Navigator.of(context, rootNavigator: true).context;
+    
     return GestureDetector(
       onTap: () {
+        // 보호자 모달 닫기
         Navigator.pop(context);
-        showDogProfileModal(
-          context,
-          dogId: dog.id,
-          dogName: dog.name,
-          breed: dog.breed,
-          age: dog.ageString != null ? int.tryParse(dog.ageString!.replaceAll(RegExp(r'[^0-9]'), '')) : null,
-          gender: 'male',
-          introduction: dog.introduction ?? '안녕하세요! 저는 ${dog.name}예요.',
-          traits: dog.traits,
-          photoUrls: dog.photoUrls,
-          profileImageUrl: dog.profileImageUrl,
-          likeCount: dog.likeCount,
-          guardianInfo: GuardianInfo(
-            id: guardianId,
-            nickname: guardianName,
-            kkosunnaeScore: kkosunnaeScore,
-            gender: gender,
-            age: age,
-          ),
-        );
+        
+        // 약간의 딜레이 후 반려동물 모달 열기
+        Future.delayed(const Duration(milliseconds: 150), () {
+          showPetProfileModal(
+            rootContext,
+            petId: pet.id,
+            petName: pet.name,
+            breed: pet.breed,
+            age: pet.ageString != null ? int.tryParse(pet.ageString!.replaceAll(RegExp(r'[^0-9]'), '')) : null,
+            gender: 'male',
+            introduction: pet.introduction ?? '안녕하세요! 저는 ${pet.name}예요.',
+            traits: pet.traits,
+            photoUrls: pet.photoUrls,
+            profileImageUrl: pet.profileImageUrl,
+            likeCount: pet.likeCount,
+            guardianInfo: GuardianInfo(
+              id: guardianId,
+              nickname: guardianName,
+              kkosunnaeScore: kkosunnaeScore,
+              gender: gender,
+              age: age,
+              isIdentityVerified: isIdentityVerified,
+              isPetVerified: isPetVerified,
+              isLocationVerified: isLocationVerified,
+              pets: pets,
+            ),
+          );
+        });
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
@@ -452,33 +464,33 @@ class GuardianProfileModal extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // 강아지 프로필 이미지 (원형)
+            // 반려동물 프로필 이미지 (원형)
             Container(
               width: 50,
               height: 50,
               decoration: BoxDecoration(
                 color: AppColors.primaryLight,
                 shape: BoxShape.circle,
-                image: dog.profileImageUrl != null && !dog.profileImageUrl!.startsWith('default_avatar:')
+                image: pet.profileImageUrl != null && !pet.profileImageUrl!.startsWith('default_avatar:')
                     ? DecorationImage(
-                        image: NetworkImage(dog.profileImageUrl!),
+                        image: NetworkImage(pet.profileImageUrl!),
                         fit: BoxFit.cover,
                       )
                     : null,
               ),
-              child: dog.profileImageUrl == null || dog.profileImageUrl!.startsWith('default_avatar:')
+              child: pet.profileImageUrl == null || pet.profileImageUrl!.startsWith('default_avatar:')
                   ? const Icon(Icons.pets, size: 24, color: AppColors.primary)
                   : null,
             ),
             const SizedBox(width: 12),
             
-            // 강아지 정보
+            // 반려동물 정보
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    dog.name,
+                    pet.name,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -486,7 +498,7 @@ class GuardianProfileModal extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    [dog.breed, dog.ageString].whereType<String>().join(' · '),
+                    [pet.breed, pet.ageString].whereType<String>().join(' · '),
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
@@ -503,7 +515,7 @@ class GuardianProfileModal extends StatelessWidget {
                 const Icon(Icons.favorite, size: 14, color: AppColors.error),
                 const SizedBox(width: 4),
                 Text(
-                  '${dog.likeCount}',
+                  '${pet.likeCount}',
                   style: const TextStyle(
                     fontSize: 12,
                     color: AppColors.textSecondary,

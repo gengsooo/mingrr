@@ -697,6 +697,47 @@ class DefaultPetImage extends StatelessWidget {
 }
 
 // ===== 섹션 헤더 =====
+/// 공통 뒤로가기 버튼
+/// 화면 상단에 사용되는 통일된 뒤로가기 버튼
+class MingrrBackButton extends StatelessWidget {
+  final VoidCallback? onPressed;
+  final Color? backgroundColor;
+  final Color? iconColor;
+  final bool isClose; // true면 X 아이콘, false면 화살표 아이콘
+
+  const MingrrBackButton({
+    super.key,
+    this.onPressed,
+    this.backgroundColor,
+    this.iconColor,
+    this.isClose = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: backgroundColor ?? Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+          ),
+        ],
+      ),
+      child: IconButton(
+        icon: Icon(
+          isClose ? Icons.close : Icons.arrow_back_ios_new,
+          size: 20,
+          color: iconColor ?? AppColors.textPrimary,
+        ),
+        onPressed: onPressed ?? () => Navigator.pop(context),
+      ),
+    );
+  }
+}
+
 /// 리스트 섹션의 제목 표시
 class MingrrSectionHeader extends StatelessWidget {
   final String title;

@@ -76,7 +76,7 @@ class ProfileScreen extends ConsumerWidget {
             pinned: true,
             backgroundColor: AppColors.primary,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+              icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.textPrimary, size: 20),
               onPressed: () {
                 if (context.canPop()) {
                   context.pop();

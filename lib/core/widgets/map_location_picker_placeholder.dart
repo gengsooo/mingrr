@@ -1,12 +1,15 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 
 /// ============================================================
-/// 지도 위치 선택 화면 (플레이스홀더)
-/// 실제 기기에서는 카카오 지도 사용
-/// 에뮬레이터에서는 좌표 직접 입력 방식
+/// 지도 위치 선택 화면
+/// 모바일: 카카오맵 사용
+/// 웹: 플레이스홀더 표시
 /// ============================================================
 
 /// 위치 좌표 클래스 (카카오 LatLng 대체)
@@ -55,9 +58,18 @@ class MapLocationPickerPlaceholder extends StatefulWidget {
 class _MapLocationPickerPlaceholderState extends State<MapLocationPickerPlaceholder> {
   LocationCoord? _selectedPosition;
   bool _isLoading = true;
+  KakaoMapController? _mapController;
+  StreamSubscription<CameraMoveEndEvent>? _cameraMoveEndSubscription;
 
   // 기본 위치 (서울 시청)
   static const LocationCoord _defaultPosition = LocationCoord(latitude: 37.5665, longitude: 126.9780);
+  
+  @override
+  void dispose() {
+    _cameraMoveEndSubscription?.cancel();
+    _mapController?.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -150,25 +162,23 @@ class _MapLocationPickerPlaceholderState extends State<MapLocationPickerPlacehol
             )
           : Stack(
               children: [
-                // 지도 플레이스홀더
-                Container(
-                  width: double.infinity,
-                  height: double.infinity,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        widget.accentColor.withOpacity(0.1),
-                        widget.accentColor.withOpacity(0.2),
-                      ],
-                    ),
+                // 카카오맵 또는 웹 플레이스홀더
+                if (kIsWeb)
+                  _buildWebPlaceholder()
+                else
+                  Builder(
+                    builder: (context) {
+                      debugPrint('🗺️ KakaoMap 위젯 빌드 시작');
+                      debugPrint('🗺️ 초기 위치: ${_selectedPosition!.latitude}, ${_selectedPosition!.longitude}');
+                      return KakaoMap(
+                        onMapCreated: _onMapCreated,
+                        initialPosition: LatLng(
+                          latitude: _selectedPosition!.latitude,
+                          longitude: _selectedPosition!.longitude,
+                        ),
+                      );
+                    },
                   ),
-                  child: CustomPaint(
-                    size: Size.infinite,
-                    painter: _GridPainter(widget.accentColor),
-                  ),
-                ),
 
                 // 중앙 핀 (고정)
                 Center(
@@ -188,27 +198,6 @@ class _MapLocationPickerPlaceholderState extends State<MapLocationPickerPlacehol
                           shape: BoxShape.circle,
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                            ),
-                          ],
-                        ),
-                        child: const Text(
-                          '실제 기기에서 지도가 표시됩니다',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -216,10 +205,11 @@ class _MapLocationPickerPlaceholderState extends State<MapLocationPickerPlacehol
                 // 내 위치 버튼
                 Positioned(
                   right: AppSizes.paddingM,
-                  bottom: 120,
+                  bottom: 140,
                   child: FloatingActionButton.small(
                     heroTag: 'myLocation',
                     backgroundColor: Colors.white,
+                    elevation: 4,
                     onPressed: _goToMyLocation,
                     child: Icon(
                       Icons.my_location,
@@ -304,21 +294,118 @@ class _MapLocationPickerPlaceholderState extends State<MapLocationPickerPlacehol
     );
   }
 
+  /// 카카오맵 생성 콜백
+  void _onMapCreated(KakaoMapController controller) {
+    debugPrint('✅ KakaoMap 생성 완료!');
+    _mapController = controller;
+    
+    // 카메라 이동 완료 이벤트 리스너 - 중앙 위치 업데이트
+    _cameraMoveEndSubscription = controller.onCameraMoveEndStream.listen((event) {
+      debugPrint('📍 카메라 이동: ${event.latitude}, ${event.longitude}');
+      setState(() {
+        _selectedPosition = LocationCoord(
+          latitude: event.latitude,
+          longitude: event.longitude,
+        );
+      });
+    });
+  }
+  
+  /// 웹용 플레이스홀더
+  Widget _buildWebPlaceholder() {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            widget.accentColor.withOpacity(0.1),
+            widget.accentColor.withOpacity(0.2),
+          ],
+        ),
+      ),
+      child: CustomPaint(
+        size: Size.infinite,
+        painter: _GridPainter(widget.accentColor),
+      ),
+    );
+  }
+
   Future<void> _goToMyLocation() async {
     try {
+      // 위치 서비스 활성화 확인
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('위치 서비스를 활성화해주세요'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        return;
+      }
+      
+      // 위치 권한 확인
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('위치 권한을 허용해주세요'),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+          return;
+        }
+      }
+      
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('설정에서 위치 권한을 허용해주세요'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+        return;
+      }
+      
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
-        timeLimit: const Duration(seconds: 5),
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
       );
 
       setState(() {
         _selectedPosition = LocationCoord(latitude: position.latitude, longitude: position.longitude);
       });
+      
+      // 카카오맵 카메라 이동
+      if (_mapController != null && !kIsWeb) {
+        await _mapController!.moveCamera(
+          cameraUpdate: CameraUpdate.fromLatLng(
+            LatLng(latitude: position.latitude, longitude: position.longitude),
+          ),
+          animation: const CameraAnimation(
+            duration: 500,
+            autoElevation: false,
+            isConsecutive: false,
+          ),
+        );
+      }
     } catch (e) {
+      debugPrint('현재 위치 가져오기 실패: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('현재 위치를 가져올 수 없습니다'),
+            content: Text('현재 위치를 가져올 수 없습니다. 잠시 후 다시 시도해주세요'),
             backgroundColor: AppColors.error,
           ),
         );

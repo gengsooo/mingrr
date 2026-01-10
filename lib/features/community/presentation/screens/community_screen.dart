@@ -10,7 +10,7 @@ import '../../../../core/widgets/profile_icon.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../profile/presentation/providers/profile_provider.dart';
 import '../providers/community_provider.dart';
-import 'community_detail_screen.dart';
+import 'group_detail_screen.dart';
 import 'group_write_screen.dart';
 
 /// ============================================================
@@ -312,14 +312,10 @@ class CommunityScreen extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _showCreateGroupSheet(context),
         backgroundColor: AppColors.community,
-        icon: const Icon(Icons.add, color: Colors.white, size: 20),
-        label: const Text(
-          '만들기',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
-        ),
+        child: const Icon(Icons.edit, color: Colors.white),
       ),
     );
   }
@@ -751,7 +747,7 @@ class CommunityScreen extends ConsumerWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CommunityDetailScreen(communityId: id, isJoined: true),
+            builder: (context) => GroupDetailScreen(groupId: id),
           ),
         );
       },
@@ -819,8 +815,8 @@ class CommunityScreen extends ConsumerWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CommunityDetailScreen(
-              communityId: id ?? name.hashCode.toString(),
+            builder: (context) => GroupDetailScreen(
+              groupId: id ?? name.hashCode.toString(),
             ),
           ),
         );
@@ -985,34 +981,57 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
       height: MediaQuery.of(context).size.height * 0.7,
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
-          // 헤더
+          // 드래그 핸들
           Container(
-            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(top: 12, bottom: 8),
+            width: 40,
+            height: 4,
             decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.divider.withOpacity(0.5))),
+              color: AppColors.divider,
+              borderRadius: BorderRadius.circular(2),
             ),
+          ),
+          // 헤더 (초기화 + 타이틀 + X버튼)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
             child: Row(
               children: [
-                const Text('지역 선택', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                const Spacer(),
+                // 초기화 버튼 (왼쪽)
                 TextButton(
                   onPressed: () {
-                    // 임시 상태만 초기화 (적용된 상태는 유지)
                     setState(() {
                       tempSelectedLocations = [];
                       selectedProvince = null;
                       selectedCity = null;
                     });
                   },
-                  child: const Text('초기화'),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    minimumSize: const Size(40, 40),
+                  ),
+                  child: const Text('초기화', style: TextStyle(fontSize: 14)),
+                ),
+                const Expanded(
+                  child: Text(
+                    '지역 선택',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                 ),
               ],
             ),
           ),
+          const Divider(height: 1),
           
           // 선택된 지역 표시 (임시 상태 기준)
           if (tempSelectedLocations.isNotEmpty)

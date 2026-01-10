@@ -12,12 +12,12 @@ import '../services/image_crop_service.dart';
 /// 기능:
 /// - 카메라 촬영
 /// - 갤러리에서 선택
-/// - 대표 아이콘 선택 (강아지/사람)
+/// - 대표 아이콘 선택 (반려동물/사람)
 /// ============================================================
 
 /// 대표 아이콘 타입
 enum DefaultAvatarType {
-  dog,    // 강아지용 아이콘
+  pet,    // 반려동물용 아이콘
   person, // 사람용 아이콘
 }
 
@@ -36,8 +36,8 @@ class DefaultAvatar {
   });
 }
 
-/// 강아지용 대표 아이콘 목록
-final List<DefaultAvatar> dogDefaultAvatars = [
+/// 반려동물용 대표 아이콘 목록
+final List<DefaultAvatar> petDefaultAvatars = [
   DefaultAvatar(
     id: 'dog_1',
     icon: Icons.pets,
@@ -160,7 +160,7 @@ class ImagePickerResult {
 Future<ImagePickerResult?> showImagePickerSheet(
   BuildContext context, {
   required String title,
-  DefaultAvatarType avatarType = DefaultAvatarType.dog,
+  DefaultAvatarType avatarType = DefaultAvatarType.pet,
   String? currentImageUrl,
   DefaultAvatar? currentDefaultAvatar,
   bool allowClear = true,
@@ -196,7 +196,7 @@ class ImagePickerSheet extends StatefulWidget {
   const ImagePickerSheet({
     super.key,
     required this.title,
-    this.avatarType = DefaultAvatarType.dog,
+    this.avatarType = DefaultAvatarType.pet,
     this.currentImageUrl,
     this.currentDefaultAvatar,
     this.allowClear = true,
@@ -213,8 +213,8 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
   XFile? _selectedImage;
   DefaultAvatar? _selectedDefaultAvatar;
   
-  List<DefaultAvatar> get _avatars => widget.avatarType == DefaultAvatarType.dog
-      ? dogDefaultAvatars
+  List<DefaultAvatar> get _avatars => widget.avatarType == DefaultAvatarType.pet
+      ? petDefaultAvatars
       : personDefaultAvatars;
   
   @override
@@ -445,7 +445,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
         shape: BoxShape.circle,
       ),
       child: Icon(
-        widget.avatarType == DefaultAvatarType.dog ? Icons.pets : Icons.person,
+        widget.avatarType == DefaultAvatarType.pet ? Icons.pets : Icons.person,
         size: 50,
         color: AppColors.textHint,
       ),

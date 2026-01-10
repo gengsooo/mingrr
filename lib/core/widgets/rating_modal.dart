@@ -32,9 +32,24 @@ void showRatingModal(
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
-    builder: (context) => RatingModal(
+    isDismissible: true,
+    enableDrag: true,
+    isScrollControlled: true,
+    useSafeArea: true,
+    builder: (sheetContext) => RatingModal(
       targetName: targetName,
-      onRatingSelected: onRatingSelected,
+      onRatingSelected: (rating) {
+        Navigator.pop(sheetContext);
+        onRatingSelected(rating);
+        // 평가 완료 알림 표시
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$targetName님에게 "${rating.label}" 평가를 보냈어요! 🌟'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: rating.color,
+          ),
+        );
+      },
     ),
   );
 }
@@ -54,66 +69,76 @@ class RatingModal extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.7,
+        maxHeight: MediaQuery.of(context).size.height * 0.6,
       ),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 핸들
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.divider,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              
-              // 헤더
-              Padding(
-                padding: const EdgeInsets.all(AppSizes.paddingL),
-                child: Column(
-                  children: [
-                    Text(
-                      '$targetName님은 어떠셨나요?',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      '솔직한 평가는 더 나은 커뮤니티를 만듭니다',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              const Divider(height: 1),
-              
-              // 평가 옵션
-              Padding(
-                padding: const EdgeInsets.all(AppSizes.paddingL),
-                child: Column(
-                  children: RatingType.values.map((rating) {
-                    return _buildRatingOption(context, rating);
-                  }).toList(),
-                ),
-              ),
-            ],
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 드래그 핸들
+          Container(
+            margin: const EdgeInsets.only(top: 12, bottom: 8),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: AppColors.divider,
+              borderRadius: BorderRadius.circular(2),
+            ),
           ),
-        ),
+          
+          // 헤더 (X 버튼 포함)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
+            child: Row(
+              children: [
+                const SizedBox(width: 40),
+                Expanded(
+                  child: Text(
+                    '$targetName님은 어떠셨나요?',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
+            child: Text(
+              '솔직한 평가는 더 나은 커뮤니티를 만듭니다',
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: AppSizes.gapM),
+          const Divider(height: 1),
+          
+          // 평가 옵션 (스크롤 가능)
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              padding: const EdgeInsets.all(AppSizes.paddingL),
+              children: RatingType.values.map((rating) {
+                return _buildRatingOption(context, rating);
+              }).toList(),
+            ),
+          ),
+          
+          SizedBox(height: MediaQuery.of(context).padding.bottom),
+        ],
       ),
     );
   }

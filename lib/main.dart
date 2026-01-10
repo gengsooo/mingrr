@@ -47,9 +47,11 @@ void main() async {
   
   // 카카오 지도 SDK 초기화 (오류 발생 시 무시)
   try {
-    await KakaoMapsFlutter.init('9d259b071721f1a6c369c9074076c657');
+    print('🗺️ 카카오맵 SDK 초기화 시작...');
+    await KakaoMapsFlutter.init('e80e09aa4db6c1f3d1eedb1be73ee8c6');
+    print('✅ 카카오맵 SDK 초기화 성공!');
   } catch (e) {
-    print('카카오맵 초기화 실패: $e');
+    print('❌ 카카오맵 초기화 실패: $e');
   }
   
   // 앱 실행

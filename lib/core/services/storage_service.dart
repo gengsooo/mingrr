@@ -147,9 +147,9 @@ class StorageService {
     }
   }
   
-  Future<void> deleteDogImages(String dogId) async {
+  Future<void> deletePetImages(String petId) async {
     try {
-      final ref = _storage.ref().child('dogs/$dogId');
+      final ref = _storage.ref().child('pets/$petId');
       final listResult = await ref.listAll();
       
       for (final item in listResult.items) {

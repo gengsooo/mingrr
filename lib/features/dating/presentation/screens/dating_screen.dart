@@ -122,11 +122,10 @@ class DatingScreen extends ConsumerWidget {
       ),
       // 교배찾기 탭에서 글쓰기 FAB 표시
       floatingActionButton: selectedTab == 2
-          ? FloatingActionButton.extended(
+          ? FloatingActionButton(
               onPressed: () => _showBreedingWriteSheet(context),
               backgroundColor: AppColors.dating,
-              icon: const Icon(Icons.edit, color: Colors.white, size: 20),
-              label: const Text('글쓰기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)),
+              child: const Icon(Icons.edit, color: Colors.white),
             )
           : null,
     );

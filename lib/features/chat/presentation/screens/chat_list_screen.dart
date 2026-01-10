@@ -7,7 +7,7 @@ import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/warmth_score.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
-import '../../../../core/widgets/dog_profile_modal.dart';
+import '../../../../core/widgets/pet_profile_modal.dart';
 import '../../../../core/widgets/community_profile_modal.dart';
 import '../../../../core/widgets/top_navigation.dart';
 import '../../../../core/widgets/chat_options_modal.dart';
