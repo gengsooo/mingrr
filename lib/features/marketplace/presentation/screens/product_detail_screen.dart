@@ -10,6 +10,8 @@ import '../../../../core/widgets/confirm_bottom_sheet.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/warmth_score.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
+import '../../../../core/widgets/map/map_widgets.dart';
+import '../../../../core/models/location_model.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../../models/chat_model.dart';
 import '../../../chat/presentation/screens/chat_detail_screen.dart';
@@ -153,6 +155,12 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                   
                   // 상품 설명
                   _buildDescription(),
+                  
+                  // 거래 희망 지역
+                  if (_product?.location != null) ...[
+                    const SizedBox(height: AppSizes.gapXL),
+                    _buildLocationSection(),
+                  ],
                   
                   // 하단 여백 (버튼 공간)
                   const SizedBox(height: 100),
@@ -349,6 +357,104 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           style: const TextStyle(fontSize: 14, height: 1.6, color: AppColors.textPrimary),
         ),
       ],
+    );
+  }
+
+  /// 거래 희망 지역 섹션
+  Widget _buildLocationSection() {
+    final location = _product?.location;
+    if (location == null) return const SizedBox.shrink();
+    
+    final locationData = LocationData(
+      latitude: location.latitude,
+      longitude: location.longitude,
+      fullAddress: _product?.address,
+      shortAddress: _product?.address,
+    );
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '거래 희망 지역',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 12),
+        LocationDisplayCard(
+          location: locationData,
+          accentColor: AppColors.market,
+          editable: false,
+          showMiniMap: true,
+          miniMapHeight: 150,
+          onTap: () => _showFullMap(locationData),
+        ),
+      ],
+    );
+  }
+  
+  /// 전체 지도 보기
+  void _showFullMap(LocationData location) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            // 헤더
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  const SizedBox(width: 40),
+                  const Expanded(
+                    child: Text(
+                      '거래 희망 지역',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            // 지도
+            Expanded(
+              child: MapViewWidget(
+                centerLocation: location,
+                accentColor: AppColors.market,
+                height: double.infinity,
+              ),
+            ),
+            // 주소 정보
+            SafeArea(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.location_on, color: AppColors.market),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        location.displayAddress,
+                        style: const TextStyle(fontSize: 15),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

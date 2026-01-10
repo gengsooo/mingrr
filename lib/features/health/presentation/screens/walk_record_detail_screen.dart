@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/confirm_bottom_sheet.dart';
+import '../../../../core/widgets/map/map_widgets.dart';
+import '../../../../core/models/location_model.dart';
 import '../../../../models/health_model.dart';
 
 /// ============================================================
@@ -10,7 +14,7 @@ import '../../../../models/health_model.dart';
 /// 지도에 이동경로 표시 + 시간/거리 등 상세정보
 /// ============================================================
 
-class WalkRecordDetailScreen extends StatelessWidget {
+class WalkRecordDetailScreen extends StatefulWidget {
   final WalkRecordModel record;
   final List<String> petNames;
 
@@ -19,6 +23,17 @@ class WalkRecordDetailScreen extends StatelessWidget {
     required this.record,
     this.petNames = const [],
   });
+
+  @override
+  State<WalkRecordDetailScreen> createState() => _WalkRecordDetailScreenState();
+}
+
+class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
+  KakaoMapController? _mapController;
+  bool _isMapReady = false;
+  
+  WalkRecordModel get record => widget.record;
+  List<String> get petNames => widget.petNames;
 
   @override
   Widget build(BuildContext context) {
@@ -82,90 +97,128 @@ class WalkRecordDetailScreen extends StatelessWidget {
 
   /// 지도 영역 (경로 표시)
   Widget _buildMapArea(BuildContext context) {
+    // 웹이거나 경로가 없으면 플레이스홀더 표시
+    if (kIsWeb || record.routePoints.isEmpty) {
+      return _buildMapPlaceholder(context);
+    }
+    
+    // 모바일에서 카카오맵 표시
+    return _buildKakaoMapWithRoute();
+  }
+  
+  /// 카카오맵에 경로 표시
+  Widget _buildKakaoMapWithRoute() {
+    final firstPoint = record.routePoints.first;
+    
+    return KakaoMap(
+      onMapCreated: _onMapCreated,
+      initialPosition: LatLng(
+        latitude: firstPoint.latitude,
+        longitude: firstPoint.longitude,
+      ),
+    );
+  }
+  
+  /// 카카오맵 생성 완료 콜백
+  void _onMapCreated(KakaoMapController controller) async {
+    _mapController = controller;
+    setState(() => _isMapReady = true);
+    
+    // 경로 폴리라인 그리기
+    await _drawRouteOnMap();
+  }
+  
+  /// 지도에 경로 표시
+  /// 참고: kakao_maps_flutter SDK에서 폴리라인 지원이 제한적이므로
+  /// 현재는 카메라 이동으로 대체합니다.
+  Future<void> _drawRouteOnMap() async {
+    if (_mapController == null || record.routePoints.length < 2) return;
+    
+    try {
+      // 경로 전체가 보이도록 카메라 조정
+      _fitBoundsToRoute();
+    } catch (e) {
+      debugPrint('카메라 조정 실패: $e');
+    }
+  }
+  
+  /// 경로 범위에 맞게 카메라 조정
+  void _fitBoundsToRoute() {
+    if (record.routePoints.isEmpty) return;
+    
+    double minLat = double.infinity;
+    double maxLat = -double.infinity;
+    double minLng = double.infinity;
+    double maxLng = -double.infinity;
+    
+    for (final point in record.routePoints) {
+      if (point.latitude < minLat) minLat = point.latitude;
+      if (point.latitude > maxLat) maxLat = point.latitude;
+      if (point.longitude < minLng) minLng = point.longitude;
+      if (point.longitude > maxLng) maxLng = point.longitude;
+    }
+    
+    final centerLat = (minLat + maxLat) / 2;
+    final centerLng = (minLng + maxLng) / 2;
+    
+    _mapController?.moveCamera(
+      cameraUpdate: CameraUpdate.fromLatLng(
+        LatLng(latitude: centerLat, longitude: centerLng),
+      ),
+    );
+  }
+  
+  /// 지도 플레이스홀더 (웹용 또는 경로 없을 때)
+  Widget _buildMapPlaceholder(BuildContext context) {
     return Stack(
       children: [
-        // 지도 플레이스홀더 (실제 기기에서는 카카오 지도로 대체)
         Container(
-          color: AppColors.walk.withOpacity(0.3),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.map_outlined,
-                  size: 60,
-                  color: AppColors.walk.withOpacity(0.5),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '산책 경로',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppColors.walk.withOpacity(0.7),
-                    fontWeight: FontWeight.w500,
+          color: AppColors.walk.withOpacity(0.2),
+          child: record.routePoints.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.map_outlined, size: 60, color: AppColors.walk.withOpacity(0.5)),
+                      const SizedBox(height: 8),
+                      Text(
+                        '경로 정보가 없습니다',
+                        style: TextStyle(fontSize: 14, color: AppColors.walk.withOpacity(0.7)),
+                      ),
+                    ],
                   ),
+                )
+              : CustomPaint(
+                  size: Size.infinite,
+                  painter: _RoutePreviewPainter(record.routePoints, AppColors.walk),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '실제 기기에서 지도가 표시됩니다',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.walk.withOpacity(0.5),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
         
-        // 실제 경로 표시
-        if (record.routePoints.isNotEmpty)
-          CustomPaint(
-            size: const Size(double.infinity, 300),
-            painter: _RoutePathPainter(
-              record.routePoints.map((gp) => Offset(
-                (gp.longitude + 180) / 360, // 경도를 0~1로 정규화
-                (90 - gp.latitude) / 180,    // 위도를 0~1로 정규화
-              )).toList(),
-            ),
-          ),
-        
-        // 발자국 표시
-        ...record.footprints.asMap().entries.map((entry) {
-          final index = entry.key;
-          final footprint = entry.value;
-          return Positioned(
-            left: ((footprint.longitude + 180) / 360) * MediaQuery.of(context).size.width,
-            top: ((90 - footprint.latitude) / 180) * 300,
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: const BoxDecoration(
-                color: AppColors.walk,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.pets,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
-          );
-        }).toList(),
-        
-        // 시작/종료 마커
-        if (record.routePoints.isNotEmpty) ...[  
-          Positioned(
-            left: ((record.routePoints.first.longitude + 180) / 360) * MediaQuery.of(context).size.width - 30,
-            top: ((90 - record.routePoints.first.latitude) / 180) * 300 - 40,
-            child: _buildMarker('출발', AppColors.success),
-          ),
-          if (record.routePoints.length > 1)
-            Positioned(
-              left: ((record.routePoints.last.longitude + 180) / 360) * MediaQuery.of(context).size.width - 30,
-              top: ((90 - record.routePoints.last.latitude) / 180) * 300 - 40,
-              child: _buildMarker('도착', AppColors.error),
-            ),
+        // 시작/종료 마커 (경로가 있을 때만)
+        if (record.routePoints.isNotEmpty) ...[
+          _buildRouteMarkers(context),
         ],
+      ],
+    );
+  }
+  
+  /// 경로 마커 (시작/종료)
+  Widget _buildRouteMarkers(BuildContext context) {
+    return Stack(
+      children: [
+        // 시작점
+        Positioned(
+          left: 20,
+          bottom: 80,
+          child: _buildMarker('출발', AppColors.success),
+        ),
+        // 종료점
+        if (record.routePoints.length > 1)
+          Positioned(
+            right: 20,
+            bottom: 80,
+            child: _buildMarker('도착', AppColors.error),
+          ),
       ],
     );
   }
@@ -595,28 +648,63 @@ class WalkRecordDetailScreen extends StatelessWidget {
 }
 
 
-/// 경로 그리기 페인터
-class _RoutePathPainter extends CustomPainter {
-  final List<Offset> points;
+/// 경로 미리보기 페인터 (웹용)
+class _RoutePreviewPainter extends CustomPainter {
+  final List<GeoPoint> routePoints;
+  final Color color;
 
-  _RoutePathPainter(this.points);
+  _RoutePreviewPainter(this.routePoints, this.color);
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (points.length < 2) return;
+    if (routePoints.length < 2) return;
 
+    // 경로 범위 계산
+    double minLat = double.infinity;
+    double maxLat = -double.infinity;
+    double minLng = double.infinity;
+    double maxLng = -double.infinity;
+
+    for (final point in routePoints) {
+      if (point.latitude < minLat) minLat = point.latitude;
+      if (point.latitude > maxLat) maxLat = point.latitude;
+      if (point.longitude < minLng) minLng = point.longitude;
+      if (point.longitude > maxLng) maxLng = point.longitude;
+    }
+
+    final latRange = maxLat - minLat;
+    final lngRange = maxLng - minLng;
+
+    if (latRange == 0 && lngRange == 0) return;
+
+    // 패딩
+    const padding = 40.0;
+    final drawWidth = size.width - padding * 2;
+    final drawHeight = size.height - padding * 2;
+
+    // 정규화된 포인트 계산
+    final points = routePoints.map((point) {
+      final x = lngRange > 0
+          ? padding + (point.longitude - minLng) / lngRange * drawWidth
+          : size.width / 2;
+      final y = latRange > 0
+          ? padding + (1 - (point.latitude - minLat) / latRange) * drawHeight
+          : size.height / 2;
+      return Offset(x, y);
+    }).toList();
+
+    // 경로 그리기
     final paint = Paint()
-      ..color = AppColors.walk
+      ..color = color
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;
 
     final path = Path();
-    final scaledPoints = points.map((p) => Offset(p.dx * size.width, p.dy * size.height)).toList();
-    
-    path.moveTo(scaledPoints.first.dx, scaledPoints.first.dy);
-    for (int i = 1; i < scaledPoints.length; i++) {
-      path.lineTo(scaledPoints[i].dx, scaledPoints[i].dy);
+    path.moveTo(points.first.dx, points.first.dy);
+
+    for (int i = 1; i < points.length; i++) {
+      path.lineTo(points[i].dx, points[i].dy);
     }
 
     // 그림자
@@ -630,17 +718,15 @@ class _RoutePathPainter extends CustomPainter {
     // 경로
     canvas.drawPath(path, paint);
 
-    // 점선 효과를 위한 점들
-    final dotPaint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 2
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.stroke;
+    // 시작점 마커
+    final startPaint = Paint()..color = AppColors.success;
+    canvas.drawCircle(points.first, 8, startPaint);
+    canvas.drawCircle(points.first, 4, Paint()..color = Colors.white);
 
-    for (final point in scaledPoints) {
-      canvas.drawCircle(point, 4, Paint()..color = AppColors.walk);
-      canvas.drawCircle(point, 2, Paint()..color = Colors.white);
-    }
+    // 끝점 마커
+    final endPaint = Paint()..color = AppColors.error;
+    canvas.drawCircle(points.last, 8, endPaint);
+    canvas.drawCircle(points.last, 4, Paint()..color = Colors.white);
   }
 
   @override

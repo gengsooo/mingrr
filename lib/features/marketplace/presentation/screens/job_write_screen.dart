@@ -9,10 +9,8 @@ import '../../../../core/services/firestore_service.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/confirm_bottom_sheet.dart';
-// TODO: 실제 기기 테스트 시 주석 해제
-// import '../../../../core/widgets/map_location_picker.dart';
-// import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
-import '../../../../core/widgets/map_location_picker_placeholder.dart';
+import '../../../../core/widgets/map/map_widgets.dart';
+import '../../../../core/models/location_model.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import 'product_write_screen.dart';
@@ -45,8 +43,7 @@ class _JobWriteScreenState extends ConsumerState<JobWriteScreen> {
   bool _isLoading = false;
   
   // 근무 지역
-  String? _selectedLocation;
-  LocationCoord? _selectedLocationLatLng;
+  LocationData? _selectedLocation;
 
   final FirestoreService _firestoreService = FirestoreService();
   final FirebaseService _firebaseService = FirebaseService();
@@ -617,84 +614,23 @@ class _JobWriteScreenState extends ConsumerState<JobWriteScreen> {
   }
 
   Widget _buildLocationSelector() {
-    // 지도에서 직접 선택만 가능
-    return GestureDetector(
+    return LocationDisplayCard(
+      location: _selectedLocation,
+      accentColor: AppColors.market,
+      placeholder: '근무 지역을 선택해주세요',
       onTap: () async {
         final result = await showMapLocationPicker(
           context: context,
-          initialPosition: _selectedLocationLatLng,
+          initialLocation: _selectedLocation,
           accentColor: AppColors.market,
           title: '근무 지역 선택',
         );
         if (result != null) {
           setState(() {
-            _selectedLocationLatLng = result;
-            _selectedLocation = '위도: ${result.latitude.toStringAsFixed(4)}, 경도: ${result.longitude.toStringAsFixed(4)}';
+            _selectedLocation = result;
           });
         }
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: _selectedLocationLatLng != null ? AppColors.market.withOpacity(0.1) : Colors.white,
-          border: Border.all(
-            color: _selectedLocationLatLng != null ? AppColors.market : AppColors.divider,
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              _selectedLocationLatLng != null ? Icons.location_on : Icons.map_outlined,
-              size: 20,
-              color: _selectedLocationLatLng != null ? AppColors.market : AppColors.textHint,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _selectedLocationLatLng != null 
-                        ? '위치가 선택되었습니다'
-                        : '근무 지역을 선택해주세요',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: _selectedLocationLatLng != null ? FontWeight.w500 : FontWeight.w400,
-                      color: _selectedLocationLatLng != null ? AppColors.textPrimary : AppColors.textHint,
-                    ),
-                  ),
-                  if (_selectedLocationLatLng != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      _selectedLocation ?? '',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: _selectedLocationLatLng != null ? AppColors.market : AppColors.background,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                _selectedLocationLatLng != null ? '변경' : '지도에서 선택',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: _selectedLocationLatLng != null ? Colors.white : AppColors.textSecondary,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 

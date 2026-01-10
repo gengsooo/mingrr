@@ -269,6 +269,30 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
     });
   }
   
+  /// 지도에 경로 폴리라인 그리기
+  /// 참고: kakao_maps_flutter SDK에서 폴리라인 지원이 제한적이므로
+  /// 현재는 카메라 이동으로 대체합니다.
+  Future<void> _drawRoutePolyline() async {
+    if (_mapController == null || _routePoints.isEmpty) return;
+    
+    try {
+      // 최신 위치로 카메라 이동
+      final lastPoint = _routePoints.last;
+      await _mapController!.moveCamera(
+        cameraUpdate: CameraUpdate.fromLatLng(
+          LatLng(latitude: lastPoint.latitude, longitude: lastPoint.longitude),
+        ),
+        animation: const CameraAnimation(
+          duration: 300,
+          autoElevation: false,
+          isConsecutive: false,
+        ),
+      );
+    } catch (e) {
+      debugPrint('카메라 이동 실패: $e');
+    }
+  }
+  
   /// 현재 위치로 카메라 이동
   Future<void> _moveCameraToCurrentPosition() async {
     if (_mapController == null || _currentPosition == null) return;
@@ -893,6 +917,9 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
           );
         }
         
+        // 지도에 경로 폴리라인 업데이트
+        await _drawRoutePolyline();
+        
         // Firebase 경로 업데이트
         final healthService = ref.read(healthServiceProvider);
         await healthService.updateWalkRoute(
@@ -1074,7 +1101,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: AppColors.surface,
+                          color: AppColors.cardBackground,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(

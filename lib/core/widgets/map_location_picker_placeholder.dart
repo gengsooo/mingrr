@@ -5,22 +5,41 @@ import 'package:geolocator/geolocator.dart';
 import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
+import '../models/location_model.dart';
+import '../services/geocoding_service.dart';
 
 /// ============================================================
-/// 지도 위치 선택 화면
-/// 모바일: 카카오맵 사용
-/// 웹: 플레이스홀더 표시
+/// 지도 위치 선택 화면 (레거시 호환용)
+/// 
+/// 새로운 코드에서는 아래 파일을 사용하세요:
+/// - lib/core/widgets/map/map_location_picker.dart
+/// - lib/core/widgets/map/map_view_widget.dart
+/// - lib/core/widgets/map/location_display_card.dart
 /// ============================================================
 
-/// 위치 좌표 클래스 (카카오 LatLng 대체)
+/// 위치 좌표 클래스 (레거시 호환용 - 새 코드에서는 LocationData 사용)
+@Deprecated('Use LocationData from core/models/location_model.dart instead')
 class LocationCoord {
   final double latitude;
   final double longitude;
 
   const LocationCoord({required this.latitude, required this.longitude});
+  
+  /// LocationData로 변환
+  LocationData toLocationData() => LocationData(
+    latitude: latitude,
+    longitude: longitude,
+  );
+  
+  /// LocationData에서 생성
+  factory LocationCoord.fromLocationData(LocationData data) => LocationCoord(
+    latitude: data.latitude,
+    longitude: data.longitude,
+  );
 }
 
-/// 지도 위치 선택 다이얼로그 표시
+/// 지도 위치 선택 다이얼로그 표시 (레거시 호환용)
+@Deprecated('Use showMapLocationPicker from core/widgets/map/map_location_picker.dart instead')
 Future<LocationCoord?> showMapLocationPicker({
   required BuildContext context,
   LocationCoord? initialPosition,

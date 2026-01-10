@@ -10,7 +10,8 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/image_picker_sheet.dart';
-import '../../../../core/widgets/map_location_picker_placeholder.dart';
+import '../../../../core/widgets/map/map_widgets.dart';
+import '../../../../core/models/location_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// ============================================================
@@ -34,7 +35,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nicknameController = TextEditingController();
   final _bioController = TextEditingController();
-  final _addressController = TextEditingController();
   
   UserGender? _selectedGender;
   DateTime? _birthDate;
@@ -48,6 +48,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   XFile? _selectedProfileImage;
   String? _profileImageUrl;
   DefaultAvatar? _selectedDefaultAvatar;
+  
+  // 위치 정보
+  LocationData? _selectedLocation;
   
   @override
   void initState() {
@@ -66,11 +69,21 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     _nicknameController.text = currentUser.nickname ?? '';
     _originalNickname = currentUser.nickname ?? '';
     _bioController.text = currentUser.bio ?? '';
-    _addressController.text = currentUser.address ?? '';
     _selectedGender = currentUser.gender;
     _birthDate = currentUser.birthDate;
     _lastNicknameChangeDate = currentUser.nicknameChangedAt;
     _profileImageUrl = currentUser.profileImageUrl;
+    
+    // 기존 위치 정보 로드
+    if (currentUser.address != null && currentUser.address!.isNotEmpty) {
+      _selectedLocation = LocationData(
+        latitude: currentUser.location?.latitude ?? 0,
+        longitude: currentUser.location?.longitude ?? 0,
+        fullAddress: currentUser.address,
+        shortAddress: currentUser.address,
+      );
+    }
+    
     _isDataLoaded = true;
     setState(() {});
   }
@@ -93,7 +106,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   void dispose() {
     _nicknameController.dispose();
     _bioController.dispose();
-    _addressController.dispose();
     super.dispose();
   }
 
@@ -402,40 +414,30 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 
   Widget _buildLocationSection() {
-    return MingrrCard(
-      margin: EdgeInsets.zero,
-      child: Column(
-        children: [
-          // 주소 (지도에서 선택)
-          TextFormField(
-            controller: _addressController,
-            decoration: const InputDecoration(
-              labelText: '위치',
-              hintText: '지도에서 위치를 선택해주세요',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.location_on),
-              suffixIcon: Icon(Icons.map_outlined),
-            ),
-            readOnly: true,
-            onTap: _selectLocation,
-          ),
-          const SizedBox(height: AppSizes.gapS),
-          
-          // 안내 텍스트
-          const Row(
-            children: [
-              Icon(Icons.info_outline, size: 14, color: AppColors.textHint),
-              SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  '지도에서 핀을 이동하여 위치를 선택해주세요',
-                  style: TextStyle(fontSize: 12, color: AppColors.textHint),
-                ),
+    return Column(
+      children: [
+        LocationDisplayCard(
+          location: _selectedLocation,
+          accentColor: AppColors.primary,
+          placeholder: '지도에서 위치를 선택해주세요',
+          onTap: _selectLocation,
+        ),
+        const SizedBox(height: AppSizes.gapS),
+        
+        // 안내 텍스트
+        const Row(
+          children: [
+            Icon(Icons.info_outline, size: 14, color: AppColors.textHint),
+            SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                '위치 정보는 근처 마켓 상품 추천에 사용됩니다',
+                style: TextStyle(fontSize: 12, color: AppColors.textHint),
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -491,13 +493,14 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   Future<void> _selectLocation() async {
     final result = await showMapLocationPicker(
       context: context,
+      initialLocation: _selectedLocation,
       accentColor: AppColors.primary,
       title: '내 위치 선택',
     );
     
     if (result != null) {
       setState(() {
-        _addressController.text = '위도: ${result.latitude.toStringAsFixed(4)}, 경도: ${result.longitude.toStringAsFixed(4)}';
+        _selectedLocation = result;
       });
     }
   }
@@ -535,7 +538,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           'gender': _selectedGender?.name,
           'birthDate': _birthDate != null ? Timestamp.fromDate(_birthDate!) : null,
           'bio': _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
-          'address': _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
+          'address': _selectedLocation?.displayAddress,
+          'location': _selectedLocation?.toGeoPoint(),
           'profileImageUrl': uploadedImageUrl,
           'updatedAt': FieldValue.serverTimestamp(),
         };
