@@ -143,16 +143,19 @@ return _buildMobileMapPlaceholder();
 
 ### ⚠️ iOS 테스트 전 필요한 작업
 
-**주석 해제 필요:**
-1. `lib/main.dart` (5-6번째 줄, 43-45번째 줄)
+**카카오맵 SDK 설정:**
+- 패키지: `kakao_map_sdk: ^1.2.3` (폴리라인/마커 지원)
+
+1. `lib/main.dart`
    ```dart
-   import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
-   await KakaoMapsFlutter.init('9d259b071721f1a6c369c9074076c657');
+   import 'package:kakao_map_sdk/kakao_map_sdk.dart';
+   await KakaoMapSdk.instance.initialize('e80e09aa4db6c1f3d1eedb1be73ee8c6');
    ```
 
-2. `lib/features/walk/presentation/screens/walk_screen.dart` (6-7번째 줄)
+2. `lib/features/walk/presentation/screens/walk_screen.dart`
    ```dart
-   import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
+   import 'package:kakao_map_sdk/kakao_map_sdk.dart';
+   // 경로 그리기: controller.routeLayer.addRoute(points, RouteStyle(color, width))
    ```
 
 **실행 명령:**

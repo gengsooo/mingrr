@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/confirm_bottom_sheet.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
 
 /// ============================================================
 /// 약 관리 화면
@@ -699,9 +699,9 @@ class MedicationDetailScreen extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context) {
-    showConfirmBottomSheet(
+    showConfirmSheet(
       context,
-      type: ConfirmType.medicationDelete,
+      type: ConfirmSheetType.medicationDelete,
       message: '${medication.name}을(를) 삭제하시겠습니까?',
       onConfirm: () {
         onDelete();

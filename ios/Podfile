@@ -32,8 +32,8 @@ target 'Runner' do
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   
-  # 카카오 지도 SDK
-  pod 'KakaoMapsSDK', '2.12.5'
+  # 카카오 지도 SDK (kakao_map_sdk 1.2.3 요구사항에 맞춤)
+  pod 'KakaoMapsSDK', '2.12.10'
   
   target 'RunnerTests' do
     inherit! :search_paths

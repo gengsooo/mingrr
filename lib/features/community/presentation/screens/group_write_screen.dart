@@ -10,7 +10,8 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/utils/image_utils.dart';
-import '../../../../core/widgets/alert_dialog.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/location_selector.dart';
 import '../../../../models/community_model.dart';
@@ -366,7 +367,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
   void _showAddTagDialog() async {
     final tag = await showInputDialog(
       context,
-      type: AlertType.community,
+      type: DialogType.community,
       title: '태그 추가',
       hintText: '태그를 입력해주세요',
       confirmText: '추가',
@@ -551,11 +552,12 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('오류가 발생했습니다: $e'),
-            backgroundColor: AppColors.error,
-          ),
+        ErrorHandler.handle(
+          context,
+          error: e,
+          tag: 'GroupWrite',
+          operation: '모임 저장',
+          themeColor: AppColors.community,
         );
       }
     } finally {

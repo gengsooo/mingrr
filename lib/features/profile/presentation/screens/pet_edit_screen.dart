@@ -10,7 +10,8 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/image_crop_service.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/confirm_bottom_sheet.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/image_picker_sheet.dart';
 import '../../../../models/pet_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -801,9 +802,9 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
   }
   
   void _deletePhotoAt(int index) {
-    showConfirmBottomSheet(
+    showConfirmSheet(
       context,
-      type: ConfirmType.photoDelete,
+      type: ConfirmSheetType.photoDelete,
       onConfirm: () {
         setState(() {
           final urlCount = _additionalPhotoUrls.length;
@@ -1094,8 +1095,12 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('저장 실패: $e'), backgroundColor: AppColors.error),
+          ErrorHandler.handle(
+            context,
+            error: e,
+            tag: 'PetEdit',
+            operation: '반려동물 저장',
+            themeColor: AppColors.primary,
           );
         }
       } finally {
@@ -1105,9 +1110,9 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
   }
 
   void _showDeleteConfirmation() {
-    showConfirmBottomSheet(
+    showConfirmSheet(
       context,
-      type: ConfirmType.petDelete,
+      type: ConfirmSheetType.petDelete,
       onConfirm: _deletePet,
     );
   }
@@ -1135,8 +1140,12 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('삭제 실패: $e'), backgroundColor: AppColors.error),
+        ErrorHandler.handle(
+          context,
+          error: e,
+          tag: 'PetEdit',
+          operation: '반려동물 삭제',
+          themeColor: AppColors.primary,
         );
       }
     } finally {

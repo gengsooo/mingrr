@@ -8,3 +8,4 @@
 export 'map_location_picker.dart';
 export 'map_view_widget.dart';
 export 'location_display_card.dart';
+export 'map_loading_widget.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/confirm_bottom_sheet.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
 
 /// ============================================================
 /// 건강수첩 상세 화면 모음
@@ -255,9 +255,9 @@ class WeightRecordDetailScreen extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context) {
-    showConfirmBottomSheet(
+    showConfirmSheet(
       context,
-      type: ConfirmType.healthRecordDelete,
+      type: ConfirmSheetType.healthRecordDelete,
       message: '이 체중 기록을 삭제하시겠습니까?\n삭제된 기록은 복구할 수 없습니다.',
       onConfirm: () {
         Navigator.pop(context);
@@ -403,9 +403,9 @@ class GroomingRecordDetailScreen extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context) {
-    showConfirmBottomSheet(
+    showConfirmSheet(
       context,
-      type: ConfirmType.healthRecordDelete,
+      type: ConfirmSheetType.healthRecordDelete,
       message: '이 그루밍 기록을 삭제하시겠습니까?\n삭제된 기록은 복구할 수 없습니다.',
       onConfirm: () {
         Navigator.pop(context);
@@ -638,9 +638,9 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context) {
-    showConfirmBottomSheet(
+    showConfirmSheet(
       context,
-      type: ConfirmType.healthRecordDelete,
+      type: ConfirmSheetType.healthRecordDelete,
       message: '이 예방접종 기록을 삭제하시겠습니까?\n삭제된 기록은 복구할 수 없습니다.',
       onConfirm: () {
         Navigator.pop(context);
@@ -875,9 +875,9 @@ class CheckupRecordDetailScreen extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context) {
-    showConfirmBottomSheet(
+    showConfirmSheet(
       context,
-      type: ConfirmType.healthRecordDelete,
+      type: ConfirmSheetType.healthRecordDelete,
       message: '이 검진 기록을 삭제하시겠습니까?\n삭제된 기록은 복구할 수 없습니다.',
       onConfirm: () {
         Navigator.pop(context);
@@ -1093,9 +1093,9 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context) {
-    showConfirmBottomSheet(
+    showConfirmSheet(
       context,
-      type: ConfirmType.healthRecordDelete,
+      type: ConfirmSheetType.healthRecordDelete,
       message: '이 치아 관리 기록을 삭제하시겠습니까?\n삭제된 기록은 복구할 수 없습니다.',
       onConfirm: () {
         Navigator.pop(context);
@@ -1325,9 +1325,9 @@ class SpecialRecordDetailScreen extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context) {
-    showConfirmBottomSheet(
+    showConfirmSheet(
       context,
-      type: ConfirmType.healthRecordDelete,
+      type: ConfirmSheetType.healthRecordDelete,
       message: '이 특이사항 기록을 삭제하시겠습니까?\n삭제된 기록은 복구할 수 없습니다.',
       onConfirm: () {
         Navigator.pop(context);

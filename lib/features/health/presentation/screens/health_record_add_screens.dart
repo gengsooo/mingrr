@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../providers/health_provider.dart';
 
@@ -234,7 +235,7 @@ class _AddWeightRecordScreenState extends State<AddWeightRecordScreen> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('체중 기록이 저장되었습니다'), backgroundColor: AppColors.success));
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+      if (mounted) ErrorHandler.showSnackBar(context, message: '저장에 실패했습니다');
     }
   }
 }
@@ -324,7 +325,7 @@ class _AddGroomingRecordScreenState extends State<AddGroomingRecordScreen> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('그루밍 기록이 저장되었습니다'), backgroundColor: AppColors.success));
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+      if (mounted) ErrorHandler.showSnackBar(context, message: '저장에 실패했습니다');
     }
   }
 }
@@ -385,7 +386,7 @@ class _AddVaccinationRecordScreenState extends State<AddVaccinationRecordScreen>
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('예방접종 기록이 저장되었습니다'), backgroundColor: AppColors.success));
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+      if (mounted) ErrorHandler.showSnackBar(context, message: '저장에 실패했습니다');
     }
   }
 }
@@ -446,7 +447,7 @@ class _AddCheckupRecordScreenState extends State<AddCheckupRecordScreen> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('검진 기록이 저장되었습니다'), backgroundColor: AppColors.success));
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+      if (mounted) ErrorHandler.showSnackBar(context, message: '저장에 실패했습니다');
     }
   }
 }
@@ -549,7 +550,7 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('약 기록이 저장되었습니다'), backgroundColor: AppColors.success));
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+      if (mounted) ErrorHandler.showSnackBar(context, message: '저장에 실패했습니다');
     }
   }
 }
@@ -614,7 +615,7 @@ class _AddSpecialRecordScreenState extends State<AddSpecialRecordScreen> {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('특이사항 기록이 저장되었습니다'), backgroundColor: AppColors.success));
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+      if (mounted) ErrorHandler.showSnackBar(context, message: '저장에 실패했습니다');
     }
   }
 }

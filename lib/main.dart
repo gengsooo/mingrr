@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 // TODO: Personal Team 테스트 시 주석 처리 (Push Notifications 미지원)
 // import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
+import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import 'firebase_options.dart';
 import 'app.dart';
 // import 'core/services/notification_service.dart';
@@ -48,7 +48,7 @@ void main() async {
   // 카카오 지도 SDK 초기화 (오류 발생 시 무시)
   try {
     print('🗺️ 카카오맵 SDK 초기화 시작...');
-    await KakaoMapsFlutter.init('e80e09aa4db6c1f3d1eedb1be73ee8c6');
+    await KakaoMapSdk.instance.initialize('e80e09aa4db6c1f3d1eedb1be73ee8c6');
     print('✅ 카카오맵 SDK 초기화 성공!');
   } catch (e) {
     print('❌ 카카오맵 초기화 실패: $e');

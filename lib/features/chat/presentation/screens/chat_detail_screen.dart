@@ -6,7 +6,8 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/rating_service.dart';
-import '../../../../core/widgets/confirm_bottom_sheet.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/kkosunnae_badge.dart';
 import '../../../../core/widgets/rating_sheet.dart';
 import '../../../../models/chat_model.dart';
@@ -406,9 +407,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('전송 실패: $e')),
-        );
+        ErrorHandler.showSnackBar(context, message: '메시지 전송에 실패했습니다');
         _messageController.text = content;
       }
     } finally {
@@ -440,9 +439,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('이미지 전송 실패: $e')),
-        );
+        ErrorHandler.showSnackBar(context, message: '이미지 전송에 실패했습니다');
       }
     } finally {
       if (mounted) setState(() => _isSending = false);
@@ -705,9 +702,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   Future<void> _leaveChatRoom(BuildContext context) async {
     Navigator.pop(context); // 바텀시트 닫기
     
-    showConfirmBottomSheet(
+    showConfirmSheet(
       context,
-      type: ConfirmType.chatLeave,
+      type: ConfirmSheetType.chatLeave,
       onConfirm: () async {
         final userId = ref.read(authStateProvider).valueOrNull?.uid;
         if (userId != null) {

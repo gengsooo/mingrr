@@ -27,11 +27,12 @@ dependencies:
 
   # ===== 위치 기반 =====
   geolocator: ^13.0.2
-  kakao_maps_flutter: ^0.1.2
+  kakao_map_sdk: ^1.2.3  # 네이티브 카카오맵 SDK (폴리라인/마커 지원)
   # geoflutterfire_plus: ^0.0.28  # 위치 기반 쿼리
 
   # ===== UI/UX =====
   cupertino_icons: ^1.0.8
+  flutter_svg: ^2.0.10+1
   cached_network_image: ^3.4.1
   image_picker: ^1.1.2
   image_cropper: ^8.0.2
@@ -63,10 +64,8 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   
-  # 에셋 및 폰트는 실제 파일 추가 후 활성화
-  # assets:
-  #   - assets/images/
-  #   - assets/icons/
+  assets:
+    - assets/icons/
   #
   # fonts:
   #   - family: Pretendard

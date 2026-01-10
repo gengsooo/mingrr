@@ -25,19 +25,18 @@
 ### 1. 카카오맵 활성화
 현재 카카오맵 관련 코드가 주석 처리되어 있습니다. iOS 테스트 시 다음 파일들의 주석을 해제하세요:
 
-#### `lib/main.dart` (5-6번째 줄, 43-45번째 줄)
+#### `lib/main.dart`
 ```dart
-// 주석 해제
-import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
+// kakao_map_sdk 패키지 사용
+import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 
-// 주석 해제
-await KakaoMapsFlutter.init('9d259b071721f1a6c369c9074076c657');
+// SDK 초기화
+await KakaoMapSdk.instance.initialize('e80e09aa4db6c1f3d1eedb1be73ee8c6');
 ```
 
-#### `lib/features/walk/presentation/screens/walk_screen.dart` (6-7번째 줄)
+#### `lib/features/walk/presentation/screens/walk_screen.dart`
 ```dart
-// 주석 해제
-import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
+import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 ```
 
 ### 2. CocoaPods 설치 및 설정

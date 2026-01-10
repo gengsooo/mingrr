@@ -11,8 +11,8 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/alert_dialog.dart';
-import '../../../../core/widgets/confirm_bottom_sheet.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/image_picker_sheet.dart';
 import '../../../../core/widgets/verification_badge.dart';
 import '../../../../core/widgets/warmth_score.dart';
@@ -89,6 +89,13 @@ class ProfileScreen extends ConsumerWidget {
               background: _buildProfileHeader(context, ref, currentUser),
             ),
             actions: [
+              // 개발자 도구 버튼 (admin 전용)
+              if (currentUser.valueOrNull?.email == 'admin@mingrr.com')
+                IconButton(
+                  icon: const Icon(Icons.developer_mode, color: Colors.orange),
+                  onPressed: () => context.push('/dev-tools'),
+                  tooltip: '개발자 도구',
+                ),
               // 설정 버튼 (우상단 톱니바퀴)
               IconButton(
                 icon: const Icon(Icons.settings_outlined, color: AppColors.textPrimary),
@@ -1092,9 +1099,9 @@ class ProfileScreen extends ConsumerWidget {
               ),
               onTap: () {
                 Navigator.pop(context);
-                showConfirmBottomSheet(
+                showConfirmSheet(
                   context,
-                  type: ConfirmType.accountLogout,
+                  type: ConfirmSheetType.accountLogout,
                   onConfirm: () async {
                     await ref.read(authNotifierProvider.notifier).signOut();
                   },
@@ -1273,9 +1280,9 @@ class ProfileScreen extends ConsumerWidget {
       final daysSinceChange = DateTime.now().difference(lastChanged).inDays;
       if (daysSinceChange < 30) {
         final daysRemaining = 30 - daysSinceChange;
-        showAppAlert(
+        showAppDialog(
           context,
-          type: AlertType.warning,
+          type: DialogType.warning,
           title: '닉네임 변경 제한',
           message: '닉네임은 30일에 한 번만 변경할 수 있습니다.\n\n$daysRemaining일 후에 다시 변경할 수 있습니다.',
         );

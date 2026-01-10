@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
+import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../constants/app_colors.dart';
 import '../../models/location_model.dart';
+import 'map_loading_widget.dart';
 
 /// ============================================================
 /// 지도 뷰 위젯 (읽기 전용)
@@ -71,10 +72,12 @@ class MapViewWidget extends StatefulWidget {
 class _MapViewWidgetState extends State<MapViewWidget> {
   KakaoMapController? _mapController;
   bool _isMapReady = false;
+  
+  /// LatLng 생성 헬퍼
+  LatLng _createLatLng(double lat, double lng) => LatLng(lat, lng);
 
   @override
   void dispose() {
-    _mapController?.dispose();
     super.dispose();
   }
 
@@ -143,16 +146,29 @@ class _MapViewWidgetState extends State<MapViewWidget> {
   Widget _buildKakaoMap() {
     final center = _getMapCenter();
     
-    return KakaoMap(
-      onMapCreated: _onMapCreated,
-      initialPosition: LatLng(
-        latitude: center.latitude,
-        longitude: center.longitude,
-      ),
+    return Stack(
+      children: [
+        KakaoMap(
+          key: ValueKey('map_view_${center.latitude}_${center.longitude}'),
+          option: KakaoMapOption(
+            position: _createLatLng(center.latitude, center.longitude),
+            zoomLevel: widget.zoomLevel,
+            mapType: MapType.normal,
+          ),
+          onMapReady: _onMapReady,
+        ),
+        // 지도 로딩 중 오버레이
+        if (!_isMapReady)
+          MapLoadingWidget(
+            accentColor: widget.accentColor,
+            message: '지도를 불러오는 중...',
+            height: widget.height,
+          ),
+      ],
     );
   }
 
-  void _onMapCreated(KakaoMapController controller) async {
+  void _onMapReady(KakaoMapController controller) async {
     _mapController = controller;
     setState(() => _isMapReady = true);
     
@@ -188,11 +204,10 @@ class _MapViewWidgetState extends State<MapViewWidget> {
     final centerLat = (minLat + maxLat) / 2;
     final centerLng = (minLng + maxLng) / 2;
 
-    _mapController?.moveCamera(
-      cameraUpdate: CameraUpdate.fromLatLng(
-        LatLng(latitude: centerLat, longitude: centerLng),
-      ),
+    final cameraUpdate = CameraUpdate.newCenterPosition(
+      _createLatLng(centerLat, centerLng),
     );
+    _mapController?.moveCamera(cameraUpdate);
   }
 
   LocationData _getMapCenter() {

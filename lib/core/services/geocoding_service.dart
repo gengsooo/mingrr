@@ -14,7 +14,7 @@ class GeocodingService {
   GeocodingService._();
   
   /// 카카오 REST API 키 (JavaScript 키가 아닌 REST API 키 사용)
-  static const String _kakaoRestApiKey = 'e80e09aa4db6c1f3d1eedb1be73ee8c6';
+  static const String _kakaoRestApiKey = '185d8f5a9d617aa3506964ffd352c8b4';
   
   /// 역지오코딩: 좌표 → 주소 변환
   /// 

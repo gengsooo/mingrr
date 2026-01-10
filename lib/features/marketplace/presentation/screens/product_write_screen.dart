@@ -11,7 +11,8 @@ import '../../../../core/services/firestore_service.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/utils/image_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/confirm_bottom_sheet.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
 import '../../../../core/models/location_model.dart';
 import '../../../../models/marketplace_model.dart';
@@ -318,9 +319,9 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
         ProductType.job => '알바',
       };
       
-      final confirmed = await showConfirmBottomSheetWithResult(
+      final confirmed = await showConfirmSheetWithResult(
         context,
-        type: ConfirmType.productTypeChange,
+        type: ConfirmSheetType.productTypeChange,
         message: '$newTypeLabel 등록으로 변경합니다.\n현재 입력된 정보가 초기화됩니다.\n계속하시겠습니까?',
       );
       
@@ -1034,11 +1035,12 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('오류가 발생했습니다: $e'),
-            backgroundColor: AppColors.error,
-          ),
+        ErrorHandler.handle(
+          context,
+          error: e,
+          tag: 'ProductWrite',
+          operation: '상품 저장',
+          themeColor: AppColors.market,
         );
       }
     } finally {

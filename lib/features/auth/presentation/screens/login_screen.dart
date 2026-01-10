@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../providers/auth_provider.dart';
 
@@ -383,11 +384,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   /// 인증 코드 전송
   void _sendCode(AuthNotifier authNotifier) {
-    final phone = _phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
-    if (phone.isEmpty || phone.length < 10) {
+    final phone = _phoneController.text;
+    final validation = Validators.phone(phone);
+    if (!validation.isValid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('올바른 전화번호를 입력해주세요.'),
+        SnackBar(
+          content: Text(validation.errorMessage!),
           backgroundColor: AppColors.error,
         ),
       );
@@ -426,20 +428,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     
-    if (email.isEmpty || !email.contains('@')) {
+    final emailValidation = Validators.email(email);
+    if (!emailValidation.isValid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('올바른 이메일을 입력해주세요.'),
+        SnackBar(
+          content: Text(emailValidation.errorMessage!),
           backgroundColor: AppColors.error,
         ),
       );
       return;
     }
     
-    if (password.isEmpty || password.length < 6) {
+    final passwordValidation = Validators.password(password);
+    if (!passwordValidation.isValid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('비밀번호는 6자 이상이어야 합니다.'),
+        SnackBar(
+          content: Text(passwordValidation.errorMessage!),
           backgroundColor: AppColors.error,
         ),
       );
@@ -454,20 +458,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     
-    if (email.isEmpty || !email.contains('@')) {
+    final emailValidation = Validators.email(email);
+    if (!emailValidation.isValid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('올바른 이메일을 입력해주세요.'),
+        SnackBar(
+          content: Text(emailValidation.errorMessage!),
           backgroundColor: AppColors.error,
         ),
       );
       return;
     }
     
-    if (password.isEmpty || password.length < 6) {
+    final passwordValidation = Validators.password(password);
+    if (!passwordValidation.isValid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('비밀번호는 6자 이상이어야 합니다.'),
+        SnackBar(
+          content: Text(passwordValidation.errorMessage!),
           backgroundColor: AppColors.error,
         ),
       );

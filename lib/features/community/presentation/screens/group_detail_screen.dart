@@ -6,7 +6,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/confirm_bottom_sheet.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../models/chat_model.dart';
 import '../../../../models/community_model.dart';
 import '../../../chat/presentation/screens/chat_detail_screen.dart';
@@ -551,9 +551,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   }
 
   void _showJoinConfirmation(BuildContext context, GroupModel group) {
-    showConfirmBottomSheet(
+    showConfirmSheet(
       context,
-      type: ConfirmType.groupJoin,
+      type: ConfirmSheetType.groupJoin,
       title: group.name,
       message: group.requireApproval
           ? '이 모임은 가입 승인이 필요합니다.\n가입 신청을 보내시겠습니까?'

@@ -3,12 +3,15 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
+import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/map/map_loading_widget.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/services/location_service.dart';
+import '../../../../core/services/location_helper.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../health/presentation/providers/health_provider.dart';
@@ -34,6 +37,11 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
   KakaoMapController? _mapController;
   LatLng? _currentMapPosition;
   bool _isMapReady = false;
+  bool _isLocationLoading = true; // 위치 로딩 상태
+  LatLng? _initialMapPosition; // 초기 지도 위치 (한 번만 설정)
+  
+  /// LatLng 생성 헬퍼
+  LatLng _createLatLng(double lat, double lng) => LatLng(lat, lng);
   
   // 위치 추적
   Position? _currentPosition;
@@ -49,6 +57,9 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
   // 선택된 반려동물 ID 목록 (중복 선택 가능)
   final Set<String> _selectedPetIds = {};
   
+  // 위치 로딩 진행 상태
+  LocationProgress? _locationProgress;
+  
   @override
   void initState() {
     super.initState();
@@ -62,44 +73,115 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
     super.dispose();
   }
   
-  /// 현재 위치 가져오기
+  /// 현재 위치 가져오기 (LocationHelper 사용 - 3단계 전략)
   Future<void> _getCurrentLocation() async {
-    try {
-      // 위치 서비스 활성화 확인
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        setState(() => _currentPosition = null);
-        return;
-      }
-      
-      // 위치 권한 확인
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          setState(() => _currentPosition = null);
-          return;
+    debugPrint('\n📍 [WalkScreen] === 위치 가져오기 시작 ===');
+    debugPrint('📍 [WalkScreen] mounted: $mounted');
+    
+    setState(() {
+      _isLocationLoading = true;
+      _locationProgress = null;
+    });
+    
+    final result = await LocationHelper.getCurrentLocation(
+      purpose: LocationPurpose.map,
+      onProgress: (progress) {
+        if (mounted) {
+          setState(() => _locationProgress = progress);
         }
-      }
-      
-      if (permission == LocationPermission.deniedForever) {
-        setState(() => _currentPosition = null);
-        return;
-      }
-      
-      // 현재 위치 가져오기 (타임아웃 5초)
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
-        timeLimit: const Duration(seconds: 5),
-      );
-      
-      setState(() {
-        _currentPosition = position;
-      });
-    } catch (e) {
-      debugPrint('위치 가져오기 실패: $e');
-      setState(() => _currentPosition = null);
+      },
+    );
+    
+    debugPrint('📍 [WalkScreen] 위치 결과: isSuccess=${result.isSuccess}, source=${result.source}, errorType=${result.errorType}');
+    if (result.position != null) {
+      debugPrint('📍 [WalkScreen] 위치: ${result.position!.latitude}, ${result.position!.longitude}');
     }
+    
+    if (!mounted) {
+      debugPrint('📍 [WalkScreen] ⚠️ mounted=false, 상태 업데이트 스킵');
+      return;
+    }
+    
+    if (result.isSuccess && result.position != null) {
+      debugPrint('📍 [WalkScreen] ✅ 위치 가져오기 성공 (source: ${result.source})');
+      setState(() {
+        _currentPosition = result.position;
+        _isLocationLoading = false;
+        _locationProgress = null;
+      });
+      
+      // 백그라운드에서 high 정확도 위치 업데이트
+      _updateHighAccuracyPosition();
+    } else {
+      debugPrint('📍 [WalkScreen] ❌ 위치 가져오기 실패 - 오류 팝업 표시');
+      setState(() {
+        _isLocationLoading = false;
+        _locationProgress = null;
+      });
+      _showLocationErrorDialog();
+    }
+  }
+  
+  /// 백그라운드에서 high 정확도 위치 업데이트
+  Future<void> _updateHighAccuracyPosition() async {
+    if (!mounted || _currentPosition == null) return;
+    
+    final highPosition = await LocationHelper.getHighAccuracyPosition();
+    if (highPosition == null || !mounted) return;
+    
+    // 50m 이상 차이나면 지도 업데이트
+    if (LocationHelper.shouldUpdatePosition(_currentPosition!, highPosition)) {
+      debugPrint('📍 [WalkScreen] 🔄 high 정확도 위치로 업데이트 (50m+ 차이)');
+      
+      setState(() => _currentPosition = highPosition);
+      
+      // 지도 카메라 부드럽게 이동
+      if (_mapController != null && _isMapReady) {
+        final cameraUpdate = CameraUpdate.newCenterPosition(
+          _createLatLng(highPosition.latitude, highPosition.longitude),
+        );
+        await _mapController!.moveCamera(
+          cameraUpdate,
+          animation: const CameraAnimation(500),
+        );
+      }
+    } else {
+      debugPrint('📍 [WalkScreen] high 정확도 위치 차이 50m 미만 - 업데이트 스킵');
+    }
+  }
+  
+  /// 위치 오류 다이얼로그 표시
+  Future<void> _showLocationErrorDialog() async {
+    if (!mounted) return;
+    
+    final dialogResult = await showErrorDialog(
+      context,
+      type: ErrorType.location,
+      themeColor: AppColors.walk,
+    );
+    
+    if (dialogResult == ErrorResult.retry) {
+      // 재시도 - 상태 초기화 후 다시 시도
+      _resetLocationState();
+      _getCurrentLocation();
+    } else {
+      // 취소 - 이전 화면으로 돌아가기
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    }
+  }
+  
+  /// 위치 관련 상태 초기화 (재시도 시 깨끗한 상태에서 시작)
+  void _resetLocationState() {
+    debugPrint('📍 [WalkScreen] 🔄 위치 상태 초기화');
+    setState(() {
+      _currentPosition = null;
+      _initialMapPosition = null;
+      _isMapReady = false;
+      _locationProgress = null;
+    });
+    _mapController = null;
   }
 
   @override
@@ -235,61 +317,87 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
 
   /// 지도 위젯 (플랫폼별 분기)
   Widget _buildKakaoMap() {
+    debugPrint('📍 [WalkScreen] _buildKakaoMap: kIsWeb=$kIsWeb, _isLocationLoading=$_isLocationLoading, _currentPosition=${_currentPosition != null}');
+    
     // 웹에서는 단순 플레이스홀더 표시
     if (kIsWeb) {
+      debugPrint('📍 [WalkScreen] → 웹 플레이스홀더 표시');
       return _buildWebMapPlaceholder();
+    }
+    
+    // 위치 로딩 중이면 로딩 위젯 표시
+    if (_isLocationLoading) {
+      debugPrint('📍 [WalkScreen] → 로딩 위젯 표시 (progress: $_locationProgress)');
+      return MapLoadingWidget.walk(progress: _locationProgress);
     }
     
     // 모바일에서는 카카오맵
     if (_currentPosition != null) {
+      // 초기 위치 설정 (한 번만)
+      _initialMapPosition ??= _createLatLng(
+        _currentPosition!.latitude, 
+        _currentPosition!.longitude,
+      );
+      
+      debugPrint('📍 [WalkScreen] → 카카오맵 렌더링: ${_initialMapPosition!.latitude}, ${_initialMapPosition!.longitude}');
+      
       return KakaoMap(
-        onMapCreated: _onMapCreated,
-        initialPosition: LatLng(
-          latitude: _currentPosition!.latitude,
-          longitude: _currentPosition!.longitude,
+        key: const ValueKey('kakao_map_walk'), // 리빌드 방지
+        option: KakaoMapOption(
+          position: _initialMapPosition!,
+          zoomLevel: 17,
+          mapType: MapType.normal,
         ),
+        onMapReady: _onMapReady,
+        onCameraMoveEnd: (position, gestureType) => _onCameraMoveEnd(position),
       );
     }
     
-    // 위치 정보가 없으면 플레이스홀더
-    return _buildMobileMapPlaceholder();
+    // 위치 정보가 없으면 로딩 위젯
+    debugPrint('📍 [WalkScreen] → 위치 없음, 오류 메시지 표시');
+    return MapLoadingWidget.walk(message: '위치를 확인할 수 없습니다');
   }
   
   /// 카카오맵 생성 완료 콜백
-  void _onMapCreated(KakaoMapController controller) {
+  void _onMapReady(KakaoMapController controller) {
+    debugPrint('📍 [WalkScreen] onMapReady 호출됨');
     _mapController = controller;
     setState(() => _isMapReady = true);
-    
-    // 카메라 이동 완료 이벤트 리스너
-    controller.onCameraMoveEndStream.listen((event) {
-      _currentMapPosition = LatLng(
-        latitude: event.latitude,
-        longitude: event.longitude,
-      );
-    });
+  }
+  
+  /// 카메라 이동 완료 콜백
+  void _onCameraMoveEnd(CameraPosition position) {
+    _currentMapPosition = position.position;
   }
   
   /// 지도에 경로 폴리라인 그리기
-  /// 참고: kakao_maps_flutter SDK에서 폴리라인 지원이 제한적이므로
-  /// 현재는 카메라 이동으로 대체합니다.
+  /// 참고: kakao_map_sdk에서 경로 그리기는 controller.routeLayer를 통해 접근
   Future<void> _drawRoutePolyline() async {
-    if (_mapController == null || _routePoints.isEmpty) return;
+    if (_mapController == null || _routePoints.length < 2) return;
     
     try {
+      // 경로 포인트를 LatLng 리스트로 변환
+      final points = _routePoints
+          .map((gp) => _createLatLng(gp.latitude, gp.longitude))
+          .toList();
+      
+      // 경로 그리기
+      await _mapController!.routeLayer.addRoute(
+        points,
+        RouteStyle(AppColors.walk, 8),
+      );
+      
       // 최신 위치로 카메라 이동
       final lastPoint = _routePoints.last;
+      final cameraUpdate = CameraUpdate.newCenterPosition(
+        _createLatLng(lastPoint.latitude, lastPoint.longitude),
+      );
       await _mapController!.moveCamera(
-        cameraUpdate: CameraUpdate.fromLatLng(
-          LatLng(latitude: lastPoint.latitude, longitude: lastPoint.longitude),
-        ),
-        animation: const CameraAnimation(
-          duration: 300,
-          autoElevation: false,
-          isConsecutive: false,
-        ),
+        cameraUpdate,
+        animation: const CameraAnimation(300),
       );
     } catch (e) {
-      debugPrint('카메라 이동 실패: $e');
+      debugPrint('경로 그리기 실패: $e');
     }
   }
   
@@ -298,81 +406,41 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
     if (_mapController == null || _currentPosition == null) return;
     
     try {
+      final cameraUpdate = CameraUpdate.newCenterPosition(
+        _createLatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+      );
       await _mapController!.moveCamera(
-        cameraUpdate: CameraUpdate.fromLatLng(
-          LatLng(
-            latitude: _currentPosition!.latitude,
-            longitude: _currentPosition!.longitude,
-          ),
-        ),
-        animation: const CameraAnimation(
-          duration: 500,
-          autoElevation: false,
-          isConsecutive: false,
-        ),
+        cameraUpdate,
+        animation: const CameraAnimation(500),
       );
     } catch (e) {
       debugPrint('카메라 이동 실패: $e');
     }
   }
   
-  /// 내 위치로 이동 버튼
+  /// 내 위치로 이동 버튼 (LocationHelper 사용)
   Future<void> _goToMyLocation() async {
-    try {
-      // 위치 서비스 확인
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('위치 서비스를 활성화해주세요')),
-          );
-        }
-        return;
-      }
-      
-      // 위치 권한 확인
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('위치 권한을 허용해주세요')),
-            );
-          }
-          return;
-        }
-      }
-      
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
+    final result = await LocationHelper.getCurrentLocation();
+    
+    if (!result.isSuccess || result.position == null) {
+      // 위치 가져오기 실패 - 오류 팝업 표시
+      _showLocationErrorDialog();
+      return;
+    }
+    
+    setState(() {
+      _currentPosition = result.position;
+    });
+    
+    // 카카오맵 카메라 이동
+    if (_mapController != null) {
+      final cameraUpdate = CameraUpdate.newCenterPosition(
+        _createLatLng(result.latitude, result.longitude),
       );
-      
-      setState(() {
-        _currentPosition = position;
-      });
-      
-      // 카카오맵 카메라 이동
-      if (_mapController != null) {
-        await _mapController!.moveCamera(
-          cameraUpdate: CameraUpdate.fromLatLng(
-            LatLng(latitude: position.latitude, longitude: position.longitude),
-          ),
-          animation: const CameraAnimation(
-            duration: 500,
-            autoElevation: false,
-            isConsecutive: false,
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('내 위치 가져오기 실패: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('현재 위치를 가져올 수 없습니다')),
-        );
-      }
+      await _mapController!.moveCamera(
+        cameraUpdate,
+        animation: const CameraAnimation(500),
+      );
     }
   }
   
@@ -753,11 +821,15 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                   children: [
                     Icon(Icons.pets, size: 16, color: AppColors.walk),
                     const SizedBox(width: 6),
-                    Text(
-                      '산책을 시작하면 이동 경로에 발바닥이 자동으로 남아요!',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
+                    Flexible(
+                      child: Text(
+                        '산책을 시작하면 이동 경로에 발바닥이 자동으로 남아요!',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
                       ),
                     ),
                   ],

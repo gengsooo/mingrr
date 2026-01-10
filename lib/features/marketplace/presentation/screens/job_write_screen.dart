@@ -8,7 +8,8 @@ import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/confirm_bottom_sheet.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
 import '../../../../core/models/location_model.dart';
 import '../../../../models/marketplace_model.dart';
@@ -230,9 +231,9 @@ class _JobWriteScreenState extends ConsumerState<JobWriteScreen> {
     if (newType == ProductType.job) return; // 이미 알바 화면
     
     if (_hasInputData) {
-      final confirmed = await showConfirmBottomSheetWithResult(
+      final confirmed = await showConfirmSheetWithResult(
         context,
-        type: ConfirmType.productTypeChange,
+        type: ConfirmSheetType.productTypeChange,
         message: '${newType == ProductType.sell ? '판매' : '나눔'} 등록 화면으로 이동합니다.\n현재 입력된 정보가 사라집니다.\n계속하시겠습니까?',
         confirmText: '이동',
       );
@@ -730,11 +731,12 @@ class _JobWriteScreenState extends ConsumerState<JobWriteScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('오류가 발생했습니다: $e'),
-            backgroundColor: AppColors.error,
-          ),
+        ErrorHandler.handle(
+          context,
+          error: e,
+          tag: 'JobWrite',
+          operation: '알바 저장',
+          themeColor: AppColors.market,
         );
       }
     } finally {

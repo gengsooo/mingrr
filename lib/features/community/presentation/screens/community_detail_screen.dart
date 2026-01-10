@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/share_service.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/confirm_bottom_sheet.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/warmth_score.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
@@ -492,9 +492,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           onPressed: () {
             if (isJoined) {
               // 탈퇴 시 확인 바텀시트 표시
-              showConfirmBottomSheet(
+              showConfirmSheet(
                 context,
-                type: ConfirmType.groupLeave,
+                type: ConfirmSheetType.groupLeave,
                 onConfirm: () {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -585,9 +585,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   /// 탈퇴 확인 바텀시트
   void _showLeaveConfirmDialog(BuildContext context) {
-    showConfirmBottomSheet(
+    showConfirmSheet(
       context,
-      type: ConfirmType.groupLeave,
+      type: ConfirmSheetType.groupLeave,
       onConfirm: () {
         setState(() => _isJoined = false);
         Navigator.pop(context);

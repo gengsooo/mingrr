@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
+import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/confirm_bottom_sheet.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
+import '../../../../core/widgets/map/map_loading_widget.dart';
 import '../../../../core/models/location_model.dart';
 import '../../../../models/health_model.dart';
 
@@ -31,6 +32,9 @@ class WalkRecordDetailScreen extends StatefulWidget {
 class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
   KakaoMapController? _mapController;
   bool _isMapReady = false;
+  
+  /// LatLng 생성 헬퍼
+  LatLng _createLatLng(double lat, double lng) => LatLng(lat, lng);
   
   WalkRecordModel get record => widget.record;
   List<String> get petNames => widget.petNames;
@@ -110,17 +114,26 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
   Widget _buildKakaoMapWithRoute() {
     final firstPoint = record.routePoints.first;
     
-    return KakaoMap(
-      onMapCreated: _onMapCreated,
-      initialPosition: LatLng(
-        latitude: firstPoint.latitude,
-        longitude: firstPoint.longitude,
-      ),
+    return Stack(
+      children: [
+        KakaoMap(
+          key: const ValueKey('walk_record_map'),
+          option: KakaoMapOption(
+            position: _createLatLng(firstPoint.latitude, firstPoint.longitude),
+            zoomLevel: 15,
+            mapType: MapType.normal,
+          ),
+          onMapReady: _onMapReady,
+        ),
+        // 지도 로딩 중 오버레이
+        if (!_isMapReady)
+          MapLoadingWidget.walk(message: '경로를 불러오는 중...'),
+      ],
     );
   }
   
   /// 카카오맵 생성 완료 콜백
-  void _onMapCreated(KakaoMapController controller) async {
+  void _onMapReady(KakaoMapController controller) async {
     _mapController = controller;
     setState(() => _isMapReady = true);
     
@@ -129,16 +142,25 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
   }
   
   /// 지도에 경로 표시
-  /// 참고: kakao_maps_flutter SDK에서 폴리라인 지원이 제한적이므로
-  /// 현재는 카메라 이동으로 대체합니다.
   Future<void> _drawRouteOnMap() async {
     if (_mapController == null || record.routePoints.length < 2) return;
     
     try {
+      // 경로 포인트를 LatLng 리스트로 변환
+      final points = record.routePoints
+          .map((gp) => _createLatLng(gp.latitude, gp.longitude))
+          .toList();
+      
+      // 경로 그리기
+      await _mapController!.routeLayer.addRoute(
+        points,
+        RouteStyle(AppColors.walk, 8),
+      );
+      
       // 경로 전체가 보이도록 카메라 조정
       _fitBoundsToRoute();
     } catch (e) {
-      debugPrint('카메라 조정 실패: $e');
+      debugPrint('경로 그리기 실패: $e');
     }
   }
   
@@ -161,11 +183,10 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
     final centerLat = (minLat + maxLat) / 2;
     final centerLng = (minLng + maxLng) / 2;
     
-    _mapController?.moveCamera(
-      cameraUpdate: CameraUpdate.fromLatLng(
-        LatLng(latitude: centerLat, longitude: centerLng),
-      ),
+    final cameraUpdate = CameraUpdate.newCenterPosition(
+      _createLatLng(centerLat, centerLng),
     );
+    _mapController?.moveCamera(cameraUpdate);
   }
   
   /// 지도 플레이스홀더 (웹용 또는 경로 없을 때)
@@ -609,9 +630,9 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
   }
 
   void _confirmDelete(BuildContext context) {
-    showConfirmBottomSheet(
+    showConfirmSheet(
       context,
-      type: ConfirmType.walkRecordDelete,
+      type: ConfirmSheetType.walkRecordDelete,
       onConfirm: () {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(

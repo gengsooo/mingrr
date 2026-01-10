@@ -6,7 +6,8 @@ import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/utils/format_utils.dart';
-import '../../../../core/widgets/confirm_bottom_sheet.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/warmth_score.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
@@ -78,6 +79,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
+        ErrorHandler.handle(
+          context,
+          error: e,
+          tag: 'ProductDetail',
+          operation: '상품 정보 로드',
+          themeColor: AppColors.market,
+          onRetry: _loadProduct,
+        );
       }
     }
   }
@@ -325,7 +334,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         const SizedBox(height: 8),
         // 시간, 조회수
         Text(
-          '${_product?.location ?? ''} · ${formatRelativeTime(_product?.createdAt ?? DateTime.now())} · 조회 ${_product?.viewCount ?? 0}',
+          '${_product?.address ?? ''} · ${formatRelativeTime(_product?.createdAt ?? DateTime.now())} · 조회 ${_product?.viewCount ?? 0}',
           style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 16),
@@ -365,11 +374,20 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     final location = _product?.location;
     if (location == null) return const SizedBox.shrink();
     
+    // 주소가 없거나 GeoPoint 인스턴스 문자열인 경우 처리
+    String? displayAddress = _product?.address;
+    if (displayAddress == null || 
+        displayAddress.isEmpty || 
+        displayAddress.contains('Instance of') ||
+        displayAddress.contains('GeoPoint')) {
+      displayAddress = '위치 정보 없음';
+    }
+    
     final locationData = LocationData(
       latitude: location.latitude,
       longitude: location.longitude,
-      fullAddress: _product?.address,
-      shortAddress: _product?.address,
+      fullAddress: displayAddress,
+      shortAddress: displayAddress,
     );
     
     return Column(
@@ -627,9 +645,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   void _confirmDelete() {
     if (_isDeleting) return; // 이미 삭제 중이면 무시
     
-    showConfirmBottomSheet(
+    showConfirmSheet(
       context,
-      type: ConfirmType.productDelete,
+      type: ConfirmSheetType.productDelete,
       onConfirm: _deleteProduct,
     );
   }
@@ -654,11 +672,12 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('삭제 실패: $e'),
-            backgroundColor: AppColors.error,
-          ),
+        ErrorHandler.handle(
+          context,
+          error: e,
+          tag: 'ProductDetail',
+          operation: '상품 삭제',
+          themeColor: AppColors.market,
         );
       }
     } finally {
