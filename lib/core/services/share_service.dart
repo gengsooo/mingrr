@@ -4,6 +4,7 @@ import '../../models/pet_model.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/community_model.dart';
 import '../constants/app_strings.dart';
+import '../widgets/common_widgets.dart';
 
 /// ============================================================
 /// 공유 서비스
@@ -107,12 +108,7 @@ class ShareService {
     await Clipboard.setData(ClipboardData(text: text));
     
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('링크가 복사되었습니다'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      MingrrSnackBar.success(context, '링크가 복사되었습니다');
     }
   }
   
@@ -175,9 +171,7 @@ class _ShareBottomSheet extends StatelessWidget {
                   await Clipboard.setData(ClipboardData(text: text));
                   if (context.mounted) {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('복사되었습니다')),
-                    );
+                    MingrrSnackBar.success(context, '복사되었습니다');
                   }
                 },
               ),
@@ -187,9 +181,7 @@ class _ShareBottomSheet extends StatelessWidget {
                 label: '카카오톡',
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('카카오톡 공유는 SDK 설정 후 사용 가능합니다')),
-                  );
+                  MingrrSnackBar.info(context, '카카오톡 공유는 SDK 설정 후 사용 가능합니다');
                 },
               ),
               _buildShareOption(
@@ -198,9 +190,7 @@ class _ShareBottomSheet extends StatelessWidget {
                 label: '문자',
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('문자 공유는 네이티브 설정 후 사용 가능합니다')),
-                  );
+                  MingrrSnackBar.info(context, '문자 공유는 네이티브 설정 후 사용 가능합니다');
                 },
               ),
               _buildShareOption(
@@ -209,9 +199,7 @@ class _ShareBottomSheet extends StatelessWidget {
                 label: '더보기',
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('share_plus 패키지 설치 후 사용 가능합니다')),
-                  );
+                  MingrrSnackBar.info(context, 'share_plus 패키지 설치 후 사용 가능합니다');
                 },
               ),
             ],

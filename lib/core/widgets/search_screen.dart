@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import '../services/firestore_service.dart';
+import 'common_widgets.dart';
 import 'svg_icons.dart';
 import '../utils/format_utils.dart';
 import '../../models/marketplace_model.dart';
@@ -100,15 +101,21 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const MingrrLoadingState();
     }
 
     if (_lastQuery.isEmpty) {
-      return _buildEmptyState('검색어를 입력해주세요', Icons.search);
+      return const MingrrEmptyState(
+        svgAsset: SvgAssets.emptySearch,
+        title: '검색어를 입력해주세요',
+      );
     }
 
     if (_results.isEmpty) {
-      return _buildEmptyState('검색 결과가 없습니다', Icons.search_off);
+      return const MingrrEmptyState(
+        svgAsset: SvgAssets.emptySearch,
+        title: '검색 결과가 없습니다',
+      );
     }
 
     return ListView.builder(
@@ -128,22 +135,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  Widget _buildEmptyState(String message, IconData icon) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const MingrrSvgIcon(
-            assetPath: SvgAssets.emptySearch,
-            width: 120,
-            height: 120,
-          ),
-          const SizedBox(height: 16),
-          Text(message, style: const TextStyle(color: AppColors.textSecondary)),
-        ],
-      ),
-    );
-  }
 
   Widget _buildProductItem(ProductModel product) {
     return Card(
@@ -301,9 +292,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       setState(() => _results = results);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('검색 중 오류가 발생했습니다: $e')),
-        );
+        MingrrSnackBar.error(context, '검색 중 오류가 발생했습니다: $e');
       }
     } finally {
       if (mounted) {

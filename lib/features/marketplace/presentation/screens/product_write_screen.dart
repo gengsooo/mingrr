@@ -103,6 +103,8 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
         title: Text(_isEditMode ? '마켓 수정' : '마켓 등록'),
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
@@ -520,95 +522,13 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
   }
 
   Widget _buildDateSelector() {
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () => _selectDate(isStart: true),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.divider),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today, size: 18, color: AppColors.textSecondary),
-                  const SizedBox(width: 8),
-                  Text(
-                    _startDate != null ? formatDate(_startDate!) : '시작일',
-                    style: TextStyle(
-                      color: _startDate != null ? AppColors.textPrimary : AppColors.textHint,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8),
-          child: Text('~'),
-        ),
-        Expanded(
-          child: GestureDetector(
-            onTap: () => _selectDate(isStart: false),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.divider),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today, size: 18, color: AppColors.textSecondary),
-                  const SizedBox(width: 8),
-                  Text(
-                    _endDate != null ? formatDate(_endDate!) : '종료일',
-                    style: TextStyle(
-                      color: _endDate != null ? AppColors.textPrimary : AppColors.textHint,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
+    return MingrrDateSelector(
+      date: _startDate,
+      endDate: _endDate,
+      onSelect: (d) => setState(() => _startDate = d),
+      onEndDateSelect: (d) => setState(() => _endDate = d),
+      accentColor: AppColors.market,
     );
-  }
-
-  Future<void> _selectDate({required bool isStart}) async {
-    final initialDate = isStart ? (_startDate ?? DateTime.now()) : (_endDate ?? DateTime.now());
-    final firstDate = isStart ? DateTime.now() : (_startDate ?? DateTime.now());
-
-    final date = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: AppColors.market),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (date != null) {
-      setState(() {
-        if (isStart) {
-          _startDate = date;
-          if (_endDate != null && _endDate!.isBefore(date)) {
-            _endDate = null;
-          }
-        } else {
-          _endDate = date;
-        }
-      });
-    }
   }
 
   Widget _buildPetSelector() {
@@ -676,7 +596,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
           ],
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const MingrrLoadingState(),
       error: (_, __) => const Text('반려동물 목록을 불러올 수 없습니다'),
     );
   }
@@ -893,9 +813,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
   Future<void> _pickImages() async {
     final totalImages = _existingImageUrls.length + _selectedImages.length;
     if (totalImages >= 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('최대 10장까지 등록할 수 있습니다')),
-      );
+      MingrrSnackBar.warning(context, '최대 10장까지 등록할 수 있습니다');
       return;
     }
 
@@ -922,12 +840,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
     
     // 판매/나눔일 때 카테고리 선택 검증
     if (!isJob && _selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('카테고리를 선택해주세요'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      MingrrSnackBar.warning(context, '카테고리를 선택해주세요');
       return;
     }
 
@@ -978,12 +891,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
 
         if (mounted) {
           Navigator.pop(context, true);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('알바가 등록되었습니다'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          MingrrSnackBar.success(context, '알바가 등록되었습니다');
         }
         return;
       }
@@ -1026,12 +934,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
 
       if (mounted) {
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_isEditMode ? '상품이 수정되었습니다' : '상품이 등록되었습니다'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        MingrrSnackBar.success(context, _isEditMode ? '상품이 수정되었습니다' : '상품이 등록되었습니다');
       }
     } catch (e) {
       if (mounted) {

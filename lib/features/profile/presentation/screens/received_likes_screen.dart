@@ -32,6 +32,8 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
         title: const Text('받은 좋아요'),
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
       ),
       body: likesAsync.when(
         data: (likes) {
@@ -71,8 +73,8 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+        loading: () => const MingrrLoadingState(),
+        error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
       ),
     );
   }
@@ -232,28 +234,21 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
       final match = await _datingService.acceptLike(like.id);
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('매칭 성공! 채팅을 시작해보세요 🎉'),
+        if (match?.chatRoomId != null) {
+          MingrrSnackBar.withAction(
+            context,
+            message: '매칭 성공! 채팅을 시작해보세요 🎉',
+            actionLabel: '채팅하기',
+            onAction: () => context.push('/chat/${match!.chatRoomId}'),
             backgroundColor: AppColors.success,
-            action: match?.chatRoomId != null
-                ? SnackBarAction(
-                    label: '채팅하기',
-                    textColor: Colors.white,
-                    onPressed: () => context.push('/chat/${match!.chatRoomId}'),
-                  )
-                : null,
-          ),
-        );
+          );
+        } else {
+          MingrrSnackBar.success(context, '매칭 성공! 채팅을 시작해보세요 🎉');
+        }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('오류가 발생했습니다: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        MingrrSnackBar.error(context, '오류가 발생했습니다: $e');
       }
     } finally {
       if (mounted) {
@@ -295,21 +290,11 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
       await _datingService.rejectLike(like.id);
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('좋아요를 거절했습니다'),
-            backgroundColor: AppColors.textSecondary,
-          ),
-        );
+        MingrrSnackBar.info(context, '좋아요를 거절했습니다');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('오류가 발생했습니다: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        MingrrSnackBar.error(context, '오류가 발생했습니다: $e');
       }
     } finally {
       if (mounted) {

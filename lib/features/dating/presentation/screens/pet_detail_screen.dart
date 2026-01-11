@@ -94,9 +94,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
   Future<void> _toggleLike() async {
     final currentUser = _firebase.currentUser;
     if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인이 필요합니다')),
-      );
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
       return;
     }
 
@@ -128,12 +126,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         });
         
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('좋아요를 보냈어요! 💕'),
-              duration: Duration(seconds: 1),
-            ),
-          );
+          MingrrSnackBar.success(context, '좋아요를 보냈어요! 💕');
         }
       }
     } catch (e) {
@@ -649,12 +642,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
     final myPets = ref.read(userPetsProvider).valueOrNull ?? [];
     
     if (myPets.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('먼저 반려동물을 등록해주세요'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      MingrrSnackBar.warning(context, '먼저 반려동물을 등록해주세요');
       return;
     }
     
@@ -711,21 +699,11 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       }
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${myPet.name}(으)로 데이트 신청을 보냈어요! 💕'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        MingrrSnackBar.success(context, '${myPet.name}(으)로 데이트 신청을 보냈어요! 💕');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('신청 실패: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        MingrrSnackBar.error(context, '신청 실패: $e');
       }
     } finally {
       if (mounted) {
@@ -761,21 +739,11 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       );
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${myPet.name}(으)로 교배 신청을 보냈어요! 🐶'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        MingrrSnackBar.success(context, '${myPet.name}(으)로 교배 신청을 보냈어요! 🐶');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('신청 실패: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        MingrrSnackBar.error(context, '신청 실패: $e');
       }
     } finally {
       if (mounted) {

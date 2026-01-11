@@ -11,11 +11,13 @@ import '../constants/app_sizes.dart';
 class ProfileButton extends StatelessWidget {
   final String? imageUrl;
   final double size;
+  final Color? backgroundColor;
 
   const ProfileButton({
     super.key,
     this.imageUrl,
     this.size = 32,
+    this.backgroundColor,
   });
 
   @override
@@ -26,7 +28,7 @@ class ProfileButton extends StatelessWidget {
         width: size,
         height: size,
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: backgroundColor ?? AppColors.background,
           shape: BoxShape.circle,
           border: Border.all(color: AppColors.divider, width: 1),
         ),
@@ -53,11 +55,15 @@ class ProfileButton extends StatelessWidget {
 }
 
 /// AppBar actions에 추가할 프로필 버튼
-Widget buildProfileAction({String? imageUrl}) {
+/// [backgroundColor]로 메뉴별 테마 색상 적용 가능
+Widget buildProfileAction({String? imageUrl, Color? backgroundColor}) {
   return Builder(
     builder: (context) => Padding(
       padding: const EdgeInsets.only(right: AppSizes.paddingS),
-      child: ProfileButton(imageUrl: imageUrl),
+      child: ProfileButton(
+        imageUrl: imageUrl,
+        backgroundColor: backgroundColor,
+      ),
     ),
   );
 }

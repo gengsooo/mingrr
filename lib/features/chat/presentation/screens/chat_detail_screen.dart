@@ -8,6 +8,7 @@ import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/rating_service.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/kkosunnae_badge.dart';
 import '../../../../core/widgets/rating_sheet.dart';
@@ -139,11 +140,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           // 메시지 목록
           Expanded(
             child: messagesAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('오류: $e')),
+              loading: () => const MingrrLoadingState(),
+              error: (e, _) => MingrrErrorState(subtitle: '$e'),
               data: (messages) {
                 if (messages.isEmpty) {
-                  return _buildEmptyState();
+                  return const MingrrEmptyState(
+                    svgAsset: SvgAssets.emptyMessage,
+                    title: '대화를 시작해보세요!',
+                  );
                 }
                 return ListView.builder(
                   controller: _scrollController,
@@ -174,22 +178,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const MingrrSvgIcon(
-            assetPath: SvgAssets.emptyMessage,
-            width: 120,
-            height: 120,
-          ),
-          const SizedBox(height: 16),
-          Text('대화를 시작해보세요!', style: TextStyle(color: Colors.grey[500], fontSize: 16)),
-        ],
-      ),
-    );
-  }
 
   Widget _buildDateDivider(DateTime date) {
     return Padding(
@@ -505,9 +493,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               title: const Text('알림 끄기'),
               onTap: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('알림이 꺼졌습니다')),
-                );
+                MingrrSnackBar.success(context, '알림이 꺼졌습니다');
               },
             ),
             ListTile(
@@ -592,9 +578,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('오류가 발생했습니다: $e')),
-        );
+        MingrrSnackBar.error(context, '오류가 발생했습니다: $e');
       }
     }
   }
@@ -690,9 +674,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     selectedReason!,
                   );
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('신고가 접수되었습니다')),
-                    );
+                    MingrrSnackBar.success(context, '신고가 접수되었습니다');
                   }
                 },
                 child: const Text('신고', style: TextStyle(color: Colors.red)),

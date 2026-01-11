@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/utils/format_utils.dart';
-import '../../../../core/widgets/warmth_score.dart';
+import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/profile_cards.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
 import '../../../../models/marketplace_model.dart';
@@ -231,41 +232,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   }
 
   Widget _buildUserInfo(BuildContext context, JobModel job) {
-    return GestureDetector(
+    return GuardianProfileCard(
+      name: '등록자',
+      kkosunnaeScore: 50.0,
+      accentColor: AppColors.market,
       onTap: () => _showUserProfile(context, job),
-      child: Row(
-        children: [
-          // 프로필 아이콘
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Center(
-              child: Icon(Icons.person, size: 24, color: AppColors.primary),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // 정보
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '등록자',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 4),
-                const KkosunnaeScoreSmall(score: 50.0),
-              ],
-            ),
-          ),
-          // 화살표
-          const Icon(Icons.chevron_right, color: AppColors.textHint),
-        ],
-      ),
     );
   }
   
@@ -463,9 +434,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
 
 
   void _shareJob(JobModel job) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('공유 기능 준비 중입니다')),
-    );
+    MingrrSnackBar.info(context, '공유 기능 준비 중입니다');
   }
 
   void _showMoreOptions(BuildContext context, JobModel job) {
@@ -503,11 +472,6 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
 
   void _startChat(JobModel job) {
     // 채팅 시작
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('채팅방을 생성합니다...'),
-        backgroundColor: AppColors.market,
-      ),
-    );
+    MingrrSnackBar.info(context, '채팅방을 생성합니다...');
   }
 }

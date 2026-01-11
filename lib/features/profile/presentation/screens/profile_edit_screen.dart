@@ -38,7 +38,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   
   UserGender? _selectedGender;
   DateTime? _birthDate;
-  DateTime? _lastNicknameChangeDate;
   String _originalNickname = '';
   bool _isLoading = false;
   bool _isDataLoaded = false;
@@ -71,7 +70,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     _bioController.text = currentUser.bio ?? '';
     _selectedGender = currentUser.gender;
     _birthDate = currentUser.birthDate;
-    _lastNicknameChangeDate = currentUser.nicknameChangedAt;
     _profileImageUrl = currentUser.profileImageUrl;
     
     // 기존 위치 정보 로드
@@ -86,20 +84,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     
     _isDataLoaded = true;
     setState(() {});
-  }
-  
-  /// 닉네임 변경 가능 여부 확인 (월 1회 제한)
-  bool get canChangeNickname {
-    if (_lastNicknameChangeDate == null) return true;
-    final daysSinceLastChange = DateTime.now().difference(_lastNicknameChangeDate!).inDays;
-    return daysSinceLastChange >= 30;
-  }
-  
-  /// 다음 닉네임 변경 가능일까지 남은 일수
-  int get daysUntilNicknameChange {
-    if (_lastNicknameChangeDate == null) return 0;
-    final daysSinceLastChange = DateTime.now().difference(_lastNicknameChangeDate!).inDays;
-    return (30 - daysSinceLastChange).clamp(0, 30);
   }
   
   @override
@@ -117,6 +101,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         title: const Text('프로필 수정'),
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
       ),
       body: Form(
         key: _formKey,
@@ -310,9 +296,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 
   Widget _buildBasicInfoSection() {
-    final nicknameChanged = _nicknameController.text != _originalNickname;
-    final canChange = canChangeNickname || !nicknameChanged;
-    
     return MingrrCard(
       margin: EdgeInsets.zero,
       child: Column(
@@ -320,18 +303,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           // 닉네임
           TextFormField(
             controller: _nicknameController,
-            enabled: canChangeNickname,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: '닉네임',
               hintText: '닉네임을 입력해주세요',
-              border: const OutlineInputBorder(),
-              helperText: canChangeNickname 
-                  ? '닉네임은 한 달에 한 번만 변경할 수 있습니다'
-                  : '$daysUntilNicknameChange일 후에 변경 가능합니다',
-              helperStyle: TextStyle(
-                color: canChangeNickname ? AppColors.textHint : AppColors.warning,
-                fontSize: 12,
-              ),
+              border: OutlineInputBorder(),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -354,7 +329,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 segments: UserGender.values.map((gender) {
                   return ButtonSegment<UserGender>(
                     value: gender,
-                    label: Text('${gender.symbol} ${gender.label}'),
+                    label: Text(gender.label),
                   );
                 }).toList(),
                 selected: {_selectedGender ?? UserGender.male},
@@ -369,19 +344,17 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           const SizedBox(height: AppSizes.gapM),
           
           // 생년월일
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('생년월일'),
-            subtitle: Text(
-              _birthDate != null
-                  ? '${_birthDate!.year}년 ${_birthDate!.month}월 ${_birthDate!.day}일'
-                  : '선택해주세요',
-              style: TextStyle(
-                color: _birthDate != null ? AppColors.textPrimary : AppColors.textHint,
-              ),
-            ),
-            trailing: const Icon(Icons.calendar_today),
-            onTap: _selectBirthDate,
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text('생년월일', style: TextStyle(fontSize: 14)),
+          ),
+          const SizedBox(height: 8),
+          MingrrDateSelector(
+            date: _birthDate,
+            onSelect: (d) => setState(() => _birthDate = d),
+            isBirthDate: true,
+            birthDateMinYear: 1950,
+            label: _birthDate != null ? null : '선택해주세요',
           ),
         ],
       ),
@@ -475,20 +448,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     );
   }
 
-  Future<void> _selectBirthDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _birthDate ?? DateTime(1990),
-      firstDate: DateTime(1950),
-      lastDate: DateTime.now(),
-      helpText: '생년월일 선택',
-    );
-    if (picked != null) {
-      setState(() {
-        _birthDate = picked;
-      });
-    }
-  }
 
   Future<void> _selectLocation() async {
     final result = await showMapLocationPicker(
@@ -517,14 +476,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           throw Exception('로그인이 필요합니다');
         }
         
-        // 닉네임 변경 여부 확인
-        final nicknameChanged = _nicknameController.text.trim() != _originalNickname;
-        
-        // 닉네임 변경 시 30일 제한 체크
-        if (nicknameChanged && !canChangeNickname) {
-          throw Exception('닉네임은 30일에 한 번만 변경할 수 있습니다. ${daysUntilNicknameChange}일 후에 다시 시도해주세요.');
-        }
-        
         // 프로필 이미지 업로드
         String? uploadedImageUrl = _profileImageUrl;
         if (_selectedDefaultAvatar != null) {
@@ -544,11 +495,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           'updatedAt': FieldValue.serverTimestamp(),
         };
         
-        // 닉네임이 변경되었으면 변경일 업데이트
-        if (nicknameChanged) {
-          updateData['nicknameChangedAt'] = FieldValue.serverTimestamp();
-        }
-        
         await FirebaseFirestore.instance
             .collection('users')
             .doc(authUser.uid)
@@ -558,19 +504,12 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         ref.invalidate(currentUserProvider);
         
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('프로필이 수정되었습니다!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          MingrrSnackBar.success(context, '프로필이 수정되었습니다!');
           Navigator.pop(context, true);
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('저장 실패: $e'), backgroundColor: AppColors.error),
-          );
+          MingrrSnackBar.error(context, '저장 실패: $e');
         }
       } finally {
         if (mounted) setState(() => _isLoading = false);

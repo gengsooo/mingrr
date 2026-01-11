@@ -248,11 +248,11 @@ class CommunityScreen extends ConsumerWidget {
 
     // 카테고리 정의 (전체 + CommunityCategory)
     final categories = [
-      (label: '전체', emoji: '📋', icon: null),
+      (label: '전체', emoji: null, icon: Icons.grid_view),
       ...CommunityCategory.values.map((c) => (
         label: c.label.replaceAll(' 모임', ''),
-        emoji: c.emoji,
-        icon: null,
+        emoji: null,
+        icon: c.icon,
       )),
     ];
 
@@ -262,6 +262,8 @@ class CommunityScreen extends ConsumerWidget {
         title: const Text('소모임'),
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
@@ -278,7 +280,7 @@ class CommunityScreen extends ConsumerWidget {
             },
           ),
           const NotificationIconButton(),
-          buildProfileAction(),
+          buildProfileAction(backgroundColor: AppColors.communityLight),
         ],
       ),
       body: Column(
@@ -683,7 +685,7 @@ class CommunityScreen extends ConsumerWidget {
               ],
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator()),
+          loading: () => const MingrrLoadingState(),
           error: (e, _) => Center(child: Text('오류: $e')),
         );
       },
@@ -915,12 +917,7 @@ class CommunityScreen extends ConsumerWidget {
       context,
       groupName: groupName,
       onConfirm: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$groupName에 가입 신청을 보냈어요!'),
-            backgroundColor: AppColors.community,
-          ),
-        );
+        MingrrSnackBar.success(context, '$groupName에 가입 신청을 보냈어요!');
       },
     );
   }

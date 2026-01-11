@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/services/firebase_service.dart';
+import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/svg_icons.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -54,6 +55,8 @@ class TransactionHistoryScreen extends ConsumerWidget {
         title: const Text('거래 내역'),
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
       ),
       body: DefaultTabController(
         length: 2,
@@ -91,7 +94,7 @@ class TransactionHistoryScreen extends ConsumerWidget {
     return sellAsync.when(
       data: (products) {
         if (products.isEmpty) {
-          return _buildEmptyState(
+          return MingrrEmptyState(
             svgAsset: SvgAssets.emptyTransaction,
             title: '판매 내역이 없어요',
             subtitle: '마켓에서 물건을 판매해보세요!',
@@ -99,8 +102,8 @@ class TransactionHistoryScreen extends ConsumerWidget {
         }
         return _buildProductList(products, isSell: true);
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+      loading: () => const MingrrLoadingState(),
+      error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
     );
   }
   
@@ -108,7 +111,7 @@ class TransactionHistoryScreen extends ConsumerWidget {
     return buyAsync.when(
       data: (products) {
         if (products.isEmpty) {
-          return _buildEmptyState(
+          return MingrrEmptyState(
             svgAsset: SvgAssets.emptyTransaction,
             title: '구매 내역이 없어요',
             subtitle: '마켓에서 필요한 물건을 구매해보세요!',
@@ -116,8 +119,8 @@ class TransactionHistoryScreen extends ConsumerWidget {
         }
         return _buildProductList(products, isSell: false);
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+      loading: () => const MingrrLoadingState(),
+      error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
     );
   }
   
@@ -170,38 +173,4 @@ class TransactionHistoryScreen extends ConsumerWidget {
     );
   }
   
-  Widget _buildEmptyState({
-    required String svgAsset,
-    required String title,
-    required String subtitle,
-  }) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          MingrrSvgIcon(
-            assetPath: svgAsset,
-            width: 120,
-            height: 120,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textHint,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

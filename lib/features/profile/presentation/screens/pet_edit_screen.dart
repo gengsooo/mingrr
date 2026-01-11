@@ -104,9 +104,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('데이터 로드 실패: $e'), backgroundColor: AppColors.error),
-        );
+        MingrrSnackBar.error(context, '데이터 로드 실패: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -130,6 +128,8 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         title: Text(isEditMode ? '반려동물 수정' : '반려동물 추가'),
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         actions: [
           if (isEditMode && !_isLoading)
             IconButton(
@@ -139,7 +139,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         ],
       ),
       body: _isLoading && isEditMode && !_isDataLoaded
-          ? const Center(child: CircularProgressIndicator())
+          ? const MingrrLoadingState()
           : Form(
         key: _formKey,
         child: ListView(
@@ -403,7 +403,14 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
                 segments: PetGender.values.map((gender) {
                   return ButtonSegment<PetGender>(
                     value: gender,
-                    label: Text('${gender.symbol} ${gender.label}'),
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(gender.icon, size: 16),
+                        const SizedBox(width: 4),
+                        Text(gender.label),
+                      ],
+                    ),
                   );
                 }).toList(),
                 selected: {_selectedGender},
@@ -418,19 +425,14 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           const SizedBox(height: AppSizes.gapM),
           
           // 생년월일
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('생년월일'),
-            subtitle: Text(
-              _birthDate != null
-                  ? '${_birthDate!.year}년 ${_birthDate!.month}월 ${_birthDate!.day}일'
-                  : '선택해주세요',
-              style: TextStyle(
-                color: _birthDate != null ? AppColors.textPrimary : AppColors.textHint,
-              ),
-            ),
-            trailing: const Icon(Icons.calendar_today),
-            onTap: _selectBirthDate,
+          const Text('생년월일', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          const SizedBox(height: 8),
+          MingrrDateSelector(
+            date: _birthDate,
+            onSelect: (d) => setState(() => _birthDate = d),
+            isBirthDate: true,
+            birthDateMinYear: 2000,
+            label: _birthDate != null ? null : '선택해주세요',
           ),
         ],
       ),
@@ -890,9 +892,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('이미지 선택 실패: $e'), backgroundColor: AppColors.error),
-        );
+        MingrrSnackBar.error(context, '이미지 선택 실패: $e');
       }
     }
   }
@@ -939,9 +939,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('이미지 선택 실패: $e'), backgroundColor: AppColors.error),
-        );
+        MingrrSnackBar.error(context, '이미지 선택 실패: $e');
       }
     }
   }
@@ -1007,30 +1005,11 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
     }
   }
 
-  Future<void> _selectBirthDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _birthDate ?? DateTime.now().subtract(const Duration(days: 365)),
-      firstDate: DateTime(2000),
-      lastDate: DateTime.now(),
-      helpText: '생년월일 선택',
-    );
-    if (picked != null) {
-      setState(() {
-        _birthDate = picked;
-      });
-    }
-  }
 
   Future<void> _savePet() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedTraits.length < 5) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('특성을 최소 5개 이상 선택해주세요'),
-            backgroundColor: AppColors.warning,
-          ),
-        );
+        MingrrSnackBar.warning(context, '특성을 최소 5개 이상 선택해주세요');
         return;
       }
       
@@ -1085,12 +1064,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         ref.invalidate(userPetsProvider);
         
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(isEditMode ? '반려동물 정보가 수정되었습니다!' : '반려동물이 등록되었습니다!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          MingrrSnackBar.success(context, isEditMode ? '반려동물 정보가 수정되었습니다!' : '반려동물이 등록되었습니다!');
           Navigator.pop(context, true);
         }
       } catch (e) {
@@ -1130,12 +1104,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       ref.invalidate(userPetsProvider);
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('반려동물이 삭제되었습니다'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        MingrrSnackBar.success(context, '반려동물이 삭제되었습니다');
         Navigator.pop(context, true);
       }
     } catch (e) {

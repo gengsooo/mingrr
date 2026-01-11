@@ -76,6 +76,8 @@ class MarketplaceScreen extends ConsumerWidget {
         title: const Text('마켓'),
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
@@ -92,7 +94,7 @@ class MarketplaceScreen extends ConsumerWidget {
             },
           ),
           const NotificationIconButton(),
-          buildProfileAction(),
+          buildProfileAction(backgroundColor: AppColors.marketLight),
         ],
       ),
       body: Column(
@@ -270,8 +272,8 @@ class MarketplaceScreen extends ConsumerWidget {
               },
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+          loading: () => const MingrrLoadingState(),
+          error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
         );
       },
     );
@@ -859,11 +861,6 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
       MarketWriteType.share => '나눔 글이 등록되었습니다!',
       MarketWriteType.job => '알바 글이 등록되었습니다!',
     };
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.success,
-      ),
-    );
+    MingrrSnackBar.success(context, message);
   }
 }

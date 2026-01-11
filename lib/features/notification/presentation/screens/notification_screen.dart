@@ -100,7 +100,11 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
       body: notificationsAsync.when(
         data: (notifications) {
           if (notifications.isEmpty) {
-            return _buildEmptyState();
+            return const MingrrEmptyState(
+              svgAsset: SvgAssets.emptyNotification,
+              title: '알림이 없습니다',
+              subtitle: '새로운 소식이 있으면 알려드릴게요!',
+            );
           }
           
           return TabBarView(
@@ -129,60 +133,24 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.textHint),
-              const SizedBox(height: 16),
-              const Text('알림을 불러올 수 없습니다'),
-              const SizedBox(height: 8),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(userNotificationsProvider),
-                child: const Text('다시 시도'),
-              ),
-            ],
-          ),
+        loading: () => const MingrrLoadingState(),
+        error: (_, __) => MingrrErrorState(
+          title: '알림을 불러올 수 없습니다',
+          buttonText: '다시 시도',
+          onRetry: () => ref.invalidate(userNotificationsProvider),
         ),
       ),
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const MingrrSvgIcon(
-            assetPath: SvgAssets.emptyNotification,
-            width: 120,
-            height: 120,
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            '알림이 없습니다',
-            style: TextStyle(
-              fontSize: 16,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            '새로운 소식이 있으면 알려드릴게요!',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textHint,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildNotificationList(List<NotificationModel> notifications) {
     if (notifications.isEmpty) {
-      return _buildEmptyState();
+      return const MingrrEmptyState(
+        svgAsset: SvgAssets.emptyNotification,
+        title: '알림이 없습니다',
+        subtitle: '새로운 소식이 있으면 알려드릴게요!',
+      );
     }
 
     // 날짜별 그룹핑
@@ -446,12 +414,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
   void _markAllAsRead() async {
     await ref.read(notificationServiceProvider).markAllAsRead();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('모든 알림을 읽음 처리했습니다'),
-          backgroundColor: AppColors.success,
-        ),
-      );
+      MingrrSnackBar.success(context, '모든 알림을 읽음 처리했습니다');
     }
   }
 }

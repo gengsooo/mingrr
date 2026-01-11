@@ -60,9 +60,11 @@ class ChatListScreen extends ConsumerWidget {
         title: const Text('채팅'),
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         actions: [
           const NotificationIconButton(),
-          buildProfileAction(),
+          buildProfileAction(backgroundColor: AppColors.chatLight),
         ],
       ),
       body: Column(
@@ -142,7 +144,11 @@ class ChatListScreen extends ConsumerWidget {
             }).toList();
             
             if (filteredRooms.isEmpty) {
-              return _buildEmptyState(type);
+              return MingrrEmptyState(
+                svgAsset: SvgAssets.emptyChat,
+                title: '${type.label} 채팅이 없어요',
+                subtitle: _getEmptyStateMessage(type),
+              );
             }
             
             return ListView.builder(
@@ -153,8 +159,12 @@ class ChatListScreen extends ConsumerWidget {
               },
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => _buildEmptyState(type),
+          loading: () => const MingrrLoadingState(),
+          error: (_, __) => MingrrEmptyState(
+            svgAsset: SvgAssets.emptyChat,
+            title: '${type.label} 채팅을 불러올 수 없어요',
+            subtitle: '네트워크 연결을 확인해주세요',
+          ),
         );
       },
     );
@@ -186,7 +196,11 @@ class ChatListScreen extends ConsumerWidget {
                 }).toList();
                 
                 if (filteredRooms.isEmpty && pendingRequests.isEmpty) {
-                  return _buildEmptyState(ChatType.dating);
+                  return MingrrEmptyState(
+                    svgAsset: SvgAssets.emptyChat,
+                    title: '데이팅 채팅이 없어요',
+                    subtitle: _getEmptyStateMessage(ChatType.dating),
+                  );
                 }
                 
                 return Column(
@@ -205,7 +219,7 @@ class ChatListScreen extends ConsumerWidget {
                   ],
                 );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const MingrrLoadingState(),
               error: (_, __) => const SizedBox.shrink(),
             ),
           ],
@@ -439,12 +453,7 @@ class ChatListScreen extends ConsumerWidget {
                     onPressed: () {
                       ref.read(receivedRequestsProvider.notifier).acceptRequest(request.id);
                       Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${request.senderPetName}의 ${request.typeLabel}을 수락했어요! 💕'),
-                          backgroundColor: AppColors.dating,
-                        ),
-                      );
+                      MingrrSnackBar.success(context, '${request.senderPetName}의 ${request.typeLabel}을 수락했어요! 💕');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.dating,
@@ -518,12 +527,7 @@ class ChatListScreen extends ConsumerWidget {
                     onPressed: () {
                       ref.read(receivedRequestsProvider.notifier).rejectRequest(request.id);
                       Navigator.pop(ctx);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('신청을 거절했어요'),
-                          backgroundColor: AppColors.textSecondary,
-                        ),
-                      );
+                      MingrrSnackBar.info(context, '신청을 거절했어요');
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.textSecondary,
@@ -710,36 +714,6 @@ class ChatListScreen extends ConsumerWidget {
     );
   }
 
-  /// 빈 상태 표시
-  Widget _buildEmptyState(ChatType type) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const MingrrSvgIcon(
-            assetPath: SvgAssets.emptyChat,
-            width: 120,
-            height: 120,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '${type.label} 채팅이 없어요',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _getEmptyStateMessage(type),
-            style: const TextStyle(fontSize: 13, color: AppColors.textHint),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
 
   String _getEmptyStateMessage(ChatType type) {
     switch (type) {

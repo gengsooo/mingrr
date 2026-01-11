@@ -457,41 +457,90 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
 
   /// 함께한 반려동물
   Widget _buildPetInfo() {
+    final pets = petNames.isNotEmpty ? petNames : ['반려동물'];
+    
     return MingrrCard(
       margin: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '함께한 반려동물',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+          // 타이틀 영역
+          Row(
+            children: [
+              const Text(
+                '함께한 친구들',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${pets.length}마리',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppColors.walk,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
+          
+          // 반려동물 목록 (Wrap으로 가로 전체 사용, 많으면 아래로)
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: (petNames.isNotEmpty ? petNames : ['반려동물']).map((name) {
+            spacing: 10,
+            runSpacing: 10,
+            children: pets.asMap().entries.map((entry) {
+              final index = entry.key;
+              final name = entry.value;
+              
+              // 각 반려동물마다 살짝 다른 색상 톤
+              final colors = [
+                AppColors.walk,
+                AppColors.primary,
+                AppColors.dating,
+                AppColors.community,
+                AppColors.market,
+              ];
+              final color = colors[index % colors.length];
+              
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: AppColors.walk.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.walk.withOpacity(0.3)),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withOpacity(0.15),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                  border: Border.all(color: color.withOpacity(0.3)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const DefaultPetIcon(size: 16),
-                    const SizedBox(width: 6),
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: DefaultPetIcon(size: 18, color: color),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     Text(
                       name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.walk,
+                        fontWeight: FontWeight.w600,
+                        color: color,
                       ),
                     ),
                   ],
@@ -594,9 +643,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
   }
 
   void _shareRecord(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('공유 기능은 준비 중입니다')),
-    );
+    MingrrSnackBar.info(context, '공유 기능은 준비 중입니다');
   }
 
   void _showMoreOptions(BuildContext context) {
@@ -606,16 +653,6 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ListTile(
-              leading: const Icon(Icons.edit_outlined),
-              title: const Text('수정'),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('수정 기능은 준비 중입니다')),
-                );
-              },
-            ),
             ListTile(
               leading: const Icon(Icons.delete_outline, color: AppColors.error),
               title: const Text('삭제', style: TextStyle(color: AppColors.error)),
@@ -636,9 +673,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
       type: ConfirmSheetType.walkRecordDelete,
       onConfirm: () {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('기록이 삭제되었습니다')),
-        );
+        MingrrSnackBar.success(context, '기록이 삭제되었습니다');
       },
     );
   }

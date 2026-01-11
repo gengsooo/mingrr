@@ -126,9 +126,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             child: const Icon(Icons.share, color: Colors.white, size: 20),
           ),
           onPressed: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('공유 기능 준비 중입니다')),
-            );
+            MingrrSnackBar.info(context, '공유 기능 준비 중입니다');
           },
         ),
         IconButton(
@@ -324,7 +322,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     return ListView(
       padding: const EdgeInsets.all(AppSizes.paddingM),
       children: [
-        _buildEmptyState(
+        MingrrEmptyState(
           svgAsset: SvgAssets.emptyList,
           title: '아직 게시글이 없습니다',
           subtitle: '첫 번째 게시글을 작성해보세요!',
@@ -337,7 +335,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     return ListView(
       padding: const EdgeInsets.all(AppSizes.paddingM),
       children: [
-        _buildEmptyState(
+        MingrrEmptyState(
           svgAsset: SvgAssets.emptySchedule,
           title: '예정된 일정이 없습니다',
           subtitle: '새로운 모임 일정을 만들어보세요!',
@@ -373,7 +371,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             ),
           ),
         ),
-        _buildEmptyState(
+        MingrrEmptyState(
           svgAsset: SvgAssets.emptyGroup,
           title: '다른 멤버가 없습니다',
           subtitle: '친구를 초대해보세요!',
@@ -382,42 +380,6 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     );
   }
 
-  Widget _buildEmptyState({
-    required String svgAsset,
-    required String title,
-    required String subtitle,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 60),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          MingrrSvgIcon(
-            assetPath: svgAsset,
-            width: 100,
-            height: 100,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textHint,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildBottomButton(BuildContext context, GroupModel group) {
     // TODO: 실제 가입 여부 확인 로직 필요
@@ -498,9 +460,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     final myUserId = firebaseService.currentUserId;
     
     if (myUserId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인이 필요합니다')),
-      );
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
       return;
     }
 
@@ -548,9 +508,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('채팅 시작 실패: $e')),
-        );
+        MingrrSnackBar.error(context, '채팅 시작 실패: $e');
       }
     }
   }
@@ -565,15 +523,11 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           : '이 모임에 가입하시겠습니까?',
       confirmText: group.requireApproval ? '신청하기' : '가입하기',
       onConfirm: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              group.requireApproval
-                  ? '가입 신청을 보냈습니다! 승인을 기다려주세요.'
-                  : '모임에 가입했습니다! 🎉',
-            ),
-            backgroundColor: AppColors.community,
-          ),
+        MingrrSnackBar.success(
+          context,
+          group.requireApproval
+              ? '가입 신청을 보냈습니다! 승인을 기다려주세요.'
+              : '모임에 가입했습니다! 🎉',
         );
       },
     );

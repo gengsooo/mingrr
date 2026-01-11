@@ -497,23 +497,13 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 type: ConfirmSheetType.groupLeave,
                 onConfirm: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('모임에서 탈퇴했습니다.'),
-                      backgroundColor: AppColors.community,
-                    ),
-                  );
+                  MingrrSnackBar.success(context, '모임에서 탈퇴했습니다.');
                 },
               );
             } else {
               // 가입 시 바로 처리
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('모임에 가입했습니다! 🎉'),
-                  backgroundColor: AppColors.community,
-                ),
-              );
+              MingrrSnackBar.success(context, '모임에 가입했습니다! 🎉');
             }
           },
           style: ElevatedButton.styleFrom(
@@ -591,12 +581,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       onConfirm: () {
         setState(() => _isJoined = false);
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('모임에서 탈퇴했습니다.'),
-            backgroundColor: AppColors.community,
-          ),
-        );
+        MingrrSnackBar.success(context, '모임에서 탈퇴했습니다.');
       },
     );
   }
@@ -644,9 +629,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                     await Clipboard.setData(ClipboardData(text: text));
                     if (context.mounted) {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('복사되었습니다')),
-                      );
+                      MingrrSnackBar.success(context, '복사되었습니다');
                     }
                   },
                 ),
@@ -655,9 +638,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   label: '카카오톡',
                   onTap: () {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('카카오톡 공유는 SDK 설정 후 사용 가능합니다')),
-                    );
+                    MingrrSnackBar.info(context, '카카오톡 공유는 SDK 설정 후 사용 가능합니다');
                   },
                 ),
               ],

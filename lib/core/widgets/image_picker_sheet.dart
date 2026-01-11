@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import '../services/image_crop_service.dart';
+import 'common_widgets.dart';
 
 /// ============================================================
 /// 이미지 선택 바텀시트
@@ -527,9 +528,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('카메라 접근 실패: $e'), backgroundColor: AppColors.error),
-        );
+        MingrrSnackBar.error(context, '카메라 접근 실패: $e');
       }
     }
   }
@@ -547,9 +546,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('갤러리 접근 실패: $e'), backgroundColor: AppColors.error),
-        );
+        MingrrSnackBar.error(context, '갤러리 접근 실패: $e');
       }
     }
   }

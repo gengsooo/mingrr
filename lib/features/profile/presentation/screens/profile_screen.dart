@@ -72,9 +72,21 @@ class ProfileScreen extends ConsumerWidget {
         slivers: [
           // ===== 프로필 헤더 =====
           SliverAppBar(
-            expandedHeight: 330,
+            expandedHeight: 260,
             pinned: true,
-            backgroundColor: AppColors.primary,
+            backgroundColor: Colors.white,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0.5,
+            title: const Text(
+              '프로필',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            centerTitle: true,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.textPrimary, size: 20),
               onPressed: () {
@@ -86,6 +98,7 @@ class ProfileScreen extends ConsumerWidget {
               },
             ),
             flexibleSpace: FlexibleSpaceBar(
+              collapseMode: CollapseMode.pin,
               background: _buildProfileHeader(context, ref, currentUser),
             ),
             actions: [
@@ -115,9 +128,15 @@ class ProfileScreen extends ConsumerWidget {
                 const SizedBox(height: AppSizes.gapXL),
                 
                 // 내 반려동물 (건강수첩 포함)
-                const MingrrSectionHeader(
+                MingrrSectionHeader(
                   title: '내 반려동물',
                   actionText: '추가',
+                  onActionTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const PetEditScreen()),
+                    );
+                  },
                 ),
                 const SizedBox(height: AppSizes.gapM),
                 _buildMyPets(context, ref),
@@ -151,7 +170,7 @@ class ProfileScreen extends ConsumerWidget {
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.only(top: 48, bottom: 12), // 앱바 높이만큼 상단 패딩
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -169,16 +188,16 @@ class ProfileScreen extends ConsumerWidget {
                       bottom: 0,
                       right: 0,
                       child: Container(
-                        width: 32,
-                        height: 32,
+                        width: 30,
+                        height: 30,
                         decoration: BoxDecoration(
-                          color: AppColors.primary,
+                          color: AppColors.primaryDark,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
                         ),
                         child: const Icon(
                           Icons.camera_alt,
-                          size: 16,
+                          size: 14,
                           color: Colors.white,
                         ),
                       ),
@@ -186,7 +205,7 @@ class ProfileScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: AppSizes.gapM),
+              const SizedBox(height: AppSizes.gapS),
               
               // 닉네임 + 수정 버튼
               currentUser.when(
@@ -196,23 +215,23 @@ class ProfileScreen extends ConsumerWidget {
                     Text(
                       user?.nickname ?? '사용자',
                       style: const TextStyle(
-                        fontSize: 24,
+                        fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     GestureDetector(
                       onTap: () => _showNicknameEditDialog(context, ref, user),
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.5),
+                          color: Colors.white.withOpacity(0.6),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.edit,
-                          size: 16,
+                          size: 14,
                           color: AppColors.textSecondary,
                         ),
                       ),
@@ -229,26 +248,6 @@ class ProfileScreen extends ConsumerWidget {
                 data: (user) => _buildKkosunnaeScore(user?.kkosunnaeScore ?? 50.0),
                 loading: () => const SizedBox(),
                 error: (_, __) => const SizedBox(),
-              ),
-              const SizedBox(height: AppSizes.gapS),
-              
-              // 프로필 수정 버튼
-              OutlinedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ProfileEditScreen()),
-                  );
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.textPrimary,
-                  side: const BorderSide(color: AppColors.textPrimary),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 8,
-                  ),
-                ),
-                child: const Text('프로필 수정'),
               ),
             ],
           ),
@@ -284,7 +283,7 @@ class ProfileScreen extends ConsumerWidget {
                   '인증하기',
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.primary,
+                    color: AppColors.textSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -386,7 +385,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const MingrrLoadingState(),
       error: (_, __) => const SizedBox(),
     );
   }
@@ -656,9 +655,7 @@ class ProfileScreen extends ConsumerWidget {
                       MaterialPageRoute(builder: (context) => screen),
                     );
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('준비 중인 기능입니다')),
-                    );
+                    MingrrSnackBar.info(context, '준비 중인 기능입니다');
                   }
                 },
               ),
@@ -762,7 +759,7 @@ class ProfileScreen extends ConsumerWidget {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
-          child: Text(badgeType.emoji, style: const TextStyle(fontSize: 22)),
+          child: Icon(badgeType.icon, size: 22, color: isVerified ? AppColors.success : AppColors.textSecondary),
         ),
       ),
       title: Text(
@@ -778,12 +775,25 @@ class ProfileScreen extends ConsumerWidget {
       ),
       trailing: isVerified
           ? const Icon(Icons.check_circle, color: AppColors.success)
-          : TextButton(
+          : ElevatedButton(
               onPressed: () async {
                 Navigator.pop(context);
                 await _processVerification(context, ref, badgeType);
               },
-              child: const Text('인증하기'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.textPrimary,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                minimumSize: const Size(70, 32),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                '인증하기',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
             ),
     );
   }
@@ -794,9 +804,7 @@ class ProfileScreen extends ConsumerWidget {
     final userId = authState.valueOrNull?.uid;
     
     if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인이 필요합니다'), backgroundColor: Colors.red),
-      );
+      MingrrSnackBar.error(context, '로그인이 필요합니다');
       return;
     }
 
@@ -819,9 +827,7 @@ class ProfileScreen extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('인증 처리 중 오류가 발생했습니다: $e'), backgroundColor: Colors.red),
-        );
+        MingrrSnackBar.error(context, '인증 처리 중 오류가 발생했습니다: $e');
       }
     }
   }
@@ -857,9 +863,7 @@ class ProfileScreen extends ConsumerWidget {
 
     if (result == true && context.mounted) {
       await firestoreService.verifyIdentity(userId);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('본인인증이 완료되었습니다! 🪪'), backgroundColor: AppColors.success),
-      );
+      MingrrSnackBar.success(context, '본인인증이 완료되었습니다! ');
     }
   }
 
@@ -888,9 +892,7 @@ class ProfileScreen extends ConsumerWidget {
         if (permission == LocationPermission.denied) {
           if (context.mounted) Navigator.pop(context);
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('위치 권한이 필요합니다'), backgroundColor: Colors.red),
-            );
+            MingrrSnackBar.error(context, '위치 권한이 필요합니다');
           }
           return;
         }
@@ -899,9 +901,7 @@ class ProfileScreen extends ConsumerWidget {
       if (permission == LocationPermission.deniedForever) {
         if (context.mounted) Navigator.pop(context);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('설정에서 위치 권한을 허용해주세요'), backgroundColor: Colors.red),
-          );
+          MingrrSnackBar.error(context, '설정에서 위치 권한을 허용해주세요');
         }
         return;
       }
@@ -978,17 +978,13 @@ class ProfileScreen extends ConsumerWidget {
       if (confirmed == true && context.mounted) {
         await firestoreService.verifyLocation(userId, addressText, geoPoint: geoPoint);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('위치인증이 완료되었습니다! 📍'), backgroundColor: AppColors.success),
-          );
+          MingrrSnackBar.success(context, '위치인증이 완료되었습니다! 📍');
         }
       }
     } catch (e) {
       if (context.mounted) Navigator.pop(context);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('위치 확인 실패: $e'), backgroundColor: Colors.red),
-        );
+        MingrrSnackBar.error(context, '위치 확인 실패: $e');
       }
     }
   }
@@ -1037,9 +1033,7 @@ class ProfileScreen extends ConsumerWidget {
 
     if (result != null && result.isNotEmpty && context.mounted) {
       await firestoreService.verifyPetRegistration(userId, result);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('동물등록 인증이 완료되었습니다! 🐕'), backgroundColor: AppColors.success),
-      );
+      MingrrSnackBar.success(context, '동물등록 인증이 완료되었습니다! 🐕');
     }
   }
 
@@ -1069,6 +1063,17 @@ class ProfileScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppSizes.gapXL),
             
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('프로필 수정'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfileEditScreen()),
+                );
+              },
+            ),
             ListTile(
               leading: const Icon(Icons.person_outline),
               title: const Text('계정 설정'),
@@ -1250,21 +1255,11 @@ class ProfileScreen extends ConsumerWidget {
         ref.invalidate(currentUserProvider);
         
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('프로필 이미지가 변경되었습니다!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          MingrrSnackBar.success(context, '프로필 이미지가 변경되었습니다!');
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('이미지 변경 실패: $e'),
-              backgroundColor: AppColors.error,
-            ),
-          );
+          MingrrSnackBar.error(context, '이미지 변경 실패: $e');
         }
       }
     }
@@ -1273,22 +1268,6 @@ class ProfileScreen extends ConsumerWidget {
   /// 닉네임 수정 다이얼로그
   void _showNicknameEditDialog(BuildContext context, WidgetRef ref, dynamic user) {
     if (user == null) return;
-    
-    // 30일 제한 체크
-    final lastChanged = user.nicknameChangedAt;
-    if (lastChanged != null) {
-      final daysSinceChange = DateTime.now().difference(lastChanged).inDays;
-      if (daysSinceChange < 30) {
-        final daysRemaining = 30 - daysSinceChange;
-        showAppDialog(
-          context,
-          type: DialogType.warning,
-          title: '닉네임 변경 제한',
-          message: '닉네임은 30일에 한 번만 변경할 수 있습니다.\n\n$daysRemaining일 후에 다시 변경할 수 있습니다.',
-        );
-        return;
-      }
-    }
     
     final controller = TextEditingController(text: user.nickname);
     
@@ -1302,72 +1281,45 @@ class ProfileScreen extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 헤더
+              // 헤더 + X 버튼
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.edit, size: 20, color: AppColors.primary),
+                  const Text(
+                    '닉네임 변경',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Text(
-                      '닉네임 변경',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    ),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: const Icon(Icons.close, size: 20, color: AppColors.textSecondary),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               
               // 입력 필드
               TextField(
                 controller: controller,
                 decoration: InputDecoration(
                   hintText: '새 닉네임을 입력해주세요',
+                  hintStyle: const TextStyle(fontSize: 14),
                   filled: true,
                   fillColor: AppColors.background,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(8),
                     borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                   ),
-                  contentPadding: const EdgeInsets.all(16),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   counterText: '',
                 ),
+                style: const TextStyle(fontSize: 14),
                 maxLength: 10,
               ),
-              const SizedBox(height: 12),
-              
-              // 경고 메시지
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.warning.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.info_outline, size: 16, color: AppColors.warning),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        '닉네임은 30일에 한 번만 변경할 수 있습니다.',
-                        style: TextStyle(fontSize: 12, color: AppColors.warning),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               
               // 버튼
               Row(
@@ -1376,23 +1328,23 @@ class ProfileScreen extends ConsumerWidget {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
                         side: const BorderSide(color: AppColors.divider),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                       child: const Text(
                         '취소',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.w500,
                           color: AppColors.textSecondary,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () async {
@@ -1406,41 +1358,30 @@ class ProfileScreen extends ConsumerWidget {
                           final firestore = FirebaseFirestore.instance;
                           await firestore.collection('users').doc(user.id).update({
                             'nickname': newNickname,
-                            'nicknameChangedAt': Timestamp.now(),
                           });
                           
                           if (context.mounted) {
                             Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('닉네임이 변경되었습니다!'),
-                                backgroundColor: AppColors.success,
-                              ),
-                            );
+                            MingrrSnackBar.success(context, '닉네임이 변경되었습니다!');
                           }
                         } catch (e) {
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('닉네임 변경 실패: $e'),
-                                backgroundColor: AppColors.error,
-                              ),
-                            );
+                            MingrrSnackBar.error(context, '닉네임 변경 실패: $e');
                           }
                         }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                       child: const Text(
                         '변경',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),

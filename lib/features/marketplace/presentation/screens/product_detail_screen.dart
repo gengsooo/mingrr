@@ -6,10 +6,11 @@ import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/utils/format_utils.dart';
+import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/report_sheet.dart';
-import '../../../../core/widgets/warmth_score.dart';
+import '../../../../core/widgets/profile_cards.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
 import '../../../../core/models/location_model.dart';
@@ -113,13 +114,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     setState(() => _isWishlisted = !_isWishlisted);
     
     // TODO: 백엔드 연동 - 찜 목록에 추가/제거
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(_isWishlisted ? '찜 목록에 추가했어요' : '찜 목록에서 제거했어요'),
-        backgroundColor: AppColors.market,
-        duration: const Duration(seconds: 1),
-      ),
-    );
+    MingrrSnackBar.success(context, _isWishlisted ? '찜 목록에 추가했어요' : '찜 목록에서 제거했어요');
   }
 
   @override
@@ -128,7 +123,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       return Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(backgroundColor: Colors.white, elevation: 0),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const MingrrLoadingState(),
       );
     }
 
@@ -242,41 +237,11 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
   /// 판매자 정보
   Widget _buildSellerInfo(BuildContext context) {
-    return GestureDetector(
+    return GuardianProfileCard(
+      name: _sellerNickname ?? '판매자',
+      kkosunnaeScore: 50.0,
+      accentColor: AppColors.market,
       onTap: () => _showSellerProfile(context),
-      child: Row(
-        children: [
-          // 아이콘 (강아지 앱이므로 사진 대신)
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Center(
-              child: Icon(Icons.person, size: 24, color: AppColors.primary),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // 정보
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _sellerNickname ?? '판매자',
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 4),
-                const KkosunnaeScoreSmall(score: 50.0),
-              ],
-            ),
-          ),
-          // 화살표
-          const Icon(Icons.chevron_right, color: AppColors.textHint),
-        ],
-      ),
     );
   }
 
@@ -663,12 +628,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       
       if (mounted) {
         Navigator.pop(context, true); // 삭제 성공 알림
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('상품이 삭제되었습니다'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        MingrrSnackBar.success(context, '상품이 삭제되었습니다');
       }
     } catch (e) {
       if (mounted) {
@@ -693,9 +653,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     
     final myUserId = _firebaseService.currentUserId;
     if (myUserId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인이 필요합니다')),
-      );
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
       return;
     }
 
@@ -749,9 +707,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('채팅 시작 실패: $e')),
-        );
+        MingrrSnackBar.error(context, '채팅 시작 실패: $e');
       }
     }
   }

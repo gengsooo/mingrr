@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
+import 'common_widgets.dart';
 
 /// ============================================================
 /// 꼬순내지수 평가 모달 (공통 위젯)
@@ -42,13 +43,7 @@ void showRatingModal(
         Navigator.pop(sheetContext);
         onRatingSelected(rating);
         // 평가 완료 알림 표시
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('$targetName님에게 "${rating.label}" 평가를 보냈어요! 🌟'),
-            duration: const Duration(seconds: 2),
-            backgroundColor: rating.color,
-          ),
-        );
+        MingrrSnackBar.success(context, '$targetName님에게 "${rating.label}" 평가를 보냈어요! 🌟');
       },
     ),
   );

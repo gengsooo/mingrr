@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/rating_model.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
+import 'common_widgets.dart';
 
 /// ============================================================
 /// 평가하기 바텀시트
@@ -426,22 +427,11 @@ class _RatingSheetState extends State<RatingSheet> {
 
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('평가가 완료되었습니다'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        MingrrSnackBar.success(context, '평가가 완료되었습니다');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('평가 중 오류가 발생했습니다: $e'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red,
-          ),
-        );
+        MingrrSnackBar.error(context, '평가 중 오류가 발생했습니다: $e');
       }
     } finally {
       if (mounted) {

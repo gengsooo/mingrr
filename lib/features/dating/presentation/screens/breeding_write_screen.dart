@@ -76,6 +76,8 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
         title: Text(_isEditMode ? '교배 글 수정' : '교배 글쓰기'),
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
@@ -190,7 +192,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
                 ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const MingrrLoadingState(),
       error: (_, __) => const Text('강아지 목록을 불러올 수 없습니다'),
     );
   }
@@ -211,9 +213,9 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
 
   Widget _buildGenderSelector() {
     final genders = [
-      (value: null, label: '무관'),
-      (value: 'male', label: '수컷 ♂'),
-      (value: 'female', label: '암컷 ♀'),
+      (value: null, label: '무관', icon: null as IconData?),
+      (value: 'male', label: '수컷', icon: Icons.male as IconData?),
+      (value: 'female', label: '암컷', icon: Icons.female as IconData?),
     ];
 
     return Wrap(
@@ -232,12 +234,21 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
                 color: isSelected ? AppColors.dating : AppColors.divider,
               ),
             ),
-            child: Text(
-              gender.label,
-              style: TextStyle(
-                fontSize: 13,
-                color: isSelected ? Colors.white : AppColors.textPrimary,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (gender.icon != null) ...[
+                  Icon(gender.icon, size: 16, color: isSelected ? Colors.white : AppColors.textSecondary),
+                  const SizedBox(width: 4),
+                ],
+                Text(
+                  gender.label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -404,9 +415,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
 
   Future<void> _onSubmit() async {
     if (_selectedPet == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('교배할 강아지를 선택해주세요')),
-      );
+      MingrrSnackBar.warning(context, '교배할 강아지를 선택해주세요');
       return;
     }
 
@@ -449,21 +458,11 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
 
       if (mounted) {
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_isEditMode ? '교배 글이 수정되었습니다' : '교배 글이 등록되었습니다 🐶'),
-            backgroundColor: AppColors.dating,
-          ),
-        );
+        MingrrSnackBar.success(context, _isEditMode ? '교배 글이 수정되었습니다' : '교배 글이 등록되었습니다 🐶');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('오류가 발생했습니다: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        MingrrSnackBar.error(context, '오류가 발생했습니다: $e');
       }
     } finally {
       if (mounted) {

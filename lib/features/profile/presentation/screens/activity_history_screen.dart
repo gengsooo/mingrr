@@ -23,6 +23,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
         title: const Text('활동 내역'),
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
       ),
       body: DefaultTabController(
         length: 3,
@@ -62,7 +64,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
     return matchesAsync.when(
       data: (matches) {
         if (matches.isEmpty) {
-          return _buildEmptyState(
+          return MingrrEmptyState(
             svgAsset: SvgAssets.emptyMatch,
             title: '매칭 내역이 없어요',
             subtitle: '데이팅에서 새로운 친구를 만나보세요!',
@@ -83,8 +85,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+      loading: () => const MingrrLoadingState(),
+      error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
     );
   }
   
@@ -93,7 +95,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
     return transactionsAsync.when(
       data: (transactions) {
         if (transactions.isEmpty) {
-          return _buildEmptyState(
+          return MingrrEmptyState(
             svgAsset: SvgAssets.emptyTransaction,
             title: '거래 내역이 없어요',
             subtitle: '마켓에서 거래해보세요!',
@@ -114,8 +116,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+      loading: () => const MingrrLoadingState(),
+      error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
     );
   }
   
@@ -123,7 +125,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
     return groupsAsync.when(
       data: (groups) {
         if (groups.isEmpty) {
-          return _buildEmptyState(
+          return MingrrEmptyState(
             svgAsset: SvgAssets.emptyGroup,
             title: '모임 활동이 없어요',
             subtitle: '소모임에 참여해보세요!',
@@ -144,45 +146,11 @@ class ActivityHistoryScreen extends ConsumerWidget {
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+      loading: () => const MingrrLoadingState(),
+      error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
     );
   }
   
-  Widget _buildEmptyState({
-    required String svgAsset,
-    required String title,
-    required String subtitle,
-  }) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          MingrrSvgIcon(
-            assetPath: svgAsset,
-            width: 120,
-            height: 120,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textHint,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
   
   Widget _buildActivityItem({
     required IconData icon,

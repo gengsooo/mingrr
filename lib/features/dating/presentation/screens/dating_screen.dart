@@ -12,6 +12,7 @@ import '../../../../core/widgets/request_sheet.dart';
 import '../../../../core/widgets/profile_icon.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../models/pet_model.dart';
 import '../providers/dating_provider.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
@@ -81,9 +82,11 @@ class DatingScreen extends ConsumerWidget {
         title: const Text('데이팅'),
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         actions: [
           const NotificationIconButton(),
-          buildProfileAction(),
+          buildProfileAction(backgroundColor: AppColors.datingLight),
         ],
       ),
       body: Column(
@@ -275,14 +278,16 @@ class DatingScreen extends ConsumerWidget {
           onTap: () => ref.read(_breedingGenderFilterProvider.notifier).state = null,
         ),
         const SizedBox(width: 6),
-        _buildFilterChip(
-          label: '수컷 ♂',
+        _buildGenderFilterChip(
+          label: '수컷',
+          icon: Icons.male,
           isSelected: genderFilter == 'male',
           onTap: () => ref.read(_breedingGenderFilterProvider.notifier).state = 'male',
         ),
         const SizedBox(width: 6),
-        _buildFilterChip(
-          label: '암컷 ♀',
+        _buildGenderFilterChip(
+          label: '암컷',
+          icon: Icons.female,
           isSelected: genderFilter == 'female',
           onTap: () => ref.read(_breedingGenderFilterProvider.notifier).state = 'female',
         ),
@@ -362,68 +367,20 @@ class DatingScreen extends ConsumerWidget {
 
   /// 크기 안내 모달
   void _showSizeGuideModal(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.pets, color: AppColors.dating, size: 24),
-            const SizedBox(width: 8),
-            const Text('강아지 크기 안내', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildSizeGuideItem('초소형', '0~4kg', '치와와, 요크셔테리어 등'),
-            _buildSizeGuideItem('소형', '4~10kg', '말티즈, 푸들, 시촄 등'),
-            _buildSizeGuideItem('중형', '10~25kg', '코카스파니엘, 비글 등'),
-            _buildSizeGuideItem('대형', '25~45kg', '골든리트리버, 래브라도 등'),
-            _buildSizeGuideItem('초대형', '45kg~', '그레이트데인, 세인트버나드 등'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 크기 안내 아이템
-  Widget _buildSizeGuideItem(String label, String weight, String examples) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.dating.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.dating),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(weight, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                Text(examples, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-              ],
-            ),
-          ),
-        ],
-      ),
+    showInfoDialog(
+      context,
+      title: '강아지 크기 안내',
+      icon: Icons.pets,
+      subtitle: '체중 기준으로 분류해요',
+      accentColor: AppColors.dating,
+      items: const [
+        InfoItem(label: '초소형', value: '0~4kg', description: '치와와, 요크셔테리어 등'),
+        InfoItem(label: '소형', value: '4~10kg', description: '말티즈, 푸들, 시츄 등'),
+        InfoItem(label: '중형', value: '10~25kg', description: '코카스파니엘, 비글 등'),
+        InfoItem(label: '대형', value: '25~45kg', description: '골든리트리버, 래브라도 등'),
+        InfoItem(label: '초대형', value: '45kg~', description: '그레이트데인, 세인트버나드 등'),
+      ],
+      footerText: '강아지마다 개체차가 있을 수 있어요',
     );
   }
 
@@ -531,6 +488,47 @@ class DatingScreen extends ConsumerWidget {
     );
   }
 
+  /// 성별 필터 칩 (아이콘 포함)
+  Widget _buildGenderFilterChip({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.dating : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? AppColors.dating : AppColors.divider,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 14,
+              color: isSelected ? Colors.white : AppColors.textSecondary,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: isSelected ? Colors.white : AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// 교배찾기 리스트 (Firebase 연동 + 거리 필터링)
   Widget _buildBreedingList(BuildContext context, WidgetRef ref, double distanceFilter) {
     // 거리 필터가 적용된 교배 펫 목록 사용
@@ -624,16 +622,10 @@ class DatingScreen extends ConsumerWidget {
                   Positioned(
                     top: 8,
                     left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isMale ? Colors.blue : Colors.pink,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        isMale ? '♂' : '♀',
-                        style: const TextStyle(fontSize: 12, color: Colors.white),
-                      ),
+                    child: PetGenderBadge(
+                      isMale: isMale,
+                      showLabel: true,
+                      size: InfoBadgeSize.small,
                     ),
                   ),
                 ],
@@ -751,16 +743,10 @@ class DatingScreen extends ConsumerWidget {
                   Positioned(
                     top: 8,
                     left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isMale ? Colors.blue : Colors.pink,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        isMale ? '♂' : '♀',
-                        style: const TextStyle(fontSize: 12, color: Colors.white),
-                      ),
+                    child: PetGenderBadge(
+                      isMale: isMale,
+                      showLabel: true,
+                      size: InfoBadgeSize.small,
                     ),
                   ),
                   // 인증 배지들 (하단)
@@ -878,14 +864,9 @@ class DatingScreen extends ConsumerWidget {
       myPets: myPets,
       onConfirm: (message, {selectedPet}) {
         // TODO: message, selectedPet을 DB에 저장
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(selectedPet != null 
-                ? '${selectedPet.name}(으)로 교배 신청을 보냈어요! 🐶' 
-                : '교배 신청을 보냈어요! 🐶'),
-            backgroundColor: AppColors.dating,
-          ),
-        );
+        MingrrSnackBar.success(context, selectedPet != null 
+            ? '${selectedPet.name}(으)로 교배 신청을 보냈어요! 🐶' 
+            : '교배 신청을 보냈어요! 🐶');
       },
     );
   }
@@ -1296,8 +1277,8 @@ class DatingScreen extends ConsumerWidget {
               },
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+          loading: () => const MingrrLoadingState(),
+          error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
         );
       },
     );
@@ -1379,26 +1360,10 @@ class DatingScreen extends ConsumerWidget {
               Positioned(
                 top: 12,
                 left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isMale ? Colors.blue : Colors.pink,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        isMale ? '♂' : '♀',
-                        style: const TextStyle(fontSize: 14, color: Colors.white),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        isMale ? '수컷' : '암컷',
-                        style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
+                child: PetGenderBadge(
+                  isMale: isMale,
+                  showLabel: true,
+                  size: InfoBadgeSize.medium,
                 ),
               ),
               

@@ -697,9 +697,10 @@ class DefaultPetImage extends StatelessWidget {
         borderRadius: borderRadius,
       ),
       child: Center(
-        child: Text(
-          '🐶',
-          style: TextStyle(fontSize: (height ?? 100) * 0.4),
+        child: Icon(
+          Icons.pets,
+          size: (height ?? 100) * 0.4,
+          color: AppColors.dating.withOpacity(0.5),
         ),
       ),
     );
@@ -787,11 +788,534 @@ class MingrrSectionHeader extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.primary,
+                  color: AppColors.textSecondary,
                 ),
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+// ===== 공통 날짜 선택기 =====
+/// 날짜 선택 위젯 (단일 날짜, 시작일/종료일, 생년월일 모두 지원)
+class MingrrDateSelector extends StatelessWidget {
+  /// 시작일 또는 단일 날짜
+  final DateTime? date;
+  /// 날짜 선택 콜백
+  final Function(DateTime) onSelect;
+  /// 테마 색상
+  final Color? accentColor;
+  /// 선택 가능한 최소 날짜
+  final DateTime? firstDate;
+  /// 선택 가능한 최대 날짜
+  final DateTime? lastDate;
+  /// 날짜 선택기 상단 텍스트
+  final String? helpText;
+  /// 표시 라벨 (null이면 자동 포맷)
+  final String? label;
+  
+  // === 시작일/종료일 모드 ===
+  /// 종료일 (null이면 단일 날짜 모드)
+  final DateTime? endDate;
+  /// 종료일 선택 콜백
+  final Function(DateTime?)? onEndDateSelect;
+  /// 시작일 라벨
+  final String startLabel;
+  /// 종료일 라벨
+  final String endLabel;
+  
+  // === 생년월일 모드 ===
+  /// 생년월일 모드 (과거 날짜만 선택 가능)
+  final bool isBirthDate;
+  /// 생년월일 최소 연도
+  final int birthDateMinYear;
+
+  const MingrrDateSelector({
+    super.key,
+    this.date,
+    required this.onSelect,
+    this.accentColor,
+    this.firstDate,
+    this.lastDate,
+    this.helpText,
+    this.label,
+    this.endDate,
+    this.onEndDateSelect,
+    this.startLabel = '시작일',
+    this.endLabel = '종료일',
+    this.isBirthDate = false,
+    this.birthDateMinYear = 1950,
+  });
+
+  /// 시작일/종료일 모드인지 확인
+  bool get isRangeMode => onEndDateSelect != null;
+
+  @override
+  Widget build(BuildContext context) {
+    if (isRangeMode) {
+      return _buildRangeSelector(context);
+    }
+    return _buildSingleSelector(context);
+  }
+
+  /// 단일 날짜 선택기
+  Widget _buildSingleSelector(BuildContext context) {
+    final color = accentColor ?? AppColors.primary;
+    final displayDate = date ?? DateTime.now();
+    
+    return GestureDetector(
+      onTap: () => _selectDate(context, isStart: true),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.divider),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_today, color: color, size: 20),
+            const SizedBox(width: 12),
+            Text(
+              label ?? _formatDate(displayDate),
+              style: TextStyle(
+                color: date != null ? AppColors.textPrimary : AppColors.textHint,
+              ),
+            ),
+            const Spacer(),
+            const Icon(Icons.chevron_right, color: AppColors.textHint, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 시작일/종료일 선택기
+  Widget _buildRangeSelector(BuildContext context) {
+    final color = accentColor ?? AppColors.primary;
+    
+    return Row(
+      children: [
+        Expanded(
+          child: _buildDateButton(
+            context,
+            date: date,
+            label: startLabel,
+            color: color,
+            onTap: () => _selectDate(context, isStart: true),
+          ),
+        ),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8),
+          child: Text('~'),
+        ),
+        Expanded(
+          child: _buildDateButton(
+            context,
+            date: endDate,
+            label: endLabel,
+            color: color,
+            onTap: () => _selectDate(context, isStart: false),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDateButton(
+    BuildContext context, {
+    required DateTime? date,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.divider),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_today, size: 16, color: color),
+            const SizedBox(width: 6),
+            Expanded(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  date != null ? _formatDateShort(date) : label,
+                  style: TextStyle(
+                    color: date != null ? AppColors.textPrimary : AppColors.textHint,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  /// 짧은 날짜 형식 (시작일/종료일용)
+  String _formatDateShort(DateTime date) {
+    return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _selectDate(BuildContext context, {required bool isStart}) async {
+    final color = accentColor ?? AppColors.primary;
+    
+    // 날짜 범위 설정
+    DateTime effectiveFirstDate;
+    DateTime effectiveLastDate;
+    DateTime initialDate;
+    
+    if (isBirthDate) {
+      effectiveFirstDate = DateTime(birthDateMinYear);
+      effectiveLastDate = DateTime.now();
+      initialDate = date ?? DateTime.now().subtract(const Duration(days: 365));
+    } else if (isRangeMode) {
+      if (isStart) {
+        effectiveFirstDate = firstDate ?? DateTime.now();
+        effectiveLastDate = lastDate ?? DateTime.now().add(const Duration(days: 365));
+        initialDate = date ?? DateTime.now();
+      } else {
+        effectiveFirstDate = date ?? DateTime.now();
+        effectiveLastDate = lastDate ?? DateTime.now().add(const Duration(days: 365));
+        initialDate = endDate ?? (date ?? DateTime.now());
+      }
+    } else {
+      effectiveFirstDate = firstDate ?? DateTime.now().subtract(const Duration(days: 365 * 2));
+      effectiveLastDate = lastDate ?? DateTime.now().add(const Duration(days: 365));
+      initialDate = date ?? DateTime.now();
+    }
+    
+    // initialDate가 범위 내에 있는지 확인
+    if (initialDate.isBefore(effectiveFirstDate)) {
+      initialDate = effectiveFirstDate;
+    }
+    if (initialDate.isAfter(effectiveLastDate)) {
+      initialDate = effectiveLastDate;
+    }
+
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: effectiveFirstDate,
+      lastDate: effectiveLastDate,
+      locale: const Locale('ko', 'KR'),
+      helpText: helpText ?? (isBirthDate ? '생년월일 선택' : null),
+      cancelText: '취소',
+      confirmText: '선택',
+      fieldLabelText: '날짜 입력',
+      fieldHintText: 'YYYY/MM/DD',
+      errorFormatText: '올바른 날짜 형식이 아닙니다',
+      errorInvalidText: '선택할 수 없는 날짜입니다',
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: color,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: AppColors.textPrimary,
+            ),
+            dialogBackgroundColor: Colors.white,
+            datePickerTheme: DatePickerThemeData(
+              backgroundColor: Colors.white,
+              headerBackgroundColor: color,
+              headerForegroundColor: Colors.white,
+              headerHeadlineStyle: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+              dayStyle: const TextStyle(fontSize: 14),
+              weekdayStyle: TextStyle(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
+              ),
+              todayBackgroundColor: WidgetStateProperty.all(color.withOpacity(0.1)),
+              todayForegroundColor: WidgetStateProperty.all(color),
+              todayBorder: BorderSide(color: color, width: 1),
+              dayBackgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return color;
+                }
+                return null;
+              }),
+              dayForegroundColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return Colors.white;
+                }
+                if (states.contains(WidgetState.disabled)) {
+                  return AppColors.textHint;
+                }
+                return AppColors.textPrimary;
+              }),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              dayOverlayColor: WidgetStateProperty.all(color.withOpacity(0.1)),
+              rangeSelectionBackgroundColor: color.withOpacity(0.2),
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: color,
+                textStyle: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      if (isRangeMode && !isStart) {
+        onEndDateSelect!(picked);
+      } else {
+        onSelect(picked);
+        // 시작일이 변경되면 종료일이 시작일보다 이전인 경우 초기화
+        if (isRangeMode && endDate != null && endDate!.isBefore(picked)) {
+          onEndDateSelect!(null);
+        }
+      }
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.year}년 ${date.month}월 ${date.day}일';
+  }
+}
+
+// ===== 공통 메모 입력 필드 =====
+/// 메모 입력 위젯 (바텀시트, 폼 등에서 사용)
+class MingrrMemoField extends StatelessWidget {
+  final TextEditingController controller;
+  final String? hint;
+  final int maxLines;
+
+  const MingrrMemoField({
+    super.key,
+    required this.controller,
+    this.hint,
+    this.maxLines = 3,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      decoration: InputDecoration(
+        hintText: hint ?? '메모를 입력하세요',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        filled: true,
+        fillColor: AppColors.background,
+      ),
+    );
+  }
+}
+
+// ===== 공통 라벨 위젯 =====
+/// 폼 필드 라벨 위젯
+class MingrrLabel extends StatelessWidget {
+  final String text;
+  final bool isRequired;
+
+  const MingrrLabel(this.text, {super.key, this.isRequired = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        isRequired ? '$text *' : text,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      ),
+    );
+  }
+}
+
+// ===== 공통 로딩 상태 위젯 =====
+/// 데이터 로딩 중 표시하는 위젯
+class MingrrLoadingState extends StatelessWidget {
+  final String? message;
+  final Color? color;
+
+  const MingrrLoadingState({
+    super.key,
+    this.message,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            color: color ?? AppColors.primary,
+            strokeWidth: 3,
+          ),
+          if (message != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              message!,
+              style: const TextStyle(
+                fontSize: 14,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ===== 공통 에러 상태 위젯 =====
+/// 에러 발생 시 표시하는 위젯
+class MingrrErrorState extends StatelessWidget {
+  final String? title;
+  final String? subtitle;
+  final String? buttonText;
+  final VoidCallback? onRetry;
+  final IconData? icon;
+
+  const MingrrErrorState({
+    super.key,
+    this.title,
+    this.subtitle,
+    this.buttonText,
+    this.onRetry,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSizes.paddingXL),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon ?? Icons.error_outline,
+              size: 64,
+              color: AppColors.textHint,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title ?? '오류가 발생했습니다',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                subtitle!,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: AppColors.textHint,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+            if (onRetry != null) ...[
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: onRetry,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
+                child: Text(buttonText ?? '다시 시도'),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ===== 공통 SnackBar 헬퍼 =====
+/// SnackBar를 쉽게 표시하기 위한 헬퍼 클래스
+class MingrrSnackBar {
+  MingrrSnackBar._();
+
+  /// 성공 메시지 표시 (녹색)
+  static void success(BuildContext context, String message) {
+    _show(context, message, AppColors.success);
+  }
+
+  /// 에러 메시지 표시 (빨간색)
+  static void error(BuildContext context, String message) {
+    _show(context, message, AppColors.error);
+  }
+
+  /// 정보 메시지 표시 (기본 색상)
+  static void info(BuildContext context, String message) {
+    _show(context, message, AppColors.textSecondary);
+  }
+
+  /// 경고 메시지 표시 (주황색)
+  static void warning(BuildContext context, String message) {
+    _show(context, message, Colors.orange);
+  }
+
+  /// 커스텀 SnackBar 표시
+  static void _show(BuildContext context, String message, Color backgroundColor) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: backgroundColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  /// 액션이 있는 SnackBar 표시
+  static void withAction(
+    BuildContext context, {
+    required String message,
+    required String actionLabel,
+    required VoidCallback onAction,
+    Color? backgroundColor,
+  }) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: backgroundColor ?? AppColors.textSecondary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 4),
+        action: SnackBarAction(
+          label: actionLabel,
+          textColor: Colors.white,
+          onPressed: onAction,
+        ),
       ),
     );
   }

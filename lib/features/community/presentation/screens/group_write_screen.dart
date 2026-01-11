@@ -86,6 +86,8 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
         title: Text(_isEditMode ? '모임 수정' : '모임 만들기'),
         backgroundColor: Colors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
@@ -272,7 +274,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(category.emoji, style: const TextStyle(fontSize: 14)),
+                Icon(category.icon, size: 14, color: isSelected ? Colors.white : AppColors.community),
                 const SizedBox(width: 4),
                 Text(
                   category.label.replaceAll(' 모임', ''),
@@ -543,12 +545,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
 
       if (mounted) {
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_isEditMode ? '모임이 수정되었습니다' : '모임이 생성되었습니다'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        MingrrSnackBar.success(context, _isEditMode ? '모임이 수정되었습니다' : '모임이 생성되었습니다');
       }
     } catch (e) {
       if (mounted) {

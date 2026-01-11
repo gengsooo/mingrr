@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';  // Flutter의 기본 UI 위젯들
 import 'package:flutter_riverpod/flutter_riverpod.dart';  // 상태 관리 라이브러리
 import 'package:go_router/go_router.dart';  // 화면 이동(라우팅) 관리
+import 'package:flutter_localizations/flutter_localizations.dart';  // 한글화 지원
 
 // 우리 앱의 커스텀 파일들
 import 'core/theme/app_theme.dart';  // 앱 테마
@@ -267,6 +268,17 @@ class MingrrApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,  // 디버그 배너 숨기기
       theme: AppTheme.lightTheme,  // 앱 테마
       routerConfig: router,  // 라우터 설정 (로그인 체크 포함)
+      // 한글화 설정
+      locale: const Locale('ko', 'KR'),
+      supportedLocales: const [
+        Locale('ko', 'KR'),
+        Locale('en', 'US'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
     );
   }
 }

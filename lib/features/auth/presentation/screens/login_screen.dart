@@ -45,12 +45,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // 에러 메시지 표시
     ref.listen<AuthState>(authNotifierProvider, (previous, next) {
       if (next.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error!),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        MingrrSnackBar.error(context, next.error!);
         authNotifier.clearError();
       }
     });
@@ -369,12 +364,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final phone = _phoneController.text;
     final validation = Validators.phone(phone);
     if (!validation.isValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(validation.errorMessage!),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      MingrrSnackBar.error(context, validation.errorMessage!);
       return;
     }
 
@@ -393,12 +383,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _verifyCode(AuthNotifier authNotifier) {
     final code = _codeController.text.trim();
     if (code.isEmpty || code.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('6자리 인증번호를 입력해주세요.'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      MingrrSnackBar.error(context, '6자리 인증번호를 입력해주세요.');
       return;
     }
 
@@ -412,23 +397,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     
     final emailValidation = Validators.email(email);
     if (!emailValidation.isValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(emailValidation.errorMessage!),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      MingrrSnackBar.error(context, emailValidation.errorMessage!);
       return;
     }
     
     final passwordValidation = Validators.password(password);
     if (!passwordValidation.isValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(passwordValidation.errorMessage!),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      MingrrSnackBar.error(context, passwordValidation.errorMessage!);
       return;
     }
     
@@ -442,23 +417,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     
     final emailValidation = Validators.email(email);
     if (!emailValidation.isValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(emailValidation.errorMessage!),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      MingrrSnackBar.error(context, emailValidation.errorMessage!);
       return;
     }
     
     final passwordValidation = Validators.password(password);
     if (!passwordValidation.isValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(passwordValidation.errorMessage!),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      MingrrSnackBar.error(context, passwordValidation.errorMessage!);
       return;
     }
     

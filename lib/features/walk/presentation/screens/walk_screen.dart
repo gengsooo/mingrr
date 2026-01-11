@@ -639,12 +639,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                         onTap: () {
                           if (isSelected && _selectedPetIds.length <= 1) {
                             // 최소 1마리는 선택되어야 함
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('최소 1마리의 반려동물을 선택해야 합니다'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
+                            MingrrSnackBar.warning(context, '최소 1마리의 반려동물을 선택해야 합니다');
                             return;
                           }
                           setState(() {
@@ -875,16 +870,12 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
   /// 산책 시작
   Future<void> _startWalk() async {
     if (_selectedPetIds.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('함께 산책할 반려동물을 선택해주세요')),
-      );
+      MingrrSnackBar.warning(context, '함께 산책할 반려동물을 선택해주세요');
       return;
     }
     
     if (_currentPosition == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('위치 정보를 가져오는 중입니다. 잠시 후 다시 시도해주세요')),
-      );
+      MingrrSnackBar.info(context, '위치 정보를 가져오는 중입니다. 잠시 후 다시 시도해주세요');
       return;
     }
     
@@ -934,17 +925,10 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         _updateWalkRoute(position);
       });
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('산책을 시작했습니다! 🐾'),
-          backgroundColor: AppColors.walk,
-        ),
-      );
+      MingrrSnackBar.success(context, '산책을 시작했습니다! 🐾');
     } catch (e) {
       debugPrint('산책 시작 오류: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('산책 시작 중 오류가 발생했습니다: $e')),
-      );
+      MingrrSnackBar.error(context, '산책 시작 중 오류가 발생했습니다: $e');
     }
   }
   
@@ -1028,13 +1012,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         location: location,
       );
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('발자국을 남겼습니다! 🐾'),
-          backgroundColor: AppColors.walk,
-          duration: Duration(seconds: 1),
-        ),
-      );
+      MingrrSnackBar.success(context, '발자국을 남겼습니다! 🐾');
     } catch (e) {
       debugPrint('발자국 추가 오류: $e');
     }
@@ -1069,9 +1047,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       });
     } catch (e) {
       debugPrint('산책 종료 오류: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('산책 종료 중 오류가 발생했습니다: $e')),
-      );
+      MingrrSnackBar.error(context, '산책 종료 중 오류가 발생했습니다: $e');
     }
   }
   
@@ -1136,7 +1112,30 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const MingrrLoadingState();
+                  }
+                  
+                  if (snapshot.hasError) {
+                    debugPrint('산책 기록 로드 오류: ${snapshot.error}');
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.error_outline, size: 64, color: AppColors.error),
+                          const SizedBox(height: 16),
+                          const Text(
+                            '산책 기록을 불러올 수 없어요',
+                            style: TextStyle(color: AppColors.textSecondary),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${snapshot.error}',
+                            style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    );
                   }
                   
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {

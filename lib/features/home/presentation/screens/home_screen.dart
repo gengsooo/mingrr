@@ -145,7 +145,7 @@ class HomeScreen extends ConsumerWidget {
         // 프로필 버튼
         Padding(
           padding: const EdgeInsets.only(right: AppSizes.paddingM),
-          child: const ProfileButton(size: 36),
+          child: ProfileButton(size: 36, backgroundColor: AppColors.primary.withOpacity(0.3)),
         ),
       ],
     );
@@ -251,7 +251,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () => context.push('/profile'),
-              child: const Text('관리', style: TextStyle(fontSize: 13)),
+              child: Text('관리', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
             ),
           ],
         ),
@@ -341,7 +341,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             TextButton(
               onPressed: () => _showHealthCategorySettings(context, ref),
-              child: const Text('설정', style: TextStyle(fontSize: 13)),
+              child: Text('설정', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
             ),
           ],
         ),
@@ -362,7 +362,7 @@ class HomeScreen extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: categories.map((category) {
                   return _buildHealthItem(
-                    emoji: category.emoji,
+                    icon: category.icon,
                     label: category.label,
                     value: _getDemoValue(category),
                     color: _getCategoryColor(category),
@@ -374,21 +374,21 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: AppSizes.gapS),
               
               // 건강수첩으로 이동 버튼
-              const Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add_circle_outline, size: 18, color: AppColors.primary),
-                  SizedBox(width: AppSizes.gapS),
+                  Icon(Icons.add_circle_outline, size: 18, color: AppColors.textSecondary),
+                  const SizedBox(width: AppSizes.gapS),
                   Text(
                     '건강수첩 열기',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.primary,
+                      color: AppColors.textSecondary,
                     ),
                   ),
-                  SizedBox(width: 4),
-                  Icon(Icons.chevron_right, size: 18, color: AppColors.primary),
+                  const SizedBox(width: 4),
+                  Icon(Icons.chevron_right, size: 18, color: AppColors.textSecondary),
                 ],
               ),
             ],
@@ -471,18 +471,14 @@ class HomeScreen extends ConsumerWidget {
                         if (updated.length < 5) {
                           updated.add(category);
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('최대 5개까지 선택 가능합니다')),
-                          );
+                          MingrrSnackBar.warning(context, '최대 5개까지 선택 가능합니다');
                           return;
                         }
                       } else {
                         if (updated.length > 1) {
                           updated.remove(category);
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('최소 1개는 선택해야 합니다')),
-                          );
+                          MingrrSnackBar.warning(context, '최소 1개는 선택해야 합니다');
                           return;
                         }
                       }
@@ -490,7 +486,7 @@ class HomeScreen extends ConsumerWidget {
                     },
                     title: Row(
                       children: [
-                        Text(category.emoji, style: const TextStyle(fontSize: 20)),
+                        Icon(category.icon, size: 20, color: AppColors.health),
                         const SizedBox(width: 12),
                         Text(category.label),
                       ],
@@ -595,7 +591,7 @@ class HomeScreen extends ConsumerWidget {
 
   /// 건강 아이템 위젯
   Widget _buildHealthItem({
-    required String emoji,
+    required IconData icon,
     required String label,
     required String value,
     required Color color,
@@ -609,7 +605,7 @@ class HomeScreen extends ConsumerWidget {
             color: color.withOpacity(0.15),
             shape: BoxShape.circle,
           ),
-          child: Center(child: Text(emoji, style: const TextStyle(fontSize: 20))),
+          child: Icon(icon, size: 20, color: color),
         ),
         const SizedBox(height: AppSizes.gapS),
         Text(

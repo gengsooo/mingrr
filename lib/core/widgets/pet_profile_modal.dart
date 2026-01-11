@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
+import 'common_widgets.dart';
 import 'warmth_score.dart';
 import 'guardian_profile_modal.dart';
 import 'trait_badge.dart';
@@ -228,9 +229,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
   Future<void> _toggleLike() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('로그인이 필요합니다')),
-      );
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
       return;
     }
 

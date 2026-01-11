@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
+import 'common_widgets.dart';
 import 'rating_modal.dart';
 
 /// ============================================================
@@ -98,12 +99,7 @@ class ChatOptionsModal extends StatelessWidget {
                   context,
                   targetName: chatName,
                   onRatingSelected: (rating) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('$chatName님을 "${rating.label}"로 평가했어요!'),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
+                    MingrrSnackBar.success(context, '$chatName님을 "${rating.label}"로 평가했어요!');
                   },
                 );
               },

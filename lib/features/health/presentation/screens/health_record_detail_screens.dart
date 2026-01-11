@@ -249,9 +249,7 @@ class WeightRecordDetailScreen extends StatelessWidget {
   }
 
   void _showEditDialog(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('수정 기능은 준비 중입니다')),
-    );
+    MingrrSnackBar.info(context, '수정 기능은 준비 중입니다');
   }
 
   void _confirmDelete(BuildContext context) {
@@ -261,9 +259,7 @@ class WeightRecordDetailScreen extends StatelessWidget {
       message: '이 체중 기록을 삭제하시겠습니까?\n삭제된 기록은 복구할 수 없습니다.',
       onConfirm: () {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('기록이 삭제되었습니다')),
-        );
+        MingrrSnackBar.success(context, '기록이 삭제되었습니다');
       },
     );
   }
@@ -288,18 +284,6 @@ class WeightRecord {
     required this.petName,
     this.memo,
   });
-
-  factory WeightRecord.demo({int index = 0}) {
-    return WeightRecord(
-      id: 'weight_$index',
-      date: DateTime.now().subtract(Duration(days: index)),
-      weight: 5.2 - index * 0.1,
-      change: index == 0 ? 0 : -0.1,
-      targetWeight: 5.0,
-      petName: '뽀삐',
-      memo: index % 2 == 0 ? '아침 식사 전 측정' : null,
-    );
-  }
 }
 
 // ===== 그루밍 기록 상세 화면 =====
@@ -338,9 +322,7 @@ class GroomingRecordDetailScreen extends StatelessWidget {
                       color: AppColors.health.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Center(
-                      child: Text(record.type.emoji, style: const TextStyle(fontSize: 40)),
-                    ),
+                    child: Icon(record.type.icon, size: 40, color: AppColors.health),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -409,35 +391,33 @@ class GroomingRecordDetailScreen extends StatelessWidget {
       message: '이 그루밍 기록을 삭제하시겠습니까?\n삭제된 기록은 복구할 수 없습니다.',
       onConfirm: () {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('기록이 삭제되었습니다')),
-        );
+        MingrrSnackBar.success(context, '기록이 삭제되었습니다');
       },
     );
   }
 }
 
 /// 그루밍 타입
-enum GroomingType {
-  shower('샤워', '🚿'),
-  brushing('빗질', '🪮'),
-  nailTrim('발톱정리', '✂️'),
-  haircut('이발', '💇'),
-  earCleaning('귀청소', '👂'),
-  tearStain('눈물자국', '👁️'),
-  analGland('항문낭', '🔘'),
-  pawCare('발바닥', '🐾');
+enum _LocalGroomingType {
+  shower('샤워', Icons.shower_outlined),
+  brushing('빗질', Icons.brush_outlined),
+  nailTrim('발톱정리', Icons.content_cut),
+  haircut('이발', Icons.cut_outlined),
+  earCleaning('귀청소', Icons.hearing_outlined),
+  tearStain('눈물자국', Icons.visibility_outlined),
+  analGland('항문낭', Icons.circle_outlined),
+  pawCare('발바닥', Icons.pets);
 
   final String label;
-  final String emoji;
-  const GroomingType(this.label, this.emoji);
+  final IconData icon;
+  const _LocalGroomingType(this.label, this.icon);
 }
 
 /// 그루밍 기록 모델
 class GroomingRecord {
   final String id;
   final DateTime date;
-  final GroomingType type;
+  final _LocalGroomingType type;
   final String location;
   final String petName;
   final double? cost;
@@ -452,20 +432,6 @@ class GroomingRecord {
     this.cost,
     this.memo,
   });
-
-  factory GroomingRecord.demo({int index = 0}) {
-    final types = GroomingType.values;
-    final locations = ['집에서', '미용실', '동물병원'];
-    return GroomingRecord(
-      id: 'grooming_$index',
-      date: DateTime.now().subtract(Duration(days: index * 2)),
-      type: types[index % types.length],
-      location: locations[index % locations.length],
-      petName: '뽀삐',
-      cost: index % 2 == 0 ? 30000 + index * 5000 : null,
-      memo: index % 3 == 0 ? '피부 상태 양호' : null,
-    );
-  }
 }
 
 // ===== 예방접종 기록 상세 화면 =====
@@ -503,9 +469,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                       color: AppColors.health.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Center(
-                      child: Text('💉', style: TextStyle(fontSize: 40)),
-                    ),
+                    child: const Icon(Icons.vaccines_outlined, size: 40, color: AppColors.health),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -644,9 +608,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
       message: '이 예방접종 기록을 삭제하시겠습니까?\n삭제된 기록은 복구할 수 없습니다.',
       onConfirm: () {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('기록이 삭제되었습니다')),
-        );
+        MingrrSnackBar.success(context, '기록이 삭제되었습니다');
       },
     );
   }
@@ -675,21 +637,6 @@ class VaccinationRecord {
     this.isCompleted = true,
     this.memo,
   });
-
-  factory VaccinationRecord.demo({int index = 0}) {
-    final vaccines = ['종합백신 (DHPPL)', '광견병', '코로나', '켄넬코프', '인플루엔자'];
-    return VaccinationRecord(
-      id: 'vaccine_$index',
-      date: DateTime.now().subtract(Duration(days: index * 30)),
-      vaccineName: vaccines[index % vaccines.length],
-      hospital: '행복 동물병원',
-      veterinarian: '김수의 원장',
-      petName: '뽀삐',
-      nextDate: index < 3 ? DateTime.now().add(Duration(days: 365 - index * 30)) : null,
-      isCompleted: true,
-      memo: index % 2 == 0 ? '접종 후 이상 반응 없음' : null,
-    );
-  }
 }
 
 // ===== 검진 기록 상세 화면 =====
@@ -727,9 +674,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                       color: AppColors.health.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Center(
-                      child: Text('🏥', style: TextStyle(fontSize: 40)),
-                    ),
+                    child: const Icon(Icons.local_hospital_outlined, size: 40, color: AppColors.health),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -881,9 +826,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
       message: '이 검진 기록을 삭제하시겠습니까?\n삭제된 기록은 복구할 수 없습니다.',
       onConfirm: () {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('기록이 삭제되었습니다')),
-        );
+        MingrrSnackBar.success(context, '기록이 삭제되었습니다');
       },
     );
   }
@@ -914,23 +857,6 @@ class CheckupRecord {
     this.cost,
     this.memo,
   });
-
-  factory CheckupRecord.demo({int index = 0}) {
-    final types = ['정기 검진', '혈액 검사', '초음파 검사', 'X-ray 검사', '심장 검사'];
-    final results = ['정상', '양호 (관찰 필요)', '주의 필요'];
-    return CheckupRecord(
-      id: 'checkup_$index',
-      date: DateTime.now().subtract(Duration(days: index * 60)),
-      checkupType: types[index % types.length],
-      hospital: '행복 동물병원',
-      veterinarian: '김수의 원장',
-      petName: '뽀삐',
-      result: results[index % results.length],
-      items: ['체중 측정', '심박수 체크', '치아 검사', '피부 검사'],
-      cost: 50000 + index * 10000,
-      memo: index % 2 == 0 ? '전반적으로 건강 상태 양호' : null,
-    );
-  }
 }
 
 // ===== 치아 관리 기록 상세 화면 =====
@@ -968,9 +894,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
                       color: AppColors.health.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Center(
-                      child: Text('🦷', style: TextStyle(fontSize: 40)),
-                    ),
+                    child: const Icon(Icons.clean_hands_outlined, size: 40, color: AppColors.health),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -1099,9 +1023,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
       message: '이 치아 관리 기록을 삭제하시겠습니까?\n삭제된 기록은 복구할 수 없습니다.',
       onConfirm: () {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('기록이 삭제되었습니다')),
-        );
+        MingrrSnackBar.success(context, '기록이 삭제되었습니다');
       },
     );
   }
@@ -1132,23 +1054,6 @@ class TeethCareRecord {
     this.cost,
     this.memo,
   });
-
-  factory TeethCareRecord.demo({int index = 0}) {
-    final types = ['양치질', '스케일링', '치과 검진', '치석 제거'];
-    final locations = ['집에서', '동물병원'];
-    return TeethCareRecord(
-      id: 'teeth_$index',
-      date: DateTime.now().subtract(Duration(days: index * 7)),
-      careType: types[index % types.length],
-      location: locations[index % locations.length],
-      petName: '뽀삐',
-      tartarLevel: 1 + index % 3,
-      gumHealth: 1 + index % 2,
-      breathLevel: 1 + index % 3,
-      cost: index % 2 == 0 ? 50000 : null,
-      memo: index % 2 == 0 ? '정기적인 양치질 권장' : null,
-    );
-  }
 }
 
 // ===== 특이사항 기록 상세 화면 =====
@@ -1189,11 +1094,10 @@ class SpecialRecordDetailScreen extends StatelessWidget {
                           color: _getCategoryColor(record.category).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Center(
-                          child: Text(
-                            _getCategoryEmoji(record.category),
-                            style: const TextStyle(fontSize: 24),
-                          ),
+                        child: Icon(
+                          _getCategoryIcon(record.category),
+                          size: 24,
+                          color: _getCategoryColor(record.category),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -1314,13 +1218,13 @@ class SpecialRecordDetailScreen extends StatelessWidget {
     }
   }
 
-  String _getCategoryEmoji(String category) {
+  IconData _getCategoryIcon(String category) {
     switch (category) {
-      case '증상': return '🤒';
-      case '행동': return '🐕';
-      case '식이': return '🍖';
-      case '기타': return '📝';
-      default: return '⭐';
+      case '증상': return Icons.sick_outlined;
+      case '행동': return Icons.pets;
+      case '식이': return Icons.restaurant_outlined;
+      case '기타': return Icons.note_alt_outlined;
+      default: return Icons.star_outline;
     }
   }
 
@@ -1331,9 +1235,7 @@ class SpecialRecordDetailScreen extends StatelessWidget {
       message: '이 특이사항 기록을 삭제하시겠습니까?\n삭제된 기록은 복구할 수 없습니다.',
       onConfirm: () {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('기록이 삭제되었습니다')),
-        );
+        MingrrSnackBar.success(context, '기록이 삭제되었습니다');
       },
     );
   }
@@ -1360,20 +1262,4 @@ class SpecialRecord {
     this.severity,
     this.action,
   });
-
-  factory SpecialRecord.demo({int index = 0}) {
-    final titles = ['구토 증상', '식욕 감소', '과도한 짖음', '발 핥기', '설사'];
-    final categories = ['증상', '식이', '행동', '행동', '증상'];
-    final severities = ['경미', '보통', '심각'];
-    return SpecialRecord(
-      id: 'special_$index',
-      date: DateTime.now().subtract(Duration(days: index * 5)),
-      title: titles[index % titles.length],
-      category: categories[index % categories.length],
-      description: '오늘 아침 ${titles[index % titles.length]}이(가) 관찰되었습니다. 평소와 다른 행동이 보여 기록합니다.',
-      petName: '뽀삐',
-      severity: severities[index % severities.length],
-      action: index % 2 == 0 ? '동물병원 방문 예정' : null,
-    );
-  }
 }

@@ -249,6 +249,90 @@ class LikeCountBadge extends StatelessWidget {
   }
 }
 
+/// 반려동물 성별 배지 (데이팅/교배찾기용)
+class PetGenderBadge extends StatelessWidget {
+  final bool isMale;
+  final bool showLabel;
+  final InfoBadgeSize size;
+
+  const PetGenderBadge({
+    super.key,
+    required this.isMale,
+    this.showLabel = true,
+    this.size = InfoBadgeSize.medium,
+  });
+
+  double get _fontSize {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return 10;
+      case InfoBadgeSize.medium:
+        return 12;
+      case InfoBadgeSize.large:
+        return 14;
+    }
+  }
+
+  double get _symbolSize {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return 11;
+      case InfoBadgeSize.medium:
+        return 13;
+      case InfoBadgeSize.large:
+        return 15;
+    }
+  }
+
+  EdgeInsets get _padding {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return const EdgeInsets.symmetric(horizontal: 6, vertical: 2);
+      case InfoBadgeSize.medium:
+        return const EdgeInsets.symmetric(horizontal: 8, vertical: 3);
+      case InfoBadgeSize.large:
+        return const EdgeInsets.symmetric(horizontal: 10, vertical: 4);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = isMale 
+        ? Colors.blue.withOpacity(0.15) 
+        : Colors.pink.withOpacity(0.15);
+    final textColor = isMale ? Colors.blue : Colors.pink;
+    
+    return Container(
+      padding: _padding,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isMale ? Icons.male : Icons.female,
+            size: _symbolSize,
+            color: textColor,
+          ),
+          if (showLabel) ...[
+            const SizedBox(width: 3),
+            Text(
+              isMale ? '수컷' : '암컷',
+              style: TextStyle(
+                fontSize: _fontSize,
+                color: textColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 /// 인증 상태 배지 (간단 버전)
 class VerifiedBadge extends StatelessWidget {
   final String label;

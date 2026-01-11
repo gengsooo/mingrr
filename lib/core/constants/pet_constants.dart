@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// ============================================================
 /// MINGRR 반려동물 전용 앱 상수
 /// 
@@ -17,13 +19,13 @@
 /// 사용자(보호자) 성별
 /// - 안전한 만남을 위해 보호자 성별 정보 필수
 enum UserGender {
-  male('남성', '♂'),
-  female('여성', '♀');
+  male('남성', Icons.male),
+  female('여성', Icons.female);
 
   final String label;
-  final String symbol;
+  final IconData icon;
 
-  const UserGender(this.label, this.symbol);
+  const UserGender(this.label, this.icon);
 }
 
 // ============================================================
@@ -58,13 +60,13 @@ enum PetSize {
 /// 반려동물 성별
 /// - 교배 매칭 시 필수 정보
 enum PetGender {
-  male('수컷', '♂'),
-  female('암컷', '♀');
+  male('수컷', Icons.male),
+  female('암컷', Icons.female);
 
   final String label;
-  final String symbol;
+  final IconData icon;
 
-  const PetGender(this.label, this.symbol);
+  const PetGender(this.label, this.icon);
 }
 
 /// ============================================================
@@ -161,20 +163,20 @@ enum PetTraitCategory {
 /// ============================================================
 enum HealthCategory {
   // ===== 건강수첩 카테고리 (건강수첩 화면과 동기화) =====
-  weight('체중', '⚖️', '체중 변화를 기록해요', true),
-  walk('산책', '🚶', '산책 시간과 거리를 기록해요', true),
-  grooming('그루밍', '✨', '미용/위생 관리를 기록해요', true),
-  medication('약', '💊', '복용 중인 약을 관리해요', true),
-  vaccination('예방접종', '💉', '예방접종 일정을 관리해요', true),
-  checkup('정기검진', '🏥', '정기검진 일정을 관리해요', true),
-  special('특이사항', '📝', '기타 특이사항을 기록해요', true);
+  weight('체중', Icons.monitor_weight_outlined, '체중 변화를 기록해요', true),
+  walk('산책', Icons.directions_walk, '산책 시간과 거리를 기록해요', true),
+  grooming('그루밍', Icons.content_cut, '미용/위생 관리를 기록해요', true),
+  medication('약', Icons.medication_outlined, '복용 중인 약을 관리해요', true),
+  vaccination('예방접종', Icons.vaccines_outlined, '예방접종 일정을 관리해요', true),
+  checkup('정기검진', Icons.local_hospital_outlined, '정기검진 일정을 관리해요', true),
+  special('특이사항', Icons.note_alt_outlined, '기타 특이사항을 기록해요', true);
 
   final String label;
-  final String emoji;
+  final IconData icon;
   final String description;
-  final bool canShowOnHome; // 메인화면에 표시 가능 여부
+  final bool canShowOnHome;
 
-  const HealthCategory(this.label, this.emoji, this.description, this.canShowOnHome);
+  const HealthCategory(this.label, this.icon, this.description, this.canShowOnHome);
   
   /// 메인화면에 표시 가능한 카테고리 목록
   static List<HealthCategory> get homeDisplayable => 
@@ -184,23 +186,23 @@ enum HealthCategory {
 /// 그루밍 세부 항목
 /// - 샤워, 빗질, 발톱정리, 이발, 귀청소 등
 enum GroomingType {
-  shower('샤워', '🚿', '목욕/샤워'),
-  brushing('빗질', '🪮', '털 빗질'),
-  nailTrim('발톱정리', '✂️', '발톱 깎기'),
-  haircut('이발', '💇', '털 미용/커트'),
-  earCleaning('귀청소', '👂', '귀 청소'),
-  eyeCleaning('눈물자국', '👁️', '눈물자국 닦기'),
-  analGland('항문낭', '🔘', '항문낭 짜기'),
-  pawCare('발바닥', '🐾', '발바닥 관리'),
-  teethBrushing('양치', '🦷', '양치질'),
-  teethScaling('치석제거', '🪥', '치석 제거/스케일링'),
-  other('기타', '✨', '기타 그루밍');
+  shower('샤워', Icons.shower_outlined, '목욕/샤워'),
+  brushing('빗질', Icons.brush_outlined, '털 빗질'),
+  nailTrim('발톱정리', Icons.content_cut, '발톱 깎기'),
+  haircut('이발', Icons.cut_outlined, '털 미용/커트'),
+  earCleaning('귀청소', Icons.hearing_outlined, '귀 청소'),
+  eyeCleaning('눈물자국', Icons.visibility_outlined, '눈물자국 닦기'),
+  analGland('항문낭', Icons.circle_outlined, '항문낭 짜기'),
+  pawCare('발바닥', Icons.pets, '발바닥 관리'),
+  teethBrushing('양치', Icons.clean_hands_outlined, '양치질'),
+  teethScaling('치석제거', Icons.auto_fix_high, '치석 제거/스케일링'),
+  other('기타', Icons.more_horiz, '기타 그루밍');
 
   final String label;
-  final String emoji;
+  final IconData icon;
   final String description;
 
-  const GroomingType(this.label, this.emoji, this.description);
+  const GroomingType(this.label, this.icon, this.description);
 }
 
 /// 약 복용 간격
@@ -218,6 +220,44 @@ enum MedicationInterval {
 }
 
 /// ============================================================
+/// 약 아이콘 색상 타입
+/// 
+/// Material Icons의 medication 아이콘 + 색상으로 구분
+/// 저장 시 id를 사용하여 저장
+/// 색상은 구분이 명확한 5가지만 사용
+/// ============================================================
+enum MedicationIconType {
+  blue('blue', 0xFF2196F3),
+  pink('pink', 0xFFE91E63),
+  orange('orange', 0xFFFF9800),
+  green('green', 0xFF4CAF50),
+  purple('purple', 0xFF7B1FA2);
+
+  final String id;
+  final int colorValue;
+
+  const MedicationIconType(this.id, this.colorValue);
+
+  /// ID로 MedicationIconType 찾기
+  static MedicationIconType fromId(String id) {
+    return MedicationIconType.values.firstWhere(
+      (e) => e.id == id,
+      orElse: () => MedicationIconType.blue,
+    );
+  }
+
+  /// 레거시 데이터 호환 (기존 pill_blue 등의 형식)
+  static MedicationIconType fromLegacyId(String legacyId) {
+    if (legacyId.contains('blue')) return MedicationIconType.blue;
+    if (legacyId.contains('pink')) return MedicationIconType.pink;
+    if (legacyId.contains('orange')) return MedicationIconType.orange;
+    if (legacyId.contains('green')) return MedicationIconType.green;
+    // 기타 색상은 보라로 매핑
+    return MedicationIconType.purple;
+  }
+}
+
+/// ============================================================
 /// 인증 배지 종류
 /// 
 /// 변경사항 (리팩토링):
@@ -225,35 +265,35 @@ enum MedicationInterval {
 /// - 위치 인증 추가 (당근마켓 스타일)
 /// ============================================================
 enum BadgeType {
-  identity('본인인증', '🪪', '본인 인증을 완료했어요'),
-  location('위치인증', '📍', '동네 인증을 완료했어요'),
-  petRegistration('동물등록', '🏷️', '동물등록 인증을 완료했어요');
+  identity('본인인증', Icons.verified_user_outlined, '본인 인증을 완료했어요'),
+  location('위치인증', Icons.location_on_outlined, '동네 인증을 완료했어요'),
+  petRegistration('동물등록', Icons.pets, '동물등록 인증을 완료했어요');
 
   final String label;
-  final String emoji;
+  final IconData icon;
   final String description;
 
-  const BadgeType(this.label, this.emoji, this.description);
+  const BadgeType(this.label, this.icon, this.description);
 }
 
 /// ============================================================
 /// 소모임 카테고리
 /// ============================================================
 enum CommunityCategory {
-  walk('산책 모임', '🚶', '함께 산책해요'),
-  play('놀이 모임', '🎾', '함께 놀아요'),
-  share('나눔 모임', '🎁', '물품을 나눠요'),
-  coffee('커피 모임', '☕', '보호자끼리 모여요'),
-  training('훈련 모임', '🎓', '함께 훈련해요'),
-  health('건강 모임', '💪', '건강 정보를 나눠요'),
-  breeding('교배 모임', '💕', '교배 정보를 나눠요'),
-  other('기타', '📌', '기타 모임이에요');
+  walk('산책 모임', Icons.directions_walk, '함께 산책해요'),
+  play('놀이 모임', Icons.sports_tennis, '함께 놀아요'),
+  share('나눔 모임', Icons.card_giftcard, '물품을 나눠요'),
+  coffee('커피 모임', Icons.coffee, '보호자끼리 모여요'),
+  training('훈련 모임', Icons.school_outlined, '함께 훈련해요'),
+  health('건강 모임', Icons.fitness_center, '건강 정보를 나눠요'),
+  breeding('교배 모임', Icons.favorite_outline, '교배 정보를 나눠요'),
+  other('기타', Icons.more_horiz, '기타 모임이에요');
 
   final String label;
-  final String emoji;
+  final IconData icon;
   final String description;
 
-  const CommunityCategory(this.label, this.emoji, this.description);
+  const CommunityCategory(this.label, this.icon, this.description);
 }
 
 /// 소모임 제한 타입
@@ -275,16 +315,16 @@ enum CommunityRestriction {
 /// - 교배 채팅 타입 분리 (배지 표시용)
 /// ============================================================
 enum ChatType {
-  dating('데이팅', '💕', '친구 만들기 채팅'),
-  breeding('교배', '🐕', '교배 상대 채팅'),
-  community('소모임', '👥', '소모임 채팅'),
-  market('마켓', '💰', '중고거래 채팅');
+  dating('데이팅', Icons.favorite, '친구 만들기 채팅'),
+  breeding('교배', Icons.pets, '교배 상대 채팅'),
+  community('소모임', Icons.groups, '소모임 채팅'),
+  market('마켓', Icons.storefront, '중고거래 채팅');
 
   final String label;
-  final String emoji;
+  final IconData icon;
   final String description;
 
-  const ChatType(this.label, this.emoji, this.description);
+  const ChatType(this.label, this.icon, this.description);
   
   /// 교배 채팅인지 확인
   bool get isBreeding => this == ChatType.breeding;

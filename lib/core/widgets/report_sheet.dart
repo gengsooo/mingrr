@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import '../services/firebase_service.dart';
+import 'common_widgets.dart';
 
 /// ============================================================
 /// 신고 기능 위젯
@@ -203,18 +204,11 @@ class _ReportSheetState extends State<ReportSheet> {
                         if (mounted) {
                           Navigator.pop(context);
                           widget.onSubmit?.call();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('신고가 접수되었습니다. 검토 후 조치하겠습니다.'),
-                              backgroundColor: AppColors.textSecondary,
-                            ),
-                          );
+                          MingrrSnackBar.success(context, '신고가 접수되었습니다. 검토 후 조치하겠습니다.');
                         }
                       } catch (e) {
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('신고 실패: $e'), backgroundColor: AppColors.error),
-                          );
+                          MingrrSnackBar.error(context, '신고 실패: $e');
                         }
                       } finally {
                         if (mounted) setState(() => _isSubmitting = false);

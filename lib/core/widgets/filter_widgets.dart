@@ -630,15 +630,17 @@ class _LocationBottomSheetState extends State<LocationBottomSheet> {
 /// 
 /// 가로 스크롤 가능한 필터 칩 목록
 /// [accentColor]: 테마 색상
-/// [categories]: 카테고리 목록 (label, emoji)
+/// [categories]: 카테고리 목록 (label, emoji, icon)
 /// [selectedIndex]: 선택된 인덱스
 /// [onSelected]: 선택 콜백
+/// [showDropdownIcon]: 드롭다운 아이콘 표시 여부
 /// ------------------------------------------------------------
 class CategoryFilterChips extends StatelessWidget {
   final Color accentColor;
-  final List<({String label, String? emoji})> categories;
+  final List<({String label, String? emoji, IconData? icon})> categories;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
+  final bool showDropdownIcon;
 
   const CategoryFilterChips({
     super.key,
@@ -646,6 +648,7 @@ class CategoryFilterChips extends StatelessWidget {
     required this.categories,
     required this.selectedIndex,
     required this.onSelected,
+    this.showDropdownIcon = false,
   });
 
   @override
@@ -679,10 +682,17 @@ class CategoryFilterChips extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: Center(
-                      child: Text(
-                        category.emoji ?? '📋',
-                        style: const TextStyle(fontSize: 18),
-                      ),
+                      child: category.icon != null
+                          ? Icon(
+                              category.icon,
+                              size: 20,
+                              color: isSelected ? Colors.white : accentColor,
+                            )
+                          : Icon(
+                              Icons.grid_view,
+                              size: 20,
+                              color: isSelected ? Colors.white : accentColor,
+                            ),
                     ),
                   ),
                   const SizedBox(height: 4),

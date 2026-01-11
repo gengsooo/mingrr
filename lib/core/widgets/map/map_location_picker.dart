@@ -8,6 +8,7 @@ import '../../constants/app_sizes.dart';
 import '../../models/location_model.dart';
 import '../../services/geocoding_service.dart';
 import '../../services/location_helper.dart';
+import '../common_widgets.dart';
 import '../dialogs/dialogs.dart';
 import 'map_loading_widget.dart';
 
@@ -302,12 +303,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
 
   void _showError(String message) {
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      MingrrSnackBar.error(context, message);
     }
   }
 

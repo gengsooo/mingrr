@@ -248,12 +248,7 @@ class GuardianProfileModal extends StatelessWidget {
             context,
             targetName: guardianName,
             onRatingSelected: (rating) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('$guardianName님을 "${rating.label}"로 평가했어요!'),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
+              MingrrSnackBar.success(context, '$guardianName님을 "${rating.label}"로 평가했어요!');
             },
           );
         },

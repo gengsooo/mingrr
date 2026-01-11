@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import '../core/constants/pet_constants.dart';
 
 /// ============================================================
@@ -145,8 +146,8 @@ class PetModel extends Equatable {
   /// 성별 한글 표시
   String get genderString => gender.label;
 
-  /// 성별 기호
-  String get genderSymbol => gender.symbol;
+  /// 성별 아이콘
+  IconData get genderIcon => gender.icon;
 
   /// 체중 크기 분류
   PetSize? get size {
