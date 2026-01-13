@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../constants/app_colors.dart';
+import '../../theme/feature_colors.dart';
 import '../../constants/app_sizes.dart';
 
 /// ============================================================
@@ -33,24 +33,50 @@ import '../../constants/app_sizes.dart';
 /// 다이얼로그 타입
 enum DialogType {
   // 기본 타입
-  info(Icons.info_outline, AppColors.primary, '안내'),
-  success(Icons.check_circle_outline, AppColors.success, '완료'),
-  warning(Icons.warning_amber_outlined, AppColors.warning, '경고'),
-  error(Icons.error_outline, AppColors.error, '오류'),
+  info(Icons.info_outline, '안내'),
+  success(Icons.check_circle_outline, '완료'),
+  warning(Icons.warning_amber_outlined, '경고'),
+  error(Icons.error_outline, '오류'),
   
   // 기능별 타입
-  walk(Icons.directions_walk, AppColors.walk, '산책'),
-  health(Icons.favorite_outline, AppColors.health, '건강'),
-  community(Icons.group_outlined, AppColors.community, '소모임'),
-  market(Icons.store_outlined, AppColors.market, '마켓'),
-  dating(Icons.pets, AppColors.dating, '데이팅'),
-  chat(Icons.chat_bubble_outline, AppColors.chat, '채팅');
+  walk(Icons.directions_walk, '산책'),
+  health(Icons.favorite_outline, '건강'),
+  community(Icons.group_outlined, '소모임'),
+  market(Icons.store_outlined, '마켓'),
+  dating(Icons.pets, '데이팅'),
+  chat(Icons.chat_bubble_outline, '채팅');
 
   final IconData icon;
-  final Color color;
   final String defaultTitle;
 
-  const DialogType(this.icon, this.color, this.defaultTitle);
+  const DialogType(this.icon, this.defaultTitle);
+  
+  /// 빌드 시점에 context에서 색상 가져오기
+  Color getColor(BuildContext context) {
+    final features = context.features;
+    switch (this) {
+      case DialogType.info:
+        return Theme.of(context).colorScheme.primary;
+      case DialogType.success:
+        return features.success;
+      case DialogType.warning:
+        return Colors.orange;
+      case DialogType.error:
+        return Colors.red;
+      case DialogType.walk:
+        return features.walk;
+      case DialogType.health:
+        return features.health;
+      case DialogType.community:
+        return features.community;
+      case DialogType.market:
+        return features.market;
+      case DialogType.dating:
+        return features.dating;
+      case DialogType.chat:
+        return features.chat;
+    }
+  }
 }
 
 /// 공통 다이얼로그 표시 함수
@@ -109,11 +135,12 @@ class AppDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = themeColor ?? type.color;
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = themeColor ?? type.getColor(context);
     final displayIcon = icon ?? type.icon;
     
     return Dialog(
-      backgroundColor: AppColors.cardBackground,
+      backgroundColor: colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusL),
       ),
@@ -137,10 +164,10 @@ class AppDialog extends StatelessWidget {
             // 제목
             Text(
               title ?? type.defaultTitle,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: AppSizes.gapS),
@@ -149,9 +176,9 @@ class AppDialog extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: AppColors.textSecondary,
+                color: colorScheme.onSurfaceVariant,
                 height: 1.5,
               ),
             ),
@@ -190,6 +217,8 @@ class AppDialog extends StatelessWidget {
   }
 
   Widget _buildTwoButtons(BuildContext context, Color color) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Row(
       children: [
         Expanded(
@@ -197,16 +226,16 @@ class AppDialog extends StatelessWidget {
             onPressed: () => Navigator.pop(context, false),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
-              side: const BorderSide(color: AppColors.divider),
+              side: BorderSide(color: colorScheme.outline),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
             child: Text(
               cancelText ?? '취소',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
-                color: AppColors.textSecondary,
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -249,10 +278,12 @@ Future<String?> showInputDialog(
 }) {
   final controller = TextEditingController(text: initialValue);
   
+  final colorScheme = Theme.of(context).colorScheme;
+  
   return showDialog<String>(
     context: context,
     builder: (ctx) => Dialog(
-      backgroundColor: AppColors.cardBackground,
+      backgroundColor: colorScheme.surface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusL),
       ),
@@ -269,19 +300,19 @@ Future<String?> showInputDialog(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: type.color.withOpacity(0.1),
+                    color: type.getColor(context).withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(type.icon, size: 20, color: type.color),
+                  child: Icon(type.icon, size: 20, color: type.getColor(context)),
                 ),
                 const SizedBox(width: AppSizes.gapS),
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -292,9 +323,9 @@ Future<String?> showInputDialog(
               const SizedBox(height: AppSizes.gapS),
               Text(
                 message,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: AppColors.textSecondary,
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -309,14 +340,14 @@ Future<String?> showInputDialog(
               decoration: InputDecoration(
                 hintText: hintText,
                 filled: true,
-                fillColor: AppColors.background,
+                fillColor: colorScheme.surfaceContainerHighest,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: type.color, width: 1.5),
+                  borderSide: BorderSide(color: type.getColor(context), width: 1.5),
                 ),
                 contentPadding: const EdgeInsets.all(16),
               ),
@@ -333,16 +364,16 @@ Future<String?> showInputDialog(
                     onPressed: () => Navigator.pop(ctx),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: AppColors.divider),
+                      side: BorderSide(color: colorScheme.outline),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                     child: Text(
                       cancelText ?? '취소',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
-                        color: AppColors.textSecondary,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -357,7 +388,7 @@ Future<String?> showInputDialog(
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: type.color,
+                      backgroundColor: type.getColor(context),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(

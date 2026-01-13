@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/pet_selector_card.dart';
 import '../../../../models/breeding_model.dart';
 import '../../../../models/pet_model.dart';
@@ -71,13 +73,9 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
     final petsAsync = ref.watch(userPetsProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.detailBackground,
       appBar: AppBar(
         title: Text(_isEditMode ? '교배 글 수정' : '교배 글쓰기'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
@@ -171,22 +169,22 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
               ? PetSelectorCard(
                   pet: _selectedPet!,
                   isSelected: true,
-                  accentColor: AppColors.dating,
+                  accentColor: context.features.dating,
                 )
               : Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.datingLight,
+                    color: context.inputBackground,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.dating.withOpacity(0.3)),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.pets, color: AppColors.dating),
-                      SizedBox(width: 12),
-                      Text('강아지를 선택해주세요', style: TextStyle(color: AppColors.textHint)),
-                      Spacer(),
-                      Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                      Icon(Icons.pets, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
+                      const SizedBox(width: 12),
+                      Text('강아지를 선택해주세요', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
+                      const Spacer(),
+                      Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
                     ],
                   ),
                 ),
@@ -204,7 +202,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
       selectedPet: _selectedPet,
       title: '교배할 강아지 선택',
       description: '교배 글에 등록할 강아지를 선택해주세요',
-      accentColor: AppColors.dating,
+      accentColor: context.features.dating,
       onSelect: (pet) {
         setState(() => _selectedPet = pet);
       },
@@ -214,8 +212,8 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
   Widget _buildGenderSelector() {
     final genders = [
       (value: null, label: '무관', icon: null as IconData?),
-      (value: 'male', label: '수컷', icon: Icons.male as IconData?),
-      (value: 'female', label: '암컷', icon: Icons.female as IconData?),
+      (value: 'male', label: '남아', icon: Icons.male as IconData?),
+      (value: 'female', label: '여아', icon: Icons.female as IconData?),
     ];
 
     return Wrap(
@@ -228,24 +226,24 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.dating : Colors.transparent,
+              color: isSelected ? context.features.dating : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isSelected ? AppColors.dating : AppColors.divider,
+                color: isSelected ? context.features.dating : Theme.of(context).colorScheme.outline,
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (gender.icon != null) ...[
-                  Icon(gender.icon, size: 16, color: isSelected ? Colors.white : AppColors.textSecondary),
+                  Icon(gender.icon, size: 16, color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant),
                   const SizedBox(width: 4),
                 ],
                 Text(
                   gender.label,
                   style: TextStyle(
                     fontSize: 13,
-                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -283,17 +281,17 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.dating : Colors.transparent,
+              color: isSelected ? context.features.dating : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isSelected ? AppColors.dating : AppColors.divider,
+                color: isSelected ? context.features.dating : Theme.of(context).colorScheme.outline,
               ),
             ),
             child: Text(
               size.label,
               style: TextStyle(
                 fontSize: 12,
-                color: isSelected ? Colors.white : AppColors.textPrimary,
+                color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
@@ -306,23 +304,27 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: context.inputBackground,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('같은 품종만', style: TextStyle(fontWeight: FontWeight.w500)),
-              Text('같은 품종의 상대만 원해요', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+              const Text('같은 품종만', style: TextStyle(fontWeight: FontWeight.w500)),
+              Text('같은 품종의 상대만 원해요', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ],
           ),
           Switch(
             value: _sameBreedOnly,
             onChanged: (value) => setState(() => _sameBreedOnly = value),
-            activeColor: AppColors.dating,
+            activeColor: Colors.white,
+            activeTrackColor: context.features.dating,
+            inactiveThumbColor: Colors.white,
+            inactiveTrackColor: Theme.of(context).colorScheme.outlineVariant,
+            trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
           ),
         ],
       ),
@@ -347,17 +349,17 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.dating : Colors.transparent,
+              color: isSelected ? context.features.dating : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isSelected ? AppColors.dating : AppColors.divider,
+                color: isSelected ? context.features.dating : Theme.of(context).colorScheme.outline,
               ),
             ),
             child: Text(
               age.label,
               style: TextStyle(
                 fontSize: 13,
-                color: isSelected ? Colors.white : AppColors.textPrimary,
+                color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
@@ -367,49 +369,11 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
   }
 
   Widget _buildBottomButton() {
-    return Container(
-      padding: EdgeInsets.only(
-        left: AppSizes.paddingL,
-        right: AppSizes.paddingL,
-        top: AppSizes.paddingM,
-        bottom: MediaQuery.of(context).padding.bottom + AppSizes.paddingM,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: ElevatedButton(
-          onPressed: _isLoading ? null : _onSubmit,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.dating,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            elevation: 0,
-          ),
-          child: _isLoading
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : Text(
-                  _isEditMode ? '수정' : '등록',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-        ),
-      ),
+    return MingrrSubmitButtonBar(
+      label: _isEditMode ? '수정' : '등록',
+      onPressed: _onSubmit,
+      isLoading: _isLoading,
+      backgroundColor: context.features.dating,
     );
   }
 

@@ -60,8 +60,8 @@ enum PetSize {
 /// 반려동물 성별
 /// - 교배 매칭 시 필수 정보
 enum PetGender {
-  male('수컷', Icons.male),
-  female('암컷', Icons.female);
+  male('남아', Icons.male),
+  female('여아', Icons.female);
 
   final String label;
   final IconData icon;
@@ -91,7 +91,7 @@ enum PetTrait {
   brave('용감함', '겁이 없고 대담해요', PetTraitCategory.personality),
   lazy('느긋함', '여유롭고 게으른 편이에요', PetTraitCategory.personality),
   loyal('충성스러움', '주인에게 충성스러워요', PetTraitCategory.personality),
-  smart('똒똒함', '영리하고 학습이 빨라요', PetTraitCategory.personality),
+  smart('똑똑함', '영리하고 학습이 빨라요', PetTraitCategory.personality),
 
   // ===== 사회성 (10개) =====
   lovesPeople('사람 좋아함', '사람을 좋아해요', PetTraitCategory.social),

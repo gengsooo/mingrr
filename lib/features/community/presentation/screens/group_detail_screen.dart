@@ -1,11 +1,14 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../models/chat_model.dart';
@@ -34,6 +37,7 @@ class GroupDetailScreen extends ConsumerStatefulWidget {
 class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _isJoining = false;
 
   @override
   void initState() {
@@ -73,7 +77,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
 
   Widget _buildContent(BuildContext context, GroupModel group) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.detailBackground,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           _buildAppBar(context, group),
@@ -97,7 +101,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     return SliverAppBar(
       expandedHeight: 200,
       pinned: true,
-      backgroundColor: AppColors.community,
+      backgroundColor: context.features.community,
       leading: IconButton(
         icon: Container(
           padding: const EdgeInsets.all(8),
@@ -173,9 +177,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
 
   Widget _buildDefaultImage() {
     return Container(
-      color: AppColors.community.withOpacity(0.3),
-      child: const Center(
-        child: Icon(Icons.groups, size: 80, color: AppColors.community),
+      color: context.features.community.withOpacity(0.3),
+      child: Center(
+        child: Icon(Icons.groups, size: 80, color: context.features.community),
       ),
     );
   }
@@ -183,7 +187,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   Widget _buildGroupInfo(GroupModel group) {
     return SliverToBoxAdapter(
       child: Container(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         padding: const EdgeInsets.all(AppSizes.paddingL),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,38 +197,60 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.community.withOpacity(0.1),
+                    color: context.features.community.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     group.category,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.community,
+                      color: context.features.community,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
-                if (!group.isPublic)
+                // 반려동물 동반 배지
+                if (group.isPetAccompanied)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppColors.textHint.withOpacity(0.1),
+                      color: context.features.dating.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.lock, size: 12, color: AppColors.textHint),
-                        SizedBox(width: 2),
+                        Icon(Icons.pets, size: 12, color: context.features.dating),
+                        const SizedBox(width: 2),
                         Text(
-                          '비공개',
-                          style: TextStyle(fontSize: 11, color: AppColors.textHint),
+                          '반려동물 동반',
+                          style: TextStyle(fontSize: 11, color: context.features.dating, fontWeight: FontWeight.w500),
                         ),
                       ],
                     ),
                   ),
+                if (!group.isPublic) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.lock, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
+                        const SizedBox(width: 2),
+                        Text(
+                          '비공개',
+                          style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
             ),
             const SizedBox(height: 12),
@@ -238,38 +264,46 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.location_on, size: 16, color: AppColors.textSecondary),
+                Icon(Icons.location_on, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 const SizedBox(width: 4),
                 Text(
                   group.address ?? '위치 미정',
-                  style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(Icons.people, size: 16, color: AppColors.textSecondary),
+                Icon(Icons.people, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 const SizedBox(width: 4),
                 Text(
                   '멤버 ${group.memberCount}명',
-                  style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                  style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 if (group.maxMembers > 0) ...[
                   Text(
                     ' / ${group.maxMembers}명',
-                    style: const TextStyle(fontSize: 14, color: AppColors.textHint),
+                    style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.outlineVariant),
                   ),
                 ],
               ],
             ),
             const SizedBox(height: 16),
-            Text(
-              group.description,
-              style: const TextStyle(
-                fontSize: 14,
-                height: 1.5,
-                color: AppColors.textPrimary,
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: context.sectionBackground,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                group.description,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.5,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
             ),
             if (group.tags.isNotEmpty) ...[
@@ -280,14 +314,14 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                 children: group.tags.map((tag) => Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
                     '#$tag',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 )).toList(),
@@ -305,9 +339,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       delegate: _SliverTabBarDelegate(
         TabBar(
           controller: _tabController,
-          labelColor: AppColors.community,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.community,
+          labelColor: context.features.community,
+          unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+          indicatorColor: context.features.community,
           tabs: const [
             Tab(text: '피드'),
             Tab(text: '일정'),
@@ -345,63 +379,196 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   }
 
   Widget _buildMembersTab(GroupModel group) {
-    return ListView(
-      padding: const EdgeInsets.all(AppSizes.paddingM),
-      children: [
-        MingrrCard(
-          margin: const EdgeInsets.only(bottom: AppSizes.gapM),
-          child: ListTile(
-            leading: const MingrrAvatar(size: 48, placeholderIcon: Icons.person),
-            title: const Text('모임장', style: TextStyle(fontWeight: FontWeight.w600)),
-            subtitle: Text('멤버 ${group.memberCount}명 관리 중'),
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.community.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: const Text(
-                '모임장',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.community,
-                  fontWeight: FontWeight.w600,
-                ),
+    return FutureBuilder<List<_MemberWithPets>>(
+      future: _loadMembersWithPets(group),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        final members = snapshot.data ?? [];
+        
+        return ListView(
+          padding: const EdgeInsets.all(AppSizes.paddingM),
+          children: [
+            // 멤버 목록
+            if (members.isEmpty)
+              MingrrEmptyState(
+                svgAsset: SvgAssets.emptyGroup,
+                title: '멤버가 없습니다',
+                subtitle: '친구를 초대해보세요!',
+              )
+            else
+              ...members.map((member) => _buildMemberItem(context, member, group)),
+          ],
+        );
+      },
+    );
+  }
+
+  /// 멤버 + 반려동물 정보 로드
+  Future<List<_MemberWithPets>> _loadMembersWithPets(GroupModel group) async {
+    final firebaseService = FirebaseService();
+    final List<_MemberWithPets> result = [];
+    
+    for (final memberId in group.memberIds.take(20)) {
+      try {
+        // 사용자 정보
+        final userDoc = await firebaseService.firestore
+            .collection('users')
+            .doc(memberId)
+            .get();
+        
+        if (!userDoc.exists) continue;
+        final userData = userDoc.data()!;
+        
+        // 반려동물 정보
+        List<String> petNames = [];
+        if (group.isPetAccompanied) {
+          final petsSnapshot = await firebaseService.firestore
+              .collection('pets')
+              .where('ownerId', isEqualTo: memberId)
+              .limit(3)
+              .get();
+          
+          petNames = petsSnapshot.docs
+              .map((doc) => doc.data()['name'] as String? ?? '반려동물')
+              .toList();
+        }
+        
+        result.add(_MemberWithPets(
+          id: memberId,
+          nickname: userData['nickname'] ?? '사용자',
+          profileImageUrl: userData['profileImageUrl'],
+          isCreator: memberId == group.creatorId,
+          isAdmin: group.adminIds.contains(memberId),
+          petNames: petNames,
+        ));
+      } catch (e) {
+        // 에러 무시
+      }
+    }
+    
+    // 모임장을 맨 위로
+    result.sort((a, b) {
+      if (a.isCreator) return -1;
+      if (b.isCreator) return 1;
+      if (a.isAdmin) return -1;
+      if (b.isAdmin) return 1;
+      return 0;
+    });
+    
+    return result;
+  }
+
+  /// 멤버 아이템 위젯
+  Widget _buildMemberItem(BuildContext context, _MemberWithPets member, GroupModel group) {
+    return MingrrCard(
+      margin: const EdgeInsets.only(bottom: AppSizes.gapS),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            // 프로필 이미지
+            MingrrAvatar(
+              size: 48,
+              imageUrl: member.profileImageUrl,
+              placeholderIcon: Icons.person,
+            ),
+            const SizedBox(width: 12),
+            // 정보
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        member.nickname,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (member.isCreator) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: context.features.community.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '모임장',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: context.features.community,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ] else if (member.isAdmin) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '운영진',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Theme.of(context).colorScheme.outlineVariant,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  // 반려동물 정보 (동반 모임인 경우)
+                  if (group.isPetAccompanied) ...[
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.pets, size: 14, color: context.features.dating),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            member.petNames.isEmpty
+                                ? '(반려동물 미등록)'
+                                : member.petNames.join(', '),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: member.petNames.isEmpty
+                                  ? Theme.of(context).colorScheme.outlineVariant
+                                  : context.features.dating,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
               ),
             ),
-          ),
+          ],
         ),
-        MingrrEmptyState(
-          svgAsset: SvgAssets.emptyGroup,
-          title: '다른 멤버가 없습니다',
-          subtitle: '친구를 초대해보세요!',
-        ),
-      ],
+      ),
     );
   }
 
 
   Widget _buildBottomButton(BuildContext context, GroupModel group) {
-    // TODO: 실제 가입 여부 확인 로직 필요
-    final isJoined = false; // 임시
+    final firebaseService = FirebaseService();
+    final myUserId = firebaseService.currentUserId;
+    // 현재 사용자가 memberIds에 포함되어 있는지 확인
+    final isJoined = myUserId != null && group.memberIds.contains(myUserId);
+    final isCreator = myUserId == group.creatorId;
 
-    return Container(
-      padding: EdgeInsets.only(
-        left: AppSizes.paddingL,
-        right: AppSizes.paddingL,
-        top: AppSizes.paddingM,
-        bottom: MediaQuery.of(context).padding.bottom + AppSizes.paddingM,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
+    return MingrrBottomButtonBar(
       child: Row(
         children: [
           // 채팅 버튼 (가입한 경우에만)
@@ -412,13 +579,13 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
               child: OutlinedButton(
                 onPressed: () => _openGroupChat(context, group),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: AppColors.community),
+                  side: BorderSide(color: context.features.community),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
                   padding: EdgeInsets.zero,
                 ),
-                child: const Icon(Icons.chat_bubble_outline, color: AppColors.community),
+                child: Icon(Icons.chat_bubble_outline, color: context.features.community),
               ),
             ),
             const SizedBox(width: 12),
@@ -432,7 +599,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                     ? () => _openGroupChat(context, group)
                     : () => _showJoinConfirmation(context, group),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.community,
+                  backgroundColor: context.features.community,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -522,44 +689,75 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           ? '이 모임은 가입 승인이 필요합니다.\n가입 신청을 보내시겠습니까?'
           : '이 모임에 가입하시겠습니까?',
       confirmText: group.requireApproval ? '신청하기' : '가입하기',
-      onConfirm: () {
-        MingrrSnackBar.success(
-          context,
-          group.requireApproval
-              ? '가입 신청을 보냈습니다! 승인을 기다려주세요.'
-              : '모임에 가입했습니다! 🎉',
-        );
-      },
+      onConfirm: () => _joinGroup(context, group),
     );
+  }
+  
+  /// 소모임 가입 처리
+  Future<void> _joinGroup(BuildContext context, GroupModel group) async {
+    if (_isJoining) return;
+    
+    final firebaseService = FirebaseService();
+    final myUserId = firebaseService.currentUserId;
+    
+    if (myUserId == null) {
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
+      return;
+    }
+    
+    setState(() => _isJoining = true);
+    
+    try {
+      if (group.requireApproval) {
+        // 승인 필요: 가입 신청 저장
+        await firebaseService.joinRequestsCollection.add({
+          'groupId': group.id,
+          'userId': myUserId,
+          'status': 'pending',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        
+        if (context.mounted) {
+          MingrrSnackBar.success(context, '가입 신청을 보냈습니다! 승인을 기다려주세요.');
+        }
+      } else {
+        // 승인 불필요: 바로 가입
+        await firebaseService.groupsCollection.doc(group.id).update({
+          'memberIds': FieldValue.arrayUnion([myUserId]),
+        });
+        
+        // 가입 후 채팅방 생성 및 이동
+        if (context.mounted) {
+          MingrrSnackBar.success(context, '모임에 가입했습니다! 🎉');
+          // 채팅방으로 이동
+          await _openGroupChat(context, group);
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        MingrrSnackBar.error(context, '가입 실패: $e');
+      }
+    } finally {
+      if (mounted) setState(() => _isJoining = false);
+    }
   }
 
   void _showMoreOptions(BuildContext context) {
-    showModalBottomSheet(
+    showMingrrOptionsSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      options: [
+        MingrrOptionItem(
+          icon: Icons.notifications_outlined,
+          label: '알림 설정',
+          onTap: () {},
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.notifications_outlined),
-              title: const Text('알림 설정'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.report_outlined, color: AppColors.error),
-              title: const Text('신고하기', style: TextStyle(color: AppColors.error)),
-              onTap: () => Navigator.pop(context),
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
-          ],
+        MingrrOptionItem(
+          icon: Icons.report_outlined,
+          label: '신고하기',
+          isDestructive: true,
+          onTap: () {},
         ),
-      ),
+      ],
     );
   }
 }
@@ -578,7 +776,7 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       child: tabBar,
     );
   }
@@ -587,4 +785,23 @@ class _SliverTabBarDelegate extends SliverPersistentHeaderDelegate {
   bool shouldRebuild(_SliverTabBarDelegate oldDelegate) {
     return false;
   }
+}
+
+/// 멤버 + 반려동물 정보 모델
+class _MemberWithPets {
+  final String id;
+  final String nickname;
+  final String? profileImageUrl;
+  final bool isCreator;
+  final bool isAdmin;
+  final List<String> petNames;
+
+  const _MemberWithPets({
+    required this.id,
+    required this.nickname,
+    this.profileImageUrl,
+    this.isCreator = false,
+    this.isAdmin = false,
+    this.petNames = const [],
+  });
 }

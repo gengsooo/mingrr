@@ -9,8 +9,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';  // 한글화
 // 우리 앱의 커스텀 파일들
 import 'core/theme/app_theme.dart';  // 앱 테마
 import 'core/constants/app_strings.dart';  // 텍스트 상수
-import 'core/constants/app_colors.dart';  // 색상 상수
+import 'core/theme/feature_colors.dart';  // 색상 상수
 import 'core/constants/app_sizes.dart';  // 크기/간격 상수
+import 'core/providers/theme_provider.dart';  // 테마 Provider
 
 // 인증 관련
 import 'features/auth/presentation/providers/auth_provider.dart';  // 로그인 상태 관리 Provider
@@ -58,6 +59,7 @@ final _authStateListenableProvider = Provider<AuthStateNotifier>((ref) {
   return AuthStateNotifier(ref);
 });
 
+// ignore: unused_element - 향후 웹 세션 복원 시 사용 예정
 /// 인증 초기화 완료 여부를 추적하는 Provider
 /// 웹에서 Firebase Auth가 세션을 복원할 때까지 대기
 final _authInitializedProvider = FutureProvider<bool>((ref) async {
@@ -262,11 +264,18 @@ class MingrrApp extends ConsumerWidget {
     // 위에서 정의한 라우터를 가져옵니다 (로그인 체크 기능 포함)
     final router = ref.watch(routerProvider);
 
+    // 테마 모드 가져오기 (상태 변경 감지를 위해 state를 watch)
+    // ignore: unused_local_variable - 상태 변경 감지용으로 watch 필요
+    final _ = ref.watch(themeModeProvider);
+    final themeModeNotifier = ref.read(themeModeProvider.notifier);
+
     // MaterialApp.router: Flutter 앱의 최상위 위젯
     return MaterialApp.router(
       title: AppStrings.appName,  // 앱 이름
       debugShowCheckedModeBanner: false,  // 디버그 배너 숨기기
-      theme: AppTheme.lightTheme,  // 앱 테마
+      theme: AppTheme.lightTheme,  // 라이트 테마
+      darkTheme: AppTheme.darkTheme,  // 다크 테마
+      themeMode: themeModeNotifier.themeMode,  // 테마 모드 (시스템/라이트/다크) - themeMode 변경 시 rebuild됨
       routerConfig: router,  // 라우터 설정 (로그인 체크 포함)
       // 한글화 설정
       locale: const Locale('ko', 'KR'),
@@ -325,14 +334,18 @@ class MingrrBottomNavBar extends ConsumerWidget {
     // 읽지 않은 채팅 메시지 수 가져오기
     final unreadCount = ref.watch(totalUnreadCountProvider);
 
+    // 다크모드 여부 확인
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    
     // Container: 박스 형태의 위젯
     return Container(
       // decoration: 컨테이너 꾸미기
       decoration: BoxDecoration(
-        color: Colors.white,  // 배경색: 흰색
+        color: isDark ? colorScheme.surface : Colors.white,  // 다크모드 대응
         boxShadow: [  // 그림자 효과
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),  // 검은색 5% 투명도
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
             blurRadius: 20,  // 그림자 흐림 정도
             offset: const Offset(0, -5),  // 그림자 위치 (위쪽으로 5픽셀)
           ),
@@ -371,7 +384,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
                   index: 1,
                   currentIndex: currentIndex,
                   route: '/dating',
-                  color: AppColors.dating,
+                  color: context.features.dating,
                 ),
               ),
               
@@ -385,6 +398,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
                   index: 2,
                   currentIndex: currentIndex,
                   route: '/chat',
+                  color: context.features.chat,  // 채팅 전용 주황색 테마
                   badge: unreadCount,
                 ),
               ),
@@ -399,7 +413,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
                   index: 3,
                   currentIndex: currentIndex,
                   route: '/market',
-                  color: AppColors.market,
+                  color: context.features.market,
                 ),
               ),
               
@@ -413,7 +427,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
                   index: 4,
                   currentIndex: currentIndex,
                   route: '/community',
-                  color: AppColors.community,
+                  color: context.features.community,
                 ),
               ),
             ],
@@ -442,7 +456,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
     final isActive = index == currentIndex;
     
     // 활성 상태 색상 결정 (color가 없으면 기본 색상 사용)
-    final activeColor = color ?? AppColors.primary;
+    final activeColor = color ?? Theme.of(context).colorScheme.primary;
 
     // GestureDetector: 터치 이벤트를 감지하는 위젯
     return GestureDetector(
@@ -476,14 +490,18 @@ class MingrrBottomNavBar extends ConsumerWidget {
                   decoration: BoxDecoration(
                     // 활성 상태면 배경색 표시, 아니면 투명
                     color: isActive
-                        ? activeColor.withOpacity(0.15)  // 15% 투명도
+                        ? activeColor.withValues(alpha: 0.15)  // 15% 투명도
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(AppSizes.radiusM),  // 둥근 모서리
                   ),
                   // Icon: 아이콘 위젯
                   child: Icon(
                     isActive ? activeIcon : icon,  // 활성 상태에 따라 아이콘 변경
-                    color: isActive ? activeColor : AppColors.textHint,  // 색상 변경
+                    color: isActive 
+                        ? activeColor 
+                        : Theme.of(context).brightness == Brightness.dark
+                            ? Theme.of(context).colorScheme.onSurfaceVariant
+                            : Theme.of(context).colorScheme.outlineVariant,  // 다크모드 대응
                     size: AppSizes.bottomNavIconSize,  // 아이콘 크기
                   ),
                 ),
@@ -500,7 +518,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
                         vertical: 1,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.error,  // 빨간색 배경
+                        color: Colors.red,  // 빨간색 배경
                         borderRadius: BorderRadius.circular(10),  // 둥근 모양
                       ),
                       child: Text(
@@ -524,7 +542,11 @@ class MingrrBottomNavBar extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,  // 활성 상태면 굵게
-                color: isActive ? activeColor : AppColors.textHint,  // 색상 변경
+                color: isActive 
+                    ? activeColor 
+                    : Theme.of(context).brightness == Brightness.dark
+                        ? Theme.of(context).colorScheme.onSurfaceVariant
+                        : Theme.of(context).colorScheme.outlineVariant,  // 다크모드 대응
               ),
             ),
           ],
@@ -609,7 +631,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -619,13 +641,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.pets,
                 size: 50,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(height: 24),
@@ -635,17 +657,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(height: 32),
             // 로딩 인디케이터
-            const SizedBox(
+            SizedBox(
               width: 24,
               height: 24,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ],

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import 'common_widgets.dart';
 import 'warmth_score.dart';
 import 'verification_badge.dart';
-import 'trait_badge.dart';
 
 /// ============================================================
 /// 프로필 카드 공통 위젯
@@ -64,7 +63,7 @@ class GuardianProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = accentColor ?? AppColors.primary;
+    final color = accentColor ?? Theme.of(context).colorScheme.primary;
     final avatarSize = compact ? 40.0 : 48.0;
     final nameSize = compact ? 14.0 : 15.0;
     
@@ -92,7 +91,7 @@ class GuardianProfileCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: nameSize,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -116,7 +115,7 @@ class GuardianProfileCard extends StatelessWidget {
                       subtitle!,
                       style: TextStyle(
                         fontSize: compact ? 11 : 12,
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     )
                   else if (kkosunnaeScore != null)
@@ -130,7 +129,7 @@ class GuardianProfileCard extends StatelessWidget {
           if (trailing != null)
             trailing!
           else if (showArrow && onTap != null)
-            const Icon(Icons.chevron_right, color: AppColors.textHint),
+            Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
         ],
       ),
     );
@@ -235,7 +234,7 @@ class PetProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = accentColor ?? AppColors.dating;
+    final color = accentColor ?? context.features.dating;
     final avatarSize = compact ? 40.0 : 48.0;
     final nameSize = compact ? 14.0 : 15.0;
     
@@ -263,7 +262,7 @@ class PetProfileCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: nameSize,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -274,7 +273,7 @@ class PetProfileCard extends StatelessWidget {
                     ],
                     if (likeCount != null && likeCount! > 0) ...[
                       const SizedBox(width: 8),
-                      _buildLikeCount(),
+                      _buildLikeCount(context),
                     ],
                   ],
                 ),
@@ -285,7 +284,7 @@ class PetProfileCard extends StatelessWidget {
                   _buildSubtitle(),
                   style: TextStyle(
                     fontSize: compact ? 11 : 12,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
                 
@@ -302,7 +301,7 @@ class PetProfileCard extends StatelessWidget {
           if (trailing != null)
             trailing!
           else if (showArrow && onTap != null)
-            const Icon(Icons.chevron_right, color: AppColors.textHint),
+            Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
         ],
       ),
     );
@@ -337,15 +336,15 @@ class PetProfileCard extends StatelessWidget {
     );
   }
 
-  Widget _buildLikeCount() {
+  Widget _buildLikeCount(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.favorite, size: 12, color: AppColors.error),
+        const Icon(Icons.favorite, size: 12, color: Colors.red),
         const SizedBox(width: 2),
         Text(
           '$likeCount',
-          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ],
     );

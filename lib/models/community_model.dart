@@ -54,6 +54,9 @@ class GroupModel extends Equatable {
   /// 대상 반려동물 종류 (선택사항)
   final String? targetPetType;
   
+  /// 반려동물 동반 여부
+  final bool isPetAccompanied;
+  
   /// 공개 여부
   final bool isPublic;
   
@@ -85,6 +88,7 @@ class GroupModel extends Equatable {
     this.location,
     this.address,
     this.targetPetType,
+    this.isPetAccompanied = true,
     this.isPublic = true,
     this.requireApproval = false,
     this.tags = const [],
@@ -134,6 +138,7 @@ class GroupModel extends Equatable {
       location: data['location'],
       address: data['address'],
       targetPetType: data['targetPetType'],
+      isPetAccompanied: data['isPetAccompanied'] ?? true,
       isPublic: data['isPublic'] ?? true,
       requireApproval: data['requireApproval'] ?? false,
       tags: List<String>.from(data['tags'] ?? []),
@@ -163,6 +168,7 @@ class GroupModel extends Equatable {
       'location': location,
       'address': address,
       'targetPetType': targetPetType,
+      'isPetAccompanied': isPetAccompanied,
       'isPublic': isPublic,
       'requireApproval': requireApproval,
       'tags': tags,
@@ -186,6 +192,7 @@ class GroupModel extends Equatable {
         location,
         address,
         targetPetType,
+        isPetAccompanied,
         isPublic,
         requireApproval,
         tags,

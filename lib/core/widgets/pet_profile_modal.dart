@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../constants/app_colors.dart';
+import '../theme/feature_colors.dart';
+import '../theme/app_theme.dart';
 import '../constants/app_sizes.dart';
 import 'common_widgets.dart';
+import 'mingrr_bottom_sheet.dart';
 import 'warmth_score.dart';
 import 'guardian_profile_modal.dart';
 import 'trait_badge.dart';
@@ -289,51 +291,28 @@ class _PetProfileModalState extends State<PetProfileModal> {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.8,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 핸들
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.divider,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          
+          const BottomSheetHandle(),
           // 헤더
-          Padding(
-            padding: const EdgeInsets.all(AppSizes.paddingM),
-            child: Row(
-              children: [
-                const SizedBox(width: 40),
-                const Expanded(
-                  child: Text(
-                    '반려동물 정보',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 4, 20, 4),
+            child: Text(
+              '반려동물 정보',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
             ),
           ),
-          
-          const Divider(height: 1),
           
           // 본문
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSizes.paddingL),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -386,7 +365,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
             ),
             Text(
               '${widget.photoUrls.length}장',
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -405,7 +384,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
                   margin: EdgeInsets.only(right: index < widget.photoUrls.length - 1 ? 8 : 0),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.divider),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(11),
@@ -413,8 +392,8 @@ class _PetProfileModalState extends State<PetProfileModal> {
                       widget.photoUrls[index],
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
-                        color: AppColors.dating.withOpacity(0.1),
-                        child: const Icon(Icons.pets, color: AppColors.dating),
+                        color: context.features.dating.withOpacity(0.1),
+                        child: Icon(Icons.pets, color: context.features.dating),
                       ),
                     ),
                   ),
@@ -508,30 +487,30 @@ class _PetProfileModalState extends State<PetProfileModal> {
       children: [
         // 프로필 이미지 (프로필 이미지만 사용, default_avatar 제외)
         Container(
-          width: 80,
-          height: 80,
+          width: 60,
+          height: 60,
           decoration: BoxDecoration(
-            color: AppColors.primaryLight,
+            color: Theme.of(context).colorScheme.primaryContainer,
             shape: BoxShape.circle,
           ),
           child: _hasValidProfileImage()
               ? ClipOval(
                   child: Image.network(
                     widget.profileImageUrl!,
-                    width: 80,
-                    height: 80,
+                    width: 60,
+                    height: 60,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const Icon(
+                    errorBuilder: (_, __, ___) => Icon(
                       Icons.pets,
-                      size: 40,
-                      color: AppColors.primary,
+                      size: 30,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 )
-              : const Icon(
+              : Icon(
                   Icons.pets,
-                  size: 40,
-                  color: AppColors.primary,
+                  size: 30,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
         ),
         const SizedBox(width: AppSizes.gapM),
@@ -546,16 +525,39 @@ class _PetProfileModalState extends State<PetProfileModal> {
                   Text(
                     widget.petName,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  // 성별 아이콘
-                  Icon(
-                    isMale ? Icons.male : Icons.female,
-                    size: 20,
-                    color: isMale ? Colors.blue : Colors.pink,
+                  // 성별 배지 (아이콘 + 텍스트, 리스트 카드와 동일한 스타일)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: isMale 
+                          ? Colors.blue.withOpacity(0.15) 
+                          : Colors.pink.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isMale ? Icons.male : Icons.female,
+                          size: 14,
+                          color: isMale ? Colors.blue : Colors.pink,
+                        ),
+                        const SizedBox(width: 3),
+                        Text(
+                          genderText,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isMale ? Colors.blue : Colors.pink,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const Spacer(),
                   // 좋아요 (클릭 가능)
@@ -568,15 +570,15 @@ class _PetProfileModalState extends State<PetProfileModal> {
                           Icon(
                             _isLiked ? Icons.favorite : Icons.favorite_border,
                             size: 24,
-                            color: AppColors.dating,
+                            color: context.features.dating,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '$_currentLikeCount',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.dating,
+                              color: context.features.dating,
                             ),
                           ),
                         ],
@@ -590,12 +592,11 @@ class _PetProfileModalState extends State<PetProfileModal> {
                 [
                   if (widget.breed != null) widget.breed,
                   if (widget.age != null) '${widget.age}살',
-                  genderText,
                   if (widget.weight != null) '${widget.weight}kg',
                 ].join(' · '),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -619,15 +620,15 @@ class _PetProfileModalState extends State<PetProfileModal> {
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.background,
+            color: context.sectionBackground,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             widget.introduction!,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               height: 1.5,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ),
@@ -676,7 +677,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: context.sectionBackground,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -687,10 +688,10 @@ class _PetProfileModalState extends State<PetProfileModal> {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.person, size: 22, color: AppColors.primary),
+                      child: Icon(Icons.person, size: 22, color: Theme.of(context).colorScheme.primary),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -734,7 +735,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
                         ],
                       ),
                     ),
-                    const Icon(Icons.chevron_right, color: AppColors.textHint),
+                    Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
                   ],
                 ),
                 // 인증 배지 (소형)
@@ -780,18 +781,18 @@ class _PetProfileModalState extends State<PetProfileModal> {
         Icon(
           icon,
           size: 18,
-          color: isVerified ? AppColors.success : AppColors.textHint,
+          color: isVerified ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
         ),
         const SizedBox(height: 2),
         Text(
           label,
           style: TextStyle(
             fontSize: 10,
-            color: isVerified ? AppColors.textPrimary : AppColors.textHint,
+            color: isVerified ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.outlineVariant,
           ),
         ),
         if (!isVerified)
-          const Icon(Icons.close, size: 10, color: AppColors.textHint),
+          Icon(Icons.close, size: 10, color: Theme.of(context).colorScheme.outlineVariant),
       ],
     );
   }

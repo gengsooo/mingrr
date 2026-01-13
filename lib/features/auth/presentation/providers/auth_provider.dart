@@ -290,6 +290,46 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  // ===== 비밀번호 재설정 이메일 =====
+  
+  Future<void> sendPasswordResetEmail(String email) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _authRepository.sendPasswordResetEmail(email);
+      state = state.copyWith(isLoading: false);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: '비밀번호 재설정 이메일 발송에 실패했습니다.',
+      );
+      rethrow;
+    }
+  }
+
+  // ===== 회원 탈퇴 (논리 삭제) =====
+  /// 회원 탈퇴 시 물리 삭제가 아닌 논리 삭제를 수행합니다.
+  /// - isDeleted: true로 설정
+  /// - deletedAt: 현재 시간 저장
+  /// - 30일 후 배치 작업으로 물리 삭제 (Cloud Functions에서 처리)
+  /// 
+  /// 논리 삭제 이유:
+  /// 1. 사용자 실수로 인한 탈퇴 복구 가능 (30일 이내)
+  /// 2. 법적 데이터 보관 의무 준수 (거래 기록 등)
+  /// 3. 악용 방지 (탈퇴 후 즉시 재가입하여 평판 초기화 방지)
+  Future<void> deleteAccount() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _authRepository.deleteAccount();
+      state = AuthState.initial();
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: '회원 탈퇴에 실패했습니다.',
+      );
+      rethrow;
+    }
+  }
+
   // ===== 에러 메시지 처리 =====
   
   String _getErrorMessage(FirebaseAuthException e) {

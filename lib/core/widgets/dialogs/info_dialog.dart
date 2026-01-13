@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../constants/app_colors.dart';
 
 /// ============================================================
 /// InfoDialog - 정보성 안내 팝업
@@ -14,7 +13,7 @@ import '../../constants/app_colors.dart';
 ///   context,
 ///   title: '강아지 크기 안내',
 ///   icon: Icons.pets,
-///   accentColor: AppColors.dating,
+///   accentColor: context.features.dating,
 ///   items: [
 ///     InfoItem(label: '초소형', value: '0~4kg', description: '치와와, 요크셔테리어 등'),
 ///     InfoItem(label: '소형', value: '4~10kg', description: '말티즈, 푸들 등'),
@@ -26,7 +25,7 @@ import '../../constants/app_colors.dart';
 ///   context,
 ///   title: '꼬순내지수란?',
 ///   icon: Icons.favorite,
-///   accentColor: AppColors.primary,
+///   accentColor: Theme.of(context).colorScheme.primary,
 ///   customContent: MyCustomWidget(),
 /// );
 /// ```
@@ -63,7 +62,7 @@ void showInfoDialog(
   String? footerText,
   String confirmText = '확인',
 }) {
-  final color = accentColor ?? AppColors.primary;
+  final color = accentColor ?? Theme.of(context).colorScheme.primary;
   
   showDialog(
     context: context,
@@ -105,9 +104,13 @@ class InfoDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       elevation: 8,
+      backgroundColor: colorScheme.surface,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 340),
         decoration: BoxDecoration(
@@ -116,8 +119,8 @@ class InfoDialog extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              accentColor.withOpacity(0.08),
-              Colors.white,
+              accentColor.withOpacity(isDark ? 0.15 : 0.08),
+              isDark ? colorScheme.surface : Colors.white,
             ],
             stops: const [0.0, 0.3],
           ),
@@ -126,7 +129,7 @@ class InfoDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             // 헤더 영역
-            _buildHeader(),
+            _buildHeader(context),
             
             // 콘텐츠 영역
             Flexible(
@@ -138,7 +141,7 @@ class InfoDialog extends StatelessWidget {
                     if (customContent != null)
                       customContent!
                     else if (items != null && items!.isNotEmpty)
-                      _buildItemsList(),
+                      _buildItemsList(context),
                   ],
                 ),
               ),
@@ -153,7 +156,7 @@ class InfoDialog extends StatelessWidget {
   }
 
   /// 헤더 영역 (아이콘 + 제목)
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
       child: Column(
@@ -197,7 +200,7 @@ class InfoDialog extends StatelessWidget {
               subtitle!,
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
@@ -208,7 +211,7 @@ class InfoDialog extends StatelessWidget {
   }
 
   /// 아이템 리스트
-  Widget _buildItemsList() {
+  Widget _buildItemsList(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: items!.asMap().entries.map((entry) {
@@ -216,26 +219,28 @@ class InfoDialog extends StatelessWidget {
         final item = entry.value;
         final isLast = index == items!.length - 1;
         
-        return _buildInfoItem(item, isLast);
+        return _buildInfoItem(context, item, isLast);
       }).toList(),
     );
   }
 
   /// 개별 정보 아이템
-  Widget _buildInfoItem(InfoItem item, bool isLast) {
+  Widget _buildInfoItem(BuildContext context, InfoItem item, bool isLast) {
     final itemColor = item.color ?? accentColor;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
     
     return Container(
       margin: EdgeInsets.only(bottom: isLast ? 0 : 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: itemColor.withOpacity(0.15),
+          color: itemColor.withOpacity(isDark ? 0.3 : 0.15),
           width: 1,
         ),
-        boxShadow: [
+        boxShadow: isDark ? null : [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
             blurRadius: 8,
@@ -281,10 +286,10 @@ class InfoDialog extends StatelessWidget {
                 if (item.value != null)
                   Text(
                     item.value!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 if (item.description != null) ...[
@@ -293,7 +298,7 @@ class InfoDialog extends StatelessWidget {
                     item.description!,
                     style: TextStyle(
                       fontSize: 11,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -332,7 +337,7 @@ class InfoDialog extends StatelessWidget {
                       footerText!,
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),

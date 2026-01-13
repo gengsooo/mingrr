@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../constants/app_colors.dart';
+import '../../theme/feature_colors.dart';
 import '../../services/location_helper.dart';
 
 /// ============================================================
@@ -11,9 +11,15 @@ import '../../services/location_helper.dart';
 /// 걸어가는 귀여운 강아지 애니메이션 + 진행 상태 표시
 /// ============================================================
 
+/// 로딩 위젯 타입 (색상 결정용)
+enum MapLoadingType { walk, market, profile, dating, custom }
+
 class MapLoadingWidget extends StatefulWidget {
-  /// 메인 색상 (테마 색상)
-  final Color accentColor;
+  /// 메인 색상 (null이면 타입에 따라 자동 결정)
+  final Color? accentColor;
+  
+  /// 로딩 위젯 타입
+  final MapLoadingType type;
   
   /// 로딩 메시지
   final String message;
@@ -29,7 +35,8 @@ class MapLoadingWidget extends StatefulWidget {
 
   const MapLoadingWidget({
     super.key,
-    this.accentColor = AppColors.primary,
+    this.accentColor,
+    this.type = MapLoadingType.custom,
     this.message = '지도를 불러오는 중...',
     this.subMessage,
     this.height,
@@ -39,7 +46,7 @@ class MapLoadingWidget extends StatefulWidget {
   /// 산책용 로딩 위젯
   factory MapLoadingWidget.walk({String? message, LocationProgress? progress}) {
     return MapLoadingWidget(
-      accentColor: AppColors.walk,
+      type: MapLoadingType.walk,
       message: message ?? '위치를 가져오는 중...',
       subMessage: '현재 위치를 중심으로 지도가 표시됩니다',
       progress: progress,
@@ -49,7 +56,7 @@ class MapLoadingWidget extends StatefulWidget {
   /// 마켓용 로딩 위젯
   factory MapLoadingWidget.market({String? message, LocationProgress? progress}) {
     return MapLoadingWidget(
-      accentColor: AppColors.market,
+      type: MapLoadingType.market,
       message: message ?? '지도를 불러오는 중...',
       subMessage: '거래 희망 지역을 선택해주세요',
       progress: progress,
@@ -59,7 +66,7 @@ class MapLoadingWidget extends StatefulWidget {
   /// 프로필용 로딩 위젯
   factory MapLoadingWidget.profile({String? message, LocationProgress? progress}) {
     return MapLoadingWidget(
-      accentColor: AppColors.primary,
+      type: MapLoadingType.profile,
       message: message ?? '지도를 불러오는 중...',
       subMessage: '내 위치를 선택해주세요',
       progress: progress,
@@ -69,7 +76,7 @@ class MapLoadingWidget extends StatefulWidget {
   /// 데이팅용 로딩 위젯
   factory MapLoadingWidget.dating({String? message, LocationProgress? progress}) {
     return MapLoadingWidget(
-      accentColor: AppColors.dating,
+      type: MapLoadingType.dating,
       message: message ?? '지도를 불러오는 중...',
       progress: progress,
     );
@@ -81,6 +88,23 @@ class MapLoadingWidget extends StatefulWidget {
 
 class _MapLoadingWidgetState extends State<MapLoadingWidget>
     with TickerProviderStateMixin {
+  /// 타입에 따른 색상 결정
+  Color get _accentColor {
+    if (widget.accentColor != null) return widget.accentColor!;
+    final features = context.features;
+    switch (widget.type) {
+      case MapLoadingType.walk:
+        return features.walk;
+      case MapLoadingType.market:
+        return features.market;
+      case MapLoadingType.dating:
+        return features.dating;
+      case MapLoadingType.profile:
+      case MapLoadingType.custom:
+        return Theme.of(context).colorScheme.primary;
+    }
+  }
+  
   late AnimationController _walkController;
   late AnimationController _legController;
   late Animation<double> _walkAnimation;
@@ -121,9 +145,9 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
     final rawSvg = await rootBundle.loadString('assets/icons/walking_dog.svg');
     
     // accentColor를 HEX 문자열로 변환
-    final colorHex = '#${widget.accentColor.value.toRadixString(16).substring(2).toUpperCase()}';
-    final lightColorHex = _getLighterColor(widget.accentColor);
-    final darkColorHex = _getDarkerColor(widget.accentColor);
+    final colorHex = '#${_accentColor.value.toRadixString(16).substring(2).toUpperCase()}';
+    final lightColorHex = _getLighterColor(_accentColor);
+    final darkColorHex = _getDarkerColor(_accentColor);
     
     // SVG 내 색상 치환 (원본 색상 → 동적 색상)
     final coloredSvg = rawSvg
@@ -178,7 +202,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
     return Container(
       width: double.infinity,
       height: widget.height ?? double.infinity,
-      color: Colors.grey[100],
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -228,7 +252,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.5,
-                        color: widget.accentColor,
+                        color: _accentColor,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -237,7 +261,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: widget.accentColor,
+                        color: _accentColor,
                       ),
                     ),
                   ],
@@ -251,7 +275,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
                 widget.subMessage!,
                 style: TextStyle(
                   fontSize: 13,
-                  color: Colors.grey[600],
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -271,7 +295,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
         child: Center(
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: widget.accentColor,
+            color: _accentColor,
           ),
         ),
       );
@@ -311,7 +335,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
                 child: Icon(
                   Icons.pets,
                   size: 16,
-                  color: widget.accentColor.withValues(alpha: 0.6),
+                  color: _accentColor.withValues(alpha: 0.6),
                 ),
               ),
             );

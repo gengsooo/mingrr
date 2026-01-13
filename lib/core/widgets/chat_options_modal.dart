@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import 'common_widgets.dart';
+import 'mingrr_bottom_sheet.dart';
 import 'rating_modal.dart';
 
 /// ============================================================
@@ -65,26 +65,16 @@ class ChatOptionsModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 핸들
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            
-            const SizedBox(height: AppSizes.gapL),
+            const BottomSheetHandle(),
+            const SizedBox(height: AppSizes.gapS),
             
             // 옵션 리스트
             _buildOption(
@@ -92,7 +82,7 @@ class ChatOptionsModal extends StatelessWidget {
               icon: Icons.pets,
               label: '꼬순내지수 평가하기',
               subtitle: '상대방을 평가해주세요',
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.primary,
               onTap: () {
                 Navigator.pop(context);
                 showRatingModal(
@@ -109,7 +99,7 @@ class ChatOptionsModal extends StatelessWidget {
               context,
               icon: Icons.notifications_off_outlined,
               label: '알림 끄기',
-              color: AppColors.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
               onTap: () {
                 Navigator.pop(context);
                 onMuteNotification?.call();
@@ -120,7 +110,7 @@ class ChatOptionsModal extends StatelessWidget {
               context,
               icon: Icons.block_outlined,
               label: '차단하기',
-              color: AppColors.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
               onTap: () {
                 Navigator.pop(context);
                 onBlock?.call();
@@ -131,7 +121,7 @@ class ChatOptionsModal extends StatelessWidget {
               context,
               icon: Icons.report_outlined,
               label: '신고하기',
-              color: AppColors.error,
+              color: Colors.red,
               onTap: () {
                 Navigator.pop(context);
                 onReport?.call();
@@ -142,7 +132,7 @@ class ChatOptionsModal extends StatelessWidget {
               context,
               icon: Icons.exit_to_app_outlined,
               label: '채팅방 나가기',
-              color: AppColors.error,
+              color: Colors.red,
               onTap: () {
                 Navigator.pop(context);
                 onLeave?.call();
@@ -194,9 +184,9 @@ class ChatOptionsModal extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         subtitle,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textHint,
+                          color: Theme.of(context).colorScheme.outlineVariant,
                         ),
                       ),
                     ],

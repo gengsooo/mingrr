@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import 'guardian_profile_modal.dart';
+import 'mingrr_bottom_sheet.dart';
 import 'warmth_score.dart';
 
 /// ============================================================
@@ -91,67 +92,44 @@ class CommunityProfileModal extends StatelessWidget {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.75,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 핸들
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.divider,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          
+          const BottomSheetHandle(),
           // 헤더
           Padding(
-            padding: const EdgeInsets.all(AppSizes.paddingL),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  '소모임 정보',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: 8),
+            child: const Text(
+              '소모임 정보',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
             ),
           ),
           
           // 본문
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSizes.paddingL,
-                0,
-                AppSizes.paddingL,
-                AppSizes.paddingL,
-              ),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 소모임 기본 정보
-                  _buildCommunityInfo(),
+                  _buildCommunityInfo(context),
                   const SizedBox(height: AppSizes.gapL),
                   
                   // 태그
                   if (tags.isNotEmpty) ...[
-                    _buildTags(),
+                    _buildTags(context),
                     const SizedBox(height: AppSizes.gapL),
                   ],
                   
                   // 소개
                   if (description != null && description!.isNotEmpty) ...[
-                    _buildDescription(),
+                    _buildDescription(context),
                     const SizedBox(height: AppSizes.gapL),
                   ],
                   
@@ -162,7 +140,7 @@ class CommunityProfileModal extends StatelessWidget {
                   ],
                   
                   // 상세 정보
-                  _buildDetails(),
+                  _buildDetails(context),
                 ],
               ),
             ),
@@ -189,7 +167,7 @@ class CommunityProfileModal extends StatelessWidget {
             child: Center(
               child: Text(
                 '외 ${members.length - 5}명',
-                style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
               ),
             ),
           ),
@@ -232,7 +210,7 @@ class CommunityProfileModal extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -243,10 +221,10 @@ class CommunityProfileModal extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.person, size: 20, color: AppColors.primary),
+                  child: Icon(Icons.person, size: 20, color: Theme.of(context).colorScheme.primary),
                 ),
                 if (member.isOnline)
                   Positioned(
@@ -256,7 +234,7 @@ class CommunityProfileModal extends StatelessWidget {
                       width: 12,
                       height: 12,
                       decoration: BoxDecoration(
-                        color: AppColors.success,
+                        color: context.features.success,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.white, width: 2),
                       ),
@@ -281,7 +259,7 @@ class CommunityProfileModal extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, size: 18, color: AppColors.textHint),
+            Icon(Icons.chevron_right, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
           ],
         ),
       ),
@@ -289,7 +267,7 @@ class CommunityProfileModal extends StatelessWidget {
   }
 
   /// 소모임 기본 정보
-  Widget _buildCommunityInfo() {
+  Widget _buildCommunityInfo(BuildContext context) {
     return Row(
       children: [
         // 프로필 이미지
@@ -297,13 +275,13 @@ class CommunityProfileModal extends StatelessWidget {
           width: 70,
           height: 70,
           decoration: BoxDecoration(
-            color: AppColors.community.withOpacity(0.1),
+            color: context.features.community.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: const Icon(
+          child: Icon(
             Icons.groups,
             size: 35,
-            color: AppColors.community,
+            color: context.features.community,
           ),
         ),
         const SizedBox(width: AppSizes.gapM),
@@ -323,13 +301,13 @@ class CommunityProfileModal extends StatelessWidget {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  const Icon(Icons.people, size: 16, color: AppColors.textSecondary),
+                  Icon(Icons.people, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   const SizedBox(width: 4),
                   Text(
                     '멤버 $memberCount명',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                   if (category != null) ...[
@@ -337,14 +315,14 @@ class CommunityProfileModal extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.community.withOpacity(0.1),
+                        color: context.features.community.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         category!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.community,
+                          color: context.features.community,
                         ),
                       ),
                     ),
@@ -359,7 +337,7 @@ class CommunityProfileModal extends StatelessWidget {
   }
 
   /// 태그
-  Widget _buildTags() {
+  Widget _buildTags(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -374,14 +352,14 @@ class CommunityProfileModal extends StatelessWidget {
           children: tags.map((tag) => Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.community.withOpacity(0.1),
+              color: context.features.community.withOpacity(0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
               '#$tag',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: AppColors.community,
+                color: context.features.community,
               ),
             ),
           )).toList(),
@@ -391,7 +369,7 @@ class CommunityProfileModal extends StatelessWidget {
   }
 
   /// 소개
-  Widget _buildDescription() {
+  Widget _buildDescription(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -404,15 +382,15 @@ class CommunityProfileModal extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.background,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             description!,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               height: 1.5,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ),
@@ -421,7 +399,7 @@ class CommunityProfileModal extends StatelessWidget {
   }
 
   /// 상세 정보
-  Widget _buildDetails() {
+  Widget _buildDetails(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -433,19 +411,20 @@ class CommunityProfileModal extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.background,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             children: [
               if (location != null)
-                _buildDetailRow(Icons.location_on, '활동 지역', location!),
+                _buildDetailRow(context, Icons.location_on, '활동 지역', location!),
               if (createdAt != null) ...[
                 if (location != null) const Divider(height: 16),
-                _buildDetailRow(Icons.calendar_today, '개설일', createdAt!),
+                _buildDetailRow(context, Icons.calendar_today, '개설일', createdAt!),
               ],
               const Divider(height: 16),
               _buildDetailRow(
+                context,
                 Icons.check_circle,
                 '가입 상태',
                 isJoined ? '가입됨' : '미가입',
@@ -457,16 +436,16 @@ class CommunityProfileModal extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String label, String value) {
+  Widget _buildDetailRow(BuildContext context, IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 18, color: AppColors.textSecondary),
+        Icon(icon, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
         const SizedBox(width: 8),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         const Spacer(),

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../models/rating_model.dart';
-import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
+import '../theme/feature_colors.dart';
 import 'common_widgets.dart';
+import 'mingrr_bottom_sheet.dart';
 
 /// ============================================================
 /// 평가하기 바텀시트
@@ -110,13 +111,13 @@ class _RatingSheetState extends State<RatingSheet> {
   Color get _themeColor {
     switch (widget.ratingType) {
       case RatingType.dating:
-        return AppColors.dating;
+        return context.features.dating;
       case RatingType.marketplace:
-        return AppColors.market;
+        return context.features.market;
       case RatingType.breeding:
-        return AppColors.dating;
+        return context.features.dating;
       case RatingType.community:
-        return AppColors.community;
+        return context.features.community;
     }
   }
 
@@ -126,30 +127,23 @@ class _RatingSheetState extends State<RatingSheet> {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.only(
+              left: AppSizes.paddingL,
+              right: AppSizes.paddingL,
+              bottom: AppSizes.paddingL,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 핸들
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
+                const Center(child: BottomSheetHandle()),
 
                 // 헤더
                 Center(
@@ -158,12 +152,12 @@ class _RatingSheetState extends State<RatingSheet> {
                       // 프로필 이미지
                       CircleAvatar(
                         radius: 36,
-                        backgroundColor: Colors.grey[200],
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                         backgroundImage: widget.targetUserImageUrl != null
                             ? NetworkImage(widget.targetUserImageUrl!)
                             : null,
                         child: widget.targetUserImageUrl == null
-                            ? const Icon(Icons.person, size: 36, color: Colors.grey)
+                            ? Icon(Icons.person, size: 36, color: Theme.of(context).colorScheme.outline)
                             : null,
                       ),
                       const SizedBox(height: 12),
@@ -179,7 +173,7 @@ class _RatingSheetState extends State<RatingSheet> {
                         '$_typeLabel은 어떠셨나요?',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey[600],
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -233,7 +227,7 @@ class _RatingSheetState extends State<RatingSheet> {
                               size: 40,
                               color: starIndex <= _selectedScore
                                   ? Colors.amber
-                                  : Colors.grey[300],
+                                  : Theme.of(context).colorScheme.outline,
                             ),
                           ),
                         );
@@ -287,15 +281,15 @@ class _RatingSheetState extends State<RatingSheet> {
                   maxLines: 2,
                   decoration: InputDecoration(
                     hintText: '상대방에게 전달하고 싶은 말을 적어주세요',
-                    hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+                    hintStyle: TextStyle(color: Theme.of(context).colorScheme.outlineVariant, fontSize: 13),
                     filled: true,
-                    fillColor: Colors.grey[100],
+                    fillColor: Theme.of(context).colorScheme.surfaceContainerLow,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide.none,
                     ),
                     contentPadding: const EdgeInsets.all(16),
-                    counterStyle: TextStyle(color: Colors.grey[400]),
+                    counterStyle: TextStyle(color: Theme.of(context).colorScheme.outlineVariant),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -347,10 +341,10 @@ class _RatingSheetState extends State<RatingSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? _themeColor : Colors.grey[100],
+          color: isSelected ? _themeColor : Theme.of(context).colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? _themeColor : Colors.grey[300]!,
+            color: isSelected ? _themeColor : Theme.of(context).colorScheme.outline,
           ),
         ),
         child: Text(
@@ -358,7 +352,7 @@ class _RatingSheetState extends State<RatingSheet> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
-            color: isSelected ? Colors.white : AppColors.textSecondary,
+            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ),
@@ -380,17 +374,17 @@ class _RatingSheetState extends State<RatingSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? _themeColor.withOpacity(0.1) : Colors.grey[100],
+          color: isSelected ? _themeColor.withOpacity(0.1) : Theme.of(context).colorScheme.surfaceContainerLow,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? _themeColor : Colors.grey[300]!,
+            color: isSelected ? _themeColor : Theme.of(context).colorScheme.outline,
           ),
         ),
         child: Text(
           tag,
           style: TextStyle(
             fontSize: 13,
-            color: isSelected ? _themeColor : AppColors.textSecondary,
+            color: isSelected ? _themeColor : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ),
@@ -489,10 +483,10 @@ class TransactionCompleteDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.check_circle_outline,
               size: 48,
-              color: AppColors.success,
+              color: context.features.success,
             ),
             const SizedBox(height: 16),
             Text(
@@ -508,7 +502,7 @@ class TransactionCompleteDialog extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 24),
@@ -522,7 +516,7 @@ class TransactionCompleteDialog extends StatelessWidget {
                   onComplete();
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.success,
+                  backgroundColor: context.features.success,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -563,7 +557,7 @@ class TransactionCompleteDialog extends StatelessWidget {
               },
               child: Text(
                 '취소됐어요',
-                style: TextStyle(color: Colors.grey[600]),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ),
           ],

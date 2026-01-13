@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
+import '../theme/app_theme.dart';
 import 'common_widgets.dart';
+import 'mingrr_bottom_sheet.dart';
 import 'warmth_score.dart';
 import 'verification_badge.dart';
 import 'pet_profile_modal.dart';
@@ -145,61 +146,38 @@ class GuardianProfileModal extends StatelessWidget {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.75,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 드래그 핸들
-          Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 8),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.divider,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          
+          const BottomSheetHandle(),
           // 헤더
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
-            child: Row(
-              children: [
-                const SizedBox(width: 40),
-                const Expanded(
-                  child: Text(
-                    '보호자 정보',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
+          const Padding(
+            padding: EdgeInsets.fromLTRB(20, 4, 20, 4),
+            child: Text(
+              '보호자 정보',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              textAlign: TextAlign.center,
             ),
           ),
-          
-          const Divider(height: 1),
           
           // 본문
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSizes.paddingM),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 보호자 기본 정보
-                  _buildGuardianInfo(),
+                  _buildGuardianInfo(context),
                   
                   const SizedBox(height: AppSizes.gapXL),
                   
                   // 인증 배지
-                  _buildVerificationBadges(),
+                  _buildVerificationBadges(context),
                   
                   const SizedBox(height: AppSizes.gapXL),
                   
@@ -208,7 +186,7 @@ class GuardianProfileModal extends StatelessWidget {
                   const SizedBox(height: AppSizes.gapXL),
                   
                   // 활동 기록 (항상 표시)
-                  _buildActivitySection(),
+                  _buildActivitySection(context),
                   
                   const SizedBox(height: AppSizes.gapL),
                 ],
@@ -225,23 +203,7 @@ class GuardianProfileModal extends StatelessWidget {
 
   /// 꼬순내지수 평가 버튼
   Widget _buildRatingButton(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(
-        left: AppSizes.paddingM,
-        right: AppSizes.paddingM,
-        top: AppSizes.paddingM,
-        bottom: MediaQuery.of(context).padding.bottom + AppSizes.paddingM,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
+    return MingrrBottomButtonBar(
       child: ElevatedButton(
         onPressed: () {
           showRatingModal(
@@ -253,7 +215,7 @@ class GuardianProfileModal extends StatelessWidget {
           );
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: Theme.of(context).colorScheme.primary,
           foregroundColor: Colors.white,
           minimumSize: const Size(double.infinity, 50),
           shape: RoundedRectangleBorder(
@@ -276,17 +238,8 @@ class GuardianProfileModal extends StatelessWidget {
   }
 
   /// 보호자 기본 정보
-  Widget _buildGuardianInfo() {
-    // 성별/나이 텍스트 생성
-    String genderAgeText = '';
-    if (gender != GuardianGender.unknown) {
-      genderAgeText = gender.label;
-      if (age != null) {
-        genderAgeText += ' · ${age}세';
-      }
-    } else if (age != null) {
-      genderAgeText = '${age}세';
-    }
+  Widget _buildGuardianInfo(BuildContext context) {
+    // 보호자 성별/나이는 개인정보 보호를 위해 표시하지 않음
     
     return Row(
       children: [
@@ -295,7 +248,7 @@ class GuardianProfileModal extends StatelessWidget {
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: profileImageUrl != null && profileImageUrl!.isNotEmpty
@@ -305,56 +258,32 @@ class GuardianProfileModal extends StatelessWidget {
                     width: 60,
                     height: 60,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const Icon(
+                    errorBuilder: (_, __, ___) => Icon(
                       Icons.person,
                       size: 30,
-                      color: AppColors.primary,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                 )
-              : const Icon(
+              : Icon(
                   Icons.person,
                   size: 30,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
         ),
         const SizedBox(width: AppSizes.gapM),
         
-        // 닉네임 + 성별/나이 + 꼬순내지수
+        // 닉네임 + 꼬순내지수 (성별/나이 제거)
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Text(
-                    guardianName,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  if (genderAgeText.isNotEmpty) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: gender == GuardianGender.male 
-                            ? Colors.blue.withOpacity(0.1) 
-                            : Colors.pink.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        genderAgeText,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          color: gender == GuardianGender.male ? Colors.blue : Colors.pink,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
+              Text(
+                guardianName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 4),
               KkosunnaeScoreSmall(score: kkosunnaeScore),
@@ -366,7 +295,7 @@ class GuardianProfileModal extends StatelessWidget {
   }
 
   /// 인증 배지
-  Widget _buildVerificationBadges() {
+  Widget _buildVerificationBadges(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -454,7 +383,7 @@ class GuardianProfileModal extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: context.sectionBackground,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -464,7 +393,7 @@ class GuardianProfileModal extends StatelessWidget {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: AppColors.primaryLight,
+                color: Theme.of(context).colorScheme.primaryContainer,
                 shape: BoxShape.circle,
                 image: pet.profileImageUrl != null && !pet.profileImageUrl!.startsWith('default_avatar:')
                     ? DecorationImage(
@@ -474,7 +403,7 @@ class GuardianProfileModal extends StatelessWidget {
                     : null,
               ),
               child: pet.profileImageUrl == null || pet.profileImageUrl!.startsWith('default_avatar:')
-                  ? const Icon(Icons.pets, size: 24, color: AppColors.primary)
+                  ? Icon(Icons.pets, size: 24, color: Theme.of(context).colorScheme.primary)
                   : null,
             ),
             const SizedBox(width: 12),
@@ -494,9 +423,9 @@ class GuardianProfileModal extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     [pet.breed, pet.ageString].whereType<String>().join(' · '),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -507,19 +436,19 @@ class GuardianProfileModal extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.favorite, size: 14, color: AppColors.error),
+                const Icon(Icons.favorite, size: 14, color: Colors.red),
                 const SizedBox(width: 4),
                 Text(
                   '${pet.likeCount}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.chevron_right, size: 18, color: AppColors.textHint),
+            Icon(Icons.chevron_right, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
           ],
         ),
       ),
@@ -527,7 +456,7 @@ class GuardianProfileModal extends StatelessWidget {
   }
 
   /// 활동 기록 섹션
-  Widget _buildActivitySection() {
+  Widget _buildActivitySection(BuildContext context) {
     final info = activityInfo ?? const GuardianActivityInfo();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -540,16 +469,16 @@ class GuardianProfileModal extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.background,
+            color: context.sectionBackground,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildActivityItem('산책', info.walkCount, Icons.directions_walk),
-              _buildActivityItem('데이팅', info.datingCount, Icons.favorite),
-              _buildActivityItem('거래', info.marketCount, Icons.shopping_bag),
-              _buildActivityItem('소모임', info.communityCount, Icons.groups),
+              _buildActivityItem(context, '산책', info.walkCount, Icons.directions_walk),
+              _buildActivityItem(context, '데이팅', info.datingCount, Icons.favorite),
+              _buildActivityItem(context, '거래', info.marketCount, Icons.shopping_bag),
+              _buildActivityItem(context, '소모임', info.communityCount, Icons.groups),
             ],
           ),
         ),
@@ -558,10 +487,10 @@ class GuardianProfileModal extends StatelessWidget {
   }
 
   /// 활동 아이템
-  Widget _buildActivityItem(String label, int count, IconData icon) {
+  Widget _buildActivityItem(BuildContext context, String label, int count, IconData icon) {
     return Column(
       children: [
-        Icon(icon, size: 20, color: AppColors.textSecondary),
+        Icon(icon, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
         const SizedBox(height: 4),
         Text(
           '$count회',
@@ -572,9 +501,9 @@ class GuardianProfileModal extends StatelessWidget {
         ),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],

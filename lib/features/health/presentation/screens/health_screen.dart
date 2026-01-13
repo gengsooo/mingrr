@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/svg_icons.dart';
 import '../../../../models/pet_model.dart';
-import '../../../../models/health_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import '../providers/health_provider.dart';
 import 'walk_record_detail_screen.dart';
-import 'health_record_detail_screens.dart';
 import 'health_record_add_screens.dart';
 
 /// ============================================================
@@ -29,14 +26,8 @@ class HealthScreen extends ConsumerWidget {
     final categories = _getCategories();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('건강수첩'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
           onPressed: () => Navigator.pop(context),
@@ -81,7 +72,7 @@ class HealthScreen extends ConsumerWidget {
                   );
                   _showAddRecordSheet(context, ref, categories[selectedTab], selectedPet);
                 },
-                backgroundColor: AppColors.health,
+                backgroundColor: context.features.health,
                 child: const Icon(Icons.add, color: Colors.white),
               )
             : null,
@@ -114,15 +105,15 @@ class HealthScreen extends ConsumerWidget {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             '반려동물을 먼저 등록해주세요',
-            style: TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () => Navigator.pop(context),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.health,
+              backgroundColor: context.features.health,
               foregroundColor: Colors.white,
             ),
             child: const Text('돌아가기'),
@@ -156,14 +147,14 @@ class HealthScreen extends ConsumerWidget {
                       height: 56,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.health.withOpacity(0.1),
+                        color: context.features.health.withOpacity(0.1),
                         border: Border.all(
-                          color: isSelected ? AppColors.health : AppColors.divider,
+                          color: isSelected ? context.features.health : Theme.of(context).colorScheme.outline,
                           width: isSelected ? 3 : 1,
                         ),
                         boxShadow: isSelected ? [
                           BoxShadow(
-                            color: AppColors.health.withOpacity(0.3),
+                            color: context.features.health.withOpacity(0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -188,7 +179,7 @@ class HealthScreen extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected ? AppColors.health : AppColors.textPrimary,
+                        color: isSelected ? context.features.health : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -219,23 +210,23 @@ class HealthScreen extends ConsumerWidget {
               margin: const EdgeInsets.only(right: 8),
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.health : Colors.transparent,
+                color: isSelected ? context.features.health : Colors.transparent,
                 borderRadius: BorderRadius.circular(25),
                 border: Border.all(
-                  color: isSelected ? AppColors.health : AppColors.divider,
+                  color: isSelected ? context.features.health : Theme.of(context).colorScheme.outline,
                 ),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(category.icon, size: 16, color: isSelected ? Colors.white : AppColors.health),
+                  Icon(category.icon, size: 16, color: isSelected ? Colors.white : context.features.health),
                   const SizedBox(width: 6),
                   Text(
                     category.label,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected ? Colors.white : AppColors.textPrimary,
+                      color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -281,10 +272,10 @@ class HealthScreen extends ConsumerWidget {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: AppColors.health.withOpacity(0.15),
+                  color: context.features.health.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(category.icon, size: 24, color: AppColors.health),
+                child: Icon(category.icon, size: 24, color: context.features.health),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -297,7 +288,7 @@ class HealthScreen extends ConsumerWidget {
                     ),
                     Text(
                       category.description,
-                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -307,24 +298,24 @@ class HealthScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           const Divider(),
           const SizedBox(height: 12),
-          _buildCategorySummary(ref, category, pet),
+          _buildCategorySummary(context, ref, category, pet),
         ],
       ),
     );
   }
 
-  Widget _buildCategorySummary(WidgetRef ref, HealthCategory category, PetModel pet) {
+  Widget _buildCategorySummary(BuildContext context, WidgetRef ref, HealthCategory category, PetModel pet) {
     switch (category) {
       case HealthCategory.weight:
-        return _buildWeightSummary(ref, pet);
+        return _buildWeightSummary(context, ref, pet);
       case HealthCategory.walk:
-        return _buildWalkSummary(ref, pet);
+        return _buildWalkSummary(context, ref, pet);
       default:
-        return _buildDefaultSummary(category);
+        return _buildDefaultSummary(context, category);
     }
   }
 
-  Widget _buildWeightSummary(WidgetRef ref, PetModel pet) {
+  Widget _buildWeightSummary(BuildContext context, WidgetRef ref, PetModel pet) {
     final recordsAsync = ref.watch(weightRecordsProvider(pet.id));
     
     return recordsAsync.when(
@@ -332,8 +323,8 @@ class HealthScreen extends ConsumerWidget {
       error: (e, _) => MingrrErrorState(subtitle: '$e'),
       data: (records) {
         if (records.isEmpty) {
-          return const Center(
-            child: Text('기록이 없습니다', style: TextStyle(color: AppColors.textSecondary)),
+          return Center(
+            child: Text('기록이 없습니다', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           );
         }
         
@@ -344,20 +335,20 @@ class HealthScreen extends ConsumerWidget {
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildSummaryItem('현재', '${latest.weight.toStringAsFixed(1)}kg', AppColors.health),
+            _buildSummaryItem('현재', '${latest.weight.toStringAsFixed(1)}kg', context.features.health),
             _buildSummaryItem(
               '변화',
               '${change >= 0 ? '+' : ''}${change.toStringAsFixed(1)}kg',
-              change > 0 ? AppColors.warning : AppColors.success,
+              change > 0 ? Colors.orange : context.features.success,
             ),
-            _buildSummaryItem('기록 수', '${records.length}회', AppColors.textSecondary),
+            _buildSummaryItem('기록 수', '${records.length}회', Theme.of(context).colorScheme.onSurfaceVariant),
           ],
         );
       },
     );
   }
 
-  Widget _buildWalkSummary(WidgetRef ref, PetModel pet) {
+  Widget _buildWalkSummary(BuildContext context, WidgetRef ref, PetModel pet) {
     final recordsAsync = ref.watch(walkRecordsProvider(pet.id));
     
     return recordsAsync.when(
@@ -365,8 +356,8 @@ class HealthScreen extends ConsumerWidget {
       error: (e, _) => MingrrErrorState(subtitle: '$e'),
       data: (records) {
         if (records.isEmpty) {
-          return const Center(
-            child: Text('기록이 없습니다', style: TextStyle(color: AppColors.textSecondary)),
+          return Center(
+            child: Text('기록이 없습니다', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           );
         }
         
@@ -381,27 +372,27 @@ class HealthScreen extends ConsumerWidget {
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildSummaryItem('이번 주', '${thisWeekRecords.length}회', AppColors.health),
-            _buildSummaryItem('총 거리', '${(totalDistance / 1000).toStringAsFixed(1)}km', AppColors.walk),
-            _buildSummaryItem('총 시간', '${totalMinutes}분', AppColors.success),
+            _buildSummaryItem('이번 주', '${thisWeekRecords.length}회', context.features.health),
+            _buildSummaryItem('총 거리', '${(totalDistance / 1000).toStringAsFixed(1)}km', context.features.walk),
+            _buildSummaryItem('총 시간', '${totalMinutes}분', context.features.success),
           ],
         );
       },
     );
   }
 
-  Widget _buildDefaultSummary(HealthCategory category) {
+  Widget _buildDefaultSummary(BuildContext context, HealthCategory category) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _buildSummaryItem('총 기록', '-', AppColors.health),
-        _buildSummaryItem('최근', '-', AppColors.textSecondary),
-        _buildSummaryItem('다음', '-', AppColors.success),
+        _buildSummaryItem('총 기록', '-', context.features.health),
+        _buildSummaryItem('최근', '-', Theme.of(context).colorScheme.onSurfaceVariant),
+        _buildSummaryItem('다음', '-', context.features.success),
       ],
     );
   }
 
-  Widget _buildSummaryItem(String label, String value, Color color) {
+  Widget _buildSummaryItem(String label, String value, Color color, {Color? labelColor}) {
     return Column(
       children: [
         Text(
@@ -411,7 +402,7 @@ class HealthScreen extends ConsumerWidget {
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 12, color: labelColor ?? color.withOpacity(0.7)),
         ),
       ],
     );
@@ -432,7 +423,7 @@ class HealthScreen extends ConsumerWidget {
       case HealthCategory.medication:
         return _buildMedicationRecords(context, ref, pet);
       default:
-        return _buildEmptyRecords();
+        return _buildEmptyRecords(context);
     }
   }
 
@@ -443,7 +434,7 @@ class HealthScreen extends ConsumerWidget {
       loading: () => const MingrrLoadingState(),
       error: (e, _) => MingrrErrorState(subtitle: '$e'),
       data: (records) {
-        if (records.isEmpty) return _buildEmptyRecords();
+        if (records.isEmpty) return _buildEmptyRecords(context);
         
         return Column(
           children: records.take(5).map((record) {
@@ -469,7 +460,7 @@ class HealthScreen extends ConsumerWidget {
       loading: () => const MingrrLoadingState(),
       error: (e, _) => MingrrErrorState(subtitle: '$e'),
       data: (records) {
-        if (records.isEmpty) return _buildEmptyRecords();
+        if (records.isEmpty) return _buildEmptyRecords(context);
         
         return Column(
           children: records.take(5).map((record) {
@@ -503,7 +494,7 @@ class HealthScreen extends ConsumerWidget {
       loading: () => const MingrrLoadingState(),
       error: (e, _) => MingrrErrorState(subtitle: '$e'),
       data: (records) {
-        if (records.isEmpty) return _buildEmptyRecords();
+        if (records.isEmpty) return _buildEmptyRecords(context);
         
         return Column(
           children: records.take(5).map((record) {
@@ -527,7 +518,7 @@ class HealthScreen extends ConsumerWidget {
       loading: () => const MingrrLoadingState(),
       error: (e, _) => MingrrErrorState(subtitle: '$e'),
       data: (records) {
-        if (records.isEmpty) return _buildEmptyRecords();
+        if (records.isEmpty) return _buildEmptyRecords(context);
         
         return Column(
           children: records.take(5).map((record) {
@@ -551,7 +542,7 @@ class HealthScreen extends ConsumerWidget {
       loading: () => const MingrrLoadingState(),
       error: (e, _) => MingrrErrorState(subtitle: '$e'),
       data: (records) {
-        if (records.isEmpty) return _buildEmptyRecords();
+        if (records.isEmpty) return _buildEmptyRecords(context);
         
         return Column(
           children: records.take(5).map((record) {
@@ -575,7 +566,7 @@ class HealthScreen extends ConsumerWidget {
       loading: () => const MingrrLoadingState(),
       error: (e, _) => MingrrErrorState(subtitle: '$e'),
       data: (records) {
-        if (records.isEmpty) return _buildEmptyRecords();
+        if (records.isEmpty) return _buildEmptyRecords(context);
         
         return Column(
           children: records.take(5).map((record) {
@@ -595,14 +586,14 @@ class HealthScreen extends ConsumerWidget {
               trailing: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: isActive ? AppColors.success.withOpacity(0.1) : AppColors.textHint.withOpacity(0.1),
+                  color: isActive ? context.features.success.withOpacity(0.1) : Theme.of(context).colorScheme.outlineVariant.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   isActive ? '복용 중' : '완료',
                   style: TextStyle(
                     fontSize: 10,
-                    color: isActive ? AppColors.success : AppColors.textHint,
+                    color: isActive ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
                   ),
                 ),
               ),
@@ -653,9 +644,9 @@ class HealthScreen extends ConsumerWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.divider),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
         ),
         child: Row(
           children: [
@@ -679,7 +670,7 @@ class HealthScreen extends ConsumerWidget {
                   ),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -691,22 +682,22 @@ class HealthScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildEmptyRecords() {
+  Widget _buildEmptyRecords(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(32),
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.note_alt_outlined, size: 40, color: AppColors.textHint),
-            SizedBox(height: 12),
+            Icon(Icons.note_alt_outlined, size: 40, color: Theme.of(context).colorScheme.outlineVariant),
+            const SizedBox(height: 12),
             Text(
               '아직 기록이 없습니다',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               '+ 버튼을 눌러 첫 기록을 추가해보세요',
-              style: TextStyle(fontSize: 12, color: AppColors.textHint),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
             ),
           ],
         ),
@@ -723,16 +714,16 @@ class HealthScreen extends ConsumerWidget {
     Widget? trailing,
     required VoidCallback onTap,
   }) {
-    final color = iconColor ?? AppColors.health;
+    final color = iconColor ?? context.features.health;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.divider),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
         ),
         child: Row(
           children: [
@@ -756,13 +747,13 @@ class HealthScreen extends ConsumerWidget {
                   ),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
             ),
             if (trailing != null) trailing,
-            const Icon(Icons.chevron_right, color: AppColors.textHint),
+            Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
           ],
         ),
       ),

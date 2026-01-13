@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/pet_constants.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/search_screen.dart';
 import '../../../../core/widgets/top_navigation.dart';
 import '../../../../core/widgets/request_sheet.dart';
@@ -256,31 +257,32 @@ class CommunityScreen extends ConsumerWidget {
       )),
     ];
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: AppColors.communityLight,
+      backgroundColor: isDark ? colorScheme.surface : context.features.communityContainer,
       appBar: AppBar(
         title: const Text('소모임'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
+            visualDensity: VisualDensity.compact,
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const SearchScreen(
+                  builder: (ctx) => SearchScreen(
                     searchType: SearchType.community,
-                    accentColor: AppColors.community,
+                    accentColor: ctx.features.community,
                   ),
                 ),
               );
             },
           ),
           const NotificationIconButton(),
-          buildProfileAction(backgroundColor: AppColors.communityLight),
+          buildProfileAction(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
         ],
       ),
       body: Column(
@@ -289,23 +291,20 @@ class CommunityScreen extends ConsumerWidget {
           _buildLocationFilterBar(context, ref, selectedLocations),
           
           // 카테고리 필터 + 정렬
-          Container(
-            color: Colors.white,
-            child: Column(
-              children: [
-                CategoryFilterChips(
-                  categories: categories.map((c) => (label: c.label, emoji: c.emoji, icon: c.icon)).toList(),
-                  selectedIndex: selectedCategory,
-                  onSelected: (index) {
-                    ref.read(_selectedCategoryProvider.notifier).state = index;
-                  },
-                  accentColor: AppColors.community,
-                  showDropdownIcon: false,
-                ),
-                // 정렬 옵션
-                _buildSortOptions(context, ref),
-              ],
-            ),
+          Column(
+            children: [
+              CategoryFilterChips(
+                categories: categories.map((c) => (label: c.label, emoji: c.emoji, icon: c.icon)).toList(),
+                selectedIndex: selectedCategory,
+                onSelected: (index) {
+                  ref.read(_selectedCategoryProvider.notifier).state = index;
+                },
+                accentColor: context.features.community,
+                showDropdownIcon: false,
+              ),
+              // 정렬 옵션
+              _buildSortOptions(context, ref),
+            ],
           ),
           
           // 모임 목록
@@ -316,7 +315,8 @@ class CommunityScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCreateGroupSheet(context),
-        backgroundColor: AppColors.community,
+        backgroundColor: context.features.community,
+        shape: const CircleBorder(),
         child: const Icon(Icons.edit, color: Colors.white),
       ),
     );
@@ -339,11 +339,13 @@ class CommunityScreen extends ConsumerWidget {
   /// 정렬 옵션 바 (오름차순/내림차순 토글 아이콘 포함)
   Widget _buildSortOptions(BuildContext context, WidgetRef ref) {
     final sortState = ref.watch(groupSortStateProvider);
+    final colorScheme = Theme.of(context).colorScheme;
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.divider.withOpacity(0.3))),
+        color: colorScheme.surface,
+        border: Border(top: BorderSide(color: colorScheme.outline.withOpacity(0.3))),
       ),
       child: Row(
         children: GroupSortOption.values.map((option) {
@@ -369,10 +371,10 @@ class CommunityScreen extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.community : Colors.transparent,
+                  color: isSelected ? context.features.community : Colors.transparent,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: isSelected ? AppColors.community : AppColors.divider,
+                    color: isSelected ? context.features.community : colorScheme.outline,
                   ),
                 ),
                 child: Row(
@@ -383,7 +385,7 @@ class CommunityScreen extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected ? Colors.white : AppColors.textSecondary,
+                        color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
                       ),
                     ),
                     if (isSelected) ...[
@@ -406,12 +408,14 @@ class CommunityScreen extends ConsumerWidget {
 
   /// 지역 필터 바
   Widget _buildLocationFilterBar(BuildContext context, WidgetRef ref, List<String> selectedLocations) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: AppColors.divider.withOpacity(0.5)),
+          bottom: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
         ),
       ),
       child: Column(
@@ -420,14 +424,14 @@ class CommunityScreen extends ConsumerWidget {
           // 상단: 지역 선택 버튼 + 초기화
           Row(
             children: [
-              Icon(Icons.location_on, size: 18, color: AppColors.community),
+              Icon(Icons.location_on, size: 18, color: context.features.community),
               const SizedBox(width: 6),
               GestureDetector(
                 onTap: () => _showLocationSelector(context, ref),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.community.withOpacity(0.15),
+                    color: context.features.community.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -438,11 +442,11 @@ class CommunityScreen extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.community,
+                          color: context.features.community,
                         ),
                       ),
                       const SizedBox(width: 4),
-                      Icon(Icons.keyboard_arrow_down, size: 18, color: AppColors.community),
+                      Icon(Icons.keyboard_arrow_down, size: 18, color: context.features.community),
                     ],
                   ),
                 ),
@@ -454,15 +458,15 @@ class CommunityScreen extends ConsumerWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.divider.withOpacity(0.5),
+                      color: colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.refresh, size: 14, color: AppColors.textSecondary),
-                        SizedBox(width: 2),
-                        Text('초기화', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                        Icon(Icons.refresh, size: 14, color: colorScheme.onSurfaceVariant),
+                        const SizedBox(width: 2),
+                        Text('초기화', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant)),
                       ],
                     ),
                   ),
@@ -480,18 +484,18 @@ class CommunityScreen extends ConsumerWidget {
                 return Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   decoration: BoxDecoration(
-                    color: AppColors.community.withOpacity(0.15),
+                    color: context.features.community.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.community.withOpacity(0.3)),
+                    border: Border.all(color: context.features.community.withOpacity(0.3)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         location,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.community,
+                          color: context.features.community,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -502,7 +506,7 @@ class CommunityScreen extends ConsumerWidget {
                           ref.read(_selectedLocationsProvider.notifier).state = 
                             current.where((l) => l != location).toList();
                         },
-                        child: const Icon(Icons.close, size: 14, color: AppColors.community),
+                        child: Icon(Icons.close, size: 14, color: context.features.community),
                       ),
                     ],
                   ),
@@ -558,19 +562,19 @@ class CommunityScreen extends ConsumerWidget {
                   ? Icons.arrow_upward 
                   : Icons.arrow_downward,
               size: 14,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             if (locationFilter.isNotEmpty) ...[
               const SizedBox(width: 8),
               Text(
                 '${locationFilter.length}개 지역',
-                style: const TextStyle(fontSize: 12, color: AppColors.community, fontWeight: FontWeight.w500),
+                style: TextStyle(fontSize: 12, color: context.features.community, fontWeight: FontWeight.w500),
               ),
             ],
             const Spacer(),
             Text(
               '${filteredGroups.length}개',
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -578,14 +582,16 @@ class CommunityScreen extends ConsumerWidget {
         
         // 모임 카드들
         if (filteredGroups.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(32),
-            child: const Column(
-              children: [
-                Icon(Icons.groups_outlined, size: 48, color: AppColors.textHint),
-                SizedBox(height: 12),
-                Text('등록된 모임이 없습니다', style: TextStyle(color: AppColors.textSecondary)),
-              ],
+          Builder(
+            builder: (ctx) => Container(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                children: [
+                  Icon(Icons.groups_outlined, size: 48, color: Theme.of(ctx).colorScheme.outlineVariant),
+                  const SizedBox(height: 12),
+                  Text('등록된 모임이 없습니다', style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
+                ],
+              ),
             ),
           )
         else
@@ -636,15 +642,17 @@ class CommunityScreen extends ConsumerWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Column(
-                      children: [
-                        Icon(Icons.groups_outlined, size: 40, color: AppColors.textHint),
-                        SizedBox(height: 8),
-                        Text('가입한 모임이 없습니다', style: TextStyle(color: AppColors.textSecondary)),
-                      ],
+                    child: Builder(
+                      builder: (ctx) => Column(
+                        children: [
+                          Icon(Icons.groups_outlined, size: 40, color: Theme.of(ctx).colorScheme.outlineVariant),
+                          const SizedBox(height: 8),
+                          Text('가입한 모임이 없습니다', style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -699,21 +707,23 @@ class CommunityScreen extends ConsumerWidget {
       context,
       MaterialPageRoute(
         builder: (context) => Scaffold(
-          backgroundColor: AppColors.communityLight,
+          backgroundColor: context.features.communityContainer,
           appBar: AppBar(
             title: const Text('내 모임'),
-            backgroundColor: Colors.white,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             elevation: 0,
           ),
           body: myGroups.isEmpty
-              ? const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.groups_outlined, size: 64, color: AppColors.textHint),
-                      SizedBox(height: 16),
-                      Text('가입한 모임이 없습니다', style: TextStyle(color: AppColors.textSecondary)),
-                    ],
+              ? Builder(
+                  builder: (ctx) => Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.groups_outlined, size: 64, color: Theme.of(ctx).colorScheme.outlineVariant),
+                        const SizedBox(height: 16),
+                        Text('가입한 모임이 없습니다', style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
+                      ],
+                    ),
                   ),
                 )
               : ListView.builder(
@@ -758,7 +768,7 @@ class CommunityScreen extends ConsumerWidget {
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
         ),
@@ -772,10 +782,10 @@ class CommunityScreen extends ConsumerWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: AppColors.community.withOpacity(0.2),
+                    color: context.features.community.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.groups, color: AppColors.community, size: 16),
+                  child: Icon(Icons.groups, color: context.features.community, size: 16),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -791,7 +801,7 @@ class CommunityScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               '$district · $members명',
-              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -827,7 +837,7 @@ class CommunityScreen extends ConsumerWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8)],
         ),
@@ -837,10 +847,10 @@ class CommunityScreen extends ConsumerWidget {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: AppColors.community.withOpacity(0.15),
+              color: context.features.community.withOpacity(0.15),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.groups, color: AppColors.community, size: 26),
+            child: Icon(Icons.groups, color: context.features.community, size: 26),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -850,12 +860,12 @@ class CommunityScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: AppColors.community.withOpacity(0.1),
+                    color: context.features.community.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     category,
-                    style: const TextStyle(fontSize: 10, color: AppColors.community, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 10, color: context.features.community, fontWeight: FontWeight.w600),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -863,25 +873,25 @@ class CommunityScreen extends ConsumerWidget {
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    const Icon(Icons.location_on, size: 12, color: AppColors.textHint),
+                    Icon(Icons.location_on, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
                     const SizedBox(width: 2),
-                    Text(district, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    Text(district, style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     if (distance != null && distance != '거리 정보 없음') ...[
                       const SizedBox(width: 4),
-                      Text('· $distance', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
+                      Text('· $distance', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant)),
                     ],
                   ],
                 ),
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    const Icon(Icons.people, size: 12, color: AppColors.textHint),
+                    Icon(Icons.people, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
                     const SizedBox(width: 2),
-                    Text('$members명', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    Text('$members명', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     const SizedBox(width: 8),
-                    const Icon(Icons.favorite, size: 12, color: AppColors.textHint),
+                    Icon(Icons.favorite, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
                     const SizedBox(width: 2),
-                    Text('$likeCount', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    Text('$likeCount', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                   ],
                 ),
               ],
@@ -891,16 +901,16 @@ class CommunityScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.community.withOpacity(0.1),
+                color: context.features.community.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text('가입중', style: TextStyle(fontSize: 12, color: AppColors.community, fontWeight: FontWeight.w600)),
+              child: Text('가입중', style: TextStyle(fontSize: 12, color: context.features.community, fontWeight: FontWeight.w600)),
             )
           else
             TextButton(
               onPressed: () => _showGroupJoinSheet(context, name),
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.community,
+                foregroundColor: context.features.community,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               ),
               child: const Text('가입', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
@@ -976,22 +986,13 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
       ),
       child: Column(
         children: [
-          // 드래그 핸들
-          Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 8),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.divider,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
+          const BottomSheetHandle(),
           // 헤더 (초기화 + 타이틀 + X버튼)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
@@ -1035,7 +1036,7 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
-              color: AppColors.communityLight,
+              color: context.features.communityContainer,
               child: Wrap(
                 spacing: 8,
                 runSpacing: 6,
@@ -1043,7 +1044,7 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
-                      color: AppColors.community,
+                      color: context.features.community,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Row(
@@ -1077,7 +1078,7 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border(right: BorderSide(color: AppColors.divider.withOpacity(0.5))),
+                      border: Border(right: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5))),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1085,8 +1086,8 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          color: AppColors.background,
-                          child: const Text('도/광역시', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          child: Text('도/광역시', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                         ),
                         Expanded(
                           child: ListView.builder(
@@ -1103,13 +1104,13 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                  color: isSelected ? AppColors.community.withOpacity(0.1) : Colors.transparent,
+                                  color: isSelected ? context.features.community.withOpacity(0.1) : Colors.transparent,
                                   child: Text(
                                     province,
                                     style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                      color: isSelected ? AppColors.community : AppColors.textPrimary,
+                                      color: isSelected ? context.features.community : Theme.of(context).colorScheme.onSurface,
                                     ),
                                   ),
                                 ),
@@ -1126,7 +1127,7 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border(right: BorderSide(color: AppColors.divider.withOpacity(0.5))),
+                      border: Border(right: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5))),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1134,12 +1135,12 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          color: AppColors.background,
-                          child: const Text('시/군', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          child: Text('시/군', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                         ),
                         Expanded(
                           child: cities.isEmpty
-                              ? const Center(child: Text('도/광역시를\n선택하세요', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: AppColors.textHint)))
+                              ? Center(child: Text('도/광역시를\n선택하세요', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant)))
                               : ListView.builder(
                                   itemCount: cities.length,
                                   itemBuilder: (context, index) {
@@ -1169,7 +1170,7 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                        color: hasHighlight ? AppColors.community.withOpacity(0.1) : Colors.transparent,
+                                        color: hasHighlight ? context.features.community.withOpacity(0.1) : Colors.transparent,
                                         child: Row(
                                           children: [
                                             Expanded(
@@ -1178,7 +1179,7 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                                                 style: TextStyle(
                                                   fontSize: 14,
                                                   fontWeight: hasHighlight ? FontWeight.w600 : FontWeight.w400,
-                                                  color: hasHighlight ? AppColors.community : AppColors.textPrimary,
+                                                  color: hasHighlight ? context.features.community : Theme.of(context).colorScheme.onSurface,
                                                 ),
                                               ),
                                             ),
@@ -1186,7 +1187,7 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                                               Icon(
                                                 isAdded ? Icons.check : Icons.add,
                                                 size: 16,
-                                                color: AppColors.community,
+                                                color: context.features.community,
                                               ),
                                           ],
                                         ),
@@ -1208,12 +1209,12 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        color: AppColors.background,
-                        child: const Text('구/군', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        child: Text('구/군', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                       ),
                       Expanded(
                         child: districts.isEmpty
-                            ? const Center(child: Text('시/군을\n선택하세요', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: AppColors.textHint)))
+                            ? Center(child: Text('시/군을\n선택하세요', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant)))
                             : ListView.builder(
                                 itemCount: districts.length,
                                 itemBuilder: (context, index) {
@@ -1234,7 +1235,7 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                      color: isAdded ? AppColors.community.withOpacity(0.1) : Colors.transparent,
+                                      color: isAdded ? context.features.community.withOpacity(0.1) : Colors.transparent,
                                       child: Row(
                                         children: [
                                           Expanded(
@@ -1243,14 +1244,14 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                                               style: TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: isAdded ? FontWeight.w600 : FontWeight.w400,
-                                                color: isAdded ? AppColors.community : AppColors.textPrimary,
+                                                color: isAdded ? context.features.community : Theme.of(context).colorScheme.onSurface,
                                               ),
                                             ),
                                           ),
                                           Icon(
                                             isAdded ? Icons.check : Icons.add,
                                             size: 16,
-                                            color: AppColors.community,
+                                            color: context.features.community,
                                           ),
                                         ],
                                       ),
@@ -1275,8 +1276,8 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
               bottom: MediaQuery.of(context).padding.bottom + 12,
             ),
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: AppColors.divider.withOpacity(0.5))),
+              color: Theme.of(context).colorScheme.surface,
+              border: Border(top: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5))),
             ),
             child: SizedBox(
               width: double.infinity,
@@ -1287,7 +1288,7 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.community,
+                  backgroundColor: context.features.community,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),

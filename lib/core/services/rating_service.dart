@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/rating_model.dart';
-import '../../models/user_model.dart';
 import 'firebase_service.dart';
 import 'kkosunnae_service.dart';
 
@@ -66,8 +65,6 @@ class RatingService {
     final userDoc = await userRef.get();
     
     if (!userDoc.exists) return;
-
-    final user = UserModel.fromFirestore(userDoc.data()!, id: userDoc.id);
 
     // 평가 통계 계산
     final ratingsSnapshot = await _ratingsCollection

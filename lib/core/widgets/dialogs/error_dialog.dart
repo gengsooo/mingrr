@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../svg_icons.dart';
 
@@ -27,7 +26,7 @@ enum ErrorType {
   location(
     icon: Icons.location_off_outlined,
     svgAsset: SvgAssets.errorLocation,
-    color: AppColors.error,
+    color: Colors.red,
     title: '위치를 가져올 수 없습니다',
     message: 'GPS 신호가 약하거나 위치 서비스가 비활성화되어 있습니다.\n설정에서 위치 서비스를 확인해주세요.',
   ),
@@ -36,7 +35,7 @@ enum ErrorType {
   network(
     icon: Icons.wifi_off_outlined,
     svgAsset: SvgAssets.errorNetwork,
-    color: AppColors.error,
+    color: Colors.red,
     title: '네트워크 연결 오류',
     message: '인터넷 연결이 불안정합니다.\nWi-Fi 또는 모바일 데이터 연결을 확인해주세요.',
   ),
@@ -45,7 +44,7 @@ enum ErrorType {
   server(
     icon: Icons.cloud_off_outlined,
     svgAsset: SvgAssets.errorServer,
-    color: AppColors.error,
+    color: Colors.red,
     title: '서버 연결 오류',
     message: '서버와 연결할 수 없습니다.\n잠시 후 다시 시도해주세요.',
   ),
@@ -54,7 +53,7 @@ enum ErrorType {
   database(
     icon: Icons.storage_outlined,
     svgAsset: SvgAssets.errorDatabase,
-    color: AppColors.error,
+    color: Colors.red,
     title: '데이터 처리 오류',
     message: '데이터를 처리하는 중 문제가 발생했습니다.\n다시 시도해주세요.',
   ),
@@ -63,7 +62,7 @@ enum ErrorType {
   permission(
     icon: Icons.lock_outline,
     svgAsset: SvgAssets.errorPermission,
-    color: AppColors.warning,
+    color: Colors.orange,
     title: '권한이 필요합니다',
     message: '이 기능을 사용하려면 권한이 필요합니다.\n설정에서 권한을 허용해주세요.',
   ),
@@ -72,7 +71,7 @@ enum ErrorType {
   dataLoad(
     icon: Icons.error_outline,
     svgAsset: SvgAssets.errorServer,
-    color: AppColors.error,
+    color: Colors.red,
     title: '데이터를 불러올 수 없습니다',
     message: '데이터를 가져오는 중 문제가 발생했습니다.\n다시 시도해주세요.',
   ),
@@ -81,7 +80,7 @@ enum ErrorType {
   imageUpload(
     icon: Icons.image_not_supported_outlined,
     svgAsset: SvgAssets.errorServer,
-    color: AppColors.error,
+    color: Colors.red,
     title: '이미지 업로드 실패',
     message: '이미지를 업로드하는 중 문제가 발생했습니다.\n다시 시도해주세요.',
   ),
@@ -90,7 +89,7 @@ enum ErrorType {
   auth(
     icon: Icons.person_off_outlined,
     svgAsset: SvgAssets.errorPermission,
-    color: AppColors.error,
+    color: Colors.red,
     title: '인증 오류',
     message: '로그인 정보가 만료되었습니다.\n다시 로그인해주세요.',
   ),
@@ -99,7 +98,7 @@ enum ErrorType {
   timeout(
     icon: Icons.timer_off_outlined,
     svgAsset: SvgAssets.errorNetwork,
-    color: AppColors.warning,
+    color: Colors.orange,
     title: '요청 시간 초과',
     message: '요청 처리 시간이 초과되었습니다.\n다시 시도해주세요.',
   ),
@@ -108,7 +107,7 @@ enum ErrorType {
   general(
     icon: Icons.warning_amber_outlined,
     svgAsset: SvgAssets.errorServer,
-    color: AppColors.error,
+    color: Colors.red,
     title: '오류가 발생했습니다',
     message: '예기치 않은 오류가 발생했습니다.\n다시 시도해주세요.',
   );
@@ -186,7 +185,7 @@ class ErrorDialog extends StatelessWidget {
     final color = themeColor ?? type.color;
     
     return Dialog(
-      backgroundColor: AppColors.cardBackground,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerLow,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusL),
       ),
@@ -219,9 +218,9 @@ class ErrorDialog extends StatelessWidget {
             Text(
               message ?? type.message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
                 height: 1.5,
               ),
             ),
@@ -245,16 +244,16 @@ class ErrorDialog extends StatelessWidget {
         onPressed: () => Navigator.pop(context, ErrorResult.cancel),
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14),
-          side: const BorderSide(color: AppColors.divider),
+          side: BorderSide(color: Theme.of(context).colorScheme.outline),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
         ),
         child: Text(
           cancelText ?? '닫기',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ),
@@ -269,16 +268,16 @@ class ErrorDialog extends StatelessWidget {
             onPressed: () => Navigator.pop(context, ErrorResult.cancel),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
-              side: const BorderSide(color: AppColors.divider),
+              side: BorderSide(color: Theme.of(context).colorScheme.outline),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
             child: Text(
               cancelText ?? '취소',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 15,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ),

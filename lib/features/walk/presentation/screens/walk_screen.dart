@@ -5,9 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/map/map_loading_widget.dart';
 import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
@@ -158,7 +159,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
     final dialogResult = await showErrorDialog(
       context,
       type: ErrorType.location,
-      themeColor: AppColors.walk,
+      themeColor: context.features.walk,
     );
     
     if (dialogResult == ErrorResult.retry) {
@@ -188,7 +189,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Column(
         children: [
           // ===== 상단 영역 (SafeArea + 반려동물 선택) =====
@@ -208,18 +209,20 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                       const Spacer(),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withOpacity(
+                                Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.1
+                              ),
                               blurRadius: 10,
                             ),
                           ],
                         ),
                         child: TextButton.icon(
-                          icon: const Icon(Icons.history, size: 18, color: AppColors.walk),
-                          label: const Text('산책 기록', style: TextStyle(color: AppColors.walk)),
+                          icon: Icon(Icons.history, size: 18, color: context.features.walk),
+                          label: Text('산책 기록', style: TextStyle(color: context.features.walk)),
                           onPressed: () => _showWalkHistory(context),
                         ),
                       ),
@@ -258,23 +261,23 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.walk.withOpacity(0.3),
+                                  color: context.features.walk.withOpacity(0.3),
                                   blurRadius: 15,
                                   spreadRadius: 3,
                                 ),
                               ],
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.pets,
                               size: 32,
-                              color: AppColors.walk,
+                              color: context.features.walk,
                             ),
                           ),
                           Container(
                             width: 4,
                             height: 20,
                             decoration: BoxDecoration(
-                              color: AppColors.walk,
+                              color: context.features.walk,
                               borderRadius: BorderRadius.circular(2),
                             ),
                           ),
@@ -282,7 +285,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                             width: 12,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: AppColors.walk.withOpacity(0.3),
+                              color: context.features.walk.withOpacity(0.3),
                               borderRadius: BorderRadius.circular(6),
                             ),
                           ),
@@ -295,12 +298,12 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                     bottom: AppSizes.paddingL,
                     child: FloatingActionButton.small(
                       heroTag: 'walkMyLocation',
-                      backgroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.surface,
                       elevation: 4,
                       onPressed: _goToMyLocation,
-                      child: const Icon(
+                      child: Icon(
                         Icons.my_location,
-                        color: AppColors.walk,
+                        color: context.features.walk,
                       ),
                     ),
                   ),
@@ -385,7 +388,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       // 경로 그리기
       await _mapController!.routeLayer.addRoute(
         points,
-        RouteStyle(AppColors.walk, 8),
+        RouteStyle(context.features.walk, 8),
       );
       
       // 최신 위치로 카메라 이동
@@ -451,7 +454,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       width: double.infinity,
       height: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.divider.withOpacity(0.3),
+        color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
       ),
       child: Center(
         child: Column(
@@ -460,15 +463,15 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
             Icon(
               Icons.map_outlined,
               size: 64,
-              color: AppColors.textHint,
+              color: Theme.of(context).colorScheme.outlineVariant,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               '지도 영역',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 4),
@@ -476,7 +479,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
               '모바일 앱에서 확인 가능',
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.textHint,
+                color: Theme.of(context).colorScheme.outlineVariant,
               ),
             ),
           ],
@@ -495,8 +498,8 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AppColors.walk.withOpacity(0.1),
-            AppColors.walk.withOpacity(0.2),
+            context.features.walk.withOpacity(0.1),
+            context.features.walk.withOpacity(0.2),
           ],
         ),
       ),
@@ -505,7 +508,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
           // 격자 패턴 (지도 느낌)
           CustomPaint(
             size: Size.infinite,
-            painter: _MapGridPainter(),
+            painter: _MapGridPainter(color: context.features.walk),
           ),
           // 중앙 마커
           Center(
@@ -519,16 +522,16 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.walk.withOpacity(0.3),
+                        color: context.features.walk.withOpacity(0.3),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.pets,
                     size: 40,
-                    color: AppColors.walk,
+                    color: context.features.walk,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -548,18 +551,18 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                     _currentPosition != null
                         ? '위치: ${_currentPosition!.latitude.toStringAsFixed(4)}, ${_currentPosition!.longitude.toStringAsFixed(4)}'
                         : '위치를 가져오는 중...',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   '현재 위치를 중심으로 지도가 표시됩니다',
                   style: TextStyle(
                     fontSize: 11,
-                    color: AppColors.textHint,
+                    color: Theme.of(context).colorScheme.outlineVariant,
                   ),
                 ),
               ],
@@ -601,8 +604,8 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                     Container(
                       width: 8,
                       height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.walk,
+                      decoration: BoxDecoration(
+                        color: context.features.walk,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -619,7 +622,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                       '${_selectedPetIds.length}마리 선택',
                       style: TextStyle(
                         fontSize: 13,
-                        color: AppColors.walk,
+                        color: context.features.walk,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -660,7 +663,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                        color: isSelected ? AppColors.walk : Colors.transparent,
+                                        color: isSelected ? context.features.walk : Colors.transparent,
                                         width: 3,
                                       ),
                                     ),
@@ -676,8 +679,8 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                                       child: Container(
                                         width: 20,
                                         height: 20,
-                                        decoration: const BoxDecoration(
-                                          color: AppColors.walk,
+                                        decoration: BoxDecoration(
+                                          color: context.features.walk,
                                           shape: BoxShape.circle,
                                         ),
                                         child: const Icon(
@@ -695,7 +698,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                  color: isSelected ? AppColors.walk : AppColors.textPrimary,
+                                  color: isSelected ? context.features.walk : Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -721,7 +724,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
       child: MingrrCard(
         margin: EdgeInsets.zero,
-        backgroundColor: AppColors.walk,
+        backgroundColor: context.features.walk,
         child: Column(
           children: [
             Row(
@@ -796,7 +799,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       child: Container(
         padding: const EdgeInsets.all(AppSizes.paddingL),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -815,14 +818,14 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.pets, size: 16, color: AppColors.walk),
+                    Icon(Icons.pets, size: 16, color: context.features.walk),
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
                         '산책을 시작하면 이동 경로에 발바닥이 자동으로 남아요!',
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                         textAlign: TextAlign.center,
                         maxLines: 2,
@@ -843,10 +846,10 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                     const SizedBox(width: 6),
                     Text(
                       '발바닥 ${_footprints.length}개 남김',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.walk,
+                        color: context.features.walk,
                       ),
                     ),
                   ],
@@ -856,7 +859,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
             // 산책 시작/종료 버튼
             MingrrButton(
               text: _isWalking ? '산책 종료' : '산책 시작',
-              backgroundColor: _isWalking ? AppColors.error : AppColors.walk,
+              backgroundColor: _isWalking ? Colors.red : context.features.walk,
               textColor: Colors.white,
               icon: _isWalking ? Icons.stop : Icons.play_arrow,
               onPressed: _isWalking ? _stopWalk : _startWalk,
@@ -925,10 +928,10 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         _updateWalkRoute(position);
       });
       
-      MingrrSnackBar.success(context, '산책을 시작했습니다! 🐾');
+      if (mounted) MingrrSnackBar.success(context, '산책을 시작했습니다! 🐾');
     } catch (e) {
       debugPrint('산책 시작 오류: $e');
-      MingrrSnackBar.error(context, '산책 시작 중 오류가 발생했습니다: $e');
+      if (mounted) MingrrSnackBar.error(context, '산책 시작 중 오류가 발생했습니다: $e');
     }
   }
   
@@ -1012,7 +1015,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         location: location,
       );
       
-      MingrrSnackBar.success(context, '발자국을 남겼습니다! 🐾');
+      if (mounted) MingrrSnackBar.success(context, '발자국을 남겼습니다! 🐾');
     } catch (e) {
       debugPrint('발자국 추가 오류: $e');
     }
@@ -1041,13 +1044,15 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       // 요약 다이얼로그 표시
       _showWalkSummary();
       
-      setState(() {
-        _isWalking = false;
-        _currentWalkRecordId = null;
-      });
+      if (mounted) {
+        setState(() {
+          _isWalking = false;
+          _currentWalkRecordId = null;
+        });
+      }
     } catch (e) {
       debugPrint('산책 종료 오류: $e');
-      MingrrSnackBar.error(context, '산책 종료 중 오류가 발생했습니다: $e');
+      if (mounted) MingrrSnackBar.error(context, '산책 종료 중 오류가 발생했습니다: $e');
     }
   }
   
@@ -1064,43 +1069,22 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.7,
         ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
         ),
         child: Column(
           children: [
-            // 드래그 핸들
-            Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            const BottomSheetHandle(),
             // 헤더
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              child: Row(
-                children: [
-                  const SizedBox(width: 40),
-                  const Expanded(
-                    child: Text(
-                      '산책 기록',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Text(
+                '산책 기록',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
               ),
             ),
-            const Divider(height: 1),
             // 산책 기록 목록
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
@@ -1121,16 +1105,16 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.error_outline, size: 64, color: AppColors.error),
+                          Icon(Icons.error_outline, size: 64, color: Colors.red),
                           const SizedBox(height: 16),
-                          const Text(
+                          Text(
                             '산책 기록을 불러올 수 없어요',
-                            style: TextStyle(color: AppColors.textSecondary),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             '${snapshot.error}',
-                            style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+                            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -1143,16 +1127,16 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.pets, size: 64, color: AppColors.textHint),
+                          Icon(Icons.pets, size: 64, color: Theme.of(context).colorScheme.outlineVariant),
                           const SizedBox(height: 16),
-                          const Text(
+                          Text(
                             '아직 산책 기록이 없어요',
-                            style: TextStyle(color: AppColors.textSecondary),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
+                          Text(
                             '산책을 시작하면 기록이 저장됩니다',
-                            style: TextStyle(fontSize: 13, color: AppColors.textHint),
+                            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
                           ),
                         ],
                       ),
@@ -1173,7 +1157,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: AppColors.cardBackground,
+                          color: Theme.of(context).colorScheme.surfaceContainerLow,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -1182,10 +1166,10 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: AppColors.walk.withOpacity(0.15),
+                                color: context.features.walk.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.directions_walk, color: AppColors.walk),
+                              child: Icon(Icons.directions_walk, color: context.features.walk),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -1204,15 +1188,15 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                     '${_formatDistance(distance)} · ${_formatDuration(duration)}',
-                                    style: const TextStyle(
-                                      color: AppColors.textSecondary,
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                                       fontSize: 13,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                            const Icon(Icons.chevron_right, color: AppColors.textHint),
+                            Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
                           ],
                         ),
                       );
@@ -1235,11 +1219,11 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusXL),
         ),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.celebration, color: AppColors.walk),
-            SizedBox(width: 8),
-            Text('산책 완료!'),
+            Icon(Icons.celebration, color: context.features.walk),
+            const SizedBox(width: 8),
+            const Text('산책 완료!'),
           ],
         ),
         content: Column(
@@ -1250,10 +1234,10 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
             _buildSummaryRow('칼로리', '${(_walkDistance / 1000 * 50).toInt()} kcal'),
             _buildSummaryRow('발자국', '${_footprints.length}개'),
             const SizedBox(height: AppSizes.gapM),
-            const Text(
-              '오늘도 건강한 산책 완료! 🎉',
+            Text(
+              '오늘도 건강해지는 산책 완료! 🎉',
               style: TextStyle(
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -1279,7 +1263,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+          Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           Text(
             value,
             style: const TextStyle(
@@ -1310,10 +1294,14 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
 
 /// 지도 격자 패턴 페인터 (플레이스홀더용)
 class _MapGridPainter extends CustomPainter {
+  final Color color;
+  
+  _MapGridPainter({required this.color});
+  
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.walk.withOpacity(0.1)
+      ..color = color.withOpacity(0.1)
       ..strokeWidth = 1;
 
     const spacing = 40.0;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import '../constants/app_sizes.dart';
+import 'mingrr_bottom_sheet.dart';
 
 /// ============================================================
 /// 공통 필터 위젯 모음
@@ -67,9 +68,9 @@ class DistanceFilterBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: AppColors.divider.withOpacity(0.5)),
+          bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
         ),
       ),
       child: Row(
@@ -124,9 +125,9 @@ class DistanceFilterBar extends StatelessWidget {
           // 반경 표시
           Text(
             '반경 ${currentDistance.toInt()}km 이내',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -180,65 +181,40 @@ class DistanceBottomSheet extends StatelessWidget {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.5,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // 드래그 핸들
-          Center(
-            child: Container(
-              margin: const EdgeInsets.only(top: 12, bottom: 8),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          // 헤더 (타이틀 + X 버튼)
+          const BottomSheetHandle(),
+          // 헤더 (타이틀만)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                const SizedBox(width: 40), // X 버튼과 균형 맞추기
-                const Expanded(
-                  child: Text(
-                    '거리 설정',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-                ),
-              ],
+            child: const Text(
+              '거리 설정',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
-          // 안내 문구
+          // 안내 문구 (중앙 정렬)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
               '집 주소 기준으로 필터링합니다',
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
+              textAlign: TextAlign.center,
             ),
           ),
           const SizedBox(height: 12),
-          // 구분선
-          const Divider(height: 1),
           
           // 거리 옵션 목록 (스크롤 가능)
           Flexible(
@@ -256,7 +232,7 @@ class DistanceBottomSheet extends StatelessWidget {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 8),
                   leading: Icon(
                     isSelected ? Icons.check_circle : Icons.circle_outlined,
-                    color: isSelected ? accentColor : AppColors.textHint,
+                    color: isSelected ? accentColor : Theme.of(context).colorScheme.outlineVariant,
                     size: 22,
                   ),
                   title: Text(
@@ -264,7 +240,7 @@ class DistanceBottomSheet extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected ? accentColor : AppColors.textPrimary,
+                      color: isSelected ? accentColor : Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   subtitle: Text(
@@ -317,9 +293,9 @@ class LocationFilterBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: AppColors.divider.withOpacity(0.5)),
+          bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
         ),
       ),
       child: Row(
@@ -368,19 +344,19 @@ class LocationFilterBar extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.divider.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.close, size: 14, color: AppColors.textSecondary),
-                    SizedBox(width: 2),
+                    Icon(Icons.close, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    const SizedBox(width: 2),
                     Text(
                       '초기화',
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -494,23 +470,13 @@ class _LocationBottomSheetState extends State<LocationBottomSheet> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
       ),
       child: Column(
         children: [
-          // 핸들
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.divider,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          
+          const BottomSheetHandle(),
           // 헤더
           Padding(
             padding: const EdgeInsets.all(16),
@@ -533,8 +499,6 @@ class _LocationBottomSheetState extends State<LocationBottomSheet> {
             ),
           ),
           
-          const Divider(height: 1),
-          
           // 2단 선택 영역
           Expanded(
             child: Row(
@@ -543,7 +507,7 @@ class _LocationBottomSheetState extends State<LocationBottomSheet> {
                 Expanded(
                   flex: 2,
                   child: Container(
-                    color: AppColors.background,
+                    color: Theme.of(context).colorScheme.surface,
                     child: ListView.builder(
                       itemCount: cities.length,
                       itemBuilder: (context, index) {
@@ -563,7 +527,7 @@ class _LocationBottomSheetState extends State<LocationBottomSheet> {
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                              color: isSelected ? widget.accentColor : AppColors.textPrimary,
+                              color: isSelected ? widget.accentColor : Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                           trailing: isSelected
@@ -593,7 +557,7 @@ class _LocationBottomSheetState extends State<LocationBottomSheet> {
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                  color: isSelected ? widget.accentColor : AppColors.textPrimary,
+                                  color: isSelected ? widget.accentColor : Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                               trailing: isSelected
@@ -607,8 +571,8 @@ class _LocationBottomSheetState extends State<LocationBottomSheet> {
                             _selectedCity != null
                                 ? '시군구 정보가 없습니다'
                                 : '시/도를 선택해주세요',
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ),
@@ -702,7 +666,7 @@ class CategoryFilterChips extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected ? accentColor : AppColors.textSecondary,
+                      color: isSelected ? accentColor : Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 
 /// ============================================================
@@ -22,34 +21,31 @@ class ProfileButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => context.push('/profile'),
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: backgroundColor ?? AppColors.background,
-          shape: BoxShape.circle,
-          border: Border.all(color: AppColors.divider, width: 1),
-        ),
-        child: imageUrl != null && imageUrl!.isNotEmpty
-            ? ClipOval(
-                child: Image.network(
-                  imageUrl!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _buildPlaceholder(),
-                ),
-              )
-            : _buildPlaceholder(),
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: backgroundColor ?? Theme.of(context).scaffoldBackgroundColor,
+        shape: BoxShape.circle,
+        border: Border.all(color: Theme.of(context).colorScheme.outline, width: 1),
       ),
+      child: imageUrl != null && imageUrl!.isNotEmpty
+          ? ClipOval(
+              child: Image.network(
+                imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _buildPlaceholder(context),
+              ),
+            )
+          : _buildPlaceholder(context),
     );
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(BuildContext context) {
     return Icon(
       Icons.person,
       size: size * 0.55,
-      color: AppColors.textHint,
+      color: Theme.of(context).colorScheme.outlineVariant,
     );
   }
 }
@@ -58,12 +54,13 @@ class ProfileButton extends StatelessWidget {
 /// [backgroundColor]로 메뉴별 테마 색상 적용 가능
 Widget buildProfileAction({String? imageUrl, Color? backgroundColor}) {
   return Builder(
-    builder: (context) => Padding(
-      padding: const EdgeInsets.only(right: AppSizes.paddingS),
-      child: ProfileButton(
+    builder: (context) => IconButton(
+      icon: ProfileButton(
         imageUrl: imageUrl,
         backgroundColor: backgroundColor,
       ),
+      visualDensity: VisualDensity.compact,
+      onPressed: () => GoRouter.of(context).push('/profile'),
     ),
   );
 }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../providers/health_provider.dart';
 
 /// ============================================================
@@ -28,39 +29,27 @@ class _RecordBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 핸들바
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2)),
-          ),
+          const BottomSheetHandle(),
           // 헤더
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-            child: Row(
-              children: [
-                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ],
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
           ),
-          const Divider(height: 1),
           // 컨텐츠
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
               child: child,
             ),
           ),
@@ -73,7 +62,7 @@ class _RecordBottomSheet extends StatelessWidget {
               bottom: MediaQuery.of(context).padding.bottom + 16,
             ),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
@@ -85,7 +74,7 @@ class _RecordBottomSheet extends StatelessWidget {
             child: ElevatedButton(
               onPressed: onSave,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.health,
+                backgroundColor: context.features.health,
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
@@ -109,19 +98,29 @@ Widget _buildDateSelector(BuildContext context, DateTime date, Function(DateTime
   return MingrrDateSelector(
     date: date,
     onSelect: onSelect,
-    accentColor: AppColors.health,
+    accentColor: context.features.health,
   );
 }
 
-Widget _buildMemoField(TextEditingController controller, {String? hint, int maxLines = 3}) {
+Widget _buildMemoField(BuildContext context, TextEditingController controller, {String? hint, int maxLines = 3}) {
   return TextField(
     controller: controller,
     maxLines: maxLines,
     decoration: InputDecoration(
       hintText: hint ?? '메모를 입력하세요',
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      filled: true,
-      fillColor: AppColors.background,
+      hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: context.features.health, width: 1.5),
+      ),
     ),
   );
 }
@@ -179,10 +178,20 @@ class _AddWeightRecordScreenState extends State<AddWeightRecordScreen> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
               hintText: '예: 5.2',
+              hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
               suffixText: 'kg',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true,
-              fillColor: AppColors.background,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: context.features.health, width: 1.5),
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -190,7 +199,7 @@ class _AddWeightRecordScreenState extends State<AddWeightRecordScreen> {
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
           const SizedBox(height: 16),
           _buildLabel('메모'),
-          _buildMemoField(_memoController),
+          _buildMemoField(context, _memoController),
         ],
       ),
     );
@@ -268,16 +277,16 @@ class _AddGroomingRecordScreenState extends State<AddGroomingRecordScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.health.withOpacity(0.15) : AppColors.background,
+                    color: isSelected ? context.features.health.withOpacity(0.15) : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isSelected ? AppColors.health : AppColors.divider, width: isSelected ? 2 : 1),
+                    border: Border.all(color: isSelected ? context.features.health : Theme.of(context).colorScheme.outline, width: isSelected ? 2 : 1),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(type.icon, size: 14, color: isSelected ? AppColors.health : AppColors.textSecondary),
+                      Icon(type.icon, size: 14, color: isSelected ? context.features.health : Theme.of(context).colorScheme.onSurfaceVariant),
                       const SizedBox(width: 4),
-                      Text(type.label, style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400, color: isSelected ? AppColors.health : AppColors.textPrimary)),
+                      Text(type.label, style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400, color: isSelected ? context.features.health : Theme.of(context).colorScheme.onSurface)),
                     ],
                   ),
                 ),
@@ -289,7 +298,7 @@ class _AddGroomingRecordScreenState extends State<AddGroomingRecordScreen> {
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
           const SizedBox(height: 16),
           _buildLabel('메모'),
-          _buildMemoField(_memoController),
+          _buildMemoField(context, _memoController),
         ],
       ),
     );
@@ -350,7 +359,7 @@ class _AddVaccinationRecordScreenState extends State<AddVaccinationRecordScreen>
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
           const SizedBox(height: 16),
           _buildLabel('메모'),
-          _buildMemoField(_memoController, hint: '백신 종류, 병원, 다음 접종일, 비용 등'),
+          _buildMemoField(context, _memoController, hint: '백신 종류, 병원, 다음 접종일, 비용 등'),
         ],
       ),
     );
@@ -411,7 +420,7 @@ class _AddCheckupRecordScreenState extends State<AddCheckupRecordScreen> {
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
           const SizedBox(height: 16),
           _buildLabel('메모'),
-          _buildMemoField(_memoController, hint: '검진 종류, 결과, 병원, 비용, 다음 검진일 등'),
+          _buildMemoField(context, _memoController, hint: '검진 종류, 결과, 병원, 비용, 다음 검진일 등'),
         ],
       ),
     );
@@ -476,9 +485,19 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
             controller: _nameController,
             decoration: InputDecoration(
               hintText: '예: 심장사상충약, 관절영양제',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true,
-              fillColor: AppColors.background,
+              hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: context.features.health, width: 1.5),
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -496,10 +515,10 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isSelected ? color.withOpacity(0.15) : AppColors.background,
+                    color: isSelected ? color.withOpacity(0.15) : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected ? color : AppColors.divider,
+                      color: isSelected ? color : Theme.of(context).colorScheme.outline,
                       width: isSelected ? 2 : 1,
                     ),
                   ),
@@ -517,7 +536,7 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
           const SizedBox(height: 16),
           _buildLabel('메모'),
-          _buildMemoField(_memoController),
+          _buildMemoField(context, _memoController),
         ],
       ),
     );
@@ -589,7 +608,7 @@ class _AddSpecialRecordScreenState extends State<AddSpecialRecordScreen> {
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
           const SizedBox(height: 16),
           _buildLabel('메모 *'),
-          _buildMemoField(_memoController, hint: '증상, 행동, 식이 변화 등 특이사항을 기록하세요', maxLines: 5),
+          _buildMemoField(context, _memoController, hint: '증상, 행동, 식이 변화 등 특이사항을 기록하세요', maxLines: 5),
         ],
       ),
     );

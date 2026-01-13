@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../models/location_model.dart';
+import '../../theme/app_theme.dart';
 
 /// ============================================================
 /// 위치 정보 표시 카드
@@ -16,7 +16,7 @@ class LocationDisplayCard extends StatelessWidget {
   final LocationData? location;
   
   /// 테마 색상
-  final Color accentColor;
+  final Color? accentColor;
   
   /// 탭 콜백
   final VoidCallback? onTap;
@@ -36,7 +36,7 @@ class LocationDisplayCard extends StatelessWidget {
   const LocationDisplayCard({
     super.key,
     this.location,
-    this.accentColor = AppColors.primary,
+    this.accentColor,
     this.onTap,
     this.showMiniMap = false,
     this.miniMapHeight = 120,
@@ -47,15 +47,16 @@ class LocationDisplayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasLocation = location != null && location!.isValid;
+    final color = accentColor ?? Theme.of(context).colorScheme.primary;
     
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(AppSizes.paddingM),
         decoration: BoxDecoration(
-          color: hasLocation ? accentColor.withOpacity(0.08) : Colors.white,
+          color: hasLocation ? color.withOpacity(0.08) : context.inputBackground,
           border: Border.all(
-            color: hasLocation ? accentColor.withOpacity(0.3) : AppColors.divider,
+            color: hasLocation ? color.withOpacity(0.3) : Theme.of(context).colorScheme.outline,
           ),
           borderRadius: BorderRadius.circular(12),
         ),
@@ -70,14 +71,14 @@ class LocationDisplayCard extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     color: hasLocation 
-                        ? accentColor.withOpacity(0.15)
-                        : AppColors.cardBackground,
+                        ? color.withOpacity(0.15)
+                        : Theme.of(context).colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     hasLocation ? Icons.location_on : Icons.location_on_outlined,
                     size: 22,
-                    color: hasLocation ? accentColor : AppColors.textHint,
+                    color: hasLocation ? color : Theme.of(context).colorScheme.outlineVariant,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -87,48 +88,71 @@ class LocationDisplayCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        hasLocation 
-                            ? (location!.shortAddress ?? location!.displayAddress)
-                            : placeholder,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: hasLocation ? FontWeight.w600 : FontWeight.w400,
-                          color: hasLocation ? AppColors.textPrimary : AppColors.textHint,
+                      if (hasLocation) ...[
+                        Text(
+                          location!.shortAddress ?? location!.displayAddress,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
                         ),
-                      ),
-                      if (hasLocation && location!.fullAddress != null) ...[
+                        if (location!.fullAddress != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            location!.fullAddress!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ] else ...[
+                        Text(
+                          '위치 선택',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
                         const SizedBox(height: 2),
                         Text(
-                          location!.fullAddress!,
-                          style: const TextStyle(
+                          '탭하여 지도에서 선택',
+                          style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.textSecondary,
+                            color: Theme.of(context).colorScheme.outlineVariant,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ],
                   ),
                 ),
                 
-                // 액션 버튼
-                if (editable)
+                // 액션 버튼 (위치가 있을 때만 변경 버튼 표시)
+                if (editable && hasLocation)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: hasLocation ? accentColor : AppColors.cardBackground,
+                      color: accentColor,
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: Text(
-                      hasLocation ? '변경' : '선택',
+                    child: const Text(
+                      '변경',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: hasLocation ? Colors.white : AppColors.textSecondary,
+                        color: Colors.white,
                       ),
                     ),
+                  )
+                else if (editable)
+                  Icon(
+                    Icons.chevron_right,
+                    color: Theme.of(context).colorScheme.outlineVariant,
+                    size: 20,
                   ),
               ],
             ),
@@ -139,7 +163,7 @@ class LocationDisplayCard extends StatelessWidget {
               Container(
                 height: miniMapHeight,
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.1),
+                  color: color.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Stack(
@@ -147,14 +171,14 @@ class LocationDisplayCard extends StatelessWidget {
                     // 격자 패턴
                     CustomPaint(
                       size: Size.infinite,
-                      painter: _MiniMapGridPainter(accentColor),
+                      painter: _MiniMapGridPainter(color),
                     ),
                     // 중앙 마커
                     Center(
                       child: Icon(
                         Icons.location_on,
                         size: 32,
-                        color: accentColor,
+                        color: color,
                       ),
                     ),
                     // 크게 보기 힌트

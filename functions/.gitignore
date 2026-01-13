@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# Build output
+lib/
+*.js
+*.js.map
+*.d.ts
+
+# TypeScript cache
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+
+# Logs
+*.log
+firebase-debug.log
+firebase-debug.*.log
+ui-debug.log
+database-debug.log
+pubsub-debug.log
+firestore-debug.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Firebase
+.firebase/
+.runtimeconfig.json
+
+# Testing
+coverage/
+
+# Package lock - 팀 프로젝트에서는 커밋하여 동일한 의존성 버전 보장
+# package-lock.json은 커밋합니다

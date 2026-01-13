@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/svg_icons.dart';
@@ -18,13 +18,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
     final groupsAsync = ref.watch(userGroupsProvider);
     
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('활동 내역'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
       ),
       body: DefaultTabController(
         length: 3,
@@ -32,12 +27,12 @@ class ActivityHistoryScreen extends ConsumerWidget {
           children: [
             // 탭바
             Container(
-              color: Colors.white,
-              child: const TabBar(
-                labelColor: AppColors.primary,
-                unselectedLabelColor: AppColors.textSecondary,
-                indicatorColor: AppColors.primary,
-                tabs: [
+              color: Theme.of(context).colorScheme.surface,
+              child: TabBar(
+                labelColor: Theme.of(context).colorScheme.primary,
+                unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                indicatorColor: Theme.of(context).colorScheme.primary,
+                tabs: const [
                   Tab(text: '매칭'),
                   Tab(text: '거래'),
                   Tab(text: '모임'),
@@ -76,8 +71,9 @@ class ActivityHistoryScreen extends ConsumerWidget {
           itemBuilder: (context, index) {
             final match = matches[index];
             return _buildActivityItem(
+              context,
               icon: Icons.favorite,
-              iconColor: AppColors.dating,
+              iconColor: context.features.dating,
               title: '새로운 매칭!',
               subtitle: '${match.user1Id}님과 매칭되었어요',
               time: _formatTime(match.createdAt),
@@ -107,8 +103,9 @@ class ActivityHistoryScreen extends ConsumerWidget {
           itemBuilder: (context, index) {
             final product = transactions[index];
             return _buildActivityItem(
+              context,
               icon: Icons.shopping_bag,
-              iconColor: AppColors.market,
+              iconColor: context.features.market,
               title: product.title,
               subtitle: '${product.price.toStringAsFixed(0)}원',
               time: _formatTime(product.createdAt),
@@ -137,8 +134,9 @@ class ActivityHistoryScreen extends ConsumerWidget {
           itemBuilder: (context, index) {
             final group = groups[index];
             return _buildActivityItem(
+              context,
               icon: Icons.groups,
-              iconColor: AppColors.community,
+              iconColor: context.features.community,
               title: group.name,
               subtitle: '멤버 ${group.memberIds.length}명',
               time: _formatTime(group.createdAt),
@@ -152,7 +150,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
   }
   
   
-  Widget _buildActivityItem({
+  Widget _buildActivityItem(
+    BuildContext context, {
     required IconData icon,
     required Color iconColor,
     required String title,
@@ -187,9 +186,9 @@ class ActivityHistoryScreen extends ConsumerWidget {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -197,9 +196,9 @@ class ActivityHistoryScreen extends ConsumerWidget {
           ),
           Text(
             time,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
-              color: AppColors.textHint,
+              color: Theme.of(context).colorScheme.outlineVariant,
             ),
           ),
         ],

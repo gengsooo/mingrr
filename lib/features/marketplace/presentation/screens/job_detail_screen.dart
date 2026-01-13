@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/profile_cards.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
@@ -58,7 +60,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
 
   Widget _buildContent(BuildContext context, JobModel job) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.detailBackground,
       body: CustomScrollView(
         slivers: [
           // 이미지 헤더 (상품 상세와 동일한 스타일)
@@ -106,7 +108,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     return SliverAppBar(
       expandedHeight: 200,
       pinned: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       leading: IconButton(
         icon: Container(
           padding: const EdgeInsets.all(8),
@@ -144,12 +146,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       ],
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          color: AppColors.marketLight,
+          color: context.features.marketContainer,
           child: Center(
             child: Icon(
               _getJobIcon(job.type),
               size: 80,
-              color: AppColors.market,
+              color: context.features.market,
             ),
           ),
         ),
@@ -212,19 +214,34 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
-        // 시간, 위치
+        // 기간, 시간, 위치
+        if (job.fullPeriodString.isNotEmpty) ...[
+          Row(
+            children: [
+              Icon(Icons.calendar_today, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  job.fullPeriodString,
+                  style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+        ],
         Text(
           '${job.address ?? ''} · ${formatRelativeTime(job.createdAt)}',
-          style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 16),
         // 급여
         Text(
           '${formatPrice(job.price)}원 / ${job.priceUnit}',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.w700,
-            color: AppColors.market,
+            color: context.features.market,
           ),
         ),
       ],
@@ -235,7 +252,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     return GuardianProfileCard(
       name: '등록자',
       kkosunnaeScore: 50.0,
-      accentColor: AppColors.market,
+      accentColor: context.features.market,
       onTap: () => _showUserProfile(context, job),
     );
   }
@@ -276,9 +293,17 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
-        Text(
-          job.description,
-          style: const TextStyle(fontSize: 14, height: 1.6, color: AppColors.textPrimary),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: context.sectionBackground,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            job.description,
+            style: TextStyle(fontSize: 14, height: 1.6, color: Theme.of(context).colorScheme.onSurface),
+          ),
         ),
       ],
     );
@@ -316,8 +341,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                     errorBuilder: (_, __, ___) => Container(
                       width: 120,
                       height: 120,
-                      color: AppColors.divider,
-                      child: const Icon(Icons.image, color: AppColors.textHint),
+                      color: Theme.of(context).colorScheme.outline,
+                      child: Icon(Icons.image, color: Theme.of(context).colorScheme.outlineVariant),
                     ),
                   ),
                 ),
@@ -330,23 +355,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   }
 
   Widget _buildBottomBar(BuildContext context, JobModel job) {
-    return Container(
-      padding: EdgeInsets.only(
-        left: AppSizes.paddingL,
-        right: AppSizes.paddingL,
-        top: AppSizes.paddingM,
-        bottom: MediaQuery.of(context).padding.bottom + AppSizes.paddingM,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
+    return MingrrBottomButtonBar(
       child: Row(
         mainAxisSize: MainAxisSize.max,
         children: [
@@ -354,10 +363,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
           Expanded(
             child: Text(
               '${formatPrice(job.price)}원/${job.priceUnit}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
@@ -369,8 +378,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                   ? () => _startChat(job)
                   : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.market,
-                disabledBackgroundColor: AppColors.divider,
+                backgroundColor: context.features.market,
+                disabledBackgroundColor: Theme.of(context).colorScheme.outline,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -394,28 +403,28 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   Color _getTypeColor(JobType type) {
     switch (type) {
       case JobType.care:
-        return AppColors.dating;
+        return context.features.dating;
       case JobType.walk:
-        return AppColors.walk;
+        return context.features.walk;
       case JobType.bath:
-        return AppColors.health;
+        return context.features.health;
       case JobType.training:
-        return AppColors.community;
+        return context.features.community;
       case JobType.other:
-        return AppColors.textSecondary;
+        return Theme.of(context).colorScheme.onSurfaceVariant;
     }
   }
 
   Color _getStatusColor(JobStatus status) {
     switch (status) {
       case JobStatus.recruiting:
-        return AppColors.success;
+        return context.features.success;
       case JobStatus.reserved:
-        return AppColors.warning;
+        return Colors.orange;
       case JobStatus.completed:
-        return AppColors.textSecondary;
+        return Theme.of(context).colorScheme.onSurfaceVariant;
       case JobStatus.cancelled:
-        return AppColors.error;
+        return Colors.red;
     }
   }
 
@@ -438,35 +447,23 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   }
 
   void _showMoreOptions(BuildContext context, JobModel job) {
-    showModalBottomSheet(
+    showMingrrOptionsSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      options: [
+        MingrrOptionItem(
+          icon: Icons.report_outlined,
+          label: '신고하기',
+          isDestructive: true,
+          onTap: () {
+            showReportSheet(
+              context,
+              targetId: job.id,
+              targetName: '이 알바 글',
+              targetType: ReportTargetType.product,
+            );
+          },
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.report_outlined, color: AppColors.error),
-              title: const Text('신고하기', style: TextStyle(color: AppColors.error)),
-              onTap: () {
-                Navigator.pop(context);
-                showReportSheet(
-                  context,
-                  targetId: job.id,
-                  targetName: '이 알바 글',
-                  targetType: ReportTargetType.product,
-                );
-              },
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
-          ],
-        ),
-      ),
+      ],
     );
   }
 

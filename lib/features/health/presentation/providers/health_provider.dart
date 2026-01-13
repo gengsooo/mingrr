@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../models/health_model.dart';
-import '../../../../models/pet_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 
 /// ============================================================

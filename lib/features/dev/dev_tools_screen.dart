@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../core/services/firebase_service.dart';
 import '../../core/services/location_helper.dart';
 import '../../core/utils/seed_data.dart';
 import '../../core/widgets/dialogs/dialogs.dart';
 import '../../core/widgets/map/map_loading_widget.dart';
-import '../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
 import '../auth/presentation/providers/auth_provider.dart';
 
 /// 데이터 항목 정의 (사용자 계정은 Firebase Auth에서 관리하므로 제외)
@@ -520,17 +519,17 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                   description: '정보 알림 또는 확인/취소 선택',
                   color: Colors.blue,
                   children: [
-                    _buildTestButton(context, '정보', Icons.info_outline, AppColors.primary,
+                    _buildTestButton(context, '정보', Icons.info_outline, Theme.of(context).colorScheme.primary,
                       () => showAppDialog(context, type: DialogType.info, message: '정보 알림 메시지입니다.')),
-                    _buildTestButton(context, '성공', Icons.check_circle_outline, AppColors.success,
+                    _buildTestButton(context, '성공', Icons.check_circle_outline, context.features.success,
                       () => showAppDialog(context, type: DialogType.success, message: '작업이 성공적으로 완료되었습니다.')),
-                    _buildTestButton(context, '경고', Icons.warning_amber, AppColors.warning,
+                    _buildTestButton(context, '경고', Icons.warning_amber, Colors.orange,
                       () => showAppDialog(context, type: DialogType.warning, message: '주의가 필요한 상황입니다.')),
-                    _buildTestButton(context, '오류', Icons.error_outline, AppColors.error,
+                    _buildTestButton(context, '오류', Icons.error_outline, Colors.red,
                       () => showAppDialog(context, type: DialogType.error, message: '오류가 발생했습니다.')),
-                    _buildTestButton(context, '확인/취소', Icons.help_outline, AppColors.primary,
+                    _buildTestButton(context, '확인/취소', Icons.help_outline, Theme.of(context).colorScheme.primary,
                       () => showAppDialog(context, type: DialogType.warning, title: '확인', message: '계속 진행하시겠습니까?', showCancel: true)),
-                    _buildTestButton(context, '삭제 확인', Icons.delete, AppColors.error,
+                    _buildTestButton(context, '삭제 확인', Icons.delete, Colors.red,
                       () => showAppDialog(context, type: DialogType.error, title: '삭제', message: '정말 삭제하시겠습니까?', showCancel: true, confirmText: '삭제')),
                   ],
                 ),
@@ -543,17 +542,17 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                   description: '하단에서 올라오는 확인/취소 시트',
                   color: Colors.teal,
                   children: [
-                    _buildTestButton(context, '모임 탈퇴', Icons.exit_to_app, AppColors.community,
+                    _buildTestButton(context, '모임 탈퇴', Icons.exit_to_app, context.features.community,
                       () async { showConfirmSheet(context, type: ConfirmSheetType.groupLeave, onConfirm: () {}); return null; }),
-                    _buildTestButton(context, '상품 삭제', Icons.delete, AppColors.market,
+                    _buildTestButton(context, '상품 삭제', Icons.delete, context.features.market,
                       () async { showConfirmSheet(context, type: ConfirmSheetType.productDelete, onConfirm: () {}); return null; }),
-                    _buildTestButton(context, '채팅방 나가기', Icons.chat, AppColors.chat,
+                    _buildTestButton(context, '채팅방 나가기', Icons.chat, context.features.chat,
                       () async { showConfirmSheet(context, type: ConfirmSheetType.chatLeave, onConfirm: () {}); return null; }),
-                    _buildTestButton(context, '반려동물 삭제', Icons.pets, AppColors.primary,
+                    _buildTestButton(context, '반려동물 삭제', Icons.pets, Theme.of(context).colorScheme.primary,
                       () async { showConfirmSheet(context, type: ConfirmSheetType.petDelete, onConfirm: () {}); return null; }),
-                    _buildTestButton(context, '산책 기록 삭제', Icons.directions_walk, AppColors.walk,
+                    _buildTestButton(context, '산책 기록 삭제', Icons.directions_walk, context.features.walk,
                       () async { showConfirmSheet(context, type: ConfirmSheetType.walkRecordDelete, onConfirm: () {}); return null; }),
-                    _buildTestButton(context, '계정 삭제', Icons.person_remove, AppColors.error,
+                    _buildTestButton(context, '계정 삭제', Icons.person_remove, Colors.red,
                       () async { showConfirmSheet(context, type: ConfirmSheetType.accountDelete, onConfirm: () {}); return null; }),
                   ],
                 ),
@@ -564,15 +563,15 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                 _buildPopupTestSection(
                   title: '4. 위치 서비스 테스트',
                   description: '3단계 전략 위치 획득 테스트 (캐시→medium→low)',
-                  color: AppColors.walk,
+                  color: context.features.walk,
                   children: [
-                    _buildTestButton(context, '지도용 위치', Icons.map, AppColors.walk,
+                    _buildTestButton(context, '지도용 위치', Icons.map, context.features.walk,
                       () => _testLocationService(context, LocationPurpose.map)),
-                    _buildTestButton(context, '산책용 위치', Icons.directions_walk, AppColors.walk,
+                    _buildTestButton(context, '산책용 위치', Icons.directions_walk, context.features.walk,
                       () => _testLocationService(context, LocationPurpose.walk)),
                     _buildTestButton(context, 'High 정확도', Icons.gps_fixed, Colors.green,
                       () => _testHighAccuracyLocation(context)),
-                    _buildTestButton(context, '로딩 애니메이션', Icons.pets, AppColors.walk,
+                    _buildTestButton(context, '로딩 애니메이션', Icons.pets, context.features.walk,
                       () => _showLoadingAnimationTest(context)),
                   ],
                 ),

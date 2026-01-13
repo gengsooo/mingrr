@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/image_picker_sheet.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
 import '../../../../core/models/location_model.dart';
@@ -96,13 +97,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.detailBackground,
       appBar: AppBar(
         title: const Text('프로필 수정'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
       ),
       body: Form(
         key: _formKey,
@@ -129,13 +126,14 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             _buildSectionTitle('위치 정보'),
             const SizedBox(height: AppSizes.gapM),
             _buildLocationSection(),
-            const SizedBox(height: AppSizes.gapXXL),
-            
-            // 저장 버튼
-            _buildSaveButton(),
             const SizedBox(height: AppSizes.gapXL),
           ],
         ),
+      ),
+      bottomNavigationBar: MingrrSubmitButtonBar(
+        label: '저장하기',
+        isLoading: _isLoading,
+        onPressed: _saveProfile,
       ),
     );
   }
@@ -143,10 +141,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
+        color: Theme.of(context).colorScheme.onSurface,
       ),
     );
   }
@@ -165,7 +163,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 2),
                 ),
@@ -190,7 +188,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         height: 120,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: AppColors.primary, width: 3),
+          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
         ),
         child: ClipOval(
           child: kIsWeb
@@ -218,7 +216,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         decoration: BoxDecoration(
           color: _selectedDefaultAvatar!.backgroundColor,
           shape: BoxShape.circle,
-          border: Border.all(color: AppColors.primary, width: 3),
+          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
         ),
         child: Icon(
           _selectedDefaultAvatar!.icon,
@@ -235,7 +233,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         height: 120,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: AppColors.primary, width: 3),
+          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
         ),
         child: ClipOval(
           child: Image.network(
@@ -257,14 +255,14 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       width: 120,
       height: 120,
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.15),
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.primary, width: 3),
+        border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
       ),
-      child: const Icon(
+      child: Icon(
         Icons.person,
         size: 60,
-        color: AppColors.primary,
+        color: Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -367,9 +365,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '다른 보호자들에게 보여질 자기소개를 작성해주세요.',
-            style: TextStyle(fontSize: 12, color: AppColors.textHint),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
           ),
           const SizedBox(height: AppSizes.gapM),
           TextFormField(
@@ -391,21 +389,21 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       children: [
         LocationDisplayCard(
           location: _selectedLocation,
-          accentColor: AppColors.primary,
+          accentColor: Theme.of(context).colorScheme.primary,
           placeholder: '지도에서 위치를 선택해주세요',
           onTap: _selectLocation,
         ),
         const SizedBox(height: AppSizes.gapS),
         
         // 안내 텍스트
-        const Row(
+        Row(
           children: [
-            Icon(Icons.info_outline, size: 14, color: AppColors.textHint),
-            SizedBox(width: 4),
+            Icon(Icons.info_outline, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
+            const SizedBox(width: 4),
             Expanded(
               child: Text(
                 '위치 정보는 근처 마켓 상품 추천에 사용됩니다',
-                style: TextStyle(fontSize: 12, color: AppColors.textHint),
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
               ),
             ),
           ],
@@ -414,46 +412,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     );
   }
 
-  Widget _buildSaveButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _saveProfile,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusM),
-          ),
-        ),
-        child: _isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : const Text(
-                '저장하기',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-      ),
-    );
-  }
-
-
   Future<void> _selectLocation() async {
     final result = await showMapLocationPicker(
       context: context,
       initialLocation: _selectedLocation,
-      accentColor: AppColors.primary,
+      accentColor: Theme.of(context).colorScheme.primary,
       title: '내 위치 선택',
     );
     

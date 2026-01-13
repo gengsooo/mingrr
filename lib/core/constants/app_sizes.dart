@@ -73,4 +73,11 @@ class AppSizes {
   // ===== 최대 너비 (반응형) =====
   static const double maxContentWidth = 600.0;
   static const double maxCardWidth = 400.0;
+
+  // ===== 바텀시트 =====
+  static const double bottomSheetRadius = 20.0;
+  static const double bottomSheetHandleWidth = 40.0;
+  static const double bottomSheetHandleHeight = 4.0;
+  static const double bottomSheetHandleTop = 16.0;
+  static const double bottomSheetHandleBottom = 12.0;
 }

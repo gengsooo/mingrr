@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import '../theme/feature_colors.dart';
 
 /// ============================================================
 /// 인증 배지 위젯
@@ -61,7 +61,7 @@ class VerificationBadgeSmall extends StatelessWidget {
       margin: const EdgeInsets.only(right: 4),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: isVerified ? AppColors.success : AppColors.textHint,
+        color: isVerified ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
         shape: BoxShape.circle,
       ),
       child: Icon(
@@ -91,8 +91,8 @@ class VerificationBadgeMedium extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(
           color: isVerified 
-              ? AppColors.success.withOpacity(0.1) 
-              : AppColors.divider.withOpacity(0.5),
+              ? context.features.success.withOpacity(0.1) 
+              : Theme.of(context).colorScheme.outline.withOpacity(0.5),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -100,7 +100,7 @@ class VerificationBadgeMedium extends StatelessWidget {
             Icon(
               isVerified ? type.verifiedIcon : type.icon,
               size: 24,
-              color: isVerified ? AppColors.success : AppColors.textHint,
+              color: isVerified ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
             ),
             const SizedBox(height: 6),
             Text(
@@ -108,14 +108,14 @@ class VerificationBadgeMedium extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
-                color: isVerified ? AppColors.success : AppColors.textHint,
+                color: isVerified ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
               ),
             ),
             const SizedBox(height: 2),
             Icon(
               isVerified ? Icons.check_circle : Icons.cancel_outlined,
               size: 14,
-              color: isVerified ? AppColors.success : AppColors.textHint,
+              color: isVerified ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
             ),
           ],
         ),
@@ -145,11 +145,11 @@ class VerificationBadgeLarge extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
           color: isVerified 
-              ? AppColors.success.withOpacity(0.1) 
-              : AppColors.background,
+              ? context.features.success.withOpacity(0.1) 
+              : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isVerified ? AppColors.success.withOpacity(0.3) : AppColors.divider,
+            color: isVerified ? context.features.success.withOpacity(0.3) : Theme.of(context).colorScheme.outline,
           ),
         ),
         child: Column(
@@ -157,7 +157,7 @@ class VerificationBadgeLarge extends StatelessWidget {
             Icon(
               isVerified ? type.verifiedIcon : type.icon,
               size: 32,
-              color: isVerified ? AppColors.success : AppColors.textSecondary,
+              color: isVerified ? context.features.success : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             const SizedBox(height: 8),
             Text(
@@ -165,21 +165,29 @@ class VerificationBadgeLarge extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: isVerified ? AppColors.success : AppColors.textSecondary,
+                color: isVerified ? context.features.success : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 4),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               decoration: BoxDecoration(
-                color: isVerified ? AppColors.success : AppColors.textHint,
+                color: isVerified 
+                    ? context.features.success 
+                    : Theme.of(context).brightness == Brightness.dark
+                        ? Theme.of(context).colorScheme.surfaceContainerHighest
+                        : Theme.of(context).colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 isVerified ? '완료' : '미인증',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
-                  color: Colors.white,
+                  color: isVerified 
+                      ? Colors.white 
+                      : Theme.of(context).brightness == Brightness.dark
+                          ? Theme.of(context).colorScheme.onSurface
+                          : Colors.white,
                   fontWeight: FontWeight.w500,
                 ),
               ),

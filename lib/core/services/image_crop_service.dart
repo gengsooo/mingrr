@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
-import '../constants/app_colors.dart';
 
 /// ============================================================
 /// 이미지 크롭 서비스
@@ -100,9 +99,9 @@ class ImageCropService {
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: _getToolbarTitle(style),
-          toolbarColor: AppColors.primary,
+          toolbarColor: context != null ? Theme.of(context).colorScheme.primary : const Color(0xFF6750A4),
           toolbarWidgetColor: Colors.white,
-          activeControlsWidgetColor: AppColors.primary,
+          activeControlsWidgetColor: context != null ? Theme.of(context).colorScheme.primary : const Color(0xFF6750A4),
           initAspectRatio: _getInitAspectRatio(style),
           lockAspectRatio: style != ImageCropStyle.free,
           aspectRatioPresets: aspectRatioPresets,

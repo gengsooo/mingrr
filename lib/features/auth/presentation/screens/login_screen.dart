@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/validators.dart';
@@ -51,7 +50,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSizes.paddingXL),
@@ -105,23 +103,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         const SizedBox(height: AppSizes.gapXL),
         
         // 앱 이름
-        const Text(
+        Text(
           AppStrings.appName,
           style: TextStyle(
             fontSize: 36,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: Theme.of(context).colorScheme.onSurface,
             letterSpacing: 2,
           ),
         ),
         const SizedBox(height: AppSizes.gapS),
         
         // 슬로건
-        const Text(
+        Text(
           AppStrings.appSlogan,
           style: TextStyle(
             fontSize: 14,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -143,7 +141,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: _isPhoneLogin ? AppColors.primary : Colors.transparent,
+                    color: _isPhoneLogin ? Theme.of(context).colorScheme.primary : Colors.transparent,
                     width: 2,
                   ),
                 ),
@@ -154,7 +152,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: _isPhoneLogin ? FontWeight.w600 : FontWeight.w400,
-                  color: _isPhoneLogin ? AppColors.primary : AppColors.textHint,
+                  color: _isPhoneLogin ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outlineVariant,
                 ),
               ),
             ),
@@ -168,7 +166,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: !_isPhoneLogin ? AppColors.primary : Colors.transparent,
+                    color: !_isPhoneLogin ? Theme.of(context).colorScheme.primary : Colors.transparent,
                     width: 2,
                   ),
                 ),
@@ -179,7 +177,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: !_isPhoneLogin ? FontWeight.w600 : FontWeight.w400,
-                  color: !_isPhoneLogin ? AppColors.primary : AppColors.textHint,
+                  color: !_isPhoneLogin ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outlineVariant,
                 ),
               ),
             ),
@@ -294,18 +292,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildDivider() {
     return Row(
       children: [
-        Expanded(child: Divider(color: AppColors.divider)),
+        Expanded(child: Divider(color: Theme.of(context).colorScheme.outline)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
           child: Text(
             '또는',
             style: TextStyle(
-              color: AppColors.textHint,
+              color: Theme.of(context).colorScheme.outlineVariant,
               fontSize: 13,
             ),
           ),
         ),
-        Expanded(child: Divider(color: AppColors.divider)),
+        Expanded(child: Divider(color: Theme.of(context).colorScheme.outline)),
       ],
     );
   }
@@ -351,7 +349,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           '로그인 시 이용약관 및 개인정보처리방침에 동의합니다.',
           style: TextStyle(
             fontSize: 12,
-            color: AppColors.textHint,
+            color: Theme.of(context).colorScheme.outlineVariant,
           ),
           textAlign: TextAlign.center,
         ),

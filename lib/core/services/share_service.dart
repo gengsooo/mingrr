@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import '../../models/pet_model.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/community_model.dart';
+import '../constants/app_sizes.dart';
 import '../constants/app_strings.dart';
 import '../widgets/common_widgets.dart';
+import '../widgets/mingrr_bottom_sheet.dart';
 
 /// ============================================================
 /// 공유 서비스
@@ -130,31 +132,29 @@ class _ShareBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      padding: const EdgeInsets.only(
+        left: AppSizes.paddingL,
+        right: AppSizes.paddingL,
+        bottom: AppSizes.paddingL,
+      ),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 핸들
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(bottom: 20),
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          
+          const BottomSheetHandle(),
           // 제목
-          const Text(
-            '공유하기',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              '공유하기',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
           const SizedBox(height: 20),

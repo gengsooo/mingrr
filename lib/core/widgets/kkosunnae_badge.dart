@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import '../constants/app_sizes.dart';
 import '../services/kkosunnae_service.dart';
+import 'mingrr_bottom_sheet.dart';
 
 /// ============================================================
 /// 꼬순내 배지 위젯
@@ -181,7 +182,7 @@ class KkosunnaeScoreBar extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -202,12 +203,12 @@ class KkosunnaeScoreBar extends StatelessWidget {
                   painter: _PawPrintPainter(color: color),
                 ),
                 const SizedBox(width: 8),
-                const Text(
+                Text(
                   '꼬순내 지수',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const Spacer(),
@@ -224,7 +225,7 @@ class KkosunnaeScoreBar extends StatelessWidget {
                   ),
                 ),
                 if (onTap != null)
-                  Icon(Icons.chevron_right, size: 20, color: AppColors.textHint),
+                  Icon(Icons.chevron_right, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
               ],
             ),
             const SizedBox(height: 12),
@@ -234,7 +235,7 @@ class KkosunnaeScoreBar extends StatelessWidget {
                 Container(
                   height: 8,
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
+                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
@@ -419,25 +420,16 @@ class KkosunnaeDetailSheet extends StatelessWidget {
     final color = Color(KkosunnaeService.getGradeColor(score));
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 핸들
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 20),
+            const BottomSheetHandle(),
+            const SizedBox(height: 12),
             
             // 점수 표시
             CustomPaint(
@@ -470,7 +462,7 @@ class KkosunnaeDetailSheet extends StatelessWidget {
                   Container(
                     height: 12,
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: Theme.of(context).colorScheme.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(6),
                     ),
                   ),
@@ -495,8 +487,8 @@ class KkosunnaeDetailSheet extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('0', style: TextStyle(fontSize: 12, color: Colors.grey[400])),
-                  Text('100', style: TextStyle(fontSize: 12, color: Colors.grey[400])),
+                  Text('0', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant)),
+                  Text('100', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant)),
                 ],
               ),
             ),
@@ -511,12 +503,12 @@ class KkosunnaeDetailSheet extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: [
-                    _buildDetailRow('평판 점수', breakdown!.reputation),
-                    _buildDetailRow('활동 점수', breakdown!.activity),
-                    _buildDetailRow('신뢰도 점수', breakdown!.trust),
-                    _buildDetailRow('앱 활성도', breakdown!.active),
+                    _buildDetailRow(context, '평판 점수', breakdown!.reputation),
+                    _buildDetailRow(context, '활동 점수', breakdown!.activity),
+                    _buildDetailRow(context, '신뢰도 점수', breakdown!.trust),
+                    _buildDetailRow(context, '앱 활성도', breakdown!.active),
                     if (breakdown!.penalty.score > 0)
-                      _buildDetailRow('감점', breakdown!.penalty, isPenalty: true),
+                      _buildDetailRow(context, '감점', breakdown!.penalty, isPenalty: true),
                   ],
                 ),
               ),
@@ -530,15 +522,15 @@ class KkosunnaeDetailSheet extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: Theme.of(context).colorScheme.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text(
+                child: Text(
                   '꼬순내 지수는 활동, 평가, 인증 등을 종합하여 계산됩니다. '
                   '좋은 매너로 활동하면 점수가 올라가요!',
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     height: 1.5,
                   ),
                 ),
@@ -551,16 +543,16 @@ class KkosunnaeDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(String label, ScoreDetail detail, {bool isPenalty = false}) {
+  Widget _buildDetailRow(BuildContext context, String label, ScoreDetail detail, {bool isPenalty = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const Spacer(),
@@ -571,14 +563,14 @@ class KkosunnaeDetailSheet extends StatelessWidget {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: isPenalty ? Colors.red : AppColors.textPrimary,
+              color: isPenalty ? Colors.red : Theme.of(context).colorScheme.onSurface,
             ),
           ),
           Text(
             ' / ${detail.maxScore.toStringAsFixed(0)}점',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey[400],
+              color: Theme.of(context).colorScheme.outlineVariant,
             ),
           ),
         ],

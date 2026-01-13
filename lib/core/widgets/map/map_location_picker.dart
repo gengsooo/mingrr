@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
-import '../../constants/app_colors.dart';
+import '../../theme/feature_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../models/location_model.dart';
 import '../../services/geocoding_service.dart';
@@ -25,7 +25,7 @@ import 'map_loading_widget.dart';
 Future<LocationData?> showMapLocationPicker({
   required BuildContext context,
   LocationData? initialLocation,
-  Color accentColor = AppColors.primary,
+  Color? accentColor,
   String title = '위치 선택',
 }) async {
   return Navigator.push<LocationData>(
@@ -42,13 +42,13 @@ Future<LocationData?> showMapLocationPicker({
 
 class MapLocationPicker extends StatefulWidget {
   final LocationData? initialLocation;
-  final Color accentColor;
+  final Color? accentColor;
   final String title;
 
   const MapLocationPicker({
     super.key,
     this.initialLocation,
-    this.accentColor = AppColors.primary,
+    this.accentColor,
     this.title = '위치 선택',
   });
 
@@ -57,6 +57,9 @@ class MapLocationPicker extends StatefulWidget {
 }
 
 class _MapLocationPickerState extends State<MapLocationPicker> {
+  // accentColor getter (nullable 처리)
+  Color get _accentColor => widget.accentColor ?? Theme.of(context).colorScheme.primary;
+  
   // 지도 관련 상태 (지도 영역에서만 사용)
   bool _isInitializing = true;
   KakaoMapController? _mapController;
@@ -212,7 +215,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     final dialogResult = await showErrorDialog(
       context,
       type: ErrorType.location,
-      themeColor: widget.accentColor,
+      themeColor: _accentColor,
     );
     
     if (dialogResult == ErrorResult.retry) {
@@ -310,10 +313,10 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: Text(widget.title),
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close),
@@ -337,7 +340,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                 // 하단 패널 (ValueNotifier로 독립적 업데이트)
                 _AddressPanel(
                   addressState: _addressState,
-                  accentColor: widget.accentColor,
+                  accentColor: _accentColor,
                 ),
               ],
             ),
@@ -345,9 +348,9 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
   }
 
   Widget _buildLoadingView() {
-    if (widget.accentColor == AppColors.market) {
+    if (_accentColor == context.features.market) {
       return MapLoadingWidget.market(progress: _locationProgress);
-    } else if (widget.accentColor == AppColors.walk) {
+    } else if (_accentColor == context.features.walk) {
       return MapLoadingWidget.walk(progress: _locationProgress);
     } else {
       return MapLoadingWidget.profile(progress: _locationProgress);
@@ -387,7 +390,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
   
   Widget _buildLocationErrorView() {
     return Container(
-      color: AppColors.cardBackground,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -395,15 +398,15 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
             Icon(
               Icons.location_off_outlined,
               size: 64,
-              color: widget.accentColor.withOpacity(0.5),
+              color: _accentColor.withOpacity(0.5),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               '위치를 가져올 수 없습니다',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 8),
@@ -415,7 +418,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
               icon: const Icon(Icons.refresh),
               label: const Text('다시 시도'),
               style: TextButton.styleFrom(
-                foregroundColor: widget.accentColor,
+                foregroundColor: _accentColor,
               ),
             ),
           ],
@@ -434,13 +437,13 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
             Icon(
               Icons.location_on,
               size: 48,
-              color: widget.accentColor,
+              color: _accentColor,
             ),
             Container(
               width: 4,
               height: 4,
               decoration: BoxDecoration(
-                color: widget.accentColor,
+                color: _accentColor,
                 shape: BoxShape.circle,
               ),
             ),
@@ -456,12 +459,12 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
       bottom: AppSizes.paddingM,
       child: FloatingActionButton.small(
         heroTag: 'myLocation_v2',
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 4,
         onPressed: _goToMyLocation,
         child: Icon(
           Icons.my_location,
-          color: widget.accentColor,
+          color: _accentColor,
         ),
       ),
     );
@@ -476,14 +479,14 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            widget.accentColor.withOpacity(0.1),
-            widget.accentColor.withOpacity(0.2),
+            _accentColor.withOpacity(0.1),
+            _accentColor.withOpacity(0.2),
           ],
         ),
       ),
       child: CustomPaint(
         size: Size.infinite,
-        painter: _GridPainter(widget.accentColor),
+        painter: _GridPainter(_accentColor),
       ),
     );
   }
@@ -506,7 +509,7 @@ class _AddressPanel extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSizes.paddingL),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -521,7 +524,7 @@ class _AddressPanel extends StatelessWidget {
             // 주소 표시 (ValueListenableBuilder로 독립적 업데이트)
             ValueListenableBuilder<AddressState>(
               valueListenable: addressState,
-              builder: (context, state, _) => _buildAddressDisplay(state),
+              builder: (context, state, _) => _buildAddressDisplay(context, state),
             ),
             const SizedBox(height: AppSizes.gapM),
             // 확인 버튼
@@ -535,7 +538,7 @@ class _AddressPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildAddressDisplay(AddressState state) {
+  Widget _buildAddressDisplay(BuildContext context, AddressState state) {
     // 높이 고정으로 레이아웃 변경 방지 (꿀렁거림 해결)
     // 로딩/주소 표시 상태 모두 동일한 높이 유지
     const double fixedHeight = 56.0;
@@ -544,7 +547,7 @@ class _AddressPanel extends StatelessWidget {
       height: fixedHeight,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -568,11 +571,11 @@ class _AddressPanel extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Text(
+                      Text(
                         '주소를 가져오는 중...',
                         style: TextStyle(
                           fontSize: 14,
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -583,10 +586,10 @@ class _AddressPanel extends StatelessWidget {
                     children: [
                       Text(
                         state.address ?? '주소 정보 없음',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -597,9 +600,9 @@ class _AddressPanel extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 2),
                           child: Text(
                             state.location!.fullAddress!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -624,7 +627,7 @@ class _AddressPanel extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: accentColor,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.divider,
+          disabledBackgroundColor: Theme.of(context).colorScheme.outline,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

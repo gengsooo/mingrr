@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import '../../models/pet_model.dart';
+import 'mingrr_bottom_sheet.dart';
 
 /// ============================================================
 /// 반려동물 선택 카드 컴포넌트
@@ -24,17 +25,19 @@ class PetSelectorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = accentColor ?? AppColors.dating;
+    final color = accentColor ?? context.features.dating;
     
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.1) : Colors.white,
+          color: isSelected 
+              ? color.withOpacity(0.1) 
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? color : AppColors.divider,
+            color: isSelected ? color : Theme.of(context).colorScheme.outline,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -50,7 +53,7 @@ class PetSelectorCard extends StatelessWidget {
                 image: _getProfileImage(),
               ),
               child: _getProfileImage() == null
-                  ? Icon(Icons.pets, size: 22, color: accentColor ?? AppColors.dating)
+                  ? Icon(Icons.pets, size: 22, color: accentColor ?? context.features.dating)
                   : null,
             ),
             const SizedBox(width: 12),
@@ -71,9 +74,9 @@ class PetSelectorCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     '${pet.breed} · ${pet.ageString}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -153,30 +156,25 @@ class _PetSelectorSheetState extends State<PetSelectorSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.accentColor ?? AppColors.dating;
+    final color = widget.accentColor ?? context.features.dating;
     
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.7,
       ),
-      padding: const EdgeInsets.all(AppSizes.paddingL),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXL)),
+      padding: const EdgeInsets.only(
+        left: AppSizes.paddingL,
+        right: AppSizes.paddingL,
+        bottom: AppSizes.paddingL,
+      ),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXL)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 핸들
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.divider,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: AppSizes.gapL),
+          const BottomSheetHandle(),
           
           // 제목
           Text(
@@ -188,7 +186,7 @@ class _PetSelectorSheetState extends State<PetSelectorSheet> {
             Text(
               widget.description!,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ],
           const SizedBox(height: AppSizes.gapL),
@@ -196,17 +194,17 @@ class _PetSelectorSheetState extends State<PetSelectorSheet> {
           // 반려동물 목록
           Flexible(
             child: widget.pets.isEmpty
-                ? const Center(
+                ? Center(
                     child: Padding(
-                      padding: EdgeInsets.all(32),
+                      padding: const EdgeInsets.all(32),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.pets, size: 48, color: AppColors.textHint),
-                          SizedBox(height: 12),
+                          Icon(Icons.pets, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
+                          const SizedBox(height: 12),
                           Text(
                             '등록된 반려동물이 없습니다',
-                            style: TextStyle(color: AppColors.textSecondary),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),
@@ -229,7 +227,7 @@ class _PetSelectorSheetState extends State<PetSelectorSheet> {
                     },
                   ),
           ),
-          const SizedBox(height: AppSizes.gapL),
+          const SizedBox(height: AppSizes.gapM),
           
           // 선택 버튼
           SizedBox(
@@ -244,7 +242,7 @@ class _PetSelectorSheetState extends State<PetSelectorSheet> {
                   : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: color,
-                disabledBackgroundColor: AppColors.divider,
+                disabledBackgroundColor: Theme.of(context).colorScheme.outline,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

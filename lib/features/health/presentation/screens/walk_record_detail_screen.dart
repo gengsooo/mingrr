@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
 import '../../../../core/widgets/map/map_loading_widget.dart';
-import '../../../../core/models/location_model.dart';
 import '../../../../models/health_model.dart';
 
 /// ============================================================
@@ -43,14 +44,14 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.detailBackground,
       body: CustomScrollView(
         slivers: [
           // 지도 영역 (앱바 포함)
           SliverAppBar(
             expandedHeight: 300,
             pinned: true,
-            backgroundColor: AppColors.walk,
+            backgroundColor: context.features.walk,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
               onPressed: () => Navigator.pop(context),
@@ -155,7 +156,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
       // 경로 그리기
       await _mapController!.routeLayer.addRoute(
         points,
-        RouteStyle(AppColors.walk, 8),
+        RouteStyle(context.features.walk, 8),
       );
       
       // 경로 전체가 보이도록 카메라 조정
@@ -195,24 +196,24 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
     return Stack(
       children: [
         Container(
-          color: AppColors.walk.withOpacity(0.2),
+          color: context.features.walk.withOpacity(0.2),
           child: record.routePoints.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.map_outlined, size: 60, color: AppColors.walk.withOpacity(0.5)),
+                      Icon(Icons.map_outlined, size: 60, color: context.features.walk.withOpacity(0.5)),
                       const SizedBox(height: 8),
                       Text(
                         '경로 정보가 없습니다',
-                        style: TextStyle(fontSize: 14, color: AppColors.walk.withOpacity(0.7)),
+                        style: TextStyle(fontSize: 14, color: context.features.walk.withOpacity(0.7)),
                       ),
                     ],
                   ),
                 )
               : CustomPaint(
                   size: Size.infinite,
-                  painter: _RoutePreviewPainter(record.routePoints, AppColors.walk),
+                  painter: _RoutePreviewPainter(record.routePoints, context.features.walk, startColor: context.features.success),
                 ),
         ),
         
@@ -232,14 +233,14 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
         Positioned(
           left: 20,
           bottom: 80,
-          child: _buildMarker('출발', AppColors.success),
+          child: _buildMarker('출발', context.features.success),
         ),
         // 종료점
         if (record.routePoints.length > 1)
           Positioned(
             right: 20,
             bottom: 80,
-            child: _buildMarker('도착', AppColors.error),
+            child: _buildMarker('도착', Colors.red),
           ),
       ],
     );
@@ -252,7 +253,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -282,7 +283,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -300,10 +301,10 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppColors.walk.withOpacity(0.1),
+                  color: context.features.walk.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.pets, color: AppColors.walk, size: 24),
+                child: Icon(Icons.pets, color: context.features.walk, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -321,9 +322,9 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
                       record.endTime != null
                           ? '${_formatTime(record.startTime)} ~ ${_formatTime(record.endTime!)}'
                           : '${_formatTime(record.startTime)} (진행 중)',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: AppColors.textSecondary,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -344,19 +345,19 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
                 icon: Icons.timer_outlined,
                 value: record.durationString,
                 label: '시간',
-                color: AppColors.walk,
+                color: context.features.walk,
               ),
               _buildStatItem(
                 icon: Icons.straighten,
                 value: record.distanceString,
                 label: '거리',
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
               _buildStatItem(
                 icon: Icons.local_fire_department_outlined,
                 value: '${record.calories?.toInt() ?? 0}',
                 label: 'kcal',
-                color: AppColors.error,
+                color: Colors.red,
               ),
             ],
           ),
@@ -391,9 +392,9 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
         ),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -438,9 +439,9 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           Text(
@@ -467,12 +468,12 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
           // 타이틀 영역
           Row(
             children: [
-              const Text(
+              Text(
                 '함께한 친구들',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(width: 8),
@@ -480,7 +481,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
                 '${pets.length}마리',
                 style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.walk,
+                  color: context.features.walk,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -498,18 +499,18 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
               
               // 각 반려동물마다 살짝 다른 색상 톤
               final colors = [
-                AppColors.walk,
-                AppColors.primary,
-                AppColors.dating,
-                AppColors.community,
-                AppColors.market,
+                context.features.walk,
+                Theme.of(context).colorScheme.primary,
+                context.features.dating,
+                context.features.community,
+                context.features.market,
               ];
               final color = colors[index % colors.length];
               
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -560,11 +561,11 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.note_outlined, size: 20, color: AppColors.textSecondary),
-              SizedBox(width: 8),
-              Text(
+              Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              const SizedBox(width: 8),
+              const Text(
                 '메모',
                 style: TextStyle(
                   fontSize: 16,
@@ -576,9 +577,9 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
           const SizedBox(height: 12),
           Text(
             record.notes!,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
               height: 1.5,
             ),
           ),
@@ -606,9 +607,9 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
               ),
               Text(
                 '${record.photoUrls.length}장',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -625,12 +626,12 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
                   height: 100,
                   margin: const EdgeInsets.only(right: 8),
                   decoration: BoxDecoration(
-                    color: AppColors.divider,
+                    color: Theme.of(context).colorScheme.outline,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.image,
-                    color: AppColors.textHint,
+                    color: Theme.of(context).colorScheme.outlineVariant,
                     size: 32,
                   ),
                 );
@@ -647,23 +648,16 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
   }
 
   void _showMoreOptions(BuildContext context) {
-    showModalBottomSheet(
+    showMingrrOptionsSheet(
       context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.delete_outline, color: AppColors.error),
-              title: const Text('삭제', style: TextStyle(color: AppColors.error)),
-              onTap: () {
-                Navigator.pop(context);
-                _confirmDelete(context);
-              },
-            ),
-          ],
+      options: [
+        MingrrOptionItem(
+          icon: Icons.delete_outline,
+          label: '삭제',
+          isDestructive: true,
+          onTap: () => _confirmDelete(context),
         ),
-      ),
+      ],
     );
   }
 
@@ -709,8 +703,9 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
 class _RoutePreviewPainter extends CustomPainter {
   final List<GeoPoint> routePoints;
   final Color color;
+  final Color startColor;
 
-  _RoutePreviewPainter(this.routePoints, this.color);
+  _RoutePreviewPainter(this.routePoints, this.color, {required this.startColor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -776,12 +771,12 @@ class _RoutePreviewPainter extends CustomPainter {
     canvas.drawPath(path, paint);
 
     // 시작점 마커
-    final startPaint = Paint()..color = AppColors.success;
+    final startPaint = Paint()..color = startColor;
     canvas.drawCircle(points.first, 8, startPaint);
     canvas.drawCircle(points.first, 4, Paint()..color = Colors.white);
 
     // 끝점 마커
-    final endPaint = Paint()..color = AppColors.error;
+    final endPaint = Paint()..color = Colors.red;
     canvas.drawCircle(points.last, 8, endPaint);
     canvas.drawCircle(points.last, 4, Paint()..color = Colors.white);
   }

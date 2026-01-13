@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../constants/app_colors.dart';
 import '../../models/location_model.dart';
 import 'map_loading_widget.dart';
 
@@ -30,7 +29,7 @@ class MapViewWidget extends StatefulWidget {
   final double height;
   
   /// 테마 색상
-  final Color accentColor;
+  final Color? accentColor;
   
   /// 줌 레벨
   final int zoomLevel;
@@ -56,7 +55,7 @@ class MapViewWidget extends StatefulWidget {
     this.routePoints,
     this.markerPoints,
     this.height = 200,
-    this.accentColor = AppColors.primary,
+    this.accentColor,
     this.zoomLevel = 15,
     this.routeColor,
     this.routeWidth = 4,
@@ -72,6 +71,8 @@ class MapViewWidget extends StatefulWidget {
 class _MapViewWidgetState extends State<MapViewWidget> {
   KakaoMapController? _mapController;
   bool _isMapReady = false;
+  
+  Color get accentColor => widget.accentColor ?? Theme.of(context).colorScheme.primary;
   
   /// LatLng 생성 헬퍼
   LatLng _createLatLng(double lat, double lng) => LatLng(lat, lng);
@@ -94,7 +95,7 @@ class _MapViewWidgetState extends State<MapViewWidget> {
         height: widget.height,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: AppColors.cardBackground,
+          color: Theme.of(context).colorScheme.surfaceContainerLow,
         ),
         clipBehavior: Clip.antiAlias,
         child: Stack(
@@ -123,13 +124,13 @@ class _MapViewWidgetState extends State<MapViewWidget> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.fullscreen, size: 16, color: widget.accentColor),
+                      Icon(Icons.fullscreen, size: 16, color: accentColor),
                       const SizedBox(width: 4),
                       Text(
                         '크게 보기',
                         style: TextStyle(
                           fontSize: 12,
-                          color: widget.accentColor,
+                          color: accentColor,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -160,7 +161,7 @@ class _MapViewWidgetState extends State<MapViewWidget> {
         // 지도 로딩 중 오버레이
         if (!_isMapReady)
           MapLoadingWidget(
-            accentColor: widget.accentColor,
+            accentColor: accentColor,
             message: '지도를 불러오는 중...',
             height: widget.height,
           ),
@@ -231,14 +232,14 @@ class _MapViewWidgetState extends State<MapViewWidget> {
     return Container(
       height: widget.height,
       decoration: BoxDecoration(
-        color: widget.accentColor.withOpacity(0.1),
+        color: accentColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Stack(
         children: [
           CustomPaint(
             size: Size.infinite,
-            painter: _GridPainter(widget.accentColor),
+            painter: _GridPainter(accentColor),
           ),
           
           // 경로 미리보기 (웹용)
@@ -247,7 +248,7 @@ class _MapViewWidgetState extends State<MapViewWidget> {
               size: Size.infinite,
               painter: _RoutePreviewPainter(
                 widget.routePoints!,
-                widget.routeColor ?? widget.accentColor,
+                widget.routeColor ?? accentColor,
               ),
             ),
           
@@ -264,14 +265,14 @@ class _MapViewWidgetState extends State<MapViewWidget> {
                 Icon(
                   Icons.map_outlined,
                   size: 40,
-                  color: widget.accentColor.withOpacity(0.5),
+                  color: accentColor.withOpacity(0.5),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   message,
                   style: TextStyle(
                     fontSize: 14,
-                    color: widget.accentColor.withOpacity(0.7),
+                    color: accentColor.withOpacity(0.7),
                   ),
                 ),
               ],
@@ -315,7 +316,7 @@ class _MapViewWidgetState extends State<MapViewWidget> {
       child: Icon(
         widget.markerIcon,
         size: 16,
-        color: widget.markerColor ?? widget.accentColor,
+        color: widget.markerColor ?? accentColor,
       ),
     );
   }

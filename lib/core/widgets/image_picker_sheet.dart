@@ -2,10 +2,10 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import '../services/image_crop_service.dart';
 import 'common_widgets.dart';
+import 'mingrr_bottom_sheet.dart';
 
 /// ============================================================
 /// 이미지 선택 바텀시트
@@ -230,39 +230,30 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
       padding: EdgeInsets.only(
         left: AppSizes.paddingL,
         right: AppSizes.paddingL,
-        top: AppSizes.paddingL,
         bottom: MediaQuery.of(context).padding.bottom + AppSizes.paddingL,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 헤더
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          
+          const BottomSheetHandle(),
           // 타이틀
-          Text(
-            widget.title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              widget.title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
           
           // 미리보기
           Center(
@@ -293,12 +284,12 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
           const SizedBox(height: 20),
           
           // 대표 아이콘 선택
-          const Text(
+          Text(
             '또는 대표 아이콘 선택',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 12),
@@ -321,8 +312,8 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
                       Navigator.pop(context, const ImagePickerResult(cleared: true));
                     },
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: const BorderSide(color: AppColors.error),
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -345,9 +336,9 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
                         }
                       : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: AppColors.divider,
+                    disabledBackgroundColor: Theme.of(context).colorScheme.outline,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -431,7 +422,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.divider, width: 2),
+        border: Border.all(color: Theme.of(context).colorScheme.outline, width: 2),
       ),
       child: content,
     );
@@ -442,13 +433,13 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
       width: 100,
       height: 100,
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: Theme.of(context).colorScheme.surface,
         shape: BoxShape.circle,
       ),
       child: Icon(
         widget.avatarType == DefaultAvatarType.pet ? Icons.pets : Icons.person,
         size: 50,
-        color: AppColors.textHint,
+        color: Theme.of(context).colorScheme.outlineVariant,
       ),
     );
   }
@@ -464,19 +455,19 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           children: [
-            Icon(icon, size: 28, color: AppColors.primary),
+            Icon(icon, size: 28, color: Theme.of(context).colorScheme.primary),
             const SizedBox(height: 8),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ],
@@ -502,7 +493,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
           color: avatar.backgroundColor,
           shape: BoxShape.circle,
           border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.transparent,
+            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
             width: 3,
           ),
         ),

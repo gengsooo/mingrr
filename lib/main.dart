@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -35,7 +36,7 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
-    print('Firebase 초기화 실패: $e');
+    if (kDebugMode) debugPrint('Firebase 초기화 실패: $e');
   }
 
   // TODO: Personal Team 테스트 시 주석 처리
@@ -47,11 +48,11 @@ void main() async {
   
   // 카카오 지도 SDK 초기화 (오류 발생 시 무시)
   try {
-    print('🗺️ 카카오맵 SDK 초기화 시작...');
+    if (kDebugMode) debugPrint('🗺️ 카카오맵 SDK 초기화 시작...');
     await KakaoMapSdk.instance.initialize('e80e09aa4db6c1f3d1eedb1be73ee8c6');
-    print('✅ 카카오맵 SDK 초기화 성공!');
+    if (kDebugMode) debugPrint('✅ 카카오맵 SDK 초기화 성공!');
   } catch (e) {
-    print('❌ 카카오맵 초기화 실패: $e');
+    if (kDebugMode) debugPrint('❌ 카카오맵 초기화 실패: $e');
   }
   
   // 앱 실행
