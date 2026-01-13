@@ -680,6 +680,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
               chatRoomId: chatRoom.id,
               otherUserName: sellerInfo.nickname,
               otherUserImageUrl: sellerInfo.profileImageUrl,
+              chatType: 'marketplace',
             ),
           ),
         );

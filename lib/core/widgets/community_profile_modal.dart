@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/bottom_sheet_stack_manager.dart';
+import '../theme/app_theme.dart';
 import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import 'guardian_profile_modal.dart';
@@ -18,12 +19,14 @@ class CommunityMember {
   final String nickname;
   final double kkosunnaeScore;
   final bool isOnline;
+  final bool isCreator; // 모임장 여부
 
   const CommunityMember({
     required this.id,
     required this.nickname,
     this.kkosunnaeScore = 50.0,
     this.isOnline = false,
+    this.isCreator = false,
   });
 }
 
@@ -170,7 +173,7 @@ class CommunityProfileModal extends StatelessWidget {
     );
   }
 
-  /// 멤버 리스트 섹션
+  /// 멤버 리스트 섹션 (좌우 스와이프 가능)
   Widget _buildMembersSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,17 +183,14 @@ class CommunityProfileModal extends StatelessWidget {
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: AppSizes.gapS),
-        ...members.take(5).map((member) => _buildMemberItem(context, member)),
-        if (members.length > 5)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Center(
-              child: Text(
-                '외 ${members.length - 5}명',
-                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
-              ),
-            ),
+        SizedBox(
+          height: 120,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: members.length,
+            itemBuilder: (context, index) => _buildMemberItem(context, members[index]),
           ),
+        ),
       ],
     );
   }
@@ -200,7 +200,6 @@ class CommunityProfileModal extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         // 스택 방식: 현재 바텀시트 위에 보호자 정보 바텀시트를 열음
-        // 보호자 정보 바텀시트를 닫으면 현재 소모임 정보 바텀시트가 보임
         showGuardianProfileModal(
           context,
           guardianId: member.id,
@@ -228,59 +227,81 @@ class CommunityProfileModal extends StatelessWidget {
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
+        width: 100,
+        margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: context.sectionBackground,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(
+        child: Stack(
           children: [
-            Stack(
+            Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(Icons.person, size: 20, color: Theme.of(context).colorScheme.primary),
-                ),
-                if (member.isOnline)
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 12,
-                      height: 12,
+                Stack(
+                  children: [
+                    Container(
+                      width: 50,
+                      height: 50,
                       decoration: BoxDecoration(
-                        color: context.features.success,
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
                       ),
+                      child: Icon(Icons.person, size: 24, color: Theme.of(context).colorScheme.primary),
                     ),
+                    if (member.isOnline)
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: context.features.success,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  member.nickname,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
                   ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                KkosunnaeScoreSmall(score: member.kkosunnaeScore),
               ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    member.nickname,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+            // 모임장 배지 (좌측 상단)
+            if (member.isCreator)
+              Positioned(
+                top: 0,
+                left: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: context.features.community,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    '모임장',
+                    style: TextStyle(
+                      fontSize: 8,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  KkosunnaeScoreSmall(score: member.kkosunnaeScore),
-                ],
+                ),
               ),
-            ),
-            Icon(Icons.chevron_right, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
           ],
         ),
       ),
@@ -291,17 +312,17 @@ class CommunityProfileModal extends StatelessWidget {
   Widget _buildCommunityInfo(BuildContext context) {
     return Row(
       children: [
-        // 프로필 이미지
+        // 프로필 이미지 (보호자/반려동물 정보와 동일한 60x60 크기)
         Container(
-          width: 70,
-          height: 70,
+          width: 60,
+          height: 60,
           decoration: BoxDecoration(
-            color: context.features.community.withOpacity(0.1),
+            color: context.features.community.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
             Icons.groups,
-            size: 35,
+            size: 30,
             color: context.features.community,
           ),
         ),
@@ -319,37 +340,23 @@ class CommunityProfileModal extends StatelessWidget {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  Icon(Icons.people, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  const SizedBox(width: 4),
-                  Text(
-                    '멤버 $memberCount명',
+              if (category != null) ...[
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: context.features.community.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    category!,
                     style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 11,
+                      color: context.features.community,
                     ),
                   ),
-                  if (category != null) ...[
-                    const SizedBox(width: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: context.features.community.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        category!,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: context.features.community,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+                ),
+              ],
             ],
           ),
         ),
@@ -403,7 +410,7 @@ class CommunityProfileModal extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
+            color: context.sectionBackground,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
@@ -432,7 +439,7 @@ class CommunityProfileModal extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
+            color: context.sectionBackground,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(

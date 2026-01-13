@@ -346,7 +346,7 @@ class GuardianProfileModal extends StatelessWidget {
     );
   }
 
-  /// 등록된 반려동물 섹션
+  /// 등록된 반려동물 섹션 (좌우 스와이프 가능)
   Widget _buildPetsSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -356,7 +356,14 @@ class GuardianProfileModal extends StatelessWidget {
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: AppSizes.gapS),
-        ...pets.map((pet) => _buildPetItem(context, pet)),
+        SizedBox(
+          height: 120,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: pets.length,
+            itemBuilder: (context, index) => _buildPetItem(context, pets[index]),
+          ),
+        ),
       ],
     );
   }
@@ -366,7 +373,6 @@ class GuardianProfileModal extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         // 스택 방식: 현재 바텀시트 위에 반려동물 정보 바텀시트를 열음
-        // 반려동물 정보 바텀시트를 닫으면 현재 보호자 정보 바텀시트가 보임
         showPetProfileModal(
           context,
           petId: pet.id,
@@ -393,13 +399,15 @@ class GuardianProfileModal extends StatelessWidget {
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
+        width: 100,
+        margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: context.sectionBackground,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
             // 반려동물 프로필 이미지 (원형)
             Container(
@@ -419,49 +427,30 @@ class GuardianProfileModal extends StatelessWidget {
                   ? Icon(Icons.pets, size: 24, color: Theme.of(context).colorScheme.primary)
                   : null,
             ),
-            const SizedBox(width: 12),
-            
-            // 반려동물 정보
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    pet.name,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    [pet.breed, pet.ageString].whereType<String>().join(' · '),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 8),
+            // 반려동물 이름
+            Text(
+              pet.name,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
             ),
-            
-            // 좋아요 수
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.favorite, size: 14, color: Colors.red),
-                const SizedBox(width: 4),
-                Text(
-                  '${pet.likeCount}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
+            const SizedBox(height: 4),
+            // 품종
+            Text(
+              pet.breed ?? '',
+              style: TextStyle(
+                fontSize: 10,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(width: 4),
-            Icon(Icons.chevron_right, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
           ],
         ),
       ),

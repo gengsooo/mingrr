@@ -16,6 +16,7 @@ import '../../../../core/widgets/guardian_profile_modal.dart';
 import '../../../../core/widgets/pet_profile_modal.dart';
 import '../../../../core/widgets/community_profile_modal.dart';
 import '../../../../models/chat_model.dart';
+import '../../../../models/community_model.dart';
 import '../../../../models/rating_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/chat_provider.dart';
@@ -29,12 +30,14 @@ class ChatDetailScreen extends ConsumerStatefulWidget {
   final String chatRoomId;
   final String? otherUserName;
   final String? otherUserImageUrl;
+  final String? chatType; // 채팅 타입 (깜빡거림 방지용 초기값)
 
   const ChatDetailScreen({
     super.key,
     required this.chatRoomId,
     this.otherUserName,
     this.otherUserImageUrl,
+    this.chatType,
   });
 
   @override
@@ -57,6 +60,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   String _searchQuery = '';
   ChatRoomModel? _chatRoom;
   TransactionStatusModel? _transaction;
+  String? _communityName; // 소모임 이름 (소모임 채팅용)
 
   @override
   void initState() {
@@ -81,7 +85,27 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   Future<void> _loadChatRoom() async {
     final room = await _chatService.getChatRoom(widget.chatRoomId);
-    if (mounted) setState(() => _chatRoom = room);
+    if (mounted) {
+      setState(() => _chatRoom = room);
+      // 소모임 채팅인 경우 소모임 이름 로드
+      if (room?.type == 'community' && room?.relatedId != null) {
+        _loadCommunityName(room!.relatedId!);
+      }
+    }
+  }
+  
+  Future<void> _loadCommunityName(String groupId) async {
+    try {
+      final groupDoc = await _firebaseService.firestore
+          .collection('groups')
+          .doc(groupId)
+          .get();
+      if (mounted && groupDoc.exists) {
+        setState(() => _communityName = groupDoc.data()?['name']);
+      }
+    } catch (e) {
+      debugPrint('Failed to load community name: $e');
+    }
   }
 
   Future<void> _markAsRead() async {
@@ -97,8 +121,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final currentUser = ref.watch(authStateProvider).valueOrNull;
     final myUserId = currentUser?.uid ?? '';
 
-    // 채팅 타입
-    final chatType = _chatRoom?.type ?? 'dating';
+    // 채팅 타입 (위젯 파라미터 우선, 없으면 _chatRoom에서, 그것도 없으면 기본값)
+    final chatType = widget.chatType ?? _chatRoom?.type ?? 'dating';
     final isDating = chatType == 'dating' || chatType == 'breeding';
     final isMarket = chatType == 'marketplace' || chatType == 'market';
     final isCommunity = chatType == 'community';
@@ -128,8 +152,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           otherName = otherParticipant.nickname;
           otherImage = otherParticipant.profileImageUrl;
         } else if (isCommunity) {
-          otherName = otherParticipant.nickname;
-          otherImage = otherParticipant.profileImageUrl;
+          // 소모임: 소모임명 표시 (로드된 경우), 아니면 위젯 파라미터 사용
+          otherName = _communityName ?? widget.otherUserName ?? '소모임';
+          otherImage = null; // 소모임은 아이콘 사용
         } else {
           otherName = otherParticipant.nickname;
           otherImage = otherParticipant.profileImageUrl;
@@ -495,6 +520,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       
       final groupData = groupDoc.data()!;
       final memberIds = List<String>.from(groupData['memberIds'] ?? []);
+      final creatorId = groupData['creatorId'] as String?;
       
       // 멤버 정보 조회 (최대 10명)
       List<CommunityMember> members = [];
@@ -509,9 +535,17 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             id: memberId,
             nickname: memberData['nickname'] ?? '사용자',
             kkosunnaeScore: (memberData['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0,
+            isCreator: memberId == creatorId,
           ));
         }
       }
+      
+      // 모임장을 맨 앞으로 정렬
+      members.sort((a, b) {
+        if (a.isCreator) return -1;
+        if (b.isCreator) return 1;
+        return 0;
+      });
       
       if (!mounted) return;
       
@@ -521,7 +555,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         communityName: groupData['name'] ?? '소모임',
         description: groupData['description'],
         memberCount: memberIds.length,
-        category: groupData['type'],
+        category: GroupTypeLabel.labelFromString(groupData['type']),
         location: groupData['address'],
         createdAt: groupData['createdAt'] != null 
             ? _formatDate(groupData['createdAt'].toDate())

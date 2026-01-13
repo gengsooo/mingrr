@@ -43,6 +43,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
   String? _existingImageUrl;
   bool _isPublic = true;
   bool _requireApproval = false;
+  bool _isPetAccompanied = true; // 반려동물 동반 여부
   final List<String> _tags = [];
   bool _isLoading = false;
   String? _selectedLocation; // 활동 지역
@@ -66,6 +67,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
       _existingImageUrl = group.imageUrl;
       _isPublic = group.isPublic;
       _requireApproval = group.requireApproval;
+      _isPetAccompanied = group.isPetAccompanied;
       _tags.addAll(group.tags);
       _selectedLocation = group.address;
       _selectedGeoPoint = group.location;
@@ -494,6 +496,28 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
                   ),
                 ],
               ),
+              const Divider(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('반려동물 동반', style: TextStyle(fontWeight: FontWeight.w500)),
+                      Text('모임 활동 시 반려동물과 함께합니다', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                    ],
+                  ),
+                  Switch(
+                    value: _isPetAccompanied,
+                    onChanged: (value) => setState(() => _isPetAccompanied = value),
+                    activeColor: Colors.white,
+                    activeTrackColor: context.features.community,
+                    inactiveThumbColor: Colors.white,
+                    inactiveTrackColor: Theme.of(context).colorScheme.outlineVariant,
+                    trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -559,6 +583,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
         address: _selectedLocation,
         isPublic: _isPublic,
         requireApproval: _requireApproval,
+        isPetAccompanied: _isPetAccompanied,
         tags: _tags,
         createdAt: _isEditMode ? widget.group!.createdAt : now,
         updatedAt: now,

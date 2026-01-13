@@ -151,7 +151,7 @@ class ChatListScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(AppSizes.paddingM),
               itemCount: filteredRooms.length,
               itemBuilder: (context, index) {
-                return _buildChatRoomItem(context, filteredRooms[index], type, currentUserId ?? '');
+                return _buildChatRoomItem(context, ref, filteredRooms[index], type, currentUserId ?? '');
               },
             );
           },
@@ -210,7 +210,7 @@ class ChatListScreen extends ConsumerWidget {
                           style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                       ),
-                      ...filteredRooms.map((room) => _buildChatRoomItem(context, room, ChatType.dating, currentUserId ?? '')),
+                      ...filteredRooms.map((room) => _buildChatRoomItem(context, ref, room, ChatType.dating, currentUserId ?? '')),
                     ],
                   ],
                 );
@@ -542,13 +542,20 @@ class ChatListScreen extends ConsumerWidget {
   }
   
   /// Firebase ChatRoomModel을 사용한 채팅 아이템
-  Widget _buildChatRoomItem(BuildContext context, ChatRoomModel room, ChatType type, String currentUserId) {
+  Widget _buildChatRoomItem(BuildContext context, WidgetRef ref, ChatRoomModel room, ChatType type, String currentUserId) {
     final otherParticipant = room.getOtherParticipant(currentUserId);
     final unreadCount = room.unreadCounts[currentUserId] ?? 0;
     final hasUnread = unreadCount > 0;
     final isBreeding = room.type == 'breeding';
     final isDating = room.type == 'dating' || room.type == 'breeding';
     final isMarket = room.type == 'marketplace' || room.type == 'market';
+    final isCommunity = room.type == 'community';
+    
+    // 소모임인 경우 소모임 이름 조회
+    String? communityName;
+    if (isCommunity && room.relatedId != null) {
+      communityName = ref.watch(communityNameProvider(room.relatedId!)).valueOrNull;
+    }
     
     // 타입별 표시 정보 결정
     // 데이팅/교배: 반려동물 이미지 + 반려동물명 (보호자명)
@@ -572,9 +579,9 @@ class ChatListScreen extends ConsumerWidget {
       subtitle = null; // 마켓은 상품명 대신 마지막 메시지로 충분
       placeholderIcon = Icons.person;
     } else {
-      // 소모임: 모임 중심
-      displayName = otherParticipant?.nickname ?? '소모임';
-      displayImage = otherParticipant?.profileImageUrl;
+      // 소모임: 모임명 표시 (소모임 이름 우선)
+      displayName = communityName ?? '소모임';
+      displayImage = null; // 소모임은 아이콘 사용
       subtitle = null;
       placeholderIcon = Icons.groups;
     }
@@ -605,6 +612,7 @@ class ChatListScreen extends ConsumerWidget {
               chatRoomId: room.id,
               otherUserName: displayName,
               otherUserImageUrl: displayImage,
+              chatType: room.type,
             ),
           ),
         );
@@ -797,6 +805,7 @@ class ChatListScreen extends ConsumerWidget {
             builder: (context) => ChatDetailScreen(
               chatRoomId: chat['id'] as String,
               otherUserName: chat['name'] as String,
+              chatType: type == ChatType.dating ? 'dating' : type == ChatType.community ? 'community' : 'marketplace',
             ),
           ),
         );

@@ -16,6 +16,49 @@ enum GroupType {
   other,      // 기타
 }
 
+/// GroupType 한글 라벨 extension
+extension GroupTypeLabel on GroupType {
+  String get label {
+    switch (this) {
+      case GroupType.walking:
+        return '산책 모임';
+      case GroupType.training:
+        return '훈련/교육';
+      case GroupType.social:
+        return '친목 모임';
+      case GroupType.health:
+        return '건강/케어';
+      case GroupType.craft:
+        return '수제 간식';
+      case GroupType.other:
+        return '기타';
+    }
+  }
+  
+  /// 영어 문자열에서 GroupType으로 변환
+  static GroupType fromString(String? value) {
+    switch (value?.toLowerCase()) {
+      case 'walking':
+        return GroupType.walking;
+      case 'training':
+        return GroupType.training;
+      case 'social':
+        return GroupType.social;
+      case 'health':
+        return GroupType.health;
+      case 'craft':
+        return GroupType.craft;
+      default:
+        return GroupType.other;
+    }
+  }
+  
+  /// 영어 문자열을 한글 라벨로 변환
+  static String labelFromString(String? value) {
+    return fromString(value).label;
+  }
+}
+
 /// 모임 모델
 class GroupModel extends Equatable {
   /// 모임 ID

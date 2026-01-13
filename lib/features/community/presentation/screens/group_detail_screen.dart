@@ -669,6 +669,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             builder: (context) => ChatDetailScreen(
               chatRoomId: chatRoom.id,
               otherUserName: group.name,
+              chatType: 'community',
             ),
           ),
         );

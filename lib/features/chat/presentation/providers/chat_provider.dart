@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/chat_service.dart';
+import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../models/chat_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -63,3 +64,38 @@ final totalUnreadCountProvider = Provider.autoDispose<int>((ref) {
 
 // 선택된 채팅방 ID
 final selectedChatRoomIdProvider = StateProvider<String?>((ref) => null);
+
+// 소모임 이름 캐시 Provider (relatedId -> groupName)
+final communityNameCacheProvider = StateProvider<Map<String, String>>((ref) => {});
+
+// 소모임 이름 조회 Provider
+final communityNameProvider = FutureProvider.autoDispose.family<String?, String>((ref, groupId) async {
+  if (groupId.isEmpty) return null;
+  
+  // 캐시 확인
+  final cache = ref.read(communityNameCacheProvider);
+  if (cache.containsKey(groupId)) {
+    return cache[groupId];
+  }
+  
+  // Firebase에서 조회
+  try {
+    final firebaseService = FirebaseService();
+    final groupDoc = await firebaseService.firestore
+        .collection('groups')
+        .doc(groupId)
+        .get();
+    
+    if (groupDoc.exists) {
+      final name = groupDoc.data()?['name'] as String?;
+      if (name != null) {
+        // 캐시에 저장
+        ref.read(communityNameCacheProvider.notifier).state = {...cache, groupId: name};
+        return name;
+      }
+    }
+  } catch (e) {
+    // 에러 무시
+  }
+  return null;
+});
