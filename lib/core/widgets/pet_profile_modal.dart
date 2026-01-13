@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/bottom_sheet_stack_manager.dart';
 import '../theme/feature_colors.dart';
 import '../theme/app_theme.dart';
 import '../constants/app_sizes.dart';
@@ -35,10 +36,26 @@ void showPetProfileModal(
   bool isLocationVerified = false,
   GuardianInfo? guardianInfo,
 }) {
+  final stackManager = BottomSheetStackManager();
+  final sheetId = BottomSheetStackManager.createSheetId(BottomSheetType.pet, petId);
+  
+  // 순환 감지: 같은 반려동물 바텀시트가 이미 열려있으면 해당 바텀시트까지 닫기
+  if (stackManager.hasCycle(sheetId)) {
+    final closeCount = stackManager.popUntilAndGetCount(sheetId);
+    for (int i = 0; i < closeCount; i++) {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    }
+  }
+  
+  // 스택에 등록
+  stackManager.push(sheetId);
+  
   // 상위 컨텍스트의 ScaffoldMessenger 저장 (바텀시트 닫힌 후에도 스낵바 표시 가능)
   final rootScaffoldMessenger = ScaffoldMessenger.of(context);
   
-  showModalBottomSheet<Map<String, dynamic>>(
+  showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
@@ -62,51 +79,9 @@ void showPetProfileModal(
       isLocationVerified: isLocationVerified,
       guardianInfo: guardianInfo,
     ),
-  ).then((result) async {
-    // 바텀시트가 닫힌 후 보호자 정보 모달 다시 열기
-    if (guardianInfo != null) {
-      // Firebase에서 최신 pets 정보 로드
-      List<GuardianPetInfo> updatedPets = [];
-      for (final pet in guardianInfo.pets) {
-        try {
-          final petDoc = await FirebaseFirestore.instance
-              .collection('pets')
-              .doc(pet.id)
-              .get();
-          final updatedLikeCount = petDoc.exists 
-              ? (petDoc.data()?['likeCount'] ?? pet.likeCount) 
-              : pet.likeCount;
-          updatedPets.add(GuardianPetInfo(
-            id: pet.id,
-            name: pet.name,
-            breed: pet.breed,
-            ageString: pet.ageString,
-            introduction: pet.introduction,
-            traits: pet.traits,
-            photoUrls: pet.photoUrls,
-            profileImageUrl: pet.profileImageUrl,
-            likeCount: updatedLikeCount,
-          ));
-        } catch (e) {
-          updatedPets.add(pet);
-        }
-      }
-      
-      Future.delayed(const Duration(milliseconds: 100), () {
-        showGuardianProfileModal(
-          context,
-          guardianId: guardianInfo.id,
-          guardianName: guardianInfo.nickname,
-          kkosunnaeScore: guardianInfo.kkosunnaeScore,
-          gender: guardianInfo.gender,
-          age: guardianInfo.age,
-          isIdentityVerified: guardianInfo.isIdentityVerified,
-          isPetVerified: guardianInfo.isPetVerified,
-          isLocationVerified: guardianInfo.isLocationVerified,
-          pets: updatedPets,
-        );
-      });
-    }
+  ).then((_) {
+    // 바텀시트가 닫힐 때 스택에서 제거
+    stackManager.pop(sheetId);
   });
 }
 
@@ -661,7 +636,8 @@ class _PetProfileModalState extends State<PetProfileModal> {
         const SizedBox(height: AppSizes.gapS),
         GestureDetector(
           onTap: () {
-            Navigator.pop(context);
+            // 스택 방식: 현재 바텀시트 위에 보호자 정보 바텀시트를 열음
+            // 보호자 정보 바텀시트를 닫으면 현재 반려동물 정보 바텀시트가 보임
             showGuardianProfileModal(
               context,
               guardianId: guardian.id,
@@ -672,6 +648,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
               isIdentityVerified: guardian.isIdentityVerified,
               isPetVerified: guardian.isPetVerified,
               isLocationVerified: guardian.isLocationVerified,
+              pets: guardian.pets,
             );
           },
           child: Container(

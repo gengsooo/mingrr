@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_sizes.dart';
+import '../services/bottom_sheet_stack_manager.dart';
 import '../theme/app_theme.dart';
 import 'common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
@@ -49,13 +50,29 @@ void showGuardianProfileModal(
   List<GuardianPetInfo> pets = const [],
   GuardianActivityInfo? activityInfo,
 }) {
+  final stackManager = BottomSheetStackManager();
+  final sheetId = BottomSheetStackManager.createSheetId(BottomSheetType.guardian, guardianId);
+  
+  // 순환 감지: 같은 보호자 바텀시트가 이미 열려있으면 해당 바텀시트까지 닫기
+  if (stackManager.hasCycle(sheetId)) {
+    final closeCount = stackManager.popUntilAndGetCount(sheetId);
+    for (int i = 0; i < closeCount; i++) {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    }
+  }
+  
+  // 스택에 등록
+  stackManager.push(sheetId);
+  
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     isDismissible: true,
     enableDrag: true,
-    builder: (context) => GuardianProfileModal(
+    builder: (sheetContext) => GuardianProfileModal(
       guardianId: guardianId,
       guardianName: guardianName,
       kkosunnaeScore: kkosunnaeScore,
@@ -68,7 +85,10 @@ void showGuardianProfileModal(
       pets: pets,
       activityInfo: activityInfo,
     ),
-  );
+  ).then((_) {
+    // 바텀시트가 닫힐 때 스택에서 제거
+    stackManager.pop(sheetId);
+  });
 }
 
 /// 보호자의 반려동물 정보
@@ -343,41 +363,34 @@ class GuardianProfileModal extends StatelessWidget {
 
   /// 반려동물 아이템 (클릭 시 반려동물 프로필 모달)
   Widget _buildPetItem(BuildContext context, GuardianPetInfo pet) {
-    // 상위 Navigator context 저장 (pop 후에도 사용 가능)
-    final rootContext = Navigator.of(context, rootNavigator: true).context;
-    
     return GestureDetector(
       onTap: () {
-        // 보호자 모달 닫기
-        Navigator.pop(context);
-        
-        // 약간의 딜레이 후 반려동물 모달 열기
-        Future.delayed(const Duration(milliseconds: 150), () {
-          showPetProfileModal(
-            rootContext,
-            petId: pet.id,
-            petName: pet.name,
-            breed: pet.breed,
-            age: pet.ageString != null ? int.tryParse(pet.ageString!.replaceAll(RegExp(r'[^0-9]'), '')) : null,
-            gender: 'male',
-            introduction: pet.introduction ?? '안녕하세요! 저는 ${pet.name}예요.',
-            traits: pet.traits,
-            photoUrls: pet.photoUrls,
-            profileImageUrl: pet.profileImageUrl,
-            likeCount: pet.likeCount,
-            guardianInfo: GuardianInfo(
-              id: guardianId,
-              nickname: guardianName,
-              kkosunnaeScore: kkosunnaeScore,
-              gender: gender,
-              age: age,
-              isIdentityVerified: isIdentityVerified,
-              isPetVerified: isPetVerified,
-              isLocationVerified: isLocationVerified,
-              pets: pets,
-            ),
-          );
-        });
+        // 스택 방식: 현재 바텀시트 위에 반려동물 정보 바텀시트를 열음
+        // 반려동물 정보 바텀시트를 닫으면 현재 보호자 정보 바텀시트가 보임
+        showPetProfileModal(
+          context,
+          petId: pet.id,
+          petName: pet.name,
+          breed: pet.breed,
+          age: pet.ageString != null ? int.tryParse(pet.ageString!.replaceAll(RegExp(r'[^0-9]'), '')) : null,
+          gender: 'male',
+          introduction: pet.introduction ?? '안녕하세요! 저는 ${pet.name}예요.',
+          traits: pet.traits,
+          photoUrls: pet.photoUrls,
+          profileImageUrl: pet.profileImageUrl,
+          likeCount: pet.likeCount,
+          guardianInfo: GuardianInfo(
+            id: guardianId,
+            nickname: guardianName,
+            kkosunnaeScore: kkosunnaeScore,
+            gender: gender,
+            age: age,
+            isIdentityVerified: isIdentityVerified,
+            isPetVerified: isPetVerified,
+            isLocationVerified: isLocationVerified,
+            pets: pets,
+          ),
+        );
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),

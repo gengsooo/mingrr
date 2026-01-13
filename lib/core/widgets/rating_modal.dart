@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/bottom_sheet_stack_manager.dart';
 import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import 'common_widgets.dart';
@@ -43,6 +44,22 @@ void showRatingModal(
   required String targetName,
   required Function(RatingType) onRatingSelected,
 }) {
+  final stackManager = BottomSheetStackManager();
+  final sheetId = BottomSheetStackManager.createSheetId(BottomSheetType.rating, targetName);
+  
+  // 순환 감지: 같은 평가 바텀시트가 이미 열려있으면 해당 바텀시트까지 닫기
+  if (stackManager.hasCycle(sheetId)) {
+    final closeCount = stackManager.popUntilAndGetCount(sheetId);
+    for (int i = 0; i < closeCount; i++) {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    }
+  }
+  
+  // 스택에 등록
+  stackManager.push(sheetId);
+  
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
@@ -59,7 +76,10 @@ void showRatingModal(
         MingrrSnackBar.success(context, '$targetName님에게 "${rating.label}" 평가를 보냈어요! 🌟');
       },
     ),
-  );
+  ).then((_) {
+    // 바텀시트가 닫힐 때 스택에서 제거
+    stackManager.pop(sheetId);
+  });
 }
 
 /// 꼬순내지수 평가 모달 위젯

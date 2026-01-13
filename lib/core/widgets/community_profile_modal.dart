@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/bottom_sheet_stack_manager.dart';
 import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import 'guardian_profile_modal.dart';
@@ -40,11 +41,27 @@ void showCommunityProfileModal(
   bool isJoined = true,
   List<CommunityMember> members = const [],
 }) {
+  final stackManager = BottomSheetStackManager();
+  final sheetId = BottomSheetStackManager.createSheetId(BottomSheetType.community, communityId);
+  
+  // 순환 감지: 같은 소모임 바텀시트가 이미 열려있으면 해당 바텀시트까지 닫기
+  if (stackManager.hasCycle(sheetId)) {
+    final closeCount = stackManager.popUntilAndGetCount(sheetId);
+    for (int i = 0; i < closeCount; i++) {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    }
+  }
+  
+  // 스택에 등록
+  stackManager.push(sheetId);
+  
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (context) => CommunityProfileModal(
+    builder: (sheetContext) => CommunityProfileModal(
       communityId: communityId,
       communityName: communityName,
       description: description,
@@ -56,7 +73,10 @@ void showCommunityProfileModal(
       isJoined: isJoined,
       members: members,
     ),
-  );
+  ).then((_) {
+    // 바텀시트가 닫힐 때 스택에서 제거
+    stackManager.pop(sheetId);
+  });
 }
 
 /// 소모임 프로필 모달 위젯
@@ -179,7 +199,8 @@ class CommunityProfileModal extends StatelessWidget {
   Widget _buildMemberItem(BuildContext context, CommunityMember member) {
     return GestureDetector(
       onTap: () {
-        Navigator.pop(context);
+        // 스택 방식: 현재 바텀시트 위에 보호자 정보 바텀시트를 열음
+        // 보호자 정보 바텀시트를 닫으면 현재 소모임 정보 바텀시트가 보임
         showGuardianProfileModal(
           context,
           guardianId: member.id,

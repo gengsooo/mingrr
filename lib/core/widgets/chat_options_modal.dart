@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_sizes.dart';
+import '../services/bottom_sheet_stack_manager.dart';
 import 'common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
 import 'rating_modal.dart';
@@ -29,10 +30,26 @@ void showChatOptionsModal(
   required VoidCallback? onReport,
   required VoidCallback? onLeave,
 }) {
+  final stackManager = BottomSheetStackManager();
+  final sheetId = BottomSheetStackManager.createSheetId(BottomSheetType.chatOptions, targetId);
+  
+  // 순환 감지: 같은 채팅 옵션 바텀시트가 이미 열려있으면 해당 바텀시트까지 닫기
+  if (stackManager.hasCycle(sheetId)) {
+    final closeCount = stackManager.popUntilAndGetCount(sheetId);
+    for (int i = 0; i < closeCount; i++) {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    }
+  }
+  
+  // 스택에 등록
+  stackManager.push(sheetId);
+  
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
-    builder: (context) => ChatOptionsModal(
+    builder: (sheetContext) => ChatOptionsModal(
       chatName: chatName,
       targetId: targetId,
       onMuteNotification: onMuteNotification,
@@ -40,7 +57,10 @@ void showChatOptionsModal(
       onReport: onReport,
       onLeave: onLeave,
     ),
-  );
+  ).then((_) {
+    // 바텀시트가 닫힐 때 스택에서 제거
+    stackManager.pop(sheetId);
+  });
 }
 
 /// 채팅방 옵션 모달 위젯
@@ -84,7 +104,8 @@ class ChatOptionsModal extends StatelessWidget {
               subtitle: '상대방을 평가해주세요',
               color: Theme.of(context).colorScheme.primary,
               onTap: () {
-                Navigator.pop(context);
+                // 스택 방식: 현재 바텀시트 위에 평가 모달을 열음
+                // 평가 모달을 닫으면 현재 옵션 바텀시트가 보임
                 showRatingModal(
                   context,
                   targetName: chatName,

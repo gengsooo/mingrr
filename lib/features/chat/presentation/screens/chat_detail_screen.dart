@@ -360,6 +360,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   }
 
   /// 반려동물 프로필 모달 표시 (데이팅/교배용)
+  /// 추천친구-상세와 동일한 내용을 표시하기 위해 보호자 정보도 함께 조회
   Future<void> _showPetProfile(BuildContext context, ChatParticipant participant) async {
     try {
       debugPrint('🐕 _showPetProfile 시작 - participant.id: ${participant.id}');
@@ -374,10 +375,43 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       
       if (petsSnapshot.docs.isEmpty) {
         debugPrint('🐕 반려동물 없음 - 스낵바 표시');
-        // 반려동물 정보가 없으면 알림 메시지 표시
         if (!mounted) return;
         MingrrSnackBar.info(context, '반려동물 정보가 없어요!');
         return;
+      }
+      
+      // 보호자 정보 조회
+      final userDoc = await _firebaseService.firestore
+          .collection('users')
+          .doc(participant.id)
+          .get();
+      final userData = userDoc.data();
+      final kkosunnaeScore = (userData?['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0;
+      final isIdentityVerified = userData?['isIdentityVerified'] as bool? ?? false;
+      final isPetVerified = userData?['isPetVerified'] as bool? ?? false;
+      final isLocationVerified = userData?['isLocationVerified'] as bool? ?? false;
+      final genderStr = userData?['gender'] as String?;
+      final userAge = userData?['age'] as int?;
+      
+      GuardianGender guardianGender = GuardianGender.unknown;
+      if (genderStr == 'male') guardianGender = GuardianGender.male;
+      if (genderStr == 'female') guardianGender = GuardianGender.female;
+      
+      // 모든 반려동물 정보 수집 (보호자 정보 바텀시트에서 사용)
+      List<GuardianPetInfo> allPets = [];
+      for (final doc in petsSnapshot.docs) {
+        final data = doc.data();
+        allPets.add(GuardianPetInfo(
+          id: doc.id,
+          name: data['name'] ?? '반려동물',
+          breed: data['breed'],
+          ageString: data['age'] != null ? '${data['age']}살' : null,
+          introduction: data['introduction'],
+          traits: List<String>.from(data['traits'] ?? []),
+          photoUrls: List<String>.from(data['photoUrls'] ?? []),
+          profileImageUrl: data['profileImageUrl'],
+          likeCount: data['likeCount'] ?? 0,
+        ));
       }
       
       // petName과 일치하는 반려동물 또는 첫 번째 반려동물
@@ -389,7 +423,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       
       if (!mounted) return;
       
-      // 채팅 상세에서는 guardianInfo를 전달하지 않음 (닫힐 때 보호자 프로필 자동 열림 방지)
+      // 추천친구-상세와 동일한 내용을 표시하기 위해 guardianInfo 전달
       showPetProfileModal(
         context,
         petId: petDoc.id,
@@ -403,9 +437,22 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         photoUrls: List<String>.from(petData['photoUrls'] ?? []),
         profileImageUrl: petData['profileImageUrl'],
         likeCount: petData['likeCount'] ?? 0,
+        isIdentityVerified: isIdentityVerified,
+        isPetVerified: isPetVerified,
+        isLocationVerified: isLocationVerified,
+        guardianInfo: GuardianInfo(
+          id: participant.id,
+          nickname: participant.nickname,
+          kkosunnaeScore: kkosunnaeScore,
+          gender: guardianGender,
+          age: userAge,
+          isIdentityVerified: isIdentityVerified,
+          isPetVerified: isPetVerified,
+          isLocationVerified: isLocationVerified,
+          pets: allPets,
+        ),
       );
     } catch (e) {
-      // 에러 시 에러 메시지 표시 (디버깅용)
       debugPrint('🐕 _showPetProfile 에러: $e');
       if (!mounted) return;
       MingrrSnackBar.error(context, '반려동물 정보를 불러오는데 실패했습니다');
