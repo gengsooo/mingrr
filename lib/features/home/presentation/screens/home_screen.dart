@@ -9,9 +9,9 @@ import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/profile_icon.dart';
 import '../../../../models/pet_model.dart';
-import '../../../../models/community_model.dart';
+import '../../../../models/group_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
-import '../../../community/presentation/providers/community_provider.dart';
+import '../../../social/presentation/providers/group_provider.dart';
 import '../../../../core/widgets/location_bubble_widget.dart';
 import '../../../../core/providers/location_verification_provider.dart';
 
@@ -94,7 +94,7 @@ class HomeScreen extends ConsumerWidget {
                   MingrrSectionHeader(
                     title: '인기 소모임',
                     actionText: '더보기',
-                    onActionTap: () => context.push('/community'),
+                    onActionTap: () => context.push('/social'),
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   _buildPopularGroupsSection(context),
@@ -971,7 +971,7 @@ class HomeScreen extends ConsumerWidget {
     
     return MingrrCard(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
-      onTap: () => context.push('/community/group/${group.id}'),
+      onTap: () => context.push('/social/group/${group.id}'),
       child: Row(
         children: [
           Container(

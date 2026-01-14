@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/firebase_providers.dart';
 import '../../../../core/providers/location_provider.dart';
 import '../../../../core/services/location_service.dart';
-import '../../../../models/community_model.dart';
+import '../../../../models/group_model.dart';
 
 /// ============================================================
 /// 커뮤니티(소모임) 관련 Provider

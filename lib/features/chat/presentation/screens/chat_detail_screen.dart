@@ -16,7 +16,7 @@ import '../../../../core/widgets/guardian_profile_modal.dart';
 import '../../../../core/widgets/pet_profile_modal.dart';
 import '../../../../core/widgets/community_profile_modal.dart';
 import '../../../../models/chat_model.dart';
-import '../../../../models/community_model.dart';
+import '../../../../models/group_model.dart';
 import '../../../../models/rating_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/chat_provider.dart';

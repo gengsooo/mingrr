@@ -7,7 +7,7 @@ import 'common_widgets.dart';
 import 'svg_icons.dart';
 import '../utils/format_utils.dart';
 import '../../models/marketplace_model.dart';
-import '../../models/community_model.dart';
+import '../../models/group_model.dart';
 
 /// ============================================================
 /// 통합 검색 화면

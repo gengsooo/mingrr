@@ -95,6 +95,18 @@ class FirebaseService {
   /// 평가(꼬순내지수) 컬렉션
   CollectionReference<Map<String, dynamic>> get ratingsCollection =>
       firestore.collection('ratings');
+  
+  /// 커뮤니티 피드 게시글 컬렉션
+  CollectionReference<Map<String, dynamic>> get feedPostsCollection =>
+      firestore.collection('feedPosts');
+  
+  /// 커뮤니티 피드 댓글 컬렉션
+  CollectionReference<Map<String, dynamic>> get feedCommentsCollection =>
+      firestore.collection('feedComments');
+  
+  /// 커뮤니티 피드 좋아요 컬렉션
+  CollectionReference<Map<String, dynamic>> get feedLikesCollection =>
+      firestore.collection('feedLikes');
 
   // ===== 메시지 서브컬렉션 접근 =====
   

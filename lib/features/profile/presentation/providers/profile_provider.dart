@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
-import '../../../../models/community_model.dart';
+import '../../../../models/group_model.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 

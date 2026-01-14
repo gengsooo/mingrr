@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/pet_model.dart';
 import '../../models/marketplace_model.dart';
-import '../../models/community_model.dart';
+import '../../models/group_model.dart';
 import '../constants/app_sizes.dart';
 import '../constants/app_strings.dart';
 import '../widgets/common_widgets.dart';

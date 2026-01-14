@@ -16,7 +16,7 @@ import 'features/home/presentation/screens/home_screen.dart';  // 홈 화면
 import 'features/dating/presentation/screens/dating_screen.dart';  // 데이팅 화면
 import 'features/marketplace/presentation/screens/marketplace_screen.dart';  // 마켓 화면
 import 'features/health/presentation/screens/health_screen.dart';  // 건강수첩 화면
-import 'features/community/presentation/screens/community_screen.dart';  // 소모임 화면
+import 'features/social/presentation/screens/social_screen.dart';  // 소셜 화면
 import 'features/chat/presentation/screens/chat_list_screen.dart';  // 채팅 목록 화면
 import 'features/profile/presentation/screens/profile_screen.dart';  // 프로필 화면
 
@@ -72,10 +72,10 @@ final demoRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const MarketplaceScreen(),
           ),
           
-          // 5️⃣ 소모임 화면 (경로: '/community')
+          // 5️⃣ 소셜 화면 (경로: '/social')
           GoRoute(
-            path: '/community',
-            builder: (context, state) => const CommunityScreen(),
+            path: '/social',
+            builder: (context, state) => const SocialScreen(),
           ),
         ],
       ),
@@ -239,15 +239,15 @@ class DemoBottomNavBar extends StatelessWidget {
                 color: context.features.market,  // 커스텀 색상 (주황)
               ),
               
-              // 5️⃣ 소모임 버튼
+              // 5️⃣ 소셜 버튼
               _buildNavItem(
                 context: context,
-                icon: Icons.groups_outlined,
-                activeIcon: Icons.groups,
-                label: '소모임',
+                icon: Icons.forum_outlined,
+                activeIcon: Icons.forum,
+                label: '소셜',
                 index: 4,
                 currentIndex: currentIndex,
-                route: '/community',
+                route: '/social',
                 color: context.features.community,  // 커스텀 색상 (보라)
               ),
             ],
@@ -391,7 +391,7 @@ class DemoBottomNavBar extends StatelessWidget {
         return 2;
       case '/market':  // 마켓 화면
         return 3;
-      case '/community':  // 소모임 화면
+      case '/social':  // 소셜 화면
         return 4;
       default:  // 그 외의 경우 (프로필, 건강수첩 등)
         return 0;  // 기본값으로 홈(0) 반환

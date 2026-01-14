@@ -279,7 +279,7 @@ enum BadgeType {
 /// ============================================================
 /// 소모임 카테고리
 /// ============================================================
-enum CommunityCategory {
+enum GroupCategory {
   walk('산책 모임', Icons.directions_walk, '함께 산책해요'),
   play('놀이 모임', Icons.sports_tennis, '함께 놀아요'),
   share('나눔 모임', Icons.card_giftcard, '물품을 나눠요'),
@@ -293,11 +293,15 @@ enum CommunityCategory {
   final IconData icon;
   final String description;
 
-  const CommunityCategory(this.label, this.icon, this.description);
+  const GroupCategory(this.label, this.icon, this.description);
 }
 
+/// 하위 호환성을 위한 별칭
+@Deprecated('GroupCategory를 사용하세요')
+typedef CommunityCategory = GroupCategory;
+
 /// 소모임 제한 타입
-enum CommunityRestriction {
+enum GroupRestriction {
   none('제한 없음'),
   petTypeOnly('종류 제한'),
   weightOnly('체중 제한'),
@@ -305,8 +309,12 @@ enum CommunityRestriction {
 
   final String label;
 
-  const CommunityRestriction(this.label);
+  const GroupRestriction(this.label);
 }
+
+/// 하위 호환성을 위한 별칭
+@Deprecated('GroupRestriction을 사용하세요')
+typedef CommunityRestriction = GroupRestriction;
 
 /// ============================================================
 /// 채팅 타입
@@ -317,7 +325,7 @@ enum CommunityRestriction {
 enum ChatType {
   dating('데이팅', Icons.favorite, '친구 만들기 채팅'),
   breeding('교배', Icons.pets, '교배 상대 채팅'),
-  community('소모임', Icons.groups, '소모임 채팅'),
+  group('소모임', Icons.groups, '소모임 채팅'),
   market('마켓', Icons.storefront, '중고거래 채팅');
 
   final String label;
@@ -328,6 +336,9 @@ enum ChatType {
   
   /// 교배 채팅인지 확인
   bool get isBreeding => this == ChatType.breeding;
+  
+  /// 소모임 채팅인지 확인
+  bool get isGroup => this == ChatType.group;
 }
 
 /// ============================================================

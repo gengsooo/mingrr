@@ -52,7 +52,7 @@ class ChatListScreen extends ConsumerWidget {
     // 탭별 배경색 (채팅 목록은 각 탭의 테마색 유지)
     final backgroundColor = switch (selectedTab) {
       ChatType.dating || ChatType.breeding => features.datingContainer,
-      ChatType.community => features.communityContainer,
+      ChatType.group => features.communityContainer,
       ChatType.market => features.marketContainer,
     };
     
@@ -76,7 +76,7 @@ class ChatListScreen extends ConsumerWidget {
               final chatType = switch (index) {
                 0 => ChatType.dating,
                 1 => ChatType.market,
-                2 => ChatType.community,
+                2 => ChatType.group,
                 _ => ChatType.dating,
               };
               ref.read(_selectedChatTabProvider.notifier).state = chatType;
@@ -100,7 +100,7 @@ class ChatListScreen extends ConsumerWidget {
         return 0;
       case ChatType.market:
         return 1;
-      case ChatType.community:
+      case ChatType.group:
         return 2;
     }
   }
@@ -113,7 +113,7 @@ class ChatListScreen extends ConsumerWidget {
         return features.dating;
       case ChatType.breeding:
         return features.breeding;
-      case ChatType.community:
+      case ChatType.group:
         return features.community;
       case ChatType.market:
         return features.market;
@@ -754,7 +754,7 @@ class ChatListScreen extends ConsumerWidget {
         return '새로운 친구를 찾아보세요!';
       case ChatType.breeding:
         return '교배 신청이 수락되면\n채팅이 시작됩니다';
-      case ChatType.community:
+      case ChatType.group:
         return '소모임에 가입하면\n채팅이 시작됩니다';
       case ChatType.market:
         return '마켓에서 거래를 시작하면\n채팅이 생성됩니다';
@@ -776,7 +776,7 @@ class ChatListScreen extends ConsumerWidget {
         return [
           {'id': '3', 'name': '몽이', 'owner': '최지현', 'lastMessage': '교배 관련해서 문의드려요', 'time': '2시간 전', 'unread': 0, 'isOnline': false, 'isBreeding': true},
         ];
-      case ChatType.community:
+      case ChatType.group:
         return [
           {'id': '5', 'name': '한강 산책 모임', 'owner': '', 'lastMessage': '이번 주 토요일 모임 확정입니다!', 'time': '3시간 전', 'unread': 5, 'memberCount': 28},
           {'id': '6', 'name': '강남 댕댕이 모임', 'owner': '', 'lastMessage': '다음 모임 장소 투표해주세요~', 'time': '5시간 전', 'unread': 12, 'memberCount': 45},
@@ -794,7 +794,7 @@ class ChatListScreen extends ConsumerWidget {
   /// 채팅 아이템
   Widget _buildChatItem(BuildContext context, Map<String, dynamic> chat, ChatType type) {
     final hasUnread = (chat['unread'] as int) > 0;
-    final isGroup = type == ChatType.community;
+    final isGroup = type == ChatType.group;
 
     return MingrrCard(
       margin: const EdgeInsets.only(bottom: AppSizes.gapS),
@@ -805,7 +805,7 @@ class ChatListScreen extends ConsumerWidget {
             builder: (context) => ChatDetailScreen(
               chatRoomId: chat['id'] as String,
               otherUserName: chat['name'] as String,
-              chatType: type == ChatType.dating ? 'dating' : type == ChatType.community ? 'community' : 'marketplace',
+              chatType: type == ChatType.dating ? 'dating' : type == ChatType.group ? 'community' : 'marketplace',
             ),
           ),
         );
@@ -960,7 +960,7 @@ class ChatListScreen extends ConsumerWidget {
       case ChatType.dating:
       case ChatType.breeding:
         return chat['owner'] as String? ?? '';
-      case ChatType.community:
+      case ChatType.group:
         final memberCount = chat['memberCount'] as int?;
         return memberCount != null ? '멤버 $memberCount명' : '';
       case ChatType.market:
@@ -975,7 +975,7 @@ class ChatListScreen extends ConsumerWidget {
         return Icons.favorite;
       case ChatType.breeding:
         return Icons.pets;
-      case ChatType.community:
+      case ChatType.group:
         return Icons.groups;
       case ChatType.market:
         return Icons.store;

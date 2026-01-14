@@ -26,8 +26,9 @@ import 'features/dating/presentation/screens/pet_detail_screen.dart';  // 반려
 import 'features/walk/presentation/screens/walk_screen.dart';  // 산책 화면
 import 'features/marketplace/presentation/screens/marketplace_screen.dart';  // 마켓 화면
 import 'features/health/presentation/screens/health_screen.dart';  // 건강수첩 화면
-import 'features/community/presentation/screens/community_screen.dart';  // 소모임 화면
-import 'features/community/presentation/screens/group_detail_screen.dart';  // 소모임 상세 화면
+import 'features/social/presentation/screens/social_screen.dart';  // 소셜 화면
+import 'features/social/presentation/screens/group_detail_screen.dart';  // 소모임 상세 화면
+import 'features/social/presentation/screens/feed_detail_screen.dart';  // 피드 상세 화면
 import 'features/chat/presentation/screens/chat_list_screen.dart';  // 채팅 목록 화면
 import 'features/chat/presentation/providers/chat_provider.dart';  // 채팅 Provider
 import 'features/profile/presentation/screens/profile_screen.dart';  // 프로필 화면
@@ -178,10 +179,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ChatListScreen(),
           ),
           
-          // 5️⃣ 소모임 화면 (경로: '/community') - 바텀바에서 접근
+          // 5️⃣ 소셜 화면 (경로: '/social') - 바텀바에서 접근
           GoRoute(
-            path: '/community',
-            builder: (context, state) => const CommunityScreen(),
+            path: '/social',
+            builder: (context, state) => const SocialScreen(),
           ),
         ],
       ),
@@ -218,12 +219,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       
-      // 소모임 상세 화면 (경로: '/community/group/:id')
+      // 소모임 상세 화면 (경로: '/social/group/:id')
       GoRoute(
-        path: '/community/group/:id',
+        path: '/social/group/:id',
         builder: (context, state) {
           final groupId = state.pathParameters['id'] ?? '';
           return GroupDetailScreen(groupId: groupId);
+        },
+      ),
+      
+      // 피드 상세 화면 (경로: '/social/feed/:id')
+      GoRoute(
+        path: '/social/feed/:id',
+        builder: (context, state) {
+          final postId = state.pathParameters['id'] ?? '';
+          return FeedDetailScreen(postId: postId);
         },
       ),
       
@@ -419,16 +429,16 @@ class MingrrBottomNavBar extends ConsumerWidget {
                 ),
               ),
               
-              // 5️⃣ 소모임 버튼
+              // 5️⃣ 소셜 버튼
               Expanded(
                 child: _buildNavItem(
                   context: context,
-                  icon: Icons.groups_outlined,
-                  activeIcon: Icons.groups,
-                  label: '소모임',
+                  icon: Icons.forum_outlined,
+                  activeIcon: Icons.forum,
+                  label: '소셜',
                   index: 4,
                   currentIndex: currentIndex,
-                  route: '/community',
+                  route: '/social',
                   color: context.features.community,
                 ),
               ),
@@ -560,7 +570,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
   // ============================================================
   // 🔢 _getIndexFromLocation - URL 경로를 인덱스 번호로 변환
   // ============================================================
-  // 예: '/' -> 0, '/dating' -> 1, '/chat' -> 2, '/market' -> 3, '/community' -> 4
+  // 예: '/' -> 0, '/dating' -> 1, '/chat' -> 2, '/market' -> 3, '/social' -> 4
   // 이 함수는 현재 어느 화면에 있는지 알아내기 위해 사용됩니다
   int _getIndexFromLocation(String location) {
     // switch: 여러 경우의 수를 처리하는 문법
@@ -573,7 +583,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
         return 2;
       case '/market':  // 마켓 화면
         return 3;
-      case '/community':  // 소모임 화면
+      case '/social':  // 소셜 화면
         return 4;
       default:  // 그 외의 경우 (산책, 건강수첩, 프로필 등)
         return 0;  // 기본값으로 홈(0) 반환

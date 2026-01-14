@@ -31,10 +31,16 @@ enum ReportTargetType {
   chat('채팅'),
   post('게시글'),
   product('상품'),
-  community('소모임');
+  group('소모임'),
+  feed('커뮤니티 게시글');
 
   final String label;
   const ReportTargetType(this.label);
+}
+
+/// 하위 호환성을 위한 별칭
+extension ReportTargetTypeCompat on ReportTargetType {
+  static ReportTargetType get community => ReportTargetType.group;
 }
 
 /// 신고 바텀시트

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/pet_model.dart';
 import '../../models/marketplace_model.dart';
-import '../../models/community_model.dart';
+import '../../models/group_model.dart';
 import '../../models/breeding_model.dart';
 import '../../models/rating_model.dart';
 import '../services/firebase_service.dart';

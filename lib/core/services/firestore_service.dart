@@ -4,7 +4,7 @@ import '../../models/pet_model.dart';
 import '../../models/chat_model.dart';
 import '../../models/dating_model.dart';
 import '../../models/marketplace_model.dart';
-import '../../models/community_model.dart';
+import '../../models/group_model.dart';
 import '../../models/breeding_model.dart';
 import 'firebase_service.dart';
 
@@ -355,7 +355,7 @@ class FirestoreService {
     }
   }
   
-  Future<void> createSchedule(ScheduleModel schedule) async {
+  Future<void> createSchedule(GroupScheduleModel schedule) async {
     try {
       await _firebase.schedulesCollection.doc(schedule.id).set(schedule.toFirestore());
     } catch (e) {
@@ -363,7 +363,7 @@ class FirestoreService {
     }
   }
   
-  Future<List<ScheduleModel>> getGroupSchedules(String groupId) async {
+  Future<List<GroupScheduleModel>> getGroupSchedules(String groupId) async {
     try {
       final snapshot = await _firebase.schedulesCollection
           .where('groupId', isEqualTo: groupId)
@@ -371,7 +371,7 @@ class FirestoreService {
           .get();
       
       return snapshot.docs
-          .map((doc) => ScheduleModel.fromFirestore(doc.data(), id: doc.id))
+          .map((doc) => GroupScheduleModel.fromFirestore(doc.data(), id: doc.id))
           .toList();
     } catch (e) {
       rethrow;

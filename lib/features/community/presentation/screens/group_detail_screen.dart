@@ -12,7 +12,7 @@ import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../models/chat_model.dart';
-import '../../../../models/community_model.dart';
+import '../../../../models/group_model.dart';
 import '../../../chat/presentation/screens/chat_detail_screen.dart';
 import '../providers/community_provider.dart';
 

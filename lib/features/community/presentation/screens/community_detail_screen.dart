@@ -544,7 +544,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
               context,
               targetId: widget.communityId,
               targetName: '이 모임',
-              targetType: ReportTargetType.community,
+              targetType: ReportTargetType.group,
             );
           },
         ),
