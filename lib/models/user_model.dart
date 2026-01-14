@@ -67,6 +67,18 @@ class UserModel extends Equatable {
   /// 위치 인증 여부 (당근마켓 스타일)
   final bool isLocationVerified;
   
+  /// 위치 인증 시간
+  final DateTime? locationVerifiedAt;
+  
+  /// 마지막 위치 체크 시간 (불일치 감지용)
+  final DateTime? lastLocationCheckAt;
+  
+  /// 위치 불일치 횟수 (3회 이상 시 재인증 요청)
+  final int locationMismatchCount;
+  
+  /// 위치 알림 무시 시간 (24시간 재알림 방지)
+  final DateTime? locationReminderDismissedAt;
+  
   /// 산책 중 상태
   final bool isWalking;
   
@@ -137,6 +149,10 @@ class UserModel extends Equatable {
     this.isVerified = false,
     this.isIdentityVerified = false,
     this.isLocationVerified = false,
+    this.locationVerifiedAt,
+    this.lastLocationCheckAt,
+    this.locationMismatchCount = 0,
+    this.locationReminderDismissedAt,
     this.isWalking = false,
     this.walkStartedAt,
     this.petIds = const [],
@@ -198,6 +214,16 @@ class UserModel extends Equatable {
       isVerified: data['isVerified'] ?? false,
       isIdentityVerified: data['isIdentityVerified'] ?? false,
       isLocationVerified: data['isLocationVerified'] ?? false,
+      locationVerifiedAt: data['locationVerifiedAt'] != null
+          ? (data['locationVerifiedAt'] as Timestamp).toDate()
+          : null,
+      lastLocationCheckAt: data['lastLocationCheckAt'] != null
+          ? (data['lastLocationCheckAt'] as Timestamp).toDate()
+          : null,
+      locationMismatchCount: data['locationMismatchCount'] ?? 0,
+      locationReminderDismissedAt: data['locationReminderDismissedAt'] != null
+          ? (data['locationReminderDismissedAt'] as Timestamp).toDate()
+          : null,
       isWalking: data['isWalking'] ?? false,
       walkStartedAt: data['walkStartedAt'] != null
           ? (data['walkStartedAt'] as Timestamp).toDate()
@@ -246,6 +272,16 @@ class UserModel extends Equatable {
       'isVerified': isVerified,
       'isIdentityVerified': isIdentityVerified,
       'isLocationVerified': isLocationVerified,
+      'locationVerifiedAt': locationVerifiedAt != null
+          ? Timestamp.fromDate(locationVerifiedAt!)
+          : null,
+      'lastLocationCheckAt': lastLocationCheckAt != null
+          ? Timestamp.fromDate(lastLocationCheckAt!)
+          : null,
+      'locationMismatchCount': locationMismatchCount,
+      'locationReminderDismissedAt': locationReminderDismissedAt != null
+          ? Timestamp.fromDate(locationReminderDismissedAt!)
+          : null,
       'isWalking': isWalking,
       'walkStartedAt': walkStartedAt != null
           ? Timestamp.fromDate(walkStartedAt!)
@@ -290,6 +326,10 @@ class UserModel extends Equatable {
     bool? isVerified,
     bool? isIdentityVerified,
     bool? isLocationVerified,
+    DateTime? locationVerifiedAt,
+    DateTime? lastLocationCheckAt,
+    int? locationMismatchCount,
+    DateTime? locationReminderDismissedAt,
     bool? isWalking,
     DateTime? walkStartedAt,
     List<String>? petIds,
@@ -327,6 +367,10 @@ class UserModel extends Equatable {
       isVerified: isVerified ?? this.isVerified,
       isIdentityVerified: isIdentityVerified ?? this.isIdentityVerified,
       isLocationVerified: isLocationVerified ?? this.isLocationVerified,
+      locationVerifiedAt: locationVerifiedAt ?? this.locationVerifiedAt,
+      lastLocationCheckAt: lastLocationCheckAt ?? this.lastLocationCheckAt,
+      locationMismatchCount: locationMismatchCount ?? this.locationMismatchCount,
+      locationReminderDismissedAt: locationReminderDismissedAt ?? this.locationReminderDismissedAt,
       isWalking: isWalking ?? this.isWalking,
       walkStartedAt: walkStartedAt ?? this.walkStartedAt,
       petIds: petIds ?? this.petIds,
@@ -379,6 +423,10 @@ class UserModel extends Equatable {
         isVerified,
         isIdentityVerified,
         isLocationVerified,
+        locationVerifiedAt,
+        lastLocationCheckAt,
+        locationMismatchCount,
+        locationReminderDismissedAt,
         isWalking,
         walkStartedAt,
         petIds,

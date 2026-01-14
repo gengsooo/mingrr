@@ -7,6 +7,9 @@ import '../theme/app_theme.dart';
 import 'mingrr_bottom_sheet.dart';
 import 'svg_icons.dart';
 
+// 공통 로딩 위젯 export
+export 'loading_widgets.dart';
+
 /// ============================================================
 /// MINGRR 공통 위젯 모음
 /// 앱 전체에서 재사용되는 UI 컴포넌트들

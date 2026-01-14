@@ -65,8 +65,11 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         }
         return _buildContent(context, group);
       },
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      loading: () => Scaffold(
+        body: MingrrFullScreenLoading(
+          message: '소모임 정보 불러오는 중',
+          type: MingrrLoadingType.community,
+        ),
       ),
       error: (_, __) => Scaffold(
         appBar: AppBar(title: const Text('소모임')),

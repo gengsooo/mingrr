@@ -48,8 +48,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         }
         return _buildContent(context, job);
       },
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      loading: () => Scaffold(
+        body: MingrrFullScreenLoading(
+          message: '알바 정보 불러오는 중',
+          type: MingrrLoadingType.market,
+        ),
       ),
       error: (_, __) => Scaffold(
         appBar: AppBar(title: const Text('알바')),

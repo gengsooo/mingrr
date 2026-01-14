@@ -801,12 +801,18 @@ class FirestoreService {
   }
 
   /// 위치 인증 처리 (GPS 기반)
+  /// 
+  /// @deprecated LocationVerificationService.verifyLocation() 사용을 권장합니다.
+  /// 이 메서드는 하위 호환성을 위해 유지됩니다.
+  @Deprecated('LocationVerificationService.verifyLocation() 사용을 권장합니다')
   Future<void> verifyLocation(String userId, String location, {GeoPoint? geoPoint}) async {
     try {
       final updateData = <String, dynamic>{
         'verifications.location': true,
         'verifications.locationAt': FieldValue.serverTimestamp(),
         'verifications.locationAddress': location,
+        'isLocationVerified': true,
+        'locationVerifiedAt': FieldValue.serverTimestamp(),
       };
       
       if (geoPoint != null) {

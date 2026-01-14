@@ -37,6 +37,7 @@ enum DialogType {
   success(Icons.check_circle_outline, '완료'),
   warning(Icons.warning_amber_outlined, '경고'),
   error(Icons.error_outline, '오류'),
+  location(Icons.location_on, '위치 인증'),
   
   // 기능별 타입
   walk(Icons.directions_walk, '산책'),
@@ -63,6 +64,8 @@ enum DialogType {
         return Colors.orange;
       case DialogType.error:
         return Colors.red;
+      case DialogType.location:
+        return Theme.of(context).colorScheme.primary;
       case DialogType.walk:
         return features.walk;
       case DialogType.health:

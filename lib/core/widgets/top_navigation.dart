@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants/app_sizes.dart';
 import 'mingrr_bottom_sheet.dart';
+import '../providers/location_verification_provider.dart';
 
 /// ============================================================
 /// 공통 상단 네비게이션 컴포넌트
@@ -132,12 +134,13 @@ class PillTabBar extends StatelessWidget {
 /// 위치/거리 필터 바
 /// 
 /// 내 동네 + 거리 선택 + 반경 표시
+/// 위치 인증 상태에 따라 UI 변경
 /// [accentColor]: 테마 색상
 /// [currentDistance]: 현재 거리 (km)
 /// [onDistanceChanged]: 거리 변경 콜백
 /// [distanceOptions]: 거리 옵션 목록
 /// ------------------------------------------------------------
-class LocationDistanceBar extends StatelessWidget {
+class LocationDistanceBar extends ConsumerWidget {
   final Color accentColor;
   final double currentDistance;
   final ValueChanged<double> onDistanceChanged;
@@ -154,9 +157,21 @@ class LocationDistanceBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    
+    // 사용자 정보 가져오기
+    final userAsync = ref.watch(currentUserStreamProvider);
+    final user = userAsync.valueOrNull;
+    final isLocationVerified = user?.isLocationVerified ?? false;
+    final homeAddress = user?.homeAddress;
+    
+    // 위치 인증이 안 된 경우 안내 표시
+    final displayLabel = locationLabel ?? 
+        (isLocationVerified && homeAddress != null 
+            ? homeAddress 
+            : '내 동네');
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -168,24 +183,31 @@ class LocationDistanceBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // 위치 아이콘
-          Icon(Icons.location_on, size: 18, color: accentColor),
+          // 위치 아이콘 (인증 상태에 따라 색상 변경)
+          Icon(
+            isLocationVerified ? Icons.location_on : Icons.location_off_outlined,
+            size: 18,
+            color: isLocationVerified ? accentColor : colorScheme.outline,
+          ),
           const SizedBox(width: 6),
           
           // 위치 라벨
-          Text(
-            locationLabel ?? '내 동네',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: colorScheme.onSurface,
+          Expanded(
+            child: Text(
+              displayLabel,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isLocationVerified ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(width: 10),
           
           // 거리 선택 버튼
           GestureDetector(
-            onTap: () => _showDistanceSelector(context),
+            onTap: () => _showDistanceSelector(context, ref),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -213,25 +235,18 @@ class LocationDistanceBar extends StatelessWidget {
               ),
             ),
           ),
-          
-          const Spacer(),
-          
-          // 반경 표시
-          Text(
-            '반경 ${currentDistance.toInt()}km 이내',
-            style: TextStyle(
-              fontSize: 12,
-              color: colorScheme.onSurfaceVariant,
-            ),
-          ),
         ],
       ),
     );
   }
 
-  void _showDistanceSelector(BuildContext context) {
+  void _showDistanceSelector(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final userAsync = ref.read(currentUserStreamProvider);
+    final user = userAsync.valueOrNull;
+    final isLocationVerified = user?.isLocationVerified ?? false;
+    final homeAddress = user?.homeAddress;
     
     showModalBottomSheet(
       context: context,
@@ -259,14 +274,26 @@ class LocationDistanceBar extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
             ),
-            // 안내 문구
+            // 안내 문구 (위치 인증 상태에 따라 다르게 표시)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                '집 주소 기준으로 필터링합니다',
-                style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
-                textAlign: TextAlign.center,
-              ),
+              child: isLocationVerified
+                  ? Text(
+                      homeAddress ?? '집 주소 기준으로 필터링합니다',
+                      style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                      textAlign: TextAlign.center,
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.info_outline, size: 14, color: colorScheme.outline),
+                        const SizedBox(width: 4),
+                        Text(
+                          '위치 인증 후 정확한 거리 필터링이 가능합니다',
+                          style: TextStyle(fontSize: 12, color: colorScheme.outline),
+                        ),
+                      ],
+                    ),
             ),
             const SizedBox(height: 12),
             // 스크롤 가능한 리스트

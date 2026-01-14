@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -16,6 +17,10 @@ import '../../../../core/widgets/image_picker_sheet.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/verification_badge.dart';
 import '../../../../core/widgets/warmth_score.dart';
+import '../../../../core/widgets/location_bubble_widget.dart';
+import '../../../../core/providers/location_verification_provider.dart';
+import '../../../../core/services/geocoding_service.dart';
+import '../../../../core/services/location_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import '../../../../models/pet_model.dart';
@@ -257,71 +262,120 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  /// 인증 배지 섹션 (통일된 인증 배지 위젯 사용)
+  /// 인증 배지 섹션 (통일된 인증 배지 위젯 사용 + 위치 불일치 말풍선)
   Widget _buildVerificationSection(
     BuildContext context,
     WidgetRef ref,
     Map<BadgeType, bool> verifications,
   ) {
-    return MingrrCard(
-      margin: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    // 위치 불일치 상태 감지
+    final mismatchAsync = ref.watch(locationMismatchProvider);
+    final shouldShowBubble = mismatchAsync.valueOrNull?.shouldShowBubble ?? false;
+    final mismatchResult = mismatchAsync.valueOrNull;
+    final userAsync = ref.watch(currentUserStreamProvider);
+    final user = userAsync.valueOrNull;
+    
+    return Column(
+      children: [
+        // 위치 불일치 말풍선 (위치 인증 카드 위에 표시)
+        if (shouldShowBubble)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: LocationMismatchBanner(
+              savedAddress: user?.homeAddress,
+              accentColor: context.features.success,
+              onUpdateLocation: () => _handleLocationUpdate(context, ref),
+              onDismiss: () => _handleLocationDismiss(ref),
+            ),
+          ),
+        
+        MingrrCard(
+          margin: EdgeInsets.zero,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                '인증 배지',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              GestureDetector(
-                onTap: () => _showVerificationSheet(context, ref, verifications),
-                child: Text(
-                  '인증하기',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    '인증 배지',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
+                  GestureDetector(
+                    onTap: () => _showVerificationSheet(context, ref, verifications),
+                    child: Text(
+                      '인증하기',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSizes.gapM),
+              Row(
+                children: [
+                  Expanded(
+                    child: VerificationBadgeLarge(
+                      type: VerificationBadgeType.identity,
+                      isVerified: verifications[BadgeType.identity] ?? false,
+                      onTap: () => _showVerificationSheet(context, ref, verifications),
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.gapS),
+                  Expanded(
+                    child: VerificationBadgeLarge(
+                      type: VerificationBadgeType.pet,
+                      isVerified: verifications[BadgeType.petRegistration] ?? false,
+                      onTap: () => _showVerificationSheet(context, ref, verifications),
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.gapS),
+                  Expanded(
+                    child: VerificationBadgeLarge(
+                      type: VerificationBadgeType.location,
+                      isVerified: verifications[BadgeType.location] ?? false,
+                      onTap: () => _showVerificationSheet(context, ref, verifications),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: AppSizes.gapM),
-          Row(
-            children: [
-              Expanded(
-                child: VerificationBadgeLarge(
-                  type: VerificationBadgeType.identity,
-                  isVerified: verifications[BadgeType.identity] ?? false,
-                  onTap: () => _showVerificationSheet(context, ref, verifications),
-                ),
-              ),
-              const SizedBox(width: AppSizes.gapS),
-              Expanded(
-                child: VerificationBadgeLarge(
-                  type: VerificationBadgeType.pet,
-                  isVerified: verifications[BadgeType.petRegistration] ?? false,
-                  onTap: () => _showVerificationSheet(context, ref, verifications),
-                ),
-              ),
-              const SizedBox(width: AppSizes.gapS),
-              Expanded(
-                child: VerificationBadgeLarge(
-                  type: VerificationBadgeType.location,
-                  isVerified: verifications[BadgeType.location] ?? false,
-                  onTap: () => _showVerificationSheet(context, ref, verifications),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
+  }
+  
+  /// 위치 업데이트 처리 (불일치 시 현재 위치로 변경) - 공통 함수 사용
+  Future<void> _handleLocationUpdate(BuildContext context, WidgetRef ref) async {
+    final authState = ref.read(authStateProvider);
+    final userId = authState.valueOrNull?.uid;
+    
+    if (userId == null) {
+      MingrrSnackBar.error(context, '로그인이 필요합니다');
+      return;
+    }
+    
+    await LocationVerificationService.handleLocationUpdateWithUI(
+      context: context,
+      userId: userId,
+    );
+  }
+  
+  /// 위치 알림 무시 처리
+  Future<void> _handleLocationDismiss(WidgetRef ref) async {
+    final authState = ref.read(authStateProvider);
+    final userId = authState.valueOrNull?.uid;
+    
+    if (userId == null) return;
+    
+    await LocationVerificationService.dismissReminder(userId);
   }
 
   /// 내 반려동물 목록 (V1: 건강수첩 버튼 포함)
@@ -701,7 +755,17 @@ class ProfileScreen extends ConsumerWidget {
                 textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(height: 12),
+            // 설명 문구 (데이트 신청 바텀시트와 동일한 스타일)
+            Text(
+              '인증을 완료하면 더 많은 친구들에게\n추천될 수 있어요!',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
             
             // 본인인증
             _buildVerificationTile(
@@ -745,6 +809,9 @@ class ProfileScreen extends ConsumerWidget {
     required bool isVerified,
     required String description,
   }) {
+    // 위치 인증은 완료 후에도 재인증 가능
+    final bool canReVerify = badgeType == BadgeType.location && isVerified;
+    
     return ListTile(
       leading: Container(
         width: 44,
@@ -771,7 +838,36 @@ class ProfileScreen extends ConsumerWidget {
         ),
       ),
       trailing: isVerified
-          ? Icon(Icons.check_circle, color: context.features.success)
+          ? canReVerify
+              // 위치 인증: 체크 아이콘 + 재인증 버튼
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.check_circle, color: context.features.success, size: 20),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _processVerification(context, ref, badgeType);
+                      },
+                      style: TextButton.styleFrom(
+                        foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        minimumSize: const Size(50, 28),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        '재인증',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                )
+              // 다른 인증: 체크 아이콘만
+              : Icon(Icons.check_circle, color: context.features.success)
           : ElevatedButton(
               onPressed: () async {
                 Navigator.pop(context);
@@ -814,8 +910,8 @@ class ProfileScreen extends ConsumerWidget {
           await _showIdentityVerificationDialog(context, firestoreService, userId);
           break;
         case BadgeType.location:
-          // 위치인증 - 현재 위치 기반 인증
-          await _showLocationVerificationDialog(context, firestoreService, userId);
+          // 위치인증 - 현재 위치 기반 인증 (거리 검증 포함)
+          await _showLocationVerificationDialog(context, ref, firestoreService, userId);
           break;
         case BadgeType.petRegistration:
           // 동물등록 인증 - 동물등록번호 입력
@@ -864,126 +960,444 @@ class ProfileScreen extends ConsumerWidget {
     }
   }
 
-  /// 위치인증 다이얼로그 (GPS 기반)
-  Future<void> _showLocationVerificationDialog(BuildContext context, FirestoreService firestoreService, String userId) async {
-    // 로딩 다이얼로그 표시
-    showDialog(
+  /// 위치 획득 헬퍼 함수 (타임아웃 포함)
+  Future<Position?> _getPositionWithTimeout() async {
+    try {
+      // 마지막 알려진 위치 먼저 시도 (즉시 반환)
+      final lastPosition = await Geolocator.getLastKnownPosition();
+      if (lastPosition != null) {
+        debugPrint('마지막 위치 사용: ${lastPosition.latitude}, ${lastPosition.longitude}');
+        return lastPosition;
+      }
+    } catch (e) {
+      debugPrint('마지막 위치 획득 실패: $e');
+    }
+    
+    // 현재 위치 획득 시도
+    return await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.medium,
+    );
+  }
+
+  /// 위치인증 다이얼로그 (GPS 기반 + 거리 검증)
+  /// 로딩과 결과를 하나의 다이얼로그에서 처리하여 깜빡임 방지
+  Future<void> _showLocationVerificationDialog(BuildContext context, WidgetRef ref, FirestoreService firestoreService, String userId) async {
+    // 통합 다이얼로그 표시 (로딩 → 결과 전환)
+    final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => const AlertDialog(
-        content: Row(
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 16),
-            Text('현재 위치를 확인하고 있습니다...'),
-          ],
-        ),
+      builder: (ctx) => _LocationVerificationDialog(
+        userId: userId,
+        ref: ref,
       ),
     );
-
-    try {
-      // 위치 권한 확인
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          if (context.mounted) Navigator.pop(context);
-          if (context.mounted) {
-            MingrrSnackBar.error(context, '위치 권한이 필요합니다');
-          }
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        if (context.mounted) Navigator.pop(context);
-        if (context.mounted) {
-          MingrrSnackBar.error(context, '설정에서 위치 권한을 허용해주세요');
-        }
-        return;
-      }
-
-      // 현재 위치 가져오기
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      if (context.mounted) Navigator.pop(context); // 로딩 다이얼로그 닫기
-
-      // 위치 확인 다이얼로그 표시
-      final geoPoint = GeoPoint(position.latitude, position.longitude);
-      final addressText = '위도: ${position.latitude.toStringAsFixed(4)}, 경도: ${position.longitude.toStringAsFixed(4)}';
-
-      if (!context.mounted) return;
-
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Row(
-            children: [
-              Icon(Icons.location_on, color: Theme.of(ctx).colorScheme.primary),
-              const SizedBox(width: 8),
-              const Text('위치 인증'),
-            ],
-          ),
-          content: Column(
+    
+    if (result == true && context.mounted) {
+      MingrrSnackBar.success(context, '위치인증이 완료되었습니다! 📍');
+    }
+  }
+  
+  /// 위치 서비스 비활성화 다이얼로그
+  void _showLocationServiceDisabledDialog(BuildContext context) async {
+    final goToSettings = await showAppDialog(
+      context,
+      type: DialogType.warning,
+      title: '위치 서비스 꺼짐',
+      message: '위치 인증을 위해 기기의 위치 서비스를 켜주세요.\n\n설정 > 위치에서 활성화할 수 있습니다.',
+      showCancel: true,
+      cancelText: '취소',
+      confirmText: '설정으로 이동',
+      icon: Icons.location_off,
+    );
+    if (goToSettings == true) {
+      Geolocator.openLocationSettings();
+    }
+  }
+  
+  /// 위치 권한 영구 거부 다이얼로그
+  void _showPermissionDeniedForeverDialog(BuildContext context) async {
+    final goToSettings = await showAppDialog(
+      context,
+      type: DialogType.warning,
+      title: '위치 권한 필요',
+      message: '위치 인증을 위해 위치 권한이 필요합니다.\n\n앱 설정에서 위치 권한을 허용해주세요.',
+      showCancel: true,
+      cancelText: '취소',
+      confirmText: '설정으로 이동',
+      icon: Icons.location_disabled,
+    );
+    if (goToSettings == true) {
+      Geolocator.openAppSettings();
+    }
+  }
+  
+  /// 위치 확인 타임아웃 다이얼로그
+  void _showLocationTimeoutDialog(BuildContext context) {
+    showAppDialog(
+      context,
+      type: DialogType.error,
+      title: '위치 확인 실패',
+      message: 'GPS 신호를 찾을 수 없습니다.\n\n실외로 이동 후 다시 시도해주세요.',
+      icon: Icons.timer_off,
+    );
+  }
+  
+  /// 첫 위치 인증 다이얼로그
+  Future<bool?> _showFirstTimeVerificationDialog(BuildContext context, String addressText) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = colorScheme.primary;
+    
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        backgroundColor: colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('현재 위치를 내 동네로 인증하시겠습니까?'),
-              const SizedBox(height: 16),
+              // 아이콘
               Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.location_on, size: 28, color: color),
+              ),
+              const SizedBox(height: 16),
+              
+              // 제목
+              const Text(
+                '위치 인증',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              
+              // 메시지
+              Text(
+                '현재 위치를 내 동네로 등록하시겠습니까?',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 16),
+              
+              // 주소 표시
+              Container(
+                width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: color.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.my_location, color: Theme.of(context).colorScheme.primary, size: 20),
-                    const SizedBox(width: 8),
+                    Icon(Icons.my_location, color: color, size: 20),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         addressText,
-                        style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: colorScheme.onSurface),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
-              Text(
-                '※ 인증된 위치는 내 동네로 설정되며, 주변 사용자에게 표시됩니다.',
-                style: TextStyle(fontSize: 12, color: Theme.of(ctx).colorScheme.outlineVariant),
+              const SizedBox(height: 20),
+              
+              // 버튼
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(color: colorScheme.outline),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: Text('취소', style: TextStyle(fontSize: 15, color: colorScheme.onSurfaceVariant)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: color,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('인증하기', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('취소'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
-              child: const Text('인증하기', style: TextStyle(color: Colors.white)),
-            ),
-          ],
         ),
-      );
-
-      if (confirmed == true && context.mounted) {
-        await firestoreService.verifyLocation(userId, addressText, geoPoint: geoPoint);
-        if (context.mounted) {
-          MingrrSnackBar.success(context, '위치인증이 완료되었습니다! 📍');
-        }
-      }
-    } catch (e) {
-      if (context.mounted) Navigator.pop(context);
-      if (context.mounted) {
-        MingrrSnackBar.error(context, '위치 확인 실패: $e');
-      }
-    }
+      ),
+    );
+  }
+  
+  /// 재인증 다이얼로그 (500m 이내)
+  Future<bool?> _showReVerificationDialog(BuildContext context, String addressText, double distance) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = context.features.success;
+    
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        backgroundColor: colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 아이콘
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.check_circle, size: 28, color: color),
+              ),
+              const SizedBox(height: 16),
+              
+              // 제목
+              const Text(
+                '위치 인증 갱신',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              
+              // 메시지
+              Text(
+                '현재 위치에서 인증을 갱신하시겠습니까?',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 16),
+              
+              // 주소 표시
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.my_location, color: color, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            addressText,
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: colorScheme.onSurface),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '저장된 위치에서 ${distance.round()}m',
+                            style: TextStyle(fontSize: 12, color: color),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              
+              // 버튼
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(color: colorScheme.outline),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: Text('취소', style: TextStyle(fontSize: 15, color: colorScheme.onSurfaceVariant)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: color,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('인증 갱신', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  /// 조금 더 가까이 다이얼로그 (500m~1km)
+  Future<void> _showTooFarDialog(BuildContext context, double distance) {
+    return showAppDialog(
+      context,
+      type: DialogType.info,
+      title: '조금 더 가까이',
+      message: '설정한 동네에서 ${distance.round()}m 떨어져 있어요.\n\n저장된 동네 근처(500m 이내)에서 인증할 수 있습니다.',
+      icon: Icons.near_me,
+    );
+  }
+  
+  /// 동네 변경 제안 다이얼로그 (1km 이상)
+  Future<bool?> _showLocationChangeDialog(BuildContext context, String newAddress, double distance, String? savedAddress) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = colorScheme.primary;
+    
+    return showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        backgroundColor: colorScheme.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // 아이콘
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.swap_horiz, size: 28, color: color),
+              ),
+              const SizedBox(height: 16),
+              
+              // 제목
+              const Text(
+                '동네 변경',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              
+              // 메시지
+              Text(
+                '현재 위치가 저장된 동네와\n${LocationService.formatDistance(distance)} 떨어져 있어요.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 16),
+              
+              // 저장된 위치
+              if (savedAddress != null) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: colorScheme.outline.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.location_on_outlined, color: colorScheme.onSurfaceVariant, size: 20),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('저장된 동네', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant)),
+                            Text(savedAddress, style: TextStyle(fontSize: 13, color: colorScheme.onSurface)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+              
+              // 현재 위치
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.my_location, color: color, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('현재 위치', style: TextStyle(fontSize: 11, color: color)),
+                          Text(newAddress, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: colorScheme.onSurface)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              
+              // 버튼
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(color: colorScheme.outline),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: Text('취소', style: TextStyle(fontSize: 15, color: colorScheme.onSurfaceVariant)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: color,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                      child: const Text('동네 변경', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   /// 동물등록 인증 다이얼로그
@@ -1377,6 +1791,445 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// ============================================================
+/// 위치 인증 통합 다이얼로그
+/// 
+/// 로딩 → 결과 화면을 하나의 다이얼로그에서 처리하여 깜빡임 방지
+/// ============================================================
+class _LocationVerificationDialog extends StatefulWidget {
+  final String userId;
+  final WidgetRef ref;
+
+  const _LocationVerificationDialog({
+    required this.userId,
+    required this.ref,
+  });
+
+  @override
+  State<_LocationVerificationDialog> createState() => _LocationVerificationDialogState();
+}
+
+class _LocationVerificationDialogState extends State<_LocationVerificationDialog> {
+  // 상태
+  bool _isLoading = true;
+  String _statusMessage = 'GPS 신호를 찾고 있습니다...';
+  String? _errorMessage;
+  
+  // 결과 데이터
+  Position? _position;
+  String? _addressText;
+  GeoPoint? _savedLocation;
+  double? _distance;
+  bool _isFirstTime = true;
+  
+  @override
+  void initState() {
+    super.initState();
+    _startLocationVerification();
+  }
+  
+  Future<void> _startLocationVerification() async {
+    try {
+      // 1. 위치 서비스 확인
+      setState(() => _statusMessage = '위치 서비스 확인 중...');
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled()
+          .timeout(const Duration(seconds: 2), onTimeout: () => false);
+      if (!serviceEnabled) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = '위치 서비스가 꺼져 있습니다.\n설정에서 위치 서비스를 켜주세요.';
+        });
+        return;
+      }
+      
+      // 2. 위치 권한 확인
+      setState(() => _statusMessage = '위치 권한 확인 중...');
+      LocationPermission permission = await Geolocator.checkPermission()
+          .timeout(const Duration(seconds: 2), onTimeout: () => LocationPermission.denied);
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission()
+            .timeout(const Duration(seconds: 10), onTimeout: () => LocationPermission.denied);
+      }
+      
+      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = '위치 권한이 필요합니다.\n앱 설정에서 위치 권한을 허용해주세요.';
+        });
+        return;
+      }
+      
+      // 3. 위치 획득
+      setState(() => _statusMessage = '현재 위치 확인 중...');
+      Position? position;
+      try {
+        // 마지막 위치 먼저 시도
+        final lastPosition = await Geolocator.getLastKnownPosition();
+        if (lastPosition != null) {
+          position = lastPosition;
+        } else {
+          position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.medium,
+          ).timeout(const Duration(seconds: 8));
+        }
+      } catch (e) {
+        debugPrint('위치 획득 실패: $e');
+        setState(() {
+          _isLoading = false;
+          _errorMessage = 'GPS 신호를 찾을 수 없습니다.\n실외로 이동 후 다시 시도해주세요.';
+        });
+        return;
+      }
+      
+      if (position == null) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage = '위치를 확인할 수 없습니다.';
+        });
+        return;
+      }
+      
+      _position = position;
+      
+      // 4. 주소 변환
+      setState(() => _statusMessage = '주소 변환 중...');
+      String addressText = '위도: ${position.latitude.toStringAsFixed(4)}, 경도: ${position.longitude.toStringAsFixed(4)}';
+      try {
+        final addressResult = await GeocodingService.reverseGeocode(
+          position.latitude,
+          position.longitude,
+        ).timeout(const Duration(seconds: 3));
+        if (addressResult != null) {
+          addressText = addressResult.shortAddress;
+        }
+      } catch (_) {}
+      _addressText = addressText;
+      
+      // 5. 사용자 정보 확인
+      final userAsync = widget.ref.read(currentUserStreamProvider);
+      final user = userAsync.valueOrNull;
+      _savedLocation = user?.homeLocation;
+      _isFirstTime = _savedLocation == null;
+      
+      if (!_isFirstTime && _savedLocation != null) {
+        final geoPoint = GeoPoint(position.latitude, position.longitude);
+        _distance = LocationService.calculateDistanceFromGeoPoints(_savedLocation!, geoPoint);
+      }
+      
+      // 로딩 완료
+      setState(() => _isLoading = false);
+      
+    } catch (e) {
+      debugPrint('위치 인증 오류: $e');
+      setState(() {
+        _isLoading = false;
+        _errorMessage = '위치 확인 중 오류가 발생했습니다.';
+      });
+    }
+  }
+  
+  Future<void> _doVerification() async {
+    if (_position == null || _addressText == null) return;
+    
+    setState(() {
+      _isLoading = true;
+      _statusMessage = '인증 처리 중...';
+    });
+    
+    try {
+      if (_isFirstTime) {
+        // 첫 인증
+        await LocationVerificationService.verifyLocation(
+          userId: widget.userId,
+          currentPosition: _position!,
+          address: _addressText!,
+          isFirstTime: true,
+        );
+      } else if (_distance != null && _distance! <= LocationConstants.verificationRadiusMeters) {
+        // 재인증 (500m 이내)
+        await LocationVerificationService.verifyLocation(
+          userId: widget.userId,
+          currentPosition: _position!,
+          address: _addressText!,
+        );
+      } else {
+        // 동네 변경
+        await LocationVerificationService.updateLocation(
+          userId: widget.userId,
+          currentPosition: _position!,
+          address: _addressText!,
+        );
+      }
+      
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      debugPrint('인증 처리 오류: $e');
+      setState(() {
+        _isLoading = false;
+        _errorMessage = '인증 처리 중 오류가 발생했습니다.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = colorScheme.primary;
+    
+    return Dialog(
+      backgroundColor: colorScheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: _isLoading 
+            ? _buildLoadingContent(colorScheme, color)
+            : _errorMessage != null
+                ? _buildErrorContent(colorScheme)
+                : _buildResultContent(colorScheme, color),
+      ),
+    );
+  }
+  
+  Widget _buildLoadingContent(ColorScheme colorScheme, Color color) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(strokeWidth: 3, color: color),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          '현재 위치 확인 중',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _statusMessage,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildErrorContent(ColorScheme colorScheme) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: Colors.red.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.location_off, size: 28, color: Colors.red),
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          '위치 확인 실패',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _errorMessage!,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant, height: 1.5),
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: () => Navigator.pop(context, false),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: colorScheme.primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('확인', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildResultContent(ColorScheme colorScheme, Color color) {
+    // 거리에 따른 상태 결정
+    final bool canVerify = _isFirstTime || 
+        (_distance != null && _distance! <= LocationConstants.verificationRadiusMeters);
+    final bool isTooFar = !_isFirstTime && 
+        _distance != null && 
+        _distance! > LocationConstants.verificationRadiusMeters &&
+        _distance! <= LocationConstants.verificationNearbyMeters;
+    final bool needsLocationChange = !_isFirstTime && 
+        _distance != null && 
+        _distance! > LocationConstants.verificationNearbyMeters;
+    
+    // 색상 결정
+    final themeColor = canVerify 
+        ? (_isFirstTime ? color : context.features.success)
+        : (needsLocationChange ? color : Colors.orange);
+    
+    // 제목 결정
+    String title;
+    String message;
+    String buttonText;
+    IconData icon;
+    
+    if (canVerify) {
+      if (_isFirstTime) {
+        title = '위치 인증';
+        message = '현재 위치를 내 동네로 등록하시겠습니까?';
+        buttonText = '인증하기';
+        icon = Icons.location_on;
+      } else {
+        title = '위치 인증 갱신';
+        message = '현재 위치에서 인증을 갱신하시겠습니까?';
+        buttonText = '인증 갱신';
+        icon = Icons.check_circle;
+      }
+    } else if (isTooFar) {
+      title = '조금 더 가까이';
+      message = '설정한 동네에서 ${_distance!.round()}m 떨어져 있어요.\n저장된 동네 근처(500m 이내)에서 인증할 수 있습니다.';
+      buttonText = '확인';
+      icon = Icons.near_me;
+    } else {
+      title = '동네 변경';
+      message = '현재 위치가 저장된 동네와\n${LocationService.formatDistance(_distance!)} 떨어져 있어요.';
+      buttonText = '동네 변경';
+      icon = Icons.swap_horiz;
+    }
+    
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 아이콘
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: themeColor.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 28, color: themeColor),
+        ),
+        const SizedBox(height: 16),
+        
+        // 제목
+        Text(
+          title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        
+        // 메시지
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant, height: 1.4),
+        ),
+        const SizedBox(height: 16),
+        
+        // 주소 표시
+        if (_addressText != null)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: themeColor.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.my_location, color: themeColor, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _addressText!,
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: colorScheme.onSurface),
+                      ),
+                      if (!_isFirstTime && _distance != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          '저장된 위치에서 ${_distance!.round()}m',
+                          style: TextStyle(fontSize: 12, color: themeColor),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 20),
+        
+        // 버튼
+        if (isTooFar)
+          // 조금 더 가까이: 확인 버튼만
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context, false),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: themeColor,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: Text(buttonText, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+            ),
+          )
+        else
+          // 인증/동네변경: 취소/확인 버튼
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: BorderSide(color: colorScheme.outline),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: Text('취소', style: TextStyle(fontSize: 15, color: colorScheme.onSurfaceVariant)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _doVerification,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: themeColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: Text(buttonText, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            ],
+          ),
+      ],
     );
   }
 }

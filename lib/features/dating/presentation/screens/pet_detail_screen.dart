@@ -156,8 +156,11 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         }
         return _buildContent(context, pet);
       },
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      loading: () => Scaffold(
+        body: MingrrFullScreenLoading(
+          message: '반려동물 정보 불러오는 중',
+          type: MingrrLoadingType.dating,
+        ),
       ),
       error: (_, __) => Scaffold(
         appBar: AppBar(title: const Text('반려동물 정보')),

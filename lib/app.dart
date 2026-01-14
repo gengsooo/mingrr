@@ -12,6 +12,8 @@ import 'core/constants/app_strings.dart';  // 텍스트 상수
 import 'core/theme/feature_colors.dart';  // 색상 상수
 import 'core/constants/app_sizes.dart';  // 크기/간격 상수
 import 'core/providers/theme_provider.dart';  // 테마 Provider
+import 'core/providers/location_verification_provider.dart';  // 위치 인증 Provider
+import 'core/widgets/loading_widgets.dart';  // 공통 로딩 위젯
 
 // 인증 관련
 import 'features/auth/presentation/providers/auth_provider.dart';  // 로그인 상태 관리 Provider
@@ -613,7 +615,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final isLoggedIn = authState.valueOrNull != null;
 
     if (isLoggedIn) {
-      // 로그인 되어 있으면 홈으로
+      // 로그인 되어 있으면 홈으로 이동 + 앱 시작 시 위치 체크
+      AppStartLocationChecker.checkOnAppStart(ref);
       context.go('/');
     } else {
       // 온보딩 완료 여부 체크
@@ -661,15 +664,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            // 로딩 인디케이터
-            SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
+            // 로딩 인디케이터 (공통 컴포넌트)
+            const MingrrLoadingIndicator.medium(),
           ],
         ),
       ),

@@ -12,6 +12,8 @@ import '../../../../models/pet_model.dart';
 import '../../../../models/community_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import '../../../community/presentation/providers/community_provider.dart';
+import '../../../../core/widgets/location_bubble_widget.dart';
+import '../../../../core/providers/location_verification_provider.dart';
 
 /// ============================================================
 /// 홈 화면 (V3 리팩토링 - 반려동물 전용)
@@ -382,8 +384,8 @@ class HomeScreen extends ConsumerWidget {
         ),
         const SizedBox(height: AppSizes.gapM),
         
-        // 산책 시작하기 카드
-        _buildWalkStartCard(context),
+        // 산책 시작하기 카드 (위치 불일치 배너 포함)
+        _buildWalkStartCardWithLocationBanner(context, ref),
         const SizedBox(height: AppSizes.gapM),
         
         // 건강 기록 카드
@@ -529,89 +531,135 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  /// 산책 시작하기 카드
-  Widget _buildWalkStartCard(BuildContext context) {
+  /// 산책 시작하기 카드 (위치 불일치 배너 포함)
+  Widget _buildWalkStartCardWithLocationBanner(BuildContext context, WidgetRef ref) {
     final features = Theme.of(context).extension<FeatureColors>()!;
     
-    return GestureDetector(
-      onTap: () => context.push('/walk'),
-      child: Container(
-        padding: const EdgeInsets.all(AppSizes.paddingM),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              features.walk,
-              features.walk.withOpacity(0.8),
-            ],
+    // 위치 불일치 상태 감지
+    final mismatchAsync = ref.watch(locationMismatchProvider);
+    final shouldShowBubble = mismatchAsync.valueOrNull?.shouldShowBubble ?? false;
+    final userAsync = ref.watch(currentUserStreamProvider);
+    final user = userAsync.valueOrNull;
+    
+    return Column(
+      children: [
+        // 위치 불일치 배너 (산책 카드 위에 표시)
+        if (shouldShowBubble)
+          LocationMismatchBanner(
+            savedAddress: user?.homeAddress,
+            accentColor: features.walk,
+            onUpdateLocation: () => _handleLocationUpdateFromHome(context, ref),
+            onDismiss: () => _handleLocationDismissFromHome(ref),
           ),
-          borderRadius: BorderRadius.circular(AppSizes.radiusL),
-          boxShadow: [
-            BoxShadow(
-              color: features.walk.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // 아이콘
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Center(
-                child: Icon(Icons.pets, size: 32, color: Colors.white),
-              ),
-            ),
-            const SizedBox(width: AppSizes.gapM),
-            // 텍스트
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '산책하러 가기',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    '반려동물과 함께 건강한 산책을!',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.white70,
-                    ),
-                  ),
+        
+        // 산책 카드
+        GestureDetector(
+          onTap: () => context.push('/walk'),
+          child: Container(
+            padding: const EdgeInsets.all(AppSizes.paddingM),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  features.walk,
+                  features.walk.withOpacity(0.8),
                 ],
               ),
+              borderRadius: BorderRadius.circular(AppSizes.radiusL),
+              boxShadow: [
+                BoxShadow(
+                  color: features.walk.withOpacity(0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            // 화살표
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.arrow_forward_rounded,
-                color: Colors.white,
-                size: 22,
-              ),
+            child: Row(
+              children: [
+                // 아이콘
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.pets, size: 32, color: Colors.white),
+                  ),
+                ),
+                const SizedBox(width: AppSizes.gapM),
+                // 텍스트
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '산책하러 가기',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        '반려동물과 함께 건강한 산책을!',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // 화살표
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
+  }
+  
+  /// 홈 화면에서 위치 업데이트 처리 - 공통 함수 사용
+  Future<void> _handleLocationUpdateFromHome(BuildContext context, WidgetRef ref) async {
+    final userAsync = ref.read(currentUserStreamProvider);
+    final user = userAsync.valueOrNull;
+    
+    if (user == null) {
+      MingrrSnackBar.error(context, '로그인이 필요합니다');
+      return;
+    }
+    
+    await LocationVerificationService.handleLocationUpdateWithUI(
+      context: context,
+      userId: user.id,
+    );
+  }
+  
+  /// 홈 화면에서 위치 알림 무시 처리
+  Future<void> _handleLocationDismissFromHome(WidgetRef ref) async {
+    final userAsync = ref.read(currentUserStreamProvider);
+    final user = userAsync.valueOrNull;
+    
+    if (user == null) return;
+    
+    await LocationVerificationService.dismissReminder(user.id);
   }
 
   /// 건강 아이템 위젯
