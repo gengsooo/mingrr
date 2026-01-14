@@ -538,7 +538,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         walkCount: 0,
         datingCount: 0,
         marketCount: 0,
-        communityCount: 0,
+        groupCount: 0,
       ),
     );
   }

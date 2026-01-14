@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
-import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/top_navigation.dart';
 import '../../../../core/widgets/profile_icon.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import 'feed_screen.dart';
+import '../../../../core/widgets/search_screen.dart';
+import 'community_screen.dart';
 import 'group_list_screen.dart';
 
 /// ============================================================
-/// 소셜 메인 화면
+/// 소셜(Social) 메인 화면
+/// 
+/// 명칭 규칙:
+/// - 소셜(Social): 메인 메뉴명, 상위 폴더
+/// - 커뮤니티(Community): 게시판 기능 (community_*)
+/// - 소모임(Group): 그룹 모임 기능 (group_*)
 /// 
 /// 탭 구조:
-/// - 커뮤니티: SNS형 게시판 (피드)
-/// - 소모임: 그룹 모임
+/// - 커뮤니티: 게시판 (CommunityScreen)
+/// - 소모임: 그룹 모임 목록 (GroupListScreen)
 /// ============================================================
 
 /// 현재 선택된 탭 인덱스
@@ -51,13 +55,28 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
 
     return Scaffold(
-      backgroundColor: isDark ? colorScheme.surface : context.features.communityContainer,
+      backgroundColor: isDark ? colorScheme.surface : context.features.socialContainer,
       appBar: AppBar(
         title: const Text('소셜'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              final currentTab = _tabController.index;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SearchScreen(
+                    searchType: currentTab == 0 ? SearchType.community : SearchType.group,
+                    accentColor: accentColor,
+                  ),
+                ),
+              );
+            },
+          ),
           const NotificationIconButton(),
           buildProfileAction(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
         ],
@@ -87,8 +106,26 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
                 fontWeight: FontWeight.w400,
               ),
               tabs: const [
-                Tab(text: '커뮤니티'),
-                Tab(text: '소모임'),
+                Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.article_outlined, size: 18),
+                      SizedBox(width: 6),
+                      Text('커뮤니티'),
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.groups_outlined, size: 18),
+                      SizedBox(width: 6),
+                      Text('소모임'),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -97,7 +134,7 @@ class _SocialScreenState extends ConsumerState<SocialScreen>
       body: TabBarView(
         controller: _tabController,
         children: const [
-          FeedScreen(),
+          CommunityScreen(),
           GroupListScreen(),
         ],
       ),

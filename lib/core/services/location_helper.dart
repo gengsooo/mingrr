@@ -218,8 +218,10 @@ class LocationHelper {
     
     try {
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: accuracy,
-        timeLimit: Duration(seconds: timeoutSeconds),
+        locationSettings: LocationSettings(
+          accuracy: accuracy,
+          timeLimit: Duration(seconds: timeoutSeconds),
+        ),
       );
       
       final positionElapsed = DateTime.now().difference(positionStartTime);
@@ -247,8 +249,10 @@ class LocationHelper {
     
     try {
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
       );
       
       debugPrint('📍 [LocationHelper] ✅ high 정확도 위치: ${position.latitude}, ${position.longitude} (정확도: ${position.accuracy}m)');

@@ -8,25 +8,28 @@ import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/services/firebase_service.dart';
-import '../../../../models/feed_model.dart';
-import '../providers/feed_provider.dart';
-import 'feed_write_screen.dart';
+import '../../../../core/utils/format_utils.dart';
+import '../../../../models/community_post_model.dart';
+import '../providers/community_provider.dart';
+import 'community_write_screen.dart';
 
 /// ============================================================
-/// 커뮤니티 피드 상세 화면
-/// 게시글 상세, 댓글, 좋아요
+/// 커뮤니티(Community) 게시글 상세 화면
+/// 
+/// 소셜 > 커뮤니티 > 게시글 상세
+/// 게시글 본문, 댓글, 좋아요 기능
 /// ============================================================
 
-class FeedDetailScreen extends ConsumerStatefulWidget {
+class CommunityDetailScreen extends ConsumerStatefulWidget {
   final String postId;
 
-  const FeedDetailScreen({super.key, required this.postId});
+  const CommunityDetailScreen({super.key, required this.postId});
 
   @override
-  ConsumerState<FeedDetailScreen> createState() => _FeedDetailScreenState();
+  ConsumerState<CommunityDetailScreen> createState() => _CommunityDetailScreenState();
 }
 
-class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
+class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
   final _commentController = TextEditingController();
   final _scrollController = ScrollController();
   bool _isAnonymousComment = false;
@@ -38,7 +41,7 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
     super.initState();
     // 조회수 증가
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(feedProviderNotifier.notifier).incrementViewCount(widget.postId);
+      ref.read(communityNotifierProvider.notifier).incrementViewCount(widget.postId);
     });
   }
 
@@ -51,11 +54,11 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final postAsync = ref.watch(feedPostDetailProvider(widget.postId));
-    final commentsAsync = ref.watch(feedCommentsProvider(widget.postId));
-    final isLikedAsync = ref.watch(isPostLikedProvider(widget.postId));
+    final postAsync = ref.watch(communityPostDetailProvider(widget.postId));
+    final commentsAsync = ref.watch(communityCommentsProvider(widget.postId));
+    final isLikedAsync = ref.watch(isCommunityPostLikedProvider(widget.postId));
     final colorScheme = Theme.of(context).colorScheme;
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
 
     return Scaffold(
       backgroundColor: context.detailBackground,
@@ -80,8 +83,8 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
                 child: RefreshIndicator(
                   color: accentColor,
                   onRefresh: () async {
-                    ref.invalidate(feedPostDetailProvider(widget.postId));
-                    ref.invalidate(feedCommentsProvider(widget.postId));
+                    ref.invalidate(communityPostDetailProvider(widget.postId));
+                    ref.invalidate(communityCommentsProvider(widget.postId));
                   },
                   child: SingleChildScrollView(
                     controller: _scrollController,
@@ -116,9 +119,9 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
     );
   }
 
-  Widget _buildPostContent(BuildContext context, FeedPostModel post, bool isLiked) {
+  Widget _buildPostContent(BuildContext context, CommunityPostModel post, bool isLiked) {
     final colorScheme = Theme.of(context).colorScheme;
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
 
     return Container(
       color: colorScheme.surface,
@@ -209,9 +212,9 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
                 label: '좋아요 ${post.likeCount}',
                 color: isLiked ? Colors.red : colorScheme.onSurfaceVariant,
                 onTap: () async {
-                  await ref.read(feedProviderNotifier.notifier).toggleLike(post.id);
-                  ref.invalidate(feedPostDetailProvider(widget.postId));
-                  ref.invalidate(isPostLikedProvider(widget.postId));
+                  await ref.read(communityNotifierProvider.notifier).toggleLike(post.id);
+                  ref.invalidate(communityPostDetailProvider(widget.postId));
+                  ref.invalidate(isCommunityPostLikedProvider(widget.postId));
                 },
               ),
               const SizedBox(width: 24),
@@ -325,8 +328,8 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
 
   Widget _buildCommentsSection(
     BuildContext context,
-    AsyncValue<List<FeedCommentModel>> commentsAsync,
-    FeedPostModel post,
+    AsyncValue<List<CommunityCommentModel>> commentsAsync,
+    CommunityPostModel post,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
 
@@ -384,12 +387,12 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
 
   Widget _buildCommentItem(
     BuildContext context,
-    FeedCommentModel comment,
-    List<FeedCommentModel> replies,
-    FeedPostModel post,
+    CommunityCommentModel comment,
+    List<CommunityCommentModel> replies,
+    CommunityPostModel post,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
     final isMyComment = FirebaseService().currentUserId == comment.authorId;
 
     return Column(
@@ -433,7 +436,7 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
                         ],
                         const Spacer(),
                         Text(
-                          _formatTimeAgo(comment.createdAt),
+                          formatRelativeTime(comment.createdAt),
                           style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
                         ),
                       ],
@@ -486,9 +489,9 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
     );
   }
 
-  Widget _buildReplyItem(BuildContext context, FeedCommentModel reply, FeedPostModel post) {
+  Widget _buildReplyItem(BuildContext context, CommunityCommentModel reply, CommunityPostModel post) {
     final colorScheme = Theme.of(context).colorScheme;
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
     final isMyComment = FirebaseService().currentUserId == reply.authorId;
 
     return Padding(
@@ -528,7 +531,7 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
                     ],
                     const Spacer(),
                     Text(
-                      _formatTimeAgo(reply.createdAt),
+                      formatRelativeTime(reply.createdAt),
                       style: TextStyle(fontSize: 10, color: colorScheme.onSurfaceVariant),
                     ),
                   ],
@@ -656,7 +659,7 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
     );
   }
 
-  void _setReplyTo(FeedCommentModel comment) {
+  void _setReplyTo(CommunityCommentModel comment) {
     setState(() {
       _replyToCommentId = comment.id;
       _replyToAuthorName = comment.displayAuthorName;
@@ -674,7 +677,7 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
     final content = _commentController.text.trim();
     if (content.isEmpty) return;
 
-    final commentId = await ref.read(feedProviderNotifier.notifier).createComment(
+    final commentId = await ref.read(communityNotifierProvider.notifier).createComment(
       postId: widget.postId,
       content: content,
       parentId: _replyToCommentId,
@@ -684,12 +687,12 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
     if (commentId != null) {
       _commentController.clear();
       _cancelReply();
-      ref.invalidate(feedCommentsProvider(widget.postId));
-      ref.invalidate(feedPostDetailProvider(widget.postId));
+      ref.invalidate(communityCommentsProvider(widget.postId));
+      ref.invalidate(communityPostDetailProvider(widget.postId));
     }
   }
 
-  Future<void> _deleteComment(FeedCommentModel comment, String postId) async {
+  Future<void> _deleteComment(CommunityCommentModel comment, String postId) async {
     final confirmed = await showConfirmSheetWithResult(
       context,
       type: ConfirmSheetType.generalDelete,
@@ -698,10 +701,10 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
     );
 
     if (confirmed == true) {
-      final success = await ref.read(feedProviderNotifier.notifier).deleteComment(comment.id, postId);
+      final success = await ref.read(communityNotifierProvider.notifier).deleteComment(comment.id, postId);
       if (success) {
-        ref.invalidate(feedCommentsProvider(widget.postId));
-        ref.invalidate(feedPostDetailProvider(widget.postId));
+        ref.invalidate(communityCommentsProvider(widget.postId));
+        ref.invalidate(communityPostDetailProvider(widget.postId));
         if (mounted) {
           MingrrSnackBar.success(context, '댓글이 삭제되었습니다');
         }
@@ -709,7 +712,7 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
     }
   }
 
-  void _showMoreOptions(BuildContext context, FeedPostModel? post) {
+  void _showMoreOptions(BuildContext context, CommunityPostModel? post) {
     if (post == null) return;
     
     final isMyPost = FirebaseService().currentUserId == post.authorId;
@@ -724,10 +727,10 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => FeedWriteScreen(post: post)),
+                MaterialPageRoute(builder: (context) => CommunityWriteScreen(post: post)),
               ).then((result) {
                 if (result == true) {
-                  ref.invalidate(feedPostDetailProvider(widget.postId));
+                  ref.invalidate(communityPostDetailProvider(widget.postId));
                 }
               });
             },
@@ -757,7 +760,7 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
     );
   }
 
-  Future<void> _deletePost(FeedPostModel post) async {
+  Future<void> _deletePost(CommunityPostModel post) async {
     final confirmed = await showConfirmSheetWithResult(
       context,
       type: ConfirmSheetType.generalDelete,
@@ -766,7 +769,7 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
     );
 
     if (confirmed == true) {
-      final success = await ref.read(feedProviderNotifier.notifier).deletePost(post.id);
+      final success = await ref.read(communityNotifierProvider.notifier).deletePost(post.id);
       if (success && mounted) {
         Navigator.pop(context);
         MingrrSnackBar.success(context, '게시글이 삭제되었습니다');
@@ -778,16 +781,6 @@ class _FeedDetailScreenState extends ConsumerState<FeedDetailScreen> {
     return '${dateTime.year}.${dateTime.month}.${dateTime.day} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
-  String _formatTimeAgo(DateTime dateTime) {
-    final now = DateTime.now();
-    final diff = now.difference(dateTime);
-
-    if (diff.inMinutes < 1) return '방금 전';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}분 전';
-    if (diff.inHours < 24) return '${diff.inHours}시간 전';
-    if (diff.inDays < 7) return '${diff.inDays}일 전';
-    return '${dateTime.month}/${dateTime.day}';
-  }
 }
 
 /// 이미지 뷰어 화면

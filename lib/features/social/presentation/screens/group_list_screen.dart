@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
@@ -11,7 +10,10 @@ import 'group_detail_screen.dart';
 import 'group_write_screen.dart';
 
 /// ============================================================
-/// 소모임 목록 화면
+/// 소모임(Group) 목록 화면
+/// 
+/// 소셜 > 소모임 탭
+/// 그룹 모임 목록, 지역/카테고리 필터, 정렬
 /// ============================================================
 
 /// 선택된 지역 목록
@@ -28,7 +30,7 @@ class GroupListScreen extends ConsumerWidget {
     final selectedLocations = ref.watch(_selectedLocationsProvider);
     final selectedCategory = ref.watch(_selectedCategoryProvider);
     final colorScheme = Theme.of(context).colorScheme;
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
 
     final categories = [
       (label: '전체', icon: Icons.grid_view),
@@ -66,7 +68,7 @@ class GroupListScreen extends ConsumerWidget {
 
   Widget _buildLocationFilterBar(BuildContext context, WidgetRef ref, List<String> selectedLocations) {
     final colorScheme = Theme.of(context).colorScheme;
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -224,7 +226,7 @@ class GroupListScreen extends ConsumerWidget {
   Widget _buildSortOptions(BuildContext context, WidgetRef ref) {
     final sortState = ref.watch(groupSortStateProvider);
     final colorScheme = Theme.of(context).colorScheme;
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -301,7 +303,7 @@ class GroupListScreen extends ConsumerWidget {
     final sortedGroups = ref.watch(sortedGroupsProvider);
     final myGroupsAsync = ref.watch(userGroupsProvider);
     final colorScheme = Theme.of(context).colorScheme;
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
 
     final filteredGroups = locationFilter.isEmpty
         ? sortedGroups
@@ -414,7 +416,7 @@ class GroupListScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 8),
         SizedBox(
-          height: 100,
+          height: 110,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: myGroups.length,
@@ -468,7 +470,7 @@ class _MyGroupCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
 
     return GestureDetector(
       onTap: onTap,
@@ -527,7 +529,7 @@ class _GroupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final group = groupWithDistance.group;
     final colorScheme = Theme.of(context).colorScheme;
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
 
     return GestureDetector(
       onTap: onTap,
@@ -653,7 +655,7 @@ class _GroupCard extends StatelessWidget {
   }
 }
 
-/// 지역 선택 바텀시트
+/// 지역 선택 바텀시트 (3단계: 시/도 → 시/군 → 구)
 class _LocationSelectorSheet extends ConsumerStatefulWidget {
   final WidgetRef ref;
 
@@ -677,27 +679,49 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
+    final districts = _selectedCity != null 
+        ? KoreaLocationData.getDistricts(_selectedProvince!, _selectedCity!)
+        : <String>[];
 
     return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
+      height: MediaQuery.of(context).size.height * 0.75,
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
-          const BottomSheetHandle(),
+          // 핸들
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: colorScheme.outline.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          // 헤더
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(8, 16, 8, 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('취소'),
+                  child: Text('취소', style: TextStyle(color: colorScheme.onSurfaceVariant)),
                 ),
-                const Text('지역 선택', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                Column(
+                  children: [
+                    const Text('지역 선택', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+                    if (_tempSelected.isNotEmpty)
+                      Text(
+                        '${_tempSelected.length}개 선택됨',
+                        style: TextStyle(fontSize: 12, color: accentColor),
+                      ),
+                  ],
+                ),
                 TextButton(
                   onPressed: () {
                     widget.ref.read(_selectedLocationsProvider.notifier).state = List.from(_tempSelected);
@@ -708,59 +732,180 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
               ],
             ),
           ),
+          // 선택된 지역 칩들
+          if (_tempSelected.isNotEmpty)
+            Container(
+              constraints: const BoxConstraints(maxHeight: 100),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: SingleChildScrollView(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _tempSelected.map((location) {
+                    return Chip(
+                      label: Text(location, style: const TextStyle(fontSize: 11)),
+                      deleteIcon: const Icon(Icons.close, size: 14),
+                      onDeleted: () => setState(() => _tempSelected.remove(location)),
+                      backgroundColor: accentColor.withOpacity(0.1),
+                      side: BorderSide.none,
+                      labelStyle: TextStyle(color: accentColor),
+                      deleteIconColor: accentColor,
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
           const Divider(height: 1),
+          // 3단 선택 영역
           Expanded(
             child: Row(
               children: [
-                // 시/도 목록
+                // 1단계: 시/도
                 Expanded(
                   child: Container(
-                    color: colorScheme.surfaceContainerLow,
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerLow,
+                      border: Border(right: BorderSide(color: colorScheme.outline.withOpacity(0.2))),
+                    ),
                     child: ListView(
                       children: KoreaLocationData.getProvinces().map((province) {
                         final isSelected = _selectedProvince == province;
-                        return ListTile(
-                          title: Text(
-                            province,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                              color: isSelected ? accentColor : colorScheme.onSurface,
-                            ),
-                          ),
-                          selected: isSelected,
-                          selectedTileColor: accentColor.withOpacity(0.1),
+                        return InkWell(
                           onTap: () => setState(() {
                             _selectedProvince = province;
                             _selectedCity = null;
                           }),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: isSelected ? accentColor.withOpacity(0.1) : null,
+                              border: Border(
+                                left: BorderSide(
+                                  color: isSelected ? accentColor : Colors.transparent,
+                                  width: 3,
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              province,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                color: isSelected ? accentColor : colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
                         );
                       }).toList(),
                     ),
                   ),
                 ),
-                // 시/군/구 목록
+                // 2단계: 시/군
                 Expanded(
-                  flex: 2,
-                  child: _selectedProvince == null
-                      ? Center(child: Text('시/도를 선택하세요', style: TextStyle(color: colorScheme.onSurfaceVariant)))
-                      : ListView(
-                          children: KoreaLocationData.getCities(_selectedProvince!).map((city) {
-                            final locationKey = '$_selectedProvince $city';
-                            final isSelected = _tempSelected.contains(locationKey);
-                            return CheckboxListTile(
-                              title: Text(city, style: const TextStyle(fontSize: 14)),
-                              value: isSelected,
-                              activeColor: accentColor,
-                              onChanged: (value) {
-                                setState(() {
-                                  if (value == true) {
-                                    _tempSelected.add(locationKey);
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border(right: BorderSide(color: colorScheme.outline.withOpacity(0.2))),
+                    ),
+                    child: _selectedProvince == null
+                        ? Center(
+                            child: Text(
+                              '시/도 선택',
+                              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                            ),
+                          )
+                        : ListView(
+                            children: KoreaLocationData.getCities(_selectedProvince!).map((city) {
+                              final isSelected = _selectedCity == city;
+                              final hasDistricts = KoreaLocationData.getDistricts(_selectedProvince!, city).isNotEmpty;
+                              return InkWell(
+                                onTap: () {
+                                  if (hasDistricts) {
+                                    setState(() => _selectedCity = city);
                                   } else {
+                                    // 구가 없으면 바로 선택
+                                    final locationKey = '$_selectedProvince $city';
+                                    setState(() {
+                                      if (_tempSelected.contains(locationKey)) {
+                                        _tempSelected.remove(locationKey);
+                                      } else {
+                                        _tempSelected.add(locationKey);
+                                      }
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? accentColor.withOpacity(0.1) : null,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          city,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                            color: isSelected ? accentColor : colorScheme.onSurface,
+                                          ),
+                                        ),
+                                      ),
+                                      if (hasDistricts)
+                                        Icon(Icons.chevron_right, size: 18, color: colorScheme.onSurfaceVariant)
+                                      else if (_tempSelected.contains('$_selectedProvince $city'))
+                                        Icon(Icons.check, size: 18, color: accentColor),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                  ),
+                ),
+                // 3단계: 구
+                Expanded(
+                  child: districts.isEmpty
+                      ? Center(
+                          child: Text(
+                            _selectedCity == null ? '시/군 선택' : '전체 선택됨',
+                            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                          ),
+                        )
+                      : ListView(
+                          children: districts.map((district) {
+                            final locationKey = '$_selectedProvince $_selectedCity $district';
+                            final isSelected = _tempSelected.contains(locationKey);
+                            return InkWell(
+                              onTap: () {
+                                setState(() {
+                                  if (isSelected) {
                                     _tempSelected.remove(locationKey);
+                                  } else {
+                                    _tempSelected.add(locationKey);
                                   }
                                 });
                               },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        district,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                          color: isSelected ? accentColor : colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      Icon(Icons.check, size: 18, color: accentColor),
+                                  ],
+                                ),
+                              ),
                             );
                           }).toList(),
                         ),
@@ -774,8 +919,9 @@ class _LocationSelectorSheetState extends ConsumerState<_LocationSelectorSheet> 
   }
 }
 
-/// 한국 지역 데이터
+/// 한국 지역 데이터 (3단계: 시/도 → 시/군 → 구)
 class KoreaLocationData {
+  // 시/도 → 시/군 데이터
   static const Map<String, List<String>> data = {
     '서울특별시': ['강남구', '서초구', '송파구', '강동구', '마포구', '영등포구', '용산구', '종로구', '중구', '성동구', '광진구', '동대문구', '중랑구', '성북구', '강북구', '도봉구', '노원구', '은평구', '서대문구', '양천구', '강서구', '구로구', '금천구', '동작구', '관악구'],
     '경기도': ['수원시', '성남시', '용인시', '고양시', '부천시', '안산시', '안양시', '남양주시', '화성시', '평택시', '의정부시', '시흥시', '파주시', '김포시', '광명시', '광주시', '군포시', '하남시', '오산시', '이천시', '안성시', '의왕시', '양주시', '포천시', '구리시', '여주시', '동두천시', '과천시'],
@@ -796,6 +942,36 @@ class KoreaLocationData {
     '제주특별자치도': ['제주시', '서귀포시'],
   };
 
+  // 시/군 → 구 데이터 (구가 있는 시만)
+  static const Map<String, Map<String, List<String>>> districtData = {
+    '경기도': {
+      '수원시': ['장안구', '권선구', '팔달구', '영통구'],
+      '성남시': ['수정구', '중원구', '분당구'],
+      '용인시': ['처인구', '기흥구', '수지구'],
+      '고양시': ['덕양구', '일산동구', '일산서구'],
+      '안산시': ['상록구', '단원구'],
+      '안양시': ['만안구', '동안구'],
+    },
+    '충청북도': {
+      '청주시': ['상당구', '서원구', '흥덕구', '청원구'],
+    },
+    '충청남도': {
+      '천안시': ['동남구', '서북구'],
+    },
+    '전북특별자치도': {
+      '전주시': ['완산구', '덕진구'],
+    },
+    '경상북도': {
+      '포항시': ['남구', '북구'],
+    },
+    '경상남도': {
+      '창원시': ['의창구', '성산구', '마산합포구', '마산회원구', '진해구'],
+    },
+  };
+
   static List<String> getProvinces() => data.keys.toList();
   static List<String> getCities(String province) => data[province] ?? [];
+  static List<String> getDistricts(String province, String city) {
+    return districtData[province]?[city] ?? [];
+  }
 }

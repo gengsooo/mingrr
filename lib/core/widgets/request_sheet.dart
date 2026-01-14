@@ -250,7 +250,7 @@ class _RequestSheetState extends State<RequestSheet> {
       case RequestSheetType.groupJoin:
         return _RequestConfig(
           icon: Icons.groups,
-          color: context.features.community,
+          color: context.features.social,
           title: '소모임 가입',
           description: '${widget.targetName ?? '이 모임'}에 가입 신청을 보낼까요?\n승인되면 모임에 참여할 수 있습니다.',
           confirmText: '가입하기',

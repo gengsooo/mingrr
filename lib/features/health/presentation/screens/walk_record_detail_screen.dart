@@ -502,7 +502,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
                 context.features.walk,
                 Theme.of(context).colorScheme.primary,
                 context.features.dating,
-                context.features.community,
+                context.features.social,
                 context.features.market,
               ];
               final color = colors[index % colors.length];

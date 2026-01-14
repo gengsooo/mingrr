@@ -1,16 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/providers/firebase_providers.dart';
 import '../../../../core/services/firebase_service.dart';
-import '../../../../models/feed_model.dart';
+import '../../../../models/community_post_model.dart';
 
 /// ============================================================
-/// 커뮤니티 피드 Provider
-/// 게시글 CRUD, 좋아요, 댓글 관리
+/// 커뮤니티(Community) 게시판 Provider
+/// 
+/// 소셜 > 커뮤니티 기능의 상태 관리
+/// - 게시글 CRUD (CommunityPostModel)
+/// - 댓글 CRUD (CommunityCommentModel)
+/// - 좋아요 토글
+/// - 조회수 증가
 /// ============================================================
 
-/// 피드 게시글 목록 (카테고리 필터)
-final feedPostsProvider = FutureProvider.autoDispose.family<List<FeedPostModel>, FeedCategory?>((ref, category) async {
+/// 커뮤니티 게시글 목록 (카테고리 필터)
+final communityPostsProvider = FutureProvider.autoDispose.family<List<CommunityPostModel>, CommunityCategory?>((ref, category) async {
+  // 캐시 유지 - 자주 사용되는 데이터이므로 자동 해제 방지
+  ref.keepAlive();
+  
   final firebase = FirebaseService();
   
   Query<Map<String, dynamic>> query = firebase.feedPostsCollection
@@ -26,20 +33,26 @@ final feedPostsProvider = FutureProvider.autoDispose.family<List<FeedPostModel>,
   
   final snapshot = await query.get();
   return snapshot.docs
-      .map((doc) => FeedPostModel.fromFirestore(doc.data(), id: doc.id))
+      .map((doc) => CommunityPostModel.fromFirestore(doc.data(), id: doc.id))
       .toList();
 });
 
 /// 특정 게시글 상세
-final feedPostDetailProvider = FutureProvider.autoDispose.family<FeedPostModel?, String>((ref, postId) async {
+final communityPostDetailProvider = FutureProvider.autoDispose.family<CommunityPostModel?, String>((ref, postId) async {
+  // 캐시 유지 - 상세 화면에서 자주 사용
+  ref.keepAlive();
+  
   final firebase = FirebaseService();
   final doc = await firebase.feedPostsCollection.doc(postId).get();
   if (!doc.exists) return null;
-  return FeedPostModel.fromFirestore(doc.data()!, id: doc.id);
+  return CommunityPostModel.fromFirestore(doc.data()!, id: doc.id);
 });
 
 /// 게시글 댓글 목록
-final feedCommentsProvider = FutureProvider.autoDispose.family<List<FeedCommentModel>, String>((ref, postId) async {
+final communityCommentsProvider = FutureProvider.autoDispose.family<List<CommunityCommentModel>, String>((ref, postId) async {
+  // 캐시 유지 - 댓글 목록은 상세 화면에서 자주 사용
+  ref.keepAlive();
+  
   final firebase = FirebaseService();
   final snapshot = await firebase.feedCommentsCollection
       .where('postId', isEqualTo: postId)
@@ -47,12 +60,12 @@ final feedCommentsProvider = FutureProvider.autoDispose.family<List<FeedCommentM
       .get();
   
   return snapshot.docs
-      .map((doc) => FeedCommentModel.fromFirestore(doc.data(), id: doc.id))
+      .map((doc) => CommunityCommentModel.fromFirestore(doc.data(), id: doc.id))
       .toList();
 });
 
-/// 사용자가 좋아요한 게시글 ID 목록
-final userLikedPostsProvider = FutureProvider.autoDispose<Set<String>>((ref) async {
+/// 사용자가 좋아요한 커뮤니티 게시글 ID 목록
+final userLikedCommunityPostsProvider = FutureProvider.autoDispose<Set<String>>((ref) async {
   final firebase = FirebaseService();
   final userId = firebase.currentUserId;
   if (userId == null) return {};
@@ -64,16 +77,15 @@ final userLikedPostsProvider = FutureProvider.autoDispose<Set<String>>((ref) asy
   return snapshot.docs.map((doc) => doc.data()['postId'] as String).toSet();
 });
 
-/// 피드 관리 Notifier
-class FeedNotifier extends StateNotifier<AsyncValue<void>> {
-  final Ref _ref;
+/// 커뮤니티 게시판 관리 Notifier
+class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
   final FirebaseService _firebase = FirebaseService();
   
-  FeedNotifier(this._ref) : super(const AsyncValue.data(null));
+  CommunityNotifier(Ref ref) : super(const AsyncValue.data(null));
   
   /// 게시글 작성
   Future<String?> createPost({
-    required FeedCategory category,
+    required CommunityCategory category,
     required String content,
     List<String> imageUrls = const [],
     List<String> tags = const [],
@@ -94,7 +106,7 @@ class FeedNotifier extends StateNotifier<AsyncValue<void>> {
       final now = DateTime.now();
       final docRef = _firebase.feedPostsCollection.doc();
       
-      final post = FeedPostModel(
+      final post = CommunityPostModel(
         id: docRef.id,
         authorId: userId,
         authorName: userData?['nickname'] ?? '사용자',
@@ -238,7 +250,7 @@ class FeedNotifier extends StateNotifier<AsyncValue<void>> {
       
       final docRef = _firebase.feedCommentsCollection.doc();
       
-      final comment = FeedCommentModel(
+      final comment = CommunityCommentModel(
         id: docRef.id,
         postId: postId,
         authorId: userId,
@@ -280,13 +292,13 @@ class FeedNotifier extends StateNotifier<AsyncValue<void>> {
   }
 }
 
-/// 피드 Notifier Provider
-final feedProviderNotifier = StateNotifierProvider<FeedNotifier, AsyncValue<void>>((ref) {
-  return FeedNotifier(ref);
+/// 커뮤니티 Notifier Provider
+final communityNotifierProvider = StateNotifierProvider<CommunityNotifier, AsyncValue<void>>((ref) {
+  return CommunityNotifier(ref);
 });
 
-/// 게시글 좋아요 여부 확인
-final isPostLikedProvider = FutureProvider.autoDispose.family<bool, String>((ref, postId) async {
+/// 커뮤니티 게시글 좋아요 여부 확인
+final isCommunityPostLikedProvider = FutureProvider.autoDispose.family<bool, String>((ref, postId) async {
   final firebase = FirebaseService();
   final userId = firebase.currentUserId;
   if (userId == null) return false;

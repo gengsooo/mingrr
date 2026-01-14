@@ -121,13 +121,13 @@ class GuardianActivityInfo {
   final int walkCount;
   final int datingCount;
   final int marketCount;
-  final int communityCount;
+  final int groupCount;
 
   const GuardianActivityInfo({
     this.walkCount = 0,
     this.datingCount = 0,
     this.marketCount = 0,
-    this.communityCount = 0,
+    this.groupCount = 0,
   });
 }
 
@@ -480,7 +480,7 @@ class GuardianProfileModal extends StatelessWidget {
               _buildActivityItem(context, '산책', info.walkCount, Icons.directions_walk),
               _buildActivityItem(context, '데이팅', info.datingCount, Icons.favorite),
               _buildActivityItem(context, '거래', info.marketCount, Icons.shopping_bag),
-              _buildActivityItem(context, '소모임', info.communityCount, Icons.groups),
+              _buildActivityItem(context, '소모임', info.groupCount, Icons.groups),
             ],
           ),
         ),

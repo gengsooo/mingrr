@@ -391,7 +391,9 @@ class LocationVerificationService {
     
     // 현재 위치 획득 시도
     return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.medium,
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.medium,
+      ),
     );
   }
 

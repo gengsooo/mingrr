@@ -117,7 +117,7 @@ class _RatingSheetState extends State<RatingSheet> {
       case RatingType.breeding:
         return context.features.dating;
       case RatingType.community:
-        return context.features.community;
+        return context.features.social;
     }
   }
 

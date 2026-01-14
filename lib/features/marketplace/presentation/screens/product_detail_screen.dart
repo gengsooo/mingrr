@@ -268,7 +268,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         walkCount: 65,
         datingCount: 8,
         marketCount: 12,
-        communityCount: 5,
+        groupCount: 5,
       ),
     );
   }

@@ -439,6 +439,7 @@ class MingrrEmptyState extends StatelessWidget {
   final String? subtitle;
   final String? buttonText;
   final VoidCallback? onButtonPressed;
+  final Color? accentColor;
 
   const MingrrEmptyState({
     super.key,
@@ -448,6 +449,7 @@ class MingrrEmptyState extends StatelessWidget {
     this.subtitle,
     this.buttonText,
     this.onButtonPressed,
+    this.accentColor,
   }) : assert(icon != null || svgAsset != null, 'icon 또는 svgAsset 중 하나는 필수입니다');
 
   @override
@@ -505,6 +507,8 @@ class MingrrEmptyState extends StatelessWidget {
                 text: buttonText!,
                 onPressed: onButtonPressed,
                 width: 200,
+                backgroundColor: accentColor,
+                textColor: Colors.white,
               ),
             ],
           ],

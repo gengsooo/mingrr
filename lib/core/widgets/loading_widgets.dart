@@ -101,7 +101,7 @@ class MingrrLoadingDialog extends StatelessWidget {
       case MingrrLoadingType.market:
         return context.features.market;
       case MingrrLoadingType.community:
-        return context.features.community;
+        return context.features.social;
       case MingrrLoadingType.chat:
         return context.features.chat;
       case MingrrLoadingType.health:
@@ -258,7 +258,7 @@ class MingrrLoadingOverlay extends StatelessWidget {
       case MingrrLoadingType.market:
         return context.features.market;
       case MingrrLoadingType.community:
-        return context.features.community;
+        return context.features.social;
       case MingrrLoadingType.chat:
         return context.features.chat;
       case MingrrLoadingType.health:
@@ -335,7 +335,7 @@ class MingrrLoadingIndicator extends StatelessWidget {
       case MingrrLoadingType.market:
         return context.features.market;
       case MingrrLoadingType.community:
-        return context.features.community;
+        return context.features.social;
       case MingrrLoadingType.chat:
         return context.features.chat;
       case MingrrLoadingType.health:
@@ -436,7 +436,7 @@ class MingrrFullScreenLoading extends StatelessWidget {
       case MingrrLoadingType.market:
         return context.features.market;
       case MingrrLoadingType.community:
-        return context.features.community;
+        return context.features.social;
       case MingrrLoadingType.chat:
         return context.features.chat;
       case MingrrLoadingType.health:

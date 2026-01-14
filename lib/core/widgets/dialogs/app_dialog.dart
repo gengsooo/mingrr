@@ -71,7 +71,7 @@ enum DialogType {
       case DialogType.health:
         return features.health;
       case DialogType.community:
-        return features.community;
+        return features.social;
       case DialogType.market:
         return features.market;
       case DialogType.dating:

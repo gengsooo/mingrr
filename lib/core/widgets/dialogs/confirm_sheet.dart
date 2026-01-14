@@ -80,7 +80,7 @@ enum ConfirmSheetType {
       case ConfirmSheetType.groupLeave:
       case ConfirmSheetType.groupDelete:
       case ConfirmSheetType.groupJoin:
-        return features.community;
+        return features.social;
       case ConfirmSheetType.productDelete:
       case ConfirmSheetType.productTypeChange:
       case ConfirmSheetType.jobDelete:

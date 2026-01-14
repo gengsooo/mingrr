@@ -8,7 +8,13 @@ import '../../../../models/group_model.dart';
 
 /// ============================================================
 /// 소모임(Group) Provider
-/// Firebase Firestore와 연동하여 소모임 데이터 관리
+/// 
+/// 소셜 > 소모임 기능의 상태 관리
+/// - 모임 목록 조회 (+ 거리/추천 점수)
+/// - 모임 가입/탈퇴/강퇴
+/// - 관리자 지정
+/// - 좋아요 토글
+/// - 일정 관리
 /// ============================================================
 
 /// 소모임 + 거리 정보 + 추천 점수
@@ -109,6 +115,9 @@ final groupSortStateProvider = StateProvider<GroupSortState>((ref) => const Grou
 
 /// 모든 공개 소모임 (거리 정보 + 추천 점수 포함)
 final _allGroupsWithDistanceProvider = FutureProvider.autoDispose<List<GroupWithDistance>>((ref) async {
+  // 캐시 유지 - 소모임 목록은 자주 사용되는 데이터
+  ref.keepAlive();
+  
   final firestoreService = ref.watch(firestoreServiceProvider);
   final userLocation = ref.watch(currentUserLocationProvider);
 
@@ -210,10 +219,9 @@ final popularGroupsProvider = FutureProvider.autoDispose<List<GroupModel>>((ref)
 
 /// 소모임 관리 Notifier
 class GroupNotifier extends StateNotifier<AsyncValue<void>> {
-  final Ref _ref;
   final FirebaseService _firebase = FirebaseService();
 
-  GroupNotifier(this._ref) : super(const AsyncValue.data(null));
+  GroupNotifier(Ref ref) : super(const AsyncValue.data(null));
 
   /// 소모임 가입
   Future<bool> joinGroup(String groupId, {String? message}) async {

@@ -28,7 +28,7 @@ import 'features/marketplace/presentation/screens/marketplace_screen.dart';  // 
 import 'features/health/presentation/screens/health_screen.dart';  // 건강수첩 화면
 import 'features/social/presentation/screens/social_screen.dart';  // 소셜 화면
 import 'features/social/presentation/screens/group_detail_screen.dart';  // 소모임 상세 화면
-import 'features/social/presentation/screens/feed_detail_screen.dart';  // 피드 상세 화면
+import 'features/social/presentation/screens/community_detail_screen.dart';  // 커뮤니티 게시글 상세 화면
 import 'features/chat/presentation/screens/chat_list_screen.dart';  // 채팅 목록 화면
 import 'features/chat/presentation/providers/chat_provider.dart';  // 채팅 Provider
 import 'features/profile/presentation/screens/profile_screen.dart';  // 프로필 화면
@@ -228,12 +228,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       
-      // 피드 상세 화면 (경로: '/social/feed/:id')
+      // 커뮤니티 게시글 상세 화면 (경로: '/social/community/:id')
       GoRoute(
-        path: '/social/feed/:id',
+        path: '/social/community/:id',
         builder: (context, state) {
           final postId = state.pathParameters['id'] ?? '';
-          return FeedDetailScreen(postId: postId);
+          return CommunityDetailScreen(postId: postId);
         },
       ),
       
@@ -439,7 +439,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
                   index: 4,
                   currentIndex: currentIndex,
                   route: '/social',
-                  color: context.features.community,
+                  color: context.features.social,
                 ),
               ),
             ],

@@ -542,7 +542,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                   description: '하단에서 올라오는 확인/취소 시트',
                   color: Colors.teal,
                   children: [
-                    _buildTestButton(context, '모임 탈퇴', Icons.exit_to_app, context.features.community,
+                    _buildTestButton(context, '모임 탈퇴', Icons.exit_to_app, context.features.social,
                       () async { showConfirmSheet(context, type: ConfirmSheetType.groupLeave, onConfirm: () {}); return null; }),
                     _buildTestButton(context, '상품 삭제', Icons.delete, context.features.market,
                       () async { showConfirmSheet(context, type: ConfirmSheetType.productDelete, onConfirm: () {}); return null; }),

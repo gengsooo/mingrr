@@ -11,10 +11,16 @@ import '../../models/group_model.dart';
 
 /// ============================================================
 /// 통합 검색 화면
-/// 마켓, 소모임, 알바 검색 지원
+/// 마켓, 소모임(group), 커뮤니티(게시판), 알바 검색 지원
 /// ============================================================
 
-enum SearchType { market, community, job, breeding }
+enum SearchType {
+  market,      // 마켓플레이스 상품
+  group,       // 소모임
+  community,   // 커뮤니티 게시판
+  job,         // 알바
+  breeding,    // 교배
+}
 
 class SearchScreen extends ConsumerStatefulWidget {
   final SearchType searchType;
@@ -92,8 +98,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     switch (widget.searchType) {
       case SearchType.breeding:
         return '교배 글 제목, 상세 내용으로 검색';
-      case SearchType.community:
+      case SearchType.group:
         return '모임명, 태그로 검색';
+      case SearchType.community:
+        return '게시글 내용, 태그로 검색';
       case SearchType.job:
         return '알바 제목, 설명으로 검색';
       case SearchType.market:
@@ -128,8 +136,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         switch (widget.searchType) {
           case SearchType.market:
             return _buildProductItem(item as ProductModel);
-          case SearchType.community:
+          case SearchType.group:
             return _buildGroupItem(item as GroupModel);
+          case SearchType.community:
+            return _buildCommunityPostItem(item); // TODO: CommunityPostModel
           case SearchType.breeding:
             return _buildBreedingItem(item);
           case SearchType.job:
@@ -189,7 +199,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: context.features.communityContainer,
+            color: context.features.socialContainer,
             borderRadius: BorderRadius.circular(8),
             image: group.imageUrl != null
                 ? DecorationImage(
@@ -199,7 +209,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 : null,
           ),
           child: group.imageUrl == null
-              ? Icon(Icons.groups, color: context.features.community)
+              ? Icon(Icons.groups, color: context.features.social)
               : null,
         ),
         title: Text(group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -289,6 +299,29 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
+  // TODO: 커뮤니티 게시글 검색 결과 아이템
+  Widget _buildCommunityPostItem(dynamic post) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
+      child: ListTile(
+        leading: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: context.features.socialContainer,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(Icons.article, color: context.features.social),
+        ),
+        title: Text('게시글', maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: const Text('커뮤니티 게시글 검색 준비 중'),
+        onTap: () {
+          Navigator.pop(context, post);
+        },
+      ),
+    );
+  }
+
   IconData _getJobIcon(JobType type) {
     switch (type) {
       case JobType.care:
@@ -319,8 +352,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         case SearchType.market:
           results = await _firestoreService.searchProducts(trimmedQuery);
           break;
-        case SearchType.community:
+        case SearchType.group:
           results = await _firestoreService.searchGroups(trimmedQuery);
+          break;
+        case SearchType.community:
+          results = []; // TODO: searchCommunityPosts 구현 필요
           break;
         case SearchType.breeding:
           results = await _firestoreService.searchBreedingPosts(trimmedQuery);

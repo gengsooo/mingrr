@@ -2,8 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 /// ============================================================
-/// 소모임(Group) 관련 모델
-/// 모임, 일정, 멤버 등 데이터 구조
+/// 소모임(Group) 모델
+/// 
+/// 소셜 > 소모임 기능의 데이터 모델
+/// - GroupModel: 모임 정보
+/// - GroupScheduleModel: 모임 일정
+/// - GroupJoinRequestModel: 가입 신청
+/// - GroupLikeModel: 모임 좋아요
 /// ============================================================
 
 /// 모임 타입

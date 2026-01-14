@@ -46,13 +46,13 @@ class ChatListScreen extends ConsumerWidget {
     final tabs = [
       TopNavTab(label: '데이팅', icon: Icons.favorite, color: features.dating),
       TopNavTab(label: '마켓', icon: Icons.store, color: features.market),
-      TopNavTab(label: '소모임', icon: Icons.groups, color: features.community),
+      TopNavTab(label: '소모임', icon: Icons.groups, color: features.social),
     ];
 
     // 탭별 배경색 (채팅 목록은 각 탭의 테마색 유지)
     final backgroundColor = switch (selectedTab) {
       ChatType.dating || ChatType.breeding => features.datingContainer,
-      ChatType.group => features.communityContainer,
+      ChatType.group => features.socialContainer,
       ChatType.market => features.marketContainer,
     };
     
@@ -114,7 +114,7 @@ class ChatListScreen extends ConsumerWidget {
       case ChatType.breeding:
         return features.breeding;
       case ChatType.group:
-        return features.community;
+        return features.social;
       case ChatType.market:
         return features.market;
     }

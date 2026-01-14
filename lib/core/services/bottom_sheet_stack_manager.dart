@@ -72,7 +72,7 @@ class BottomSheetStackManager {
 class BottomSheetType {
   static const String guardian = 'guardian';
   static const String pet = 'pet';
-  static const String community = 'community';
+  static const String group = 'group';
   static const String chatOptions = 'chat_options';
   static const String rating = 'rating';
 }

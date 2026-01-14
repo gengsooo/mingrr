@@ -359,6 +359,54 @@ service cloud.firestore {
     }
     
     // ============================================================
+    // feedPosts Collection - 커뮤니티 피드 게시글
+    // ============================================================
+    match /feedPosts/{postId} {
+      // 읽기: 로그인한 사용자는 모든 게시글 조회 가능
+      allow read: if isAdmin() || isSignedIn();
+      
+      // 생성: 본인이 작성자인 게시글만 생성 가능
+      allow create: if isAdmin() || (isSignedIn() && incomingData().authorId == request.auth.uid);
+      
+      // 수정: 본인이 작성자인 게시글만 수정 가능
+      allow update: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
+      
+      // 삭제: 본인이 작성자인 게시글만 삭제 가능
+      allow delete: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
+    }
+    
+    // ============================================================
+    // feedComments Collection - 커뮤니티 피드 댓글
+    // ============================================================
+    match /feedComments/{commentId} {
+      // 읽기: 로그인한 사용자는 모든 댓글 조회 가능
+      allow read: if isAdmin() || isSignedIn();
+      
+      // 생성: 본인이 작성자인 댓글만 생성 가능
+      allow create: if isAdmin() || (isSignedIn() && incomingData().authorId == request.auth.uid);
+      
+      // 수정: 본인이 작성자인 댓글만 수정 가능
+      allow update: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
+      
+      // 삭제: 본인이 작성자인 댓글만 삭제 가능
+      allow delete: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
+    }
+    
+    // ============================================================
+    // feedLikes Collection - 커뮤니티 피드 좋아요
+    // ============================================================
+    match /feedLikes/{likeId} {
+      // 읽기: 로그인한 사용자는 조회 가능
+      allow read: if isAdmin() || isSignedIn();
+      
+      // 생성: 본인 계정으로만 좋아요 가능
+      allow create: if isAdmin() || (isSignedIn() && incomingData().userId == request.auth.uid);
+      
+      // 삭제: 본인이 좋아요한 것만 삭제 가능
+      allow delete: if isAdmin() || (isSignedIn() && existingData().userId == request.auth.uid);
+    }
+    
+    // ============================================================
     // breedingPosts Collection - 교배 게시글
     // ============================================================
     match /breedingPosts/{postId} {

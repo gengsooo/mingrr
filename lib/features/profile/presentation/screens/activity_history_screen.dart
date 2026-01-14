@@ -136,7 +136,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
             return _buildActivityItem(
               context,
               icon: Icons.groups,
-              iconColor: context.features.community,
+              iconColor: context.features.social,
               title: group.name,
               subtitle: '멤버 ${group.memberIds.length}명',
               time: _formatTime(group.createdAt),

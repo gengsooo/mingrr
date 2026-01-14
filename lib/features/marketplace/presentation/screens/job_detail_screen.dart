@@ -282,7 +282,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         walkCount: 65,
         datingCount: 8,
         marketCount: 12,
-        communityCount: 5,
+        groupCount: 5,
       ),
     );
   }
@@ -412,7 +412,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       case JobType.bath:
         return context.features.health;
       case JobType.training:
-        return context.features.community;
+        return context.features.social;
       case JobType.other:
         return Theme.of(context).colorScheme.onSurfaceVariant;
     }

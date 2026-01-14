@@ -310,7 +310,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
       case 'market':
         return context.features.market;
       case 'community':
-        return context.features.community;
+        return context.features.social;
       default:
         return Theme.of(context).colorScheme.onSurfaceVariant;
     }
@@ -326,7 +326,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
       case 'market':
         return context.features.marketContainer;
       case 'community':
-        return context.features.communityContainer;
+        return context.features.socialContainer;
       default:
         return Theme.of(context).colorScheme.outline;
     }

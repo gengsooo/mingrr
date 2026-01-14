@@ -8,20 +8,20 @@ import 'mingrr_bottom_sheet.dart';
 import 'warmth_score.dart';
 
 /// ============================================================
-/// 소모임 프로필 모달
+/// 소모임(Group) 프로필 모달
 /// 
 /// 소모임 채팅에서 소모임 정보를 표시할 때 사용
 /// ============================================================
 
 /// 소모임 멤버 정보
-class CommunityMember {
+class GroupMember {
   final String id;
   final String nickname;
   final double kkosunnaeScore;
   final bool isOnline;
   final bool isCreator; // 모임장 여부
 
-  const CommunityMember({
+  const GroupMember({
     required this.id,
     required this.nickname,
     this.kkosunnaeScore = 50.0,
@@ -31,10 +31,10 @@ class CommunityMember {
 }
 
 /// 소모임 프로필 모달 표시 함수
-void showCommunityProfileModal(
+void showGroupProfileModal(
   BuildContext context, {
-  required String communityId,
-  required String communityName,
+  required String groupId,
+  required String groupName,
   String? description,
   int memberCount = 0,
   String? category,
@@ -42,10 +42,10 @@ void showCommunityProfileModal(
   String? createdAt,
   List<String> tags = const [],
   bool isJoined = true,
-  List<CommunityMember> members = const [],
+  List<GroupMember> members = const [],
 }) {
   final stackManager = BottomSheetStackManager();
-  final sheetId = BottomSheetStackManager.createSheetId(BottomSheetType.community, communityId);
+  final sheetId = BottomSheetStackManager.createSheetId(BottomSheetType.group, groupId);
   
   // 순환 감지: 같은 소모임 바텀시트가 이미 열려있으면 해당 바텀시트까지 닫기
   if (stackManager.hasCycle(sheetId)) {
@@ -64,9 +64,9 @@ void showCommunityProfileModal(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (sheetContext) => CommunityProfileModal(
-      communityId: communityId,
-      communityName: communityName,
+    builder: (sheetContext) => GroupProfileModal(
+      groupId: groupId,
+      groupName: groupName,
       description: description,
       memberCount: memberCount,
       category: category,
@@ -83,9 +83,9 @@ void showCommunityProfileModal(
 }
 
 /// 소모임 프로필 모달 위젯
-class CommunityProfileModal extends StatelessWidget {
-  final String communityId;
-  final String communityName;
+class GroupProfileModal extends StatelessWidget {
+  final String groupId;
+  final String groupName;
   final String? description;
   final int memberCount;
   final String? category;
@@ -93,12 +93,12 @@ class CommunityProfileModal extends StatelessWidget {
   final String? createdAt;
   final List<String> tags;
   final bool isJoined;
-  final List<CommunityMember> members;
+  final List<GroupMember> members;
 
-  const CommunityProfileModal({
+  const GroupProfileModal({
     super.key,
-    required this.communityId,
-    required this.communityName,
+    required this.groupId,
+    required this.groupName,
     this.description,
     this.memberCount = 0,
     this.category,
@@ -141,7 +141,7 @@ class CommunityProfileModal extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 소모임 기본 정보
-                  _buildCommunityInfo(context),
+                  _buildGroupInfo(context),
                   const SizedBox(height: AppSizes.gapL),
                   
                   // 태그
@@ -196,7 +196,7 @@ class CommunityProfileModal extends StatelessWidget {
   }
 
   /// 멤버 아이템 (클릭 시 보호자 프로필)
-  Widget _buildMemberItem(BuildContext context, CommunityMember member) {
+  Widget _buildMemberItem(BuildContext context, GroupMember member) {
     return GestureDetector(
       onTap: () {
         // 스택 방식: 현재 바텀시트 위에 보호자 정보 바텀시트를 열음
@@ -222,7 +222,7 @@ class CommunityProfileModal extends StatelessWidget {
             walkCount: 85,
             datingCount: 12,
             marketCount: 5,
-            communityCount: 18,
+            groupCount: 18,
           ),
         );
       },
@@ -289,7 +289,7 @@ class CommunityProfileModal extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   decoration: BoxDecoration(
-                    color: context.features.community,
+                    color: context.features.social,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: const Text(
@@ -309,7 +309,7 @@ class CommunityProfileModal extends StatelessWidget {
   }
 
   /// 소모임 기본 정보
-  Widget _buildCommunityInfo(BuildContext context) {
+  Widget _buildGroupInfo(BuildContext context) {
     return Row(
       children: [
         // 프로필 이미지 (보호자/반려동물 정보와 동일한 60x60 크기)
@@ -317,13 +317,13 @@ class CommunityProfileModal extends StatelessWidget {
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: context.features.community.withValues(alpha: 0.1),
+            color: context.features.social.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
             Icons.groups,
             size: 30,
-            color: context.features.community,
+            color: context.features.social,
           ),
         ),
         const SizedBox(width: AppSizes.gapM),
@@ -334,7 +334,7 @@ class CommunityProfileModal extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                communityName,
+                groupName,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -345,14 +345,14 @@ class CommunityProfileModal extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(
-                    color: context.features.community.withValues(alpha: 0.1),
+                    color: context.features.social.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     category!,
                     style: TextStyle(
                       fontSize: 11,
-                      color: context.features.community,
+                      color: context.features.social,
                     ),
                   ),
                 ),
@@ -380,14 +380,14 @@ class CommunityProfileModal extends StatelessWidget {
           children: tags.map((tag) => Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: context.features.community.withOpacity(0.1),
+              color: context.features.social.withOpacity(0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Text(
               '#$tag',
               style: TextStyle(
                 fontSize: 13,
-                color: context.features.community,
+                color: context.features.social,
               ),
             ),
           )).toList(),

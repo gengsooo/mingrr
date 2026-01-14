@@ -2,12 +2,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 /// ============================================================
-/// 커뮤니티 피드(게시판) 관련 모델
-/// SNS형 게시글, 댓글, 좋아요 등 데이터 구조
+/// 커뮤니티(Community) 게시판 모델
+/// 
+/// 소셜 > 커뮤니티 기능의 데이터 모델
+/// - CommunityPostModel: 게시글
+/// - CommunityCommentModel: 댓글
+/// - CommunityLikeModel: 게시글 좋아요
+/// - CommunityCommentLikeModel: 댓글 좋아요
 /// ============================================================
 
 /// 게시글 카테고리
-enum FeedCategory {
+enum CommunityCategory {
   daily,      // 일상
   question,   // 질문
   info,       // 정보공유
@@ -17,53 +22,53 @@ enum FeedCategory {
   other,      // 기타
 }
 
-extension FeedCategoryLabel on FeedCategory {
+extension CommunityCategoryLabel on CommunityCategory {
   String get label {
     switch (this) {
-      case FeedCategory.daily:
+      case CommunityCategory.daily:
         return '일상';
-      case FeedCategory.question:
+      case CommunityCategory.question:
         return '질문';
-      case FeedCategory.info:
+      case CommunityCategory.info:
         return '정보공유';
-      case FeedCategory.review:
+      case CommunityCategory.review:
         return '후기';
-      case FeedCategory.lost:
+      case CommunityCategory.lost:
         return '실종/목격';
-      case FeedCategory.event:
+      case CommunityCategory.event:
         return '이벤트';
-      case FeedCategory.other:
+      case CommunityCategory.other:
         return '기타';
     }
   }
   
   String get emoji {
     switch (this) {
-      case FeedCategory.daily:
+      case CommunityCategory.daily:
         return '🐕';
-      case FeedCategory.question:
+      case CommunityCategory.question:
         return '❓';
-      case FeedCategory.info:
+      case CommunityCategory.info:
         return '📢';
-      case FeedCategory.review:
+      case CommunityCategory.review:
         return '⭐';
-      case FeedCategory.lost:
+      case CommunityCategory.lost:
         return '🔍';
-      case FeedCategory.event:
+      case CommunityCategory.event:
         return '🎉';
-      case FeedCategory.other:
+      case CommunityCategory.other:
         return '💬';
     }
   }
 }
 
 /// 게시글 모델
-class FeedPostModel extends Equatable {
+class CommunityPostModel extends Equatable {
   final String id;
   final String authorId;
   final String authorName;
   final String? authorProfileUrl;
-  final FeedCategory category;
+  final CommunityCategory category;
   final String content;
   final List<String> imageUrls;
   final List<String> tags;
@@ -76,7 +81,7 @@ class FeedPostModel extends Equatable {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  const FeedPostModel({
+  const CommunityPostModel({
     required this.id,
     required this.authorId,
     required this.authorName,
@@ -104,15 +109,15 @@ class FeedPostModel extends Equatable {
   /// 첫 번째 이미지
   String? get firstImage => imageUrls.isNotEmpty ? imageUrls.first : null;
 
-  factory FeedPostModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
-    return FeedPostModel(
+  factory CommunityPostModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
+    return CommunityPostModel(
       id: id ?? data['id'] ?? '',
       authorId: data['authorId'] ?? '',
       authorName: data['authorName'] ?? '',
       authorProfileUrl: data['authorProfileUrl'],
-      category: FeedCategory.values.firstWhere(
+      category: CommunityCategory.values.firstWhere(
         (e) => e.name == data['category'],
-        orElse: () => FeedCategory.daily,
+        orElse: () => CommunityCategory.daily,
       ),
       content: data['content'] ?? '',
       imageUrls: List<String>.from(data['imageUrls'] ?? []),
@@ -152,12 +157,12 @@ class FeedPostModel extends Equatable {
     };
   }
   
-  FeedPostModel copyWith({
+  CommunityPostModel copyWith({
     String? id,
     String? authorId,
     String? authorName,
     String? authorProfileUrl,
-    FeedCategory? category,
+    CommunityCategory? category,
     String? content,
     List<String>? imageUrls,
     List<String>? tags,
@@ -170,7 +175,7 @@ class FeedPostModel extends Equatable {
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
-    return FeedPostModel(
+    return CommunityPostModel(
       id: id ?? this.id,
       authorId: authorId ?? this.authorId,
       authorName: authorName ?? this.authorName,
@@ -199,7 +204,7 @@ class FeedPostModel extends Equatable {
 }
 
 /// 댓글 모델
-class FeedCommentModel extends Equatable {
+class CommunityCommentModel extends Equatable {
   final String id;
   final String postId;
   final String authorId;
@@ -212,7 +217,7 @@ class FeedCommentModel extends Equatable {
   final DateTime createdAt;
   final DateTime? updatedAt;
 
-  const FeedCommentModel({
+  const CommunityCommentModel({
     required this.id,
     required this.postId,
     required this.authorId,
@@ -232,8 +237,8 @@ class FeedCommentModel extends Equatable {
   /// 표시용 작성자 이름
   String get displayAuthorName => isAnonymous ? '익명' : authorName;
 
-  factory FeedCommentModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
-    return FeedCommentModel(
+  factory CommunityCommentModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
+    return CommunityCommentModel(
       id: id ?? data['id'] ?? '',
       postId: data['postId'] ?? '',
       authorId: data['authorId'] ?? '',
@@ -275,21 +280,21 @@ class FeedCommentModel extends Equatable {
 }
 
 /// 게시글 좋아요 모델
-class FeedLikeModel extends Equatable {
+class CommunityLikeModel extends Equatable {
   final String id;
   final String userId;
   final String postId;
   final DateTime createdAt;
 
-  const FeedLikeModel({
+  const CommunityLikeModel({
     required this.id,
     required this.userId,
     required this.postId,
     required this.createdAt,
   });
 
-  factory FeedLikeModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
-    return FeedLikeModel(
+  factory CommunityLikeModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
+    return CommunityLikeModel(
       id: id ?? data['id'] ?? '',
       userId: data['userId'] ?? '',
       postId: data['postId'] ?? '',
@@ -312,21 +317,21 @@ class FeedLikeModel extends Equatable {
 }
 
 /// 댓글 좋아요 모델
-class CommentLikeModel extends Equatable {
+class CommunityCommentLikeModel extends Equatable {
   final String id;
   final String userId;
   final String commentId;
   final DateTime createdAt;
 
-  const CommentLikeModel({
+  const CommunityCommentLikeModel({
     required this.id,
     required this.userId,
     required this.commentId,
     required this.createdAt,
   });
 
-  factory CommentLikeModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
-    return CommentLikeModel(
+  factory CommunityCommentLikeModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
+    return CommunityCommentLikeModel(
       id: id ?? data['id'] ?? '',
       userId: data['userId'] ?? '',
       commentId: data['commentId'] ?? '',

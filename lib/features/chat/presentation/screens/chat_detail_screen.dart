@@ -14,7 +14,7 @@ import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/rating_sheet.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
 import '../../../../core/widgets/pet_profile_modal.dart';
-import '../../../../core/widgets/community_profile_modal.dart';
+import '../../../../core/widgets/group_profile_modal.dart';
 import '../../../../models/chat_model.dart';
 import '../../../../models/group_model.dart';
 import '../../../../models/rating_model.dart';
@@ -523,7 +523,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       final creatorId = groupData['creatorId'] as String?;
       
       // 멤버 정보 조회 (최대 10명)
-      List<CommunityMember> members = [];
+      List<GroupMember> members = [];
       for (final memberId in memberIds.take(10)) {
         final memberDoc = await _firebaseService.firestore
             .collection('users')
@@ -531,7 +531,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             .get();
         if (memberDoc.exists) {
           final memberData = memberDoc.data()!;
-          members.add(CommunityMember(
+          members.add(GroupMember(
             id: memberId,
             nickname: memberData['nickname'] ?? '사용자',
             kkosunnaeScore: (memberData['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0,
@@ -549,10 +549,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       
       if (!mounted) return;
       
-      showCommunityProfileModal(
+      showGroupProfileModal(
         context,
-        communityId: groupDoc.id,
-        communityName: groupData['name'] ?? '소모임',
+        groupId: groupDoc.id,
+        groupName: groupData['name'] ?? '소모임',
         description: groupData['description'],
         memberCount: memberIds.length,
         category: GroupTypeLabel.labelFromString(groupData['type']),
@@ -1425,7 +1425,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       case 'market':
         return context.features.market;
       case 'community':
-        return context.features.community;
+        return context.features.social;
       default:
         return Theme.of(context).colorScheme.primary;
     }

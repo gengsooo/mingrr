@@ -96,15 +96,15 @@ class FirebaseService {
   CollectionReference<Map<String, dynamic>> get ratingsCollection =>
       firestore.collection('ratings');
   
-  /// 커뮤니티 피드 게시글 컬렉션
+  /// 커뮤니티 게시판 게시글 컨렉션 (Firestore: feedPosts)
   CollectionReference<Map<String, dynamic>> get feedPostsCollection =>
       firestore.collection('feedPosts');
   
-  /// 커뮤니티 피드 댓글 컬렉션
+  /// 커뮤니티 게시판 댓글 컨렉션 (Firestore: feedComments)
   CollectionReference<Map<String, dynamic>> get feedCommentsCollection =>
       firestore.collection('feedComments');
   
-  /// 커뮤니티 피드 좋아요 컬렉션
+  /// 커뮤니티 게시판 좋아요 컨렉션 (Firestore: feedLikes)
   CollectionReference<Map<String, dynamic>> get feedLikesCollection =>
       firestore.collection('feedLikes');
 

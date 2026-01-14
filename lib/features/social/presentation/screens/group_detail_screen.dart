@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
@@ -18,8 +17,10 @@ import '../providers/group_provider.dart';
 import 'group_write_screen.dart';
 
 /// ============================================================
-/// 소모임 상세 화면
-/// 모임 정보, 멤버 목록, 일정, 가입/탈퇴 기능
+/// 소모임(Group) 상세 화면
+/// 
+/// 소셜 > 소모임 > 모임 상세
+/// 모임 정보, 멤버 목록, 일정, 가입/탈퇴/강퇴 기능
 /// ============================================================
 
 class GroupDetailScreen extends ConsumerStatefulWidget {
@@ -53,7 +54,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     final groupAsync = ref.watch(groupDetailProvider(widget.groupId));
     final isLikedAsync = ref.watch(isGroupLikedProvider(widget.groupId));
     final colorScheme = Theme.of(context).colorScheme;
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
 
     return Scaffold(
       backgroundColor: context.detailBackground,
@@ -103,7 +104,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   }
 
   Widget _buildAppBar(BuildContext context, GroupModel group, bool isLiked) {
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
 
     return SliverAppBar(
       expandedHeight: 200,
@@ -181,7 +182,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
 
   Widget _buildGroupInfo(BuildContext context, GroupModel group, bool isJoined) {
     final colorScheme = Theme.of(context).colorScheme;
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
 
     return Container(
       color: colorScheme.surface,
@@ -372,7 +373,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
 
   Widget _buildMembersTab(BuildContext context, GroupModel group, bool isCreator, bool isAdmin) {
     final colorScheme = Theme.of(context).colorScheme;
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
 
     return FutureBuilder<List<_MemberInfo>>(
       future: _loadMembers(group),
@@ -560,7 +561,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   Widget _buildScheduleTab(BuildContext context, GroupModel group, bool isJoined) {
     final schedulesAsync = ref.watch(groupSchedulesProvider(group.id));
     final colorScheme = Theme.of(context).colorScheme;
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
 
     return schedulesAsync.when(
       data: (schedules) {
@@ -676,7 +677,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     final myUserId = FirebaseService().currentUserId;
     final isJoined = myUserId != null && group.isMember(myUserId);
     final isCreator = myUserId != null && group.isCreator(myUserId);
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
 
     return MingrrBottomButtonBar(
       child: Row(

@@ -248,7 +248,7 @@ class DemoBottomNavBar extends StatelessWidget {
                 index: 4,
                 currentIndex: currentIndex,
                 route: '/social',
-                color: context.features.community,  // 커스텀 색상 (보라)
+                color: context.features.social,  // 커스텀 색상 (보라)
               ),
             ],
           ),

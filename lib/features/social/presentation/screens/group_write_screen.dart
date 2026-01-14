@@ -16,10 +16,14 @@ import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/location_selector.dart';
+import '../../../../core/widgets/tag_input.dart';
 import '../../../../models/group_model.dart';
 
 /// ============================================================
-/// 소모임 등록/수정 화면
+/// 소모임(Group) 등록/수정 화면
+/// 
+/// 소셜 > 소모임 > 모임 만들기/수정
+/// 모임 정보 입력, 이미지, 위치, 설정
 /// ============================================================
 
 class GroupWriteScreen extends ConsumerStatefulWidget {
@@ -82,12 +86,12 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final accentColor = context.features.community;
+    final accentColor = context.features.social;
 
     return Scaffold(
       backgroundColor: context.detailBackground,
       appBar: AppBar(
-        title: Text(_isEditMode ? '모임 수정' : '모임 만들기'),
+        title: Text(_isEditMode ? '소모임 수정' : '소모임 만들기'),
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
@@ -153,9 +157,15 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
               const SizedBox(height: AppSizes.gapL),
 
               // 태그
-              const Text('태그 (선택)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: AppSizes.gapS),
-              _buildTagInput(accentColor),
+              MingrrTagInput(
+                tags: _tags,
+                onTagsChanged: (tags) => setState(() {
+                  _tags.clear();
+                  _tags.addAll(tags);
+                }),
+                accentColor: accentColor,
+                labelText: '태그 (선택)',
+              ),
               const SizedBox(height: AppSizes.gapL),
 
               // 설정
@@ -320,73 +330,6 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
     );
   }
 
-  Widget _buildTagInput(Color accentColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_tags.isNotEmpty) ...[
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _tags.map((tag) {
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('#$tag', style: TextStyle(fontSize: 13, color: accentColor)),
-                    const SizedBox(width: 4),
-                    GestureDetector(
-                      onTap: () => setState(() => _tags.remove(tag)),
-                      child: Icon(Icons.close, size: 14, color: accentColor),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 8),
-        ],
-        GestureDetector(
-          onTap: _showAddTagDialog,
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              border: Border.all(color: Theme.of(context).colorScheme.outline),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.add, size: 20, color: accentColor),
-                const SizedBox(width: 8),
-                Text('태그 추가', style: TextStyle(color: accentColor, fontWeight: FontWeight.w500)),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showAddTagDialog() async {
-    final tag = await showInputDialog(
-      context,
-      type: DialogType.community,
-      title: '태그 추가',
-      hintText: '태그를 입력해주세요',
-      confirmText: '추가',
-    );
-
-    if (tag != null && tag.isNotEmpty && !_tags.contains(tag)) {
-      setState(() => _tags.add(tag));
-    }
-  }
-
   Widget _buildSettingsSection(Color accentColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -475,7 +418,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
   Future<void> _pickImage() async {
     final croppedFile = await ImageUtils.pickCoverImage(
       context: context,
-      toolbarColor: context.features.community,
+      toolbarColor: context.features.social,
     );
 
     if (croppedFile != null) {
@@ -540,7 +483,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
           error: e,
           tag: 'GroupWrite',
           operation: '모임 저장',
-          themeColor: context.features.community,
+          themeColor: context.features.social,
         );
       }
     } finally {

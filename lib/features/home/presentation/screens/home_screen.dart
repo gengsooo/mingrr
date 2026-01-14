@@ -734,7 +734,7 @@ class HomeScreen extends ConsumerWidget {
       case HealthCategory.grooming:
         return features.health;
       case HealthCategory.medication:
-        return features.community;
+        return features.social;
       default:
         return Theme.of(context).colorScheme.onSurfaceVariant;
     }
@@ -978,7 +978,7 @@ class HomeScreen extends ConsumerWidget {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: features.community.withOpacity(0.15),
+              color: features.social.withOpacity(0.15),
               borderRadius: BorderRadius.circular(AppSizes.radiusM),
               image: group.imageUrl != null
                   ? DecorationImage(
@@ -988,7 +988,7 @@ class HomeScreen extends ConsumerWidget {
                   : null,
             ),
             child: group.imageUrl == null
-                ? Icon(Icons.groups, color: features.community, size: 26)
+                ? Icon(Icons.groups, color: features.social, size: 26)
                 : null,
           ),
           const SizedBox(width: AppSizes.gapM),
@@ -1001,14 +1001,14 @@ class HomeScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: features.community.withOpacity(0.1),
+                        color: features.social.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         group.category,
                         style: TextStyle(
                           fontSize: 10,
-                          color: features.community,
+                          color: features.social,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

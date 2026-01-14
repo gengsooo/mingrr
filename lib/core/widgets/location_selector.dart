@@ -412,7 +412,7 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
   String? selectedCity;
   String? selectedDistrict;
 
-  Color get accentColor => widget.accentColor ?? context.features.community;
+  Color get accentColor => widget.accentColor ?? context.features.social;
 
   @override
   void initState() {
