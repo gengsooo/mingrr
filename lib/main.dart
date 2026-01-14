@@ -1,12 +1,13 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-// TODO: 실제 기기 테스트 시 주석 해제
-// import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
+// TODO: Personal Team 테스트 시 주석 처리 (Push Notifications 미지원)
+// import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import 'firebase_options.dart';
 import 'app.dart';
-import 'core/services/notification_service.dart';
+// import 'core/services/notification_service.dart';
 
 /// ============================================================
 /// MINGRR - 반려동물 커뮤니티 앱
@@ -30,19 +31,29 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Firebase 초기화
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    if (kDebugMode) debugPrint('Firebase 초기화 실패: $e');
+  }
 
+  // TODO: Personal Team 테스트 시 주석 처리
   // FCM 백그라운드 핸들러 등록
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  // FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   // 푸시 알림 서비스 초기화
-  await NotificationService().initialize();
+  // await NotificationService().initialize();
   
-  // TODO: 실제 기기 테스트 시 주석 해제
-  // 카카오 지도 SDK 초기화
-  // await KakaoMapsFlutter.init('9d259b071721f1a6c369c9074076c657');
+  // 카카오 지도 SDK 초기화 (오류 발생 시 무시)
+  try {
+    if (kDebugMode) debugPrint('🗺️ 카카오맵 SDK 초기화 시작...');
+    await KakaoMapSdk.instance.initialize('e80e09aa4db6c1f3d1eedb1be73ee8c6');
+    if (kDebugMode) debugPrint('✅ 카카오맵 SDK 초기화 성공!');
+  } catch (e) {
+    if (kDebugMode) debugPrint('❌ 카카오맵 초기화 실패: $e');
+  }
   
   // 앱 실행
   runApp(

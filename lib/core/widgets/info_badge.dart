@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import '../theme/feature_colors.dart';
 
 /// ============================================================
 /// 정보 배지 위젯 모음
@@ -81,8 +81,8 @@ class InfoBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = backgroundColor ?? AppColors.background;
-    final txtColor = textColor ?? AppColors.textSecondary;
+    final bgColor = backgroundColor ?? Theme.of(context).colorScheme.surface;
+    final txtColor = textColor ?? Theme.of(context).colorScheme.onSurfaceVariant;
     final icnColor = iconColor ?? txtColor;
 
     return Container(
@@ -150,17 +150,20 @@ class MatchScoreBadge extends StatelessWidget {
     this.showLabel = true,
   });
 
-  /// 점수에 따른 색상
-  Color get _backgroundColor {
-    if (score >= 90) return AppColors.success.withOpacity(0.15);
-    if (score >= 70) return AppColors.dating.withOpacity(0.15);
-    return AppColors.background;
+  /// 점수에 따른 배경색
+  Color _getBackgroundColor(BuildContext context) {
+    final features = context.features;
+    if (score >= 90) return features.success.withOpacity(0.15);
+    if (score >= 70) return features.dating.withOpacity(0.15);
+    return Theme.of(context).colorScheme.surface;
   }
 
-  Color get _textColor {
-    if (score >= 90) return AppColors.success;
-    if (score >= 70) return AppColors.dating;
-    return AppColors.textSecondary;
+  /// 점수에 따른 텍스트색
+  Color _getTextColor(BuildContext context) {
+    final features = context.features;
+    if (score >= 90) return features.success;
+    if (score >= 70) return features.dating;
+    return Theme.of(context).colorScheme.onSurfaceVariant;
   }
 
   String get _displayText {
@@ -172,8 +175,8 @@ class MatchScoreBadge extends StatelessWidget {
     return InfoBadge(
       text: _displayText,
       icon: showIcon ? Icons.favorite : null,
-      backgroundColor: _backgroundColor,
-      textColor: _textColor,
+      backgroundColor: _getBackgroundColor(context),
+      textColor: _getTextColor(context),
       size: size,
     );
   }
@@ -196,12 +199,12 @@ class GenderAgeBadge extends StatelessWidget {
 
   Color get _backgroundColor {
     return isMale 
-        ? Colors.blue.withOpacity(0.1) 
-        : Colors.pink.withOpacity(0.1);
+        ? const Color(0xFF2196F3)  // 파란색 (투명도 없음)
+        : const Color(0xFFE91E63); // 핑크색 (투명도 없음)
   }
 
   Color get _textColor {
-    return isMale ? Colors.blue : Colors.pink;
+    return Colors.white;  // 텍스트 흰색
   }
 
   String get _displayText {
@@ -242,9 +245,94 @@ class LikeCountBadge extends StatelessWidget {
     return InfoBadge(
       text: '$count',
       icon: showIcon ? Icons.favorite : null,
-      backgroundColor: AppColors.dating.withOpacity(0.1),
-      textColor: AppColors.dating,
+      backgroundColor: context.features.dating.withOpacity(0.1),
+      textColor: context.features.dating,
       size: size,
+    );
+  }
+}
+
+/// 반려동물 성별 배지 (데이팅/교배찾기용)
+class PetGenderBadge extends StatelessWidget {
+  final bool isMale;
+  final bool showLabel;
+  final InfoBadgeSize size;
+
+  const PetGenderBadge({
+    super.key,
+    required this.isMale,
+    this.showLabel = true,
+    this.size = InfoBadgeSize.medium,
+  });
+
+  double get _fontSize {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return 10;
+      case InfoBadgeSize.medium:
+        return 12;
+      case InfoBadgeSize.large:
+        return 14;
+    }
+  }
+
+  double get _symbolSize {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return 11;
+      case InfoBadgeSize.medium:
+        return 13;
+      case InfoBadgeSize.large:
+        return 15;
+    }
+  }
+
+  EdgeInsets get _padding {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return const EdgeInsets.symmetric(horizontal: 6, vertical: 2);
+      case InfoBadgeSize.medium:
+        return const EdgeInsets.symmetric(horizontal: 8, vertical: 3);
+      case InfoBadgeSize.large:
+        return const EdgeInsets.symmetric(horizontal: 10, vertical: 4);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // 투명도 없는 배경색, 흰색 텍스트
+    final bgColor = isMale 
+        ? const Color(0xFF2196F3)  // 파란색 (투명도 없음)
+        : const Color(0xFFE91E63); // 핑크색 (투명도 없음)
+    const textColor = Colors.white;
+    
+    return Container(
+      padding: _padding,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isMale ? Icons.male : Icons.female,
+            size: _symbolSize,
+            color: textColor,
+          ),
+          if (showLabel) ...[
+            const SizedBox(width: 3),
+            Text(
+              isMale ? '남아' : '여아',
+              style: TextStyle(
+                fontSize: _fontSize,
+                color: textColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -268,9 +356,9 @@ class VerifiedBadge extends StatelessWidget {
       text: label,
       icon: isVerified ? Icons.check_circle : Icons.cancel_outlined,
       backgroundColor: isVerified 
-          ? AppColors.success.withOpacity(0.1) 
-          : AppColors.background,
-      textColor: isVerified ? AppColors.success : AppColors.textHint,
+          ? context.features.success.withOpacity(0.1) 
+          : Theme.of(context).colorScheme.surface,
+      textColor: isVerified ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
       size: size,
     );
   }

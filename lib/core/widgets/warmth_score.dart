@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../constants/app_colors.dart';
+import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import '../services/firebase_service.dart';
+import 'common_widgets.dart';
+import 'dialogs/dialogs.dart';
+import 'mingrr_bottom_sheet.dart';
 
 /// ============================================================
 /// 꼬순내지수 (보호자 평점 시스템)
@@ -104,79 +107,50 @@ class KkosunnaeScoreMedium extends StatelessWidget {
   Widget build(BuildContext context) {
     final scoreColor = _getScoreColor(score);
     final isMaster = score >= 90; // 90% 이상이면 마스터
-    final isGold = score >= 98; // 98% 이상이면 골드
     
     return GestureDetector(
       onTap: onTap ?? () => showKkosunnaeScoreGuideModal(context),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isGold ? Colors.white : scoreColor.withOpacity(0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isGold ? scoreColor : scoreColor.withOpacity(0.2),
-            width: isGold ? 1.5 : 1,
-          ),
-          boxShadow: isGold ? [
-            BoxShadow(
-              color: scoreColor.withOpacity(0.25),
-              blurRadius: 6,
-              spreadRadius: 0.5,
-            ),
-          ] : null,
+          color: scoreColor.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(20),
         ),
-        child: Column(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 발바닥 게이지 아이콘
-                _buildPawIcon(score, 20),
-                const SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // 꼬순내지수 라벨 + 배지
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '꼬순내지수',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        if (isMaster) ...[
-                          const SizedBox(width: 3),
-                          _KkosunaeMasterBadgeSmall(size: 12),
-                        ],
-                      ],
-                    ),
-                    // 퍼센트
-                    Text(
-                      '${score.toInt()}%',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: scoreColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            // 구간별 설명
-            const SizedBox(height: 4),
+            // 발바닥 게이지 아이콘
+            _buildPawIcon(score, 20),
+            const SizedBox(width: 6),
+            // 꼬순내지수 라벨
             Text(
-              _getScoreDescription(score),
+              '꼬순내지수',
               style: TextStyle(
-                fontSize: 10,
-                color: scoreColor.withOpacity(0.9),
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
+            ),
+            const SizedBox(width: 4),
+            // 퍼센트
+            Text(
+              '${score.toInt()}%',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: scoreColor,
+              ),
+            ),
+            if (isMaster) ...[
+              const SizedBox(width: 4),
+              _KkosunaeMasterBadgeSmall(size: 14),
+            ],
+            const SizedBox(width: 4),
+            // 클릭 가능 표시 아이콘
+            Icon(
+              Icons.help_outline,
+              size: 14,
+              color: Theme.of(context).colorScheme.outlineVariant,
             ),
           ],
         ),
@@ -329,45 +303,38 @@ class _KkosunnaeScoreRatingSheetState extends State<KkosunnaeScoreRatingSheet> {
       padding: EdgeInsets.only(
         left: AppSizes.paddingL,
         right: AppSizes.paddingL,
-        top: AppSizes.paddingL,
         bottom: MediaQuery.of(context).padding.bottom + AppSizes.paddingL,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const BottomSheetHandle(),
           // 헤더
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(2),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              '${widget.targetUserName}님과의 만남은 어땠나요?',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
               ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            '${widget.targetUserName}님과의 만남은 어땠나요?',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
+              textAlign: TextAlign.center,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             '평가는 상대방의 꼬순내지수에 반영됩니다.',
             style: TextStyle(
               fontSize: 13,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 12),
 
           // 별점
           Center(
@@ -382,8 +349,8 @@ class _KkosunnaeScoreRatingSheetState extends State<KkosunnaeScoreRatingSheet> {
                       index < _selectedRating ? Icons.star : Icons.star_border,
                       size: 40,
                       color: index < _selectedRating 
-                          ? AppColors.warning 
-                          : AppColors.divider,
+                          ? Colors.orange 
+                          : Theme.of(context).colorScheme.outline,
                     ),
                   ),
                 );
@@ -417,17 +384,17 @@ class _KkosunnaeScoreRatingSheetState extends State<KkosunnaeScoreRatingSheet> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.success.withOpacity(0.1) : Colors.transparent,
+                      color: isSelected ? context.features.success.withOpacity(0.1) : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected ? AppColors.success : AppColors.divider,
+                        color: isSelected ? context.features.success : Theme.of(context).colorScheme.outline,
                       ),
                     ),
                     child: Text(
                       tag,
                       style: TextStyle(
                         fontSize: 13,
-                        color: isSelected ? AppColors.success : AppColors.textSecondary,
+                        color: isSelected ? context.features.success : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -461,17 +428,17 @@ class _KkosunnaeScoreRatingSheetState extends State<KkosunnaeScoreRatingSheet> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.error.withOpacity(0.1) : Colors.transparent,
+                      color: isSelected ? Colors.red.withOpacity(0.1) : Colors.transparent,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected ? AppColors.error : AppColors.divider,
+                        color: isSelected ? Colors.red : Theme.of(context).colorScheme.outline,
                       ),
                     ),
                     child: Text(
                       tag,
                       style: TextStyle(
                         fontSize: 13,
-                        color: isSelected ? AppColors.error : AppColors.textSecondary,
+                        color: isSelected ? Colors.red : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -521,18 +488,11 @@ class _KkosunnaeScoreRatingSheetState extends State<KkosunnaeScoreRatingSheet> {
                         if (mounted) {
                           Navigator.pop(context);
                           widget.onSubmit?.call();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('평가가 완료되었습니다!'),
-                              backgroundColor: AppColors.success,
-                            ),
-                          );
+                          MingrrSnackBar.success(context, '평가가 완료되었습니다!');
                         }
                       } catch (e) {
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('평가 실패: $e'), backgroundColor: AppColors.error),
-                          );
+                          MingrrSnackBar.error(context, '평가 실패: $e');
                         }
                       } finally {
                         if (mounted) setState(() => _isSubmitting = false);
@@ -540,8 +500,8 @@ class _KkosunnaeScoreRatingSheetState extends State<KkosunnaeScoreRatingSheet> {
                     }
                   : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                disabledBackgroundColor: AppColors.divider,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                disabledBackgroundColor: Theme.of(context).colorScheme.outline,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -635,12 +595,6 @@ String _getScoreDescription(double score) {
   return '최고의 보호자예요! 🐾';
 }
 
-/// 마스터 배지 표시 여부 (90% 이상)
-bool _isMasterLevel(double score) => score >= 90;
-
-/// 골드 레벨 여부 (98% 이상)
-bool _isGoldLevel(double score) => score >= 98;
-
 /// 꼬순내지수 평가 바텀시트 표시 함수
 void showKkosunnaeScoreRatingSheet(
   BuildContext context, {
@@ -662,128 +616,65 @@ void showKkosunnaeScoreRatingSheet(
 
 /// 꼬순내지수 구간 안내 모달
 void showKkosunnaeScoreGuideModal(BuildContext context) {
-  showDialog(
-    context: context,
-    builder: (context) => Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 헤더
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.pets, size: 22, color: AppColors.primary),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Text(
-                    '꼬순내지수란?',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: const Icon(Icons.close, size: 20, color: AppColors.textHint),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            
-            // 설명
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text(
-                '꼬순내지수는 반려동물 보호자로서의 신뢰도를 나타내는 지표예요.\n거래, 만남, 활동 후 상대방의 평가를 통해 점수가 변동됩니다.',
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
-              ),
-            ),
-            const SizedBox(height: 20),
-            
-            // 구간별 안내
-            const Text(
-              '구간별 등급',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            
-            _buildScoreGuideRow(Colors.green, '0 ~ 49%', '아직 활동이 적어요', false),
-            _buildScoreGuideRow(Colors.blue, '50 ~ 79%', '좋은 보호자예요', false),
-            _buildScoreGuideRow(Colors.redAccent, '80 ~ 89%', '믿을 수 있는 보호자예요', false),
-            _buildScoreGuideRow(Colors.orange, '90 ~ 97%', '훌륭한 보호자예요!', true),
-            _buildScoreGuideRow(const Color(0xFFFFD700), '98 ~ 100%', '최고의 보호자예요! 🐾', true, isGold: true),
-            
-            const SizedBox(height: 16),
-            
-            // 닫기 버튼
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('확인', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
+  showInfoDialog(
+    context,
+    title: '꼬순내지수란?',
+    icon: Icons.pets,
+    subtitle: '보호자 신뢰도 지표',
+    accentColor: Theme.of(context).colorScheme.primary,
+    customContent: _KkosunnaeScoreGuideContent(),
+    footerText: '거래, 만남, 활동 후 상대방의 평가를 통해 점수가 변동돼요',
   );
 }
 
-/// 구간 안내 행
-Widget _buildScoreGuideRow(Color color, String range, String description, bool hasBadge, {bool isGold = false}) {
-  return Container(
-    margin: const EdgeInsets.only(bottom: 8),
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-    decoration: BoxDecoration(
-      color: isGold ? Colors.white : color.withOpacity(0.08),
-      borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: color.withOpacity(isGold ? 0.5 : 0.2)),
-      boxShadow: isGold ? [
-        BoxShadow(color: color.withOpacity(0.2), blurRadius: 4, spreadRadius: 0.5),
-      ] : null,
-    ),
-    child: Row(
+/// 꼬순내지수 안내 커스텀 콘텐츠
+class _KkosunnaeScoreGuideContent extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // 발바닥 아이콘
-        Icon(Icons.pets, size: 18, color: color),
-        const SizedBox(width: 10),
-        // 구간
-        SizedBox(
-          width: 70,
-          child: Text(
-            range,
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color),
-          ),
-        ),
-        // 설명
-        Expanded(
-          child: Text(
-            description,
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-          ),
-        ),
-        // 배지
-        if (hasBadge) _KkosunaeMasterBadgeSmall(size: 16),
+        _buildScoreGuideRow(context, Colors.green, '0 ~ 49%', '아직 활동이 적어요', false),
+        _buildScoreGuideRow(context, Colors.blue, '50 ~ 79%', '좋은 보호자예요', false),
+        _buildScoreGuideRow(context, Colors.redAccent, '80 ~ 89%', '믿을 수 있는 보호자예요', false),
+        _buildScoreGuideRow(context, Colors.orange, '90 ~ 97%', '훌륭한 보호자예요!', true),
+        _buildScoreGuideRow(context, const Color(0xFFFFD700), '98 ~ 100%', '최고의 보호자예요! 🐾', true, isGold: true),
       ],
-    ),
-  );
+    );
+  }
+
+  Widget _buildScoreGuideRow(BuildContext context, Color color, String range, String description, bool hasBadge, {bool isGold = false}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isGold ? Colors.white : color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(isGold ? 0.5 : 0.2)),
+        boxShadow: isGold ? [
+          BoxShadow(color: color.withOpacity(0.2), blurRadius: 4, spreadRadius: 0.5),
+        ] : null,
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.pets, size: 16, color: color),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 65,
+            child: Text(
+              range,
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              description,
+              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+          ),
+          if (hasBadge) _KkosunaeMasterBadgeSmall(size: 14),
+        ],
+      ),
+    );
+  }
 }

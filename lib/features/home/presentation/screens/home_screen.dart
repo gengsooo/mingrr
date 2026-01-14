@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/profile_icon.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../models/community_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../community/presentation/providers/community_provider.dart';
 
 /// ============================================================
@@ -49,7 +49,6 @@ class HomeScreen extends ConsumerWidget {
         : null;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -110,28 +109,33 @@ class HomeScreen extends ConsumerWidget {
 
   /// 앱바
   Widget _buildAppBar(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
+    final features = Theme.of(context).extension<FeatureColors>()!;
+    
     return SliverAppBar(
       floating: true,
-      backgroundColor: AppColors.background,
       elevation: 0,
+      backgroundColor: theme.scaffoldBackgroundColor,
       title: Row(
         children: [
           Container(
             width: 36,
             height: 36,
-            decoration: const BoxDecoration(
-              gradient: AppColors.warmGradient,
+            decoration: BoxDecoration(
+              gradient: features.warmGradient,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.pets, size: 20, color: AppColors.textPrimary),
+            child: Icon(Icons.pets, size: 20, color: colorScheme.onSurface),
           ),
           const SizedBox(width: AppSizes.gapS),
-          const Text(
+          Text(
             AppStrings.appName,
             style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: colorScheme.onSurface,
             ),
           ),
         ],
@@ -145,7 +149,10 @@ class HomeScreen extends ConsumerWidget {
         // 프로필 버튼
         Padding(
           padding: const EdgeInsets.only(right: AppSizes.paddingM),
-          child: const ProfileButton(size: 36),
+          child: GestureDetector(
+            onTap: () => context.push('/profile'),
+            child: ProfileButton(size: 36, backgroundColor: theme.scaffoldBackgroundColor),
+          ),
         ),
       ],
     );
@@ -153,20 +160,22 @@ class HomeScreen extends ConsumerWidget {
 
   /// 반려동물이 없을 때 표시할 카드
   Widget _buildEmptyPetsCard(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return MingrrCard(
       margin: EdgeInsets.zero,
       child: Column(
         children: [
-          const Icon(Icons.pets, size: 48, color: AppColors.textHint),
+          Icon(Icons.pets, size: 48, color: colorScheme.outlineVariant),
           const SizedBox(height: AppSizes.gapM),
           const Text(
             '등록된 반려동물이 없습니다',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: AppSizes.gapS),
-          const Text(
+          Text(
             '프로필에서 반려동물을 추가해보세요',
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: AppSizes.gapM),
           ElevatedButton(
@@ -180,54 +189,66 @@ class HomeScreen extends ConsumerWidget {
 
   /// 로딩 중 반려동물 카드 (Skeleton UI)
   Widget _buildLoadingPetsCard() {
-    return MingrrCard(
-      margin: EdgeInsets.zero,
-      child: Column(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.divider,
-              shape: BoxShape.circle,
-            ),
+    return Builder(
+      builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
+        
+        return MingrrCard(
+          margin: EdgeInsets.zero,
+          child: Column(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: colorScheme.outline,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(height: AppSizes.gapM),
+              Container(
+                width: 150,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: colorScheme.outline,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: AppSizes.gapS),
+              Container(
+                width: 200,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: colorScheme.outline,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: AppSizes.gapM),
-          Container(
-            width: 150,
-            height: 16,
-            decoration: BoxDecoration(
-              color: AppColors.divider,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-          const SizedBox(height: AppSizes.gapS),
-          Container(
-            width: 200,
-            height: 12,
-            decoration: BoxDecoration(
-              color: AppColors.divider,
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   /// 로딩 중 AI 추천 섹션 (Skeleton UI)
   Widget _buildLoadingAiSection() {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(AppSizes.paddingL),
-        child: Text(
-          '아직 등록된 반려동물이 없습니다',
-          style: TextStyle(
-            fontSize: 14,
-            color: AppColors.textSecondary,
+    return Builder(
+      builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
+        
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.paddingL),
+            child: Text(
+              '아직 등록된 반려동물이 없습니다',
+              style: TextStyle(
+                fontSize: 14,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -249,9 +270,11 @@ class HomeScreen extends ConsumerWidget {
               '내 반려동물',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
-            TextButton(
-              onPressed: () => context.push('/profile'),
-              child: const Text('관리', style: TextStyle(fontSize: 13)),
+            Builder(
+              builder: (context) => TextButton(
+                onPressed: () => context.push('/profile'),
+                child: Text('관리', style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+              ),
             ),
           ],
         ),
@@ -277,38 +300,48 @@ class HomeScreen extends ConsumerWidget {
                   child: Column(
                     children: [
                       // 프로필 이미지 (프로필 이미지만 사용, 없으면 기본 아이콘)
-                      Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryLight,
-                          shape: BoxShape.circle,
-                          border: isSelected 
-                              ? Border.all(color: AppColors.primary, width: 3)
-                              : null,
-                          image: _getPetProfileImageOnly(pet),
-                        ),
-                        child: _getPetProfileImageOnly(pet) == null
-                            ? const Icon(
-                                Icons.pets,
-                                size: 28,
-                                color: AppColors.primary,
-                              )
-                            : null,
+                      Builder(
+                        builder: (ctx) {
+                          final cs = Theme.of(ctx).colorScheme;
+                          return Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: cs.primaryContainer,
+                              shape: BoxShape.circle,
+                              border: isSelected 
+                                  ? Border.all(color: cs.primary, width: 3)
+                                  : null,
+                              image: _getPetProfileImageOnly(pet),
+                            ),
+                            child: _getPetProfileImageOnly(pet) == null
+                                ? Icon(
+                                    Icons.pets,
+                                    size: 28,
+                                    color: cs.primary,
+                                  )
+                                : null,
+                          );
+                        },
                       ),
                       const SizedBox(height: 6),
                       // 이름만 표시
-                      Text(
-                        pet.name,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                          color: isSelected 
-                              ? AppColors.primary 
-                              : AppColors.textPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Builder(
+                        builder: (ctx) {
+                          final cs = Theme.of(ctx).colorScheme;
+                          return Text(
+                            pet.name,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              color: isSelected 
+                                  ? cs.primary 
+                                  : cs.onSurface,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -339,9 +372,11 @@ class HomeScreen extends ConsumerWidget {
               '${selectedPet.name}의 건강 기록',
               style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
-            TextButton(
-              onPressed: () => _showHealthCategorySettings(context, ref),
-              child: const Text('설정', style: TextStyle(fontSize: 13)),
+            Builder(
+              builder: (ctx) => TextButton(
+                onPressed: () => _showHealthCategorySettings(ctx, ref),
+                child: Text('설정', style: TextStyle(fontSize: 13, color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
+              ),
             ),
           ],
         ),
@@ -362,10 +397,10 @@ class HomeScreen extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: categories.map((category) {
                   return _buildHealthItem(
-                    emoji: category.emoji,
+                    icon: category.icon,
                     label: category.label,
                     value: _getDemoValue(category),
-                    color: _getCategoryColor(category),
+                    color: _getCategoryColor(context, category),
                   );
                 }).toList(),
               ),
@@ -374,22 +409,27 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: AppSizes.gapS),
               
               // 건강수첩으로 이동 버튼
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add_circle_outline, size: 18, color: AppColors.primary),
-                  SizedBox(width: AppSizes.gapS),
-                  Text(
-                    '건강수첩 열기',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  SizedBox(width: 4),
-                  Icon(Icons.chevron_right, size: 18, color: AppColors.primary),
-                ],
+              Builder(
+                builder: (ctx) {
+                  final cs = Theme.of(ctx).colorScheme;
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add_circle_outline, size: 18, color: cs.onSurfaceVariant),
+                      const SizedBox(width: AppSizes.gapS),
+                      Text(
+                        '건강수첩 열기',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.chevron_right, size: 18, color: cs.onSurfaceVariant),
+                    ],
+                  );
+                },
               ),
             ],
           ),
@@ -407,51 +447,36 @@ class HomeScreen extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.6,
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            // 핸들
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+      builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
+        
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.6,
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
+          ),
+          child: Column(
+            children: [
+              const BottomSheetHandle(),
             // 헤더
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      '메인화면 건강기록 설정',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('완료'),
-                  ),
-                ],
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: const Text(
+                '메인화면 건강기록 설정',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
               ),
             ),
-            const Divider(height: 1),
             // 안내 문구
-            const Padding(
-              padding: EdgeInsets.all(16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 '메인화면에 표시할 건강기록을 선택하세요 (최소 1개, 최대 5개)',
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
               ),
             ),
+            const SizedBox(height: 12),
             // 카테고리 목록
             Expanded(
               child: ListView.builder(
@@ -468,18 +493,14 @@ class HomeScreen extends ConsumerWidget {
                         if (updated.length < 5) {
                           updated.add(category);
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('최대 5개까지 선택 가능합니다')),
-                          );
+                          MingrrSnackBar.warning(context, '최대 5개까지 선택 가능합니다');
                           return;
                         }
                       } else {
                         if (updated.length > 1) {
                           updated.remove(category);
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('최소 1개는 선택해야 합니다')),
-                          );
+                          MingrrSnackBar.warning(context, '최소 1개는 선택해야 합니다');
                           return;
                         }
                       }
@@ -487,7 +508,7 @@ class HomeScreen extends ConsumerWidget {
                     },
                     title: Row(
                       children: [
-                        Text(category.emoji, style: const TextStyle(fontSize: 20)),
+                        Icon(category.icon, size: 20, color: context.features.health),
                         const SizedBox(width: 12),
                         Text(category.label),
                       ],
@@ -496,9 +517,95 @@ class HomeScreen extends ConsumerWidget {
                       category.description,
                       style: const TextStyle(fontSize: 12),
                     ),
-                    activeColor: AppColors.primary,
+                    activeColor: colorScheme.primary,
                   );
                 },
+              ),
+            ),
+          ],
+        ),
+        );
+      },
+    );
+  }
+
+  /// 산책 시작하기 카드
+  Widget _buildWalkStartCard(BuildContext context) {
+    final features = Theme.of(context).extension<FeatureColors>()!;
+    
+    return GestureDetector(
+      onTap: () => context.push('/walk'),
+      child: Container(
+        padding: const EdgeInsets.all(AppSizes.paddingM),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              features.walk,
+              features.walk.withOpacity(0.8),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
+          boxShadow: [
+            BoxShadow(
+              color: features.walk.withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // 아이콘
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Center(
+                child: Icon(Icons.pets, size: 32, color: Colors.white),
+              ),
+            ),
+            const SizedBox(width: AppSizes.gapM),
+            // 텍스트
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '산책하러 가기',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    '반려동물과 함께 건강한 산책을!',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // 화살표
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_forward_rounded,
+                color: Colors.white,
+                size: 22,
               ),
             ),
           ],
@@ -507,85 +614,9 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  /// 산책 시작하기 카드
-  Widget _buildWalkStartCard(BuildContext context) {
-    return MingrrCard(
-      margin: EdgeInsets.zero,
-      child: Row(
-        children: [
-          // 아이콘
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.walk.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(
-              child: Icon(Icons.directions_walk, size: 28, color: AppColors.walk),
-            ),
-          ),
-          const SizedBox(width: AppSizes.gapM),
-          // 텍스트
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '산책 시작하기',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                SizedBox(height: 2),
-                Text(
-                  '산책을 시작하면 경로와 시간이 기록돼요',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // 토글 스위치
-          GestureDetector(
-            onTap: () => context.push('/walk'),
-            child: Container(
-              width: 52,
-              height: 28,
-              decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    left: 3,
-                    top: 3,
-                    child: Container(
-                      width: 22,
-                      height: 22,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   /// 건강 아이템 위젯
   Widget _buildHealthItem({
-    required String emoji,
+    required IconData icon,
     required String label,
     required String value,
     required Color color,
@@ -599,20 +630,30 @@ class HomeScreen extends ConsumerWidget {
             color: color.withOpacity(0.15),
             shape: BoxShape.circle,
           ),
-          child: Center(child: Text(emoji, style: const TextStyle(fontSize: 20))),
+          child: Icon(icon, size: 20, color: color),
         ),
         const SizedBox(height: AppSizes.gapS),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
-          ),
+        Builder(
+          builder: (ctx) {
+            final cs = Theme.of(ctx).colorScheme;
+            return Text(
+              value,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: cs.onSurface,
+              ),
+            );
+          },
         ),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+        Builder(
+          builder: (ctx) {
+            final cs = Theme.of(ctx).colorScheme;
+            return Text(
+              label,
+              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+            );
+          },
         ),
       ],
     );
@@ -635,18 +676,19 @@ class HomeScreen extends ConsumerWidget {
   }
 
   /// 카테고리별 색상
-  Color _getCategoryColor(HealthCategory category) {
+  Color _getCategoryColor(BuildContext context, HealthCategory category) {
+    final features = context.features;
     switch (category) {
       case HealthCategory.weight:
-        return AppColors.health;
+        return features.health;
       case HealthCategory.walk:
-        return AppColors.walk;
+        return features.walk;
       case HealthCategory.grooming:
-        return AppColors.health;
+        return features.health;
       case HealthCategory.medication:
-        return AppColors.community;
+        return features.community;
       default:
-        return AppColors.textSecondary;
+        return Theme.of(context).colorScheme.onSurfaceVariant;
     }
   }
 
@@ -656,10 +698,12 @@ class HomeScreen extends ConsumerWidget {
     final displayPets = otherPets.take(4).toList();
     
     if (displayPets.isEmpty) {
-      return const Center(
-        child: Text(
-          '아직 등록된 반려동물이 없습니다',
-          style: TextStyle(color: AppColors.textSecondary),
+      return Builder(
+        builder: (ctx) => Center(
+          child: Text(
+            '아직 등록된 반려동물이 없습니다',
+            style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+          ),
         ),
       );
     }
@@ -699,17 +743,19 @@ class HomeScreen extends ConsumerWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            Text(
-                              '${pet.breed ?? '품종 미상'} · ${_calculateAge(pet.birthDate)}',
-                              style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            Builder(
+                              builder: (ctx) => Text(
+                                '${pet.breed ?? '품종 미상'} · ${_calculateAge(pet.birthDate)}',
+                                style: TextStyle(fontSize: 10, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: _getScoreColor(score).withOpacity(0.15),
+                                color: _getScoreColor(context, score).withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
@@ -717,7 +763,7 @@ class HomeScreen extends ConsumerWidget {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.w600,
-                                  color: _getScoreColor(score),
+                                  color: _getScoreColor(context, score),
                                 ),
                               ),
                             ),
@@ -739,21 +785,26 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildPetSquareImage(PetModel pet, double height) {
     final imageUrl = pet.displayImageUrl;
     
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusM)),
-      child: Container(
-        height: height,
-        color: AppColors.datingLight,
-        child: imageUrl != null
-            ? Image.network(
-                imageUrl,
-                width: double.infinity,
-                height: height,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildDefaultPetIcon(height),
-              )
-            : _buildDefaultPetIcon(height),
-      ),
+    return Builder(
+      builder: (ctx) {
+        final features = Theme.of(ctx).extension<FeatureColors>()!;
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusM)),
+          child: Container(
+            height: height,
+            color: features.datingContainer,
+            child: imageUrl != null
+                ? Image.network(
+                    imageUrl,
+                    width: double.infinity,
+                    height: height,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _buildDefaultPetIcon(height),
+                  )
+                : _buildDefaultPetIcon(height),
+          ),
+        );
+      },
     );
   }
 
@@ -769,40 +820,46 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildPetProfileImage(PetModel pet, double size) {
     final imageUrl = pet.profileImageUrl ?? pet.displayImageUrl;
     
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.15),
-        shape: BoxShape.circle,
-      ),
-      child: imageUrl != null
-          ? ClipOval(
-              child: Image.network(
-                imageUrl,
-                width: size,
-                height: size,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Icon(
+    return Builder(
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        return Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            color: cs.primary.withOpacity(0.15),
+            shape: BoxShape.circle,
+          ),
+          child: imageUrl != null
+              ? ClipOval(
+                  child: Image.network(
+                    imageUrl,
+                    width: size,
+                    height: size,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Icon(
+                      Icons.pets,
+                      size: size * 0.5,
+                      color: cs.primary,
+                    ),
+                  ),
+                )
+              : Icon(
                   Icons.pets,
                   size: size * 0.5,
-                  color: AppColors.primary,
+                  color: cs.primary,
                 ),
-              ),
-            )
-          : Icon(
-              Icons.pets,
-              size: size * 0.5,
-              color: AppColors.primary,
-            ),
+        );
+      },
     );
   }
 
-  Color _getScoreColor(int score) {
-    if (score >= 90) return AppColors.success;
-    if (score >= 75) return AppColors.dating;
-    if (score >= 60) return AppColors.warning;
-    return AppColors.textHint;
+  Color _getScoreColor(BuildContext context, int score) {
+    final features = context.features;
+    if (score >= 90) return features.success;
+    if (score >= 75) return features.dating;
+    if (score >= 60) return features.warning;
+    return Theme.of(context).colorScheme.outlineVariant;
   }
 
   String _calculateAge(DateTime? birthDate) {
@@ -829,12 +886,14 @@ class HomeScreen extends ConsumerWidget {
         return groupsAsync.when(
           data: (groups) {
             if (groups.isEmpty) {
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(AppSizes.paddingL),
-                  child: Text(
-                    '아직 등록된 소모임이 없습니다',
-                    style: TextStyle(color: AppColors.textSecondary),
+              return Builder(
+                builder: (ctx) => Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSizes.paddingL),
+                    child: Text(
+                      '아직 등록된 소모임이 없습니다',
+                      style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                    ),
                   ),
                 ),
               );
@@ -859,6 +918,9 @@ class HomeScreen extends ConsumerWidget {
   
   /// Firebase GroupModel을 사용한 소모임 카드
   Widget _buildGroupCard(BuildContext context, GroupModel group) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final features = Theme.of(context).extension<FeatureColors>()!;
+    
     return MingrrCard(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       onTap: () => context.push('/community/group/${group.id}'),
@@ -868,7 +930,7 @@ class HomeScreen extends ConsumerWidget {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: AppColors.community.withOpacity(0.15),
+              color: features.community.withOpacity(0.15),
               borderRadius: BorderRadius.circular(AppSizes.radiusM),
               image: group.imageUrl != null
                   ? DecorationImage(
@@ -878,7 +940,7 @@ class HomeScreen extends ConsumerWidget {
                   : null,
             ),
             child: group.imageUrl == null
-                ? const Icon(Icons.groups, color: AppColors.community, size: 26)
+                ? Icon(Icons.groups, color: features.community, size: 26)
                 : null,
           ),
           const SizedBox(width: AppSizes.gapM),
@@ -891,14 +953,14 @@ class HomeScreen extends ConsumerWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.community.withOpacity(0.1),
+                        color: features.community.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         group.category,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
-                          color: AppColors.community,
+                          color: features.community,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -912,25 +974,25 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 Row(
                   children: [
-                    const Icon(Icons.location_on, size: 12, color: AppColors.textHint),
+                    Icon(Icons.location_on, size: 12, color: colorScheme.outlineVariant),
                     const SizedBox(width: 2),
                     Text(
                       group.address ?? '위치 미상',
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
                     ),
                     const SizedBox(width: 8),
-                    const Icon(Icons.people, size: 12, color: AppColors.textHint),
+                    Icon(Icons.people, size: 12, color: colorScheme.outlineVariant),
                     const SizedBox(width: 2),
                     Text(
                       '${group.memberCount}명',
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: AppColors.textHint),
+          Icon(Icons.chevron_right, color: colorScheme.outlineVariant),
         ],
       ),
     );

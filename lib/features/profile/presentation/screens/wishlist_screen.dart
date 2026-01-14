@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../providers/profile_provider.dart';
 
 /// 찜한 목록 화면
@@ -14,11 +14,8 @@ class WishlistScreen extends ConsumerWidget {
     final wishlistAsync = ref.watch(wishlistProductsProvider);
     
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('찜한 목록'),
-        backgroundColor: Colors.white,
-        elevation: 0,
       ),
       body: DefaultTabController(
         length: 2,
@@ -26,12 +23,12 @@ class WishlistScreen extends ConsumerWidget {
           children: [
             // 탭바
             Container(
-              color: Colors.white,
-              child: const TabBar(
-                labelColor: AppColors.primary,
-                unselectedLabelColor: AppColors.textSecondary,
-                indicatorColor: AppColors.primary,
-                tabs: [
+              color: Theme.of(context).colorScheme.surface,
+              child: TabBar(
+                labelColor: Theme.of(context).colorScheme.primary,
+                unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                indicatorColor: Theme.of(context).colorScheme.primary,
+                tabs: const [
                   Tab(text: '상품'),
                   Tab(text: '반려동물'),
                 ],
@@ -56,8 +53,8 @@ class WishlistScreen extends ConsumerWidget {
     return wishlistAsync.when(
       data: (products) {
         if (products.isEmpty) {
-          return _buildEmptyState(
-            icon: Icons.shopping_bag_outlined,
+          return MingrrEmptyState(
+            svgAsset: SvgAssets.emptyWishlist,
             title: '찜한 상품이 없어요',
             subtitle: '마켓에서 마음에 드는 상품을 찜해보세요!',
           );
@@ -74,7 +71,7 @@ class WishlistScreen extends ConsumerWidget {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    color: AppColors.divider,
+                    color: Theme.of(context).colorScheme.outline,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: product.imageUrls.isNotEmpty
@@ -82,7 +79,7 @@ class WishlistScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(8),
                           child: Image.network(product.imageUrls.first, fit: BoxFit.cover),
                         )
-                      : const Icon(Icons.image, color: AppColors.textHint),
+                      : Icon(Icons.image, color: Theme.of(context).colorScheme.outlineVariant),
                 ),
                 title: Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis),
                 subtitle: Text('${product.price.toStringAsFixed(0)}원'),
@@ -92,48 +89,18 @@ class WishlistScreen extends ConsumerWidget {
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+      loading: () => const MingrrLoadingState(),
+      error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
     );
   }
   
   Widget _buildPetWishlist() {
     // 반려동물 찜 기능은 추후 구현
-    return _buildEmptyState(
-      icon: Icons.pets,
+    return MingrrEmptyState(
+      svgAsset: SvgAssets.emptyHeart,
       title: '찜한 반려동물이 없어요',
       subtitle: '데이팅에서 마음에 드는 친구를 찜해보세요!',
     );
   }
   
-  Widget _buildEmptyState({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 64, color: AppColors.textHint),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textHint,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

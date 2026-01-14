@@ -4,12 +4,14 @@
 import 'package:flutter/material.dart';  // Flutter의 기본 UI 위젯들
 import 'package:flutter_riverpod/flutter_riverpod.dart';  // 상태 관리 라이브러리
 import 'package:go_router/go_router.dart';  // 화면 이동(라우팅) 관리
+import 'package:flutter_localizations/flutter_localizations.dart';  // 한글화 지원
 
 // 우리 앱의 커스텀 파일들
 import 'core/theme/app_theme.dart';  // 앱 테마
 import 'core/constants/app_strings.dart';  // 텍스트 상수
-import 'core/constants/app_colors.dart';  // 색상 상수
+import 'core/theme/feature_colors.dart';  // 색상 상수
 import 'core/constants/app_sizes.dart';  // 크기/간격 상수
+import 'core/providers/theme_provider.dart';  // 테마 Provider
 
 // 인증 관련
 import 'features/auth/presentation/providers/auth_provider.dart';  // 로그인 상태 관리 Provider
@@ -30,6 +32,7 @@ import 'features/profile/presentation/screens/profile_screen.dart';  // 프로�
 import 'features/dev/dev_tools_screen.dart';  // 개발자 도구 화면
 import 'features/notification/presentation/screens/notification_screen.dart';  // 알림 화면
 import 'features/marketplace/presentation/screens/job_detail_screen.dart';  // 알바 상세 화면
+import 'features/onboarding/presentation/screens/onboarding_screen.dart';  // 온보딩 화면
 
 /// ============================================================
 /// MINGRR 앱 메인 위젯 (Firebase 연동 버전)
@@ -56,6 +59,7 @@ final _authStateListenableProvider = Provider<AuthStateNotifier>((ref) {
   return AuthStateNotifier(ref);
 });
 
+// ignore: unused_element - 향후 웹 세션 복원 시 사용 예정
 /// 인증 초기화 완료 여부를 추적하는 Provider
 /// 웹에서 Firebase Auth가 세션을 복원할 때까지 대기
 final _authInitializedProvider = FutureProvider<bool>((ref) async {
@@ -83,6 +87,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isSplashRoute = path == '/splash';
       final isLoginRoute = path == '/login';
       final isDevToolsRoute = path == '/dev-tools';
+      final isOnboardingRoute = path == '/onboarding';
 
       // 로딩 중이면 스플래시 화면으로 (깜빡임 방지)
       if (isLoading) {
@@ -90,12 +95,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       }
 
       // 로딩 완료 후 스플래시 화면에 있으면 적절한 화면으로 이동
+      // (온보딩 체크는 SplashScreen에서 비동기로 처리)
       if (isSplashRoute) {
-        return isLoggedIn ? '/' : '/login';
+        return null; // SplashScreen에서 직접 처리
       }
 
       // 케이스 1: 로그인 안 된 상태에서 보호된 페이지 접근 시 로그인으로 리다이렉트
-      if (!isLoggedIn && !isLoginRoute && !isDevToolsRoute) {
+      if (!isLoggedIn && !isLoginRoute && !isDevToolsRoute && !isOnboardingRoute) {
         return '/login';
       }
 
@@ -114,6 +120,19 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/splash',
         builder: (context, state) => const SplashScreen(),
+      ),
+      
+      // ========================================
+      // 온보딩 화면 (처음 실행 시)
+      // ========================================
+      GoRoute(
+        path: '/onboarding',
+        builder: (context, state) => OnboardingScreen(
+          onComplete: () {
+            // 온보딩 완료 후 로그인 화면으로 이동
+            GoRouter.of(context).go('/login');
+          },
+        ),
       ),
       
       // ========================================
@@ -245,12 +264,30 @@ class MingrrApp extends ConsumerWidget {
     // 위에서 정의한 라우터를 가져옵니다 (로그인 체크 기능 포함)
     final router = ref.watch(routerProvider);
 
+    // 테마 모드 가져오기 (상태 변경 감지를 위해 state를 watch)
+    // ignore: unused_local_variable - 상태 변경 감지용으로 watch 필요
+    final _ = ref.watch(themeModeProvider);
+    final themeModeNotifier = ref.read(themeModeProvider.notifier);
+
     // MaterialApp.router: Flutter 앱의 최상위 위젯
     return MaterialApp.router(
       title: AppStrings.appName,  // 앱 이름
       debugShowCheckedModeBanner: false,  // 디버그 배너 숨기기
-      theme: AppTheme.lightTheme,  // 앱 테마
+      theme: AppTheme.lightTheme,  // 라이트 테마
+      darkTheme: AppTheme.darkTheme,  // 다크 테마
+      themeMode: themeModeNotifier.themeMode,  // 테마 모드 (시스템/라이트/다크) - themeMode 변경 시 rebuild됨
       routerConfig: router,  // 라우터 설정 (로그인 체크 포함)
+      // 한글화 설정
+      locale: const Locale('ko', 'KR'),
+      supportedLocales: const [
+        Locale('ko', 'KR'),
+        Locale('en', 'US'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
     );
   }
 }
@@ -297,14 +334,18 @@ class MingrrBottomNavBar extends ConsumerWidget {
     // 읽지 않은 채팅 메시지 수 가져오기
     final unreadCount = ref.watch(totalUnreadCountProvider);
 
+    // 다크모드 여부 확인
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    
     // Container: 박스 형태의 위젯
     return Container(
       // decoration: 컨테이너 꾸미기
       decoration: BoxDecoration(
-        color: Colors.white,  // 배경색: 흰색
+        color: isDark ? colorScheme.surface : Colors.white,  // 다크모드 대응
         boxShadow: [  // 그림자 효과
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),  // 검은색 5% 투명도
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
             blurRadius: 20,  // 그림자 흐림 정도
             offset: const Offset(0, -5),  // 그림자 위치 (위쪽으로 5픽셀)
           ),
@@ -318,65 +359,76 @@ class MingrrBottomNavBar extends ConsumerWidget {
           
           // Row: 자식 위젯들을 가로로 나열
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,  // 균등하게 배치
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               // 1️⃣ 홈 버튼
-              _buildNavItem(
-                context: context,
-                icon: Icons.home_outlined,  // 비활성 상태 아이콘
-                activeIcon: Icons.home,  // 활성 상태 아이콘
-                label: '홈',
-                index: 0,
-                currentIndex: currentIndex,
-                route: '/',
+              Expanded(
+                child: _buildNavItem(
+                  context: context,
+                  icon: Icons.home_outlined,
+                  activeIcon: Icons.home,
+                  label: '홈',
+                  index: 0,
+                  currentIndex: currentIndex,
+                  route: '/',
+                ),
               ),
               
               // 2️⃣ 데이팅 버튼
-              _buildNavItem(
-                context: context,
-                icon: Icons.favorite_outline,
-                activeIcon: Icons.favorite,
-                label: '데이팅',
-                index: 1,
-                currentIndex: currentIndex,
-                route: '/dating',
-                color: AppColors.dating,  // 커스텀 색상 (핑크)
+              Expanded(
+                child: _buildNavItem(
+                  context: context,
+                  icon: Icons.favorite_outline,
+                  activeIcon: Icons.favorite,
+                  label: '데이팅',
+                  index: 1,
+                  currentIndex: currentIndex,
+                  route: '/dating',
+                  color: context.features.dating,
+                ),
               ),
               
               // 3️⃣ 채팅 버튼
-              _buildNavItem(
-                context: context,
-                icon: Icons.chat_bubble_outline,
-                activeIcon: Icons.chat_bubble,
-                label: '채팅',
-                index: 2,
-                currentIndex: currentIndex,
-                route: '/chat',
-                badge: unreadCount,  // 실제 읽지 않은 메시지 수
+              Expanded(
+                child: _buildNavItem(
+                  context: context,
+                  icon: Icons.chat_bubble_outline,
+                  activeIcon: Icons.chat_bubble,
+                  label: '채팅',
+                  index: 2,
+                  currentIndex: currentIndex,
+                  route: '/chat',
+                  color: context.features.chat,  // 채팅 전용 주황색 테마
+                  badge: unreadCount,
+                ),
               ),
               
               // 4️⃣ 마켓 버튼
-              _buildNavItem(
-                context: context,
-                icon: Icons.store_outlined,
-                activeIcon: Icons.store,
-                label: '마켓',
-                index: 3,
-                currentIndex: currentIndex,
-                route: '/market',
-                color: AppColors.market,  // 커스텀 색상 (주황)
+              Expanded(
+                child: _buildNavItem(
+                  context: context,
+                  icon: Icons.store_outlined,
+                  activeIcon: Icons.store,
+                  label: '마켓',
+                  index: 3,
+                  currentIndex: currentIndex,
+                  route: '/market',
+                  color: context.features.market,
+                ),
               ),
               
               // 5️⃣ 소모임 버튼
-              _buildNavItem(
-                context: context,
-                icon: Icons.groups_outlined,
-                activeIcon: Icons.groups,
-                label: '소모임',
-                index: 4,
-                currentIndex: currentIndex,
-                route: '/community',
-                color: AppColors.community,
+              Expanded(
+                child: _buildNavItem(
+                  context: context,
+                  icon: Icons.groups_outlined,
+                  activeIcon: Icons.groups,
+                  label: '소모임',
+                  index: 4,
+                  currentIndex: currentIndex,
+                  route: '/community',
+                  color: context.features.community,
+                ),
               ),
             ],
           ),
@@ -404,7 +456,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
     final isActive = index == currentIndex;
     
     // 활성 상태 색상 결정 (color가 없으면 기본 색상 사용)
-    final activeColor = color ?? AppColors.primary;
+    final activeColor = color ?? Theme.of(context).colorScheme.primary;
 
     // GestureDetector: 터치 이벤트를 감지하는 위젯
     return GestureDetector(
@@ -419,8 +471,8 @@ class MingrrBottomNavBar extends ConsumerWidget {
       
       child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.paddingM,  // 좌우 여백
-          vertical: AppSizes.paddingS,  // 상하 여백
+          horizontal: 4,
+          vertical: AppSizes.paddingS,
         ),
         
         // Column: 자식 위젯들을 세로로 나열 (아이콘 + 텍스트)
@@ -438,14 +490,18 @@ class MingrrBottomNavBar extends ConsumerWidget {
                   decoration: BoxDecoration(
                     // 활성 상태면 배경색 표시, 아니면 투명
                     color: isActive
-                        ? activeColor.withOpacity(0.15)  // 15% 투명도
+                        ? activeColor.withValues(alpha: 0.15)  // 15% 투명도
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(AppSizes.radiusM),  // 둥근 모서리
                   ),
                   // Icon: 아이콘 위젯
                   child: Icon(
                     isActive ? activeIcon : icon,  // 활성 상태에 따라 아이콘 변경
-                    color: isActive ? activeColor : AppColors.textHint,  // 색상 변경
+                    color: isActive 
+                        ? activeColor 
+                        : Theme.of(context).brightness == Brightness.dark
+                            ? Theme.of(context).colorScheme.onSurfaceVariant
+                            : Theme.of(context).colorScheme.outlineVariant,  // 다크모드 대응
                     size: AppSizes.bottomNavIconSize,  // 아이콘 크기
                   ),
                 ),
@@ -462,7 +518,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
                         vertical: 1,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.error,  // 빨간색 배경
+                        color: Colors.red,  // 빨간색 배경
                         borderRadius: BorderRadius.circular(10),  // 둥근 모양
                       ),
                       child: Text(
@@ -486,7 +542,11 @@ class MingrrBottomNavBar extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,  // 활성 상태면 굵게
-                color: isActive ? activeColor : AppColors.textHint,  // 색상 변경
+                color: isActive 
+                    ? activeColor 
+                    : Theme.of(context).brightness == Brightness.dark
+                        ? Theme.of(context).colorScheme.onSurfaceVariant
+                        : Theme.of(context).colorScheme.outlineVariant,  // 다크모드 대응
               ),
             ),
           ],
@@ -524,13 +584,54 @@ class MingrrBottomNavBar extends ConsumerWidget {
 // ============================================================
 // 웹에서 Firebase Auth가 세션을 복원할 때까지 보여주는 화면
 // 깜빡거림 방지를 위해 로딩 중에는 이 화면을 표시
-class SplashScreen extends StatelessWidget {
+// 온보딩 완료 여부도 체크하여 적절한 화면으로 이동
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
+
+  @override
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
+}
+
+class _SplashScreenState extends ConsumerState<SplashScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkAndNavigate();
+  }
+
+  Future<void> _checkAndNavigate() async {
+    // 인증 상태가 로딩 완료될 때까지 대기
+    await Future.doWhile(() async {
+      await Future.delayed(const Duration(milliseconds: 100));
+      final authState = ref.read(authStateProvider);
+      return authState.isLoading;
+    });
+
+    if (!mounted) return;
+
+    final authState = ref.read(authStateProvider);
+    final isLoggedIn = authState.valueOrNull != null;
+
+    if (isLoggedIn) {
+      // 로그인 되어 있으면 홈으로
+      context.go('/');
+    } else {
+      // 온보딩 완료 여부 체크
+      final onboardingCompleted = await isOnboardingCompleted();
+      if (!mounted) return;
+      
+      if (onboardingCompleted) {
+        context.go('/login');
+      } else {
+        context.go('/onboarding');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -540,13 +641,13 @@ class SplashScreen extends StatelessWidget {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.pets,
                 size: 50,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(height: 24),
@@ -556,17 +657,17 @@ class SplashScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(height: 32),
             // 로딩 인디케이터
-            const SizedBox(
+            SizedBox(
               width: 24,
               height: 24,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ],

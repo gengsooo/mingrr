@@ -1,0 +1,11 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 원형 배경 -->
+  <circle cx="60" cy="60" r="50" fill="#F5F5F5" stroke="#E0E0E0" stroke-width="2" stroke-dasharray="8 4"/>
+  
+  <!-- 돋보기 -->
+  <circle cx="52" cy="52" r="20" fill="none" stroke="#BDBDBD" stroke-width="6"/>
+  <line x1="66" y1="66" x2="82" y2="82" stroke="#BDBDBD" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- X 표시 (검색 결과 없음) -->
+  <path d="M45 45 L59 59 M59 45 L45 59" stroke="#9E9E9E" stroke-width="3" stroke-linecap="round"/>
+</svg>

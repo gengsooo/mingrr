@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import '../services/firebase_service.dart';
+import 'common_widgets.dart';
+import 'mingrr_bottom_sheet.dart';
 
 /// ============================================================
 /// 신고 기능 위젯
@@ -73,32 +74,21 @@ class _ReportSheetState extends State<ReportSheet> {
       padding: EdgeInsets.only(
         left: AppSizes.paddingL,
         right: AppSizes.paddingL,
-        top: AppSizes.paddingL,
         bottom: MediaQuery.of(context).padding.bottom + AppSizes.paddingL,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 헤더
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.divider,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
+          const Center(child: BottomSheetHandle()),
+          const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.report_outlined, color: AppColors.error),
+              const Icon(Icons.report_outlined, color: Colors.red),
               const SizedBox(width: 8),
               Text(
                 '${widget.targetName} 신고하기',
@@ -114,7 +104,7 @@ class _ReportSheetState extends State<ReportSheet> {
             '신고 사유를 선택해주세요. 허위 신고 시 제재를 받을 수 있습니다.',
             style: TextStyle(
               fontSize: 13,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 20),
@@ -128,10 +118,10 @@ class _ReportSheetState extends State<ReportSheet> {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.error.withOpacity(0.1) : Colors.transparent,
+                  color: isSelected ? Colors.red.withOpacity(0.1) : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected ? AppColors.error : AppColors.divider,
+                    color: isSelected ? Colors.red : Theme.of(context).colorScheme.outline,
                   ),
                 ),
                 child: Row(
@@ -139,14 +129,14 @@ class _ReportSheetState extends State<ReportSheet> {
                     Icon(
                       isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
                       size: 20,
-                      color: isSelected ? AppColors.error : AppColors.textHint,
+                      color: isSelected ? Colors.red : Theme.of(context).colorScheme.outlineVariant,
                     ),
                     const SizedBox(width: 12),
                     Text(
                       type.label,
                       style: TextStyle(
                         fontSize: 14,
-                        color: isSelected ? AppColors.error : AppColors.textPrimary,
+                        color: isSelected ? Colors.red : Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -163,14 +153,14 @@ class _ReportSheetState extends State<ReportSheet> {
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: '신고 사유를 자세히 적어주세요',
-                hintStyle: const TextStyle(color: AppColors.textHint),
+                hintStyle: TextStyle(color: Theme.of(context).colorScheme.outlineVariant, fontSize: 13),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.divider),
+                  borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: AppColors.error),
+                  borderSide: const BorderSide(color: Colors.red),
                 ),
               ),
             ),
@@ -203,18 +193,11 @@ class _ReportSheetState extends State<ReportSheet> {
                         if (mounted) {
                           Navigator.pop(context);
                           widget.onSubmit?.call();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('신고가 접수되었습니다. 검토 후 조치하겠습니다.'),
-                              backgroundColor: AppColors.textSecondary,
-                            ),
-                          );
+                          MingrrSnackBar.success(context, '신고가 접수되었습니다. 검토 후 조치하겠습니다.');
                         }
                       } catch (e) {
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('신고 실패: $e'), backgroundColor: AppColors.error),
-                          );
+                          MingrrSnackBar.error(context, '신고 실패: $e');
                         }
                       } finally {
                         if (mounted) setState(() => _isSubmitting = false);
@@ -222,8 +205,8 @@ class _ReportSheetState extends State<ReportSheet> {
                     }
                   : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.error,
-                disabledBackgroundColor: AppColors.divider,
+                backgroundColor: Colors.red,
+                disabledBackgroundColor: Theme.of(context).colorScheme.outline,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

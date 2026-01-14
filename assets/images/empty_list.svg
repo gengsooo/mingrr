@@ -1,0 +1,13 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 원형 배경 -->
+  <circle cx="60" cy="60" r="50" fill="#F5F5F5" stroke="#E0E0E0" stroke-width="2" stroke-dasharray="8 4"/>
+  
+  <!-- 문서/리스트 아이콘 -->
+  <rect x="35" y="28" width="50" height="64" rx="6" fill="#BDBDBD"/>
+  
+  <!-- 리스트 라인들 -->
+  <line x1="45" y1="42" x2="75" y2="42" stroke="#9E9E9E" stroke-width="3" stroke-linecap="round"/>
+  <line x1="45" y1="54" x2="70" y2="54" stroke="#9E9E9E" stroke-width="3" stroke-linecap="round"/>
+  <line x1="45" y1="66" x2="65" y2="66" stroke="#9E9E9E" stroke-width="3" stroke-linecap="round"/>
+  <line x1="45" y1="78" x2="60" y2="78" stroke="#9E9E9E" stroke-width="3" stroke-linecap="round"/>
+</svg>

@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/dating_service.dart';
-import '../../../../core/services/location_service.dart';
-import '../../../../core/providers/location_provider.dart';
-import '../../../../core/widgets/verification_badge.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/request_sheet.dart';
 import '../../../../core/widgets/warmth_score.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
 import '../../../../core/widgets/trait_badge.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../models/user_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -45,11 +45,99 @@ class PetDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
-  bool isLiked = false;
-  int likeCount = 42;
+  bool _isLiked = false;
+  int _likeCount = 0;
   bool _isSending = false;
+  // ignore: unused_field - 향후 로딩 상태 표시용
+  bool _likeLoaded = false;
   final FirebaseService _firebase = FirebaseService();
   final DatingService _datingService = DatingService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLikeStatus();
+  }
+
+  /// Firebase에서 좋아요 상태 로드
+  Future<void> _loadLikeStatus() async {
+    try {
+      final currentUser = _firebase.currentUser;
+      if (currentUser == null) return;
+
+      // 반려동물의 좋아요 수 조회
+      final petDoc = await _firebase.petsCollection.doc(widget.petId).get();
+      if (petDoc.exists) {
+        final data = petDoc.data();
+        setState(() {
+          _likeCount = data?['likeCount'] ?? 0;
+        });
+      }
+
+      // 내가 좋아요 했는지 확인
+      final likeDoc = await _firebase.firestore
+          .collection('likes')
+          .doc('${currentUser.uid}_${widget.petId}')
+          .get();
+      
+      setState(() {
+        _isLiked = likeDoc.exists;
+        _likeLoaded = true;
+      });
+    } catch (e) {
+      debugPrint('좋아요 상태 로드 오류: $e');
+      setState(() => _likeLoaded = true);
+    }
+  }
+
+  /// 좋아요 토글
+  Future<void> _toggleLike() async {
+    final currentUser = _firebase.currentUser;
+    if (currentUser == null) {
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
+      return;
+    }
+
+    final likeDocId = '${currentUser.uid}_${widget.petId}';
+    final wasLiked = _isLiked;
+
+    // 낙관적 업데이트
+    setState(() {
+      _isLiked = !_isLiked;
+      _likeCount += _isLiked ? 1 : -1;
+    });
+
+    try {
+      if (wasLiked) {
+        // 좋아요 취소
+        await _firebase.firestore.collection('likes').doc(likeDocId).delete();
+        await _firebase.petsCollection.doc(widget.petId).update({
+          'likeCount': FieldValue.increment(-1),
+        });
+      } else {
+        // 좋아요 추가
+        await _firebase.firestore.collection('likes').doc(likeDocId).set({
+          'userId': currentUser.uid,
+          'petId': widget.petId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        await _firebase.petsCollection.doc(widget.petId).update({
+          'likeCount': FieldValue.increment(1),
+        });
+        
+        if (mounted) {
+          MingrrSnackBar.success(context, '좋아요를 보냈어요! 💕');
+        }
+      }
+    } catch (e) {
+      // 실패 시 롤백
+      setState(() {
+        _isLiked = wasLiked;
+        _likeCount += wasLiked ? 1 : -1;
+      });
+      debugPrint('좋아요 토글 오류: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +168,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
 
   Widget _buildContent(BuildContext context, PetModel pet) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.detailBackground,
       body: CustomScrollView(
         slivers: [
           // 이미지 헤더
@@ -164,7 +252,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
     return SliverAppBar(
       expandedHeight: 350,
       pinned: true,
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       leading: IconButton(
         icon: Container(
           padding: const EdgeInsets.all(8),
@@ -172,7 +260,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
             color: Colors.black.withOpacity(0.3),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+          child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
         ),
         onPressed: () => Navigator.pop(context),
       ),
@@ -195,9 +283,11 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
           isMale: isMale,
           distance: distanceKm,
           matchScore: !widget.isBreeding ? matchScore : null,
-          likeCount: likeCount,
+          likeCount: _likeCount,
+          isLiked: _isLiked,
           isBreeding: widget.isBreeding,
           profileImageUrl: _getPrimaryPhotoUrl(pet),
+          onLikeTap: _toggleLike,
         ),
       ),
     );
@@ -218,7 +308,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         const SizedBox(height: 8),
         Text(
           '${pet.breed ?? '품종 미상'} · ${age}살 · ${pet.weight ?? 0}kg ($sizeStr)',
-          style: const TextStyle(fontSize: 15, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ],
     );
@@ -243,12 +333,12 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.background,
+            color: context.sectionBackground,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             pet.bio ?? '소개글이 없습니다.',
-            style: const TextStyle(fontSize: 14, height: 1.6, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 14, height: 1.6, color: Theme.of(context).colorScheme.onSurface),
           ),
         ),
       ],
@@ -291,7 +381,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.background,
+                  color: context.sectionBackground,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(
@@ -303,7 +393,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.1),
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: owner?.profileImageUrl != null
@@ -313,42 +403,21 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                                     width: 50,
                                     height: 50,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => const Icon(
-                                      Icons.person, size: 24, color: AppColors.primary),
+                                    errorBuilder: (_, __, ___) => Icon(
+                                      Icons.person, size: 24, color: Theme.of(context).colorScheme.primary),
                                   ),
                                 )
-                              : const Icon(Icons.person, size: 24, color: AppColors.primary),
+                              : Icon(Icons.person, size: 24, color: Theme.of(context).colorScheme.primary),
                         ),
                         const SizedBox(width: 12),
-                        // 닉네임 + 성별/나이 + 꼬순내지수
+                        // 닉네임 + 꼬순내지수 (성별/나이 제거 - 개인정보 보호)
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    nickname,
-                                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: gender == '남성' 
-                                          ? Colors.blue.withOpacity(0.1) 
-                                          : Colors.pink.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      '$gender · ${age}세',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: gender == '남성' ? Colors.blue : Colors.pink,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                nickname,
+                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                               ),
                               const SizedBox(height: 4),
                               KkosunnaeScoreSmall(score: kkosunnaeScore),
@@ -356,7 +425,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                           ),
                         ),
                         // 화살표
-                        const Icon(Icons.chevron_right, color: AppColors.textHint),
+                        Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
                       ],
                     ),
                     // 인증 배지 (소형)
@@ -404,18 +473,18 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         Icon(
           icon,
           size: 20,
-          color: isVerified ? AppColors.success : AppColors.textHint,
+          color: isVerified ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
         ),
         const SizedBox(height: 4),
         Text(
           label,
           style: TextStyle(
             fontSize: 11,
-            color: isVerified ? AppColors.textPrimary : AppColors.textHint,
+            color: isVerified ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.outlineVariant,
           ),
         ),
         if (!isVerified)
-          const Icon(Icons.close, size: 12, color: AppColors.textHint),
+          Icon(Icons.close, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
       ],
     );
   }
@@ -449,13 +518,13 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       isIdentityVerified: owner?.isIdentityVerified ?? false,
       isPetVerified: owner?.isVerified ?? false,
       isLocationVerified: owner?.isLocationVerified ?? false,
-      dogs: [
-        GuardianDogInfo(
+      pets: [
+        GuardianPetInfo(
           id: pet.id,
           name: pet.name,
           breed: pet.breed ?? '품종 미상',
           ageString: '${_calculateAge(pet.birthDate)}살',
-          likeCount: likeCount,
+          likeCount: _likeCount,
           profileImageUrl: pet.profileImageUrl, // 프로필 이미지만 사용
           photoUrls: pet.photoUrls,
           traits: pet.traits.map((t) => t.label).toList(),
@@ -473,58 +542,32 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
 
   /// 하단 고정 버튼
   Widget _buildBottomButton(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(
-        left: AppSizes.paddingL,
-        right: AppSizes.paddingL,
-        top: AppSizes.paddingM,
-        bottom: MediaQuery.of(context).padding.bottom + AppSizes.paddingM,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
+    return MingrrBottomButtonBar(
       child: Row(
         children: [
-          // 좋아요 버튼
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                isLiked = !isLiked;
-                likeCount = isLiked ? likeCount + 1 : likeCount - 1;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(isLiked ? '좋아요를 보냈어요! ❤️' : '좋아요를 취소했어요'),
-                  duration: const Duration(seconds: 1),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: isLiked ? AppColors.dating : Colors.white,
-              foregroundColor: isLiked ? Colors.white : AppColors.dating,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              minimumSize: const Size(0, 56),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-                side: BorderSide(
-                  color: AppColors.dating,
-                  width: isLiked ? 0 : 1,
-                ),
+          // 좋아요 버튼 (아이콘 + 숫자만)
+          GestureDetector(
+            onTap: _toggleLike,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+              child: Row(
+                children: [
+                  Icon(
+                    _isLiked ? Icons.favorite : Icons.favorite_border,
+                    size: 28,
+                    color: _isLiked ? Colors.red : context.features.dating,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '$_likeCount',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: _isLiked ? Colors.red : context.features.dating,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            child: Row(
-              children: [
-                Icon(isLiked ? Icons.favorite : Icons.favorite_border),
-                const SizedBox(width: 4),
-                Text('$likeCount'),
-              ],
             ),
           ),
           const SizedBox(width: 12),
@@ -535,7 +578,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
               child: ElevatedButton(
                 onPressed: () => _showRequestConfirmation(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.dating,
+                  backgroundColor: context.features.dating,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -562,12 +605,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
     final myPets = ref.read(userPetsProvider).valueOrNull ?? [];
     
     if (myPets.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('먼저 반려동물을 등록해주세요'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      MingrrSnackBar.warning(context, '먼저 반려동물을 등록해주세요');
       return;
     }
     
@@ -618,30 +656,17 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         message: message,
       );
       
-      // 좋아요 수 증가
-      await _datingService.incrementPetLikeCount(targetPet.id);
+      // 좋아요 수 증가 (이미 좋아요 안 했으면)
+      if (!_isLiked) {
+        await _toggleLike();
+      }
       
       if (mounted) {
-        setState(() {
-          isLiked = true;
-          likeCount++;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${myPet.name}(으)로 데이트 신청을 보냈어요! 💕'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        MingrrSnackBar.success(context, '${myPet.name}(으)로 데이트 신청을 보냈어요! 💕');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('신청 실패: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        MingrrSnackBar.error(context, '신청 실패: $e');
       }
     } finally {
       if (mounted) {
@@ -677,21 +702,11 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       );
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${myPet.name}(으)로 교배 신청을 보냈어요! 🐶'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        MingrrSnackBar.success(context, '${myPet.name}(으)로 교배 신청을 보냈어요! 🐶');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('신청 실패: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        MingrrSnackBar.error(context, '신청 실패: $e');
       }
     } finally {
       if (mounted) {
@@ -702,40 +717,28 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
 
   /// 더보기 옵션 메뉴
   void _showMoreOptions(BuildContext context) {
-    showModalBottomSheet(
+    showMingrrOptionsSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      options: [
+        MingrrOptionItem(
+          icon: Icons.block_outlined,
+          label: '차단하기',
+          onTap: () {},
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.block_outlined),
-              title: const Text('차단하기'),
-              onTap: () => Navigator.pop(context),
-            ),
-            ListTile(
-              leading: const Icon(Icons.report_outlined, color: AppColors.error),
-              title: const Text('신고하기', style: TextStyle(color: AppColors.error)),
-              onTap: () {
-                Navigator.pop(context);
-                showReportSheet(
-                  context,
-                  targetId: widget.petId,
-                  targetName: '이 사용자',
-                  targetType: ReportTargetType.user,
-                );
-              },
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
-          ],
+        MingrrOptionItem(
+          icon: Icons.report_outlined,
+          label: '신고하기',
+          isDestructive: true,
+          onTap: () {
+            showReportSheet(
+              context,
+              targetId: widget.petId,
+              targetName: '이 사용자',
+              targetType: ReportTargetType.user,
+            );
+          },
         ),
-      ),
+      ],
     );
   }
 }
@@ -747,8 +750,10 @@ class _PetPhotoSlider extends StatefulWidget {
   final double distance;
   final int? matchScore;
   final int likeCount;
+  final bool isLiked;
   final bool isBreeding;
   final String? profileImageUrl;
+  final VoidCallback? onLikeTap;
 
   const _PetPhotoSlider({
     required this.photos,
@@ -756,8 +761,10 @@ class _PetPhotoSlider extends StatefulWidget {
     required this.distance,
     this.matchScore,
     required this.likeCount,
+    required this.isLiked,
     required this.isBreeding,
     this.profileImageUrl,
+    this.onLikeTap,
   });
 
   @override
@@ -766,7 +773,6 @@ class _PetPhotoSlider extends StatefulWidget {
 
 class _PetPhotoSliderState extends State<_PetPhotoSlider> {
   int _currentIndex = 0;
-  bool _isLiked = false;
 
   @override
   Widget build(BuildContext context) {
@@ -816,14 +822,16 @@ class _PetPhotoSliderState extends State<_PetPhotoSlider> {
             ),
           ),
         
-        // 성별 배지
+        // 성별 배지 (투명도 없는 배경색, 흰색 텍스트)
         Positioned(
           top: MediaQuery.of(context).padding.top + 60,
           left: 16,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: widget.isMale ? Colors.blue : Colors.pink,
+              color: widget.isMale 
+                  ? const Color(0xFF2196F3)  // 파란색 (투명도 없음)
+                  : const Color(0xFFE91E63), // 핑크색 (투명도 없음)
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -836,8 +844,12 @@ class _PetPhotoSliderState extends State<_PetPhotoSlider> {
                 ),
                 const SizedBox(width: 2),
                 Text(
-                  widget.isMale ? '수컷' : '암컷',
-                  style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w500),
+                  widget.isMale ? '남아' : '여아',
+                  style: const TextStyle(
+                    fontSize: 12, 
+                    color: Colors.white, 
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -860,7 +872,9 @@ class _PetPhotoSliderState extends State<_PetPhotoSlider> {
                 const Icon(Icons.location_on, size: 14, color: Colors.white),
                 const SizedBox(width: 2),
                 Text(
-                  '${widget.distance}km',
+                  widget.distance > 0 && widget.distance.isFinite 
+                    ? '${widget.distance.toStringAsFixed(1)}km'
+                    : '위치정보 없음',
                   style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500),
                 ),
               ],
@@ -873,24 +887,24 @@ class _PetPhotoSliderState extends State<_PetPhotoSlider> {
           bottom: 16,
           left: 16,
           child: GestureDetector(
-            onTap: () => setState(() => _isLiked = !_isLiked),
+            onTap: widget.onLikeTap,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: _isLiked ? AppColors.error : Colors.black.withOpacity(0.5),
+                color: widget.isLiked ? Colors.red : Colors.black.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    _isLiked ? Icons.favorite : Icons.favorite_border,
+                    widget.isLiked ? Icons.favorite : Icons.favorite_border,
                     size: 16,
                     color: Colors.white,
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    '${widget.likeCount + (_isLiked ? 1 : 0)}',
+                    '${widget.likeCount}',
                     style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500),
                   ),
                 ],
@@ -908,8 +922,8 @@ class _PetPhotoSliderState extends State<_PetPhotoSlider> {
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: widget.matchScore! >= 90 
-                    ? AppColors.success 
-                    : AppColors.dating,
+                    ? context.features.success 
+                    : context.features.dating,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(

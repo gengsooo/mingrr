@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../../../dating/presentation/providers/dating_provider.dart';
 import '../providers/profile_provider.dart';
 
@@ -17,11 +18,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
     final groupsAsync = ref.watch(userGroupsProvider);
     
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('활동 내역'),
-        backgroundColor: Colors.white,
-        elevation: 0,
       ),
       body: DefaultTabController(
         length: 3,
@@ -29,12 +27,12 @@ class ActivityHistoryScreen extends ConsumerWidget {
           children: [
             // 탭바
             Container(
-              color: Colors.white,
-              child: const TabBar(
-                labelColor: AppColors.primary,
-                unselectedLabelColor: AppColors.textSecondary,
-                indicatorColor: AppColors.primary,
-                tabs: [
+              color: Theme.of(context).colorScheme.surface,
+              child: TabBar(
+                labelColor: Theme.of(context).colorScheme.primary,
+                unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                indicatorColor: Theme.of(context).colorScheme.primary,
+                tabs: const [
                   Tab(text: '매칭'),
                   Tab(text: '거래'),
                   Tab(text: '모임'),
@@ -61,8 +59,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
     return matchesAsync.when(
       data: (matches) {
         if (matches.isEmpty) {
-          return _buildEmptyState(
-            icon: Icons.favorite,
+          return MingrrEmptyState(
+            svgAsset: SvgAssets.emptyMatch,
             title: '매칭 내역이 없어요',
             subtitle: '데이팅에서 새로운 친구를 만나보세요!',
           );
@@ -73,8 +71,9 @@ class ActivityHistoryScreen extends ConsumerWidget {
           itemBuilder: (context, index) {
             final match = matches[index];
             return _buildActivityItem(
+              context,
               icon: Icons.favorite,
-              iconColor: AppColors.dating,
+              iconColor: context.features.dating,
               title: '새로운 매칭!',
               subtitle: '${match.user1Id}님과 매칭되었어요',
               time: _formatTime(match.createdAt),
@@ -82,8 +81,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+      loading: () => const MingrrLoadingState(),
+      error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
     );
   }
   
@@ -92,8 +91,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
     return transactionsAsync.when(
       data: (transactions) {
         if (transactions.isEmpty) {
-          return _buildEmptyState(
-            icon: Icons.shopping_bag,
+          return MingrrEmptyState(
+            svgAsset: SvgAssets.emptyTransaction,
             title: '거래 내역이 없어요',
             subtitle: '마켓에서 거래해보세요!',
           );
@@ -104,8 +103,9 @@ class ActivityHistoryScreen extends ConsumerWidget {
           itemBuilder: (context, index) {
             final product = transactions[index];
             return _buildActivityItem(
+              context,
               icon: Icons.shopping_bag,
-              iconColor: AppColors.market,
+              iconColor: context.features.market,
               title: product.title,
               subtitle: '${product.price.toStringAsFixed(0)}원',
               time: _formatTime(product.createdAt),
@@ -113,8 +113,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+      loading: () => const MingrrLoadingState(),
+      error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
     );
   }
   
@@ -122,8 +122,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
     return groupsAsync.when(
       data: (groups) {
         if (groups.isEmpty) {
-          return _buildEmptyState(
-            icon: Icons.groups,
+          return MingrrEmptyState(
+            svgAsset: SvgAssets.emptyGroup,
             title: '모임 활동이 없어요',
             subtitle: '소모임에 참여해보세요!',
           );
@@ -134,8 +134,9 @@ class ActivityHistoryScreen extends ConsumerWidget {
           itemBuilder: (context, index) {
             final group = groups[index];
             return _buildActivityItem(
+              context,
               icon: Icons.groups,
-              iconColor: AppColors.community,
+              iconColor: context.features.community,
               title: group.name,
               subtitle: '멤버 ${group.memberIds.length}명',
               time: _formatTime(group.createdAt),
@@ -143,43 +144,14 @@ class ActivityHistoryScreen extends ConsumerWidget {
           },
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+      loading: () => const MingrrLoadingState(),
+      error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
     );
   }
   
-  Widget _buildEmptyState({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 64, color: AppColors.textHint),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            subtitle,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppColors.textHint,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
   
-  Widget _buildActivityItem({
+  Widget _buildActivityItem(
+    BuildContext context, {
     required IconData icon,
     required Color iconColor,
     required String title,
@@ -214,9 +186,9 @@ class ActivityHistoryScreen extends ConsumerWidget {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -224,9 +196,9 @@ class ActivityHistoryScreen extends ConsumerWidget {
           ),
           Text(
             time,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
-              color: AppColors.textHint,
+              color: Theme.of(context).colorScheme.outlineVariant,
             ),
           ),
         ],

@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import '../theme/feature_colors.dart';
 
 /// ============================================================
 /// 플랫폼별 지도 위젯
@@ -79,9 +79,9 @@ class _WebMapWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.divider.withOpacity(0.5),
+        color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Center(
         child: Column(
@@ -90,15 +90,15 @@ class _WebMapWidget extends StatelessWidget {
             Icon(
               Icons.map_outlined,
               size: 48,
-              color: AppColors.textHint,
+              color: Theme.of(context).colorScheme.outlineVariant,
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               '지도 영역',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 4),
@@ -106,7 +106,7 @@ class _WebMapWidget extends StatelessWidget {
               '모바일 앱에서 확인 가능',
               style: TextStyle(
                 fontSize: 12,
-                color: AppColors.textHint,
+                color: Theme.of(context).colorScheme.outlineVariant,
               ),
             ),
           ],
@@ -183,7 +183,7 @@ class _MobileMapWidgetState extends State<_MobileMapWidget> {
   Widget _buildPlaceholder() {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.divider,
+        color: Theme.of(context).colorScheme.outline,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Stack(
@@ -214,7 +214,7 @@ class _MobileMapWidgetState extends State<_MobileMapWidget> {
                   Icon(
                     Icons.map,
                     size: 48,
-                    color: AppColors.walk.withOpacity(0.7),
+                    color: context.features.walk.withOpacity(0.7),
                   ),
                   const SizedBox(height: 8),
                   const Text(
@@ -230,7 +230,7 @@ class _MobileMapWidgetState extends State<_MobileMapWidget> {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                   if (widget.latitude != null && widget.longitude != null) ...[
@@ -238,14 +238,14 @@ class _MobileMapWidgetState extends State<_MobileMapWidget> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.walk.withOpacity(0.1),
+                        color: context.features.walk.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         '${widget.latitude!.toStringAsFixed(4)}, ${widget.longitude!.toStringAsFixed(4)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.walk,
+                          color: context.features.walk,
                         ),
                       ),
                     ),
@@ -262,11 +262,11 @@ class _MobileMapWidgetState extends State<_MobileMapWidget> {
               bottom: 12,
               child: FloatingActionButton.small(
                 heroTag: 'currentLocation',
-                backgroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.surface,
                 onPressed: () {
                   // 현재 위치로 이동
                 },
-                child: const Icon(Icons.my_location, color: AppColors.walk),
+                child: Icon(Icons.my_location, color: context.features.walk),
               ),
             ),
         ],

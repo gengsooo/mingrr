@@ -8,7 +8,7 @@ import 'package:go_router/go_router.dart';  // 화면 이동(라우팅)을 관�
 // 우리 앱의 커스텀 파일들을 불러옵니다
 import 'core/theme/app_theme.dart';  // 앱의 전체적인 디자인 테마 (색상, 폰트 등)
 import 'core/constants/app_strings.dart';  // 앱에서 사용하는 모든 텍스트 상수
-import 'core/constants/app_colors.dart';  // 앱에서 사용하는 색상 상수
+import 'core/theme/feature_colors.dart';  // 앱에서 사용하는 색상 상수
 import 'core/constants/app_sizes.dart';  // 앱에서 사용하는 크기/간격 상수
 
 // 각 기능별 화면들을 불러옵니다
@@ -211,7 +211,7 @@ class DemoBottomNavBar extends StatelessWidget {
                 index: 1,
                 currentIndex: currentIndex,
                 route: '/dating',
-                color: AppColors.dating,  // 커스텀 색상 (핑크)
+                color: context.features.dating,  // 커스텀 색상 (핑크)
               ),
               
               // 3️⃣ 채팅 버튼
@@ -223,7 +223,7 @@ class DemoBottomNavBar extends StatelessWidget {
                 index: 2,
                 currentIndex: currentIndex,
                 route: '/chat',
-                color: AppColors.chat,  // 커스텀 색상 (파랑)
+                color: context.features.chat,  // 커스텀 색상 (파랑)
                 badge: 3,  // 배지 숫자 (읽지 않은 메시지 3개)
               ),
               
@@ -236,7 +236,7 @@ class DemoBottomNavBar extends StatelessWidget {
                 index: 3,
                 currentIndex: currentIndex,
                 route: '/market',
-                color: AppColors.market,  // 커스텀 색상 (주황)
+                color: context.features.market,  // 커스텀 색상 (주황)
               ),
               
               // 5️⃣ 소모임 버튼
@@ -248,7 +248,7 @@ class DemoBottomNavBar extends StatelessWidget {
                 index: 4,
                 currentIndex: currentIndex,
                 route: '/community',
-                color: AppColors.community,  // 커스텀 색상 (보라)
+                color: context.features.community,  // 커스텀 색상 (보라)
               ),
             ],
           ),
@@ -284,7 +284,7 @@ class DemoBottomNavBar extends StatelessWidget {
     final isActive = index == currentIndex;
     
     // 활성 상태 색상 결정 (color가 없으면 기본 색상 사용)
-    final activeColor = color ?? AppColors.primary;
+    final activeColor = color ?? Theme.of(context).colorScheme.primary;
 
     // GestureDetector: 터치 이벤트를 감지하는 위젯
     return GestureDetector(
@@ -325,7 +325,7 @@ class DemoBottomNavBar extends StatelessWidget {
                   // Icon: 아이콘 위젯
                   child: Icon(
                     isActive ? activeIcon : icon,  // 활성 상태에 따라 아이콘 변경
-                    color: isActive ? activeColor : AppColors.textHint,  // 색상 변경
+                    color: isActive ? activeColor : Theme.of(context).colorScheme.outlineVariant,  // 색상 변경
                     size: AppSizes.bottomNavIconSize,  // 아이콘 크기
                   ),
                 ),
@@ -342,7 +342,7 @@ class DemoBottomNavBar extends StatelessWidget {
                         vertical: 1,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.error,  // 빨간색 배경
+                        color: Colors.red,  // 빨간색 배경
                         borderRadius: BorderRadius.circular(10),  // 둥근 모양
                       ),
                       child: Text(
@@ -366,7 +366,7 @@ class DemoBottomNavBar extends StatelessWidget {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,  // 활성 상태면 굵게
-                color: isActive ? activeColor : AppColors.textHint,  // 색상 변경
+                color: isActive ? activeColor : Theme.of(context).colorScheme.outlineVariant,  // 색상 변경
               ),
             ),
           ],

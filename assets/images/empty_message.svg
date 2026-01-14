@@ -1,0 +1,16 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 원형 배경 -->
+  <circle cx="60" cy="60" r="50" fill="#F5F5F5" stroke="#E0E0E0" stroke-width="2" stroke-dasharray="8 4"/>
+  
+  <!-- 메시지 버블 -->
+  <rect x="25" y="35" width="50" height="35" rx="10" fill="#BDBDBD"/>
+  <polygon points="35,70 30,82 50,70" fill="#BDBDBD"/>
+  
+  <!-- 점선 (메시지 없음) -->
+  <line x1="35" y1="48" x2="65" y2="48" stroke="#9E9E9E" stroke-width="3" stroke-dasharray="5 3" stroke-linecap="round"/>
+  <line x1="35" y1="58" x2="55" y2="58" stroke="#9E9E9E" stroke-width="3" stroke-dasharray="5 3" stroke-linecap="round"/>
+  
+  <!-- 말풍선 꼬리 -->
+  <circle cx="85" cy="55" r="8" fill="#E0E0E0"/>
+  <circle cx="95" cy="65" r="5" fill="#E0E0E0"/>
+</svg>

@@ -4,13 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/image_picker_sheet.dart';
-import '../../../../core/widgets/map_location_picker_placeholder.dart';
+import '../../../../core/widgets/map/map_widgets.dart';
+import '../../../../core/models/location_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// ============================================================
@@ -34,11 +36,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nicknameController = TextEditingController();
   final _bioController = TextEditingController();
-  final _addressController = TextEditingController();
   
   UserGender? _selectedGender;
   DateTime? _birthDate;
-  DateTime? _lastNicknameChangeDate;
   String _originalNickname = '';
   bool _isLoading = false;
   bool _isDataLoaded = false;
@@ -48,6 +48,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   XFile? _selectedProfileImage;
   String? _profileImageUrl;
   DefaultAvatar? _selectedDefaultAvatar;
+  
+  // 위치 정보
+  LocationData? _selectedLocation;
   
   @override
   void initState() {
@@ -66,45 +69,37 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     _nicknameController.text = currentUser.nickname ?? '';
     _originalNickname = currentUser.nickname ?? '';
     _bioController.text = currentUser.bio ?? '';
-    _addressController.text = currentUser.address ?? '';
     _selectedGender = currentUser.gender;
     _birthDate = currentUser.birthDate;
-    _lastNicknameChangeDate = currentUser.nicknameChangedAt;
     _profileImageUrl = currentUser.profileImageUrl;
+    
+    // 기존 위치 정보 로드
+    if (currentUser.address != null && currentUser.address!.isNotEmpty) {
+      _selectedLocation = LocationData(
+        latitude: currentUser.location?.latitude ?? 0,
+        longitude: currentUser.location?.longitude ?? 0,
+        fullAddress: currentUser.address,
+        shortAddress: currentUser.address,
+      );
+    }
+    
     _isDataLoaded = true;
     setState(() {});
-  }
-  
-  /// 닉네임 변경 가능 여부 확인 (월 1회 제한)
-  bool get canChangeNickname {
-    if (_lastNicknameChangeDate == null) return true;
-    final daysSinceLastChange = DateTime.now().difference(_lastNicknameChangeDate!).inDays;
-    return daysSinceLastChange >= 30;
-  }
-  
-  /// 다음 닉네임 변경 가능일까지 남은 일수
-  int get daysUntilNicknameChange {
-    if (_lastNicknameChangeDate == null) return 0;
-    final daysSinceLastChange = DateTime.now().difference(_lastNicknameChangeDate!).inDays;
-    return (30 - daysSinceLastChange).clamp(0, 30);
   }
   
   @override
   void dispose() {
     _nicknameController.dispose();
     _bioController.dispose();
-    _addressController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.detailBackground,
       appBar: AppBar(
         title: const Text('프로필 수정'),
-        backgroundColor: Colors.white,
-        elevation: 0,
       ),
       body: Form(
         key: _formKey,
@@ -131,13 +126,14 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             _buildSectionTitle('위치 정보'),
             const SizedBox(height: AppSizes.gapM),
             _buildLocationSection(),
-            const SizedBox(height: AppSizes.gapXXL),
-            
-            // 저장 버튼
-            _buildSaveButton(),
             const SizedBox(height: AppSizes.gapXL),
           ],
         ),
+      ),
+      bottomNavigationBar: MingrrSubmitButtonBar(
+        label: '저장하기',
+        isLoading: _isLoading,
+        onPressed: _saveProfile,
       ),
     );
   }
@@ -145,10 +141,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w700,
-        color: AppColors.textPrimary,
+        color: Theme.of(context).colorScheme.onSurface,
       ),
     );
   }
@@ -167,7 +163,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 2),
                 ),
@@ -192,7 +188,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         height: 120,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: AppColors.primary, width: 3),
+          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
         ),
         child: ClipOval(
           child: kIsWeb
@@ -220,7 +216,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         decoration: BoxDecoration(
           color: _selectedDefaultAvatar!.backgroundColor,
           shape: BoxShape.circle,
-          border: Border.all(color: AppColors.primary, width: 3),
+          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
         ),
         child: Icon(
           _selectedDefaultAvatar!.icon,
@@ -237,7 +233,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         height: 120,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: AppColors.primary, width: 3),
+          border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
         ),
         child: ClipOval(
           child: Image.network(
@@ -259,14 +255,14 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       width: 120,
       height: 120,
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.15),
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.primary, width: 3),
+        border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
       ),
-      child: const Icon(
+      child: Icon(
         Icons.person,
         size: 60,
-        color: AppColors.primary,
+        color: Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -298,9 +294,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 
   Widget _buildBasicInfoSection() {
-    final nicknameChanged = _nicknameController.text != _originalNickname;
-    final canChange = canChangeNickname || !nicknameChanged;
-    
     return MingrrCard(
       margin: EdgeInsets.zero,
       child: Column(
@@ -308,18 +301,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           // 닉네임
           TextFormField(
             controller: _nicknameController,
-            enabled: canChangeNickname,
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               labelText: '닉네임',
               hintText: '닉네임을 입력해주세요',
-              border: const OutlineInputBorder(),
-              helperText: canChangeNickname 
-                  ? '닉네임은 한 달에 한 번만 변경할 수 있습니다'
-                  : '$daysUntilNicknameChange일 후에 변경 가능합니다',
-              helperStyle: TextStyle(
-                color: canChangeNickname ? AppColors.textHint : AppColors.warning,
-                fontSize: 12,
-              ),
+              border: OutlineInputBorder(),
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -342,7 +327,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                 segments: UserGender.values.map((gender) {
                   return ButtonSegment<UserGender>(
                     value: gender,
-                    label: Text('${gender.symbol} ${gender.label}'),
+                    label: Text(gender.label),
                   );
                 }).toList(),
                 selected: {_selectedGender ?? UserGender.male},
@@ -357,19 +342,17 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           const SizedBox(height: AppSizes.gapM),
           
           // 생년월일
-          ListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('생년월일'),
-            subtitle: Text(
-              _birthDate != null
-                  ? '${_birthDate!.year}년 ${_birthDate!.month}월 ${_birthDate!.day}일'
-                  : '선택해주세요',
-              style: TextStyle(
-                color: _birthDate != null ? AppColors.textPrimary : AppColors.textHint,
-              ),
-            ),
-            trailing: const Icon(Icons.calendar_today),
-            onTap: _selectBirthDate,
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text('생년월일', style: TextStyle(fontSize: 14)),
+          ),
+          const SizedBox(height: 8),
+          MingrrDateSelector(
+            date: _birthDate,
+            onSelect: (d) => setState(() => _birthDate = d),
+            isBirthDate: true,
+            birthDateMinYear: 1950,
+            label: _birthDate != null ? null : '선택해주세요',
           ),
         ],
       ),
@@ -382,9 +365,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '다른 보호자들에게 보여질 자기소개를 작성해주세요.',
-            style: TextStyle(fontSize: 12, color: AppColors.textHint),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
           ),
           const SizedBox(height: AppSizes.gapM),
           TextFormField(
@@ -402,102 +385,44 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   }
 
   Widget _buildLocationSection() {
-    return MingrrCard(
-      margin: EdgeInsets.zero,
-      child: Column(
-        children: [
-          // 주소 (지도에서 선택)
-          TextFormField(
-            controller: _addressController,
-            decoration: const InputDecoration(
-              labelText: '위치',
-              hintText: '지도에서 위치를 선택해주세요',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.location_on),
-              suffixIcon: Icon(Icons.map_outlined),
-            ),
-            readOnly: true,
-            onTap: _selectLocation,
-          ),
-          const SizedBox(height: AppSizes.gapS),
-          
-          // 안내 텍스트
-          const Row(
-            children: [
-              Icon(Icons.info_outline, size: 14, color: AppColors.textHint),
-              SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  '지도에서 핀을 이동하여 위치를 선택해주세요',
-                  style: TextStyle(fontSize: 12, color: AppColors.textHint),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSaveButton() {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _saveProfile,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusM),
-          ),
+    return Column(
+      children: [
+        LocationDisplayCard(
+          location: _selectedLocation,
+          accentColor: Theme.of(context).colorScheme.primary,
+          placeholder: '지도에서 위치를 선택해주세요',
+          onTap: _selectLocation,
         ),
-        child: _isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : const Text(
-                '저장하기',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+        const SizedBox(height: AppSizes.gapS),
+        
+        // 안내 텍스트
+        Row(
+          children: [
+            Icon(Icons.info_outline, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                '위치 정보는 근처 마켓 상품 추천에 사용됩니다',
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
               ),
-      ),
+            ),
+          ],
+        ),
+      ],
     );
-  }
-
-  Future<void> _selectBirthDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _birthDate ?? DateTime(1990),
-      firstDate: DateTime(1950),
-      lastDate: DateTime.now(),
-      helpText: '생년월일 선택',
-    );
-    if (picked != null) {
-      setState(() {
-        _birthDate = picked;
-      });
-    }
   }
 
   Future<void> _selectLocation() async {
     final result = await showMapLocationPicker(
       context: context,
-      accentColor: AppColors.primary,
+      initialLocation: _selectedLocation,
+      accentColor: Theme.of(context).colorScheme.primary,
       title: '내 위치 선택',
     );
     
     if (result != null) {
       setState(() {
-        _addressController.text = '위도: ${result.latitude.toStringAsFixed(4)}, 경도: ${result.longitude.toStringAsFixed(4)}';
+        _selectedLocation = result;
       });
     }
   }
@@ -514,14 +439,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           throw Exception('로그인이 필요합니다');
         }
         
-        // 닉네임 변경 여부 확인
-        final nicknameChanged = _nicknameController.text.trim() != _originalNickname;
-        
-        // 닉네임 변경 시 30일 제한 체크
-        if (nicknameChanged && !canChangeNickname) {
-          throw Exception('닉네임은 30일에 한 번만 변경할 수 있습니다. ${daysUntilNicknameChange}일 후에 다시 시도해주세요.');
-        }
-        
         // 프로필 이미지 업로드
         String? uploadedImageUrl = _profileImageUrl;
         if (_selectedDefaultAvatar != null) {
@@ -535,15 +452,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           'gender': _selectedGender?.name,
           'birthDate': _birthDate != null ? Timestamp.fromDate(_birthDate!) : null,
           'bio': _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
-          'address': _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
+          'address': _selectedLocation?.displayAddress,
+          'location': _selectedLocation?.toGeoPoint(),
           'profileImageUrl': uploadedImageUrl,
           'updatedAt': FieldValue.serverTimestamp(),
         };
-        
-        // 닉네임이 변경되었으면 변경일 업데이트
-        if (nicknameChanged) {
-          updateData['nicknameChangedAt'] = FieldValue.serverTimestamp();
-        }
         
         await FirebaseFirestore.instance
             .collection('users')
@@ -554,19 +467,12 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         ref.invalidate(currentUserProvider);
         
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('프로필이 수정되었습니다!'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          MingrrSnackBar.success(context, '프로필이 수정되었습니다!');
           Navigator.pop(context, true);
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('저장 실패: $e'), backgroundColor: AppColors.error),
-          );
+          MingrrSnackBar.error(context, '저장 실패: $e');
         }
       } finally {
         if (mounted) setState(() => _isLoading = false);

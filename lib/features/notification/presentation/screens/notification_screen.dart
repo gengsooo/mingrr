@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../../../../models/notification_model.dart';
 import '../providers/notification_provider.dart';
 
@@ -53,7 +54,6 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     final unreadCount = ref.watch(unreadNotificationCountProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Row(
           children: [
@@ -63,7 +63,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.error,
+                  color: Colors.red,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -78,8 +78,6 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
             ],
           ],
         ),
-        backgroundColor: Colors.white,
-        elevation: 0,
         actions: [
           if (unreadCount > 0)
             TextButton(
@@ -89,9 +87,9 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
         ],
         bottom: TabBar(
           controller: _tabController,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.textHint,
-          indicatorColor: AppColors.primary,
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor: Theme.of(context).colorScheme.outlineVariant,
+          indicatorColor: Theme.of(context).colorScheme.primary,
           isScrollable: true,
           tabs: _tabs,
         ),
@@ -99,7 +97,11 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
       body: notificationsAsync.when(
         data: (notifications) {
           if (notifications.isEmpty) {
-            return _buildEmptyState();
+            return const MingrrEmptyState(
+              svgAsset: SvgAssets.emptyNotification,
+              title: '알림이 없습니다',
+              subtitle: '새로운 소식이 있으면 알려드릴게요!',
+            );
           }
           
           return TabBarView(
@@ -128,60 +130,24 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
             ],
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: AppColors.textHint),
-              const SizedBox(height: 16),
-              const Text('알림을 불러올 수 없습니다'),
-              const SizedBox(height: 8),
-              ElevatedButton(
-                onPressed: () => ref.invalidate(userNotificationsProvider),
-                child: const Text('다시 시도'),
-              ),
-            ],
-          ),
+        loading: () => const MingrrLoadingState(),
+        error: (_, __) => MingrrErrorState(
+          title: '알림을 불러올 수 없습니다',
+          buttonText: '다시 시도',
+          onRetry: () => ref.invalidate(userNotificationsProvider),
         ),
       ),
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.notifications_none,
-            size: 64,
-            color: AppColors.textHint.withOpacity(0.5),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            '알림이 없습니다',
-            style: TextStyle(
-              fontSize: 16,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            '새로운 소식이 있으면 알려드릴게요!',
-            style: TextStyle(
-              fontSize: 14,
-              color: AppColors.textHint,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildNotificationList(List<NotificationModel> notifications) {
     if (notifications.isEmpty) {
-      return _buildEmptyState();
+      return const MingrrEmptyState(
+        svgAsset: SvgAssets.emptyNotification,
+        title: '알림이 없습니다',
+        subtitle: '새로운 소식이 있으면 알려드릴게요!',
+      );
     }
 
     // 날짜별 그룹핑
@@ -209,10 +175,10 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
               ),
               child: Text(
                 dateKey,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
@@ -230,9 +196,9 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
       child: Container(
         padding: const EdgeInsets.all(AppSizes.paddingM),
         decoration: BoxDecoration(
-          color: notification.isRead ? Colors.white : AppColors.primaryPale,
+          color: notification.isRead ? Colors.white : Theme.of(context).colorScheme.primaryContainer,
           border: Border(
-            bottom: BorderSide(color: AppColors.divider.withOpacity(0.5)),
+            bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
           ),
         ),
         child: Row(
@@ -268,7 +234,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                             fontWeight: notification.isRead 
                                 ? FontWeight.w500 
                                 : FontWeight.w600,
-                            color: AppColors.textPrimary,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -277,7 +243,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                           width: 8,
                           height: 8,
                           decoration: const BoxDecoration(
-                            color: AppColors.error,
+                            color: Colors.red,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -286,9 +252,9 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                   const SizedBox(height: 4),
                   Text(
                     notification.body,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -296,9 +262,9 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                   const SizedBox(height: 4),
                   Text(
                     _formatTime(notification.createdAt),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
-                      color: AppColors.textHint,
+                      color: Theme.of(context).colorScheme.outlineVariant,
                     ),
                   ),
                 ],
@@ -338,15 +304,15 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     switch (type.category) {
       case 'dating':
       case 'breeding':
-        return AppColors.dating;
+        return context.features.dating;
       case 'chat':
-        return AppColors.chat;
+        return context.features.chat;
       case 'market':
-        return AppColors.market;
+        return context.features.market;
       case 'community':
-        return AppColors.community;
+        return context.features.community;
       default:
-        return AppColors.textSecondary;
+        return Theme.of(context).colorScheme.onSurfaceVariant;
     }
   }
 
@@ -354,15 +320,15 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     switch (type.category) {
       case 'dating':
       case 'breeding':
-        return AppColors.datingLight;
+        return context.features.datingContainer;
       case 'chat':
-        return AppColors.chatLight;
+        return context.features.chat.withOpacity(0.2);
       case 'market':
-        return AppColors.marketLight;
+        return context.features.marketContainer;
       case 'community':
-        return AppColors.communityLight;
+        return context.features.communityContainer;
       default:
-        return AppColors.divider;
+        return Theme.of(context).colorScheme.outline;
     }
   }
 
@@ -445,12 +411,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
   void _markAllAsRead() async {
     await ref.read(notificationServiceProvider).markAllAsRead();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('모든 알림을 읽음 처리했습니다'),
-          backgroundColor: AppColors.success,
-        ),
-      );
+      MingrrSnackBar.success(context, '모든 알림을 읽음 처리했습니다');
     }
   }
 }

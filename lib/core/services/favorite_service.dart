@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:uuid/uuid.dart';
 import '../../models/pet_model.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/community_model.dart';
@@ -16,7 +15,6 @@ import 'firebase_service.dart';
 /// ============================================================
 class FavoriteService {
   final FirebaseService _firebase = FirebaseService();
-  final _uuid = const Uuid();
   
   FirebaseFirestore get _firestore => _firebase.firestore;
   

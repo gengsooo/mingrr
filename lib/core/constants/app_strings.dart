@@ -6,7 +6,7 @@ class AppStrings {
   AppStrings._();
 
   // ===== 앱 정보 =====
-  static const String appName = 'MINGRR';
+  static const String appName = '밍그르르';
   static const String appSlogan = '반려동물과 함께하는 특별한 만남';
 
   // ===== 인증 관련 =====
@@ -37,8 +37,8 @@ class AppStrings {
   static const String petGender = '성별';
   static const String petPersonality = '성격';
   static const String petPhotos = '사진';
-  static const String male = '수컷';
-  static const String female = '암컷';
+  static const String male = '남아';
+  static const String female = '여아';
   static const String neutered = '중성화 완료';
   static const String notNeutered = '중성화 안함';
 

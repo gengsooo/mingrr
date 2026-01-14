@@ -10,10 +10,10 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         
-        <!-- 카카오 지도 API 키 -->
+        <!-- 카카오 지도 API 키 (밍그르르 앱) -->
         <meta-data
             android:name="com.kakao.vectormap.APP_KEY"
-            android:value="9d259b071721f1a6c369c9074076c657"/>
+            android:value="e80e09aa4db6c1f3d1eedb1be73ee8c6"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"

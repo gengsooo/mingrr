@@ -1,12 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import '../core/constants/pet_constants.dart';
 
 /// ============================================================
-/// 반려동물 모델 (V2 리팩토링 - 강아지 전용)
+/// 반려동물 모델 (V2 리팩토링)
 /// 
 /// 변경사항:
-/// - PetType 제거 (강아지 전용 앱)
+/// - PetType 제거 (반려동물 통합)
 /// - 통일된 Pet 명칭 사용 (PetSize, PetGender, PetTrait)
 /// - 50개 특성 시스템, 건강수첩 연동
 /// ============================================================
@@ -145,8 +146,8 @@ class PetModel extends Equatable {
   /// 성별 한글 표시
   String get genderString => gender.label;
 
-  /// 성별 기호
-  String get genderSymbol => gender.symbol;
+  /// 성별 아이콘
+  IconData get genderIcon => gender.icon;
 
   /// 체중 크기 분류
   PetSize? get size {

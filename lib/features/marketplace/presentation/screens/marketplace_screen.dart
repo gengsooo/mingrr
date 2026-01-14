@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/product_card.dart';
 import '../../../../core/widgets/search_screen.dart';
 import '../../../../core/widgets/top_navigation.dart';
@@ -44,9 +44,9 @@ class MarketplaceScreen extends ConsumerWidget {
 
     // 탭 정의 (판매 / 나눔 / 알바)
     final tabs = [
-      TopNavTab(label: '판매', icon: Icons.sell, color: AppColors.market),
-      TopNavTab(label: '나눔', icon: Icons.volunteer_activism, color: AppColors.market),
-      TopNavTab(label: '알바', icon: Icons.work_outline, color: AppColors.market),
+      TopNavTab(label: '판매', icon: Icons.sell, color: context.features.market),
+      TopNavTab(label: '나눔', icon: Icons.volunteer_activism, color: context.features.market),
+      TopNavTab(label: '알바', icon: Icons.work_outline, color: context.features.market),
     ];
 
     // 카테고리 정의 (탭에 따라 다름)
@@ -70,36 +70,39 @@ class MarketplaceScreen extends ConsumerWidget {
             (label: '가구', emoji: null, icon: null),
           ];
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    
     return Scaffold(
-      backgroundColor: AppColors.marketLight,
+      backgroundColor: isDark ? colorScheme.surface : context.features.marketContainer,
       appBar: AppBar(
         title: const Text('마켓'),
-        backgroundColor: Colors.white,
-        elevation: 0,
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
+            visualDensity: VisualDensity.compact,
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const SearchScreen(
+                  builder: (ctx) => SearchScreen(
                     searchType: SearchType.market,
-                    accentColor: AppColors.market,
+                    accentColor: ctx.features.market,
                   ),
                 ),
               );
             },
           ),
           const NotificationIconButton(),
-          buildProfileAction(),
+          buildProfileAction(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
         ],
       ),
       body: Column(
         children: [
-          // 2개 탭 (판매 / 나눔)
+          // 2개 탭 (판매 / 나눠)
           Container(
-            color: Colors.white,
+            color: isDark ? colorScheme.surface : context.features.marketContainer,
             child: PillTabBar(
               tabs: tabs,
               selectedIndex: selectedTab,
@@ -111,7 +114,7 @@ class MarketplaceScreen extends ConsumerWidget {
           
           // 위치/거리 필터 바
           LocationDistanceBar(
-            accentColor: AppColors.market,
+            accentColor: context.features.market,
             currentDistance: distanceFilter,
             onDistanceChanged: (distance) {
               ref.read(_distanceFilterProvider.notifier).state = distance;
@@ -119,16 +122,13 @@ class MarketplaceScreen extends ConsumerWidget {
           ),
           
           // 카테고리 필터
-          Container(
-            color: Colors.white,
-            child: CategoryFilterChips(
-              categories: categories,
-              selectedIndex: selectedCategory,
-              onSelected: (index) {
-                ref.read(_selectedCategoryProvider.notifier).state = index;
-              },
-              accentColor: AppColors.market,
-            ),
+          CategoryFilterChips(
+            categories: categories,
+            selectedIndex: selectedCategory,
+            onSelected: (index) {
+              ref.read(_selectedCategoryProvider.notifier).state = index;
+            },
+            accentColor: context.features.market,
           ),
           
           // 상품/알바 목록
@@ -139,14 +139,11 @@ class MarketplaceScreen extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddSheet(context, selectedTab),
-        backgroundColor: AppColors.market,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          '글쓰기',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-        ),
+        backgroundColor: context.features.market,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.edit, color: Colors.white),
       ),
     );
   }
@@ -166,17 +163,17 @@ class MarketplaceScreen extends ConsumerWidget {
                 Icon(
                   type == ProductType.sell ? Icons.sell : Icons.volunteer_activism,
                   size: 48,
-                  color: AppColors.textHint,
+                  color: Theme.of(context).colorScheme.outlineVariant,
                 ),
                 const SizedBox(height: 16),
                 Text(
                   '${distanceFilter.toInt()}km 내에 ${type == ProductType.sell ? '판매' : '나눔'} 상품이 없습니다',
-                  style: const TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   '거리를 늘려보세요',
-                  style: TextStyle(fontSize: 12, color: AppColors.textHint),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
                 ),
               ],
             ),
@@ -256,11 +253,11 @@ class MarketplaceScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.work_outline, size: 48, color: AppColors.textHint),
+                    Icon(Icons.work_outline, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       '등록된 알바가 없습니다',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -274,8 +271,8 @@ class MarketplaceScreen extends ConsumerWidget {
               },
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+          loading: () => const MingrrLoadingState(),
+          error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
         );
       },
     );
@@ -332,7 +329,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
   late MarketWriteType _selectedType;
   String? _selectedJobCategory;
   JobPayType _payType = JobPayType.total;
-  final List<Map<String, String>> _selectedDogs = [];
+  final List<Map<String, String>> _selectedPets = [];
 
   @override
   void initState() {
@@ -344,22 +341,13 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXL)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXL)),
       ),
       child: Column(
         children: [
-          // 핸들
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: AppColors.divider,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
+          const BottomSheetHandle(),
           // 헤더
           Padding(
             padding: const EdgeInsets.all(AppSizes.paddingM),
@@ -404,10 +392,10 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                             margin: EdgeInsets.only(right: type != MarketWriteType.job ? 8 : 0),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: isSelected ? AppColors.market : Colors.transparent,
+                              color: isSelected ? context.features.market : Colors.transparent,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: isSelected ? AppColors.market : AppColors.divider,
+                                color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
                               ),
                             ),
                             child: Row(
@@ -416,7 +404,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                                 Icon(
                                   type.icon,
                                   size: 18,
-                                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                                  color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                                 const SizedBox(width: 6),
                                 Text(
@@ -424,7 +412,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -470,15 +458,15 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                 width: 80,
                 height: 80,
                 decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.divider),
+                  border: Border.all(color: Theme.of(context).colorScheme.outline),
                   borderRadius: BorderRadius.circular(AppSizes.radiusM),
                 ),
-                child: const Column(
+                child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.camera_alt, color: AppColors.textHint),
-                    SizedBox(height: 4),
-                    Text('0/10', style: TextStyle(fontSize: 11, color: AppColors.textHint)),
+                    Icon(Icons.camera_alt, color: Theme.of(context).colorScheme.outlineVariant),
+                    const SizedBox(height: 4),
+                    Text('0/10', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant)),
                   ],
                 ),
               ),
@@ -534,17 +522,17 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.market : Colors.transparent,
+                  color: isSelected ? context.features.market : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? AppColors.market : AppColors.divider,
+                    color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
                   ),
                 ),
                 child: Text(
                   type,
                   style: TextStyle(
                     fontSize: 13,
-                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -573,14 +561,14 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.divider),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.calendar_today, size: 18, color: AppColors.textSecondary),
-                      SizedBox(width: 8),
-                      Text('시작일', style: TextStyle(color: AppColors.textHint)),
+                      Icon(Icons.calendar_today, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 8),
+                      Text('시작일', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
                     ],
                   ),
                 ),
@@ -598,14 +586,14 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.divider),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.calendar_today, size: 18, color: AppColors.textSecondary),
-                      SizedBox(width: 8),
-                      Text('종료일', style: TextStyle(color: AppColors.textHint)),
+                      Icon(Icons.calendar_today, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      const SizedBox(width: 8),
+                      Text('종료일', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
                     ],
                   ),
                 ),
@@ -615,65 +603,65 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
         ),
         const SizedBox(height: AppSizes.gapL),
 
-        // 강아지 추가
-        const Text('돌봄 대상 강아지', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        // 반려동물 추가
+        const Text('돌봄 대상 반려동물', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         const SizedBox(height: AppSizes.gapS),
-        // 추가된 강아지 목록
-        if (_selectedDogs.isNotEmpty) ...[
-          ...List.generate(_selectedDogs.length, (index) {
-            final dog = _selectedDogs[index];
+        // 추가된 반려동물 목록
+        if (_selectedPets.isNotEmpty) ...[
+          ...List.generate(_selectedPets.length, (index) {
+            final pet = _selectedPets[index];
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.divider.withOpacity(0.3),
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.pets, size: 20, color: AppColors.market),
+                  Icon(Icons.pets, size: 20, color: context.features.market),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          dog['name'] ?? '',
+                          pet['name'] ?? '',
                           style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
                         Text(
-                          '${dog['breed']} · ${dog['weight']}kg',
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          '${pet['breed']} · ${pet['weight']}kg',
+                          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
                   ),
                   GestureDetector(
-                    onTap: () => setState(() => _selectedDogs.removeAt(index)),
-                    child: const Icon(Icons.close, size: 18, color: AppColors.textHint),
+                    onTap: () => setState(() => _selectedPets.removeAt(index)),
+                    child: Icon(Icons.close, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
                   ),
                 ],
               ),
             );
           }),
         ],
-        // 강아지 추가 버튼
+        // 반려동물 추가 버튼
         GestureDetector(
-          onTap: _showAddDogDialog,
+          onTap: _showAddPetDialog,
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.divider, style: BorderStyle.solid),
+              border: Border.all(color: Theme.of(context).colorScheme.outline, style: BorderStyle.solid),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.add, size: 20, color: AppColors.market),
-                SizedBox(width: 8),
+                Icon(Icons.add, size: 20, color: context.features.market),
+                const SizedBox(width: 8),
                 Text(
-                  '강아지 추가',
-                  style: TextStyle(color: AppColors.market, fontWeight: FontWeight.w500),
+                  '반려동물 추가',
+                  style: TextStyle(color: context.features.market, fontWeight: FontWeight.w500),
                 ),
               ],
             ),
@@ -695,10 +683,10 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   margin: EdgeInsets.only(right: type != JobPayType.daily ? 8 : 0),
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.market.withOpacity(0.1) : Colors.transparent,
+                    color: isSelected ? context.features.market.withOpacity(0.1) : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: isSelected ? AppColors.market : AppColors.divider,
+                      color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
                     ),
                   ),
                   child: Text(
@@ -707,7 +695,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                      color: isSelected ? AppColors.market : AppColors.textSecondary,
+                      color: isSelected ? context.features.market : Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -739,56 +727,50 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
     );
   }
 
-  /// 등록된 강아지에서 선택하는 바텀시트
-  void _showAddDogDialog() {
-    // 데모용 등록된 강아지 목록 (실제로는 Provider에서 가져옴)
-    final myDogs = [
-      {'id': 'dog_1', 'name': '뽀삐', 'breed': '골든 리트리버', 'weight': '28.5'},
-      {'id': 'dog_2', 'name': '초코', 'breed': '말티즈', 'weight': '3.2'},
-      {'id': 'dog_3', 'name': '콩이', 'breed': '포메라니안', 'weight': '4.5'},
+  /// 등록된 반려동물에서 선택하는 바텀시트
+  void _showAddPetDialog() {
+    // 데모용 등록된 반려동물 목록 (실제로는 Provider에서 가져옴)
+    final myPets = [
+      {'id': 'pet_1', 'name': '뽀삐', 'breed': '골든 리트리버', 'weight': '28.5'},
+      {'id': 'pet_2', 'name': '초코', 'breed': '말티즈', 'weight': '3.2'},
+      {'id': 'pet_3', 'name': '콩이', 'breed': '포메라니안', 'weight': '4.5'},
     ];
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        padding: const EdgeInsets.all(AppSizes.paddingM),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
+        decoration: BoxDecoration(
+          color: Theme.of(ctx).colorScheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.divider,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+            const Center(child: BottomSheetHandle()),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                '반려동물 선택',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(height: 16),
-            const Text(
-              '강아지 선택',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
             const SizedBox(height: 8),
-            const Text(
-              '프로필에 등록된 강아지 중 선택해주세요',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            Text(
+              '프로필에 등록된 반려동물 중 선택해주세요',
+              style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
-            // 등록된 강아지 목록
-            ...myDogs.map((dog) {
-              final isAlreadySelected = _selectedDogs.any((d) => d['id'] == dog['id']);
+            // 등록된 반려동물 목록
+            ...myPets.map((pet) {
+              final isAlreadySelected = _selectedPets.any((d) => d['id'] == pet['id']);
               return GestureDetector(
                 onTap: isAlreadySelected ? null : () {
                   setState(() {
-                    _selectedDogs.add(dog);
+                    _selectedPets.add(pet);
                   });
                   Navigator.pop(ctx);
                 },
@@ -797,11 +779,11 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isAlreadySelected 
-                        ? AppColors.divider.withOpacity(0.5) 
-                        : AppColors.background,
+                        ? Theme.of(context).colorScheme.outline.withOpacity(0.5) 
+                        : Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isAlreadySelected ? AppColors.divider : Colors.transparent,
+                      color: isAlreadySelected ? Theme.of(context).colorScheme.outline : Colors.transparent,
                     ),
                   ),
                   child: Row(
@@ -810,10 +792,10 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: AppColors.divider,
+                          color: Theme.of(context).colorScheme.outline,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.pets, color: AppColors.textHint),
+                        child: Icon(Icons.pets, color: Theme.of(context).colorScheme.outlineVariant),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -821,29 +803,29 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              dog['name']!,
+                              pet['name']!,
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
                                 color: isAlreadySelected 
-                                    ? AppColors.textHint 
-                                    : AppColors.textPrimary,
+                                    ? Theme.of(context).colorScheme.outlineVariant 
+                                    : Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              '${dog['breed']} · ${dog['weight']}kg',
+                              '${pet['breed']} · ${pet['weight']}kg',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: isAlreadySelected 
-                                    ? AppColors.textHint 
-                                    : AppColors.textSecondary,
+                                    ? Theme.of(context).colorScheme.outlineVariant 
+                                    : Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],
                         ),
                       ),
                       if (isAlreadySelected)
-                        const Icon(Icons.check_circle, color: AppColors.market, size: 20),
+                        Icon(Icons.check_circle, color: context.features.market, size: 20),
                     ],
                   ),
                 ),
@@ -863,11 +845,6 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
       MarketWriteType.share => '나눔 글이 등록되었습니다!',
       MarketWriteType.job => '알바 글이 등록되었습니다!',
     };
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.success,
-      ),
-    );
+    MingrrSnackBar.success(context, message);
   }
 }

@@ -1,0 +1,19 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 원형 배경 -->
+  <circle cx="60" cy="60" r="50" fill="#F5F5F5" stroke="#E0E0E0" stroke-width="2" stroke-dasharray="8 4"/>
+  
+  <!-- 중앙 사람 -->
+  <circle cx="60" cy="45" r="12" fill="#BDBDBD"/>
+  <ellipse cx="60" cy="72" rx="15" ry="12" fill="#BDBDBD"/>
+  
+  <!-- 왼쪽 사람 (흐릿하게) -->
+  <circle cx="35" cy="50" r="10" fill="#E0E0E0"/>
+  <ellipse cx="35" cy="72" rx="12" ry="10" fill="#E0E0E0"/>
+  
+  <!-- 오른쪽 사람 (흐릿하게) -->
+  <circle cx="85" cy="50" r="10" fill="#E0E0E0"/>
+  <ellipse cx="85" cy="72" rx="12" ry="10" fill="#E0E0E0"/>
+  
+  <!-- 점선 연결 -->
+  <line x1="48" y1="55" x2="72" y2="55" stroke="#9E9E9E" stroke-width="2" stroke-dasharray="4 2"/>
+</svg>

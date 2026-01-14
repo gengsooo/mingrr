@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/svg_icons.dart';
 import '../providers/auth_provider.dart';
 
 /// ============================================================
@@ -43,18 +44,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // 에러 메시지 표시
     ref.listen<AuthState>(authNotifierProvider, (previous, next) {
       if (next.error != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(next.error!),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        MingrrSnackBar.error(context, next.error!);
         authNotifier.clearError();
       }
     });
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSizes.paddingXL),
@@ -103,47 +98,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildHeader() {
     return Column(
       children: [
-        // 로고 아이콘 (귀여운 발바닥 모양)
-        Container(
-          width: 120,
-          height: 120,
-          decoration: BoxDecoration(
-            gradient: AppColors.warmGradient,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withOpacity(0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: const Icon(
-            Icons.pets,
-            size: 60,
-            color: AppColors.textPrimary,
-          ),
-        ),
+        // 로고 아이콘
+        const AppLogoIcon(size: 120),
         const SizedBox(height: AppSizes.gapXL),
         
         // 앱 이름
-        const Text(
+        Text(
           AppStrings.appName,
           style: TextStyle(
             fontSize: 36,
             fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+            color: Theme.of(context).colorScheme.onSurface,
             letterSpacing: 2,
           ),
         ),
         const SizedBox(height: AppSizes.gapS),
         
         // 슬로건
-        const Text(
+        Text(
           AppStrings.appSlogan,
           style: TextStyle(
             fontSize: 14,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -165,7 +141,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: _isPhoneLogin ? AppColors.primary : Colors.transparent,
+                    color: _isPhoneLogin ? Theme.of(context).colorScheme.primary : Colors.transparent,
                     width: 2,
                   ),
                 ),
@@ -176,7 +152,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: _isPhoneLogin ? FontWeight.w600 : FontWeight.w400,
-                  color: _isPhoneLogin ? AppColors.primary : AppColors.textHint,
+                  color: _isPhoneLogin ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outlineVariant,
                 ),
               ),
             ),
@@ -190,7 +166,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               decoration: BoxDecoration(
                 border: Border(
                   bottom: BorderSide(
-                    color: !_isPhoneLogin ? AppColors.primary : Colors.transparent,
+                    color: !_isPhoneLogin ? Theme.of(context).colorScheme.primary : Colors.transparent,
                     width: 2,
                   ),
                 ),
@@ -201,7 +177,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: !_isPhoneLogin ? FontWeight.w600 : FontWeight.w400,
-                  color: !_isPhoneLogin ? AppColors.primary : AppColors.textHint,
+                  color: !_isPhoneLogin ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outlineVariant,
                 ),
               ),
             ),
@@ -316,18 +292,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget _buildDivider() {
     return Row(
       children: [
-        Expanded(child: Divider(color: AppColors.divider)),
+        Expanded(child: Divider(color: Theme.of(context).colorScheme.outline)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
           child: Text(
             '또는',
             style: TextStyle(
-              color: AppColors.textHint,
+              color: Theme.of(context).colorScheme.outlineVariant,
               fontSize: 13,
             ),
           ),
         ),
-        Expanded(child: Divider(color: AppColors.divider)),
+        Expanded(child: Divider(color: Theme.of(context).colorScheme.outline)),
       ],
     );
   }
@@ -373,7 +349,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           '로그인 시 이용약관 및 개인정보처리방침에 동의합니다.',
           style: TextStyle(
             fontSize: 12,
-            color: AppColors.textHint,
+            color: Theme.of(context).colorScheme.outlineVariant,
           ),
           textAlign: TextAlign.center,
         ),
@@ -383,14 +359,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   /// 인증 코드 전송
   void _sendCode(AuthNotifier authNotifier) {
-    final phone = _phoneController.text.replaceAll(RegExp(r'[^0-9]'), '');
-    if (phone.isEmpty || phone.length < 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('올바른 전화번호를 입력해주세요.'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+    final phone = _phoneController.text;
+    final validation = Validators.phone(phone);
+    if (!validation.isValid) {
+      MingrrSnackBar.error(context, validation.errorMessage!);
       return;
     }
 
@@ -409,12 +381,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _verifyCode(AuthNotifier authNotifier) {
     final code = _codeController.text.trim();
     if (code.isEmpty || code.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('6자리 인증번호를 입력해주세요.'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      MingrrSnackBar.error(context, '6자리 인증번호를 입력해주세요.');
       return;
     }
 
@@ -426,23 +393,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     
-    if (email.isEmpty || !email.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('올바른 이메일을 입력해주세요.'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+    final emailValidation = Validators.email(email);
+    if (!emailValidation.isValid) {
+      MingrrSnackBar.error(context, emailValidation.errorMessage!);
       return;
     }
     
-    if (password.isEmpty || password.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('비밀번호는 6자 이상이어야 합니다.'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+    final passwordValidation = Validators.password(password);
+    if (!passwordValidation.isValid) {
+      MingrrSnackBar.error(context, passwordValidation.errorMessage!);
       return;
     }
     
@@ -454,23 +413,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     
-    if (email.isEmpty || !email.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('올바른 이메일을 입력해주세요.'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+    final emailValidation = Validators.email(email);
+    if (!emailValidation.isValid) {
+      MingrrSnackBar.error(context, emailValidation.errorMessage!);
       return;
     }
     
-    if (password.isEmpty || password.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('비밀번호는 6자 이상이어야 합니다.'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+    final passwordValidation = Validators.password(password);
+    if (!passwordValidation.isValid) {
+      MingrrSnackBar.error(context, passwordValidation.errorMessage!);
       return;
     }
     

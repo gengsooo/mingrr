@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import '../theme/app_theme.dart';
 
 /// ============================================================
 /// 성격&특성 배지 위젯
@@ -81,7 +81,7 @@ class TraitBadge extends StatelessWidget {
     return Container(
       padding: _padding,
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: context.sectionBackground,
         borderRadius: BorderRadius.circular(_borderRadius),
       ),
       child: Text(
@@ -89,7 +89,7 @@ class TraitBadge extends StatelessWidget {
         style: TextStyle(
           fontSize: _fontSize,
           fontWeight: _fontWeight,
-          color: AppColors.textPrimary,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       ),
     );
@@ -162,10 +162,10 @@ class TraitSection extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 12),

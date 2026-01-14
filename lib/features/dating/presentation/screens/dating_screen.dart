@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/top_navigation.dart';
+import '../../../../core/widgets/search_screen.dart';
 import '../../../../core/widgets/info_badge.dart';
 import '../../../../core/widgets/trait_badge.dart';
 import '../../../../core/widgets/verification_badge.dart';
 import '../../../../core/widgets/request_sheet.dart';
 import '../../../../core/widgets/profile_icon.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../models/pet_model.dart';
 import '../providers/dating_provider.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
@@ -54,9 +57,6 @@ final _breedingIdentityVerifiedFilterProvider = StateProvider<bool?>((ref) => nu
 final _breedingPetVerifiedFilterProvider = StateProvider<bool?>((ref) => null);
 final _breedingLocationVerifiedFilterProvider = StateProvider<bool?>((ref) => null);
 
-/// 교배찾기 검색어 필터
-final _breedingSearchQueryProvider = StateProvider<String>((ref) => '');
-
 class DatingScreen extends ConsumerWidget {
   const DatingScreen({super.key});
 
@@ -67,42 +67,57 @@ class DatingScreen extends ConsumerWidget {
     // 내 반려동물 목록 미리 로드 (교배 신청 시 사용)
     ref.watch(userPetsProvider);
 
+    final theme = Theme.of(context);
+    final features = theme.extension<FeatureColors>()!;
+    
     // 탭 정의 (추천친구 / 근처 검색 / 교배찾기)
     final tabs = [
-      TopNavTab(label: '추천친구', icon: Icons.auto_awesome, color: AppColors.dating),
-      TopNavTab(label: '근처 검색', icon: Icons.location_on, color: AppColors.dating),
-      TopNavTab(label: '교배찾기', icon: Icons.pets, color: AppColors.dating),
+      TopNavTab(label: '추천친구', icon: Icons.auto_awesome, color: features.dating),
+      TopNavTab(label: '근처 검색', icon: Icons.location_on, color: features.dating),
+      TopNavTab(label: '교배찾기', icon: Icons.pets, color: features.dating),
     ];
-
+    
     return Scaffold(
-      backgroundColor: AppColors.datingLight,
+      backgroundColor: features.datingContainer,
       appBar: AppBar(
         title: const Text('데이팅'),
-        backgroundColor: Colors.white,
-        elevation: 0,
         actions: [
+          // 교배찾기 탭에서만 검색 아이콘 표시
+          if (selectedTab == 2)
+            IconButton(
+              icon: const Icon(Icons.search),
+              visualDensity: VisualDensity.compact,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (ctx) => SearchScreen(
+                      searchType: SearchType.breeding,
+                      accentColor: features.dating,
+                    ),
+                  ),
+                );
+              },
+            ),
           const NotificationIconButton(),
-          buildProfileAction(),
+          buildProfileAction(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
         ],
       ),
       body: Column(
         children: [
           // 3개 탭 (추천 / 근처 검색 / 교배찾기)
-          Container(
-            color: Colors.white,
-            child: PillTabBar(
-              tabs: tabs,
-              selectedIndex: selectedTab,
-              onTabSelected: (index) {
-                ref.read(_selectedTabProvider.notifier).state = index;
-              },
-            ),
+          PillTabBar(
+            tabs: tabs,
+            selectedIndex: selectedTab,
+            onTabSelected: (index) {
+              ref.read(_selectedTabProvider.notifier).state = index;
+            },
           ),
           
           // 위치/거리 필터 바 (근처 검색/교배찾기 탭에서 표시)
           if (selectedTab == 1 || selectedTab == 2)
             LocationDistanceBar(
-              accentColor: AppColors.dating,
+              accentColor: features.dating,
               currentDistance: distanceFilter,
               onDistanceChanged: (distance) {
                 ref.read(_distanceFilterProvider.notifier).state = distance;
@@ -122,11 +137,11 @@ class DatingScreen extends ConsumerWidget {
       ),
       // 교배찾기 탭에서 글쓰기 FAB 표시
       floatingActionButton: selectedTab == 2
-          ? FloatingActionButton.extended(
+          ? FloatingActionButton(
               onPressed: () => _showBreedingWriteSheet(context),
-              backgroundColor: AppColors.dating,
-              icon: const Icon(Icons.edit, color: Colors.white),
-              label: const Text('교배 글쓰기', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+              backgroundColor: features.dating,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.edit, color: Colors.white),
             )
           : null,
     );
@@ -162,30 +177,10 @@ class DatingScreen extends ConsumerWidget {
   /// 교배찾기 필터 섹션
   Widget _buildBreedingFilters(BuildContext context, WidgetRef ref) {
     return Container(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 검색 바
-          Padding(
-            padding: const EdgeInsets.fromLTRB(AppSizes.paddingM, AppSizes.paddingS, AppSizes.paddingM, 0),
-            child: TextField(
-              onChanged: (value) => ref.read(_breedingSearchQueryProvider.notifier).state = value,
-              decoration: InputDecoration(
-                hintText: '제목으로 검색',
-                hintStyle: const TextStyle(fontSize: 14, color: AppColors.textHint),
-                prefixIcon: const Icon(Icons.search, color: AppColors.textHint, size: 20),
-                filled: true,
-                fillColor: AppColors.background,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
           // 1행: 성별 + 품종
           _buildFilterRow(
             context, ref,
@@ -226,6 +221,8 @@ class DatingScreen extends ConsumerWidget {
     required String title,
     required List<Widget> children,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
       child: SingleChildScrollView(
@@ -236,15 +233,15 @@ class DatingScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.textSecondary.withOpacity(0.1),
+                color: colorScheme.onSurfaceVariant.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
@@ -258,9 +255,11 @@ class DatingScreen extends ConsumerWidget {
 
   /// 구분선
   Widget _buildDivider() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Container(width: 1, height: 20, color: AppColors.divider),
+    return Builder(
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Container(width: 1, height: 20, color: Theme.of(ctx).colorScheme.outline),
+      ),
     );
   }
 
@@ -275,14 +274,16 @@ class DatingScreen extends ConsumerWidget {
           onTap: () => ref.read(_breedingGenderFilterProvider.notifier).state = null,
         ),
         const SizedBox(width: 6),
-        _buildFilterChip(
-          label: '수컷 ♂',
+        _buildGenderFilterChip(
+          label: '남아',
+          icon: Icons.male,
           isSelected: genderFilter == 'male',
           onTap: () => ref.read(_breedingGenderFilterProvider.notifier).state = 'male',
         ),
         const SizedBox(width: 6),
-        _buildFilterChip(
-          label: '암컷 ♀',
+        _buildGenderFilterChip(
+          label: '여아',
+          icon: Icons.female,
           isSelected: genderFilter == 'female',
           onTap: () => ref.read(_breedingGenderFilterProvider.notifier).state = 'female',
         ),
@@ -323,16 +324,21 @@ class DatingScreen extends ConsumerWidget {
     return Row(
       children: [
         // 안내 버튼
-        GestureDetector(
-          onTap: () => _showSizeGuideModal(context),
-          child: Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              color: AppColors.dating.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.help_outline, size: 14, color: AppColors.dating),
-          ),
+        Builder(
+          builder: (ctx) {
+            final features = Theme.of(ctx).extension<FeatureColors>()!;
+            return GestureDetector(
+              onTap: () => _showSizeGuideModal(ctx),
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: features.dating.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.help_outline, size: 14, color: features.dating),
+              ),
+            );
+          },
         ),
         const SizedBox(width: 8),
         // 크기 필터 칩들
@@ -362,68 +368,21 @@ class DatingScreen extends ConsumerWidget {
 
   /// 크기 안내 모달
   void _showSizeGuideModal(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.pets, color: AppColors.dating, size: 24),
-            const SizedBox(width: 8),
-            const Text('강아지 크기 안내', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildSizeGuideItem('초소형', '0~4kg', '치와와, 요크셔테리어 등'),
-            _buildSizeGuideItem('소형', '4~10kg', '말티즈, 푸들, 시촄 등'),
-            _buildSizeGuideItem('중형', '10~25kg', '코카스파니엘, 비글 등'),
-            _buildSizeGuideItem('대형', '25~45kg', '골든리트리버, 래브라도 등'),
-            _buildSizeGuideItem('초대형', '45kg~', '그레이트데인, 세인트버나드 등'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('확인'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 크기 안내 아이템
-  Widget _buildSizeGuideItem(String label, String weight, String examples) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.dating.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              label,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.dating),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(weight, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                Text(examples, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-              ],
-            ),
-          ),
-        ],
-      ),
+    final features = Theme.of(context).extension<FeatureColors>()!;
+    showInfoDialog(
+      context,
+      title: '강아지 크기 안내',
+      icon: Icons.pets,
+      subtitle: '체중 기준으로 분류해요',
+      accentColor: features.dating,
+      items: const [
+        InfoItem(label: '초소형', value: '0~4kg', description: '치와와, 요크셔테리어 등'),
+        InfoItem(label: '소형', value: '4~10kg', description: '말티즈, 푸들, 시츄 등'),
+        InfoItem(label: '중형', value: '10~25kg', description: '코카스파니엘, 비글 등'),
+        InfoItem(label: '대형', value: '25~45kg', description: '골든리트리버, 래브라도 등'),
+        InfoItem(label: '초대형', value: '45kg~', description: '그레이트데인, 세인트버나드 등'),
+      ],
+      footerText: '강아지마다 개체차가 있을 수 있어요',
     );
   }
 
@@ -494,40 +453,93 @@ class DatingScreen extends ConsumerWidget {
     Color? color,
     IconData? icon,
   }) {
-    final chipColor = color ?? AppColors.dating;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          color: isSelected ? chipColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected ? chipColor : AppColors.divider,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 12,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
-              ),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
+    return Builder(
+      builder: (ctx) {
+        final features = Theme.of(ctx).extension<FeatureColors>()!;
+        final colorScheme = Theme.of(ctx).colorScheme;
+        final chipColor = color ?? features.dating;
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: isSelected ? chipColor : Colors.transparent,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isSelected ? chipColor : colorScheme.outline,
               ),
             ),
-          ],
-        ),
-      ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(
+                    icon,
+                    size: 12,
+                    color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 4),
+                ],
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 성별 필터 칩 (아이콘 포함)
+  Widget _buildGenderFilterChip({
+    required String label,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Builder(
+      builder: (ctx) {
+        final features = Theme.of(ctx).extension<FeatureColors>()!;
+        final colorScheme = Theme.of(ctx).colorScheme;
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: isSelected ? features.dating : Colors.transparent,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isSelected ? features.dating : colorScheme.outline,
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 14,
+                  color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -548,20 +560,21 @@ class DatingScreen extends ConsumerWidget {
     }
     
     if (filteredPets.isEmpty) {
+      final colorScheme = Theme.of(context).colorScheme;
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.pets, size: 48, color: AppColors.textHint),
+            Icon(Icons.pets, size: 48, color: colorScheme.outlineVariant),
             const SizedBox(height: 16),
             Text(
               '${distanceFilter.toInt()}km 내에 교배 가능한 반려동물이 없습니다',
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               '거리를 늘려보세요',
-              style: TextStyle(fontSize: 12, color: AppColors.textHint),
+              style: TextStyle(fontSize: 12, color: colorScheme.outlineVariant),
             ),
           ],
         ),
@@ -581,130 +594,156 @@ class DatingScreen extends ConsumerWidget {
   Widget _buildBreedingPetCard(BuildContext context, WidgetRef ref, PetWithDistance petWithDistance) {
     final pet = petWithDistance.pet;
     final isMale = pet.gender == PetGender.male;
+    final colorScheme = Theme.of(context).colorScheme;
     
     return GestureDetector(
       onTap: () => _navigateToDetail(context, pet.id, isBreeding: true),
       child: Container(
         margin: const EdgeInsets.only(bottom: AppSizes.gapM),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(0.06),
               blurRadius: 10,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Row(
-          children: [
-            // 이미지 영역 (대표사진 우선)
-            Container(
-              width: 120,
-              height: 130,
-              decoration: BoxDecoration(
-                color: AppColors.datingLight,
-                borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(AppSizes.radiusL),
-                ),
-                image: _getPetPrimaryPhotoUrl(pet) != null
-                    ? DecorationImage(
-                        image: NetworkImage(_getPetPrimaryPhotoUrl(pet)!),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-              ),
-              child: Stack(
-                children: [
-                  if (_getPetPrimaryPhotoUrl(pet) == null)
-                    const Center(
-                      child: Text('🐶', style: TextStyle(fontSize: 50)),
-                    ),
-                  // 성별 배지
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isMale ? Colors.blue : Colors.pink,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        isMale ? '♂' : '♀',
-                        style: const TextStyle(fontSize: 12, color: Colors.white),
-                      ),
-                    ),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 이미지 영역 (대표사진 우선)
+              Container(
+                width: 120,
+                decoration: BoxDecoration(
+                  color: context.features.datingContainer,
+                  borderRadius: const BorderRadius.horizontal(
+                    left: Radius.circular(AppSizes.radiusL),
                   ),
-                ],
-              ),
-            ),
-            // 정보 영역
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSizes.paddingM),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  image: _getPetPrimaryPhotoUrl(pet) != null
+                      ? DecorationImage(
+                          image: NetworkImage(_getPetPrimaryPhotoUrl(pet)!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: Stack(
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          pet.name,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                        ),
-                        const Spacer(),
-                        Text(
-                          petWithDistance.distanceString,
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${pet.breed ?? '품종 미상'} · ${pet.ageString}',
-                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: 8),
-                    // 교배 조건 태그
-                    Wrap(
-                      spacing: 4,
-                      runSpacing: 4,
-                      children: [
-                        if (pet.hasPedigree)
-                          _buildBreedingConditionTag('혈통서 보유', Icons.verified),
-                        if (pet.isVaccinationVerified)
-                          _buildBreedingConditionTag('예방접종 완료', Icons.health_and_safety),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    // 교배 신청 버튼
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => _showBreedingRequestSheet(context, ref, pet.id),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.dating,
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text(
-                          '교배 신청',
-                          style: TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w600),
-                        ),
+                    if (_getPetPrimaryPhotoUrl(pet) == null)
+                      const Center(
+                        child: DefaultPetIcon(size: 50),
+                      ),
+                    // 성별 배지
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: PetGenderBadge(
+                        isMale: isMale,
+                        showLabel: true,
+                        size: InfoBadgeSize.small,
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+              // 정보 영역
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSizes.paddingM),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // 상단: 이름, 거리, 품종/나이
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  pet.name,
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: colorScheme.surfaceContainerHighest,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.location_on, size: 10, color: colorScheme.onSurfaceVariant),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      petWithDistance.distanceString,
+                                      style: TextStyle(fontSize: 10, color: colorScheme.onSurfaceVariant),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            '${pet.breed ?? '품종 미상'} · ${pet.ageString}',
+                            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                          ),
+                        ],
+                      ),
+                      // 중간: 교배 조건 태그
+                      if (pet.hasPedigree || pet.isVaccinationVerified)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: AppSizes.gapS),
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 4,
+                            children: [
+                              if (pet.hasPedigree)
+                                _buildBreedingConditionTag('혈통서', Icons.verified),
+                              if (pet.isVaccinationVerified)
+                                _buildBreedingConditionTag('예방접종', Icons.health_and_safety),
+                            ],
+                          ),
+                        ),
+                      // 하단: 교배 신청 버튼
+                      const SizedBox(height: AppSizes.gapS),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 34,
+                        child: ElevatedButton(
+                          onPressed: () => _showBreedingRequestSheet(context, ref, pet.id),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: context.features.dating,
+                            padding: EdgeInsets.zero,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                          child: const Text(
+                            '교배 신청',
+                            style: TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  // ignore: unused_element - 더미 데이터용 (Firebase 전환 후 미사용)
   /// 교배찾기 카드 (더미 데이터용 - 사용하지 않음)
   Widget _buildBreedingCard(BuildContext context, int index) {
     final distance = (index + 1) * 1.5;
@@ -721,7 +760,7 @@ class DatingScreen extends ConsumerWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: AppSizes.gapM),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
           boxShadow: [
             BoxShadow(
@@ -737,7 +776,7 @@ class DatingScreen extends ConsumerWidget {
               width: 120,
               height: 130,
               decoration: BoxDecoration(
-                color: AppColors.datingLight,
+                color: context.features.datingContainer,
                 borderRadius: const BorderRadius.horizontal(
                   left: Radius.circular(AppSizes.radiusL),
                 ),
@@ -745,22 +784,16 @@ class DatingScreen extends ConsumerWidget {
               child: Stack(
                 children: [
                   const Center(
-                    child: Text('🐶', style: TextStyle(fontSize: 50)),
+                    child: DefaultPetIcon(size: 50),
                   ),
                   // 성별 배지
                   Positioned(
                     top: 8,
                     left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isMale ? Colors.blue : Colors.pink,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        isMale ? '♂' : '♀',
-                        style: const TextStyle(fontSize: 12, color: Colors.white),
-                      ),
+                    child: PetGenderBadge(
+                      isMale: isMale,
+                      showLabel: true,
+                      size: InfoBadgeSize.small,
                     ),
                   ),
                   // 인증 배지들 (하단)
@@ -794,20 +827,20 @@ class DatingScreen extends ConsumerWidget {
                         const Spacer(),
                         Text(
                           '${distance.toStringAsFixed(1)}km',
-                          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '푸들 · ${isMale ? "수컷" : "암컷"} · 3살',
-                      style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                      '푸들 · ${isMale ? "남아" : "여아"} · 3살',
+                      style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                     const SizedBox(height: 8),
                     // 원하는 조건 태그
-                    const Text(
+                    Text(
                       '원하는 조건',
-                      style: TextStyle(fontSize: 10, color: AppColors.textHint),
+                      style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outlineVariant),
                     ),
                     const SizedBox(height: 4),
                     Wrap(
@@ -834,27 +867,32 @@ class DatingScreen extends ConsumerWidget {
 
   /// 교배 조건 태그
   Widget _buildBreedingConditionTag(String text, IconData icon, {bool isNoCondition = false}) {
-    final color = isNoCondition ? Colors.grey : AppColors.dating;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 10, color: color),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: color),
+    return Builder(
+      builder: (ctx) {
+        final color = isNoCondition ? Colors.grey : ctx.features.dating;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
           ),
-        ],
-      ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 10, color: color),
+              const SizedBox(width: 4),
+              Text(
+                text,
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: color),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
+  // ignore: unused_element - 더미 데이터용 (Firebase 전환 후 미사용)
   /// 교배찾기 태그
   Widget _buildBreedingTag(String text, Color color) {
     return Container(
@@ -878,14 +916,9 @@ class DatingScreen extends ConsumerWidget {
       myPets: myPets,
       onConfirm: (message, {selectedPet}) {
         // TODO: message, selectedPet을 DB에 저장
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(selectedPet != null 
-                ? '${selectedPet.name}(으)로 교배 신청을 보냈어요! 🐶' 
-                : '교배 신청을 보냈어요! 🐶'),
-            backgroundColor: AppColors.dating,
-          ),
-        );
+        MingrrSnackBar.success(context, selectedPet != null 
+            ? '${selectedPet.name}(으)로 교배 신청을 보냈어요! 🐶' 
+            : '교배 신청을 보냈어요! 🐶');
       },
     );
   }
@@ -919,23 +952,23 @@ class DatingScreen extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.pets, size: 48, color: AppColors.textHint),
+                  Icon(Icons.pets, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     '반려동물을 먼저 등록해주세요',
-                    style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     '반려동물을 등록하면 근처의\n친구들을 찾아드려요',
-                    style: TextStyle(fontSize: 12, color: AppColors.textHint),
+                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => context.push('/profile'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.dating,
+                      backgroundColor: context.features.dating,
                       foregroundColor: Colors.white,
                     ),
                     child: const Text('반려동물 추가하기'),
@@ -949,16 +982,16 @@ class DatingScreen extends ConsumerWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.location_off, size: 48, color: AppColors.textHint),
+                Icon(Icons.location_off, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
                 const SizedBox(height: 16),
                 Text(
                   '${distanceFilter.toInt()}km 내에 반려동물이 없습니다',
-                  style: const TextStyle(color: AppColors.textSecondary),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   '거리를 늘려보세요',
-                  style: TextStyle(fontSize: 12, color: AppColors.textHint),
+                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
                 ),
               ],
             ),
@@ -986,14 +1019,12 @@ class DatingScreen extends ConsumerWidget {
   Widget _buildNearbyPetCard(BuildContext context, PetWithDistance petWithDistance) {
     final pet = petWithDistance.pet;
     final matchScore = petWithDistance.matchScore;
-    final isHighMatch = matchScore >= 90;
-    final matchColor = isHighMatch ? AppColors.success : AppColors.dating;
     
     return GestureDetector(
       onTap: () => _navigateToDetail(context, pet.id),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
           boxShadow: [
             BoxShadow(
@@ -1010,7 +1041,7 @@ class DatingScreen extends ConsumerWidget {
               flex: 3,
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.datingLight,
+                  color: context.features.datingContainer,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(AppSizes.radiusL),
                   ),
@@ -1026,7 +1057,7 @@ class DatingScreen extends ConsumerWidget {
                   children: [
                     if (_getPetPrimaryPhotoUrl(pet) == null)
                       const Center(
-                        child: Text('🐶', style: TextStyle(fontSize: 50)),
+                        child: DefaultPetIcon(size: 50),
                       ),
                     Positioned(
                       top: 8,
@@ -1070,7 +1101,7 @@ class DatingScreen extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text(
                       '${pet.breed ?? '품종 미상'} · ${pet.ageString}',
-                      style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1097,18 +1128,19 @@ class DatingScreen extends ConsumerWidget {
     return pet.displayImageUrl;
   }
 
+  // ignore: unused_element - 더미 데이터용 (Firebase 전환 후 미사용)
   /// 근처 검색 카드 (더미 데이터용 - 사용하지 않음)
   Widget _buildNearbyCard(BuildContext context, int index) {
     final distance = (index + 1) * 0.5;
     final matchScore = 80 + index * 2;
     final isHighMatch = matchScore >= 90;
-    final matchColor = isHighMatch ? AppColors.success : AppColors.dating;
+    final matchColor = isHighMatch ? context.features.success : context.features.dating;
     
     return GestureDetector(
       onTap: () => _navigateToDetail(context, 'nearby_$index'),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
           boxShadow: [
             BoxShadow(
@@ -1125,7 +1157,7 @@ class DatingScreen extends ConsumerWidget {
               flex: 3,
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.datingLight,
+                  color: context.features.datingContainer,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(AppSizes.radiusL),
                   ),
@@ -1134,7 +1166,7 @@ class DatingScreen extends ConsumerWidget {
                   fit: StackFit.expand,
                   children: [
                     const Center(
-                      child: Text('🐶', style: TextStyle(fontSize: 50)),
+                      child: DefaultPetIcon(size: 50),
                     ),
                     Positioned(
                       top: 8,
@@ -1170,9 +1202,9 @@ class DatingScreen extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    const Text(
+                    Text(
                       '푸들 · 3살',
-                      style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                      style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                     const SizedBox(height: 4),
                     // 특성 태그
@@ -1213,15 +1245,17 @@ class DatingScreen extends ConsumerWidget {
 
   /// 작은 태그 (근처검색용 - 회색)
   Widget _buildSmallTag(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 9, color: AppColors.textSecondary),
+    return Builder(
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        decoration: BoxDecoration(
+          color: Colors.grey.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(fontSize: 9, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+        ),
       ),
     );
   }
@@ -1243,23 +1277,23 @@ class DatingScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.pets, size: 48, color: AppColors.textHint),
+                      Icon(Icons.pets, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         '반려동물을 먼저 등록해주세요',
-                        style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
+                      Text(
                         '반려동물을 등록하면 궁합이 맞는\n친구들을 추천해드려요',
-                        style: TextStyle(fontSize: 12, color: AppColors.textHint),
+                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () => context.push('/profile'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.dating,
+                          backgroundColor: context.features.dating,
                           foregroundColor: Colors.white,
                         ),
                         child: const Text('반려동물 추가하기'),
@@ -1273,16 +1307,16 @@ class DatingScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.auto_awesome, size: 48, color: AppColors.textHint),
+                    Icon(Icons.auto_awesome, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
                     const SizedBox(height: 16),
-                    const Text(
+                    Text(
                       '추천할 반려동물이 없습니다',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       '근처에 등록된 반려동물이 없어요',
-                      style: TextStyle(fontSize: 12, color: AppColors.textHint),
+                      style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
                     ),
                   ],
                 ),
@@ -1296,8 +1330,8 @@ class DatingScreen extends ConsumerWidget {
               },
             );
           },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+          loading: () => const MingrrLoadingState(),
+          error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
         );
       },
     );
@@ -1315,7 +1349,7 @@ class DatingScreen extends ConsumerWidget {
         margin: const EdgeInsets.only(bottom: AppSizes.gapM),
         height: 280,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusXL),
           boxShadow: [
             BoxShadow(
@@ -1335,8 +1369,8 @@ class DatingScreen extends ConsumerWidget {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.datingLight,
-                      AppColors.dating.withOpacity(0.2),
+                      context.features.datingContainer,
+                      context.features.dating.withOpacity(0.2),
                     ],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
@@ -1350,7 +1384,7 @@ class DatingScreen extends ConsumerWidget {
                 ),
                 child: _getPetPrimaryPhotoUrl(pet) == null
                     ? const Center(
-                        child: Text('🐶', style: TextStyle(fontSize: 80)),
+                        child: DefaultPetIcon(size: 80),
                       )
                     : null,
               ),
@@ -1379,26 +1413,10 @@ class DatingScreen extends ConsumerWidget {
               Positioned(
                 top: 12,
                 left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isMale ? Colors.blue : Colors.pink,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        isMale ? '♂' : '♀',
-                        style: const TextStyle(fontSize: 14, color: Colors.white),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        isMale ? '수컷' : '암컷',
-                        style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w500),
-                      ),
-                    ],
-                  ),
+                child: PetGenderBadge(
+                  isMale: isMale,
+                  showLabel: true,
+                  size: InfoBadgeSize.medium,
                 ),
               ),
               
@@ -1409,7 +1427,7 @@ class DatingScreen extends ConsumerWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: matchScore >= 90 ? AppColors.success : AppColors.dating,
+                    color: matchScore >= 90 ? context.features.success : context.features.dating,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(

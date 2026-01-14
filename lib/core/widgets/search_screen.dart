@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../constants/app_colors.dart';
+import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import '../services/firestore_service.dart';
+import 'common_widgets.dart';
+import 'svg_icons.dart';
 import '../utils/format_utils.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/community_model.dart';
@@ -12,7 +14,7 @@ import '../../models/community_model.dart';
 /// 마켓, 소모임, 알바 검색 지원
 /// ============================================================
 
-enum SearchType { market, community, job }
+enum SearchType { market, community, job, breeding }
 
 class SearchScreen extends ConsumerStatefulWidget {
   final SearchType searchType;
@@ -45,16 +47,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         titleSpacing: 0,
         title: _buildSearchField(),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('취소', style: TextStyle(color: AppColors.textSecondary)),
+            child: Text('취소', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           ),
         ],
       ),
@@ -67,7 +69,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       height: 40,
       margin: const EdgeInsets.only(left: 16),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
       ),
       child: TextField(
@@ -75,7 +77,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         autofocus: true,
         decoration: InputDecoration(
           hintText: _getHintText(),
-          hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 14),
+          hintStyle: TextStyle(color: Theme.of(context).colorScheme.outlineVariant, fontSize: 13),
           prefixIcon: Icon(Icons.search, color: widget.accentColor, size: 20),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -88,26 +90,34 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   String _getHintText() {
     switch (widget.searchType) {
-      case SearchType.market:
-        return '상품명, 설명으로 검색';
+      case SearchType.breeding:
+        return '교배 글 제목, 상세 내용으로 검색';
       case SearchType.community:
         return '모임명, 태그로 검색';
       case SearchType.job:
         return '알바 제목, 설명으로 검색';
+      case SearchType.market:
+        return '상품명, 설명으로 검색';
     }
   }
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const MingrrLoadingState();
     }
 
     if (_lastQuery.isEmpty) {
-      return _buildEmptyState('검색어를 입력해주세요', Icons.search);
+      return const MingrrEmptyState(
+        svgAsset: SvgAssets.emptySearch,
+        title: '검색어를 입력해주세요',
+      );
     }
 
     if (_results.isEmpty) {
-      return _buildEmptyState('검색 결과가 없습니다', Icons.search_off);
+      return const MingrrEmptyState(
+        svgAsset: SvgAssets.emptySearch,
+        title: '검색 결과가 없습니다',
+      );
     }
 
     return ListView.builder(
@@ -120,6 +130,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             return _buildProductItem(item as ProductModel);
           case SearchType.community:
             return _buildGroupItem(item as GroupModel);
+          case SearchType.breeding:
+            return _buildBreedingItem(item);
           case SearchType.job:
             return _buildJobItem(item as JobModel);
         }
@@ -127,18 +139,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  Widget _buildEmptyState(String message, IconData icon) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 64, color: AppColors.textHint),
-          const SizedBox(height: 16),
-          Text(message, style: const TextStyle(color: AppColors.textSecondary)),
-        ],
-      ),
-    );
-  }
 
   Widget _buildProductItem(ProductModel product) {
     return Card(
@@ -148,7 +148,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: AppColors.marketLight,
+            color: context.features.marketContainer,
             borderRadius: BorderRadius.circular(8),
             image: product.imageUrls.isNotEmpty
                 ? DecorationImage(
@@ -158,20 +158,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 : null,
           ),
           child: product.imageUrls.isEmpty
-              ? const Icon(Icons.image, color: AppColors.market)
+              ? Icon(Icons.image, color: context.features.market)
               : null,
         ),
         title: Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(
           product.priceString,
           style: TextStyle(
-            color: product.type == ProductType.share ? AppColors.walk : AppColors.textPrimary,
+            color: product.type == ProductType.share ? context.features.walk : Theme.of(context).colorScheme.onSurface,
             fontWeight: FontWeight.w600,
           ),
         ),
         trailing: Text(
           formatRelativeTime(product.createdAt),
-          style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
         ),
         onTap: () {
           // TODO: 상품 상세 화면으로 이동
@@ -189,7 +189,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: AppColors.communityLight,
+            color: context.features.communityContainer,
             borderRadius: BorderRadius.circular(8),
             image: group.imageUrl != null
                 ? DecorationImage(
@@ -199,7 +199,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 : null,
           ),
           child: group.imageUrl == null
-              ? const Icon(Icons.groups, color: AppColors.community)
+              ? Icon(Icons.groups, color: context.features.community)
               : null,
         ),
         title: Text(group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -207,16 +207,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           children: [
             Text(group.typeString, style: const TextStyle(fontSize: 12)),
             const SizedBox(width: 8),
-            const Icon(Icons.person, size: 12, color: AppColors.textHint),
-            Text(' ${group.memberCount}', style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+            Icon(Icons.person, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
+            Text(' ${group.memberCount}', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant)),
           ],
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.favorite, size: 14, color: AppColors.dating),
+            Icon(Icons.favorite, size: 14, color: context.features.breeding),
             const SizedBox(width: 2),
-            Text('${group.likeCount}', style: const TextStyle(fontSize: 12, color: AppColors.textHint)),
+            Text('${group.likeCount}', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant)),
           ],
         ),
         onTap: () {
@@ -234,22 +234,56 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: AppColors.marketLight,
+            color: context.features.marketContainer,
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(_getJobIcon(job.type), color: AppColors.market),
+          child: Icon(_getJobIcon(job.type), color: context.features.market),
         ),
         title: Text(job.title, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(
           '${formatPrice(job.price)}원/${job.priceUnit}',
-          style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.market),
+          style: TextStyle(fontWeight: FontWeight.w600, color: context.features.market),
         ),
         trailing: Text(
           formatRelativeTime(job.createdAt),
-          style: const TextStyle(fontSize: 12, color: AppColors.textHint),
+          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
         ),
         onTap: () {
           Navigator.pop(context, job);
+        },
+      ),
+    );
+  }
+
+  Widget _buildBreedingItem(dynamic breeding) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
+      child: ListTile(
+        leading: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: context.features.breedingContainer,
+            borderRadius: BorderRadius.circular(8),
+            image: breeding.imageUrls != null && breeding.imageUrls.isNotEmpty
+                ? DecorationImage(
+                    image: NetworkImage(breeding.imageUrls.first),
+                    fit: BoxFit.cover,
+                  )
+                : null,
+          ),
+          child: (breeding.imageUrls == null || breeding.imageUrls.isEmpty)
+              ? Icon(Icons.pets, color: context.features.breeding)
+              : null,
+        ),
+        title: Text(breeding.title ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text(
+          '${breeding.breed ?? '품종 미상'}',
+          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+        ),
+        trailing: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+        onTap: () {
+          Navigator.pop(context, breeding);
         },
       ),
     );
@@ -288,6 +322,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         case SearchType.community:
           results = await _firestoreService.searchGroups(trimmedQuery);
           break;
+        case SearchType.breeding:
+          results = await _firestoreService.searchBreedingPosts(trimmedQuery);
+          break;
         case SearchType.job:
           results = await _firestoreService.searchJobs(trimmedQuery);
           break;
@@ -296,9 +333,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       setState(() => _results = results);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('검색 중 오류가 발생했습니다: $e')),
-        );
+        MingrrSnackBar.error(context, '검색 중 오류가 발생했습니다: $e');
       }
     } finally {
       if (mounted) {

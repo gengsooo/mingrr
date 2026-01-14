@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/user_model.dart';
 import '../../models/rating_model.dart';
 import 'firebase_service.dart';
@@ -20,11 +19,11 @@ class KkosunnaeService {
   static final _firebase = FirebaseService();
 
   // ===== 등급 정의 =====
-  static const String gradeMaster = '🏆 꼬순내 마스터';
-  static const String gradeVeteran = '⭐ 꼬순내 베테랑';
-  static const String gradeFriend = '👍 꼬순내 친구';
-  static const String gradeGrowing = '🌱 꼬순내 성장중';
-  static const String gradeNewbie = '🐣 꼬순내 새싹';
+  static const String gradeMaster = '꼬순내 마스터';
+  static const String gradeVeteran = '꼬순내 베테랑';
+  static const String gradeFriend = '꼬순내 친구';
+  static const String gradeGrowing = '꼬순내 성장중';
+  static const String gradeNewbie = '꼬순내 새싹';
 
   /// 꼬순내 지수 계산 (전체)
   static Future<KkosunnaeResult> calculateScore(String userId) async {

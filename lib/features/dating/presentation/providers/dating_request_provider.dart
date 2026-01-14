@@ -100,7 +100,7 @@ class ReceivedRequestsNotifier extends StateNotifier<List<DatingRequestModel>> {
         await _notificationService.sendDatingAcceptedNotification(
           recipientId: acceptedRequest!.senderId,
           accepterName: myUserData?['nickname'] ?? '사용자',
-          accepterPetName: acceptedRequest!.receiverPetId ?? '',
+          accepterPetName: acceptedRequest!.receiverPetId,
           chatRoomId: chatRoom.id,
           isBreeding: isBreeding,
         );

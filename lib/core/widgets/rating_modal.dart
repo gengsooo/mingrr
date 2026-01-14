@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import '../services/bottom_sheet_stack_manager.dart';
+import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
+import 'common_widgets.dart';
+import 'mingrr_bottom_sheet.dart';
 
 /// ============================================================
 /// 꼬순내지수 평가 모달 (공통 위젯)
@@ -11,16 +14,28 @@ import '../constants/app_sizes.dart';
 /// ============================================================
 
 enum RatingType {
-  excellent('최고에요', Icons.sentiment_very_satisfied, AppColors.success),
-  good('좋아요', Icons.sentiment_satisfied, AppColors.primary),
-  normal('보통', Icons.sentiment_neutral, AppColors.warning),
-  bad('나쁨', Icons.sentiment_dissatisfied, AppColors.error);
+  excellent('최고에요', Icons.sentiment_very_satisfied),
+  good('좋아요', Icons.sentiment_satisfied),
+  normal('보통', Icons.sentiment_neutral),
+  bad('나쁨', Icons.sentiment_dissatisfied);
 
   final String label;
   final IconData icon;
-  final Color color;
 
-  const RatingType(this.label, this.icon, this.color);
+  const RatingType(this.label, this.icon);
+
+  Color getColor(BuildContext context) {
+    switch (this) {
+      case RatingType.excellent:
+        return context.features.success;
+      case RatingType.good:
+        return Theme.of(context).colorScheme.primary;
+      case RatingType.normal:
+        return Colors.orange;
+      case RatingType.bad:
+        return Colors.red;
+    }
+  }
 }
 
 /// 꼬순내지수 평가 모달 표시 함수
@@ -29,14 +44,42 @@ void showRatingModal(
   required String targetName,
   required Function(RatingType) onRatingSelected,
 }) {
+  final stackManager = BottomSheetStackManager();
+  final sheetId = BottomSheetStackManager.createSheetId(BottomSheetType.rating, targetName);
+  
+  // 순환 감지: 같은 평가 바텀시트가 이미 열려있으면 해당 바텀시트까지 닫기
+  if (stackManager.hasCycle(sheetId)) {
+    final closeCount = stackManager.popUntilAndGetCount(sheetId);
+    for (int i = 0; i < closeCount; i++) {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+    }
+  }
+  
+  // 스택에 등록
+  stackManager.push(sheetId);
+  
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
-    builder: (context) => RatingModal(
+    isDismissible: true,
+    enableDrag: true,
+    isScrollControlled: true,
+    useSafeArea: true,
+    builder: (sheetContext) => RatingModal(
       targetName: targetName,
-      onRatingSelected: onRatingSelected,
+      onRatingSelected: (rating) {
+        Navigator.pop(sheetContext);
+        onRatingSelected(rating);
+        // 평가 완료 알림 표시
+        MingrrSnackBar.success(context, '$targetName님에게 "${rating.label}" 평가를 보냈어요! 🌟');
+      },
     ),
-  );
+  ).then((_) {
+    // 바텀시트가 닫힐 때 스택에서 제거
+    stackManager.pop(sheetId);
+  });
 }
 
 /// 꼬순내지수 평가 모달 위젯
@@ -54,66 +97,54 @@ class RatingModal extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.7,
+        maxHeight: MediaQuery.of(context).size.height * 0.6,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 핸들
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.divider,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const BottomSheetHandle(),
+          // 헤더
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: 8),
+            child: Text(
+              '$targetName님은 어떠셨나요?',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
               ),
-              
-              // 헤더
-              Padding(
-                padding: const EdgeInsets.all(AppSizes.paddingL),
-                child: Column(
-                  children: [
-                    Text(
-                      '$targetName님은 어떠셨나요?',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      '솔직한 평가는 더 나은 커뮤니티를 만듭니다',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              const Divider(height: 1),
-              
-              // 평가 옵션
-              Padding(
-                padding: const EdgeInsets.all(AppSizes.paddingL),
-                child: Column(
-                  children: RatingType.values.map((rating) {
-                    return _buildRatingOption(context, rating);
-                  }).toList(),
-                ),
-              ),
-            ],
+              textAlign: TextAlign.center,
+            ),
           ),
-        ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
+            child: Text(
+              '솔직한 평가는 더 나은 커뮤니티를 만듭니다',
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: AppSizes.gapM),
+          
+          // 평가 옵션 (스크롤 가능)
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              children: RatingType.values.map((rating) {
+                return _buildRatingOption(context, rating);
+              }).toList(),
+            ),
+          ),
+          
+          SizedBox(height: MediaQuery.of(context).padding.bottom),
+        ],
       ),
     );
   }
@@ -133,10 +164,10 @@ class RatingModal extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: rating.color.withOpacity(0.05),
+              color: rating.getColor(context).withOpacity(0.05),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: rating.color.withOpacity(0.2),
+                color: rating.getColor(context).withOpacity(0.2),
                 width: 1,
               ),
             ),
@@ -146,12 +177,12 @@ class RatingModal extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: rating.color.withOpacity(0.1),
+                    color: rating.getColor(context).withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     rating.icon,
-                    color: rating.color,
+                    color: rating.getColor(context),
                     size: 28,
                   ),
                 ),
@@ -162,13 +193,13 @@ class RatingModal extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: rating.color,
+                      color: rating.getColor(context),
                     ),
                   ),
                 ),
                 Icon(
                   Icons.chevron_right,
-                  color: rating.color.withOpacity(0.5),
+                  color: rating.getColor(context).withOpacity(0.5),
                 ),
               ],
             ),

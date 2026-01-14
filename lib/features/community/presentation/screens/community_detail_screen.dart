@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/services/share_service.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/confirm_bottom_sheet.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/warmth_score.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
@@ -48,7 +49,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     final communityData = _getDemoData();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.detailBackground,
       body: CustomScrollView(
         slivers: [
           // 이미지 헤더
@@ -119,7 +120,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
     return SliverAppBar(
       expandedHeight: 200,
       pinned: true,
-      backgroundColor: AppColors.community,
+      backgroundColor: context.features.community,
       leading: IconButton(
         icon: Container(
           padding: const EdgeInsets.all(8),
@@ -127,7 +128,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             color: Colors.black.withOpacity(0.3),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+          child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
         ),
         onPressed: () => Navigator.pop(context),
       ),
@@ -162,8 +163,8 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppColors.community.withOpacity(0.8),
-                AppColors.community,
+                context.features.community.withOpacity(0.8),
+                context.features.community,
               ],
             ),
           ),
@@ -184,12 +185,12 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: AppColors.community.withOpacity(0.1),
+            color: context.features.community.withOpacity(0.1),
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
             data['category'],
-            style: const TextStyle(fontSize: 12, color: AppColors.community),
+            style: TextStyle(fontSize: 12, color: context.features.community),
           ),
         ),
         const SizedBox(height: 12),
@@ -202,18 +203,18 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         // 위치, 멤버 수
         Row(
           children: [
-            const Icon(Icons.location_on_outlined, size: 16, color: AppColors.textSecondary),
+            Icon(Icons.location_on_outlined, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(width: 4),
             Text(
               data['location'],
-              style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(width: 16),
-            const Icon(Icons.people_outline, size: 16, color: AppColors.textSecondary),
+            Icon(Icons.people_outline, size: 16, color: Theme.of(context).colorScheme.onSurfaceVariant),
             const SizedBox(width: 4),
             Text(
               '${data['memberCount']}/${data['maxMembers']}명',
-              style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -235,11 +236,11 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: const Center(
-              child: Icon(Icons.person, size: 24, color: AppColors.primary),
+            child: Center(
+              child: Icon(Icons.person, size: 24, color: Theme.of(context).colorScheme.primary),
             ),
           ),
           const SizedBox(width: 12),
@@ -258,7 +259,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppColors.community,
+                        color: context.features.community,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: const Text(
@@ -274,7 +275,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             ),
           ),
           // 화살표
-          const Icon(Icons.chevron_right, color: AppColors.textHint),
+          Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
         ],
       ),
     );
@@ -290,9 +291,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       isIdentityVerified: true,
       isPetVerified: true,
       isLocationVerified: true,
-      dogs: [
-        GuardianDogInfo(
-          id: 'dog_1',
+      pets: [
+        GuardianPetInfo(
+          id: 'pet_1',
           name: '뽀삐',
           breed: '골든 리트리버',
           ageString: '3살',
@@ -318,9 +319,17 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
-        Text(
-          data['description'],
-          style: const TextStyle(fontSize: 14, height: 1.6, color: AppColors.textPrimary),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: context.sectionBackground,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            data['description'],
+            style: TextStyle(fontSize: 14, height: 1.6, color: Theme.of(context).colorScheme.onSurface),
+          ),
         ),
       ],
     );
@@ -339,7 +348,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.background,
+            color: context.sectionBackground,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -348,10 +357,10 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppColors.community.withOpacity(0.1),
+                  color: context.features.community.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.calendar_today, color: AppColors.community),
+                child: Icon(Icons.calendar_today, color: context.features.community),
               ),
               const SizedBox(width: 16),
               Column(
@@ -364,7 +373,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   const SizedBox(height: 2),
                   Text(
                     data['meetingTime'],
-                    style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                    style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -391,7 +400,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             ),
             Text(
               '${data['memberCount']}명',
-              style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -413,17 +422,17 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Center(
-                          child: Icon(Icons.person, size: 24, color: AppColors.primary),
+                        child: Center(
+                          child: Icon(Icons.person, size: 24, color: Theme.of(context).colorScheme.primary),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         memberName,
-                        style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                        style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     ],
                   ),
@@ -446,9 +455,9 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       isIdentityVerified: index % 2 == 0,
       isPetVerified: true,
       isLocationVerified: index % 3 == 0,
-      dogs: [
-        GuardianDogInfo(
-          id: 'dog_$index',
+      pets: [
+        GuardianPetInfo(
+          id: 'pet_$index',
           name: index == 0 ? '초코' : '콩이',
           breed: index == 0 ? '말티즈' : '포메라니안',
           ageString: '${2 + index}살',
@@ -468,23 +477,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
   Widget _buildBottomButton(BuildContext context, Map<String, dynamic> data) {
     final isJoined = data['isJoined'] as bool;
     
-    return Container(
-      padding: EdgeInsets.only(
-        left: AppSizes.paddingL,
-        right: AppSizes.paddingL,
-        top: AppSizes.paddingM,
-        bottom: MediaQuery.of(context).padding.bottom + AppSizes.paddingM,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
+    return MingrrBottomButtonBar(
       child: SizedBox(
         width: double.infinity,
         height: 56,
@@ -492,32 +485,22 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
           onPressed: () {
             if (isJoined) {
               // 탈퇴 시 확인 바텀시트 표시
-              showConfirmBottomSheet(
+              showConfirmSheet(
                 context,
-                type: ConfirmType.groupLeave,
+                type: ConfirmSheetType.groupLeave,
                 onConfirm: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('모임에서 탈퇴했습니다.'),
-                      backgroundColor: AppColors.community,
-                    ),
-                  );
+                  MingrrSnackBar.success(context, '모임에서 탈퇴했습니다.');
                 },
               );
             } else {
               // 가입 시 바로 처리
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('모임에 가입했습니다! 🎉'),
-                  backgroundColor: AppColors.community,
-                ),
-              );
+              MingrrSnackBar.success(context, '모임에 가입했습니다! 🎉');
             }
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: isJoined ? AppColors.error : AppColors.community,
+            backgroundColor: isJoined ? Colors.red : context.features.community,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -537,66 +520,47 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
 
   /// 더보기 옵션 메뉴
   void _showMoreOptions(BuildContext context) {
-    showModalBottomSheet(
+    showMingrrOptionsSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      options: [
+        MingrrOptionItem(
+          icon: Icons.notifications_off_outlined,
+          label: '알림 끄기',
+          onTap: () {},
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.notifications_off_outlined),
-              title: const Text('알림 끄기'),
-              onTap: () => Navigator.pop(context),
-            ),
-            if (_isJoined)
-              ListTile(
-                leading: const Icon(Icons.exit_to_app, color: AppColors.error),
-                title: const Text('모임 탈퇴하기', style: TextStyle(color: AppColors.error)),
-                onTap: () {
-                  Navigator.pop(context);
-                  _showLeaveConfirmDialog(context);
-                },
-              ),
-            ListTile(
-              leading: const Icon(Icons.report_outlined, color: AppColors.error),
-              title: const Text('신고하기', style: TextStyle(color: AppColors.error)),
-              onTap: () {
-                Navigator.pop(context);
-                showReportSheet(
-                  context,
-                  targetId: widget.communityId,
-                  targetName: '이 모임',
-                  targetType: ReportTargetType.community,
-                );
-              },
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
-          ],
+        if (_isJoined)
+          MingrrOptionItem(
+            icon: Icons.exit_to_app,
+            label: '모임 탈퇴하기',
+            isDestructive: true,
+            onTap: () => _showLeaveConfirmDialog(context),
+          ),
+        MingrrOptionItem(
+          icon: Icons.report_outlined,
+          label: '신고하기',
+          isDestructive: true,
+          onTap: () {
+            showReportSheet(
+              context,
+              targetId: widget.communityId,
+              targetName: '이 모임',
+              targetType: ReportTargetType.community,
+            );
+          },
         ),
-      ),
+      ],
     );
   }
 
   /// 탈퇴 확인 바텀시트
   void _showLeaveConfirmDialog(BuildContext context) {
-    showConfirmBottomSheet(
+    showConfirmSheet(
       context,
-      type: ConfirmType.groupLeave,
+      type: ConfirmSheetType.groupLeave,
       onConfirm: () {
         setState(() => _isJoined = false);
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('모임에서 탈퇴했습니다.'),
-            backgroundColor: AppColors.community,
-          ),
-        );
+        MingrrSnackBar.success(context, '모임에서 탈퇴했습니다.');
       },
     );
   }
@@ -612,23 +576,15 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            const BottomSheetHandle(),
             const Text(
               '공유하기',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
@@ -644,9 +600,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                     await Clipboard.setData(ClipboardData(text: text));
                     if (context.mounted) {
                       Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('복사되었습니다')),
-                      );
+                      MingrrSnackBar.success(context, '복사되었습니다');
                     }
                   },
                 ),
@@ -655,9 +609,7 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
                   label: '카카오톡',
                   onTap: () {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('카카오톡 공유는 SDK 설정 후 사용 가능합니다')),
-                    );
+                    MingrrSnackBar.info(context, '카카오톡 공유는 SDK 설정 후 사용 가능합니다');
                   },
                 ),
               ],
@@ -667,12 +619,12 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 text,
-                style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface),
                 maxLines: 4,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -697,15 +649,15 @@ class _CommunityDetailScreenState extends State<CommunityDetailScreen> {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: Colors.grey[100],
+              color: Theme.of(context).colorScheme.surfaceContainerLow,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, size: 24, color: Colors.grey[700]),
+            child: Icon(icon, size: 24, color: Theme.of(context).colorScheme.onSurface),
           ),
           const SizedBox(height: 8),
           Text(
             label,
-            style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface),
           ),
         ],
       ),

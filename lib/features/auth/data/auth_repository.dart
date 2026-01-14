@@ -246,6 +246,35 @@ class AuthRepository {
     });
   }
 
+  // ===== 비밀번호 재설정 =====
+  
+  /// 비밀번호 재설정 이메일 발송
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _firebase.auth.sendPasswordResetEmail(email: email);
+  }
+
+  // ===== 회원 탈퇴 (논리 삭제) =====
+  
+  /// 회원 탈퇴 처리
+  /// 물리 삭제가 아닌 논리 삭제를 수행합니다.
+  /// - isDeleted: true로 설정
+  /// - deletedAt: 현재 시간 저장
+  /// - 30일 후 Cloud Functions에서 물리 삭제 처리
+  Future<void> deleteAccount() async {
+    final user = _firebase.currentUser;
+    if (user == null) throw Exception('로그인이 필요합니다');
+    
+    // 1. Firestore에서 논리 삭제 처리
+    await _firebase.usersCollection.doc(user.uid).update({
+      'isDeleted': true,
+      'deletedAt': DateTime.now(),
+    });
+    
+    // 2. Firebase Auth 로그아웃 (계정은 유지)
+    // 실제 계정 삭제는 30일 후 Cloud Functions에서 처리
+    await signOut();
+  }
+
   // ===== 상태 스트림 =====
   
   /// 인증 상태 변경 스트림

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/services/dating_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
@@ -27,11 +27,8 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
     final likesAsync = ref.watch(receivedLikesProvider);
     
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('받은 좋아요'),
-        backgroundColor: Colors.white,
-        elevation: 0,
       ),
       body: likesAsync.when(
         data: (likes) {
@@ -40,21 +37,21 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.favorite_border, size: 64, color: AppColors.textHint),
+                  Icon(Icons.favorite_border, size: 64, color: Theme.of(context).colorScheme.outlineVariant),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     '아직 받은 좋아요가 없어요',
                     style: TextStyle(
                       fontSize: 16,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     '데이팅에서 활동해보세요!',
                     style: TextStyle(
                       fontSize: 14,
-                      color: AppColors.textHint,
+                      color: Theme.of(context).colorScheme.outlineVariant,
                     ),
                   ),
                 ],
@@ -71,8 +68,8 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
             },
           );
         },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (_, __) => const Center(child: Text('데이터를 불러올 수 없습니다')),
+        loading: () => const MingrrLoadingState(),
+        error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
       ),
     );
   }
@@ -98,7 +95,7 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
           width: 60,
           height: 60,
           decoration: BoxDecoration(
-            color: AppColors.divider,
+            color: Theme.of(context).colorScheme.outline,
             borderRadius: BorderRadius.circular(12),
           ),
         ),
@@ -107,9 +104,9 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(width: 100, height: 16, color: AppColors.divider),
+              Container(width: 100, height: 16, color: Theme.of(context).colorScheme.outline),
               const SizedBox(height: 8),
-              Container(width: 150, height: 12, color: AppColors.divider),
+              Container(width: 150, height: 12, color: Theme.of(context).colorScheme.outline),
             ],
           ),
         ),
@@ -155,18 +152,18 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
                   const SizedBox(height: 2),
                   Text(
                     '${pet.breed ?? '믹스견'} · ${pet.ageString}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textHint,
+                      color: Theme.of(context).colorScheme.outlineVariant,
                     ),
                   ),
                 ],
                 const SizedBox(height: 4),
                 Text(
                   like.message ?? '좋아요를 보냈어요!',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -180,11 +177,11 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.close, color: AppColors.textHint),
+                icon: Icon(Icons.close, color: Theme.of(context).colorScheme.outlineVariant),
                 onPressed: _isProcessing ? null : () => _rejectLike(like),
               ),
               IconButton(
-                icon: const Icon(Icons.favorite, color: AppColors.dating),
+                icon: Icon(Icons.favorite, color: context.features.dating),
                 onPressed: _isProcessing ? null : () => _acceptLike(like),
               ),
             ],
@@ -194,8 +191,8 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
               color: like.status == LikeStatus.accepted 
-                  ? AppColors.success.withOpacity(0.1)
-                  : AppColors.textHint.withOpacity(0.1),
+                  ? context.features.success.withOpacity(0.1)
+                  : Theme.of(context).colorScheme.outlineVariant.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
@@ -203,8 +200,8 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
               style: TextStyle(
                 fontSize: 12,
                 color: like.status == LikeStatus.accepted 
-                    ? AppColors.success 
-                    : AppColors.textHint,
+                    ? context.features.success 
+                    : Theme.of(context).colorScheme.outlineVariant,
               ),
             ),
           ),
@@ -217,10 +214,10 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
       width: 60,
       height: 60,
       decoration: BoxDecoration(
-        color: AppColors.datingLight,
+        color: context.features.datingContainer,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Icon(Icons.pets, color: AppColors.dating, size: 30),
+      child: Icon(Icons.pets, color: context.features.dating, size: 30),
     );
   }
   
@@ -232,28 +229,21 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
       final match = await _datingService.acceptLike(like.id);
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('매칭 성공! 채팅을 시작해보세요 🎉'),
-            backgroundColor: AppColors.success,
-            action: match?.chatRoomId != null
-                ? SnackBarAction(
-                    label: '채팅하기',
-                    textColor: Colors.white,
-                    onPressed: () => context.push('/chat/${match!.chatRoomId}'),
-                  )
-                : null,
-          ),
-        );
+        if (match?.chatRoomId != null) {
+          MingrrSnackBar.withAction(
+            context,
+            message: '매칭 성공! 채팅을 시작해보세요 🎉',
+            actionLabel: '채팅하기',
+            onAction: () => context.push('/chat/${match!.chatRoomId}'),
+            backgroundColor: context.features.success,
+          );
+        } else {
+          MingrrSnackBar.success(context, '매칭 성공! 채팅을 시작해보세요 🎉');
+        }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('오류가 발생했습니다: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        MingrrSnackBar.error(context, '오류가 발생했습니다: $e');
       }
     } finally {
       if (mounted) {
@@ -280,7 +270,7 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('거절'),
           ),
         ],
@@ -295,21 +285,11 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
       await _datingService.rejectLike(like.id);
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('좋아요를 거절했습니다'),
-            backgroundColor: AppColors.textSecondary,
-          ),
-        );
+        MingrrSnackBar.info(context, '좋아요를 거절했습니다');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('오류가 발생했습니다: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
+        MingrrSnackBar.error(context, '오류가 발생했습니다: $e');
       }
     } finally {
       if (mounted) {

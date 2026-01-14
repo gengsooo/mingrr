@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../models/health_model.dart';
-import '../../../../models/pet_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 
 /// ============================================================
@@ -298,6 +297,74 @@ class HealthService {
 
   Future<void> deleteSpecialNote(String recordId) async {
     await _firebase.firestore.collection('special_notes').doc(recordId).delete();
+  }
+
+  // ===== 산책 기록 =====
+  /// 산책 시작 (진행 중인 기록 생성)
+  Future<String> startWalkRecord({
+    required String userId,
+    required String petId,
+    required List<String> petIds,
+    required GeoPoint startLocation,
+  }) async {
+    final docRef = _firebase.firestore.collection('walk_records').doc();
+    await docRef.set({
+      'petId': petId,
+      'petIds': petIds,
+      'userId': userId,
+      'startTime': Timestamp.fromDate(DateTime.now()),
+      'endTime': null,
+      'distance': 0,
+      'calories': null,
+      'routePoints': [startLocation],
+      'footprints': [],
+      'notes': null,
+      'photoUrls': [],
+      'createdAt': Timestamp.fromDate(DateTime.now()),
+    });
+    return docRef.id;
+  }
+
+  /// 산책 경로 업데이트 (위치 추가)
+  Future<void> updateWalkRoute({
+    required String recordId,
+    required GeoPoint newLocation,
+    required double totalDistance,
+  }) async {
+    await _firebase.firestore.collection('walk_records').doc(recordId).update({
+      'routePoints': FieldValue.arrayUnion([newLocation]),
+      'distance': totalDistance,
+    });
+  }
+
+  /// 발자국 추가
+  Future<void> addFootprint({
+    required String recordId,
+    required GeoPoint location,
+  }) async {
+    await _firebase.firestore.collection('walk_records').doc(recordId).update({
+      'footprints': FieldValue.arrayUnion([location]),
+    });
+  }
+
+  /// 산책 종료
+  Future<void> endWalkRecord({
+    required String recordId,
+    required double totalDistance,
+    double? calories,
+    String? notes,
+  }) async {
+    await _firebase.firestore.collection('walk_records').doc(recordId).update({
+      'endTime': Timestamp.fromDate(DateTime.now()),
+      'distance': totalDistance,
+      'calories': calories,
+      'notes': notes,
+    });
+  }
+
+  /// 산책 기록 삭제
+  Future<void> deleteWalkRecord(String recordId) async {
+    await _firebase.firestore.collection('walk_records').doc(recordId).delete();
   }
 }
 

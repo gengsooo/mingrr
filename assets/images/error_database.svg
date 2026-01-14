@@ -1,0 +1,17 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 원형 배경 -->
+  <circle cx="60" cy="60" r="50" fill="#FFEBEE"/>
+  
+  <!-- 데이터베이스 실린더 -->
+  <ellipse cx="60" cy="40" rx="25" ry="10" fill="#BDBDBD"/>
+  <rect x="35" y="40" width="50" height="35" fill="#BDBDBD"/>
+  <ellipse cx="60" cy="75" rx="25" ry="10" fill="#9E9E9E"/>
+  
+  <!-- 중간 라인 -->
+  <ellipse cx="60" cy="52" rx="25" ry="8" fill="none" stroke="#9E9E9E" stroke-width="2"/>
+  <ellipse cx="60" cy="64" rx="25" ry="8" fill="none" stroke="#9E9E9E" stroke-width="2"/>
+  
+  <!-- X 표시 -->
+  <circle cx="85" cy="35" r="15" fill="#D32F2F"/>
+  <path d="M79 29 L91 41 M91 29 L79 41" stroke="white" stroke-width="3" stroke-linecap="round"/>
+</svg>

@@ -610,13 +610,213 @@ class SeedData {
     await _seedLikesAndMatches(userIds);
   }
   
-  /// 채팅 데이터만 생성
+  /// 채팅 데이터만 생성 (현재 로그인 사용자 기준 테스트 채팅 포함)
   Future<void> seedChats() async {
-    final userIds = await _getExistingUserIds();
-    if (userIds.isEmpty) {
-      throw Exception('사용자 데이터가 없습니다. 먼저 사용자를 생성해주세요.');
+    print('🌱 채팅 테스트 데이터 생성 중...');
+    
+    final currentUserId = _firebase.currentUserId;
+    if (currentUserId == null) {
+      print('❌ 로그인된 사용자가 없습니다');
+      return;
     }
-    await _seedChats(userIds);
+    
+    // 현재 사용자 정보 가져오기
+    final currentUserDoc = await _firebase.usersCollection.doc(currentUserId).get();
+    final currentUserData = currentUserDoc.data();
+    final currentUserNickname = currentUserData?['nickname'] ?? '나';
+    final currentUserProfileImage = currentUserData?['profileImageUrl'];
+    
+    // 현재 사용자의 반려동물 정보 가져오기
+    final myPetsSnapshot = await _firebase.petsCollection
+        .where('ownerId', isEqualTo: currentUserId)
+        .limit(1)
+        .get();
+    String? myPetName;
+    String? myPetImageUrl;
+    if (myPetsSnapshot.docs.isNotEmpty) {
+      final myPetData = myPetsSnapshot.docs.first.data();
+      myPetName = myPetData['name'];
+      myPetImageUrl = myPetData['profileImageUrl'];
+    }
+    
+    final now = DateTime.now();
+    final chatCollection = _firebase.firestore.collection('chatRooms');
+    final messagesCollection = _firebase.firestore.collection('messages');
+    
+    // 테스트용 상대방 사용자 생성
+    final testUsers = [
+      {'id': 'test_user_dating', 'nickname': '김민수', 'petName': '초코', 'petBreed': '포메라니안'},
+      {'id': 'test_user_dating_shiba', 'nickname': '시바견집사', 'petName': '시바', 'petBreed': '시바견'},
+      {'id': 'test_user_market', 'nickname': '이영희', 'petName': null, 'petBreed': null},
+      {'id': 'test_user_community', 'nickname': '박철수', 'petName': '뭉치', 'petBreed': '말티즈'},
+    ];
+    
+    for (final user in testUsers) {
+      await _firebase.usersCollection.doc(user['id'] as String).set({
+        'nickname': user['nickname'],
+        'profileImageUrl': null,
+        'kkosunnaeScore': 75.0,
+        'isIdentityVerified': true,
+        'isPetVerified': true,
+        'isLocationVerified': false,
+        'createdAt': Timestamp.fromDate(now.subtract(const Duration(days: 30))),
+      }, SetOptions(merge: true));
+      
+      if (user['petName'] != null) {
+        await _firebase.petsCollection.doc('pet_${user['id']}').set({
+          'ownerId': user['id'],
+          'name': user['petName'],
+          'breed': user['petBreed'] ?? '포메라니안',
+          'age': 3,
+          'gender': 'male',
+          'profileImageUrl': null,
+          'traits': ['활발함', '친근함'],
+          'introduction': '안녕하세요! ${user['petName']}입니다.',
+          'likeCount': 42,
+          'createdAt': Timestamp.fromDate(now.subtract(const Duration(days: 30))),
+        }, SetOptions(merge: true));
+      }
+    }
+    
+    // 1. 데이팅 채팅방 (초코)
+    await chatCollection.doc('chat_dating_test').set({
+      'participantIds': [currentUserId, 'test_user_dating'],
+      'participants': {
+        currentUserId: {'id': currentUserId, 'nickname': currentUserNickname, 'profileImageUrl': currentUserProfileImage, 'petName': myPetName, 'petImageUrl': myPetImageUrl},
+        'test_user_dating': {'id': 'test_user_dating', 'nickname': '김민수', 'profileImageUrl': null, 'petName': '초코', 'petImageUrl': null},
+      },
+      'type': 'dating',
+      'lastMessage': '안녕하세요! 초코 보호자입니다 😊',
+      'lastMessageSenderId': 'test_user_dating',
+      'lastMessageAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 5))),
+      'unreadCounts': {currentUserId: 1, 'test_user_dating': 0},
+      'isActive': true,
+      'createdAt': Timestamp.fromDate(now.subtract(const Duration(hours: 2))),
+    });
+    await messagesCollection.doc('msg_dating_1').set({
+      'chatRoomId': 'chat_dating_test',
+      'senderId': 'test_user_dating',
+      'content': '안녕하세요! 초코 보호자입니다 😊',
+      'type': 'text',
+      'isRead': false,
+      'sentAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 5))),
+    });
+    
+    // 2. 데이팅 채팅방 (시바)
+    await chatCollection.doc('chat_dating_shiba_test').set({
+      'participantIds': [currentUserId, 'test_user_dating_shiba'],
+      'participants': {
+        currentUserId: {'id': currentUserId, 'nickname': currentUserNickname, 'profileImageUrl': currentUserProfileImage, 'petName': myPetName, 'petImageUrl': myPetImageUrl},
+        'test_user_dating_shiba': {'id': 'test_user_dating_shiba', 'nickname': '시바견집사', 'profileImageUrl': null, 'petName': '시바', 'petImageUrl': null},
+      },
+      'type': 'dating',
+      'lastMessage': '시바가 산책 친구를 찾고 있어요! 🐕',
+      'lastMessageSenderId': 'test_user_dating_shiba',
+      'lastMessageAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 15))),
+      'unreadCounts': {currentUserId: 1, 'test_user_dating_shiba': 0},
+      'isActive': true,
+      'createdAt': Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
+    });
+    await messagesCollection.doc('msg_dating_shiba_1').set({
+      'chatRoomId': 'chat_dating_shiba_test',
+      'senderId': 'test_user_dating_shiba',
+      'content': '시바가 산책 친구를 찾고 있어요! 🐕',
+      'type': 'text',
+      'isRead': false,
+      'sentAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 15))),
+    });
+    
+    // 3. 마켓 채팅방
+    await chatCollection.doc('chat_market_test').set({
+      'participantIds': [currentUserId, 'test_user_market'],
+      'participants': {
+        currentUserId: {'id': currentUserId, 'nickname': currentUserNickname, 'profileImageUrl': currentUserProfileImage, 'petName': myPetName, 'petImageUrl': myPetImageUrl},
+        'test_user_market': {'id': 'test_user_market', 'nickname': '이영희', 'profileImageUrl': null, 'petName': null, 'petImageUrl': null},
+      },
+      'type': 'marketplace',
+      'lastMessage': '강아지 사료 아직 판매하시나요?',
+      'lastMessageSenderId': currentUserId,
+      'lastMessageAt': Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
+      'unreadCounts': {currentUserId: 0, 'test_user_market': 1},
+      'relatedId': 'product_test_001',
+      'isActive': true,
+      'createdAt': Timestamp.fromDate(now.subtract(const Duration(hours: 3))),
+    });
+    await messagesCollection.doc('msg_market_1').set({
+      'chatRoomId': 'chat_market_test',
+      'senderId': currentUserId,
+      'content': '강아지 사료 아직 판매하시나요?',
+      'type': 'text',
+      'isRead': false,
+      'sentAt': Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
+    });
+    
+    // 4. 소모임 채팅방
+    final groupId = 'group_test_001';
+    await _firebase.firestore.collection('groups').doc(groupId).set({
+      'name': '말티즈 산책 모임',
+      'description': '말티즈 보호자들의 산책 모임입니다. 매주 토요일 오후에 만나요!',
+      'type': 'walking',
+      'creatorId': 'test_user_community',
+      'adminIds': ['test_user_community'],
+      'memberIds': [currentUserId, 'test_user_community'],
+      'maxMembers': 20,
+      'address': '서울시 강남구',
+      'isPetAccompanied': true,
+      'isPublic': true,
+      'requireApproval': false,
+      'tags': ['말티즈', '산책', '강남'],
+      'likeCount': 15,
+      'createdAt': Timestamp.fromDate(now.subtract(const Duration(days: 30))),
+      'updatedAt': Timestamp.fromDate(now),
+    }, SetOptions(merge: true));
+    
+    await chatCollection.doc('chat_community_test').set({
+      'participantIds': [currentUserId, 'test_user_community'],
+      'participants': {
+        currentUserId: {'id': currentUserId, 'nickname': currentUserNickname, 'profileImageUrl': currentUserProfileImage, 'petName': myPetName, 'petImageUrl': myPetImageUrl},
+        'test_user_community': {'id': 'test_user_community', 'nickname': '말티즈 산책 모임', 'profileImageUrl': null, 'petName': null, 'petImageUrl': null},
+      },
+      'type': 'community',
+      'lastMessage': '이번 주 토요일 산책 참여하실 분?',
+      'lastMessageSenderId': 'test_user_community',
+      'lastMessageAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 30))),
+      'unreadCounts': {currentUserId: 2, 'test_user_community': 0},
+      'relatedId': groupId,
+      'isActive': true,
+      'createdAt': Timestamp.fromDate(now.subtract(const Duration(days: 7))),
+    });
+    await messagesCollection.doc('msg_community_1').set({
+      'chatRoomId': 'chat_community_test',
+      'senderId': 'test_user_community',
+      'content': '이번 주 토요일 산책 참여하실 분?',
+      'type': 'text',
+      'isRead': false,
+      'sentAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 30))),
+    });
+    
+    print('✅ 채팅 테스트 데이터 생성 완료');
+    print('   - 데이팅 채팅 (초코): chat_dating_test');
+    print('   - 데이팅 채팅 (시바): chat_dating_shiba_test');
+    print('   - 마켓 채팅: chat_market_test');
+    print('   - 소모임 채팅: chat_community_test');
+  }
+  
+  /// 채팅 테스트 데이터 삭제
+  Future<void> clearChats() async {
+    print('🗑️ 채팅 테스트 데이터 삭제 중...');
+    
+    final testChatIds = ['chat_dating_test', 'chat_dating_shiba_test', 'chat_market_test', 'chat_community_test'];
+    for (final chatId in testChatIds) {
+      await _firebase.firestore.collection('chatRooms').doc(chatId).delete();
+    }
+    
+    final testMessageIds = ['msg_dating_1', 'msg_dating_shiba_1', 'msg_market_1', 'msg_community_1'];
+    for (final msgId in testMessageIds) {
+      await _firebase.firestore.collection('messages').doc(msgId).delete();
+    }
+    
+    print('✅ 채팅 테스트 데이터 삭제 완료');
   }
   
   /// 교배 글 데이터만 생성
@@ -645,7 +845,7 @@ class SeedData {
         'userId': userIds[0],
         'petId': petIds.isNotEmpty ? petIds[0] : 'pet_001',
         'title': '건강한 골든 리트리버 교배 원해요',
-        'description': '3살 수컷 골든 리트리버입니다. 건강검진 완료했고, 성격이 온순해요. 같은 품종 또는 대형견 암컷 찾습니다.',
+        'description': '3살 남아 골든 리트리버입니다. 건강검진 완료했고, 성격이 온순해요. 같은 품종 또는 대형견 여아 찾습니다.',
         'preferredGender': 'female',
         'preferredSizes': ['large', 'giant'],
         'sameBreedOnly': false,
@@ -655,7 +855,7 @@ class SeedData {
         'userId': userIds.length > 1 ? userIds[1] : userIds[0],
         'petId': petIds.length > 1 ? petIds[1] : petIds[0],
         'title': '말티즈 교배 상대 구합니다',
-        'description': '2살 암컷 말티즈예요. 혈통서 있고 건강해요. 같은 품종 수컷 원합니다.',
+        'description': '2살 여아 말티즈예요. 혈통서 있고 건강해요. 같은 품종 남아 원합니다.',
         'preferredGender': 'male',
         'preferredSizes': ['tiny', 'small'],
         'sameBreedOnly': true,
@@ -665,7 +865,7 @@ class SeedData {
         'userId': userIds.length > 2 ? userIds[2] : userIds[0],
         'petId': petIds.length > 2 ? petIds[2] : petIds[0],
         'title': '푸들 교배 파트너 찾아요',
-        'description': '토이푸들 수컷 4살입니다. 성격 좋고 건강해요. 소형견 암컷 구합니다.',
+        'description': '토이푸들 남아 4살입니다. 성격 좋고 건강해요. 소형견 여아 구합니다.',
         'preferredGender': 'female',
         'preferredSizes': ['tiny', 'small'],
         'sameBreedOnly': false,
@@ -725,10 +925,6 @@ class SeedData {
   Future<void> clearLikesAndMatches() async {
     await _clearCollection(_firebase.likesCollection);
     await _clearCollection(_firebase.matchesCollection);
-  }
-  
-  Future<void> clearChats() async {
-    await _clearCollection(_firebase.chatRoomsCollection);
   }
   
   Future<void> clearBreedingPosts() async {
@@ -861,60 +1057,6 @@ class SeedData {
           'compatibilityScore': 70 + (i % 30),
           'matchedAt': Timestamp.fromDate(now.subtract(Duration(hours: i))),
           'isActive': true,
-        });
-      }
-    }
-  }
-  
-  Future<void> _seedChats(List<String> userIds) async {
-    if (userIds.length < 2) return;
-    
-    final now = DateTime.now();
-    
-    // 채팅방 및 메시지 생성
-    for (int i = 0; i < userIds.length - 1; i++) {
-      final user1 = userIds[i];
-      final user2 = userIds[(i + 1) % userIds.length];
-      
-      if (user1 == user2) continue;
-      
-      final chatRoomId = 'chatroom_${user1}_$user2';
-      
-      // 채팅방 생성 - 양쪽 사용자 모두에게 읽지 않은 메시지 설정
-      await _firebase.chatRoomsCollection.doc(chatRoomId).set({
-        'participantIds': [user1, user2],
-        'participants': {}, // 참여자 정보는 나중에 업데이트
-        'type': i % 2 == 0 ? 'dating' : 'market',
-        'lastMessage': '안녕하세요! 반가워요 😊',
-        'lastMessageSenderId': user1,
-        'lastMessageAt': Timestamp.fromDate(now.subtract(Duration(minutes: i * 30))),
-        'createdAt': Timestamp.fromDate(now.subtract(Duration(days: i))),
-        'unreadCounts': {user1: i % 2 + 1, user2: i % 3 + 1},
-        'isActive': true,
-      });
-      
-      // 메시지 생성
-      final messages = [
-        {'sender': user1, 'content': '안녕하세요!', 'offset': 60},
-        {'sender': user2, 'content': '안녕하세요~ 반가워요!', 'offset': 55},
-        {'sender': user1, 'content': '우리 아이 사진 봤어요. 너무 귀여워요 🐕', 'offset': 50},
-        {'sender': user2, 'content': '감사해요! 저도 사진 봤는데 정말 사랑스럽네요 💕', 'offset': 45},
-        {'sender': user1, 'content': '이번 주말에 산책 어떠세요?', 'offset': 40},
-        {'sender': user2, 'content': '좋아요! 한강공원 어때요?', 'offset': 35},
-        {'sender': user1, 'content': '완전 좋아요! 토요일 오전 10시 어떨까요?', 'offset': 30},
-        {'sender': user2, 'content': '네 좋습니다! 그때 봬요 😊', 'offset': 25},
-      ];
-      
-      for (int j = 0; j < messages.length; j++) {
-        final msg = messages[j];
-        final messageId = 'msg_${chatRoomId}_$j';
-        
-        await _firebase.messagesCollection(chatRoomId).doc(messageId).set({
-          'senderId': msg['sender'],
-          'content': msg['content'],
-          'type': 'text',
-          'sentAt': Timestamp.fromDate(now.subtract(Duration(minutes: msg['offset'] as int))),
-          'isRead': j < messages.length - 2,
         });
       }
     }
@@ -1070,7 +1212,6 @@ class SeedData {
   Future<void> _seedCheckupRecords(List<String> petIds) async {
     final now = DateTime.now();
     final collection = _firebase.firestore.collection('checkup_records');
-    final checkupTypes = ['정기 검진', '혈액 검사', '초음파 검사', 'X-ray 검사'];
     final results = ['정상', '양호 (관찰 필요)', '정상'];
     
     for (int p = 0; p < petIds.length; p++) {

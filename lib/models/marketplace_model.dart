@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 
 /// ============================================================
 /// 마켓플레이스(중고거래/나눔) 모델
@@ -23,13 +24,18 @@ enum ProductType {
 
 /// 상품 카테고리
 enum ProductCategory {
-  food,       // 사료/간식
-  clothes,    // 의류/악세서리
-  toys,       // 장난감
-  supplies,   // 용품
-  furniture,  // 가구/하우스
-  health,     // 건강/위생
-  other,      // 기타
+  food('사료/간식', Icons.restaurant_outlined),
+  clothes('의류/악세서리', Icons.checkroom_outlined),
+  toys('장난감', Icons.toys_outlined),
+  supplies('용품', Icons.inventory_2_outlined),
+  furniture('가구/하우스', Icons.house_outlined),
+  health('건강/위생', Icons.medical_services_outlined),
+  other('기타', Icons.more_horiz);
+
+  final String label;
+  final IconData icon;
+
+  const ProductCategory(this.label, this.icon);
 }
 
 /// 상품 모델
@@ -351,11 +357,16 @@ class ProductLikeModel extends Equatable {
 
 /// 알바 타입
 enum JobType {
-  care,     // 돌봄
-  walk,     // 산책
-  bath,     // 목욕
-  training, // 훈련
-  other,    // 기타
+  care('돌봄', Icons.home_outlined),
+  walk('산책', Icons.directions_walk),
+  bath('목욕', Icons.shower_outlined),
+  training('훈련', Icons.school_outlined),
+  other('기타', Icons.more_horiz);
+
+  final String label;
+  final IconData icon;
+
+  const JobType(this.label, this.icon);
 }
 
 /// 알바 상태
@@ -378,6 +389,9 @@ class JobModel extends Equatable {
   final String priceUnit; // '일', '회', '시간'
   final DateTime? startDate;
   final DateTime? endDate;
+  final String? startTime; // 시작 시간 (HH:mm 형식)
+  final String? endTime; // 종료 시간 (HH:mm 형식)
+  final bool isTimeFlexible; // 시간 미정 여부
   final int? duration; // 시간 단위
   final GeoPoint? location;
   final String? address;
@@ -397,6 +411,9 @@ class JobModel extends Equatable {
     required this.priceUnit,
     this.startDate,
     this.endDate,
+    this.startTime,
+    this.endTime,
+    this.isTimeFlexible = false,
     this.duration,
     this.location,
     this.address,
@@ -432,6 +449,29 @@ class JobModel extends Equatable {
     }
     return '';
   }
+  
+  /// 시간 문자열 (시간 미정 포함)
+  String get timeString {
+    if (isTimeFlexible) {
+      return '시간 미정';
+    }
+    final startStr = startTime ?? '미정';
+    final endStr = endTime ?? '미정';
+    if (startTime != null || endTime != null) {
+      return '$startStr ~ $endStr';
+    }
+    return '';
+  }
+  
+  /// 기간 + 시간 전체 문자열
+  String get fullPeriodString {
+    final period = periodString;
+    final time = timeString;
+    if (period.isNotEmpty && time.isNotEmpty) {
+      return '$period ($time)';
+    }
+    return period.isNotEmpty ? period : time;
+  }
 
   factory JobModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
     return JobModel(
@@ -455,6 +495,9 @@ class JobModel extends Equatable {
       endDate: data['endDate'] != null
           ? (data['endDate'] as Timestamp).toDate()
           : null,
+      startTime: data['startTime'],
+      endTime: data['endTime'],
+      isTimeFlexible: data['isTimeFlexible'] ?? false,
       duration: data['duration'],
       location: data['location'],
       address: data['address'],
@@ -480,6 +523,9 @@ class JobModel extends Equatable {
       'priceUnit': priceUnit,
       'startDate': startDate != null ? Timestamp.fromDate(startDate!) : null,
       'endDate': endDate != null ? Timestamp.fromDate(endDate!) : null,
+      'startTime': startTime,
+      'endTime': endTime,
+      'isTimeFlexible': isTimeFlexible,
       'duration': duration,
       'location': location,
       'address': address,
@@ -502,6 +548,9 @@ class JobModel extends Equatable {
         priceUnit,
         startDate,
         endDate,
+        startTime,
+        endTime,
+        isTimeFlexible,
         duration,
         location,
         address,

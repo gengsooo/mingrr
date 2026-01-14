@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../constants/pet_constants.dart';
 import '../services/location_service.dart';
 import '../../models/pet_model.dart';
@@ -332,10 +331,7 @@ class MatchingService {
   static double _calculateActiveScore(UserModel? user) {
     if (user == null) return 0;
 
-    final lastActive = user.lastActiveAt;
-    if (lastActive == null) return 0;
-
-    final minutesAgo = DateTime.now().difference(lastActive).inMinutes;
+    final minutesAgo = DateTime.now().difference(user.lastActiveAt).inMinutes;
 
     if (minutesAgo <= 5) return 4;      // 현재 온라인
     if (minutesAgo <= 60) return 3;     // 1시간 내

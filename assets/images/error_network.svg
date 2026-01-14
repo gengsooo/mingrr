@@ -1,0 +1,16 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 원형 배경 -->
+  <circle cx="60" cy="60" r="50" fill="#FFEBEE"/>
+  
+  <!-- 와이파이 아이콘 -->
+  <path d="M60 85 L60 85" stroke="#BDBDBD" stroke-width="8" stroke-linecap="round"/>
+  <path d="M45 70 Q60 55 75 70" stroke="#BDBDBD" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M32 55 Q60 30 88 55" stroke="#BDBDBD" stroke-width="4" fill="none" stroke-linecap="round"/>
+  
+  <!-- 대각선 (연결 끊김) -->
+  <line x1="35" y1="35" x2="85" y2="85" stroke="#EF5350" stroke-width="6" stroke-linecap="round"/>
+  
+  <!-- X 표시 -->
+  <circle cx="85" cy="35" r="15" fill="#D32F2F"/>
+  <path d="M79 29 L91 41 M91 29 L79 41" stroke="white" stroke-width="3" stroke-linecap="round"/>
+</svg>

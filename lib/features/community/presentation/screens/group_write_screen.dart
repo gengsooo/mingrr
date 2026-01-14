@@ -4,14 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/utils/image_utils.dart';
-import '../../../../core/widgets/alert_dialog.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/location_selector.dart';
 import '../../../../models/community_model.dart';
 
@@ -40,6 +43,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
   String? _existingImageUrl;
   bool _isPublic = true;
   bool _requireApproval = false;
+  bool _isPetAccompanied = true; // 반려동물 동반 여부
   final List<String> _tags = [];
   bool _isLoading = false;
   String? _selectedLocation; // 활동 지역
@@ -63,6 +67,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
       _existingImageUrl = group.imageUrl;
       _isPublic = group.isPublic;
       _requireApproval = group.requireApproval;
+      _isPetAccompanied = group.isPetAccompanied;
       _tags.addAll(group.tags);
       _selectedLocation = group.address;
       _selectedGeoPoint = group.location;
@@ -80,11 +85,9 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.detailBackground,
       appBar: AppBar(
         title: Text(_isEditMode ? '모임 수정' : '모임 만들기'),
-        backgroundColor: Colors.white,
-        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
@@ -177,9 +180,9 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
         width: double.infinity,
         height: 180,
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.divider),
+          border: Border.all(color: Theme.of(context).colorScheme.outline),
           image: _selectedImage != null
               ? DecorationImage(
                   image: FileImage(File(_selectedImage!.path)),
@@ -193,12 +196,12 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
                   : null,
         ),
         child: (_selectedImage == null && _existingImageUrl == null)
-            ? const Column(
+            ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add_photo_alternate, size: 48, color: AppColors.textHint),
-                  SizedBox(height: 8),
-                  Text('이미지 추가', style: TextStyle(color: AppColors.textHint)),
+                  Icon(Icons.add_photo_alternate, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
+                  const SizedBox(height: 8),
+                  Text('이미지 추가', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
                 ],
               )
             : null,
@@ -207,11 +210,14 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
   }
 
   Widget _buildLocationSelector() {
+    final hasLocation = _selectedLocation != null && _selectedLocation!.isNotEmpty;
+    final color = context.features.community;
+    
     return GestureDetector(
       onTap: () => showLocationSelectorWithCoordinates(
         context: context,
         initialLocation: _selectedLocation,
-        accentColor: AppColors.community,
+        accentColor: color,
         onLocationResultSelected: (result) {
           setState(() {
             _selectedLocation = result.address;
@@ -220,30 +226,86 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
         },
       ),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.all(AppSizes.paddingM),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: hasLocation ? color.withOpacity(0.08) : context.inputBackground,
+          border: Border.all(
+            color: hasLocation ? color.withOpacity(0.3) : Theme.of(context).colorScheme.outline,
+          ),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.divider),
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.location_on_outlined,
-              color: _selectedLocation != null ? AppColors.community : AppColors.textHint,
-              size: 20,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                _selectedLocation ?? '활동 지역을 선택해주세요',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: _selectedLocation != null ? AppColors.textPrimary : AppColors.textHint,
-                ),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: hasLocation ? color.withOpacity(0.15) : Theme.of(context).colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                hasLocation ? Icons.location_on : Icons.location_on_outlined,
+                size: 22,
+                color: hasLocation ? color : Theme.of(context).colorScheme.outlineVariant,
               ),
             ),
-            const Icon(Icons.keyboard_arrow_down, color: AppColors.textHint),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (hasLocation) ...[
+                    Text(
+                      _selectedLocation!,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ] else ...[
+                    Text(
+                      '활동 지역 선택',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '탭하여 지역을 선택하세요',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.outlineVariant,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (hasLocation)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Text(
+                  '변경',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+              )
+            else
+              Icon(
+                Icons.chevron_right,
+                color: Theme.of(context).colorScheme.outlineVariant,
+                size: 20,
+              ),
           ],
         ),
       ),
@@ -262,22 +324,22 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.community : Colors.transparent,
+              color: isSelected ? context.features.community : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isSelected ? AppColors.community : AppColors.divider,
+                color: isSelected ? context.features.community : Theme.of(context).colorScheme.outline,
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(category.emoji, style: const TextStyle(fontSize: 14)),
+                Icon(category.icon, size: 14, color: isSelected ? Colors.white : context.features.community),
                 const SizedBox(width: 4),
                 Text(
                   category.label.replaceAll(' 모임', ''),
                   style: TextStyle(
                     fontSize: 13,
-                    color: isSelected ? Colors.white : AppColors.textPrimary,
+                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -321,17 +383,17 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: AppColors.community.withOpacity(0.1),
+                  color: context.features.community.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('#$tag', style: const TextStyle(fontSize: 13, color: AppColors.community)),
+                    Text('#$tag', style: TextStyle(fontSize: 13, color: context.features.community)),
                     const SizedBox(width: 4),
                     GestureDetector(
                       onTap: () => setState(() => _tags.remove(tag)),
-                      child: const Icon(Icons.close, size: 14, color: AppColors.community),
+                      child: Icon(Icons.close, size: 14, color: context.features.community),
                     ),
                   ],
                 ),
@@ -346,15 +408,15 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.divider),
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.add, size: 20, color: AppColors.community),
-                SizedBox(width: 8),
-                Text('태그 추가', style: TextStyle(color: AppColors.community, fontWeight: FontWeight.w500)),
+                Icon(Icons.add, size: 20, color: context.features.community),
+                const SizedBox(width: 8),
+                Text('태그 추가', style: TextStyle(color: context.features.community, fontWeight: FontWeight.w500)),
               ],
             ),
           ),
@@ -366,7 +428,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
   void _showAddTagDialog() async {
     final tag = await showInputDialog(
       context,
-      type: AlertType.community,
+      type: DialogType.community,
       title: '태그 추가',
       hintText: '태그를 입력해주세요',
       confirmText: '추가',
@@ -386,7 +448,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.background,
+            color: context.inputBackground,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -394,17 +456,21 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('공개 모임', style: TextStyle(fontWeight: FontWeight.w500)),
-                      Text('누구나 모임을 볼 수 있습니다', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      const Text('공개 모임', style: TextStyle(fontWeight: FontWeight.w500)),
+                      Text('누구나 모임을 볼 수 있습니다', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     ],
                   ),
                   Switch(
                     value: _isPublic,
                     onChanged: (value) => setState(() => _isPublic = value),
-                    activeColor: AppColors.community,
+                    activeColor: Colors.white,
+                    activeTrackColor: context.features.community,
+                    inactiveThumbColor: Colors.white,
+                    inactiveTrackColor: Theme.of(context).colorScheme.outlineVariant,
+                    trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
                   ),
                 ],
               ),
@@ -412,17 +478,43 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('가입 승인 필요', style: TextStyle(fontWeight: FontWeight.w500)),
-                      Text('관리자가 가입을 승인해야 합니다', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                      const Text('가입 승인 필요', style: TextStyle(fontWeight: FontWeight.w500)),
+                      Text('관리자가 가입을 승인해야 합니다', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
                     ],
                   ),
                   Switch(
                     value: _requireApproval,
                     onChanged: (value) => setState(() => _requireApproval = value),
-                    activeColor: AppColors.community,
+                    activeColor: Colors.white,
+                    activeTrackColor: context.features.community,
+                    inactiveThumbColor: Colors.white,
+                    inactiveTrackColor: Theme.of(context).colorScheme.outlineVariant,
+                    trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+                  ),
+                ],
+              ),
+              const Divider(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('반려동물 동반', style: TextStyle(fontWeight: FontWeight.w500)),
+                      Text('모임 활동 시 반려동물과 함께합니다', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                    ],
+                  ),
+                  Switch(
+                    value: _isPetAccompanied,
+                    onChanged: (value) => setState(() => _isPetAccompanied = value),
+                    activeColor: Colors.white,
+                    activeTrackColor: context.features.community,
+                    inactiveThumbColor: Colors.white,
+                    inactiveTrackColor: Theme.of(context).colorScheme.outlineVariant,
+                    trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
                   ),
                 ],
               ),
@@ -434,49 +526,11 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
   }
 
   Widget _buildBottomButton() {
-    return Container(
-      padding: EdgeInsets.only(
-        left: AppSizes.paddingL,
-        right: AppSizes.paddingL,
-        top: AppSizes.paddingM,
-        bottom: MediaQuery.of(context).padding.bottom + AppSizes.paddingM,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: ElevatedButton(
-          onPressed: _isLoading ? null : _onSubmit,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.community,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            elevation: 0,
-          ),
-          child: _isLoading
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : Text(
-                  _isEditMode ? '수정' : '등록',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-        ),
-      ),
+    return MingrrSubmitButtonBar(
+      label: _isEditMode ? '수정' : '등록',
+      onPressed: _onSubmit,
+      isLoading: _isLoading,
+      backgroundColor: context.features.community,
     );
   }
 
@@ -484,7 +538,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
     // 16:9 커버 이미지 크롭
     final croppedFile = await ImageUtils.pickCoverImage(
       context: context,
-      toolbarColor: AppColors.community,
+      toolbarColor: context.features.community,
     );
 
     if (croppedFile != null) {
@@ -529,6 +583,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
         address: _selectedLocation,
         isPublic: _isPublic,
         requireApproval: _requireApproval,
+        isPetAccompanied: _isPetAccompanied,
         tags: _tags,
         createdAt: _isEditMode ? widget.group!.createdAt : now,
         updatedAt: now,
@@ -542,20 +597,16 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
 
       if (mounted) {
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_isEditMode ? '모임이 수정되었습니다' : '모임이 생성되었습니다'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        MingrrSnackBar.success(context, _isEditMode ? '모임이 수정되었습니다' : '모임이 생성되었습니다');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('오류가 발생했습니다: $e'),
-            backgroundColor: AppColors.error,
-          ),
+        ErrorHandler.handle(
+          context,
+          error: e,
+          tag: 'GroupWrite',
+          operation: '모임 저장',
+          themeColor: context.features.community,
         );
       }
     } finally {

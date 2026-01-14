@@ -1,0 +1,10 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 메인 패드 -->
+  <ellipse cx="12" cy="16" rx="5" ry="4" fill="#FF9800"/>
+  
+  <!-- 발가락 패드들 -->
+  <circle cx="6" cy="10" r="2.5" fill="#FF9800"/>
+  <circle cx="10" cy="7" r="2.5" fill="#FF9800"/>
+  <circle cx="14" cy="7" r="2.5" fill="#FF9800"/>
+  <circle cx="18" cy="10" r="2.5" fill="#FF9800"/>
+</svg>

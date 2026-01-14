@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
+import '../constants/app_sizes.dart';
+import 'mingrr_bottom_sheet.dart';
 
 /// ============================================================
 /// 공통 상단 네비게이션 컴포넌트
@@ -54,13 +55,16 @@ class PillTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      color: backgroundColor,
+      color: backgroundColor ?? colorScheme.surface,
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: AppColors.divider.withOpacity(0.3),
+          color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
           borderRadius: BorderRadius.circular(30),
         ),
         child: Row(
@@ -100,7 +104,7 @@ class PillTabBar extends StatelessWidget {
                         Icon(
                           tab.icon,
                           size: 18,
-                          color: isSelected ? Colors.white : AppColors.textSecondary,
+                          color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
                         ),
                       const SizedBox(width: 6),
                       // 라벨
@@ -109,7 +113,7 @@ class PillTabBar extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                          color: isSelected ? Colors.white : AppColors.textPrimary,
+                          color: isSelected ? Colors.white : colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -151,12 +155,15 @@ class LocationDistanceBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: AppColors.divider.withOpacity(0.5)),
+          bottom: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
         ),
       ),
       child: Row(
@@ -168,9 +175,10 @@ class LocationDistanceBar extends StatelessWidget {
           // 위치 라벨
           Text(
             locationLabel ?? '내 동네',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
+              color: colorScheme.onSurface,
             ),
           ),
           const SizedBox(width: 10),
@@ -211,9 +219,9 @@ class LocationDistanceBar extends StatelessWidget {
           // 반경 표시
           Text(
             '반경 ${currentDistance.toInt()}km 이내',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: AppColors.textSecondary,
+              color: colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -222,55 +230,79 @@ class LocationDistanceBar extends StatelessWidget {
   }
 
   void _showDistanceSelector(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6,
+        ),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '거리 설정',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            const BottomSheetHandle(),
+            // 헤더
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                '거리 설정',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: colorScheme.onSurface),
+                textAlign: TextAlign.center,
+              ),
             ),
-            const SizedBox(height: 6),
-            const Text(
-              '집 주소 기준으로 필터링합니다',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            // 안내 문구
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                '집 주소 기준으로 필터링합니다',
+                style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                textAlign: TextAlign.center,
+              ),
             ),
-            const SizedBox(height: 16),
-            ...distanceOptions.map((distance) {
-              final isSelected = currentDistance == distance;
-              return ListTile(
-                onTap: () {
-                  onDistanceChanged(distance);
-                  Navigator.pop(context);
-                },
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(
-                  isSelected ? Icons.check_circle : Icons.circle_outlined,
-                  color: isSelected ? accentColor : AppColors.textHint,
-                ),
-                title: Text(
-                  '${distance.toInt()}km',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? accentColor : AppColors.textPrimary,
-                  ),
-                ),
-                subtitle: Text(
-                  _getDistanceDescription(distance),
-                  style: const TextStyle(fontSize: 12),
-                ),
-              );
-            }),
+            const SizedBox(height: 12),
+            // 스크롤 가능한 리스트
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                children: distanceOptions.map((distance) {
+                  final isSelected = currentDistance == distance;
+                  return ListTile(
+                    onTap: () {
+                      onDistanceChanged(distance);
+                      Navigator.pop(context);
+                    },
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    leading: Icon(
+                      isSelected ? Icons.check_circle : Icons.circle_outlined,
+                      color: isSelected ? accentColor : colorScheme.onSurfaceVariant,
+                    ),
+                    title: Text(
+                      '${distance.toInt()}km',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isSelected ? accentColor : colorScheme.onSurface,
+                      ),
+                    ),
+                    subtitle: Text(
+                      _getDistanceDescription(distance),
+                      style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
             SizedBox(height: MediaQuery.of(context).padding.bottom),
           ],
         ),
@@ -315,8 +347,12 @@ class CategoryFilterChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
+      color: colorScheme.surface,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -334,10 +370,10 @@ class CategoryFilterChips extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isSelected 
                         ? accentColor.withOpacity(0.15) 
-                        : Colors.white,
+                        : colorScheme.surface,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isSelected ? accentColor : AppColors.divider,
+                      color: isSelected ? accentColor : colorScheme.outline,
                       width: isSelected ? 1.5 : 1,
                     ),
                   ),
@@ -349,7 +385,7 @@ class CategoryFilterChips extends StatelessWidget {
                         Icon(
                           Icons.keyboard_arrow_down,
                           size: 18,
-                          color: isSelected ? accentColor : AppColors.textSecondary,
+                          color: isSelected ? accentColor : colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 2),
                       ],
@@ -363,7 +399,7 @@ class CategoryFilterChips extends StatelessWidget {
                         Icon(
                           category.icon,
                           size: 16,
-                          color: isSelected ? accentColor : AppColors.textSecondary,
+                          color: isSelected ? accentColor : colorScheme.onSurfaceVariant,
                         ),
                         const SizedBox(width: 4),
                       ],
@@ -373,7 +409,7 @@ class CategoryFilterChips extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                          color: isSelected ? accentColor : AppColors.textPrimary,
+                          color: isSelected ? accentColor : colorScheme.onSurface,
                         ),
                       ),
                     ],

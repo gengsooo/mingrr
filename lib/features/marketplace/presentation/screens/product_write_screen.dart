@@ -4,18 +4,19 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/utils/image_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/confirm_bottom_sheet.dart';
-// TODO: 실제 기기 테스트 시 주석 해제
-// import '../../../../core/widgets/map_location_picker.dart';
-// import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
-import '../../../../core/widgets/map_location_picker_placeholder.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/utils/error_handler.dart';
+import '../../../../core/widgets/map/map_widgets.dart';
+import '../../../../core/models/location_model.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../../models/pet_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
@@ -57,15 +58,16 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
   String _priceUnit = '회';
   DateTime? _startDate;
   DateTime? _endDate;
+  TimeOfDay? _startTime;
+  TimeOfDay? _endTime;
+  bool _isTimeFlexible = false;
   final List<String> _selectedPetIds = [];
   
   // 희망지역 (판매/나눔)
-  String? _selectedLocation;
-  LocationCoord? _selectedLocationLatLng;
+  LocationData? _selectedLocation;
   
   // 알바 지역
-  String? _selectedJobLocation;
-  LocationCoord? _selectedJobLocationLatLng;
+  LocationData? _selectedJobLocation;
 
   final FirestoreService _firestoreService = FirestoreService();
   final FirebaseService _firebaseService = FirebaseService();
@@ -101,11 +103,9 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
     final isJob = _selectedType == ProductType.job;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.detailBackground,
       appBar: AppBar(
         title: Text(_isEditMode ? '마켓 수정' : '마켓 등록'),
-        backgroundColor: Colors.white,
-        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
@@ -166,8 +166,8 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
                 _buildDateSelector(),
                 const SizedBox(height: AppSizes.gapL),
 
-                // 돌봄 대상 강아지
-                const Text('돌봄 대상 강아지', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                // 돌봄 대상 반려동물
+                const Text('돌봄 대상 반려동물', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: AppSizes.gapS),
                 _buildPetSelector(),
                 const SizedBox(height: AppSizes.gapL),
@@ -272,23 +272,23 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.market : Colors.transparent,
+            color: isSelected ? context.features.market : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected ? AppColors.market : AppColors.divider,
+              color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
             ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 18, color: isSelected ? Colors.white : AppColors.textSecondary),
+              Icon(icon, size: 18, color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                  color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -322,9 +322,9 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
         ProductType.job => '알바',
       };
       
-      final confirmed = await showConfirmBottomSheetWithResult(
+      final confirmed = await showConfirmSheetWithResult(
         context,
-        type: ConfirmType.productTypeChange,
+        type: ConfirmSheetType.productTypeChange,
         message: '$newTypeLabel 등록으로 변경합니다.\n현재 입력된 정보가 초기화됩니다.\n계속하시겠습니까?',
       );
       
@@ -361,15 +361,15 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                border: Border.all(color: AppColors.divider),
+                border: Border.all(color: Theme.of(context).colorScheme.outline),
                 borderRadius: BorderRadius.circular(AppSizes.radiusM),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.camera_alt, color: AppColors.textHint),
+                  Icon(Icons.camera_alt, color: Theme.of(context).colorScheme.outlineVariant),
                   const SizedBox(height: 4),
-                  Text('$totalImages/10', style: const TextStyle(fontSize: 11, color: AppColors.textHint)),
+                  Text('$totalImages/10', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant)),
                 ],
               ),
             ),
@@ -442,18 +442,25 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.market : Colors.transparent,
+              color: isSelected ? context.features.market : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isSelected ? AppColors.market : AppColors.divider,
+                color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
               ),
             ),
-            child: Text(
-              _getCategoryLabel(category),
-              style: TextStyle(
-                fontSize: 13,
-                color: isSelected ? Colors.white : AppColors.textPrimary,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(category.icon, size: 14, color: isSelected ? Colors.white : context.features.market),
+                const SizedBox(width: 4),
+                Text(
+                  category.label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -461,60 +468,40 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
     );
   }
 
-  String _getCategoryLabel(ProductCategory category) {
-    switch (category) {
-      case ProductCategory.food:
-        return '사료/간식';
-      case ProductCategory.clothes:
-        return '의류/악세서리';
-      case ProductCategory.toys:
-        return '장난감';
-      case ProductCategory.supplies:
-        return '용품';
-      case ProductCategory.furniture:
-        return '가구/하우스';
-      case ProductCategory.health:
-        return '건강/위생';
-      case ProductCategory.other:
-        return '기타';
-    }
-  }
-
   // ============================================================
   // 알바 전용 위젯들
   // ============================================================
 
   Widget _buildJobTypeSelector() {
-    final types = [
-      (type: JobType.care, label: '돌봄'),
-      (type: JobType.walk, label: '산책'),
-      (type: JobType.bath, label: '목욕'),
-      (type: JobType.training, label: '훈련'),
-      (type: JobType.other, label: '기타'),
-    ];
-
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: types.map((item) {
-        final isSelected = _selectedJobType == item.type;
+      children: JobType.values.map((type) {
+        final isSelected = _selectedJobType == type;
         return GestureDetector(
-          onTap: () => setState(() => _selectedJobType = item.type),
+          onTap: () => setState(() => _selectedJobType = type),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.market : Colors.transparent,
+              color: isSelected ? context.features.market : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: isSelected ? AppColors.market : AppColors.divider,
+                color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
               ),
             ),
-            child: Text(
-              item.label,
-              style: TextStyle(
-                fontSize: 13,
-                color: isSelected ? Colors.white : AppColors.textPrimary,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(type.icon, size: 14, color: isSelected ? Colors.white : context.features.market),
+                const SizedBox(width: 4),
+                Text(
+                  type.label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -523,95 +510,23 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
   }
 
   Widget _buildDateSelector() {
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () => _selectDate(isStart: true),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.divider),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today, size: 18, color: AppColors.textSecondary),
-                  const SizedBox(width: 8),
-                  Text(
-                    _startDate != null ? formatDate(_startDate!) : '시작일',
-                    style: TextStyle(
-                      color: _startDate != null ? AppColors.textPrimary : AppColors.textHint,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8),
-          child: Text('~'),
-        ),
-        Expanded(
-          child: GestureDetector(
-            onTap: () => _selectDate(isStart: false),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.divider),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.calendar_today, size: 18, color: AppColors.textSecondary),
-                  const SizedBox(width: 8),
-                  Text(
-                    _endDate != null ? formatDate(_endDate!) : '종료일',
-                    style: TextStyle(
-                      color: _endDate != null ? AppColors.textPrimary : AppColors.textHint,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
+    return MingrrDateSelector(
+      date: _startDate,
+      endDate: _endDate,
+      onSelect: (d) => setState(() => _startDate = d),
+      onEndDateSelect: (d) => setState(() => _endDate = d),
+      // 시간 선택 옵션 (알바용)
+      enableTimeSelection: true,
+      startTime: _startTime,
+      endTime: _endTime,
+      onTimeSelect: (start, end) => setState(() {
+        _startTime = start;
+        _endTime = end;
+      }),
+      isTimeFlexible: _isTimeFlexible,
+      onTimeFlexibleChanged: (v) => setState(() => _isTimeFlexible = v),
+      accentColor: context.features.market,
     );
-  }
-
-  Future<void> _selectDate({required bool isStart}) async {
-    final initialDate = isStart ? (_startDate ?? DateTime.now()) : (_endDate ?? DateTime.now());
-    final firstDate = isStart ? DateTime.now() : (_startDate ?? DateTime.now());
-
-    final date = await showDatePicker(
-      context: context,
-      initialDate: initialDate,
-      firstDate: firstDate,
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(primary: AppColors.market),
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (date != null) {
-      setState(() {
-        if (isStart) {
-          _startDate = date;
-          if (_endDate != null && _endDate!.isBefore(date)) {
-            _endDate = null;
-          }
-        } else {
-          _endDate = date;
-        }
-      });
-    }
   }
 
   Widget _buildPetSelector() {
@@ -621,66 +536,72 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
       data: (pets) {
         final selectedPets = pets.where((pet) => _selectedPetIds.contains(pet.id)).toList();
         
-        return Column(
-          children: [
-            // 선택된 강아지 목록 (PetSelectorCard 스타일)
-            ...selectedPets.map((pet) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Stack(
-                  children: [
-                    PetSelectorCard(
+        // 선택된 반려동물이 있으면 카드 형태로 표시
+        if (selectedPets.isNotEmpty) {
+          return Column(
+            children: [
+              ...selectedPets.map((pet) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: GestureDetector(
+                    onTap: () => _showPetSelectorSheet(pets),
+                    child: PetSelectorCard(
                       pet: pet,
                       isSelected: true,
-                      accentColor: AppColors.market,
+                      accentColor: context.features.market,
                     ),
-                    // 삭제 버튼
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: GestureDetector(
-                        onTap: () => setState(() => _selectedPetIds.remove(pet.id)),
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.5),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.close, size: 14, color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-            // 강아지 추가 버튼
-            GestureDetector(
-              onTap: () => _showPetSelectorSheet(pets),
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppColors.divider),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.add, size: 20, color: AppColors.market),
-                    SizedBox(width: 8),
-                    Text(
-                      '강아지 추가',
-                      style: TextStyle(color: AppColors.market, fontWeight: FontWeight.w500),
-                    ),
-                  ],
+                  ),
+                );
+              }),
+              // 추가 버튼 (여러 마리 선택 가능)
+              GestureDetector(
+                onTap: () => _showPetSelectorSheet(pets),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: context.inputBackground,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Theme.of(context).colorScheme.outline),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.pets, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
+                      const SizedBox(width: 12),
+                      Text('반려동물 추가', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
+                      const Spacer(),
+                      Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+                    ],
+                  ),
                 ),
               ),
+            ],
+          );
+        }
+        
+        // 선택된 반려동물이 없으면 교배 등록과 동일한 스타일
+        return GestureDetector(
+          onTap: () => _showPetSelectorSheet(pets),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: context.inputBackground,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
             ),
-          ],
+            child: Row(
+              children: [
+                Icon(Icons.pets, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
+                const SizedBox(width: 12),
+                Text('반려동물을 선택해주세요', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
+                const Spacer(),
+                Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+              ],
+            ),
+          ),
         );
       },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, __) => const Text('강아지 목록을 불러올 수 없습니다'),
+      loading: () => const MingrrLoadingState(),
+      error: (_, __) => const Text('반려동물 목록을 불러올 수 없습니다'),
     );
   }
 
@@ -688,9 +609,9 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
     showPetSelectorSheet(
       context,
       pets: pets.cast<PetModel>(),
-      title: '강아지 선택',
-      description: '프로필에 등록된 강아지 중 선택해주세요',
-      accentColor: AppColors.market,
+      title: '반려동물 선택',
+      description: '프로필에 등록된 반려동물 중 선택해주세요',
+      accentColor: context.features.market,
       onSelect: (pet) {
         if (!_selectedPetIds.contains(pet.id)) {
           setState(() => _selectedPetIds.add(pet.id));
@@ -711,10 +632,10 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
               margin: EdgeInsets.only(right: unit != '일' ? 8 : 0),
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                color: isSelected ? AppColors.market.withOpacity(0.1) : Colors.transparent,
+                color: isSelected ? context.features.market.withOpacity(0.1) : Colors.transparent,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: isSelected ? AppColors.market : AppColors.divider,
+                  color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
                 ),
               ),
               child: Text(
@@ -723,7 +644,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected ? AppColors.market : AppColors.textSecondary,
+                  color: isSelected ? context.features.market : Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ),
@@ -746,15 +667,15 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
         suffixText: '원/$_priceUnit',
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.divider),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.divider),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.market),
+          borderSide: BorderSide(color: context.features.market),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
@@ -774,91 +695,28 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
   Widget _buildLocationSelector() {
     final isJob = _selectedType == ProductType.job;
     final location = isJob ? _selectedJobLocation : _selectedLocation;
-    final latLng = isJob ? _selectedJobLocationLatLng : _selectedLocationLatLng;
     
-    // 지도에서 직접 선택만 가능
-    return GestureDetector(
+    return LocationDisplayCard(
+      location: location,
+      accentColor: context.features.market,
+      placeholder: isJob ? '근무 지역을 선택해주세요' : '희망 지역을 선택해주세요',
       onTap: () async {
         final result = await showMapLocationPicker(
           context: context,
-          initialPosition: latLng,
-          accentColor: AppColors.market,
+          initialLocation: location,
+          accentColor: context.features.market,
           title: isJob ? '근무 지역 선택' : '희망 지역 선택',
         );
         if (result != null) {
           setState(() {
             if (isJob) {
-              _selectedJobLocationLatLng = result;
-              _selectedJobLocation = '위도: ${result.latitude.toStringAsFixed(4)}, 경도: ${result.longitude.toStringAsFixed(4)}';
+              _selectedJobLocation = result;
             } else {
-              _selectedLocationLatLng = result;
-              _selectedLocation = '위도: ${result.latitude.toStringAsFixed(4)}, 경도: ${result.longitude.toStringAsFixed(4)}';
+              _selectedLocation = result;
             }
           });
         }
       },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: latLng != null ? AppColors.market.withOpacity(0.1) : Colors.white,
-          border: Border.all(
-            color: latLng != null ? AppColors.market : AppColors.divider,
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              latLng != null ? Icons.location_on : Icons.map_outlined,
-              size: 20,
-              color: latLng != null ? AppColors.market : AppColors.textHint,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    latLng != null 
-                        ? '위치가 선택되었습니다'
-                        : (isJob ? '근무 지역을 선택해주세요' : '희망 지역을 선택해주세요'),
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: latLng != null ? FontWeight.w500 : FontWeight.w400,
-                      color: latLng != null ? AppColors.textPrimary : AppColors.textHint,
-                    ),
-                  ),
-                  if (latLng != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      location ?? '',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: latLng != null ? AppColors.market : AppColors.background,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                latLng != null ? '변경' : '지도에서 선택',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: latLng != null ? Colors.white : AppColors.textSecondary,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -881,15 +739,15 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
             suffixText: '원',
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.divider),
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.divider),
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: AppColors.market),
+              borderSide: BorderSide(color: context.features.market),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           ),
@@ -905,78 +763,33 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
   }
 
   Widget _buildBottomButton() {
-    return Container(
-      padding: EdgeInsets.only(
-        left: AppSizes.paddingL,
-        right: AppSizes.paddingL,
-        top: AppSizes.paddingM,
-        bottom: MediaQuery.of(context).padding.bottom + AppSizes.paddingM,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SizedBox(
-        width: double.infinity,
-        height: 52,
-        child: ElevatedButton(
-          onPressed: _isLoading ? null : _onSubmit,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.market,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 0,
-          ),
-          child: _isLoading
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : Text(
-                  _isEditMode ? '수정' : '등록',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-        ),
-      ),
+    return MingrrSubmitButtonBar(
+      label: _isEditMode ? '수정' : '등록',
+      onPressed: _onSubmit,
+      isLoading: _isLoading,
+      backgroundColor: context.features.market,
     );
   }
 
   Future<void> _pickImages() async {
     final totalImages = _existingImageUrls.length + _selectedImages.length;
     if (totalImages >= 10) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('최대 10장까지 등록할 수 있습니다')),
-      );
+      MingrrSnackBar.warning(context, '최대 10장까지 등록할 수 있습니다');
       return;
     }
 
     // 이미지 소스 선택 다이얼로그
     final source = await ImageUtils.showImageSourceDialog(context);
-    if (source == null) return;
+    if (source == null || !mounted) return;
 
     // 이미지 선택 및 크롭
     final croppedFile = await ImageUtils.pickAndCropImage(
       context: context,
       source: source,
-      toolbarColor: AppColors.market,
+      toolbarColor: context.features.market,
     );
 
-    if (croppedFile != null) {
+    if (croppedFile != null && mounted) {
       setState(() => _selectedImages.add(XFile(croppedFile.path)));
     }
   }
@@ -988,12 +801,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
     
     // 판매/나눔일 때 카테고리 선택 검증
     if (!isJob && _selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('카테고리를 선택해주세요'),
-          backgroundColor: AppColors.error,
-        ),
-      );
+      MingrrSnackBar.warning(context, '카테고리를 선택해주세요');
       return;
     }
 
@@ -1033,7 +841,10 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
           priceUnit: _priceUnit,
           startDate: _startDate,
           endDate: _endDate,
-          address: _selectedJobLocation,
+          startTime: _startTime != null ? '${_startTime!.hour.toString().padLeft(2, '0')}:${_startTime!.minute.toString().padLeft(2, '0')}' : null,
+          endTime: _endTime != null ? '${_endTime!.hour.toString().padLeft(2, '0')}:${_endTime!.minute.toString().padLeft(2, '0')}' : null,
+          isTimeFlexible: _isTimeFlexible,
+          address: _selectedJobLocation?.displayAddress,
           imageUrls: imageUrls,
           chatCount: 0,
           createdAt: now,
@@ -1044,12 +855,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
 
         if (mounted) {
           Navigator.pop(context, true);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('알바가 등록되었습니다'),
-              backgroundColor: AppColors.success,
-            ),
-          );
+          MingrrSnackBar.success(context, '알바가 등록되었습니다');
         }
         return;
       }
@@ -1092,20 +898,16 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
 
       if (mounted) {
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_isEditMode ? '상품이 수정되었습니다' : '상품이 등록되었습니다'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        MingrrSnackBar.success(context, _isEditMode ? '상품이 수정되었습니다' : '상품이 등록되었습니다');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('오류가 발생했습니다: $e'),
-            backgroundColor: AppColors.error,
-          ),
+        ErrorHandler.handle(
+          context,
+          error: e,
+          tag: 'ProductWrite',
+          operation: '상품 저장',
+          themeColor: context.features.market,
         );
       }
     } finally {

@@ -1,13 +1,22 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// TODO: 실제 기기 테스트 시 주석 해제
-// import 'package:kakao_maps_flutter/kakao_maps_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/map/map_loading_widget.dart';
+import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/services/location_service.dart';
+import '../../../../core/services/location_helper.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../health/presentation/providers/health_provider.dart';
 
 /// ============================================================
 /// 산책 화면
@@ -26,17 +35,32 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
   int _walkDuration = 0; // 초 단위
   double _walkDistance = 0; // 미터 단위
   
-  // TODO: 실제 기기 테스트 시 주석 해제
   // 카카오 맵 컨트롤러
-  // KakaoMapController? _mapController;
-  // LatLng? _currentPosition;
-  // bool _isMapReady = false;
+  KakaoMapController? _mapController;
+  LatLng? _currentMapPosition;
+  bool _isMapReady = false;
+  bool _isLocationLoading = true; // 위치 로딩 상태
+  LatLng? _initialMapPosition; // 초기 지도 위치 (한 번만 설정)
   
-  // 임시 위치 (에뮬레이터용)
+  /// LatLng 생성 헬퍼
+  LatLng _createLatLng(double lat, double lng) => LatLng(lat, lng);
+  
+  // 위치 추적
   Position? _currentPosition;
+  StreamSubscription<Position>? _positionStreamSubscription;
+  Timer? _walkTimer;
+  
+  // 산책 기록
+  String? _currentWalkRecordId;
+  final List<GeoPoint> _routePoints = [];
+  final List<GeoPoint> _footprints = [];
+  Position? _lastPosition;
   
   // 선택된 반려동물 ID 목록 (중복 선택 가능)
   final Set<String> _selectedPetIds = {};
+  
+  // 위치 로딩 진행 상태
+  LocationProgress? _locationProgress;
   
   @override
   void initState() {
@@ -44,50 +68,128 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
     _getCurrentLocation();
   }
   
-  /// 현재 위치 가져오기
+  @override
+  void dispose() {
+    _positionStreamSubscription?.cancel();
+    _walkTimer?.cancel();
+    super.dispose();
+  }
+  
+  /// 현재 위치 가져오기 (LocationHelper 사용 - 3단계 전략)
   Future<void> _getCurrentLocation() async {
-    try {
-      // 위치 서비스 활성화 확인
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        setState(() => _currentPosition = null);
-        return;
-      }
-      
-      // 위치 권한 확인
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          setState(() => _currentPosition = null);
-          return;
+    debugPrint('\n📍 [WalkScreen] === 위치 가져오기 시작 ===');
+    debugPrint('📍 [WalkScreen] mounted: $mounted');
+    
+    setState(() {
+      _isLocationLoading = true;
+      _locationProgress = null;
+    });
+    
+    final result = await LocationHelper.getCurrentLocation(
+      purpose: LocationPurpose.map,
+      onProgress: (progress) {
+        if (mounted) {
+          setState(() => _locationProgress = progress);
         }
-      }
-      
-      if (permission == LocationPermission.deniedForever) {
-        setState(() => _currentPosition = null);
-        return;
-      }
-      
-      // 현재 위치 가져오기 (타임아웃 5초)
-      final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium,
-        timeLimit: const Duration(seconds: 5),
-      );
-      
-      setState(() {
-        _currentPosition = position;
-      });
-    } catch (e) {
-      debugPrint('위치 가져오기 실패: $e');
-      setState(() => _currentPosition = null);
+      },
+    );
+    
+    debugPrint('📍 [WalkScreen] 위치 결과: isSuccess=${result.isSuccess}, source=${result.source}, errorType=${result.errorType}');
+    if (result.position != null) {
+      debugPrint('📍 [WalkScreen] 위치: ${result.position!.latitude}, ${result.position!.longitude}');
     }
+    
+    if (!mounted) {
+      debugPrint('📍 [WalkScreen] ⚠️ mounted=false, 상태 업데이트 스킵');
+      return;
+    }
+    
+    if (result.isSuccess && result.position != null) {
+      debugPrint('📍 [WalkScreen] ✅ 위치 가져오기 성공 (source: ${result.source})');
+      setState(() {
+        _currentPosition = result.position;
+        _isLocationLoading = false;
+        _locationProgress = null;
+      });
+      
+      // 백그라운드에서 high 정확도 위치 업데이트
+      _updateHighAccuracyPosition();
+    } else {
+      debugPrint('📍 [WalkScreen] ❌ 위치 가져오기 실패 - 오류 팝업 표시');
+      setState(() {
+        _isLocationLoading = false;
+        _locationProgress = null;
+      });
+      _showLocationErrorDialog();
+    }
+  }
+  
+  /// 백그라운드에서 high 정확도 위치 업데이트
+  Future<void> _updateHighAccuracyPosition() async {
+    if (!mounted || _currentPosition == null) return;
+    
+    final highPosition = await LocationHelper.getHighAccuracyPosition();
+    if (highPosition == null || !mounted) return;
+    
+    // 50m 이상 차이나면 지도 업데이트
+    if (LocationHelper.shouldUpdatePosition(_currentPosition!, highPosition)) {
+      debugPrint('📍 [WalkScreen] 🔄 high 정확도 위치로 업데이트 (50m+ 차이)');
+      
+      setState(() => _currentPosition = highPosition);
+      
+      // 지도 카메라 부드럽게 이동
+      if (_mapController != null && _isMapReady) {
+        final cameraUpdate = CameraUpdate.newCenterPosition(
+          _createLatLng(highPosition.latitude, highPosition.longitude),
+        );
+        await _mapController!.moveCamera(
+          cameraUpdate,
+          animation: const CameraAnimation(500),
+        );
+      }
+    } else {
+      debugPrint('📍 [WalkScreen] high 정확도 위치 차이 50m 미만 - 업데이트 스킵');
+    }
+  }
+  
+  /// 위치 오류 다이얼로그 표시
+  Future<void> _showLocationErrorDialog() async {
+    if (!mounted) return;
+    
+    final dialogResult = await showErrorDialog(
+      context,
+      type: ErrorType.location,
+      themeColor: context.features.walk,
+    );
+    
+    if (dialogResult == ErrorResult.retry) {
+      // 재시도 - 상태 초기화 후 다시 시도
+      _resetLocationState();
+      _getCurrentLocation();
+    } else {
+      // 취소 - 이전 화면으로 돌아가기
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    }
+  }
+  
+  /// 위치 관련 상태 초기화 (재시도 시 깨끗한 상태에서 시작)
+  void _resetLocationState() {
+    debugPrint('📍 [WalkScreen] 🔄 위치 상태 초기화');
+    setState(() {
+      _currentPosition = null;
+      _initialMapPosition = null;
+      _isMapReady = false;
+      _locationProgress = null;
+    });
+    _mapController = null;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Column(
         children: [
           // ===== 상단 영역 (SafeArea + 반려동물 선택) =====
@@ -103,38 +205,25 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                   ),
                   child: Row(
                     children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                            ),
-                          ],
-                        ),
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back),
-                          onPressed: () => Navigator.pop(context),
-                        ),
-                      ),
+                      const MingrrBackButton(),
                       const Spacer(),
                       Container(
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.surface,
                           borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
+                              color: Colors.black.withOpacity(
+                                Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.1
+                              ),
                               blurRadius: 10,
                             ),
                           ],
                         ),
                         child: TextButton.icon(
-                          icon: const Icon(Icons.history, size: 18),
-                          label: const Text('산책 기록'),
-                          onPressed: () {},
+                          icon: Icon(Icons.history, size: 18, color: context.features.walk),
+                          label: Text('산책 기록', style: TextStyle(color: context.features.walk)),
+                          onPressed: () => _showWalkHistory(context),
                         ),
                       ),
                     ],
@@ -156,7 +245,70 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(AppSizes.radiusXL),
               ),
-              child: _buildKakaoMap(),
+              child: Stack(
+                children: [
+                  _buildKakaoMap(),
+                  // 현재 위치 핀 (중앙)
+                  if (_currentPosition != null && !_isWalking)
+                    Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: context.features.walk.withOpacity(0.3),
+                                  blurRadius: 15,
+                                  spreadRadius: 3,
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              Icons.pets,
+                              size: 32,
+                              color: context.features.walk,
+                            ),
+                          ),
+                          Container(
+                            width: 4,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              color: context.features.walk,
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          Container(
+                            width: 12,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: context.features.walk.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  // 현재 위치 버튼
+                  Positioned(
+                    right: AppSizes.paddingM,
+                    bottom: AppSizes.paddingL,
+                    child: FloatingActionButton.small(
+                      heroTag: 'walkMyLocation',
+                      backgroundColor: Theme.of(context).colorScheme.surface,
+                      elevation: 4,
+                      onPressed: _goToMyLocation,
+                      child: Icon(
+                        Icons.my_location,
+                        color: context.features.walk,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           
@@ -169,13 +321,131 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
 
   /// 지도 위젯 (플랫폼별 분기)
   Widget _buildKakaoMap() {
+    debugPrint('📍 [WalkScreen] _buildKakaoMap: kIsWeb=$kIsWeb, _isLocationLoading=$_isLocationLoading, _currentPosition=${_currentPosition != null}');
+    
     // 웹에서는 단순 플레이스홀더 표시
     if (kIsWeb) {
+      debugPrint('📍 [WalkScreen] → 웹 플레이스홀더 표시');
       return _buildWebMapPlaceholder();
     }
     
-    // 모바일에서는 카카오맵 (설정 전에는 플레이스홀더)
-    return _buildMobileMapPlaceholder();
+    // 위치 로딩 중이면 로딩 위젯 표시
+    if (_isLocationLoading) {
+      debugPrint('📍 [WalkScreen] → 로딩 위젯 표시 (progress: $_locationProgress)');
+      return MapLoadingWidget.walk(progress: _locationProgress);
+    }
+    
+    // 모바일에서는 카카오맵
+    if (_currentPosition != null) {
+      // 초기 위치 설정 (한 번만)
+      _initialMapPosition ??= _createLatLng(
+        _currentPosition!.latitude, 
+        _currentPosition!.longitude,
+      );
+      
+      debugPrint('📍 [WalkScreen] → 카카오맵 렌더링: ${_initialMapPosition!.latitude}, ${_initialMapPosition!.longitude}');
+      
+      return KakaoMap(
+        key: const ValueKey('kakao_map_walk'), // 리빌드 방지
+        option: KakaoMapOption(
+          position: _initialMapPosition!,
+          zoomLevel: 17,
+          mapType: MapType.normal,
+        ),
+        onMapReady: _onMapReady,
+        onCameraMoveEnd: (position, gestureType) => _onCameraMoveEnd(position),
+      );
+    }
+    
+    // 위치 정보가 없으면 로딩 위젯
+    debugPrint('📍 [WalkScreen] → 위치 없음, 오류 메시지 표시');
+    return MapLoadingWidget.walk(message: '위치를 확인할 수 없습니다');
+  }
+  
+  /// 카카오맵 생성 완료 콜백
+  void _onMapReady(KakaoMapController controller) {
+    debugPrint('📍 [WalkScreen] onMapReady 호출됨');
+    _mapController = controller;
+    setState(() => _isMapReady = true);
+  }
+  
+  /// 카메라 이동 완료 콜백
+  void _onCameraMoveEnd(CameraPosition position) {
+    _currentMapPosition = position.position;
+  }
+  
+  /// 지도에 경로 폴리라인 그리기
+  /// 참고: kakao_map_sdk에서 경로 그리기는 controller.routeLayer를 통해 접근
+  Future<void> _drawRoutePolyline() async {
+    if (_mapController == null || _routePoints.length < 2) return;
+    
+    try {
+      // 경로 포인트를 LatLng 리스트로 변환
+      final points = _routePoints
+          .map((gp) => _createLatLng(gp.latitude, gp.longitude))
+          .toList();
+      
+      // 경로 그리기
+      await _mapController!.routeLayer.addRoute(
+        points,
+        RouteStyle(context.features.walk, 8),
+      );
+      
+      // 최신 위치로 카메라 이동
+      final lastPoint = _routePoints.last;
+      final cameraUpdate = CameraUpdate.newCenterPosition(
+        _createLatLng(lastPoint.latitude, lastPoint.longitude),
+      );
+      await _mapController!.moveCamera(
+        cameraUpdate,
+        animation: const CameraAnimation(300),
+      );
+    } catch (e) {
+      debugPrint('경로 그리기 실패: $e');
+    }
+  }
+  
+  /// 현재 위치로 카메라 이동
+  Future<void> _moveCameraToCurrentPosition() async {
+    if (_mapController == null || _currentPosition == null) return;
+    
+    try {
+      final cameraUpdate = CameraUpdate.newCenterPosition(
+        _createLatLng(_currentPosition!.latitude, _currentPosition!.longitude),
+      );
+      await _mapController!.moveCamera(
+        cameraUpdate,
+        animation: const CameraAnimation(500),
+      );
+    } catch (e) {
+      debugPrint('카메라 이동 실패: $e');
+    }
+  }
+  
+  /// 내 위치로 이동 버튼 (LocationHelper 사용)
+  Future<void> _goToMyLocation() async {
+    final result = await LocationHelper.getCurrentLocation();
+    
+    if (!result.isSuccess || result.position == null) {
+      // 위치 가져오기 실패 - 오류 팝업 표시
+      _showLocationErrorDialog();
+      return;
+    }
+    
+    setState(() {
+      _currentPosition = result.position;
+    });
+    
+    // 카카오맵 카메라 이동
+    if (_mapController != null) {
+      final cameraUpdate = CameraUpdate.newCenterPosition(
+        _createLatLng(result.latitude, result.longitude),
+      );
+      await _mapController!.moveCamera(
+        cameraUpdate,
+        animation: const CameraAnimation(500),
+      );
+    }
   }
   
   /// 웹용 지도 플레이스홀더
@@ -184,7 +454,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       width: double.infinity,
       height: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.divider.withOpacity(0.3),
+        color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
       ),
       child: Center(
         child: Column(
@@ -193,15 +463,15 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
             Icon(
               Icons.map_outlined,
               size: 64,
-              color: AppColors.textHint,
+              color: Theme.of(context).colorScheme.outlineVariant,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               '지도 영역',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 4),
@@ -209,7 +479,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
               '모바일 앱에서 확인 가능',
               style: TextStyle(
                 fontSize: 13,
-                color: AppColors.textHint,
+                color: Theme.of(context).colorScheme.outlineVariant,
               ),
             ),
           ],
@@ -218,7 +488,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
     );
   }
   
-  /// 모바일용 지도 플레이스홀더 (카카오맵 SDK 설정 전)
+  /// 모바일용 카카오맵
   Widget _buildMobileMapPlaceholder() {
     return Container(
       width: double.infinity,
@@ -228,8 +498,8 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AppColors.walk.withOpacity(0.1),
-            AppColors.walk.withOpacity(0.2),
+            context.features.walk.withOpacity(0.1),
+            context.features.walk.withOpacity(0.2),
           ],
         ),
       ),
@@ -238,7 +508,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
           // 격자 패턴 (지도 느낌)
           CustomPaint(
             size: Size.infinite,
-            painter: _MapGridPainter(),
+            painter: _MapGridPainter(color: context.features.walk),
           ),
           // 중앙 마커
           Center(
@@ -252,16 +522,16 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.walk.withOpacity(0.3),
+                        color: context.features.walk.withOpacity(0.3),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.pets,
                     size: 40,
-                    color: AppColors.walk,
+                    color: context.features.walk,
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -281,18 +551,18 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                     _currentPosition != null
                         ? '위치: ${_currentPosition!.latitude.toStringAsFixed(4)}, ${_currentPosition!.longitude.toStringAsFixed(4)}'
                         : '위치를 가져오는 중...',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  '카카오맵 SDK 설정 후 지도가 표시됩니다',
+                Text(
+                  '현재 위치를 중심으로 지도가 표시됩니다',
                   style: TextStyle(
                     fontSize: 11,
-                    color: AppColors.textHint,
+                    color: Theme.of(context).colorScheme.outlineVariant,
                   ),
                 ),
               ],
@@ -334,8 +604,8 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                     Container(
                       width: 8,
                       height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.walk,
+                      decoration: BoxDecoration(
+                        color: context.features.walk,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -352,7 +622,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                       '${_selectedPetIds.length}마리 선택',
                       style: TextStyle(
                         fontSize: 13,
-                        color: AppColors.walk,
+                        color: context.features.walk,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -370,6 +640,11 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                       
                       return GestureDetector(
                         onTap: () {
+                          if (isSelected && _selectedPetIds.length <= 1) {
+                            // 최소 1마리는 선택되어야 함
+                            MingrrSnackBar.warning(context, '최소 1마리의 반려동물을 선택해야 합니다');
+                            return;
+                          }
                           setState(() {
                             if (isSelected) {
                               _selectedPetIds.remove(pet.id);
@@ -388,7 +663,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                        color: isSelected ? AppColors.walk : Colors.transparent,
+                                        color: isSelected ? context.features.walk : Colors.transparent,
                                         width: 3,
                                       ),
                                     ),
@@ -404,8 +679,8 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                                       child: Container(
                                         width: 20,
                                         height: 20,
-                                        decoration: const BoxDecoration(
-                                          color: AppColors.walk,
+                                        decoration: BoxDecoration(
+                                          color: context.features.walk,
                                           shape: BoxShape.circle,
                                         ),
                                         child: const Icon(
@@ -423,7 +698,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                  color: isSelected ? AppColors.walk : AppColors.textPrimary,
+                                  color: isSelected ? context.features.walk : Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -449,7 +724,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
       child: MingrrCard(
         margin: EdgeInsets.zero,
-        backgroundColor: AppColors.walk,
+        backgroundColor: context.features.walk,
         child: Column(
           children: [
             Row(
@@ -524,7 +799,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       child: Container(
         padding: const EdgeInsets.all(AppSizes.paddingL),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -536,39 +811,399 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 발자국 남기기 버튼
+            // 안내 문구 (산책 전)
+            if (!_isWalking)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSizes.gapM),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.pets, size: 16, color: context.features.walk),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        '산책을 시작하면 이동 경로에 발바닥이 자동으로 남아요!',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            
+            // 산책 중 정보 (발바닥 개수)
             if (_isWalking)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSizes.gapM),
-                child: MingrrButton(
-                  text: '🐾 발자국 남기기',
-                  isOutlined: true,
-                  backgroundColor: AppColors.primary,
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('발자국을 남겼습니다! 🐾'),
-                        backgroundColor: AppColors.walk,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const PawPrintIcon(size: 16),
+                    const SizedBox(width: 6),
+                    Text(
+                      '발바닥 ${_footprints.length}개 남김',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: context.features.walk,
                       ),
-                    );
-                  },
+                    ),
+                  ],
                 ),
               ),
             
             // 산책 시작/종료 버튼
             MingrrButton(
               text: _isWalking ? '산책 종료' : '산책 시작',
-              backgroundColor: _isWalking ? AppColors.error : AppColors.walk,
+              backgroundColor: _isWalking ? Colors.red : context.features.walk,
               textColor: Colors.white,
               icon: _isWalking ? Icons.stop : Icons.play_arrow,
-              onPressed: () {
-                setState(() {
-                  _isWalking = !_isWalking;
-                  if (!_isWalking) {
-                    _showWalkSummary();
+              onPressed: _isWalking ? _stopWalk : _startWalk,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 산책 시작
+  Future<void> _startWalk() async {
+    if (_selectedPetIds.isEmpty) {
+      MingrrSnackBar.warning(context, '함께 산책할 반려동물을 선택해주세요');
+      return;
+    }
+    
+    if (_currentPosition == null) {
+      MingrrSnackBar.info(context, '위치 정보를 가져오는 중입니다. 잠시 후 다시 시도해주세요');
+      return;
+    }
+    
+    try {
+      final user = ref.read(authStateProvider).value;
+      if (user == null) return;
+      
+      final healthService = ref.read(healthServiceProvider);
+      final startLocation = GeoPoint(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+      );
+      
+      // Firebase에 산책 기록 시작
+      final recordId = await healthService.startWalkRecord(
+        userId: user.uid,
+        petId: _selectedPetIds.first,
+        petIds: _selectedPetIds.toList(),
+        startLocation: startLocation,
+      );
+      
+      setState(() {
+        _isWalking = true;
+        _currentWalkRecordId = recordId;
+        _walkDuration = 0;
+        _walkDistance = 0;
+        _routePoints.clear();
+        _routePoints.add(startLocation);
+        _footprints.clear();
+        _lastPosition = _currentPosition;
+      });
+      
+      // 타이머 시작 (1초마다)
+      _walkTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        setState(() {
+          _walkDuration++;
+        });
+      });
+      
+      // 위치 추적 시작 (10초마다)
+      _positionStreamSubscription = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          distanceFilter: 10, // 10미터 이상 이동 시 업데이트
+        ),
+      ).listen((Position position) {
+        _updateWalkRoute(position);
+      });
+      
+      if (mounted) MingrrSnackBar.success(context, '산책을 시작했습니다! 🐾');
+    } catch (e) {
+      debugPrint('산책 시작 오류: $e');
+      if (mounted) MingrrSnackBar.error(context, '산책 시작 중 오류가 발생했습니다: $e');
+    }
+  }
+  
+  /// 산책 경로 업데이트
+  Future<void> _updateWalkRoute(Position position) async {
+    if (!_isWalking || _currentWalkRecordId == null) return;
+    
+    try {
+      final newLocation = GeoPoint(position.latitude, position.longitude);
+      
+      // 이전 위치와의 거리 계산
+      if (_lastPosition != null) {
+        final distance = LocationService.calculateDistance(
+          _lastPosition!.latitude,
+          _lastPosition!.longitude,
+          position.latitude,
+          position.longitude,
+        );
+        
+        final previousDistance = _walkDistance;
+        
+        setState(() {
+          _walkDistance += distance;
+          _currentPosition = position;
+          _lastPosition = position;
+          _routePoints.add(newLocation);
+        });
+        
+        // 50m마다 자동으로 발바닥 남기기
+        final previousFootprintCount = (previousDistance / 50).floor();
+        final currentFootprintCount = (_walkDistance / 50).floor();
+        
+        if (currentFootprintCount > previousFootprintCount) {
+          setState(() {
+            _footprints.add(newLocation);
+          });
+          
+          // Firebase에 발바닥 추가
+          final healthService = ref.read(healthServiceProvider);
+          await healthService.addFootprint(
+            recordId: _currentWalkRecordId!,
+            location: newLocation,
+          );
+        }
+        
+        // 지도에 경로 폴리라인 업데이트
+        await _drawRoutePolyline();
+        
+        // Firebase 경로 업데이트
+        final healthService = ref.read(healthServiceProvider);
+        await healthService.updateWalkRoute(
+          recordId: _currentWalkRecordId!,
+          newLocation: newLocation,
+          totalDistance: _walkDistance,
+        );
+      }
+    } catch (e) {
+      debugPrint('경로 업데이트 오류: $e');
+    }
+  }
+  
+  /// 발자국 남기기
+  Future<void> _addFootprint() async {
+    if (!_isWalking || _currentWalkRecordId == null || _currentPosition == null) {
+      return;
+    }
+    
+    try {
+      final location = GeoPoint(
+        _currentPosition!.latitude,
+        _currentPosition!.longitude,
+      );
+      
+      setState(() {
+        _footprints.add(location);
+      });
+      
+      final healthService = ref.read(healthServiceProvider);
+      await healthService.addFootprint(
+        recordId: _currentWalkRecordId!,
+        location: location,
+      );
+      
+      if (mounted) MingrrSnackBar.success(context, '발자국을 남겼습니다! 🐾');
+    } catch (e) {
+      debugPrint('발자국 추가 오류: $e');
+    }
+  }
+  
+  /// 산책 종료
+  Future<void> _stopWalk() async {
+    if (!_isWalking || _currentWalkRecordId == null) return;
+    
+    try {
+      // 타이머 및 위치 추적 중지
+      _walkTimer?.cancel();
+      _positionStreamSubscription?.cancel();
+      
+      // 칼로리 계산 (간단한 공식: 거리(km) * 50)
+      final calories = (_walkDistance / 1000) * 50;
+      
+      // Firebase에 산책 종료 저장
+      final healthService = ref.read(healthServiceProvider);
+      await healthService.endWalkRecord(
+        recordId: _currentWalkRecordId!,
+        totalDistance: _walkDistance,
+        calories: calories,
+      );
+      
+      // 요약 다이얼로그 표시
+      _showWalkSummary();
+      
+      if (mounted) {
+        setState(() {
+          _isWalking = false;
+          _currentWalkRecordId = null;
+        });
+      }
+    } catch (e) {
+      debugPrint('산책 종료 오류: $e');
+      if (mounted) MingrrSnackBar.error(context, '산책 종료 중 오류가 발생했습니다: $e');
+    }
+  }
+  
+  /// 산책 기록 보기
+  void _showWalkHistory(BuildContext context) {
+    final user = ref.read(authStateProvider).value;
+    if (user == null) return;
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+        ),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
+        ),
+        child: Column(
+          children: [
+            const BottomSheetHandle(),
+            // 헤더
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Text(
+                '산책 기록',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            // 산책 기록 목록
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('walk_records')
+                    .where('userId', isEqualTo: user.uid)
+                    .orderBy('startTime', descending: true)
+                    .limit(20)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const MingrrLoadingState();
                   }
-                });
-              },
+                  
+                  if (snapshot.hasError) {
+                    debugPrint('산책 기록 로드 오류: ${snapshot.error}');
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.error_outline, size: 64, color: Colors.red),
+                          const SizedBox(height: 16),
+                          Text(
+                            '산책 기록을 불러올 수 없어요',
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${snapshot.error}',
+                            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.pets, size: 64, color: Theme.of(context).colorScheme.outlineVariant),
+                          const SizedBox(height: 16),
+                          Text(
+                            '아직 산책 기록이 없어요',
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '산책을 시작하면 기록이 저장됩니다',
+                            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: snapshot.data!.docs.length,
+                    itemBuilder: (context, index) {
+                      final doc = snapshot.data!.docs[index];
+                      final data = doc.data() as Map<String, dynamic>;
+                      final startTime = (data['startTime'] as Timestamp?)?.toDate();
+                      final distance = (data['totalDistance'] as num?)?.toDouble() ?? 0;
+                      final duration = data['duration'] as int? ?? 0;
+                      
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: context.features.walk.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(Icons.directions_walk, color: context.features.walk),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    startTime != null
+                                        ? '${startTime.month}월 ${startTime.day}일 산책'
+                                        : '산책 기록',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 15,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${_formatDistance(distance)} · ${_formatDuration(duration)}',
+                                    style: TextStyle(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -584,11 +1219,11 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusXL),
         ),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.celebration, color: AppColors.walk),
-            SizedBox(width: 8),
-            Text('산책 완료!'),
+            Icon(Icons.celebration, color: context.features.walk),
+            const SizedBox(width: 8),
+            const Text('산책 완료!'),
           ],
         ),
         content: Column(
@@ -596,12 +1231,13 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
           children: [
             _buildSummaryRow('시간', _formatDuration(_walkDuration)),
             _buildSummaryRow('거리', _formatDistance(_walkDistance)),
-            _buildSummaryRow('칼로리', '${(_walkDistance * 0.05).toInt()} kcal'),
+            _buildSummaryRow('칼로리', '${(_walkDistance / 1000 * 50).toInt()} kcal'),
+            _buildSummaryRow('발자국', '${_footprints.length}개'),
             const SizedBox(height: AppSizes.gapM),
-            const Text(
-              '오늘도 건강한 산책 완료! 🎉',
+            Text(
+              '오늘도 건강해지는 산책 완료! 🎉',
               style: TextStyle(
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -627,7 +1263,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textSecondary)),
+          Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
           Text(
             value,
             style: const TextStyle(
@@ -658,10 +1294,14 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
 
 /// 지도 격자 패턴 페인터 (플레이스홀더용)
 class _MapGridPainter extends CustomPainter {
+  final Color color;
+  
+  _MapGridPainter({required this.color});
+  
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = AppColors.walk.withOpacity(0.1)
+      ..color = color.withOpacity(0.1)
       ..strokeWidth = 1;
 
     const spacing = 40.0;

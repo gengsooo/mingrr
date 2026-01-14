@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../core/constants/pet_constants.dart';
+import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../providers/health_provider.dart';
 
 /// ============================================================
@@ -26,90 +29,98 @@ class _RecordBottomSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 핸들바
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(color: AppColors.divider, borderRadius: BorderRadius.circular(2)),
-          ),
+          const BottomSheetHandle(),
           // 헤더
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
-            child: Row(
-              children: [
-                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const Spacer(),
-                TextButton(
-                  onPressed: onSave,
-                  child: const Text('저장', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                ),
-              ],
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
           ),
-          const Divider(height: 1),
           // 컨텐츠
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
               child: child,
             ),
           ),
-          SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
+          // 하단 저장 버튼
+          Container(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 16,
+              bottom: MediaQuery.of(context).padding.bottom + 16,
+            ),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: ElevatedButton(
+              onPressed: onSave,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: context.features.health,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                '저장',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-// ===== 공통 위젯 =====
+// ===== 공통 위젯 (MingrrDateSelector 사용) =====
 Widget _buildDateSelector(BuildContext context, DateTime date, Function(DateTime) onSelect) {
-  return GestureDetector(
-    onTap: () async {
-      final picked = await showDatePicker(
-        context: context,
-        initialDate: date,
-        firstDate: DateTime.now().subtract(const Duration(days: 365 * 2)),
-        lastDate: DateTime.now().add(const Duration(days: 365)),
-      );
-      if (picked != null) onSelect(picked);
-    },
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.divider),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.calendar_today, color: AppColors.health, size: 20),
-          const SizedBox(width: 12),
-          Text('${date.year}년 ${date.month}월 ${date.day}일'),
-          const Spacer(),
-          const Icon(Icons.chevron_right, color: AppColors.textHint, size: 20),
-        ],
-      ),
-    ),
+  return MingrrDateSelector(
+    date: date,
+    onSelect: onSelect,
+    accentColor: context.features.health,
   );
 }
 
-Widget _buildMemoField(TextEditingController controller, {String? hint, int maxLines = 3}) {
+Widget _buildMemoField(BuildContext context, TextEditingController controller, {String? hint, int maxLines = 3}) {
   return TextField(
     controller: controller,
     maxLines: maxLines,
     decoration: InputDecoration(
       hintText: hint ?? '메모를 입력하세요',
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      filled: true,
-      fillColor: AppColors.background,
+      hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: context.features.health, width: 1.5),
+      ),
     ),
   );
 }
@@ -167,10 +178,20 @@ class _AddWeightRecordScreenState extends State<AddWeightRecordScreen> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
               hintText: '예: 5.2',
+              hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
               suffixText: 'kg',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true,
-              fillColor: AppColors.background,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: context.features.health, width: 1.5),
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -178,7 +199,7 @@ class _AddWeightRecordScreenState extends State<AddWeightRecordScreen> {
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
           const SizedBox(height: 16),
           _buildLabel('메모'),
-          _buildMemoField(_memoController),
+          _buildMemoField(context, _memoController),
         ],
       ),
     );
@@ -186,22 +207,22 @@ class _AddWeightRecordScreenState extends State<AddWeightRecordScreen> {
 
   Future<void> _saveRecord() async {
     if (_weightController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('체중을 입력해주세요')));
+      MingrrSnackBar.warning(context, '체중을 입력해주세요');
       return;
     }
     final weight = double.tryParse(_weightController.text);
     if (weight == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('올바른 체중을 입력해주세요')));
+      MingrrSnackBar.warning(context, '올바른 체중을 입력해주세요');
       return;
     }
     try {
       await _healthService.addWeightRecord(petId: widget.petId, weight: weight, recordDate: _selectedDate, notes: _memoController.text.isNotEmpty ? _memoController.text : null);
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('체중 기록이 저장되었습니다'), backgroundColor: AppColors.success));
+        MingrrSnackBar.success(context, '체중 기록이 저장되었습니다');
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+      if (mounted) ErrorHandler.showSnackBar(context, message: '저장에 실패했습니다');
     }
   }
 }
@@ -256,16 +277,16 @@ class _AddGroomingRecordScreenState extends State<AddGroomingRecordScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.health.withOpacity(0.15) : AppColors.background,
+                    color: isSelected ? context.features.health.withOpacity(0.15) : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isSelected ? AppColors.health : AppColors.divider, width: isSelected ? 2 : 1),
+                    border: Border.all(color: isSelected ? context.features.health : Theme.of(context).colorScheme.outline, width: isSelected ? 2 : 1),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(type.emoji, style: const TextStyle(fontSize: 14)),
+                      Icon(type.icon, size: 14, color: isSelected ? context.features.health : Theme.of(context).colorScheme.onSurfaceVariant),
                       const SizedBox(width: 4),
-                      Text(type.label, style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400, color: isSelected ? AppColors.health : AppColors.textPrimary)),
+                      Text(type.label, style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400, color: isSelected ? context.features.health : Theme.of(context).colorScheme.onSurface)),
                     ],
                   ),
                 ),
@@ -277,7 +298,7 @@ class _AddGroomingRecordScreenState extends State<AddGroomingRecordScreen> {
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
           const SizedBox(height: 16),
           _buildLabel('메모'),
-          _buildMemoField(_memoController),
+          _buildMemoField(context, _memoController),
         ],
       ),
     );
@@ -288,10 +309,10 @@ class _AddGroomingRecordScreenState extends State<AddGroomingRecordScreen> {
       await _healthService.addGroomingRecord(petId: widget.petId, groomingType: _selectedType.name, recordDate: _selectedDate, notes: _memoController.text.isNotEmpty ? _memoController.text : null);
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('그루밍 기록이 저장되었습니다'), backgroundColor: AppColors.success));
+        MingrrSnackBar.success(context, '그루밍 기록이 저장되었습니다');
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+      if (mounted) ErrorHandler.showSnackBar(context, message: '저장에 실패했습니다');
     }
   }
 }
@@ -338,7 +359,7 @@ class _AddVaccinationRecordScreenState extends State<AddVaccinationRecordScreen>
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
           const SizedBox(height: 16),
           _buildLabel('메모'),
-          _buildMemoField(_memoController, hint: '백신 종류, 병원, 다음 접종일, 비용 등'),
+          _buildMemoField(context, _memoController, hint: '백신 종류, 병원, 다음 접종일, 비용 등'),
         ],
       ),
     );
@@ -349,10 +370,10 @@ class _AddVaccinationRecordScreenState extends State<AddVaccinationRecordScreen>
       await _healthService.addVaccinationRecord(petId: widget.petId, vaccineName: '예방접종', vaccinationDate: _selectedDate, notes: _memoController.text.isNotEmpty ? _memoController.text : null);
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('예방접종 기록이 저장되었습니다'), backgroundColor: AppColors.success));
+        MingrrSnackBar.success(context, '예방접종 기록이 저장되었습니다');
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+      if (mounted) ErrorHandler.showSnackBar(context, message: '저장에 실패했습니다');
     }
   }
 }
@@ -399,7 +420,7 @@ class _AddCheckupRecordScreenState extends State<AddCheckupRecordScreen> {
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
           const SizedBox(height: 16),
           _buildLabel('메모'),
-          _buildMemoField(_memoController, hint: '검진 종류, 결과, 병원, 비용, 다음 검진일 등'),
+          _buildMemoField(context, _memoController, hint: '검진 종류, 결과, 병원, 비용, 다음 검진일 등'),
         ],
       ),
     );
@@ -410,10 +431,10 @@ class _AddCheckupRecordScreenState extends State<AddCheckupRecordScreen> {
       await _healthService.addCheckupRecord(petId: widget.petId, checkupDate: _selectedDate, notes: _memoController.text.isNotEmpty ? _memoController.text : null);
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('검진 기록이 저장되었습니다'), backgroundColor: AppColors.success));
+        MingrrSnackBar.success(context, '검진 기록이 저장되었습니다');
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+      if (mounted) ErrorHandler.showSnackBar(context, message: '저장에 실패했습니다');
     }
   }
 }
@@ -442,9 +463,7 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
   final _nameController = TextEditingController();
   final _memoController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
-  String _selectedIcon = '💊';
-
-  final List<String> _icons = ['💊', '💉', '🩹', '🧴', '🩺', '🏥', '❤️', '⭐'];
+  MedicationIconType _selectedIconType = MedicationIconType.blue;
 
   @override
   void dispose() {
@@ -466,29 +485,48 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
             controller: _nameController,
             decoration: InputDecoration(
               hintText: '예: 심장사상충약, 관절영양제',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              filled: true,
-              fillColor: AppColors.background,
+              hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: context.features.health, width: 1.5),
+              ),
             ),
           ),
           const SizedBox(height: 16),
-          _buildLabel('아이콘'),
+          _buildLabel('아이콘 색상'),
+          const SizedBox(height: 8),
           Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: _icons.map((icon) {
-              final isSelected = _selectedIcon == icon;
+            spacing: 12,
+            runSpacing: 12,
+            children: MedicationIconType.values.map((iconType) {
+              final isSelected = _selectedIconType == iconType;
+              final color = Color(iconType.colorValue);
               return GestureDetector(
-                onTap: () => setState(() => _selectedIcon = icon),
+                onTap: () => setState(() => _selectedIconType = iconType),
                 child: Container(
-                  width: 44,
-                  height: 44,
+                  width: 48,
+                  height: 48,
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.health.withOpacity(0.15) : AppColors.background,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: isSelected ? AppColors.health : AppColors.divider, width: isSelected ? 2 : 1),
+                    color: isSelected ? color.withOpacity(0.15) : Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? color : Theme.of(context).colorScheme.outline,
+                      width: isSelected ? 2 : 1,
+                    ),
                   ),
-                  child: Center(child: Text(icon, style: const TextStyle(fontSize: 22))),
+                  child: Icon(
+                    Icons.medication,
+                    size: 26,
+                    color: color,
+                  ),
                 ),
               );
             }).toList(),
@@ -498,7 +536,7 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
           const SizedBox(height: 16),
           _buildLabel('메모'),
-          _buildMemoField(_memoController),
+          _buildMemoField(context, _memoController),
         ],
       ),
     );
@@ -506,17 +544,24 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
 
   Future<void> _saveRecord() async {
     if (_nameController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('약 이름을 입력해주세요')));
+      MingrrSnackBar.warning(context, '약 이름을 입력해주세요');
       return;
     }
     try {
-      await _healthService.addMedicationRecord(petId: widget.petId, medicationName: '$_selectedIcon ${_nameController.text}', startDate: _selectedDate, notes: _memoController.text.isNotEmpty ? _memoController.text : null);
+      // 아이콘 ID와 약 이름을 함께 저장 (형식: "icon_id|약이름")
+      final medicationName = '${_selectedIconType.id}|${_nameController.text}';
+      await _healthService.addMedicationRecord(
+        petId: widget.petId,
+        medicationName: medicationName,
+        startDate: _selectedDate,
+        notes: _memoController.text.isNotEmpty ? _memoController.text : null,
+      );
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('약 기록이 저장되었습니다'), backgroundColor: AppColors.success));
+        MingrrSnackBar.success(context, '약 기록이 저장되었습니다');
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+      if (mounted) ErrorHandler.showSnackBar(context, message: '저장에 실패했습니다');
     }
   }
 }
@@ -563,7 +608,7 @@ class _AddSpecialRecordScreenState extends State<AddSpecialRecordScreen> {
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
           const SizedBox(height: 16),
           _buildLabel('메모 *'),
-          _buildMemoField(_memoController, hint: '증상, 행동, 식이 변화 등 특이사항을 기록하세요', maxLines: 5),
+          _buildMemoField(context, _memoController, hint: '증상, 행동, 식이 변화 등 특이사항을 기록하세요', maxLines: 5),
         ],
       ),
     );
@@ -571,17 +616,17 @@ class _AddSpecialRecordScreenState extends State<AddSpecialRecordScreen> {
 
   Future<void> _saveRecord() async {
     if (_memoController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('메모를 입력해주세요')));
+      MingrrSnackBar.warning(context, '메모를 입력해주세요');
       return;
     }
     try {
       await _healthService.addSpecialNote(petId: widget.petId, recordDate: _selectedDate, title: '특이사항', content: _memoController.text, category: '기타');
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('특이사항 기록이 저장되었습니다'), backgroundColor: AppColors.success));
+        MingrrSnackBar.success(context, '특이사항 기록이 저장되었습니다');
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('저장 실패: $e')));
+      if (mounted) ErrorHandler.showSnackBar(context, message: '저장에 실패했습니다');
     }
   }
 }

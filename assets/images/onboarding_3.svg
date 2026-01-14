@@ -1,0 +1,40 @@
+<svg width="280" height="280" viewBox="0 0 280 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 배경 원 -->
+  <circle cx="140" cy="140" r="130" fill="#F3E5F5"/>
+  
+  <!-- 채팅 버블 1 -->
+  <rect x="50" y="70" width="100" height="50" rx="15" fill="#9C27B0"/>
+  <polygon points="70,120 60,135 90,120" fill="#9C27B0"/>
+  <circle cx="75" cy="95" r="5" fill="white"/>
+  <circle cx="95" cy="95" r="5" fill="white"/>
+  <circle cx="115" cy="95" r="5" fill="white"/>
+  
+  <!-- 채팅 버블 2 -->
+  <rect x="130" y="100" width="100" height="50" rx="15" fill="#E1BEE7"/>
+  <polygon points="210,150 220,165 190,150" fill="#E1BEE7"/>
+  <line x1="145" y1="120" x2="210" y2="120" stroke="#9C27B0" stroke-width="3" stroke-linecap="round"/>
+  <line x1="145" y1="135" x2="190" y2="135" stroke="#9C27B0" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- 강아지들 모임 -->
+  <circle cx="90" cy="200" r="28" fill="#FF9800"/>
+  <ellipse cx="70" cy="180" rx="8" ry="14" fill="#E65100"/>
+  <ellipse cx="110" cy="180" rx="8" ry="14" fill="#E65100"/>
+  <circle cx="82" cy="195" r="4" fill="#212121"/>
+  <circle cx="98" cy="195" r="4" fill="#212121"/>
+  
+  <circle cx="140" cy="190" r="28" fill="#8D6E63"/>
+  <ellipse cx="120" cy="170" rx="8" ry="14" fill="#5D4037"/>
+  <ellipse cx="160" cy="170" rx="8" ry="14" fill="#5D4037"/>
+  <circle cx="132" cy="185" r="4" fill="#212121"/>
+  <circle cx="148" cy="185" r="4" fill="#212121"/>
+  
+  <circle cx="190" cy="200" r="28" fill="#FFCC80"/>
+  <ellipse cx="170" cy="180" rx="8" ry="14" fill="#FFB74D"/>
+  <ellipse cx="210" cy="180" rx="8" ry="14" fill="#FFB74D"/>
+  <circle cx="182" cy="195" r="4" fill="#212121"/>
+  <circle cx="198" cy="195" r="4" fill="#212121"/>
+  
+  <!-- 별들 -->
+  <path d="M60 50 L62 56 L68 56 L63 60 L65 66 L60 62 L55 66 L57 60 L52 56 L58 56 Z" fill="#FFC107"/>
+  <path d="M220 50 L222 56 L228 56 L223 60 L225 66 L220 62 L215 66 L217 60 L212 56 L218 56 Z" fill="#FFC107"/>
+</svg>
