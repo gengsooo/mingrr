@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -11,6 +11,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/firestore_service.dart';
+import '../../../../core/services/animal_registration_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/image_picker_sheet.dart';
@@ -1400,50 +1401,18 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  /// 동물등록 인증 다이얼로그
+  /// 동물등록 인증 다이얼로그 (API 연동 + PetModel 매칭)
   Future<void> _showPetRegistrationDialog(BuildContext context, FirestoreService firestoreService, String userId) async {
-    final registrationController = TextEditingController();
-    
-    final result = await showDialog<String>(
+    final result = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('동물등록 인증'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('동물등록번호를 입력해주세요.'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: registrationController,
-              decoration: const InputDecoration(
-                hintText: '15자리 동물등록번호',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.pets),
-              ),
-              keyboardType: TextInputType.number,
-              maxLength: 15,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '※ 동물등록번호는 동물보호관리시스템에서 확인할 수 있습니다.',
-              style: TextStyle(fontSize: 12, color: Theme.of(ctx).colorScheme.outlineVariant),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, registrationController.text),
-            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
-            child: const Text('인증하기', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+      barrierDismissible: false,
+      builder: (ctx) => _PetRegistrationVerificationDialog(
+        userId: userId,
+        firestoreService: firestoreService,
       ),
     );
 
-    if (result != null && result.isNotEmpty && context.mounted) {
-      await firestoreService.verifyPetRegistration(userId, result);
+    if (result == true && context.mounted) {
       MingrrSnackBar.success(context, '동물등록 인증이 완료되었습니다! 🐕');
     }
   }
@@ -2230,6 +2199,706 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
             ],
           ),
       ],
+    );
+  }
+}
+
+/// ============================================================
+/// 동물등록 인증 통합 다이얼로그
+/// 
+/// 입력 → 로딩 → 결과(성공/실패) → PetModel 매칭
+/// ============================================================
+class _PetRegistrationVerificationDialog extends StatefulWidget {
+  final String userId;
+  final FirestoreService firestoreService;
+
+  const _PetRegistrationVerificationDialog({
+    required this.userId,
+    required this.firestoreService,
+  });
+
+  @override
+  State<_PetRegistrationVerificationDialog> createState() => _PetRegistrationVerificationDialogState();
+}
+
+enum _VerificationStep { input, loading, success, error, petSelection }
+
+class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVerificationDialog> {
+  // 상태
+  _VerificationStep _step = _VerificationStep.input;
+  String _statusMessage = '';
+  String? _errorMessage;
+  
+  // 입력 컨트롤러
+  final _registrationController = TextEditingController();
+  final _ownerNameController = TextEditingController();
+  
+  // 결과 데이터
+  AnimalInfo? _animalInfo;
+  List<PetModel> _userPets = [];
+  PetModel? _selectedPet;
+  
+  @override
+  void dispose() {
+    _registrationController.dispose();
+    _ownerNameController.dispose();
+    super.dispose();
+  }
+  
+  /// 인증 시작
+  Future<void> _startVerification() async {
+    final regNo = _registrationController.text.trim();
+    final ownerName = _ownerNameController.text.trim();
+    
+    // 입력 검증
+    if (regNo.isEmpty) {
+      setState(() => _errorMessage = '동물등록번호를 입력해주세요.');
+      return;
+    }
+    if (ownerName.isEmpty) {
+      setState(() => _errorMessage = '소유자 성명을 입력해주세요.');
+      return;
+    }
+    
+    setState(() {
+      _step = _VerificationStep.loading;
+      _statusMessage = '동물등록 정보 확인 중...';
+      _errorMessage = null;
+    });
+    
+    try {
+      // API 호출
+      final result = await AnimalRegistrationService.verify(
+        registrationNumber: regNo,
+        ownerName: ownerName,
+      );
+      
+      if (!mounted) return;
+      
+      if (result.isSuccess && result.animalInfo != null) {
+        _animalInfo = result.animalInfo;
+        
+        // 사용자의 반려동물 목록 조회
+        setState(() => _statusMessage = '반려동물 정보 확인 중...');
+        _userPets = await widget.firestoreService.getUserPets(widget.userId);
+        
+        // 이미 등록된 동물등록번호인지 확인
+        final existingPet = await widget.firestoreService.findPetByRegistrationNumber(
+          widget.userId, 
+          regNo,
+        );
+        
+        if (existingPet != null) {
+          // 이미 인증된 반려동물
+          _selectedPet = existingPet;
+          setState(() => _step = _VerificationStep.success);
+        } else if (_userPets.isEmpty) {
+          // 등록된 반려동물이 없음 → 바로 인증 완료
+          setState(() => _step = _VerificationStep.success);
+        } else {
+          // 반려동물 선택 화면으로 이동
+          setState(() => _step = _VerificationStep.petSelection);
+        }
+      } else {
+        setState(() {
+          _step = _VerificationStep.error;
+          _errorMessage = result.errorMessage ?? '인증에 실패했습니다.';
+        });
+      }
+    } catch (e) {
+      debugPrint('동물등록 인증 오류: $e');
+      setState(() {
+        _step = _VerificationStep.error;
+        _errorMessage = '인증 중 오류가 발생했습니다.';
+      });
+    }
+  }
+  
+  /// 인증 완료 처리
+  Future<void> _completeVerification() async {
+    if (_animalInfo == null) return;
+    
+    setState(() {
+      _step = _VerificationStep.loading;
+      _statusMessage = '인증 정보 저장 중...';
+    });
+    
+    try {
+      final regNo = _animalInfo!.dogRegNo;
+      final animalData = _animalInfo!.toMap();
+      
+      // 1. 사용자 인증 정보 저장
+      await widget.firestoreService.verifyPetRegistration(
+        widget.userId,
+        regNo,
+        animalData: animalData,
+        matchedPetId: _selectedPet?.id,
+      );
+      
+      // 2. 선택된 반려동물에 인증 정보 연결
+      if (_selectedPet != null) {
+        await widget.firestoreService.linkPetRegistration(
+          _selectedPet!.id,
+          regNo,
+          animalData,
+        );
+      }
+      
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      debugPrint('인증 저장 오류: $e');
+      setState(() {
+        _step = _VerificationStep.error;
+        _errorMessage = '인증 정보 저장 중 오류가 발생했습니다.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final primaryColor = colorScheme.primary;
+    
+    return Dialog(
+      backgroundColor: colorScheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: _buildContent(colorScheme, primaryColor),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildContent(ColorScheme colorScheme, Color primaryColor) {
+    switch (_step) {
+      case _VerificationStep.input:
+        return _buildInputContent(colorScheme, primaryColor);
+      case _VerificationStep.loading:
+        return _buildLoadingContent(colorScheme, primaryColor);
+      case _VerificationStep.success:
+        return _buildSuccessContent(colorScheme, primaryColor);
+      case _VerificationStep.error:
+        return _buildErrorContent(colorScheme);
+      case _VerificationStep.petSelection:
+        return _buildPetSelectionContent(colorScheme, primaryColor);
+    }
+  }
+  
+  /// 입력 화면
+  Widget _buildInputContent(ColorScheme colorScheme, Color primaryColor) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 아이콘
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: primaryColor.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(Icons.pets, size: 28, color: primaryColor),
+        ),
+        const SizedBox(height: 16),
+        
+        // 제목
+        const Text(
+          '동물등록 인증',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '동물등록번호와 소유자 성명을 입력해주세요.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 20),
+        
+        // 동물등록번호 입력
+        TextField(
+          controller: _registrationController,
+          decoration: InputDecoration(
+            labelText: '동물등록번호',
+            hintText: '15자리 숫자',
+            prefixIcon: const Icon(Icons.tag),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            counterText: '',
+          ),
+          keyboardType: TextInputType.number,
+          maxLength: 15,
+        ),
+        const SizedBox(height: 12),
+        
+        // 소유자 성명 입력
+        TextField(
+          controller: _ownerNameController,
+          decoration: InputDecoration(
+            labelText: '소유자 성명',
+            hintText: '실명을 입력해주세요',
+            prefixIcon: const Icon(Icons.person_outline),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          keyboardType: TextInputType.name,
+        ),
+        
+        // 에러 메시지
+        if (_errorMessage != null) ...[
+          const SizedBox(height: 12),
+          Text(
+            _errorMessage!,
+            style: const TextStyle(fontSize: 13, color: Colors.red),
+          ),
+        ],
+        
+        const SizedBox(height: 8),
+        Text(
+          '※ 동물등록번호는 동물보호관리시스템(animal.go.kr)에서 확인할 수 있습니다.',
+          style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 20),
+        
+        // 버튼
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(context, false),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(color: colorScheme.outline),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Text('취소', style: TextStyle(fontSize: 15, color: colorScheme.onSurfaceVariant)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _startVerification,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: const Text('인증하기', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+  
+  /// 로딩 화면
+  Widget _buildLoadingContent(ColorScheme colorScheme, Color primaryColor) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: primaryColor.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Center(
+            child: SizedBox(
+              width: 28,
+              height: 28,
+              child: CircularProgressIndicator(strokeWidth: 3, color: primaryColor),
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          '동물등록 인증 중',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _statusMessage,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+        ),
+      ],
+    );
+  }
+  
+  /// 성공 화면
+  Widget _buildSuccessContent(ColorScheme colorScheme, Color primaryColor) {
+    final successColor = context.features.success;
+    
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 아이콘
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: successColor.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(Icons.check_circle, size: 28, color: successColor),
+        ),
+        const SizedBox(height: 16),
+        
+        // 제목
+        const Text(
+          '인증 완료',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 16),
+        
+        // 동물 정보 카드
+        if (_animalInfo != null)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: successColor.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                // 이름
+                Row(
+                  children: [
+                    Icon(Icons.pets, color: successColor, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      _animalInfo!.dogNm,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                
+                // 상세 정보
+                _buildInfoRow('품종', _animalInfo!.kindNm ?? '정보 없음'),
+                _buildInfoRow('성별', _animalInfo!.sexNm ?? '정보 없음'),
+                _buildInfoRow('중성화', _animalInfo!.isNeutered ? 'O' : 'X'),
+                _buildInfoRow('생년월일', _animalInfo!.birthDateFormatted),
+                _buildInfoRow('등록번호', _animalInfo!.dogRegNo),
+              ],
+            ),
+          ),
+        
+        // 매칭된 반려동물 정보
+        if (_selectedPet != null) ...[
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: primaryColor.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.link, color: primaryColor, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '내 반려동물 "${_selectedPet!.name}"과 연결됨',
+                    style: TextStyle(fontSize: 13, color: primaryColor),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+        
+        const SizedBox(height: 20),
+        
+        // 완료 버튼
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _completeVerification,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: successColor,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('완료', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+  
+  /// 에러 화면
+  Widget _buildErrorContent(ColorScheme colorScheme) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: Colors.red.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.error_outline, size: 28, color: Colors.red),
+        ),
+        const SizedBox(height: 20),
+        const Text(
+          '인증 실패',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _errorMessage ?? '알 수 없는 오류가 발생했습니다.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant, height: 1.5),
+        ),
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(context, false),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(color: colorScheme.outline),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Text('닫기', style: TextStyle(fontSize: 15, color: colorScheme.onSurfaceVariant)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () => setState(() {
+                  _step = _VerificationStep.input;
+                  _errorMessage = null;
+                }),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: const Text('다시 시도', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+  
+  /// 반려동물 선택 화면
+  Widget _buildPetSelectionContent(ColorScheme colorScheme, Color primaryColor) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 아이콘
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: primaryColor.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(Icons.pets, size: 28, color: primaryColor),
+        ),
+        const SizedBox(height: 16),
+        
+        // 제목
+        const Text(
+          '반려동물 연결',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '인증된 동물 정보를 연결할 반려동물을 선택해주세요.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+        ),
+        const SizedBox(height: 16),
+        
+        // 인증된 동물 정보
+        if (_animalInfo != null)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: primaryColor.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.verified, color: primaryColor, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _animalInfo!.dogNm,
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                      ),
+                      Text(
+                        '${_animalInfo!.kindNm ?? ''} · ${_animalInfo!.sexNm ?? ''}',
+                        style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 16),
+        
+        // 반려동물 목록
+        Container(
+          constraints: const BoxConstraints(maxHeight: 200),
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: _userPets.length + 1, // +1 for "연결 안함" 옵션
+            itemBuilder: (context, index) {
+              if (index == _userPets.length) {
+                // 연결 안함 옵션
+                return _buildPetOption(
+                  null,
+                  '연결 안함',
+                  '나중에 연결할게요',
+                  colorScheme,
+                );
+              }
+              
+              final pet = _userPets[index];
+              return _buildPetOption(
+                pet,
+                pet.name,
+                '${pet.breed ?? '품종 미입력'} · ${pet.genderString}',
+                colorScheme,
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 20),
+        
+        // 버튼
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton(
+                onPressed: () => Navigator.pop(context, false),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: BorderSide(color: colorScheme.outline),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Text('취소', style: TextStyle(fontSize: 15, color: colorScheme.onSurfaceVariant)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: ElevatedButton(
+                onPressed: () {
+                  setState(() => _step = _VerificationStep.success);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: const Text('다음', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildPetOption(PetModel? pet, String title, String subtitle, ColorScheme colorScheme) {
+    final isSelected = _selectedPet?.id == pet?.id;
+    
+    return GestureDetector(
+      onTap: () => setState(() => _selectedPet = pet),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? colorScheme.primary.withOpacity(0.1) : colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? colorScheme.primary : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Row(
+          children: [
+            // 프로필 이미지 또는 아이콘
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: pet?.displayImageUrl != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(pet!.displayImageUrl!, fit: BoxFit.cover),
+                    )
+                  : Icon(
+                      pet == null ? Icons.link_off : Icons.pets,
+                      color: colorScheme.onSurfaceVariant,
+                      size: 20,
+                    ),
+            ),
+            const SizedBox(width: 12),
+            
+            // 정보
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? colorScheme.primary : colorScheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
+            ),
+            
+            // 체크 아이콘
+            if (isSelected)
+              Icon(Icons.check_circle, color: colorScheme.primary, size: 20),
+          ],
+        ),
+      ),
     );
   }
 }

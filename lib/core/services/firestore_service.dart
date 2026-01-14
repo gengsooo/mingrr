@@ -827,14 +827,75 @@ class FirestoreService {
     }
   }
 
-  /// 동물등록 인증 처리
-  Future<void> verifyPetRegistration(String userId, String registrationNumber) async {
+  /// 동물등록 인증 처리 (API 검증 결과 저장)
+  /// 
+  /// [userId]: 사용자 ID
+  /// [registrationNumber]: 동물등록번호
+  /// [animalData]: API에서 받은 동물 정보 (선택)
+  /// [matchedPetId]: 매칭된 반려동물 ID (선택)
+  Future<void> verifyPetRegistration(
+    String userId, 
+    String registrationNumber, {
+    Map<String, dynamic>? animalData,
+    String? matchedPetId,
+  }) async {
     try {
-      await _firebase.usersCollection.doc(userId).update({
+      final updateData = {
         'verifications.petRegistration': true,
         'verifications.petRegistrationAt': FieldValue.serverTimestamp(),
         'verifications.petRegistrationNumber': registrationNumber,
+      };
+      
+      // API 응답 데이터 저장
+      if (animalData != null) {
+        updateData['verifications.petRegistrationData'] = animalData;
+      }
+      
+      // 매칭된 반려동물 ID 저장
+      if (matchedPetId != null) {
+        updateData['verifications.petRegistrationMatchedPetId'] = matchedPetId;
+      }
+      
+      await _firebase.usersCollection.doc(userId).update(updateData);
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  /// 반려동물에 동물등록 인증 정보 연결
+  /// 
+  /// [petId]: 반려동물 ID
+  /// [registrationNumber]: 동물등록번호
+  /// [animalData]: API에서 받은 동물 정보
+  Future<void> linkPetRegistration(
+    String petId,
+    String registrationNumber,
+    Map<String, dynamic> animalData,
+  ) async {
+    try {
+      await _firebase.petsCollection.doc(petId).update({
+        'registrationNumber': registrationNumber,
+        'isRegistrationVerified': true,
+        'registrationVerifiedAt': FieldValue.serverTimestamp(),
+        'registrationData': animalData,
+        'updatedAt': FieldValue.serverTimestamp(),
       });
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
+  /// 동물등록번호로 반려동물 찾기
+  Future<PetModel?> findPetByRegistrationNumber(String userId, String registrationNumber) async {
+    try {
+      final snapshot = await _firebase.petsCollection
+          .where('ownerId', isEqualTo: userId)
+          .where('registrationNumber', isEqualTo: registrationNumber)
+          .limit(1)
+          .get();
+      
+      if (snapshot.docs.isEmpty) return null;
+      return PetModel.fromFirestore(snapshot.docs.first);
     } catch (e) {
       rethrow;
     }
