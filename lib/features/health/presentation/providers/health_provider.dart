@@ -24,7 +24,7 @@ final selectedHealthTabProvider = StateProvider<int>((ref) => 0);
 /// 체중 기록 Provider (인덱스 없이 클라이언트에서 정렬)
 final weightRecordsProvider = StreamProvider.family<List<WeightRecordModel>, String>((ref, petId) {
   return _firebaseService.firestore
-      .collection('weight_records')
+      .collection('weightRecords')
       .where('petId', isEqualTo: petId)
       .snapshots()
       .map((snapshot) {
@@ -39,7 +39,7 @@ final weightRecordsProvider = StreamProvider.family<List<WeightRecordModel>, Str
 /// 산책 기록 Provider (인덱스 없이 클라이언트에서 정렬)
 final walkRecordsProvider = StreamProvider.family<List<WalkRecordModel>, String>((ref, petId) {
   return _firebaseService.firestore
-      .collection('walk_records')
+      .collection('walkRecords')
       .where('petId', isEqualTo: petId)
       .snapshots()
       .map((snapshot) {
@@ -54,7 +54,7 @@ final walkRecordsProvider = StreamProvider.family<List<WalkRecordModel>, String>
 /// 그루밍 기록 Provider (인덱스 없이 클라이언트에서 정렬)
 final groomingRecordsProvider = StreamProvider.family<List<GroomingRecordModel>, String>((ref, petId) {
   return _firebaseService.firestore
-      .collection('grooming_records')
+      .collection('groomingRecords')
       .where('petId', isEqualTo: petId)
       .snapshots()
       .map((snapshot) {
@@ -69,7 +69,7 @@ final groomingRecordsProvider = StreamProvider.family<List<GroomingRecordModel>,
 /// 예방접종 기록 Provider (인덱스 없이 클라이언트에서 정렬)
 final vaccinationRecordsProvider = StreamProvider.family<List<VaccinationModel>, String>((ref, petId) {
   return _firebaseService.firestore
-      .collection('vaccination_records')
+      .collection('vaccinationRecords')
       .where('petId', isEqualTo: petId)
       .snapshots()
       .map((snapshot) {
@@ -84,7 +84,7 @@ final vaccinationRecordsProvider = StreamProvider.family<List<VaccinationModel>,
 /// 검진 기록 Provider (인덱스 없이 클라이언트에서 정렬)
 final checkupRecordsProvider = StreamProvider.family<List<CheckupRecordModel>, String>((ref, petId) {
   return _firebaseService.firestore
-      .collection('checkup_records')
+      .collection('checkupRecords')
       .where('petId', isEqualTo: petId)
       .snapshots()
       .map((snapshot) {
@@ -99,7 +99,7 @@ final checkupRecordsProvider = StreamProvider.family<List<CheckupRecordModel>, S
 /// 약 복용 기록 Provider (인덱스 없이 클라이언트에서 정렬)
 final medicationRecordsProvider = StreamProvider.family<List<MedicationRecordModel>, String>((ref, petId) {
   return _firebaseService.firestore
-      .collection('medication_records')
+      .collection('medicationRecords')
       .where('petId', isEqualTo: petId)
       .snapshots()
       .map((snapshot) {
@@ -139,7 +139,7 @@ class HealthService {
     required DateTime recordDate,
     String? notes,
   }) async {
-    final docRef = _firebase.firestore.collection('weight_records').doc();
+    final docRef = _firebase.firestore.collection('weightRecords').doc();
     await docRef.set({
       'petId': petId,
       'weight': weight,
@@ -150,7 +150,7 @@ class HealthService {
   }
 
   Future<void> deleteWeightRecord(String recordId) async {
-    await _firebase.firestore.collection('weight_records').doc(recordId).delete();
+    await _firebase.firestore.collection('weightRecords').doc(recordId).delete();
   }
 
   // ===== 그루밍 =====
@@ -162,7 +162,7 @@ class HealthService {
     int? cost,
     String? notes,
   }) async {
-    final docRef = _firebase.firestore.collection('grooming_records').doc();
+    final docRef = _firebase.firestore.collection('groomingRecords').doc();
     await docRef.set({
       'petId': petId,
       'groomingType': groomingType,
@@ -176,7 +176,7 @@ class HealthService {
   }
 
   Future<void> deleteGroomingRecord(String recordId) async {
-    await _firebase.firestore.collection('grooming_records').doc(recordId).delete();
+    await _firebase.firestore.collection('groomingRecords').doc(recordId).delete();
   }
 
   // ===== 예방접종 =====
@@ -190,7 +190,7 @@ class HealthService {
     String? notes,
     bool reminderEnabled = true,
   }) async {
-    final docRef = _firebase.firestore.collection('vaccination_records').doc();
+    final docRef = _firebase.firestore.collection('vaccinationRecords').doc();
     await docRef.set({
       'petId': petId,
       'vaccineName': vaccineName,
@@ -206,7 +206,7 @@ class HealthService {
   }
 
   Future<void> deleteVaccinationRecord(String recordId) async {
-    await _firebase.firestore.collection('vaccination_records').doc(recordId).delete();
+    await _firebase.firestore.collection('vaccinationRecords').doc(recordId).delete();
   }
 
   // ===== 검진 =====
@@ -220,7 +220,7 @@ class HealthService {
     String? notes,
     bool reminderEnabled = true,
   }) async {
-    final docRef = _firebase.firestore.collection('checkup_records').doc();
+    final docRef = _firebase.firestore.collection('checkupRecords').doc();
     await docRef.set({
       'petId': petId,
       'checkupDate': Timestamp.fromDate(checkupDate),
@@ -237,7 +237,7 @@ class HealthService {
   }
 
   Future<void> deleteCheckupRecord(String recordId) async {
-    await _firebase.firestore.collection('checkup_records').doc(recordId).delete();
+    await _firebase.firestore.collection('checkupRecords').doc(recordId).delete();
   }
 
   // ===== 약 복용 =====
@@ -253,7 +253,7 @@ class HealthService {
     bool reminderEnabled = false,
     List<String> reminderTimes = const [],
   }) async {
-    final docRef = _firebase.firestore.collection('medication_records').doc();
+    final docRef = _firebase.firestore.collection('medicationRecords').doc();
     await docRef.set({
       'petId': petId,
       'medicationName': medicationName,
@@ -270,7 +270,7 @@ class HealthService {
   }
 
   Future<void> deleteMedicationRecord(String recordId) async {
-    await _firebase.firestore.collection('medication_records').doc(recordId).delete();
+    await _firebase.firestore.collection('medicationRecords').doc(recordId).delete();
   }
 
   // ===== 특이사항 =====
@@ -307,7 +307,7 @@ class HealthService {
     required List<String> petIds,
     required GeoPoint startLocation,
   }) async {
-    final docRef = _firebase.firestore.collection('walk_records').doc();
+    final docRef = _firebase.firestore.collection('walkRecords').doc();
     await docRef.set({
       'petId': petId,
       'petIds': petIds,
@@ -331,7 +331,7 @@ class HealthService {
     required GeoPoint newLocation,
     required double totalDistance,
   }) async {
-    await _firebase.firestore.collection('walk_records').doc(recordId).update({
+    await _firebase.firestore.collection('walkRecords').doc(recordId).update({
       'routePoints': FieldValue.arrayUnion([newLocation]),
       'distance': totalDistance,
     });
@@ -342,7 +342,7 @@ class HealthService {
     required String recordId,
     required GeoPoint location,
   }) async {
-    await _firebase.firestore.collection('walk_records').doc(recordId).update({
+    await _firebase.firestore.collection('walkRecords').doc(recordId).update({
       'footprints': FieldValue.arrayUnion([location]),
     });
   }
@@ -354,7 +354,7 @@ class HealthService {
     double? calories,
     String? notes,
   }) async {
-    await _firebase.firestore.collection('walk_records').doc(recordId).update({
+    await _firebase.firestore.collection('walkRecords').doc(recordId).update({
       'endTime': Timestamp.fromDate(DateTime.now()),
       'distance': totalDistance,
       'calories': calories,
@@ -364,7 +364,7 @@ class HealthService {
 
   /// 산책 기록 삭제
   Future<void> deleteWalkRecord(String recordId) async {
-    await _firebase.firestore.collection('walk_records').doc(recordId).delete();
+    await _firebase.firestore.collection('walkRecords').doc(recordId).delete();
   }
 }
 

@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/form_strings.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/utils/format_utils.dart';
@@ -16,6 +17,7 @@ import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
+import '../../../../core/widgets/form_components.dart';
 import '../../../../core/models/location_model.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../../models/pet_model.dart';
@@ -104,12 +106,9 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
 
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: Text(_isEditMode ? '마켓 수정' : '마켓 등록'),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: MingrrFormAppBar(
+        title: _isEditMode ? ScreenTitles.productEdit : ScreenTitles.productWrite,
+        onClose: () => Navigator.pop(context),
       ),
       body: Form(
         key: _formKey,
@@ -119,8 +118,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 종류 선택 (판매/나눔/알바)
-              const Text('종류', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: AppSizes.gapS),
+              const MingrrSectionLabel(FormStrings.labelType),
               Row(
                 children: [
                   _buildTypeButton(ProductType.sell, '판매', Icons.sell),
@@ -135,67 +133,67 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
               // === 알바 전용 UI ===
               if (isJob) ...[
                 // 사진 (선택)
-                const Text('사진 (선택)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                const SizedBox(height: AppSizes.gapS),
-                _buildImagePicker(),
+                MingrrSectionLabel(
+                  '${FormStrings.labelPhoto} (${FormStrings.optional})',
+                  suffix: '(최대 ${ImageLimits.maxImageCount}장)',
+                ),
+                MingrrImagePicker(
+                  existingUrls: _existingImageUrls,
+                  selectedFiles: _selectedImages,
+                  onPickImages: _pickImages,
+                  onRemoveExisting: (index) => setState(() => _existingImageUrls.removeAt(index)),
+                  onRemoveSelected: (index) => setState(() => _selectedImages.removeAt(index)),
+                  maxImages: ImageLimits.maxImageCount,
+                ),
                 const SizedBox(height: AppSizes.gapXL),
                 
                 // 알바 유형
-                const Text('알바 유형', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                const SizedBox(height: AppSizes.gapS),
+                const MingrrSectionLabel('알바 유형'),
                 _buildJobTypeSelector(),
                 const SizedBox(height: AppSizes.gapXL),
 
                 // 제목
                 MingrrTextField(
                   controller: _titleController,
-                  labelText: '제목',
-                  hintText: '제목을 입력해주세요',
+                  labelText: FormStrings.labelTitle,
+                  hintText: FormStrings.hintTitle,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return '제목을 입력해주세요';
-                    }
+                    if (value == null || value.isEmpty) return FormStrings.errorTitleRequired;
                     return null;
                   },
                 ),
                 const SizedBox(height: AppSizes.gapL),
 
                 // 기간
-                const Text('기간', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                const SizedBox(height: AppSizes.gapS),
+                const MingrrSectionLabel('기간'),
                 _buildDateSelector(),
                 const SizedBox(height: AppSizes.gapL),
 
                 // 돌봄 대상 반려동물
-                const Text('돌봄 대상 반려동물', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                const SizedBox(height: AppSizes.gapS),
+                const MingrrSectionLabel('돌봄 대상 반려동물'),
                 _buildPetSelector(),
                 const SizedBox(height: AppSizes.gapL),
 
                 // 급여
-                const Text('급여', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                const SizedBox(height: AppSizes.gapS),
+                const MingrrSectionLabel('급여'),
                 _buildPriceUnitSelector(),
                 const SizedBox(height: AppSizes.gapS),
                 _buildJobPriceField(),
                 const SizedBox(height: AppSizes.gapL),
 
                 // 근무 지역
-                const Text('근무 지역', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                const SizedBox(height: AppSizes.gapS),
+                const MingrrSectionLabel('근무 지역'),
                 _buildLocationSelector(),
                 const SizedBox(height: AppSizes.gapL),
 
                 // 상세 설명
                 MingrrTextField(
                   controller: _descriptionController,
-                  labelText: '상세 내용',
-                  hintText: '상세 내용을 입력해주세요',
+                  labelText: FormStrings.labelDescription,
+                  hintText: FormStrings.hintDescription,
                   maxLines: 5,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return '상세 내용을 입력해주세요';
-                    }
+                    if (value == null || value.isEmpty) return FormStrings.errorContentRequired;
                     return null;
                   },
                 ),
@@ -204,26 +202,32 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
               // === 판매/나눔 UI ===
               else ...[
                 // 사진
-                const Text('사진', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                const SizedBox(height: AppSizes.gapS),
-                _buildImagePicker(),
+                MingrrSectionLabel(
+                  FormStrings.labelPhoto,
+                  suffix: '(최대 ${ImageLimits.maxImageCount}장)',
+                ),
+                MingrrImagePicker(
+                  existingUrls: _existingImageUrls,
+                  selectedFiles: _selectedImages,
+                  onPickImages: _pickImages,
+                  onRemoveExisting: (index) => setState(() => _existingImageUrls.removeAt(index)),
+                  onRemoveSelected: (index) => setState(() => _selectedImages.removeAt(index)),
+                  maxImages: ImageLimits.maxImageCount,
+                ),
                 const SizedBox(height: AppSizes.gapXL),
 
                 // 카테고리
-                const Text('카테고리', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                const SizedBox(height: AppSizes.gapS),
+                const MingrrSectionLabel(FormStrings.labelCategory),
                 _buildCategorySelector(),
                 const SizedBox(height: AppSizes.gapXL),
 
                 // 제목
                 MingrrTextField(
                   controller: _titleController,
-                  labelText: '제목',
-                  hintText: '제목을 입력해주세요',
+                  labelText: FormStrings.labelTitle,
+                  hintText: FormStrings.hintTitle,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return '제목을 입력해주세요';
-                    }
+                    if (value == null || value.isEmpty) return FormStrings.errorTitleRequired;
                     return null;
                   },
                 ),
@@ -236,21 +240,18 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
                 ],
 
                 // 희망지역
-                const Text('희망지역', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                const SizedBox(height: AppSizes.gapS),
+                const MingrrSectionLabel('희망지역'),
                 _buildLocationSelector(),
                 const SizedBox(height: AppSizes.gapL),
 
                 // 설명
                 MingrrTextField(
                   controller: _descriptionController,
-                  labelText: '상세 내용',
-                  hintText: '상세 내용을 입력해주세요',
+                  labelText: FormStrings.labelDescription,
+                  hintText: FormStrings.hintDescription,
                   maxLines: 5,
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return '상세 내용을 입력해주세요';
-                    }
+                    if (value == null || value.isEmpty) return FormStrings.errorContentRequired;
                     return null;
                   },
                 ),
@@ -273,7 +274,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             color: isSelected ? context.features.market : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
             border: Border.all(
               color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
             ),
@@ -346,125 +347,14 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
     setState(() => _selectedType = newType);
   }
 
-  Widget _buildImagePicker() {
-    final totalImages = _existingImageUrls.length + _selectedImages.length;
-    
-    return SizedBox(
-      height: 80,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          // 추가 버튼
-          GestureDetector(
-            onTap: _pickImages,
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).colorScheme.outline),
-                borderRadius: BorderRadius.circular(AppSizes.radiusM),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.camera_alt, color: Theme.of(context).colorScheme.outlineVariant),
-                  const SizedBox(height: 4),
-                  Text('$totalImages/10', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant)),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          // 기존 이미지
-          ..._existingImageUrls.asMap().entries.map((entry) {
-            return _buildImageItem(
-              imageUrl: entry.value,
-              onRemove: () {
-                setState(() => _existingImageUrls.removeAt(entry.key));
-              },
-            );
-          }),
-          // 새로 선택한 이미지
-          ..._selectedImages.asMap().entries.map((entry) {
-            return _buildImageItem(
-              file: File(entry.value.path),
-              onRemove: () {
-                setState(() => _selectedImages.removeAt(entry.key));
-              },
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImageItem({String? imageUrl, File? file, required VoidCallback onRemove}) {
-    return Container(
-      width: 80,
-      height: 80,
-      margin: const EdgeInsets.only(right: 8),
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppSizes.radiusM),
-            child: imageUrl != null
-                ? Image.network(imageUrl, width: 80, height: 80, fit: BoxFit.cover)
-                : Image.file(file!, width: 80, height: 80, fit: BoxFit.cover),
-          ),
-          Positioned(
-            top: 4,
-            right: 4,
-            child: GestureDetector(
-              onTap: onRemove,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.black54,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.close, size: 14, color: Colors.white),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildCategorySelector() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: ProductCategory.values.map((category) {
-        final isSelected = _selectedCategory == category;
-        return GestureDetector(
-          onTap: () => setState(() => _selectedCategory = category),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected ? context.features.market : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(category.icon, size: 14, color: isSelected ? Colors.white : context.features.market),
-                const SizedBox(width: 4),
-                Text(
-                  category.label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
+    return MingrrChipSelector<ProductCategory>(
+      items: ProductCategory.values,
+      selectedItem: _selectedCategory,
+      onSelected: (category) => setState(() => _selectedCategory = category),
+      labelBuilder: (category) => category.label,
+      iconBuilder: (category) => category.icon,
+      accentColor: context.features.market,
     );
   }
 
@@ -473,39 +363,13 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
   // ============================================================
 
   Widget _buildJobTypeSelector() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: JobType.values.map((type) {
-        final isSelected = _selectedJobType == type;
-        return GestureDetector(
-          onTap: () => setState(() => _selectedJobType = type),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected ? context.features.market : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(type.icon, size: 14, color: isSelected ? Colors.white : context.features.market),
-                const SizedBox(width: 4),
-                Text(
-                  type.label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
+    return MingrrChipSelector<JobType>(
+      items: JobType.values,
+      selectedItem: _selectedJobType,
+      onSelected: (type) => setState(() => _selectedJobType = type),
+      labelBuilder: (type) => type.label,
+      iconBuilder: (type) => type.icon,
+      accentColor: context.features.market,
     );
   }
 
@@ -560,7 +424,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: context.inputBackground,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     border: Border.all(color: Theme.of(context).colorScheme.outline),
                   ),
                   child: Row(
@@ -585,7 +449,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: context.inputBackground,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
               border: Border.all(color: Theme.of(context).colorScheme.outline),
             ),
             child: Row(
@@ -601,7 +465,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
         );
       },
       loading: () => const MingrrLoadingState(),
-      error: (_, __) => const Text('반려동물 목록을 불러올 수 없습니다'),
+      error: (_, __) => const Text('일시적인 오류가 발생했어요'),
     );
   }
 
@@ -666,15 +530,15 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
         hintText: '금액을 입력해주세요',
         suffixText: '원/$_priceUnit',
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           borderSide: BorderSide(color: context.features.market),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -738,15 +602,15 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
             hintText: isJob ? '시급을 입력해주세요' : '가격을 입력해주세요',
             suffixText: '원',
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
               borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
               borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
               borderSide: BorderSide(color: context.features.market),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -773,8 +637,8 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
 
   Future<void> _pickImages() async {
     final totalImages = _existingImageUrls.length + _selectedImages.length;
-    if (totalImages >= 10) {
-      MingrrSnackBar.warning(context, '최대 10장까지 등록할 수 있습니다');
+    if (totalImages >= ImageLimits.maxImageCount) {
+      MingrrSnackBar.warning(context, '이미지는 최대 ${ImageLimits.maxImageCount}장까지 업로드 가능합니다');
       return;
     }
 
@@ -787,9 +651,22 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
       context: context,
       source: source,
       toolbarColor: context.features.market,
+      maxWidth: ImageLimits.maxResolution,
+      maxHeight: ImageLimits.maxResolution,
+      imageQuality: ImageLimits.imageQuality,
     );
 
     if (croppedFile != null && mounted) {
+      // 파일 크기 검사
+      final fileSize = await croppedFile.length();
+      if (fileSize > ImageLimits.maxFileSizeBytes) {
+        final sizeMB = (fileSize / (1024 * 1024)).toStringAsFixed(1);
+        MingrrSnackBar.warning(
+          context, 
+          '이미지 크기가 너무 큽니다 (${sizeMB}MB). 최대 ${ImageLimits.maxFileSizeMB}MB까지 업로드 가능합니다',
+        );
+        return;
+      }
       setState(() => _selectedImages.add(XFile(croppedFile.path)));
     }
   }

@@ -167,12 +167,12 @@ class MarketplaceScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  '${distanceFilter.toInt()}km 내에 ${type == ProductType.sell ? '판매' : '나눔'} 상품이 없습니다',
+                  '아직 데이터가 없어요',
                   style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '거리를 늘려보세요',
+                  '거리를 늘리거나 다른 카테고리를 확인해보세요',
                   style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
                 ),
               ],
@@ -256,8 +256,13 @@ class MarketplaceScreen extends ConsumerWidget {
                     Icon(Icons.work_outline, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
                     const SizedBox(height: 16),
                     Text(
-                      '등록된 알바가 없습니다',
+                      '아직 데이터가 없어요',
                       style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '새로운 알바를 등록해보세요',
+                      style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
                     ),
                   ],
                 ),
@@ -272,7 +277,7 @@ class MarketplaceScreen extends ConsumerWidget {
             );
           },
           loading: () => const MingrrLoadingState(),
-          error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
+          error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
         );
       },
     );
@@ -330,11 +335,58 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
   String? _selectedJobCategory;
   JobPayType _payType = JobPayType.total;
   final List<Map<String, String>> _selectedPets = [];
+  DateTime? _startDate;
+  DateTime? _endDate;
 
   @override
   void initState() {
     super.initState();
     _selectedType = MarketWriteType.values[widget.initialType.clamp(0, 2)];
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.month}/${date.day}';
+  }
+
+  Future<void> _selectDate(bool isStart) async {
+    final now = DateTime.now();
+    final initialDate = isStart 
+        ? (_startDate ?? now) 
+        : (_endDate ?? _startDate ?? now);
+    
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: isStart ? now : (_startDate ?? now),
+      lastDate: now.add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: context.features.market,
+              surface: Colors.white,
+              onSurface: Colors.black87,
+              surfaceContainerHighest: Colors.white,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
+    );
+    
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          _startDate = picked;
+          if (_endDate != null && _endDate!.isBefore(picked)) {
+            _endDate = null;
+          }
+        } else {
+          _endDate = picked;
+        }
+      });
+    }
   }
 
   @override
@@ -393,7 +445,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
                               color: isSelected ? context.features.market : Colors.transparent,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppSizes.radiusS),
                               border: Border.all(
                                 color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
                               ),
@@ -555,20 +607,35 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: () {
-                  // TODO: 시작 날짜 선택 구현 예정
-                },
+                onTap: () => _selectDate(true),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).colorScheme.outline),
-                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _startDate != null 
+                          ? context.features.market 
+                          : Theme.of(context).colorScheme.outline,
+                    ),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_today, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      Icon(
+                        Icons.calendar_today, 
+                        size: 18, 
+                        color: _startDate != null 
+                            ? context.features.market 
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                       const SizedBox(width: 8),
-                      Text('시작일', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
+                      Text(
+                        _startDate != null ? _formatDate(_startDate!) : '시작일',
+                        style: TextStyle(
+                          color: _startDate != null 
+                              ? Theme.of(context).colorScheme.onSurface 
+                              : Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -580,20 +647,35 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
             ),
             Expanded(
               child: GestureDetector(
-                onTap: () {
-                  // TODO: 종료 날짜 선택 구현 예정
-                },
+                onTap: () => _selectDate(false),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).colorScheme.outline),
-                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _endDate != null 
+                          ? context.features.market 
+                          : Theme.of(context).colorScheme.outline,
+                    ),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_today, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      Icon(
+                        Icons.calendar_today, 
+                        size: 18, 
+                        color: _endDate != null 
+                            ? context.features.market 
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                       const SizedBox(width: 8),
-                      Text('종료일', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
+                      Text(
+                        _endDate != null ? _formatDate(_endDate!) : '종료일',
+                        style: TextStyle(
+                          color: _endDate != null 
+                              ? Theme.of(context).colorScheme.onSurface 
+                              : Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -615,7 +697,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Row(
                 children: [
@@ -652,7 +734,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               border: Border.all(color: Theme.of(context).colorScheme.outline, style: BorderStyle.solid),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -781,7 +863,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                     color: isAlreadySelected 
                         ? Theme.of(context).colorScheme.outline.withOpacity(0.5) 
                         : Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     border: Border.all(
                       color: isAlreadySelected ? Theme.of(context).colorScheme.outline : Colors.transparent,
                     ),
@@ -793,7 +875,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                         height: 50,
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.outline,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Icon(Icons.pets, color: Theme.of(context).colorScheme.outlineVariant),
                       ),

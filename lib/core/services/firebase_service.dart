@@ -175,4 +175,47 @@ class FirebaseService {
       rethrow;
     }
   }
+
+  // ===== 비디오 업로드 =====
+  
+  /// 비디오 파일 업로드 및 URL 반환
+  Future<String> uploadVideo(File file, String path) async {
+    try {
+      final ref = storage.ref().child(path);
+      final metadata = SettableMetadata(contentType: 'video/mp4');
+      final snapshot = await ref.putFile(file, metadata);
+      return await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      debugPrint('비디오 업로드 오류: $e');
+      rethrow;
+    }
+  }
+
+  /// 비디오와 썸네일을 함께 업로드하고 URL 반환
+  /// Returns: {'videoUrl': String, 'thumbnailUrl': String?}
+  Future<Map<String, String?>> uploadVideoWithThumbnail(
+    File videoFile,
+    String videoPath, {
+    File? thumbnailFile,
+    String? thumbnailPath,
+  }) async {
+    try {
+      // 비디오 업로드
+      final videoUrl = await uploadVideo(videoFile, videoPath);
+      
+      // 썸네일 업로드 (제공된 경우)
+      String? thumbnailUrl;
+      if (thumbnailFile != null && thumbnailPath != null) {
+        thumbnailUrl = await uploadImage(thumbnailFile, thumbnailPath);
+      }
+      
+      return {
+        'videoUrl': videoUrl,
+        'thumbnailUrl': thumbnailUrl,
+      };
+    } catch (e) {
+      debugPrint('비디오/썸네일 업로드 오류: $e');
+      rethrow;
+    }
+  }
 }

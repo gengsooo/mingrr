@@ -4,10 +4,12 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/form_strings.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/form_components.dart';
 import '../../../../core/widgets/pet_selector_card.dart';
 import '../../../../models/breeding_model.dart';
 import '../../../../models/pet_model.dart';
@@ -74,12 +76,9 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
 
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: Text(_isEditMode ? '교배 글 수정' : '교배 글쓰기'),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: MingrrFormAppBar(
+        title: _isEditMode ? ScreenTitles.breedingEdit : ScreenTitles.breedingWrite,
+        onClose: () => Navigator.pop(context),
       ),
       body: Form(
         key: _formKey,
@@ -89,20 +88,17 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 교배할 강아지 선택
-              const Text('교배할 강아지', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: AppSizes.gapS),
+              const MingrrSectionLabel('교배할 강아지'),
               _buildPetSelector(petsAsync),
               const SizedBox(height: AppSizes.gapXL),
 
               // 제목
               MingrrTextField(
                 controller: _titleController,
-                labelText: '제목',
-                hintText: '제목을 입력해주세요',
+                labelText: FormStrings.labelTitle,
+                hintText: FormStrings.hintTitle,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return '제목을 입력해주세요';
-                  }
+                  if (value == null || value.isEmpty) return FormStrings.errorTitleRequired;
                   return null;
                 },
               ),
@@ -111,44 +107,54 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
               // 상세 내용
               MingrrTextField(
                 controller: _descriptionController,
-                labelText: '상세 내용',
-                hintText: '상세 내용을 입력해주세요',
+                labelText: FormStrings.labelDescription,
+                hintText: FormStrings.hintDescription,
                 maxLines: 5,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return '상세 내용을 입력해주세요';
-                  }
+                  if (value == null || value.isEmpty) return FormStrings.errorContentRequired;
                   return null;
                 },
               ),
               const SizedBox(height: AppSizes.gapXL),
 
               // 원하는 상대 성별
-              const Text('원하는 상대 성별', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: AppSizes.gapS),
+              const MingrrSectionLabel('원하는 상대 성별'),
               _buildGenderSelector(),
               const SizedBox(height: AppSizes.gapL),
 
               // 원하는 상대 크기
-              const Text('원하는 상대 크기 (중복 선택 가능)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: AppSizes.gapS),
+              const MingrrSectionLabel('원하는 상대 크기', suffix: '(중복 선택 가능)'),
               _buildSizeSelector(),
               const SizedBox(height: AppSizes.gapL),
 
               // 같은 품종만
-              _buildSameBreedSwitch(),
+              MingrrSwitchCard(
+                accentColor: context.features.dating,
+                items: [
+                  MingrrSwitchItem(
+                    title: SwitchStrings.sameBreedOnly,
+                    subtitle: SwitchStrings.sameBreedOnlyDesc,
+                    value: _sameBreedOnly,
+                    onChanged: (value) => setState(() => _sameBreedOnly = value),
+                  ),
+                ],
+              ),
               const SizedBox(height: AppSizes.gapL),
 
               // 나이 범위
-              const Text('원하는 상대 나이', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: AppSizes.gapS),
+              const MingrrSectionLabel('원하는 상대 나이'),
               _buildAgeSelector(),
               const SizedBox(height: AppSizes.gapXXL),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomButton(),
+      bottomNavigationBar: MingrrSubmitButtonBar(
+        label: _isEditMode ? FormStrings.edit : FormStrings.submit,
+        onPressed: _onSubmit,
+        isLoading: _isLoading,
+        backgroundColor: context.features.dating,
+      ),
     );
   }
 
@@ -191,7 +197,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
         );
       },
       loading: () => const MingrrLoadingState(),
-      error: (_, __) => const Text('강아지 목록을 불러올 수 없습니다'),
+      error: (_, __) => const Text('일시적인 오류가 발생했어요'),
     );
   }
 
@@ -211,46 +217,18 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
 
   Widget _buildGenderSelector() {
     final genders = [
-      (value: null, label: '무관', icon: null as IconData?),
-      (value: 'male', label: '남아', icon: Icons.male as IconData?),
-      (value: 'female', label: '여아', icon: Icons.female as IconData?),
+      (value: null as String?, label: '무관', icon: null as IconData?),
+      (value: 'male' as String?, label: '남아', icon: Icons.male as IconData?),
+      (value: 'female' as String?, label: '여아', icon: Icons.female as IconData?),
     ];
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: genders.map((gender) {
-        final isSelected = _preferredGender == gender.value;
-        return GestureDetector(
-          onTap: () => setState(() => _preferredGender = gender.value),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected ? context.features.dating : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected ? context.features.dating : Theme.of(context).colorScheme.outline,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (gender.icon != null) ...[
-                  Icon(gender.icon, size: 16, color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant),
-                  const SizedBox(width: 4),
-                ],
-                Text(
-                  gender.label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
+    return MingrrChipSelector<({String? value, String label, IconData? icon})>(
+      items: genders,
+      selectedItem: genders.firstWhere((g) => g.value == _preferredGender, orElse: () => genders.first),
+      onSelected: (gender) => setState(() => _preferredGender = gender.value),
+      labelBuilder: (gender) => gender.label,
+      iconBuilder: (gender) => gender.icon,
+      accentColor: context.features.dating,
     );
   }
 
@@ -300,80 +278,20 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
     );
   }
 
-  Widget _buildSameBreedSwitch() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.inputBackground,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('같은 품종만', style: TextStyle(fontWeight: FontWeight.w500)),
-              Text('같은 품종의 상대만 원해요', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-            ],
-          ),
-          Switch(
-            value: _sameBreedOnly,
-            onChanged: (value) => setState(() => _sameBreedOnly = value),
-            activeColor: Colors.white,
-            activeTrackColor: context.features.dating,
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: Theme.of(context).colorScheme.outlineVariant,
-            trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildAgeSelector() {
     final ages = [
-      (value: null, label: '무관'),
-      (value: 3, label: '~3살'),
-      (value: 5, label: '~5살'),
-      (value: 10, label: '~10살'),
+      (value: null as int?, label: '무관'),
+      (value: 3 as int?, label: '~3살'),
+      (value: 5 as int?, label: '~5살'),
+      (value: 10 as int?, label: '~10살'),
     ];
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: ages.map((age) {
-        final isSelected = _maxAge == age.value;
-        return GestureDetector(
-          onTap: () => setState(() => _maxAge = age.value),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected ? context.features.dating : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected ? context.features.dating : Theme.of(context).colorScheme.outline,
-              ),
-            ),
-            child: Text(
-              age.label,
-              style: TextStyle(
-                fontSize: 13,
-                color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildBottomButton() {
-    return MingrrSubmitButtonBar(
-      label: _isEditMode ? '수정' : '등록',
-      onPressed: _onSubmit,
-      isLoading: _isLoading,
-      backgroundColor: context.features.dating,
+    return MingrrChipSelector<({int? value, String label})>(
+      items: ages,
+      selectedItem: ages.firstWhere((a) => a.value == _maxAge, orElse: () => ages.first),
+      onSelected: (age) => setState(() => _maxAge = age.value),
+      labelBuilder: (age) => age.label,
+      accentColor: context.features.dating,
     );
   }
 
@@ -422,11 +340,11 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
 
       if (mounted) {
         Navigator.pop(context, true);
-        MingrrSnackBar.success(context, _isEditMode ? '교배 글이 수정되었습니다' : '교배 글이 등록되었습니다 🐶');
+        MingrrSnackBar.success(context, _isEditMode ? FormStrings.successUpdated : FormStrings.successCreated);
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '오류가 발생했습니다: $e');
+        MingrrSnackBar.error(context, '${FormStrings.errorGeneral}: $e');
       }
     } finally {
       if (mounted) {

@@ -8,6 +8,7 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
+import '../../../../core/constants/form_strings.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/utils/image_utils.dart';
@@ -16,6 +17,7 @@ import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/location_selector.dart';
+import '../../../../core/widgets/form_components.dart';
 import '../../../../core/widgets/tag_input.dart';
 import '../../../../models/group_model.dart';
 
@@ -90,12 +92,9 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
 
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: Text(_isEditMode ? '소모임 수정' : '소모임 만들기'),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: MingrrFormAppBar(
+        title: _isEditMode ? ScreenTitles.groupEdit : ScreenTitles.groupWrite,
+        onClose: () => Navigator.pop(context),
       ),
       body: Form(
         key: _formKey,
@@ -105,24 +104,31 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 대표 이미지
-              const Text('대표 이미지', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: AppSizes.gapS),
-              _buildImagePicker(),
+              const MingrrSectionLabel('대표 이미지', suffix: '(최대 10MB)'),
+              MingrrImagePicker.single(
+                existingUrl: _existingImageUrl,
+                selectedFile: _selectedImage,
+                onPickImage: _pickImage,
+                onRemove: () => setState(() {
+                  _existingImageUrl = null;
+                  _selectedImage = null;
+                }),
+                height: 180,
+              ),
               const SizedBox(height: AppSizes.gapXL),
 
               // 모임 종류
-              const Text('모임 종류', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: AppSizes.gapS),
+              const MingrrSectionLabel('모임 종류'),
               _buildTypeSelector(accentColor),
               const SizedBox(height: AppSizes.gapXL),
 
               // 모임 이름
               MingrrTextField(
                 controller: _nameController,
-                labelText: '모임 이름',
-                hintText: '모임 이름을 입력해주세요',
+                labelText: '소모임 이름',
+                hintText: '소모임 이름을 입력해주세요',
                 validator: (value) {
-                  if (value == null || value.isEmpty) return '모임 이름을 입력해주세요';
+                  if (value == null || value.isEmpty) return FormStrings.errorRequired;
                   return null;
                 },
               ),
@@ -131,27 +137,41 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
               // 모임 소개
               MingrrTextField(
                 controller: _descriptionController,
-                labelText: '모임 소개',
-                hintText: '모임에 대해 소개해주세요',
+                labelText: '소모임 소개',
+                hintText: '소모임에 대해 소개해주세요',
                 maxLines: 5,
                 validator: (value) {
-                  if (value == null || value.isEmpty) return '모임 소개를 입력해주세요';
+                  if (value == null || value.isEmpty) return FormStrings.errorRequired;
                   return null;
                 },
               ),
               const SizedBox(height: AppSizes.gapL),
 
               // 활동 지역
-              const Text('활동 지역', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-              const SizedBox(height: AppSizes.gapS),
-              _buildLocationSelector(accentColor),
+              MingrrSelectButton(
+                label: '활동 지역',
+                value: _selectedLocation,
+                placeholder: FormStrings.hintLocation,
+                icon: Icons.location_on_outlined,
+                onTap: () => showLocationSelectorWithCoordinates(
+                  context: context,
+                  initialLocation: _selectedLocation,
+                  accentColor: accentColor,
+                  onLocationResultSelected: (result) {
+                    setState(() {
+                      _selectedLocation = result.address;
+                      _selectedGeoPoint = result.location;
+                    });
+                  },
+                ),
+              ),
               const SizedBox(height: AppSizes.gapL),
 
               // 최대 인원
               MingrrTextField(
                 controller: _maxMembersController,
-                labelText: '최대 인원 (선택)',
-                hintText: '0 = 무제한',
+                labelText: '${FormStrings.labelMaxMembers} (${FormStrings.optional})',
+                hintText: FormStrings.hintMaxMembers,
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: AppSizes.gapL),
@@ -164,53 +184,45 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
                   _tags.addAll(tags);
                 }),
                 accentColor: accentColor,
-                labelText: '태그 (선택)',
+                labelText: '${FormStrings.labelTag} (${FormStrings.optional})',
               ),
               const SizedBox(height: AppSizes.gapL),
 
               // 설정
-              _buildSettingsSection(accentColor),
+              MingrrSwitchCard(
+                title: FormStrings.labelSettings,
+                accentColor: accentColor,
+                items: [
+                  MingrrSwitchItem(
+                    title: SwitchStrings.publicGroup,
+                    subtitle: SwitchStrings.publicGroupDesc,
+                    value: _isPublic,
+                    onChanged: (value) => setState(() => _isPublic = value),
+                  ),
+                  MingrrSwitchItem(
+                    title: SwitchStrings.requireApproval,
+                    subtitle: SwitchStrings.requireApprovalDesc,
+                    value: _requireApproval,
+                    onChanged: (value) => setState(() => _requireApproval = value),
+                  ),
+                  MingrrSwitchItem(
+                    title: SwitchStrings.petAccompanied,
+                    subtitle: SwitchStrings.petAccompaniedDesc,
+                    value: _isPetAccompanied,
+                    onChanged: (value) => setState(() => _isPetAccompanied = value),
+                  ),
+                ],
+              ),
               const SizedBox(height: AppSizes.gapXXL),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomButton(accentColor),
-    );
-  }
-
-  Widget _buildImagePicker() {
-    return GestureDetector(
-      onTap: _pickImage,
-      child: Container(
-        width: double.infinity,
-        height: 180,
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).colorScheme.outline),
-          image: _selectedImage != null
-              ? DecorationImage(
-                  image: FileImage(File(_selectedImage!.path)),
-                  fit: BoxFit.cover,
-                )
-              : _existingImageUrl != null
-                  ? DecorationImage(
-                      image: NetworkImage(_existingImageUrl!),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
-        ),
-        child: (_selectedImage == null && _existingImageUrl == null)
-            ? Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add_photo_alternate, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
-                  const SizedBox(height: 8),
-                  Text('이미지 추가', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
-                ],
-              )
-            : null,
+      bottomNavigationBar: MingrrSubmitButtonBar(
+        label: _isEditMode ? FormStrings.edit : FormStrings.submit,
+        onPressed: _onSubmit,
+        isLoading: _isLoading,
+        backgroundColor: accentColor,
       ),
     );
   }
@@ -269,152 +281,6 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
     }
   }
 
-  Widget _buildLocationSelector(Color accentColor) {
-    final hasLocation = _selectedLocation != null && _selectedLocation!.isNotEmpty;
-
-    return GestureDetector(
-      onTap: () => showLocationSelectorWithCoordinates(
-        context: context,
-        initialLocation: _selectedLocation,
-        accentColor: accentColor,
-        onLocationResultSelected: (result) {
-          setState(() {
-            _selectedLocation = result.address;
-            _selectedGeoPoint = result.location;
-          });
-        },
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(AppSizes.paddingM),
-        decoration: BoxDecoration(
-          color: hasLocation ? accentColor.withOpacity(0.08) : context.inputBackground,
-          border: Border.all(
-            color: hasLocation ? accentColor.withOpacity(0.3) : Theme.of(context).colorScheme.outline,
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: hasLocation ? accentColor.withOpacity(0.15) : Theme.of(context).colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(
-                hasLocation ? Icons.location_on : Icons.location_on_outlined,
-                size: 22,
-                color: hasLocation ? accentColor : Theme.of(context).colorScheme.outlineVariant,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                hasLocation ? _selectedLocation! : '활동 지역 선택',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: hasLocation ? FontWeight.w600 : FontWeight.w500,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              color: Theme.of(context).colorScheme.outlineVariant,
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSettingsSection(Color accentColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('설정', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-        const SizedBox(height: AppSizes.gapS),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: context.inputBackground,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            children: [
-              _buildSwitchRow(
-                title: '공개 모임',
-                subtitle: '누구나 모임을 볼 수 있습니다',
-                value: _isPublic,
-                onChanged: (value) => setState(() => _isPublic = value),
-                accentColor: accentColor,
-              ),
-              const Divider(),
-              _buildSwitchRow(
-                title: '가입 승인 필요',
-                subtitle: '관리자가 가입을 승인해야 합니다',
-                value: _requireApproval,
-                onChanged: (value) => setState(() => _requireApproval = value),
-                accentColor: accentColor,
-              ),
-              const Divider(),
-              _buildSwitchRow(
-                title: '반려동물 동반',
-                subtitle: '모임 활동 시 반려동물과 함께합니다',
-                value: _isPetAccompanied,
-                onChanged: (value) => setState(() => _isPetAccompanied = value),
-                accentColor: accentColor,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSwitchRow({
-    required String title,
-    required String subtitle,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-    required Color accentColor,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w500)),
-              Text(subtitle, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-            ],
-          ),
-        ),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeColor: Colors.white,
-          activeTrackColor: accentColor,
-          inactiveThumbColor: Colors.white,
-          inactiveTrackColor: Theme.of(context).colorScheme.outlineVariant,
-          trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBottomButton(Color accentColor) {
-    return MingrrSubmitButtonBar(
-      label: _isEditMode ? '수정' : '등록',
-      onPressed: _onSubmit,
-      isLoading: _isLoading,
-      backgroundColor: accentColor,
-    );
-  }
-
   Future<void> _pickImage() async {
     final croppedFile = await ImageUtils.pickCoverImage(
       context: context,
@@ -422,6 +288,18 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
     );
 
     if (croppedFile != null) {
+      // 파일 크기 검사
+      final fileSize = await croppedFile.length();
+      if (fileSize > ImageLimits.maxFileSizeBytes) {
+        if (mounted) {
+          final sizeMB = (fileSize / (1024 * 1024)).toStringAsFixed(1);
+          MingrrSnackBar.warning(
+            context, 
+            '이미지 크기가 너무 큽니다 (${sizeMB}MB). 최대 ${ImageLimits.maxFileSizeMB}MB까지 업로드 가능합니다',
+          );
+        }
+        return;
+      }
       setState(() => _selectedImage = XFile(croppedFile.path));
     }
   }
@@ -474,7 +352,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
 
       if (mounted) {
         Navigator.pop(context, true);
-        MingrrSnackBar.success(context, _isEditMode ? '모임이 수정되었습니다' : '모임이 생성되었습니다');
+        MingrrSnackBar.success(context, _isEditMode ? FormStrings.successUpdated : FormStrings.successCreated);
       }
     } catch (e) {
       if (mounted) {

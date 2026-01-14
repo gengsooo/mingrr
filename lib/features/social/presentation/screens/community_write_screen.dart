@@ -6,9 +6,13 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/form_strings.dart';
 import '../../../../core/services/firebase_service.dart';
+import '../../../../core/utils/video_utils.dart';
+import '../../../../core/utils/image_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/form_components.dart';
 import '../../../../core/widgets/tag_input.dart';
 import '../../../../models/community_post_model.dart';
 import '../providers/community_provider.dart';
@@ -35,6 +39,9 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
   CommunityCategory _selectedCategory = CommunityCategory.daily;
   final List<XFile> _selectedImages = [];
   final List<String> _existingImageUrls = [];
+  XFile? _selectedVideo;
+  String? _existingVideoUrl;
+  String? _existingVideoThumbnailUrl;
   final List<String> _tags = [];
   bool _isAnonymous = false;
   bool _isLoading = false;
@@ -49,6 +56,8 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
       _contentController.text = post.content;
       _selectedCategory = post.category;
       _existingImageUrls.addAll(post.imageUrls);
+      _existingVideoUrl = post.videoUrl;
+      _existingVideoThumbnailUrl = post.videoThumbnailUrl;
       _tags.addAll(post.tags);
       _isAnonymous = post.isAnonymous;
     }
@@ -67,41 +76,59 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: Text(_isEditMode ? '글 수정' : '글 작성'),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
-        ),
+      appBar: MingrrFormAppBar(
+        title: _isEditMode ? ScreenTitles.communityEdit : ScreenTitles.communityWrite,
+        onClose: () => Navigator.pop(context),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSizes.paddingL),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 사진
-            const Text('사진', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppSizes.gapS),
-            _buildImagePicker(),
+            // 사진/동영상
+            MingrrSectionLabel(
+              '미디어',
+              suffix: '(사진 최대 ${ImageLimits.maxImageCount}장, 동영상 ${VideoLimits.maxDurationSeconds}초)',
+            ),
+            MingrrMediaPicker(
+              existingImageUrls: _existingImageUrls,
+              selectedImages: _selectedImages,
+              onPickImages: _pickImages,
+              onRemoveExistingImage: (index) => setState(() => _existingImageUrls.removeAt(index)),
+              onRemoveSelectedImage: (index) => setState(() => _selectedImages.removeAt(index)),
+              maxImages: ImageLimits.maxImageCount,
+              existingVideoUrl: _existingVideoUrl,
+              existingVideoThumbnailUrl: _existingVideoThumbnailUrl,
+              selectedVideo: _selectedVideo,
+              onPickVideo: _pickVideo,
+              onRemoveVideo: () => setState(() {
+                _existingVideoUrl = null;
+                _existingVideoThumbnailUrl = null;
+                _selectedVideo = null;
+              }),
+            ),
             const SizedBox(height: AppSizes.gapXL),
 
             // 카테고리 선택
-            const Text('카테고리', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppSizes.gapS),
-            _buildCategorySelector(),
+            const MingrrSectionLabel(FormStrings.labelCategory),
+            MingrrChipSelector<CommunityCategory>(
+              items: CommunityCategory.values,
+              selectedItem: _selectedCategory,
+              onSelected: (category) => setState(() => _selectedCategory = category),
+              labelBuilder: (category) => category.label,
+              emojiBuilder: (category) => category.emoji,
+              accentColor: _accentColor,
+            ),
             const SizedBox(height: AppSizes.gapXL),
 
             // 본문 입력
-            const Text('내용', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-            const SizedBox(height: AppSizes.gapS),
+            const MingrrSectionLabel(FormStrings.labelContent, isRequired: true),
             Container(
               decoration: BoxDecoration(
                 color: context.inputBackground,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.3)),
               ),
               child: TextField(
@@ -109,7 +136,7 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
                 maxLines: 6,
                 maxLength: 2000,
                 decoration: InputDecoration(
-                  hintText: '내용을 입력해주세요',
+                  hintText: FormStrings.hintContent,
                   hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.all(16),
@@ -127,198 +154,102 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
                 _tags.addAll(tags);
               }),
               accentColor: _accentColor,
-              labelText: '태그 (선택)',
+              labelText: '${FormStrings.labelTag} (${FormStrings.optional})',
             ),
             const SizedBox(height: AppSizes.gapXL),
 
             // 익명 설정
-            _buildAnonymousSwitch(),
+            MingrrSwitchCard(
+              accentColor: _accentColor,
+              items: [
+                MingrrSwitchItem(
+                  title: SwitchStrings.anonymous,
+                  subtitle: SwitchStrings.anonymousDesc,
+                  value: _isAnonymous,
+                  onChanged: (value) => setState(() => _isAnonymous = value),
+                ),
+              ],
+            ),
             
             const SizedBox(height: AppSizes.gapXXL),
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomButton(),
-    );
-  }
-
-  Widget _buildBottomButton() {
-    return MingrrSubmitButtonBar(
-      label: _isEditMode ? '수정' : '등록',
-      onPressed: _onSubmit,
-      isLoading: _isLoading,
-      backgroundColor: _accentColor,
-    );
-  }
-
-  Widget _buildCategorySelector() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: CommunityCategory.values.map((category) {
-        final isSelected = _selectedCategory == category;
-        return GestureDetector(
-          onTap: () => setState(() => _selectedCategory = category),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected ? _accentColor : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected ? _accentColor : Theme.of(context).colorScheme.outline,
-              ),
-            ),
-            child: Text(
-              '${category.emoji} ${category.label}',
-              style: TextStyle(
-                fontSize: 13,
-                color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildImagePicker() {
-    final totalImages = _existingImageUrls.length + _selectedImages.length;
-    
-    return SizedBox(
-      height: 80,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          // 추가 버튼
-          GestureDetector(
-            onTap: _pickImages,
-            child: Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                border: Border.all(color: Theme.of(context).colorScheme.outline),
-                borderRadius: BorderRadius.circular(AppSizes.radiusM),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.camera_alt, color: Theme.of(context).colorScheme.outlineVariant),
-                  const SizedBox(height: 4),
-                  Text('$totalImages/5', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant)),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          // 기존 이미지
-          ..._existingImageUrls.asMap().entries.map((entry) {
-            return _buildImageTile(
-              imageUrl: entry.value,
-              onRemove: () => setState(() => _existingImageUrls.removeAt(entry.key)),
-            );
-          }),
-          // 새로 선택한 이미지
-          ..._selectedImages.asMap().entries.map((entry) {
-            return _buildImageTile(
-              file: File(entry.value.path),
-              onRemove: () => setState(() => _selectedImages.removeAt(entry.key)),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImageTile({String? imageUrl, File? file, required VoidCallback onRemove}) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Stack(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppSizes.radiusM),
-            child: imageUrl != null
-                ? Image.network(imageUrl, width: 80, height: 80, fit: BoxFit.cover)
-                : Image.file(file!, width: 80, height: 80, fit: BoxFit.cover),
-          ),
-          Positioned(
-            top: 4,
-            right: 4,
-            child: GestureDetector(
-              onTap: onRemove,
-              child: Container(
-                padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.black54,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.close, size: 14, color: Colors.white),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnonymousSwitch() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.inputBackground,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('익명으로 작성', style: TextStyle(fontWeight: FontWeight.w500)),
-                Text(
-                  '닉네임이 "익명"으로 표시됩니다',
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: _isAnonymous,
-            onChanged: (value) => setState(() => _isAnonymous = value),
-            activeColor: Colors.white,
-            activeTrackColor: _accentColor,
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: Theme.of(context).colorScheme.outlineVariant,
-            trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
-          ),
-        ],
+      bottomNavigationBar: MingrrSubmitButtonBar(
+        label: _isEditMode ? FormStrings.edit : FormStrings.submit,
+        onPressed: _onSubmit,
+        isLoading: _isLoading,
+        backgroundColor: _accentColor,
       ),
     );
   }
 
   Future<void> _pickImages() async {
     final picker = ImagePicker();
-    final remaining = 5 - (_existingImageUrls.length + _selectedImages.length);
+    final remaining = ImageLimits.maxImageCount - (_existingImageUrls.length + _selectedImages.length);
     
-    if (remaining <= 0) return;
+    if (remaining <= 0) {
+      MingrrSnackBar.warning(context, '이미지는 최대 ${ImageLimits.maxImageCount}장까지 업로드 가능합니다');
+      return;
+    }
     
     final images = await picker.pickMultiImage(
-      maxWidth: 1200,
-      maxHeight: 1200,
-      imageQuality: 80,
+      maxWidth: ImageLimits.maxResolution.toDouble(),
+      maxHeight: ImageLimits.maxResolution.toDouble(),
+      imageQuality: ImageLimits.imageQuality,
     );
     
     if (images.isNotEmpty) {
-      setState(() {
-        _selectedImages.addAll(images.take(remaining));
-      });
+      // 각 이미지 파일 크기 검사
+      final validImages = <XFile>[];
+      for (final image in images.take(remaining)) {
+        final file = File(image.path);
+        final fileSize = await file.length();
+        if (fileSize > ImageLimits.maxFileSizeBytes) {
+          if (mounted) {
+            final sizeMB = (fileSize / (1024 * 1024)).toStringAsFixed(1);
+            MingrrSnackBar.warning(
+              context, 
+              '이미지 크기가 너무 큽니다 (${sizeMB}MB). 최대 ${ImageLimits.maxFileSizeMB}MB까지 업로드 가능합니다',
+            );
+          }
+          continue;
+        }
+        validImages.add(image);
+      }
+      
+      if (validImages.isNotEmpty) {
+        setState(() {
+          _selectedImages.addAll(validImages);
+        });
+      }
+    }
+  }
+
+  Future<void> _pickVideo() async {
+    final picker = ImagePicker();
+    final video = await picker.pickVideo(
+      source: ImageSource.gallery,
+      maxDuration: Duration(seconds: VideoLimits.maxDurationSeconds),
+    );
+    
+    if (video != null) {
+      // 동영상 유효성 검사
+      final validation = await VideoUtils.validateVideo(video.path);
+      if (!validation.isValid) {
+        if (mounted) {
+          MingrrSnackBar.warning(context, validation.errorMessage ?? '동영상을 업로드할 수 없습니다');
+        }
+        return;
+      }
+      setState(() => _selectedVideo = video);
     }
   }
 
   Future<void> _onSubmit() async {
     final content = _contentController.text.trim();
     if (content.isEmpty) {
-      MingrrSnackBar.warning(context, '내용을 입력해주세요');
+      MingrrSnackBar.warning(context, FormStrings.errorContentRequired);
       return;
     }
 
@@ -337,6 +268,32 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
         uploadedUrls.add(url);
       }
 
+      // 동영상 업로드 및 썸네일 자동 생성
+      String? videoUrl = _existingVideoUrl;
+      String? videoThumbnailUrl = _existingVideoThumbnailUrl;
+      if (_selectedVideo != null) {
+        final videoId = const Uuid().v4();
+        
+        // 썸네일 생성
+        final thumbnailFile = await VideoUtils.generateThumbnail(_selectedVideo!.path);
+        
+        // 비디오와 썸네일 업로드
+        final result = await firebase.uploadVideoWithThumbnail(
+          File(_selectedVideo!.path),
+          'feeds/videos/$videoId',
+          thumbnailFile: thumbnailFile,
+          thumbnailPath: thumbnailFile != null ? 'feeds/thumbnails/$videoId.jpg' : null,
+        );
+        
+        videoUrl = result['videoUrl'];
+        videoThumbnailUrl = result['thumbnailUrl'];
+        
+        // 임시 썸네일 파일 삭제
+        if (thumbnailFile != null && await thumbnailFile.exists()) {
+          await thumbnailFile.delete();
+        }
+      }
+
       final notifier = ref.read(communityNotifierProvider.notifier);
       
       if (_isEditMode) {
@@ -344,29 +301,33 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
           postId: widget.post!.id,
           content: content,
           imageUrls: uploadedUrls,
+          videoUrl: videoUrl,
+          videoThumbnailUrl: videoThumbnailUrl,
           tags: _tags,
         );
         if (mounted) {
           Navigator.pop(context, true);
-          MingrrSnackBar.success(context, '글이 수정되었습니다');
+          MingrrSnackBar.success(context, FormStrings.successUpdated);
         }
       } else {
         final postId = await notifier.createPost(
           category: _selectedCategory,
           content: content,
           imageUrls: uploadedUrls,
+          videoUrl: videoUrl,
+          videoThumbnailUrl: videoThumbnailUrl,
           tags: _tags,
           isAnonymous: _isAnonymous,
         );
         
         if (mounted && postId != null) {
           Navigator.pop(context, true);
-          MingrrSnackBar.success(context, '글이 등록되었습니다');
+          MingrrSnackBar.success(context, FormStrings.successCreated);
         }
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '오류가 발생했습니다: $e');
+        MingrrSnackBar.error(context, '${FormStrings.errorGeneral}: $e');
       }
     } finally {
       if (mounted) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/svg_icons.dart';
@@ -35,7 +36,7 @@ class HealthScreen extends ConsumerWidget {
       ),
       body: petsAsync.when(
         loading: () => const MingrrLoadingState(),
-        error: (e, _) => MingrrErrorState(title: '오류가 발생했습니다', subtitle: '$e'),
+        error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
         data: (pets) {
           if (pets.isEmpty) {
             return _buildNoPetsView(context);
@@ -273,7 +274,7 @@ class HealthScreen extends ConsumerWidget {
                 height: 50,
                 decoration: BoxDecoration(
                   color: context.features.health.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Icon(category.icon, size: 24, color: context.features.health),
               ),
@@ -320,7 +321,7 @@ class HealthScreen extends ConsumerWidget {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(),
-      error: (e, _) => MingrrErrorState(subtitle: '$e'),
+      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       data: (records) {
         if (records.isEmpty) {
           return Center(
@@ -353,7 +354,7 @@ class HealthScreen extends ConsumerWidget {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(),
-      error: (e, _) => MingrrErrorState(subtitle: '$e'),
+      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       data: (records) {
         if (records.isEmpty) {
           return Center(
@@ -432,7 +433,7 @@ class HealthScreen extends ConsumerWidget {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(),
-      error: (e, _) => MingrrErrorState(subtitle: '$e'),
+      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
@@ -458,7 +459,7 @@ class HealthScreen extends ConsumerWidget {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(),
-      error: (e, _) => MingrrErrorState(subtitle: '$e'),
+      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
@@ -492,7 +493,7 @@ class HealthScreen extends ConsumerWidget {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(),
-      error: (e, _) => MingrrErrorState(subtitle: '$e'),
+      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
@@ -516,7 +517,7 @@ class HealthScreen extends ConsumerWidget {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(),
-      error: (e, _) => MingrrErrorState(subtitle: '$e'),
+      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
@@ -540,7 +541,7 @@ class HealthScreen extends ConsumerWidget {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(),
-      error: (e, _) => MingrrErrorState(subtitle: '$e'),
+      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
@@ -564,7 +565,7 @@ class HealthScreen extends ConsumerWidget {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(),
-      error: (e, _) => MingrrErrorState(subtitle: '$e'),
+      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
@@ -645,7 +646,7 @@ class HealthScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(color: Theme.of(context).colorScheme.outline),
         ),
         child: Row(
@@ -722,7 +723,7 @@ class HealthScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(color: Theme.of(context).colorScheme.outline),
         ),
         child: Row(

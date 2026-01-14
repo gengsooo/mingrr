@@ -45,8 +45,8 @@ class CommunityScreen extends ConsumerWidget {
                   return Center(
                     child: MingrrEmptyState(
                       svgAsset: SvgAssets.emptyList,
-                      title: '아직 게시글이 없어요',
-                      subtitle: '첫 번째 글을 작성해보세요!',
+                      title: '아직 데이터가 없어요',
+                      subtitle: '첫 번째 글을 작성해보세요',
                       buttonText: '글 작성하기',
                       onButtonPressed: () => _navigateToWrite(context),
                       accentColor: accentColor,
@@ -74,20 +74,11 @@ class CommunityScreen extends ConsumerWidget {
                 );
               },
               loading: () => const MingrrLoadingState(),
-              error: (e, _) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 48, color: colorScheme.error),
-                    const SizedBox(height: 16),
-                    Text('데이터를 불러올 수 없습니다', style: TextStyle(color: colorScheme.onSurfaceVariant)),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () => ref.invalidate(communityPostsProvider(selectedCategory)),
-                      child: const Text('다시 시도'),
-                    ),
-                  ],
-                ),
+              error: (_, __) => MingrrErrorState(
+                title: '일시적인 오류가 발생했어요',
+                subtitle: '잠시 후 다시 시도해주세요',
+                buttonText: '다시 시도',
+                onRetry: () => ref.invalidate(communityPostsProvider(selectedCategory)),
               ),
             ),
           ),
@@ -179,7 +170,7 @@ class _CategoryChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? accentColor : colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(
             color: isSelected ? accentColor : colorScheme.outline.withOpacity(0.3),
           ),

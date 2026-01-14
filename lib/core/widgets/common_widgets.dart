@@ -455,10 +455,11 @@ class MingrrEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(AppSizes.paddingXL),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             if (svgAsset != null)
               MingrrSvgIcon(
@@ -2081,7 +2082,7 @@ class MingrrErrorState extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              title ?? '오류가 발생했습니다',
+              title ?? '일시적인 오류가 발생했어요',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,

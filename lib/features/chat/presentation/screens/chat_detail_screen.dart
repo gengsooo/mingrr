@@ -11,6 +11,7 @@ import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../../../core/utils/image_utils.dart';
 import '../../../../core/widgets/rating_sheet.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
 import '../../../../core/widgets/pet_profile_modal.dart';
@@ -291,7 +292,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               color: Theme.of(context).colorScheme.surface,
               child: messagesAsync.when(
                 loading: () => const MingrrLoadingState(),
-                error: (e, _) => MingrrErrorState(subtitle: '$e'),
+                error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
                 data: (messages) {
                   // 검색 필터링
                   final filteredMessages = _searchQuery.isEmpty
@@ -1116,8 +1117,27 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final userId = ref.read(authStateProvider).valueOrNull?.uid;
     if (userId == null) return;
 
-    final picked = await _imagePicker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final picked = await _imagePicker.pickImage(
+      source: ImageSource.gallery, 
+      imageQuality: ImageLimits.imageQuality,
+      maxWidth: ImageLimits.maxResolution.toDouble(),
+      maxHeight: ImageLimits.maxResolution.toDouble(),
+    );
     if (picked == null) return;
+
+    // 파일 크기 검사
+    final file = File(picked.path);
+    final fileSize = await file.length();
+    if (fileSize > ImageLimits.maxFileSizeBytes) {
+      if (mounted) {
+        final sizeMB = (fileSize / (1024 * 1024)).toStringAsFixed(1);
+        MingrrSnackBar.warning(
+          context, 
+          '이미지 크기가 너무 큽니다 (${sizeMB}MB). 최대 ${ImageLimits.maxFileSizeMB}MB까지 전송 가능합니다',
+        );
+      }
+      return;
+    }
 
     setState(() {
       _isSending = true;
@@ -1127,7 +1147,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     try {
       // 이미지 업로드
       final imageUrl = await _firebaseService.uploadImage(
-        File(picked.path),
+        file,
         'chats/${widget.chatRoomId}/${DateTime.now().millisecondsSinceEpoch}.jpg',
       );
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/common_widgets.dart';
@@ -112,7 +113,7 @@ class GroupListScreen extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -351,8 +352,8 @@ class GroupListScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(32),
                 child: MingrrEmptyState(
                   svgAsset: SvgAssets.emptyGroup,
-                  title: '등록된 모임이 없습니다',
-                  subtitle: '새로운 모임을 만들어보세요!',
+                  title: '아직 데이터가 없어요',
+                  subtitle: '새로운 모임을 만들어보세요',
                 ),
               ),
             )
@@ -386,13 +387,13 @@ class GroupListScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
           child: Column(
             children: [
               Icon(Icons.groups_outlined, size: 40, color: colorScheme.outlineVariant),
               const SizedBox(height: 8),
-              Text('가입한 모임이 없습니다', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+              Text('아직 데이터가 없어요', style: TextStyle(color: colorScheme.onSurfaceVariant)),
             ],
           ),
         ),
@@ -480,7 +481,7 @@ class _MyGroupCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(color: accentColor.withOpacity(0.3)),
         ),
         child: Column(

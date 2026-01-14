@@ -61,8 +61,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
         if (matches.isEmpty) {
           return MingrrEmptyState(
             svgAsset: SvgAssets.emptyMatch,
-            title: '매칭 내역이 없어요',
-            subtitle: '데이팅에서 새로운 친구를 만나보세요!',
+            title: '아직 데이터가 없어요',
+            subtitle: '데이팅에서 새로운 친구를 만나보세요',
           );
         }
         return ListView.builder(
@@ -82,7 +82,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
         );
       },
       loading: () => const MingrrLoadingState(),
-      error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
+      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
     );
   }
   
@@ -93,8 +93,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
         if (transactions.isEmpty) {
           return MingrrEmptyState(
             svgAsset: SvgAssets.emptyTransaction,
-            title: '거래 내역이 없어요',
-            subtitle: '마켓에서 거래해보세요!',
+            title: '아직 데이터가 없어요',
+            subtitle: '마켓에서 거래해보세요',
           );
         }
         return ListView.builder(
@@ -114,7 +114,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
         );
       },
       loading: () => const MingrrLoadingState(),
-      error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
+      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
     );
   }
   
@@ -124,8 +124,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
         if (groups.isEmpty) {
           return MingrrEmptyState(
             svgAsset: SvgAssets.emptyGroup,
-            title: '모임 활동이 없어요',
-            subtitle: '소모임에 참여해보세요!',
+            title: '아직 데이터가 없어요',
+            subtitle: '소모임에 참여해보세요',
           );
         }
         return ListView.builder(
@@ -145,7 +145,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
         );
       },
       loading: () => const MingrrLoadingState(),
-      error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
+      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
     );
   }
   

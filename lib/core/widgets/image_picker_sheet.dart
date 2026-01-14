@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../constants/app_sizes.dart';
 import '../services/image_crop_service.dart';
+import '../utils/image_utils.dart';
 import 'common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
 
@@ -510,8 +511,9 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.camera,
-        maxWidth: 2000,
-        maxHeight: 2000,
+        maxWidth: ImageLimits.maxResolution.toDouble(),
+        maxHeight: ImageLimits.maxResolution.toDouble(),
+        imageQuality: ImageLimits.imageQuality,
       );
       
       if (image != null) {
@@ -528,8 +530,9 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 2000,
-        maxHeight: 2000,
+        maxWidth: ImageLimits.maxResolution.toDouble(),
+        maxHeight: ImageLimits.maxResolution.toDouble(),
+        imageQuality: ImageLimits.imageQuality,
       );
       
       if (image != null) {
@@ -543,15 +546,31 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
   }
   
   Future<void> _processImage(XFile image) async {
+    // 파일 크기 검사
+    if (!kIsWeb) {
+      final file = File(image.path);
+      final fileSize = await file.length();
+      if (fileSize > ImageLimits.maxFileSizeBytes) {
+        if (mounted) {
+          final sizeMB = (fileSize / (1024 * 1024)).toStringAsFixed(1);
+          MingrrSnackBar.warning(
+            context, 
+            '이미지 크기가 너무 큽니다 (${sizeMB}MB). 최대 ${ImageLimits.maxFileSizeMB}MB까지 업로드 가능합니다',
+          );
+        }
+        return;
+      }
+    }
+
     // 크롭 기능 활성화 & 모바일인 경우만 크롭 적용
     if (widget.enableCrop && !kIsWeb) {
       final croppedPath = await ImageCropService().cropImage(
         imagePath: image.path,
         style: widget.cropStyle,
         context: context,
-        maxWidth: 800,
-        maxHeight: 800,
-        compressQuality: 85,
+        maxWidth: ImageLimits.maxResolution,
+        maxHeight: ImageLimits.maxResolution,
+        compressQuality: ImageLimits.imageQuality,
       );
       
       if (croppedPath != null) {

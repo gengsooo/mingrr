@@ -142,7 +142,7 @@ class ChatListScreen extends ConsumerWidget {
             if (filteredRooms.isEmpty) {
               return MingrrEmptyState(
                 svgAsset: SvgAssets.emptyChat,
-                title: '${type.label} 채팅이 없어요',
+                title: '아직 데이터가 없어요',
                 subtitle: _getEmptyStateMessage(type),
               );
             }
@@ -156,10 +156,9 @@ class ChatListScreen extends ConsumerWidget {
             );
           },
           loading: () => const MingrrLoadingState(),
-          error: (_, __) => MingrrEmptyState(
-            svgAsset: SvgAssets.emptyChat,
-            title: '${type.label} 채팅을 불러올 수 없어요',
-            subtitle: '네트워크 연결을 확인해주세요',
+          error: (_, __) => const MingrrErrorState(
+            title: '일시적인 오류가 발생했어요',
+            subtitle: '잠시 후 다시 시도해주세요',
           ),
         );
       },
@@ -194,7 +193,7 @@ class ChatListScreen extends ConsumerWidget {
                 if (filteredRooms.isEmpty && pendingRequests.isEmpty) {
                   return MingrrEmptyState(
                     svgAsset: SvgAssets.emptyChat,
-                    title: '데이팅 채팅이 없어요',
+                    title: '아직 데이터가 없어요',
                     subtitle: _getEmptyStateMessage(ChatType.dating),
                   );
                 }

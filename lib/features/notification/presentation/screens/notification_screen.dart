@@ -99,8 +99,8 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
           if (notifications.isEmpty) {
             return const MingrrEmptyState(
               svgAsset: SvgAssets.emptyNotification,
-              title: '알림이 없습니다',
-              subtitle: '새로운 소식이 있으면 알려드릴게요!',
+              title: '아직 데이터가 없어요',
+              subtitle: '새로운 소식이 있으면 알려드릴게요',
             );
           }
           
@@ -132,7 +132,8 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
         },
         loading: () => const MingrrLoadingState(),
         error: (_, __) => MingrrErrorState(
-          title: '알림을 불러올 수 없습니다',
+          title: '일시적인 오류가 발생했어요',
+          subtitle: '잠시 후 다시 시도해주세요',
           buttonText: '다시 시도',
           onRetry: () => ref.invalidate(userNotificationsProvider),
         ),
@@ -145,8 +146,8 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     if (notifications.isEmpty) {
       return const MingrrEmptyState(
         svgAsset: SvgAssets.emptyNotification,
-        title: '알림이 없습니다',
-        subtitle: '새로운 소식이 있으면 알려드릴게요!',
+        title: '아직 데이터가 없어요',
+        subtitle: '새로운 소식이 있으면 알려드릴게요',
       );
     }
 

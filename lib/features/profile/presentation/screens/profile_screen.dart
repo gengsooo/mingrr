@@ -821,7 +821,7 @@ class ProfileScreen extends ConsumerWidget {
           color: isVerified
               ? context.features.success.withOpacity(0.1)
               : Theme.of(context).colorScheme.outline.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
         ),
         child: Center(
           child: Icon(badgeType.icon, size: 22, color: isVerified ? context.features.success : Theme.of(context).colorScheme.onSurfaceVariant),
@@ -1092,7 +1092,7 @@ class ProfileScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Row(
                   children: [
@@ -1194,7 +1194,7 @@ class ProfileScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Row(
                   children: [
@@ -1318,7 +1318,7 @@ class ProfileScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: colorScheme.outline.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   ),
                   child: Row(
                     children: [
@@ -1345,7 +1345,7 @@ class ProfileScreen extends ConsumerWidget {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Row(
                   children: [
@@ -2123,7 +2123,7 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: themeColor.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Row(
               children: [
@@ -2423,7 +2423,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             labelText: '동물등록번호',
             hintText: '15자리 숫자',
             prefixIcon: const Icon(Icons.tag),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppSizes.radiusS)),
             counterText: '',
           ),
           keyboardType: TextInputType.number,
@@ -2438,7 +2438,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             labelText: '소유자 성명',
             hintText: '실명을 입력해주세요',
             prefixIcon: const Icon(Icons.person_outline),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppSizes.radiusS)),
           ),
           keyboardType: TextInputType.name,
         ),
@@ -2560,7 +2560,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: successColor.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Column(
               children: [
@@ -2595,7 +2595,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: primaryColor.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Row(
               children: [
@@ -2743,7 +2743,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: primaryColor.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Row(
               children: [
@@ -2843,7 +2843,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isSelected ? colorScheme.primary.withOpacity(0.1) : colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(
             color: isSelected ? colorScheme.primary : Colors.transparent,
             width: 2,

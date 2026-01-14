@@ -71,6 +71,8 @@ class CommunityPostModel extends Equatable {
   final CommunityCategory category;
   final String content;
   final List<String> imageUrls;
+  final String? videoUrl;
+  final String? videoThumbnailUrl;
   final List<String> tags;
   final int likeCount;
   final int commentCount;
@@ -89,6 +91,8 @@ class CommunityPostModel extends Equatable {
     required this.category,
     required this.content,
     this.imageUrls = const [],
+    this.videoUrl,
+    this.videoThumbnailUrl,
     this.tags = const [],
     this.likeCount = 0,
     this.commentCount = 0,
@@ -106,6 +110,12 @@ class CommunityPostModel extends Equatable {
   /// 이미지가 있는지 확인
   bool get hasImages => imageUrls.isNotEmpty;
   
+  /// 동영상이 있는지 확인
+  bool get hasVideo => videoUrl != null && videoUrl!.isNotEmpty;
+  
+  /// 미디어(이미지 또는 동영상)가 있는지 확인
+  bool get hasMedia => hasImages || hasVideo;
+  
   /// 첫 번째 이미지
   String? get firstImage => imageUrls.isNotEmpty ? imageUrls.first : null;
 
@@ -121,6 +131,8 @@ class CommunityPostModel extends Equatable {
       ),
       content: data['content'] ?? '',
       imageUrls: List<String>.from(data['imageUrls'] ?? []),
+      videoUrl: data['videoUrl'],
+      videoThumbnailUrl: data['videoThumbnailUrl'],
       tags: List<String>.from(data['tags'] ?? []),
       likeCount: data['likeCount'] ?? 0,
       commentCount: data['commentCount'] ?? 0,
@@ -145,6 +157,8 @@ class CommunityPostModel extends Equatable {
       'category': category.name,
       'content': content,
       'imageUrls': imageUrls,
+      'videoUrl': videoUrl,
+      'videoThumbnailUrl': videoThumbnailUrl,
       'tags': tags,
       'likeCount': likeCount,
       'commentCount': commentCount,
@@ -165,6 +179,8 @@ class CommunityPostModel extends Equatable {
     CommunityCategory? category,
     String? content,
     List<String>? imageUrls,
+    String? videoUrl,
+    String? videoThumbnailUrl,
     List<String>? tags,
     int? likeCount,
     int? commentCount,
@@ -183,6 +199,8 @@ class CommunityPostModel extends Equatable {
       category: category ?? this.category,
       content: content ?? this.content,
       imageUrls: imageUrls ?? this.imageUrls,
+      videoUrl: videoUrl ?? this.videoUrl,
+      videoThumbnailUrl: videoThumbnailUrl ?? this.videoThumbnailUrl,
       tags: tags ?? this.tags,
       likeCount: likeCount ?? this.likeCount,
       commentCount: commentCount ?? this.commentCount,
@@ -198,8 +216,8 @@ class CommunityPostModel extends Equatable {
   @override
   List<Object?> get props => [
         id, authorId, authorName, authorProfileUrl, category, content,
-        imageUrls, tags, likeCount, commentCount, viewCount, isAnonymous,
-        location, geoPoint, createdAt, updatedAt,
+        imageUrls, videoUrl, videoThumbnailUrl, tags, likeCount, commentCount, 
+        viewCount, isAnonymous, location, geoPoint, createdAt, updatedAt,
       ];
 }
 

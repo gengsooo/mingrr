@@ -1,0 +1,115 @@
+rules_version = '2';
+
+// Firebase Storage 보안 규칙
+// 동영상 업로드 제한: 50MB, MP4/MOV/M4V 형식만 허용
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // 공통 함수: 인증된 사용자 확인
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // 공통 함수: 파일 소유자 확인
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // 동영상 파일 크기 제한 (50MB)
+    function isValidVideoSize() {
+      return request.resource.size <= 50 * 1024 * 1024;
+    }
+    
+    // 동영상 파일 형식 제한 (MP4, MOV, M4V)
+    function isValidVideoType() {
+      return request.resource.contentType.matches('video/mp4')
+          || request.resource.contentType.matches('video/quicktime')
+          || request.resource.contentType.matches('video/x-m4v');
+    }
+    
+    // 이미지 파일 크기 제한 (10MB)
+    function isValidImageSize() {
+      return request.resource.size <= 10 * 1024 * 1024;
+    }
+    
+    // 이미지 파일 형식 제한 (JPEG, PNG만 허용)
+    function isValidImageType() {
+      return request.resource.contentType.matches('image/jpeg')
+          || request.resource.contentType.matches('image/png');
+    }
+    
+    // 피드 이미지
+    match /feeds/{imageId} {
+      allow read: if true;
+      allow write: if isAuthenticated() 
+                   && isValidImageSize() 
+                   && isValidImageType();
+      allow delete: if isAuthenticated();
+    }
+    
+    // 피드 동영상
+    match /feeds/videos/{videoId} {
+      allow read: if true;
+      allow write: if isAuthenticated() 
+                   && isValidVideoSize() 
+                   && isValidVideoType();
+      allow delete: if isAuthenticated();
+    }
+    
+    // 피드 썸네일
+    match /feeds/thumbnails/{thumbnailId} {
+      allow read: if true;
+      allow write: if isAuthenticated() 
+                   && isValidImageSize() 
+                   && isValidImageType();
+      allow delete: if isAuthenticated();
+    }
+    
+    // 프로필 이미지
+    match /profiles/{userId}/{imageId} {
+      allow read: if true;
+      allow write: if isAuthenticated() 
+                   && isOwner(userId) 
+                   && isValidImageSize() 
+                   && isValidImageType();
+      allow delete: if isAuthenticated() && isOwner(userId);
+    }
+    
+    // 반려동물 이미지
+    match /pets/{petId}/{imageId} {
+      allow read: if true;
+      allow write: if isAuthenticated() 
+                   && isValidImageSize() 
+                   && isValidImageType();
+      allow delete: if isAuthenticated();
+    }
+    
+    // 상품 이미지
+    match /products/{productId}/{imageId} {
+      allow read: if true;
+      allow write: if isAuthenticated() 
+                   && isValidImageSize() 
+                   && isValidImageType();
+      allow delete: if isAuthenticated();
+    }
+    
+    // 소모임 이미지
+    match /groups/{groupId}/{imageId} {
+      allow read: if true;
+      allow write: if isAuthenticated() 
+                   && isValidImageSize() 
+                   && isValidImageType();
+      allow delete: if isAuthenticated();
+    }
+    
+    // 채팅 미디어
+    match /chats/{chatId}/{mediaId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() 
+                   && (isValidImageSize() || isValidVideoSize())
+                   && (isValidImageType() || isValidVideoType());
+      allow delete: if isAuthenticated();
+    }
+  }
+}

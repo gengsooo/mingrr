@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import '../services/firestore_service.dart';
@@ -8,6 +9,7 @@ import 'svg_icons.dart';
 import '../utils/format_utils.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/group_model.dart';
+import '../../models/community_post_model.dart';
 
 /// ============================================================
 /// 통합 검색 화면
@@ -139,7 +141,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           case SearchType.group:
             return _buildGroupItem(item as GroupModel);
           case SearchType.community:
-            return _buildCommunityPostItem(item); // TODO: CommunityPostModel
+            return _buildCommunityPostItem(item as CommunityPostModel);
           case SearchType.breeding:
             return _buildBreedingItem(item);
           case SearchType.job:
@@ -184,8 +186,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
         ),
         onTap: () {
-          // TODO: 상품 상세 화면으로 이동
-          Navigator.pop(context, product);
+          Navigator.pop(context);
+          context.push('/market/product/${product.id}');
         },
       ),
     );
@@ -230,7 +232,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           ],
         ),
         onTap: () {
-          Navigator.pop(context, group);
+          Navigator.pop(context);
+          context.push('/social/group/${group.id}');
         },
       ),
     );
@@ -259,7 +262,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
         ),
         onTap: () {
-          Navigator.pop(context, job);
+          Navigator.pop(context);
+          context.push('/market/job/${job.id}');
         },
       ),
     );
@@ -293,14 +297,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
         trailing: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
         onTap: () {
-          Navigator.pop(context, breeding);
+          Navigator.pop(context);
+          context.push('/dating/detail/${breeding.petId}');
         },
       ),
     );
   }
 
-  // TODO: 커뮤니티 게시글 검색 결과 아이템
-  Widget _buildCommunityPostItem(dynamic post) {
+  Widget _buildCommunityPostItem(CommunityPostModel post) {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       child: ListTile(
@@ -310,13 +314,50 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           decoration: BoxDecoration(
             color: context.features.socialContainer,
             borderRadius: BorderRadius.circular(8),
+            image: post.imageUrls.isNotEmpty
+                ? DecorationImage(
+                    image: NetworkImage(post.imageUrls.first),
+                    fit: BoxFit.cover,
+                  )
+                : null,
           ),
-          child: Icon(Icons.article, color: context.features.social),
+          child: post.imageUrls.isEmpty
+              ? Icon(Icons.article, color: context.features.social)
+              : null,
         ),
-        title: Text('게시글', maxLines: 1, overflow: TextOverflow.ellipsis),
-        subtitle: const Text('커뮤니티 게시글 검색 준비 중'),
+        title: Text(
+          post.content.length > 30 ? '${post.content.substring(0, 30)}...' : post.content,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: context.features.social.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Text(
+                post.category.label,
+                style: TextStyle(fontSize: 10, color: context.features.social),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.favorite, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
+            Text(' ${post.likeCount}', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant)),
+            const SizedBox(width: 8),
+            Icon(Icons.chat_bubble_outline, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
+            Text(' ${post.commentCount}', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant)),
+          ],
+        ),
+        trailing: Text(
+          formatRelativeTime(post.createdAt),
+          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+        ),
         onTap: () {
-          Navigator.pop(context, post);
+          Navigator.pop(context);
+          context.push('/social/community/${post.id}');
         },
       ),
     );
@@ -356,7 +397,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           results = await _firestoreService.searchGroups(trimmedQuery);
           break;
         case SearchType.community:
-          results = []; // TODO: searchCommunityPosts 구현 필요
+          results = await _firestoreService.searchCommunityPosts(trimmedQuery);
           break;
         case SearchType.breeding:
           results = await _firestoreService.searchBreedingPosts(trimmedQuery);

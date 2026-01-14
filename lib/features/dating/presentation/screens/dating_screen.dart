@@ -568,12 +568,12 @@ class DatingScreen extends ConsumerWidget {
             Icon(Icons.pets, size: 48, color: colorScheme.outlineVariant),
             const SizedBox(height: 16),
             Text(
-              '${distanceFilter.toInt()}km 내에 교배 가능한 반려동물이 없습니다',
+              '아직 데이터가 없어요',
               style: TextStyle(color: colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 8),
             Text(
-              '거리를 늘려보세요',
+              '거리를 늘리거나 필터를 조정해보세요',
               style: TextStyle(fontSize: 12, color: colorScheme.outlineVariant),
             ),
           ],
@@ -985,7 +985,7 @@ class DatingScreen extends ConsumerWidget {
                 Icon(Icons.location_off, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
                 const SizedBox(height: 16),
                 Text(
-                  '${distanceFilter.toInt()}km 내에 반려동물이 없습니다',
+                  '아직 데이터가 없어요',
                   style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 8),
@@ -1331,7 +1331,7 @@ class DatingScreen extends ConsumerWidget {
             );
           },
           loading: () => const MingrrLoadingState(),
-          error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
+          error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
         );
       },
     );

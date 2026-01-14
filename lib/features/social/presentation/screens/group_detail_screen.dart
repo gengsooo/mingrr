@@ -61,7 +61,11 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       body: groupAsync.when(
         data: (group) {
           if (group == null) {
-            return const Center(child: Text('모임을 찾을 수 없습니다'));
+            return const MingrrEmptyState(
+              icon: Icons.groups_outlined,
+              title: '아직 데이터가 없어요',
+              subtitle: '모임을 찾을 수 없습니다',
+            );
           }
 
           final myUserId = FirebaseService().currentUserId;
@@ -94,7 +98,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           );
         },
         loading: () => const MingrrLoadingState(),
-        error: (e, _) => Center(child: Text('오류: $e')),
+        error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       ),
       bottomNavigationBar: groupAsync.whenData((group) {
         if (group == null) return const SizedBox.shrink();
@@ -286,7 +290,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: colorScheme.surfaceContainerLow,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Text('#$tag', style: TextStyle(fontSize: 12, color: accentColor)),
               )).toList(),
@@ -324,7 +328,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Text(
               group.description,
@@ -340,7 +344,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Column(
               children: [
@@ -387,7 +391,8 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           return Center(
             child: MingrrEmptyState(
               svgAsset: SvgAssets.emptyGroup,
-              title: '멤버가 없습니다',
+              title: '아직 데이터가 없어요',
+              subtitle: '멤버가 없습니다',
             ),
           );
         }
@@ -402,7 +407,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Row(
                 children: [
@@ -569,8 +574,8 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           return Center(
             child: MingrrEmptyState(
               svgAsset: SvgAssets.emptySchedule,
-              title: '예정된 일정이 없습니다',
-              subtitle: isJoined ? '새로운 일정을 만들어보세요' : null,
+              title: '아직 데이터가 없어요',
+              subtitle: isJoined ? '새로운 일정을 만들어보세요' : '예정된 일정이 없습니다',
             ),
           );
         }
@@ -587,7 +592,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 border: isPast ? null : Border.all(color: accentColor.withOpacity(0.3)),
               ),
               child: Column(
@@ -663,7 +668,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         );
       },
       loading: () => const MingrrLoadingState(),
-      error: (_, __) => const Center(child: Text('일정을 불러올 수 없습니다')),
+      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
     );
   }
 

@@ -90,14 +90,14 @@ class TransactionHistoryScreen extends ConsumerWidget {
         if (products.isEmpty) {
           return MingrrEmptyState(
             svgAsset: SvgAssets.emptyTransaction,
-            title: '판매 내역이 없어요',
-            subtitle: '마켓에서 물건을 판매해보세요!',
+            title: '아직 데이터가 없어요',
+            subtitle: '마켓에서 물건을 판매해보세요',
           );
         }
         return _buildProductList(products, isSell: true);
       },
       loading: () => const MingrrLoadingState(),
-      error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
+      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
     );
   }
   
@@ -107,14 +107,14 @@ class TransactionHistoryScreen extends ConsumerWidget {
         if (products.isEmpty) {
           return MingrrEmptyState(
             svgAsset: SvgAssets.emptyTransaction,
-            title: '구매 내역이 없어요',
-            subtitle: '마켓에서 필요한 물건을 구매해보세요!',
+            title: '아직 데이터가 없어요',
+            subtitle: '마켓에서 필요한 물건을 구매해보세요',
           );
         }
         return _buildProductList(products, isSell: false);
       },
       loading: () => const MingrrLoadingState(),
-      error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
+      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
     );
   }
   

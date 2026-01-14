@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/svg_icons.dart';
@@ -254,7 +255,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
@@ -302,7 +303,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: context.features.walk.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Icon(Icons.pets, color: context.features.walk, size: 24),
               ),
@@ -511,7 +512,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   boxShadow: [
                     BoxShadow(
                       color: color.withOpacity(0.15),
@@ -627,7 +628,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
                   margin: const EdgeInsets.only(right: 8),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.outline,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   ),
                   child: Icon(
                     Icons.image,

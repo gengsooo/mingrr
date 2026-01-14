@@ -60,3 +60,30 @@ String formatCompactNumber(int number) {
   if (number < 1000000) return '${(number / 1000).toStringAsFixed(1)}K';
   return '${(number / 1000000).toStringAsFixed(1)}M';
 }
+
+/// 날짜/시간 포맷팅 (yyyy.MM.dd HH:mm)
+String formatDateTime(DateTime dateTime) {
+  return '${dateTime.year}.${dateTime.month}.${dateTime.day} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+}
+
+/// 날짜/시간 포맷팅 (yyyy년 MM월 dd일)
+String formatDateKorean(DateTime dateTime) {
+  return '${dateTime.year}년 ${dateTime.month}월 ${dateTime.day}일';
+}
+
+/// 시간만 포맷팅 (HH:mm)
+String formatTime(DateTime dateTime) {
+  return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+}
+
+/// 날짜/시간 포맷팅 (상대 시간 또는 절대 시간)
+/// 24시간 이내면 상대 시간, 그 이후면 절대 시간
+String formatSmartDateTime(DateTime dateTime) {
+  final now = DateTime.now();
+  final diff = now.difference(dateTime);
+  
+  if (diff.inHours < 24) {
+    return formatRelativeTime(dateTime);
+  }
+  return formatDateTime(dateTime);
+}

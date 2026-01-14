@@ -1089,7 +1089,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
-                    .collection('walk_records')
+                    .collection('walkRecords')
                     .where('userId', isEqualTo: user.uid)
                     .orderBy('startTime', descending: true)
                     .limit(20)

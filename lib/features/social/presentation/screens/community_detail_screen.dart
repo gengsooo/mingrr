@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:video_player/video_player.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
@@ -74,7 +75,11 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
       body: postAsync.when(
         data: (post) {
           if (post == null) {
-            return const Center(child: Text('게시글을 찾을 수 없습니다'));
+            return const MingrrEmptyState(
+              icon: Icons.article_outlined,
+              title: '아직 데이터가 없어요',
+              subtitle: '게시글을 찾을 수 없습니다',
+            );
           }
 
           return Column(
@@ -114,7 +119,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
           );
         },
         loading: () => const MingrrLoadingState(),
-        error: (e, _) => Center(child: Text('오류: $e')),
+        error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       ),
     );
   }
@@ -164,7 +169,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _formatDateTime(post.createdAt),
+                      formatDateTime(post.createdAt),
                       style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                     ),
                   ],
@@ -179,6 +184,12 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
             post.content,
             style: const TextStyle(fontSize: 15, height: 1.6),
           ),
+
+          // 동영상
+          if (post.hasVideo) ...[
+            const SizedBox(height: 16),
+            _buildVideoPlayer(context, post.videoUrl!, post.videoThumbnailUrl),
+          ],
 
           // 이미지
           if (post.hasImages) ...[
@@ -244,12 +255,110 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
     );
   }
 
+  Widget _buildVideoPlayer(BuildContext context, String videoUrl, String? thumbnailUrl) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return GestureDetector(
+      onTap: () => _playVideo(context, videoUrl),
+      child: Container(
+        width: double.infinity,
+        height: 220,
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // 썸네일
+            if (thumbnailUrl != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                child: Image.network(
+                  thumbnailUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _buildVideoPlaceholder(colorScheme),
+                ),
+              )
+            else
+              _buildVideoPlaceholder(colorScheme),
+            // 재생 버튼 오버레이
+            Center(
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.play_arrow,
+                  color: Colors.white,
+                  size: 40,
+                ),
+              ),
+            ),
+            // 동영상 표시
+            Positioned(
+              left: 12,
+              bottom: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.videocam, color: Colors.white, size: 16),
+                    SizedBox(width: 4),
+                    Text(
+                      '동영상',
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVideoPlaceholder(ColorScheme colorScheme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.videocam,
+          size: 48,
+          color: colorScheme.outlineVariant,
+        ),
+      ),
+    );
+  }
+
+  void _playVideo(BuildContext context, String videoUrl) {
+    // 외부 앱으로 동영상 재생 (추후 인앱 플레이어로 변경 가능)
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _VideoPlayerScreen(videoUrl: videoUrl),
+      ),
+    );
+  }
+
   Widget _buildImages(BuildContext context, List<String> imageUrls) {
     if (imageUrls.length == 1) {
       return GestureDetector(
         onTap: () => _showImageViewer(context, imageUrls, 0),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           child: Image.network(
             imageUrls.first,
             width: double.infinity,
@@ -275,7 +384,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
             child: Padding(
               padding: EdgeInsets.only(right: index < imageUrls.length - 1 ? 8 : 0),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 child: Image.network(
                   imageUrls[index],
                   width: 200,
@@ -376,7 +485,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('댓글을 불러올 수 없습니다')),
+            error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
           ),
           
           const SizedBox(height: 80),
@@ -777,10 +886,6 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
     }
   }
 
-  String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.year}.${dateTime.month}.${dateTime.day} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-  }
-
 }
 
 /// 이미지 뷰어 화면
@@ -845,6 +950,198 @@ class _ImageViewerScreenState extends State<_ImageViewerScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// 동영상 플레이어 화면
+class _VideoPlayerScreen extends StatefulWidget {
+  final String videoUrl;
+
+  const _VideoPlayerScreen({required this.videoUrl});
+
+  @override
+  State<_VideoPlayerScreen> createState() => _VideoPlayerScreenState();
+}
+
+class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
+  late VideoPlayerController _controller;
+  bool _isInitialized = false;
+  bool _hasError = false;
+  bool _showControls = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeVideo();
+  }
+
+  Future<void> _initializeVideo() async {
+    _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+    try {
+      await _controller.initialize();
+      _controller.addListener(_videoListener);
+      if (mounted) {
+        setState(() => _isInitialized = true);
+        _controller.play();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _hasError = true);
+      }
+    }
+  }
+
+  void _videoListener() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_videoListener);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text('동영상', style: TextStyle(color: Colors.white)),
+      ),
+      body: _hasError
+          ? _buildErrorState()
+          : _isInitialized
+              ? _buildVideoPlayer()
+              : _buildLoadingState(),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return const Center(
+      child: CircularProgressIndicator(color: Colors.white),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, color: Colors.white54, size: 64),
+          const SizedBox(height: 16),
+          const Text(
+            '동영상을 재생할 수 없습니다',
+            style: TextStyle(color: Colors.white, fontSize: 16),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              setState(() => _hasError = false);
+              _initializeVideo();
+            },
+            child: const Text('다시 시도'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVideoPlayer() {
+    return GestureDetector(
+      onTap: () => setState(() => _showControls = !_showControls),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // 동영상
+          Center(
+            child: AspectRatio(
+              aspectRatio: _controller.value.aspectRatio,
+              child: VideoPlayer(_controller),
+            ),
+          ),
+          // 컨트롤 오버레이
+          if (_showControls) ...[
+            // 재생/일시정지 버튼
+            GestureDetector(
+              onTap: () {
+                if (_controller.value.isPlaying) {
+                  _controller.pause();
+                } else {
+                  _controller.play();
+                }
+              },
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                  color: Colors.white,
+                  size: 40,
+                ),
+              ),
+            ),
+            // 하단 프로그레스 바
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    // 프로그레스 바
+                    VideoProgressIndicator(
+                      _controller,
+                      allowScrubbing: true,
+                      colors: const VideoProgressColors(
+                        playedColor: Colors.white,
+                        bufferedColor: Colors.white38,
+                        backgroundColor: Colors.white24,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    // 시간 표시
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _formatDuration(_controller.value.position),
+                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                        Text(
+                          _formatDuration(_controller.value.duration),
+                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

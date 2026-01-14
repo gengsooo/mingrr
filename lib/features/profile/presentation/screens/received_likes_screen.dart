@@ -69,7 +69,7 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
           );
         },
         loading: () => const MingrrLoadingState(),
-        error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
+        error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       ),
     );
   }
@@ -96,7 +96,7 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
           height: 60,
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.outline,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
         ),
         const SizedBox(width: 12),
@@ -121,7 +121,7 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
         GestureDetector(
           onTap: () => context.push('/dating/detail/${like.fromPetId}'),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
             child: pet?.displayImageUrl != null
                 ? Image.network(
                     pet!.displayImageUrl!,
@@ -193,7 +193,7 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
               color: like.status == LikeStatus.accepted 
                   ? context.features.success.withOpacity(0.1)
                   : Theme.of(context).colorScheme.outlineVariant.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Text(
               like.status == LikeStatus.accepted ? '수락됨' : '거절됨',
@@ -215,7 +215,7 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
       height: 60,
       decoration: BoxDecoration(
         color: context.features.datingContainer,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Icon(Icons.pets, color: context.features.dating, size: 30),
     );

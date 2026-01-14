@@ -7,8 +7,36 @@ import '../../models/rating_model.dart';
 import '../services/firebase_service.dart';
 import '../constants/pet_constants.dart';
 
+/// 테스트 데이터 ID 접두사 - 이 접두사로 시작하는 데이터만 테스트 데이터로 인식
+class TestDataPrefix {
+  static const String pet = 'test_pet_';
+  static const String product = 'test_product_';
+  static const String group = 'test_group_';
+  static const String job = 'test_job_';
+  static const String breeding = 'test_breeding_';
+  static const String like = 'test_like_';
+  static const String match = 'test_match_';
+  static const String chat = 'test_chat_';
+  static const String message = 'test_msg_';
+  static const String rating = 'test_rating_';
+  static const String user = 'test_user_';
+  static const String feedPost = 'test_feed_';
+  static const String schedule = 'test_schedule_';
+}
+
 class SeedData {
   final FirebaseService _firebase = FirebaseService();
+  
+  // 샘플 이미지 URL
+  static const _storageBaseUrl = 'https://firebasestorage.googleapis.com/v0/b/mingrr.firebasestorage.app/o';
+  static final sampleImages = [
+    '$_storageBaseUrl/pets%2Fsample%2Fdog1.jpg?alt=media',
+    '$_storageBaseUrl/pets%2Fsample%2Fdog2.jpg?alt=media',
+    '$_storageBaseUrl/pets%2Fsample%2Fdog3.jpg?alt=media',
+    '$_storageBaseUrl/pets%2Fsample%2Fdog4.jpg?alt=media',
+    '$_storageBaseUrl/pets%2Fsample%2Fdog5.jpg?alt=media',
+    '$_storageBaseUrl/pets%2Fsample%2Fdog6.jpg?alt=media',
+  ];
   
   Future<void> seedAll() async {
     print('🌱 더미 데이터 생성 시작...');
@@ -43,482 +71,170 @@ class SeedData {
   Future<void> _seedPets(List<String> userIds) async {
     final now = DateTime.now();
     
-    // Firebase Storage 테스트 이미지 URL (실제 업로드된 이미지 사용)
-    // 다양한 케이스 테스트: 프로필+추가사진, 프로필만, 추가사진만, 사진없음
-    const storageBaseUrl = 'https://firebasestorage.googleapis.com/v0/b/mingrr.firebasestorage.app/o';
-    
-    // 샘플 강아지 이미지 URL (Firebase Storage에 업로드된 이미지)
-    final sampleImages = [
-      '$storageBaseUrl/pets%2Fsample%2Fdog1.jpg?alt=media',
-      '$storageBaseUrl/pets%2Fsample%2Fdog2.jpg?alt=media',
-      '$storageBaseUrl/pets%2Fsample%2Fdog3.jpg?alt=media',
-      '$storageBaseUrl/pets%2Fsample%2Fdog4.jpg?alt=media',
-      '$storageBaseUrl/pets%2Fsample%2Fdog5.jpg?alt=media',
-      '$storageBaseUrl/pets%2Fsample%2Fdog6.jpg?alt=media',
+    // 다양한 견종, 성별, 나이, 성격 조합의 테스트 데이터
+    final petDataList = [
+      {'name': '초코', 'breed': '포메라니안', 'gender': 'female', 'weight': 3.5, 'ageDays': 365 * 2, 'neutered': true, 'traits': [PetTrait.active, PetTrait.friendly, PetTrait.affectionate], 'bio': '사람 좋아하는 초코에요! 산책을 좋아해요', 'hasProfile': true, 'photoCount': 3},
+      {'name': '골디', 'breed': '골든리트리버', 'gender': 'male', 'weight': 28.0, 'ageDays': 365 * 3, 'neutered': false, 'traits': [PetTrait.gentle, PetTrait.loyal, PetTrait.lovesPeople], 'bio': '착한 골디입니다. 아이들과 잘 놀아요', 'hasProfile': false, 'photoCount': 2},
+      {'name': '쿠키', 'breed': '토이푸들', 'gender': 'female', 'weight': 2.8, 'ageDays': 365, 'neutered': false, 'traits': [PetTrait.affectionate, PetTrait.playful, PetTrait.smart], 'bio': '귀여운 쿠키, 재롱 부리는 걸 좋아해요', 'hasProfile': true, 'photoCount': 0},
+      {'name': '코코', 'breed': '웰시코기', 'gender': 'male', 'weight': 12.5, 'ageDays': 365 * 4, 'neutered': true, 'traits': [PetTrait.brave, PetTrait.protective, PetTrait.loyal, PetTrait.active], 'bio': '에너지 넘치는 코코, 산책 많이 해야해요', 'hasProfile': true, 'photoCount': 4},
+      {'name': '시바', 'breed': '시바견', 'gender': 'female', 'weight': 9.0, 'ageDays': 365 * 2 + 180, 'neutered': false, 'traits': [PetTrait.independent, PetTrait.calm, PetTrait.smart], 'bio': '도도한 시바, 자기만의 시간이 필요해요', 'hasProfile': false, 'photoCount': 0},
+      {'name': '뭉치', 'breed': '비숑프리제', 'gender': 'male', 'weight': 5.5, 'ageDays': 365 * 5, 'neutered': true, 'traits': [PetTrait.friendly, PetTrait.playful, PetTrait.lovesPeople], 'bio': '모든 강아지와 친하게 지내요', 'hasProfile': false, 'photoCount': 1},
+      {'name': '하양이', 'breed': '말티즈', 'gender': 'female', 'weight': 2.5, 'ageDays': 365 * 7, 'neutered': true, 'traits': [PetTrait.shy, PetTrait.calm, PetTrait.affectionate], 'bio': '조용한 산책을 좋아하는 하양이', 'hasProfile': true, 'photoCount': 2},
+      {'name': '뽀미', 'breed': '포메라니안', 'gender': 'male', 'weight': 4.0, 'ageDays': 365, 'neutered': false, 'traits': [PetTrait.active, PetTrait.playful, PetTrait.brave], 'bio': '활발한 뽀미, 같이 뛰어놀 친구 찾아요', 'hasProfile': false, 'photoCount': 0},
+      {'name': '백구', 'breed': '진돗개', 'gender': 'male', 'weight': 22.0, 'ageDays': 365 * 3, 'neutered': false, 'traits': [PetTrait.loyal, PetTrait.protective, PetTrait.brave, PetTrait.independent], 'bio': '충성스러운 백구, 등산 좋아해요', 'hasProfile': false, 'photoCount': 2},
+      {'name': '슈슈', 'breed': '미니어처 슈나우저', 'gender': 'female', 'weight': 7.0, 'ageDays': 365 * 2, 'neutered': true, 'traits': [PetTrait.smart, PetTrait.active, PetTrait.friendly], 'bio': '똑똒한 슈슈, 훈련을 잘 받아요', 'hasProfile': true, 'photoCount': 3},
+      {'name': '래브', 'breed': '래브라도 리트리버', 'gender': 'female', 'weight': 25.0, 'ageDays': 365 * 6, 'neutered': true, 'traits': [PetTrait.gentle, PetTrait.calm, PetTrait.lovesPeople], 'bio': '온순한 래브, 물놀이를 좋아해요', 'hasProfile': false, 'photoCount': 0},
+      {'name': '치치', 'breed': '치와와', 'gender': 'male', 'weight': 1.8, 'ageDays': 365 * 4, 'neutered': true, 'traits': [PetTrait.shy, PetTrait.affectionate, PetTrait.protective], 'bio': '작지만 용감한 치치', 'hasProfile': true, 'photoCount': 0},
+      {'name': '비비', 'breed': '비글', 'gender': 'female', 'weight': 10.0, 'ageDays': 365 + 180, 'neutered': false, 'traits': [PetTrait.friendly, PetTrait.active, PetTrait.playful], 'bio': '호기심 많은 비비, 냄새 맡는 걸 좋아해요', 'hasProfile': true, 'photoCount': 3},
+      {'name': '하늘이', 'breed': '시베리안 허스키', 'gender': 'male', 'weight': 23.0, 'ageDays': 365 * 2, 'neutered': false, 'traits': [PetTrait.independent, PetTrait.active, PetTrait.playful], 'bio': '달리기를 좋아하는 하늘이', 'hasProfile': false, 'photoCount': 2},
+      {'name': '크림', 'breed': '토이푸들', 'gender': 'male', 'weight': 3.2, 'ageDays': 180, 'neutered': true, 'traits': [PetTrait.gentle, PetTrait.calm, PetTrait.shy], 'bio': '쿠키의 동생 크림이, 낯가림이 있어요', 'hasProfile': false, 'photoCount': 0},
     ];
     
-    // 다양한 경우의 수를 테스트할 수 있는 펫 데이터
-    final pets = [
-      // 케이스 1: 프로필 + 추가사진 모두 있음
-      {
-        'id': 'dog_001',
-        'ownerId': userIds[0],
-        'name': '초코',
-        'breed': '포메라니안',
-        'gender': 'female',
-        'weight': 3.5,
-        'birthDate': now.subtract(const Duration(days: 365 * 2)), // 2살
-        'isNeutered': true,
-        'traits': [PetTrait.active, PetTrait.friendly, PetTrait.affectionate],
-        'bio': '사람 좋아하는 초코에요! 산책을 좋아해요',
-        'profileImageUrl': sampleImages[0],
-        'photoUrls': [sampleImages[0], sampleImages[1], sampleImages[2]],
-      },
-      // 케이스 2: 추가사진만 있음 (프로필 없음)
-      {
-        'id': 'dog_002',
-        'ownerId': userIds[1],
-        'name': '골디',
-        'breed': '골든리트리버',
-        'gender': 'male',
-        'weight': 28.0,
-        'birthDate': now.subtract(const Duration(days: 365 * 3)), // 3살
-        'isNeutered': false,
-        'traits': [PetTrait.gentle, PetTrait.loyal, PetTrait.lovesPeople],
-        'bio': '착한 골디입니다. 아이들과 잘 놀아요',
-        'profileImageUrl': null,
-        'photoUrls': [sampleImages[1], sampleImages[2]],
-      },
-      // 케이스 3: 프로필만 있음 (추가사진 없음)
-      {
-        'id': 'dog_003',
-        'ownerId': userIds[2],
-        'name': '쿠키',
-        'breed': '토이푸들',
-        'gender': 'female',
-        'weight': 2.8,
-        'birthDate': now.subtract(const Duration(days: 365)), // 1살
-        'isNeutered': false,
-        'traits': [PetTrait.affectionate, PetTrait.playful, PetTrait.smart],
-        'bio': '귀여운 쿠키, 재롱 부리는 걸 좋아해요',
-        'profileImageUrl': sampleImages[2],
-        'photoUrls': <String>[],
-      },
-      // 케이스 4: 사진 없음 (프로필, 추가사진 모두 없음)
-      {
-        'id': 'dog_004',
-        'ownerId': userIds[2],
-        'name': '크림',
-        'breed': '토이푸들',
-        'gender': 'male',
-        'weight': 3.2,
-        'birthDate': now.subtract(const Duration(days: 180)), // 6개월
-        'isNeutered': true,
-        'traits': [PetTrait.gentle, PetTrait.calm, PetTrait.shy],
-        'bio': '쿠키의 동생 크림이, 낯가림이 있어요',
-        'profileImageUrl': null,
-        'photoUrls': <String>[],
-      },
-      // 케이스 5: 추가사진 여러장
-      {
-        'id': 'dog_005',
-        'ownerId': userIds[3],
-        'name': '코코',
-        'breed': '웰시코기',
-        'gender': 'male',
-        'weight': 12.5,
-        'birthDate': now.subtract(const Duration(days: 365 * 4)), // 4살
-        'isNeutered': true,
-        'traits': [PetTrait.brave, PetTrait.protective, PetTrait.loyal, PetTrait.active],
-        'bio': '에너지 넘치는 코코, 산책 많이 해야해요',
-        'profileImageUrl': sampleImages[3],
-        'photoUrls': [sampleImages[3], sampleImages[4], sampleImages[5], sampleImages[0]],
-      },
-      // 케이스 6: 사진 없음
-      {
-        'id': 'dog_006',
-        'ownerId': userIds[4],
-        'name': '시바',
-        'breed': '시바견',
-        'gender': 'female',
-        'weight': 9.0,
-        'birthDate': now.subtract(const Duration(days: 365 * 2 + 180)), // 2.5살
-        'isNeutered': false,
-        'traits': [PetTrait.independent, PetTrait.calm, PetTrait.smart],
-        'bio': '도도한 시바, 자기만의 시간이 필요해요',
-        'profileImageUrl': null,
-        'photoUrls': <String>[],
-      },
-      // 케이스 7: 추가사진만 1장
-      {
-        'id': 'dog_007',
-        'ownerId': userIds[5],
-        'name': '뭉치',
-        'breed': '비숑프리제',
-        'gender': 'male',
-        'weight': 5.5,
-        'birthDate': now.subtract(const Duration(days: 365 * 5)), // 5살
-        'isNeutered': true,
-        'traits': [PetTrait.friendly, PetTrait.playful, PetTrait.lovesPeople, PetTrait.affectionate],
-        'bio': '모든 강아지와 친하게 지내요',
-        'profileImageUrl': null,
-        'photoUrls': [sampleImages[4]],
-      },
-      // 케이스 8: 프로필 + 추가사진 모두 있음
-      {
-        'id': 'dog_008',
-        'ownerId': userIds[6],
-        'name': '하양이',
-        'breed': '말티즈',
-        'gender': 'female',
-        'weight': 2.5,
-        'birthDate': now.subtract(const Duration(days: 365 * 7)), // 7살 (노령견)
-        'isNeutered': true,
-        'traits': [PetTrait.shy, PetTrait.calm, PetTrait.affectionate],
-        'bio': '조용한 산책을 좋아하는 하양이',
-        'profileImageUrl': sampleImages[5],
-        'photoUrls': [sampleImages[5], sampleImages[0]],
-      },
-      // 케이스 9: 사진 없음
-      {
-        'id': 'dog_009',
-        'ownerId': userIds[7],
-        'name': '뽀미',
-        'breed': '포메라니안',
-        'gender': 'male',
-        'weight': 4.0,
-        'birthDate': now.subtract(const Duration(days: 365)), // 1살
-        'isNeutered': false,
-        'traits': [PetTrait.active, PetTrait.playful, PetTrait.brave],
-        'bio': '활발한 뽀미, 같이 뛰어놀 친구 찾아요',
-        'profileImageUrl': null,
-        'photoUrls': <String>[],
-      },
-      // 케이스 10: 추가사진만 있음
-      {
-        'id': 'dog_010',
-        'ownerId': userIds[8],
-        'name': '백구',
-        'breed': '진돗개',
-        'gender': 'male',
-        'weight': 22.0,
-        'birthDate': now.subtract(const Duration(days: 365 * 3)), // 3살
-        'isNeutered': false,
-        'traits': [PetTrait.loyal, PetTrait.protective, PetTrait.brave, PetTrait.independent],
-        'bio': '충성스러운 백구, 등산 좋아해요',
-        'profileImageUrl': null,
-        'photoUrls': [sampleImages[1], sampleImages[3]],
-      },
-      // 케이스 11: 프로필 + 추가사진 모두 있음
-      {
-        'id': 'dog_011',
-        'ownerId': userIds[9],
-        'name': '슈슈',
-        'breed': '미니어처 슈나우저',
-        'gender': 'female',
-        'weight': 7.0,
-        'birthDate': now.subtract(const Duration(days: 365 * 2)), // 2살
-        'isNeutered': true,
-        'traits': [PetTrait.smart, PetTrait.active, PetTrait.friendly, PetTrait.playful],
-        'bio': '똑똒한 슈슈, 훈련을 잘 받아요',
-        'profileImageUrl': sampleImages[2],
-        'photoUrls': [sampleImages[2], sampleImages[4], sampleImages[5]],
-      },
-      // 케이스 12: 사진 없음
-      {
-        'id': 'dog_012',
-        'ownerId': userIds[0],
-        'name': '래브',
-        'breed': '래브라도 리트리버',
-        'gender': 'female',
-        'weight': 25.0,
-        'birthDate': now.subtract(const Duration(days: 365 * 6)), // 6살
-        'isNeutered': true,
-        'traits': [PetTrait.gentle, PetTrait.calm, PetTrait.lovesPeople, PetTrait.loyal],
-        'bio': '온순한 래브, 물놀이를 좋아해요',
-        'profileImageUrl': null,
-        'photoUrls': <String>[],
-      },
-      // 케이스 13: 프로필만 있음
-      {
-        'id': 'dog_013',
-        'ownerId': userIds[1],
-        'name': '치치',
-        'breed': '치와와',
-        'gender': 'male',
-        'weight': 1.8,
-        'birthDate': now.subtract(const Duration(days: 365 * 4)), // 4살
-        'isNeutered': true,
-        'traits': [PetTrait.shy, PetTrait.affectionate, PetTrait.protective],
-        'bio': '작지만 용감한 치치',
-        'profileImageUrl': sampleImages[0],
-        'photoUrls': <String>[],
-      },
-      // 케이스 14: 추가사진 여러장
-      {
-        'id': 'dog_014',
-        'ownerId': userIds[3],
-        'name': '비비',
-        'breed': '비글',
-        'gender': 'female',
-        'weight': 10.0,
-        'birthDate': now.subtract(const Duration(days: 365 + 180)), // 1.5살
-        'isNeutered': false,
-        'traits': [PetTrait.friendly, PetTrait.active, PetTrait.playful, PetTrait.smart],
-        'bio': '호기심 많은 비비, 냄새 맡는 걸 좋아해요',
-        'profileImageUrl': sampleImages[3],
-        'photoUrls': [sampleImages[3], sampleImages[1], sampleImages[5]],
-      },
-      // 케이스 15: 추가사진만 있음
-      {
-        'id': 'dog_015',
-        'ownerId': userIds[5],
-        'name': '하늘이',
-        'breed': '시베리안 허스키',
-        'gender': 'male',
-        'weight': 23.0,
-        'birthDate': now.subtract(const Duration(days: 365 * 2)), // 2살
-        'isNeutered': false,
-        'traits': [PetTrait.independent, PetTrait.active, PetTrait.playful, PetTrait.brave],
-        'bio': '달리기를 좋아하는 하늘이',
-        'profileImageUrl': null,
-        'photoUrls': [sampleImages[4], sampleImages[2]],
-      },
-    ];
-    
-    for (int i = 0; i < pets.length; i++) {
-      final petData = pets[i];
-      // 첫번째 펫만 isPrimary = true
-      final isPrimary = i == 0 || 
-          (i > 0 && petData['ownerId'] != pets[i - 1]['ownerId']);
+    for (int i = 0; i < petDataList.length; i++) {
+      final data = petDataList[i];
+      final ownerId = userIds[i % userIds.length];
+      final petId = '${TestDataPrefix.pet}${(i + 1).toString().padLeft(3, '0')}';
+      
+      // 이미지 설정
+      final hasProfile = data['hasProfile'] as bool;
+      final photoCount = data['photoCount'] as int;
+      final profileImage = hasProfile ? sampleImages[i % sampleImages.length] : null;
+      final photos = <String>[];
+      for (int j = 0; j < photoCount; j++) {
+        photos.add(sampleImages[(i + j) % sampleImages.length]);
+      }
       
       final pet = PetModel(
-        id: petData['id'] as String,
-        ownerId: petData['ownerId'] as String,
-        isPrimary: isPrimary,
-        name: petData['name'] as String,
-        breed: petData['breed'] as String,
-        birthDate: petData['birthDate'] as DateTime?,
-        gender: petData['gender'] == 'male' ? PetGender.male : PetGender.female,
-        weight: petData['weight'] as double,
-        isNeutered: petData['isNeutered'] as bool,
-        traits: (petData['traits'] as List<PetTrait>),
-        bio: petData['bio'] as String,
-        profileImageUrl: petData['profileImageUrl'] as String?,
-        photoUrls: (petData['photoUrls'] as List<String>?) ?? [],
-        isRegistrationVerified: true,
-        isVaccinationVerified: true,
-        hasPedigree: false,
-        isBreedingAvailable: !(petData['isNeutered'] as bool),
+        id: petId,
+        ownerId: ownerId,
+        isPrimary: i % 3 == 0, // 3개 중 1개만 대표
+        name: data['name'] as String,
+        breed: data['breed'] as String,
+        birthDate: now.subtract(Duration(days: data['ageDays'] as int)),
+        gender: data['gender'] == 'male' ? PetGender.male : PetGender.female,
+        weight: data['weight'] as double,
+        isNeutered: data['neutered'] as bool,
+        traits: List<PetTrait>.from(data['traits'] as List),
+        bio: data['bio'] as String,
+        profileImageUrl: profileImage,
+        photoUrls: photos,
+        isRegistrationVerified: i % 2 == 0,
+        isVaccinationVerified: i % 3 == 0,
+        hasPedigree: i % 5 == 0,
+        isBreedingAvailable: !(data['neutered'] as bool),
         healthBookEnabled: true,
         enabledHealthCategories: [HealthCategory.weight, HealthCategory.vaccination, HealthCategory.walk],
         walkFeatureEnabled: true,
-        likeCount: i * 2, // 다양한 좋아요 수
-        createdAt: now,
+        likeCount: (i + 1) * 3,
+        createdAt: now.subtract(Duration(days: i * 2)),
         updatedAt: now,
       );
       
       await _firebase.petsCollection.doc(pet.id).set(pet.toFirestore());
-      
-      await _firebase.usersCollection.doc(pet.ownerId).update({
-        'petIds': FieldValue.arrayUnion([pet.id]),
-      });
     }
+    print('  ✓ 반려동물 ${petDataList.length}마리 생성 완료');
   }
   
   Future<void> _seedProducts(List<String> userIds) async {
     final now = DateTime.now();
     
-    final products = [
-      {
-        'sellerId': userIds[0],
-        'title': '강아지 옷 (소형견용)',
-        'description': '한번도 안입은 새상품입니다. 사이즈가 안맞아서 팔아요.',
-        'price': 15000,
-        'type': 'sell',
-        'category': 'clothes',
-        'location': const GeoPoint(37.5665, 126.9780),
-        'address': '서울시 중구',
-      },
-      {
-        'sellerId': userIds[1],
-        'title': '강아지 사료 나눔',
-        'description': '우리 강아지가 안먹어서 나눔합니다. 유통기한 충분해요.',
-        'price': 0,
-        'type': 'share',
-        'category': 'food',
-        'location': const GeoPoint(37.4979, 127.0276),
-        'address': '서울시 강남구',
-      },
-      {
-        'sellerId': userIds[2],
-        'title': '강아지 장난감 세트',
-        'description': '거의 새것입니다. 5개 세트로 판매해요.',
-        'price': 20000,
-        'type': 'sell',
-        'category': 'toys',
-        'location': const GeoPoint(37.5172, 127.0473),
-        'address': '서울시 송파구',
-      },
-      {
-        'sellerId': userIds[3],
-        'title': '강아지 이동장 (중형견)',
-        'description': '깨끗하게 사용했습니다. 직거래 선호',
-        'price': 50000,
-        'type': 'sell',
-        'category': 'supplies',
-        'location': const GeoPoint(37.5219, 126.9245),
-        'address': '서울시 마포구',
-      },
-      {
-        'sellerId': userIds[4],
-        'title': '강아지 목줄 나눔',
-        'description': '사이즈가 안맞아서 나눔합니다',
-        'price': 0,
-        'type': 'share',
-        'category': 'supplies',
-        'location': const GeoPoint(37.5326, 126.9910),
-        'address': '서울시 용산구',
-      },
+    // 다양한 상품 데이터 (판매/나눔, 다양한 카테고리, 가격대)
+    final productDataList = [
+      {'title': '강아지 옷 (소형견용)', 'desc': '한번도 안입은 새상품입니다. 사이즈가 안맞아서 팔아요.', 'price': 15000, 'type': 'sell', 'category': 'clothes', 'lat': 37.5665, 'lng': 126.9780, 'address': '서울시 중구'},
+      {'title': '강아지 사료 나눔', 'desc': '우리 강아지가 안먹어서 나눔합니다. 유통기한 충분해요.', 'price': 0, 'type': 'share', 'category': 'food', 'lat': 37.4979, 'lng': 127.0276, 'address': '서울시 강남구'},
+      {'title': '강아지 장난감 세트', 'desc': '거의 새것입니다. 5개 세트로 판매해요.', 'price': 20000, 'type': 'sell', 'category': 'toys', 'lat': 37.5172, 'lng': 127.0473, 'address': '서울시 송파구'},
+      {'title': '강아지 이동장 (중형견)', 'desc': '깨끗하게 사용했습니다. 직거래 선호', 'price': 50000, 'type': 'sell', 'category': 'supplies', 'lat': 37.5219, 'lng': 126.9245, 'address': '서울시 마포구'},
+      {'title': '강아지 목줄 나눔', 'desc': '사이즈가 안맞아서 나눔합니다', 'price': 0, 'type': 'share', 'category': 'supplies', 'lat': 37.5326, 'lng': 126.9910, 'address': '서울시 용산구'},
+      {'title': '프리미엄 사료 로얄캐닌 3kg', 'desc': '개봉했지만 거의 안먹었어요. 반값에 드려요.', 'price': 25000, 'type': 'sell', 'category': 'food', 'lat': 37.5045, 'lng': 127.0498, 'address': '서울시 강남구'},
+      {'title': '강아지 방석 (대형)', 'desc': '세탁 완료! 깨끗합니다.', 'price': 30000, 'type': 'sell', 'category': 'supplies', 'lat': 37.5662, 'lng': 126.9784, 'address': '서울시 종로구'},
+      {'title': '간식 모음 나눔', 'desc': '유통기한 임박이라 나눔해요', 'price': 0, 'type': 'share', 'category': 'food', 'lat': 37.5133, 'lng': 127.1001, 'address': '서울시 강동구'},
+      {'title': '강아지 유모차', 'desc': '노령견용으로 구매했는데 안써서 팔아요', 'price': 80000, 'type': 'sell', 'category': 'supplies', 'lat': 37.5172, 'lng': 127.0473, 'address': '서울시 송파구'},
+      {'title': '겨울 패딩 조끼', 'desc': '따뜻한 패딩 조끼입니다. S사이즈', 'price': 25000, 'type': 'sell', 'category': 'clothes', 'lat': 37.5219, 'lng': 126.9245, 'address': '서울시 마포구'},
+      {'title': '터그 장난감 나눔', 'desc': '새상품인데 우리 강아지가 안좋아해요', 'price': 0, 'type': 'share', 'category': 'toys', 'lat': 37.5665, 'lng': 126.9780, 'address': '서울시 중구'},
+      {'title': '자동 급식기', 'desc': '타이머 설정 가능, 정상 작동합니다', 'price': 45000, 'type': 'sell', 'category': 'supplies', 'lat': 37.4979, 'lng': 127.0276, 'address': '서울시 강남구'},
+      {'title': '강아지 샴푸 세트', 'desc': '피부가 예민한 아이용 저자극 샴푸', 'price': 18000, 'type': 'sell', 'category': 'supplies', 'lat': 37.5326, 'lng': 126.9910, 'address': '서울시 용산구'},
+      {'title': '레인코트 (중형견)', 'desc': '비오는 날 산책용, 거의 새것', 'price': 20000, 'type': 'sell', 'category': 'clothes', 'lat': 37.5045, 'lng': 127.0498, 'address': '서울시 강남구'},
+      {'title': '노즈워크 매트 나눔', 'desc': '사용감 있지만 아직 쓸만해요', 'price': 0, 'type': 'share', 'category': 'toys', 'lat': 37.5662, 'lng': 126.9784, 'address': '서울시 종로구'},
     ];
     
-    for (int i = 0; i < products.length; i++) {
-      final productData = products[i];
+    for (int i = 0; i < productDataList.length; i++) {
+      final data = productDataList[i];
+      final productId = '${TestDataPrefix.product}${(i + 1).toString().padLeft(3, '0')}';
+      
       final product = ProductModel(
-        id: 'product_${(i + 1).toString().padLeft(3, '0')}',
-        sellerId: productData['sellerId'] as String,
-        title: productData['title'] as String,
-        description: productData['description'] as String,
-        price: productData['price'] as int,
-        type: productData['type'] == 'sell' ? ProductType.sell : ProductType.share,
-        category: ProductCategory.values.firstWhere(
-          (e) => e.name == productData['category'],
-        ),
-        status: ProductStatus.available,
-        imageUrls: [],
-        location: productData['location'] as GeoPoint,
-        address: productData['address'] as String,
-        viewCount: (i * 5) + 3,
-        likeCount: i + 1,
-        chatCount: i,
-        createdAt: now,
+        id: productId,
+        sellerId: userIds[i % userIds.length],
+        title: data['title'] as String,
+        description: data['desc'] as String,
+        price: data['price'] as int,
+        type: data['type'] == 'sell' ? ProductType.sell : ProductType.share,
+        category: ProductCategory.values.firstWhere((e) => e.name == data['category']),
+        status: i % 5 == 0 ? ProductStatus.reserved : ProductStatus.available,
+        imageUrls: [sampleImages[i % sampleImages.length]],
+        location: GeoPoint(data['lat'] as double, data['lng'] as double),
+        address: data['address'] as String,
+        viewCount: (i + 1) * 8,
+        likeCount: (i + 1) * 2,
+        chatCount: i % 3,
+        createdAt: now.subtract(Duration(days: i)),
         updatedAt: now,
       );
       
       await _firebase.productsCollection.doc(product.id).set(product.toFirestore());
     }
+    print('  ✓ 상품 ${productDataList.length}개 생성 완료');
   }
   
   Future<void> _seedGroups(List<String> userIds) async {
     final now = DateTime.now();
     
-    final groups = [
-      {
-        'creatorId': userIds[0],
-        'name': '한강 산책 모임',
-        'description': '매주 주말 한강에서 산책해요! 소형견 환영',
-        'type': 'walking',
-        'location': const GeoPoint(37.5219, 126.9245),
-        'address': '서울특별시 서울특별시 마포구',
-        'isPublic': true,
-        'maxMembers': 20,
-        'likeCount': 45,
-      },
-      {
-        'creatorId': userIds[1],
-        'name': '대형견 놀이터',
-        'description': '대형견들끼리 모여서 놀아요',
-        'type': 'social',
-        'location': const GeoPoint(37.5172, 127.0473),
-        'address': '서울특별시 서울특별시 강남구',
-        'isPublic': true,
-        'maxMembers': 15,
-        'likeCount': 32,
-      },
-      {
-        'creatorId': userIds[2],
-        'name': '강아지 훈련 스터디',
-        'description': '같이 훈련 방법 공유하고 연습해요',
-        'type': 'training',
-        'location': const GeoPoint(37.5145, 127.1066),
-        'address': '서울특별시 서울특별시 송파구',
-        'isPublic': true,
-        'maxMembers': 10,
-        'likeCount': 18,
-      },
-      {
-        'creatorId': userIds[0],
-        'name': '분당 댕댕이 모임',
-        'description': '분당 지역 반려견 친목 모임입니다',
-        'type': 'social',
-        'location': const GeoPoint(37.3825, 127.1188),
-        'address': '경기도 성남시 분당구',
-        'isPublic': true,
-        'maxMembers': 25,
-        'likeCount': 28,
-      },
-      {
-        'creatorId': userIds[1],
-        'name': '용인 산책 친구들',
-        'description': '용인 지역에서 함께 산책해요',
-        'type': 'walking',
-        'location': const GeoPoint(37.2346, 127.2090),
-        'address': '경기도 용인특례시 처인구',
-        'isPublic': true,
-        'maxMembers': 15,
-        'likeCount': 12,
-      },
-      {
-        'creatorId': userIds[2],
-        'name': '수제 간식 만들기',
-        'description': '건강한 수제 간식 함께 만들어요',
-        'type': 'craft',
-        'location': const GeoPoint(37.4837, 127.0324),
-        'address': '서울특별시 서울특별시 서초구',
-        'isPublic': true,
-        'maxMembers': 8,
-        'likeCount': 55,
-      },
-      {
-        'creatorId': userIds[0],
-        'name': '시니어 반려견 케어',
-        'description': '노령견 케어 정보 공유 모임',
-        'type': 'health',
-        'location': const GeoPoint(37.5663, 126.9014),
-        'address': '서울특별시 서울특별시 마포구',
-        'isPublic': true,
-        'maxMembers': 20,
-        'likeCount': 38,
-      },
+    // 다양한 소모임 데이터 (다양한 타입, 지역, 멤버 수)
+    final groupDataList = [
+      {'name': '한강 산책 모임', 'desc': '매주 주말 한강에서 산책해요! 소형견 환영', 'type': 'walking', 'lat': 37.5219, 'lng': 126.9245, 'address': '서울시 마포구', 'maxMembers': 20, 'likeCount': 45},
+      {'name': '대형견 놀이터', 'desc': '대형견들끼리 모여서 놀아요', 'type': 'social', 'lat': 37.5172, 'lng': 127.0473, 'address': '서울시 강남구', 'maxMembers': 15, 'likeCount': 32},
+      {'name': '강아지 훈련 스터디', 'desc': '같이 훈련 방법 공유하고 연습해요', 'type': 'training', 'lat': 37.5145, 'lng': 127.1066, 'address': '서울시 송파구', 'maxMembers': 10, 'likeCount': 18},
+      {'name': '분당 댕댕이 모임', 'desc': '분당 지역 반려견 친목 모임입니다', 'type': 'social', 'lat': 37.3825, 'lng': 127.1188, 'address': '경기도 성남시 분당구', 'maxMembers': 25, 'likeCount': 28},
+      {'name': '용인 산책 친구들', 'desc': '용인 지역에서 함께 산책해요', 'type': 'walking', 'lat': 37.2346, 'lng': 127.2090, 'address': '경기도 용인시 처인구', 'maxMembers': 15, 'likeCount': 12},
+      {'name': '수제 간식 만들기', 'desc': '건강한 수제 간식 함께 만들어요', 'type': 'craft', 'lat': 37.4837, 'lng': 127.0324, 'address': '서울시 서초구', 'maxMembers': 8, 'likeCount': 55},
+      {'name': '시니어 반려견 케어', 'desc': '노령견 케어 정보 공유 모임', 'type': 'health', 'lat': 37.5663, 'lng': 126.9014, 'address': '서울시 마포구', 'maxMembers': 20, 'likeCount': 38},
+      {'name': '포메라니안 모임', 'desc': '포메 보호자들의 정보 공유 모임', 'type': 'social', 'lat': 37.5665, 'lng': 126.9780, 'address': '서울시 중구', 'maxMembers': 30, 'likeCount': 62},
+      {'name': '반려견 수영 클럽', 'desc': '물놀이 좋아하는 강아지들 모여라!', 'type': 'sports', 'lat': 37.4979, 'lng': 127.0276, 'address': '서울시 강남구', 'maxMembers': 12, 'likeCount': 41},
+      {'name': '애견카페 투어', 'desc': '매주 다른 애견카페 탐방해요', 'type': 'social', 'lat': 37.5326, 'lng': 126.9910, 'address': '서울시 용산구', 'maxMembers': 10, 'likeCount': 29},
+      {'name': '반려견 사진 동호회', 'desc': '예쁜 사진 찍고 공유해요', 'type': 'hobby', 'lat': 37.5045, 'lng': 127.0498, 'address': '서울시 강남구', 'maxMembers': 15, 'likeCount': 35},
+      {'name': '새벽 산책 모임', 'desc': '아침 6시 새벽 산책 함께해요', 'type': 'walking', 'lat': 37.5662, 'lng': 126.9784, 'address': '서울시 종로구', 'maxMembers': 8, 'likeCount': 15},
+      {'name': '반려견 요가', 'desc': '강아지와 함께하는 도가 요가', 'type': 'sports', 'lat': 37.5133, 'lng': 127.1001, 'address': '서울시 강동구', 'maxMembers': 10, 'likeCount': 22},
+      {'name': '퍼피 플레이데이트', 'desc': '1살 미만 퍼피들의 사회화 모임', 'type': 'social', 'lat': 37.5172, 'lng': 127.0473, 'address': '서울시 송파구', 'maxMembers': 15, 'likeCount': 48},
+      {'name': '반려견 미용 스터디', 'desc': '셀프 미용 배우고 연습해요', 'type': 'craft', 'lat': 37.5219, 'lng': 126.9245, 'address': '서울시 마포구', 'maxMembers': 8, 'likeCount': 19},
     ];
     
-    for (int i = 0; i < groups.length; i++) {
-      final groupData = groups[i];
-      final creatorId = groupData['creatorId'] as String;
+    for (int i = 0; i < groupDataList.length; i++) {
+      final data = groupDataList[i];
+      final creatorId = userIds[i % userIds.length];
+      final groupId = '${TestDataPrefix.group}${(i + 1).toString().padLeft(3, '0')}';
       
       final group = GroupModel(
-        id: 'group_${(i + 1).toString().padLeft(3, '0')}',
-        name: groupData['name'] as String,
-        description: groupData['description'] as String,
-        type: GroupType.values.firstWhere(
-          (e) => e.name == groupData['type'],
-        ),
+        id: groupId,
+        name: data['name'] as String,
+        description: data['desc'] as String,
+        type: GroupType.values.firstWhere((e) => e.name == data['type'], orElse: () => GroupType.social),
         creatorId: creatorId,
         adminIds: [creatorId],
-        memberIds: [creatorId],
-        maxMembers: groupData['maxMembers'] as int,
-        location: groupData['location'] as GeoPoint,
-        address: groupData['address'] as String,
-        isPublic: groupData['isPublic'] as bool,
-        requireApproval: false,
-        tags: [],
-        likeCount: groupData['likeCount'] as int,
-        createdAt: now,
+        memberIds: [creatorId, userIds[(i + 1) % userIds.length], userIds[(i + 2) % userIds.length]],
+        maxMembers: data['maxMembers'] as int,
+        location: GeoPoint(data['lat'] as double, data['lng'] as double),
+        address: data['address'] as String,
+        imageUrl: sampleImages[i % sampleImages.length],
+        isPublic: i % 4 != 0, // 4개 중 1개는 비공개
+        requireApproval: i % 3 == 0, // 3개 중 1개는 승인 필요
+        tags: ['반려견', '모임'],
+        likeCount: data['likeCount'] as int,
+        createdAt: now.subtract(Duration(days: i * 3)),
         updatedAt: now,
       );
       
       await _firebase.groupsCollection.doc(group.id).set(group.toFirestore());
     }
+    print('  ✓ 소모임 ${groupDataList.length}개 생성 완료');
   }
   Future<void> clearAllData() async {
     print('🗑️  모든 데이터 삭제 시작...');
@@ -535,13 +251,94 @@ class SeedData {
       await _clearCollection(_firebase.jobsCollection);
       await _clearCollection(_firebase.breedingPostsCollection);
       await _clearCollection(_firebase.ratingsCollection);
-      await _clearCollection(_firebase.firestore.collection('transaction_statuses'));
+      await _clearCollection(_firebase.firestore.collection('transactionStatuses'));
       
       print('✅ 모든 Firestore 데이터 삭제 완료 (users 컬렉션 제외)');
     } catch (e) {
       print('❌ 데이터 삭제 실패: $e');
       rethrow;
     }
+  }
+  
+  /// 테스트 데이터만 삭제 (test_ 접두사로 시작하는 문서만 삭제)
+  Future<void> clearTestDataOnly() async {
+    print('🧹 테스트 데이터만 삭제 시작...');
+    
+    try {
+      int deletedCount = 0;
+      
+      // 반려동물
+      deletedCount += await _clearTestDataFromCollection(_firebase.petsCollection, TestDataPrefix.pet);
+      
+      // 상품
+      deletedCount += await _clearTestDataFromCollection(_firebase.productsCollection, TestDataPrefix.product);
+      
+      // 소모임
+      deletedCount += await _clearTestDataFromCollection(_firebase.groupsCollection, TestDataPrefix.group);
+      
+      // 알바
+      deletedCount += await _clearTestDataFromCollection(_firebase.jobsCollection, TestDataPrefix.job);
+      
+      // 교배
+      deletedCount += await _clearTestDataFromCollection(_firebase.breedingPostsCollection, TestDataPrefix.breeding);
+      
+      // 좋아요
+      deletedCount += await _clearTestDataFromCollection(_firebase.likesCollection, TestDataPrefix.like);
+      
+      // 매칭
+      deletedCount += await _clearTestDataFromCollection(_firebase.matchesCollection, TestDataPrefix.match);
+      
+      // 채팅방
+      deletedCount += await _clearTestDataFromCollection(_firebase.chatRoomsCollection, TestDataPrefix.chat);
+      
+      // 메시지
+      deletedCount += await _clearTestDataFromCollection(_firebase.firestore.collection('messages'), TestDataPrefix.message);
+      
+      // 평가
+      deletedCount += await _clearTestDataFromCollection(_firebase.ratingsCollection, TestDataPrefix.rating);
+      
+      // 테스트 사용자
+      deletedCount += await _clearTestDataFromCollection(_firebase.usersCollection, TestDataPrefix.user);
+      
+      // 커뮤니티 게시글
+      deletedCount += await _clearTestDataFromCollection(_firebase.feedPostsCollection, TestDataPrefix.feedPost);
+      
+      // 일정
+      deletedCount += await _clearTestDataFromCollection(_firebase.firestore.collection('schedules'), TestDataPrefix.schedule);
+      
+      // 건강수첩 데이터
+      deletedCount += await _clearTestDataFromCollection(_firebase.firestore.collection('weightRecords'), 'weight_${TestDataPrefix.pet}');
+      deletedCount += await _clearTestDataFromCollection(_firebase.firestore.collection('walkRecords'), 'walk_${TestDataPrefix.pet}');
+      deletedCount += await _clearTestDataFromCollection(_firebase.firestore.collection('groomingRecords'), 'grooming_${TestDataPrefix.pet}');
+      deletedCount += await _clearTestDataFromCollection(_firebase.firestore.collection('vaccinationRecords'), 'vaccine_${TestDataPrefix.pet}');
+      deletedCount += await _clearTestDataFromCollection(_firebase.firestore.collection('checkupRecords'), 'checkup_${TestDataPrefix.pet}');
+      deletedCount += await _clearTestDataFromCollection(_firebase.firestore.collection('medicationRecords'), 'med_${TestDataPrefix.pet}');
+      
+      print('✅ 테스트 데이터 $deletedCount개 삭제 완료');
+    } catch (e) {
+      print('❌ 테스트 데이터 삭제 실패: $e');
+      rethrow;
+    }
+  }
+  
+  /// 특정 접두사로 시작하는 문서만 삭제
+  Future<int> _clearTestDataFromCollection(CollectionReference collection, String prefix) async {
+    final snapshot = await collection.get();
+    int deletedCount = 0;
+    
+    final batch = _firebase.firestore.batch();
+    for (final doc in snapshot.docs) {
+      if (doc.id.startsWith(prefix)) {
+        batch.delete(doc.reference);
+        deletedCount++;
+      }
+    }
+    
+    if (deletedCount > 0) {
+      await batch.commit();
+    }
+    
+    return deletedCount;
   }
   
   Future<void> _clearCollection(CollectionReference collection) async {
@@ -941,71 +738,49 @@ class SeedData {
   Future<void> _seedJobs(List<String> userIds) async {
     final now = DateTime.now();
     
-    final jobs = [
-      {
-        'userId': userIds[0],
-        'title': '여행 중 우리 아이 돌봐주실 분',
-        'description': '12월 25일부터 28일까지 3박 4일 동안 돌봐주실 분 구해요',
-        'type': 'care',
-        'price': 50000,
-        'priceUnit': '일',
-        'startDate': now.add(const Duration(days: 5)),
-        'endDate': now.add(const Duration(days: 8)),
-        'address': '서울시 강남구 역삼동',
-      },
-      {
-        'userId': userIds[1],
-        'title': '평일 오전 산책 도우미 구해요',
-        'description': '월~금 오전 8시~9시 산책 부탁드려요',
-        'type': 'walk',
-        'price': 15000,
-        'priceUnit': '회',
-        'duration': 1,
-        'address': '서울시 마포구 상암동',
-      },
-      {
-        'userId': userIds[2],
-        'title': '대형견 목욕 도와주실 분',
-        'description': '골든리트리버 목욕 도와주실 분 구해요',
-        'type': 'bath',
-        'price': 30000,
-        'priceUnit': '회',
-        'duration': 2,
-        'address': '서울시 송파구 잠실동',
-      },
-      {
-        'userId': userIds.length > 3 ? userIds[3] : userIds[0],
-        'title': '기본 훈련 도와주실 분',
-        'description': '앉아, 기다려 등 기본 훈련 도와주세요',
-        'type': 'training',
-        'price': 40000,
-        'priceUnit': '회',
-        'duration': 1,
-        'address': '서울시 용산구 이태원동',
-      },
+    // 다양한 알바 데이터 (다양한 타입, 가격대, 기간)
+    final jobDataList = [
+      {'title': '여행 중 우리 아이 돌봐주실 분', 'desc': '3박 4일 동안 돌봐주실 분 구해요', 'type': 'care', 'price': 50000, 'unit': '일', 'address': '서울시 강남구 역삼동'},
+      {'title': '평일 오전 산책 도우미 구해요', 'desc': '월~금 오전 8시~9시 산책 부탁드려요', 'type': 'walk', 'price': 15000, 'unit': '회', 'address': '서울시 마포구 상암동'},
+      {'title': '대형견 목욕 도와주실 분', 'desc': '골든리트리버 목욕 도와주실 분 구해요', 'type': 'bath', 'price': 30000, 'unit': '회', 'address': '서울시 송파구 잠실동'},
+      {'title': '기본 훈련 도와주실 분', 'desc': '앉아, 기다려 등 기본 훈련 도와주세요', 'type': 'training', 'price': 40000, 'unit': '회', 'address': '서울시 용산구 이태원동'},
+      {'title': '주말 산책 도우미', 'desc': '토요일, 일요일 오후 산책 부탁드려요', 'type': 'walk', 'price': 20000, 'unit': '회', 'address': '서울시 강남구 삼성동'},
+      {'title': '출장 중 펫시터 구해요', 'desc': '일주일간 돌봐주실 분 구합니다', 'type': 'care', 'price': 45000, 'unit': '일', 'address': '서울시 서초구 반포동'},
+      {'title': '노령견 케어 도우미', 'desc': '약 먹이기, 산책 등 도와주세요', 'type': 'care', 'price': 35000, 'unit': '일', 'address': '서울시 종로구 평창동'},
+      {'title': '강아지 미용 도우미', 'desc': '셀프 미용 도와주실 분 구해요', 'type': 'bath', 'price': 25000, 'unit': '회', 'address': '서울시 강동구 천호동'},
+      {'title': '저녁 산책 도우미', 'desc': '평일 저녁 7시 산책 부탁드려요', 'type': 'walk', 'price': 18000, 'unit': '회', 'address': '서울시 중구 명동'},
+      {'title': '퍼피 사회화 훈련 도우미', 'desc': '다른 강아지와 어울리는 훈련 도와주세요', 'type': 'training', 'price': 50000, 'unit': '회', 'address': '서울시 강남구 청담동'},
+      {'title': '주 3회 산책 도우미', 'desc': '월수금 오전 산책 부탁드려요', 'type': 'walk', 'price': 15000, 'unit': '회', 'address': '서울시 마포구 연남동'},
+      {'title': '당일 펫시터 급구', 'desc': '오늘 하루만 돌봐주실 분 구해요', 'type': 'care', 'price': 60000, 'unit': '일', 'address': '서울시 송파구 문정동'},
+      {'title': '발톱 깎기 도와주실 분', 'desc': '대형견 발톱 깎기 도와주세요', 'type': 'bath', 'price': 20000, 'unit': '회', 'address': '서울시 용산구 한남동'},
+      {'title': '배변 훈련 도우미', 'desc': '퍼피 배변 훈련 도와주세요', 'type': 'training', 'price': 35000, 'unit': '회', 'address': '서울시 강남구 논현동'},
+      {'title': '장기 펫시터 구해요', 'desc': '한 달간 돌봐주실 분 구합니다', 'type': 'care', 'price': 40000, 'unit': '일', 'address': '서울시 서초구 방배동'},
     ];
     
-    for (int i = 0; i < jobs.length; i++) {
-      final jobData = jobs[i];
+    for (int i = 0; i < jobDataList.length; i++) {
+      final data = jobDataList[i];
+      final jobId = '${TestDataPrefix.job}${(i + 1).toString().padLeft(3, '0')}';
+      
       final job = JobModel(
-        id: 'job_${(i + 1).toString().padLeft(3, '0')}',
-        userId: jobData['userId'] as String,
-        title: jobData['title'] as String,
-        description: jobData['description'] as String,
-        type: JobType.values.firstWhere((e) => e.name == jobData['type']),
-        status: JobStatus.recruiting,
-        price: jobData['price'] as int,
-        priceUnit: jobData['priceUnit'] as String,
-        startDate: jobData['startDate'] as DateTime?,
-        endDate: jobData['endDate'] as DateTime?,
-        duration: jobData['duration'] as int?,
-        address: jobData['address'] as String,
-        createdAt: now.subtract(Duration(hours: i)),
-        updatedAt: now.subtract(Duration(hours: i)),
+        id: jobId,
+        userId: userIds[i % userIds.length],
+        title: data['title'] as String,
+        description: data['desc'] as String,
+        type: JobType.values.firstWhere((e) => e.name == data['type']),
+        status: i % 4 == 0 ? JobStatus.completed : JobStatus.recruiting,
+        price: data['price'] as int,
+        priceUnit: data['unit'] as String,
+        startDate: now.add(Duration(days: i + 1)),
+        endDate: now.add(Duration(days: i + 3)),
+        duration: 1,
+        address: data['address'] as String,
+        createdAt: now.subtract(Duration(hours: i * 2)),
+        updatedAt: now,
       );
       
       await _firebase.jobsCollection.doc(job.id).set(job.toFirestore());
     }
+    print('  ✓ 알바 ${jobDataList.length}개 생성 완료');
   }
   
   Future<void> _seedLikesAndMatches(List<String> userIds) async {
@@ -1104,7 +879,7 @@ class SeedData {
   
   Future<void> _seedWeightRecords(List<String> petIds) async {
     final now = DateTime.now();
-    final collection = _firebase.firestore.collection('weight_records');
+    final collection = _firebase.firestore.collection('weightRecords');
     
     for (int p = 0; p < petIds.length; p++) {
       final petId = petIds[p];
@@ -1127,7 +902,7 @@ class SeedData {
   
   Future<void> _seedWalkRecords(List<String> petIds) async {
     final now = DateTime.now();
-    final collection = _firebase.firestore.collection('walk_records');
+    final collection = _firebase.firestore.collection('walkRecords');
     
     for (int p = 0; p < petIds.length; p++) {
       final petId = petIds[p];
@@ -1157,7 +932,7 @@ class SeedData {
   
   Future<void> _seedGroomingRecords(List<String> petIds) async {
     final now = DateTime.now();
-    final collection = _firebase.firestore.collection('grooming_records');
+    final collection = _firebase.firestore.collection('groomingRecords');
     final groomingTypes = ['shower', 'brushing', 'nailTrim', 'haircut', 'earCleaning'];
     final locations = ['집에서', '미용실', '동물병원'];
     
@@ -1183,7 +958,7 @@ class SeedData {
   
   Future<void> _seedVaccinationRecords(List<String> petIds) async {
     final now = DateTime.now();
-    final collection = _firebase.firestore.collection('vaccination_records');
+    final collection = _firebase.firestore.collection('vaccinationRecords');
     final vaccines = ['종합백신 (DHPPL)', '광견병', '코로나', '켄넬코프', '인플루엔자'];
     
     for (int p = 0; p < petIds.length; p++) {
@@ -1211,7 +986,7 @@ class SeedData {
   
   Future<void> _seedCheckupRecords(List<String> petIds) async {
     final now = DateTime.now();
-    final collection = _firebase.firestore.collection('checkup_records');
+    final collection = _firebase.firestore.collection('checkupRecords');
     final results = ['정상', '양호 (관찰 필요)', '정상'];
     
     for (int p = 0; p < petIds.length; p++) {
@@ -1239,7 +1014,7 @@ class SeedData {
   
   Future<void> _seedMedicationRecords(List<String> petIds) async {
     final now = DateTime.now();
-    final collection = _firebase.firestore.collection('medication_records');
+    final collection = _firebase.firestore.collection('medicationRecords');
     final medications = [
       {'name': '심장약', 'dosage': '1정', 'interval': 'daily'},
       {'name': '피부약', 'dosage': '2정', 'interval': 'daily'},
@@ -1273,12 +1048,12 @@ class SeedData {
   
   Future<void> clearHealthRecords() async {
     print('🗑️ 건강수첩 데이터 삭제 중...');
-    await _clearCollection(_firebase.firestore.collection('weight_records'));
-    await _clearCollection(_firebase.firestore.collection('walk_records'));
-    await _clearCollection(_firebase.firestore.collection('grooming_records'));
-    await _clearCollection(_firebase.firestore.collection('vaccination_records'));
-    await _clearCollection(_firebase.firestore.collection('checkup_records'));
-    await _clearCollection(_firebase.firestore.collection('medication_records'));
+    await _clearCollection(_firebase.firestore.collection('weightRecords'));
+    await _clearCollection(_firebase.firestore.collection('walkRecords'));
+    await _clearCollection(_firebase.firestore.collection('groomingRecords'));
+    await _clearCollection(_firebase.firestore.collection('vaccinationRecords'));
+    await _clearCollection(_firebase.firestore.collection('checkupRecords'));
+    await _clearCollection(_firebase.firestore.collection('medicationRecords'));
     print('✅ 건강수첩 데이터 삭제 완료');
   }
   
@@ -1349,7 +1124,7 @@ class SeedData {
   
   Future<void> _seedTransactionStatuses(List<String> userIds) async {
     final now = DateTime.now();
-    final collection = _firebase.firestore.collection('transaction_statuses');
+    final collection = _firebase.firestore.collection('transactionStatuses');
     final types = ['marketplace', 'dating', 'breeding'];
     
     for (int i = 0; i < 10; i++) {
@@ -1376,7 +1151,7 @@ class SeedData {
   Future<void> clearRatings() async {
     print('🗑️ 꼬순내 평가 데이터 삭제 중...');
     await _clearCollection(_firebase.ratingsCollection);
-    await _clearCollection(_firebase.firestore.collection('transaction_statuses'));
+    await _clearCollection(_firebase.firestore.collection('transactionStatuses'));
     print('✅ 꼬순내 평가 데이터 삭제 완료');
   }
 }

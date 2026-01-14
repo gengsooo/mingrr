@@ -956,9 +956,7 @@ class HomeScreen extends ConsumerWidget {
               child: CircularProgressIndicator(),
             ),
           ),
-          error: (_, __) => const Center(
-            child: Text('데이터를 불러올 수 없습니다'),
-          ),
+          error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
         );
       },
     );

@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/services/firebase_service.dart';
-import '../../core/services/location_helper.dart';
 import '../../core/utils/seed_data.dart';
-import '../../core/widgets/dialogs/dialogs.dart';
-import '../../core/widgets/map/map_loading_widget.dart';
-import '../../../../core/theme/feature_colors.dart';
 import '../auth/presentation/providers/auth_provider.dart';
 
 /// 데이터 항목 정의 (사용자 계정은 Firebase Auth에서 관리하므로 제외)
@@ -51,12 +47,12 @@ final collectionCountsProvider = StreamProvider.autoDispose<Map<DataCategory, in
     
     // 건강수첩 데이터 개수 (여러 컬렉션 합산)
     int healthCount = 0;
-    healthCount += (await _firebaseService.firestore.collection('weight_records').get()).docs.length;
-    healthCount += (await _firebaseService.firestore.collection('walk_records').get()).docs.length;
-    healthCount += (await _firebaseService.firestore.collection('grooming_records').get()).docs.length;
-    healthCount += (await _firebaseService.firestore.collection('vaccination_records').get()).docs.length;
-    healthCount += (await _firebaseService.firestore.collection('checkup_records').get()).docs.length;
-    healthCount += (await _firebaseService.firestore.collection('medication_records').get()).docs.length;
+    healthCount += (await _firebaseService.firestore.collection('weightRecords').get()).docs.length;
+    healthCount += (await _firebaseService.firestore.collection('walkRecords').get()).docs.length;
+    healthCount += (await _firebaseService.firestore.collection('groomingRecords').get()).docs.length;
+    healthCount += (await _firebaseService.firestore.collection('vaccinationRecords').get()).docs.length;
+    healthCount += (await _firebaseService.firestore.collection('checkupRecords').get()).docs.length;
+    healthCount += (await _firebaseService.firestore.collection('medicationRecords').get()).docs.length;
     counts[DataCategory.healthRecords] = healthCount;
     
     return counts;
@@ -174,6 +170,53 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
       
       setState(() {
         _message = '✅ 선택한 데이터 생성 완료!';
+      });
+    } catch (e) {
+      setState(() {
+        _message = '❌ 오류: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _clearTestDataOnly() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('🧹 테스트 데이터 삭제'),
+        content: const Text(
+          'test_ 접두사로 시작하는 테스트 데이터만 삭제합니다.\n실제 사용자 데이터는 유지됩니다.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.orange),
+            child: const Text('삭제'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isLoading = true;
+      _message = '테스트 데이터 삭제 중...';
+    });
+
+    try {
+      await _seedData.clearTestDataOnly();
+      ref.invalidate(collectionCountsProvider);
+      
+      setState(() {
+        _message = '✅ 테스트 데이터만 삭제 완료!';
       });
     } catch (e) {
       setState(() {
@@ -419,7 +462,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                       child: ElevatedButton.icon(
                         onPressed: _isLoading ? null : _clearSelectedData,
                         icon: const Icon(Icons.delete_forever),
-                        label: const Text('삭제'),
+                        label: const Text('전체 삭제'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
                           foregroundColor: Colors.white,
@@ -428,6 +471,23 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                       ),
                     ),
                   ],
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // 테스트 데이터만 삭제 버튼
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _isLoading ? null : _clearTestDataOnly,
+                    icon: const Icon(Icons.cleaning_services),
+                    label: const Text('테스트 데이터만 삭제 (test_ 접두사)'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.all(16),
+                    ),
+                  ),
                 ),
                 
                 const SizedBox(height: 16),
@@ -467,114 +527,6 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                     ),
                   ),
                 
-                const SizedBox(height: 32),
-                const Divider(thickness: 2),
-                const SizedBox(height: 16),
-                
-                // ===== 공통 팝업 테스트 섹션 =====
-                const Text(
-                  '📦 공통 팝업 컴포넌트 테스트',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  '프로젝트에서 사용하는 공통 팝업들을 테스트합니다.',
-                  style: TextStyle(fontSize: 13, color: Colors.grey),
-                ),
-                const SizedBox(height: 16),
-                
-                // 1. ErrorDialog (오류 팝업)
-                _buildPopupTestSection(
-                  title: '1. ErrorDialog (오류 팝업)',
-                  description: '오류 발생 시 재시도/취소 선택 제공',
-                  color: Colors.red,
-                  children: [
-                    _buildTestButton(context, '위치 오류', Icons.location_off, Colors.red,
-                      () => showErrorDialog(context, type: ErrorType.location)),
-                    _buildTestButton(context, '네트워크 오류', Icons.wifi_off, Colors.red,
-                      () => showErrorDialog(context, type: ErrorType.network)),
-                    _buildTestButton(context, '서버 오류', Icons.cloud_off, Colors.red,
-                      () => showErrorDialog(context, type: ErrorType.server)),
-                    _buildTestButton(context, 'DB 오류', Icons.storage, Colors.red,
-                      () => showErrorDialog(context, type: ErrorType.database)),
-                    _buildTestButton(context, '권한 오류', Icons.lock, Colors.orange,
-                      () => showErrorDialog(context, type: ErrorType.permission)),
-                    _buildTestButton(context, '타임아웃', Icons.timer_off, Colors.orange,
-                      () => showErrorDialog(context, type: ErrorType.timeout)),
-                    _buildTestButton(context, '인증 오류', Icons.person_off, Colors.red,
-                      () => showErrorDialog(context, type: ErrorType.auth)),
-                    _buildTestButton(context, '일반 오류', Icons.warning, Colors.red,
-                      () => showErrorDialog(context, type: ErrorType.general)),
-                  ],
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // 2. AppDialog (알림/확인 팝업)
-                _buildPopupTestSection(
-                  title: '2. AppDialog (알림/확인 팝업)',
-                  description: '정보 알림 또는 확인/취소 선택',
-                  color: Colors.blue,
-                  children: [
-                    _buildTestButton(context, '정보', Icons.info_outline, Theme.of(context).colorScheme.primary,
-                      () => showAppDialog(context, type: DialogType.info, message: '정보 알림 메시지입니다.')),
-                    _buildTestButton(context, '성공', Icons.check_circle_outline, context.features.success,
-                      () => showAppDialog(context, type: DialogType.success, message: '작업이 성공적으로 완료되었습니다.')),
-                    _buildTestButton(context, '경고', Icons.warning_amber, Colors.orange,
-                      () => showAppDialog(context, type: DialogType.warning, message: '주의가 필요한 상황입니다.')),
-                    _buildTestButton(context, '오류', Icons.error_outline, Colors.red,
-                      () => showAppDialog(context, type: DialogType.error, message: '오류가 발생했습니다.')),
-                    _buildTestButton(context, '확인/취소', Icons.help_outline, Theme.of(context).colorScheme.primary,
-                      () => showAppDialog(context, type: DialogType.warning, title: '확인', message: '계속 진행하시겠습니까?', showCancel: true)),
-                    _buildTestButton(context, '삭제 확인', Icons.delete, Colors.red,
-                      () => showAppDialog(context, type: DialogType.error, title: '삭제', message: '정말 삭제하시겠습니까?', showCancel: true, confirmText: '삭제')),
-                  ],
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // 3. ConfirmSheet (확인 바텀시트)
-                _buildPopupTestSection(
-                  title: '3. ConfirmSheet (확인 바텀시트)',
-                  description: '하단에서 올라오는 확인/취소 시트',
-                  color: Colors.teal,
-                  children: [
-                    _buildTestButton(context, '모임 탈퇴', Icons.exit_to_app, context.features.social,
-                      () async { showConfirmSheet(context, type: ConfirmSheetType.groupLeave, onConfirm: () {}); return null; }),
-                    _buildTestButton(context, '상품 삭제', Icons.delete, context.features.market,
-                      () async { showConfirmSheet(context, type: ConfirmSheetType.productDelete, onConfirm: () {}); return null; }),
-                    _buildTestButton(context, '채팅방 나가기', Icons.chat, context.features.chat,
-                      () async { showConfirmSheet(context, type: ConfirmSheetType.chatLeave, onConfirm: () {}); return null; }),
-                    _buildTestButton(context, '반려동물 삭제', Icons.pets, Theme.of(context).colorScheme.primary,
-                      () async { showConfirmSheet(context, type: ConfirmSheetType.petDelete, onConfirm: () {}); return null; }),
-                    _buildTestButton(context, '산책 기록 삭제', Icons.directions_walk, context.features.walk,
-                      () async { showConfirmSheet(context, type: ConfirmSheetType.walkRecordDelete, onConfirm: () {}); return null; }),
-                    _buildTestButton(context, '계정 삭제', Icons.person_remove, Colors.red,
-                      () async { showConfirmSheet(context, type: ConfirmSheetType.accountDelete, onConfirm: () {}); return null; }),
-                  ],
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // 4. 위치 서비스 테스트
-                _buildPopupTestSection(
-                  title: '4. 위치 서비스 테스트',
-                  description: '3단계 전략 위치 획득 테스트 (캐시→medium→low)',
-                  color: context.features.walk,
-                  children: [
-                    _buildTestButton(context, '지도용 위치', Icons.map, context.features.walk,
-                      () => _testLocationService(context, LocationPurpose.map)),
-                    _buildTestButton(context, '산책용 위치', Icons.directions_walk, context.features.walk,
-                      () => _testLocationService(context, LocationPurpose.walk)),
-                    _buildTestButton(context, 'High 정확도', Icons.gps_fixed, Colors.green,
-                      () => _testHighAccuracyLocation(context)),
-                    _buildTestButton(context, '로딩 애니메이션', Icons.pets, context.features.walk,
-                      () => _showLoadingAnimationTest(context)),
-                  ],
-                ),
               ],
             ),
           ),
@@ -583,242 +535,4 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
     );
   }
   
-  /// 위치 서비스 테스트
-  Future<String> _testLocationService(BuildContext context, LocationPurpose purpose) async {
-    final startTime = DateTime.now();
-    
-    // 진행 상태 표시용 다이얼로그
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => _LocationTestDialog(purpose: purpose),
-    );
-    
-    final result = await LocationHelper.getCurrentLocation(purpose: purpose);
-    
-    if (context.mounted) {
-      Navigator.of(context).pop(); // 다이얼로그 닫기
-    }
-    
-    final elapsed = DateTime.now().difference(startTime);
-    
-    if (result.isSuccess) {
-      return '✅ 성공 (${result.source?.name ?? "unknown"})\n'
-          '위치: ${result.latitude.toStringAsFixed(6)}, ${result.longitude.toStringAsFixed(6)}\n'
-          '소요시간: ${elapsed.inMilliseconds}ms';
-    } else {
-      return '❌ 실패 (${result.errorType?.name ?? "unknown"})\n'
-          '메시지: ${result.message}\n'
-          '소요시간: ${elapsed.inMilliseconds}ms';
-    }
-  }
-  
-  /// High 정확도 위치 테스트
-  Future<String> _testHighAccuracyLocation(BuildContext context) async {
-    final startTime = DateTime.now();
-    
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => const AlertDialog(
-        content: Row(
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(width: 16),
-            Text('High 정확도 위치 획득 중...'),
-          ],
-        ),
-      ),
-    );
-    
-    final position = await LocationHelper.getHighAccuracyPosition();
-    
-    if (context.mounted) {
-      Navigator.of(context).pop();
-    }
-    
-    final elapsed = DateTime.now().difference(startTime);
-    
-    if (position != null) {
-      return '✅ 성공\n'
-          '위치: ${position.latitude.toStringAsFixed(6)}, ${position.longitude.toStringAsFixed(6)}\n'
-          '정확도: ${position.accuracy.toStringAsFixed(1)}m\n'
-          '소요시간: ${elapsed.inMilliseconds}ms';
-    } else {
-      return '❌ 실패\n소요시간: ${elapsed.inMilliseconds}ms';
-    }
-  }
-  
-  /// 로딩 애니메이션 테스트
-  Future<void> _showLoadingAnimationTest(BuildContext context) async {
-    await showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        child: SizedBox(
-          height: 400,
-          child: Column(
-            children: [
-              Expanded(child: MapLoadingWidget.walk()),
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('닫기'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    return;
-  }
-  
-  /// 팝업 테스트 섹션 빌더
-  Widget _buildPopupTestSection({
-    required String title,
-    required String description,
-    required Color color,
-    required List<Widget> children,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: color,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            description,
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: children,
-          ),
-        ],
-      ),
-    );
-  }
-  
-  /// 테스트 버튼 빌더
-  Widget _buildTestButton(
-    BuildContext context,
-    String label,
-    IconData icon,
-    Color color,
-    Future<dynamic> Function() onPressed,
-  ) {
-    return ElevatedButton.icon(
-      onPressed: () async {
-        final result = await onPressed();
-        if (context.mounted && result != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('결과: $result'),
-              duration: const Duration(seconds: 1),
-            ),
-          );
-        }
-      },
-      icon: Icon(icon, size: 14),
-      label: Text(label, style: const TextStyle(fontSize: 11)),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        minimumSize: Size.zero,
-      ),
-    );
-  }
-}
-
-/// 위치 테스트 진행 상태 다이얼로그
-class _LocationTestDialog extends StatefulWidget {
-  final LocationPurpose purpose;
-  
-  const _LocationTestDialog({required this.purpose});
-  
-  @override
-  State<_LocationTestDialog> createState() => _LocationTestDialogState();
-}
-
-class _LocationTestDialogState extends State<_LocationTestDialog> {
-  LocationProgress? _progress;
-  
-  @override
-  void initState() {
-    super.initState();
-    _startLocationTest();
-  }
-  
-  Future<void> _startLocationTest() async {
-    await LocationHelper.getCurrentLocation(
-      purpose: widget.purpose,
-      onProgress: (progress) {
-        if (mounted) {
-          setState(() => _progress = progress);
-        }
-      },
-    );
-  }
-  
-  String get _progressText {
-    switch (_progress) {
-      case LocationProgress.checkingPermission:
-        return '권한 확인 중...';
-      case LocationProgress.checkingCache:
-        return '캐시 확인 중...';
-      case LocationProgress.gettingGpsMedium:
-        return 'GPS 신호 찾는 중 (medium)...';
-      case LocationProgress.gettingGpsLow:
-        return 'GPS 신호 찾는 중 (low)...';
-      case null:
-        return '준비 중...';
-    }
-  }
-  
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 16),
-          Text(
-            '${widget.purpose == LocationPurpose.map ? "지도용" : "산책용"} 위치 획득',
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Text(_progressText),
-        ],
-      ),
-    );
-  }
 }

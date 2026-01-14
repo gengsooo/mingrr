@@ -131,7 +131,11 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     if (_product == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('상품을 찾을 수 없습니다')),
+        body: const MingrrEmptyState(
+          icon: Icons.shopping_bag_outlined,
+          title: '아직 데이터가 없어요',
+          subtitle: '상품을 찾을 수 없습니다',
+        ),
       );
     }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 
@@ -481,7 +482,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                       color: record.isCompleted
                           ? context.features.success.withOpacity(0.1)
                           : Colors.orange.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     ),
                     child: Text(
                       record.isCompleted ? '접종 완료' : '접종 예정',
@@ -517,7 +518,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                       height: 50,
                       decoration: BoxDecoration(
                         color: Colors.orange.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
                       ),
                       child: const Center(
                         child: Icon(Icons.notifications_outlined, color: Colors.orange),
@@ -712,7 +713,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: _getResultColor(context, record.result).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     ),
                     child: Row(
                       children: [
@@ -1091,7 +1092,7 @@ class SpecialRecordDetailScreen extends StatelessWidget {
                         height: 50,
                         decoration: BoxDecoration(
                           color: _getCategoryColor(context, record.category).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Icon(
                           _getCategoryIcon(record.category),

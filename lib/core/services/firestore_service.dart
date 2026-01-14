@@ -6,6 +6,7 @@ import '../../models/dating_model.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/group_model.dart';
 import '../../models/breeding_model.dart';
+import '../../models/community_post_model.dart';
 import 'firebase_service.dart';
 
 class FirestoreService {
@@ -744,6 +745,26 @@ class FirestoreService {
           .where((p) => 
               p.title.toLowerCase().contains(lowerQuery) ||
               p.description.toLowerCase().contains(lowerQuery))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 커뮤니티 게시글 검색
+  Future<List<CommunityPostModel>> searchCommunityPosts(String query) async {
+    try {
+      final snapshot = await _firebase.feedPostsCollection
+          .orderBy('createdAt', descending: true)
+          .limit(50)
+          .get();
+      
+      final lowerQuery = query.toLowerCase();
+      return snapshot.docs
+          .map((doc) => CommunityPostModel.fromFirestore(doc.data()!, id: doc.id))
+          .where((p) => 
+              p.content.toLowerCase().contains(lowerQuery) ||
+              p.tags.any((t) => t.toLowerCase().contains(lowerQuery)))
           .toList();
     } catch (e) {
       rethrow;

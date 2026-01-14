@@ -10,6 +10,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/image_crop_service.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/utils/image_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
@@ -821,21 +822,35 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 85,
+        maxWidth: ImageLimits.maxResolution.toDouble(),
+        maxHeight: ImageLimits.maxResolution.toDouble(),
+        imageQuality: ImageLimits.imageQuality,
       );
       
       if (image != null) {
+        // 파일 크기 검사
+        final file = File(image.path);
+        final fileSize = await file.length();
+        if (fileSize > ImageLimits.maxFileSizeBytes) {
+          if (mounted) {
+            final sizeMB = (fileSize / (1024 * 1024)).toStringAsFixed(1);
+            MingrrSnackBar.warning(
+              context, 
+              '이미지 크기가 너무 큽니다 (${sizeMB}MB). 최대 ${ImageLimits.maxFileSizeMB}MB까지 업로드 가능합니다',
+            );
+          }
+          return;
+        }
+
         // 웹에서는 크롭 미지원, 모바일에서만 크롭 적용
         if (!kIsWeb && mounted) {
           final croppedPath = await ImageCropService().cropImage(
             imagePath: image.path,
             style: ImageCropStyle.circle,
             context: context,
-            maxWidth: 800,
-            maxHeight: 800,
-            compressQuality: 85,
+            maxWidth: ImageLimits.maxResolution,
+            maxHeight: ImageLimits.maxResolution,
+            compressQuality: ImageLimits.imageQuality,
           );
           
           if (croppedPath != null && mounted) {
@@ -863,24 +878,44 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
   Future<void> _pickAdditionalPhotos() async {
     try {
       final List<XFile> images = await _imagePicker.pickMultiImage(
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 85,
+        maxWidth: ImageLimits.maxResolution.toDouble(),
+        maxHeight: ImageLimits.maxResolution.toDouble(),
+        imageQuality: ImageLimits.imageQuality,
       );
       
       if (images.isNotEmpty && mounted) {
+        // 파일 크기 검사 및 필터링
+        final List<XFile> validImages = [];
+        for (final image in images) {
+          final file = File(image.path);
+          final fileSize = await file.length();
+          if (fileSize > ImageLimits.maxFileSizeBytes) {
+            if (mounted) {
+              final sizeMB = (fileSize / (1024 * 1024)).toStringAsFixed(1);
+              MingrrSnackBar.warning(
+                context, 
+                '이미지 크기가 너무 큽니다 (${sizeMB}MB). 최대 ${ImageLimits.maxFileSizeMB}MB까지 업로드 가능합니다',
+              );
+            }
+            continue;
+          }
+          validImages.add(image);
+        }
+
+        if (validImages.isEmpty) return;
+
         // 웹에서는 크롭 미지원, 모바일에서만 크롭 적용
         if (!kIsWeb) {
           final List<XFile> croppedImages = [];
-          for (final image in images) {
+          for (final image in validImages) {
             if (!mounted) break;
             final croppedPath = await ImageCropService().cropImage(
               imagePath: image.path,
               style: ImageCropStyle.square,
               context: context,
-              maxWidth: 800,
-              maxHeight: 800,
-              compressQuality: 85,
+              maxWidth: ImageLimits.maxResolution,
+              maxHeight: ImageLimits.maxResolution,
+              compressQuality: ImageLimits.imageQuality,
             );
             
             if (croppedPath != null) {
@@ -898,7 +933,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         
         // 웹이거나 크롭 취소 시 원본 사용
         setState(() {
-          _selectedAdditionalPhotos.addAll(images);
+          _selectedAdditionalPhotos.addAll(validImages);
         });
       }
     } catch (e) {

@@ -88,6 +88,8 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
     required CommunityCategory category,
     required String content,
     List<String> imageUrls = const [],
+    String? videoUrl,
+    String? videoThumbnailUrl,
     List<String> tags = const [],
     bool isAnonymous = false,
     String? location,
@@ -114,6 +116,8 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
         category: category,
         content: content,
         imageUrls: imageUrls,
+        videoUrl: videoUrl,
+        videoThumbnailUrl: videoThumbnailUrl,
         tags: tags,
         isAnonymous: isAnonymous,
         location: location,
@@ -137,6 +141,8 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
     required String postId,
     required String content,
     List<String>? imageUrls,
+    String? videoUrl,
+    String? videoThumbnailUrl,
     List<String>? tags,
   }) async {
     state = const AsyncValue.loading();
@@ -148,6 +154,8 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
       };
       
       if (imageUrls != null) updateData['imageUrls'] = imageUrls;
+      if (videoUrl != null) updateData['videoUrl'] = videoUrl;
+      if (videoThumbnailUrl != null) updateData['videoThumbnailUrl'] = videoThumbnailUrl;
       if (tags != null) updateData['tags'] = tags;
       
       await _firebase.feedPostsCollection.doc(postId).update(updateData);

@@ -43,7 +43,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         if (job == null) {
           return Scaffold(
             appBar: AppBar(title: const Text('알바')),
-            body: const Center(child: Text('알바 정보를 찾을 수 없습니다')),
+            body: const MingrrEmptyState(
+              icon: Icons.work_outline,
+              title: '아직 데이터가 없어요',
+              subtitle: '알바 정보를 찾을 수 없습니다',
+            ),
           );
         }
         return _buildContent(context, job);
@@ -56,7 +60,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       ),
       error: (_, __) => Scaffold(
         appBar: AppBar(title: const Text('알바')),
-        body: const Center(child: Text('데이터를 불러올 수 없습니다')),
+        body: const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       ),
     );
   }
@@ -301,7 +305,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: context.sectionBackground,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
           child: Text(
             job.description,
@@ -335,7 +339,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                   right: index < job.imageUrls.length - 1 ? 8 : 0,
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   child: Image.network(
                     job.imageUrls[index],
                     width: 120,
@@ -384,7 +388,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                 backgroundColor: context.features.market,
                 disabledBackgroundColor: Theme.of(context).colorScheme.outline,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),

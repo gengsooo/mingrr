@@ -151,7 +151,11 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         if (pet == null) {
           return Scaffold(
             appBar: AppBar(title: const Text('반려동물 정보')),
-            body: const Center(child: Text('반려동물 정보를 찾을 수 없습니다')),
+            body: const MingrrEmptyState(
+              icon: Icons.pets,
+              title: '아직 데이터가 없어요',
+              subtitle: '반려동물 정보를 찾을 수 없습니다',
+            ),
           );
         }
         return _buildContent(context, pet);
@@ -164,7 +168,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       ),
       error: (_, __) => Scaffold(
         appBar: AppBar(title: const Text('반려동물 정보')),
-        body: const Center(child: Text('데이터를 불러올 수 없습니다')),
+        body: const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       ),
     );
   }

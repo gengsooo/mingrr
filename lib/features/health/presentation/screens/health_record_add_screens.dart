@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/form_components.dart';
 import '../providers/health_provider.dart';
 
 /// ============================================================
@@ -78,7 +80,7 @@ class _RecordBottomSheet extends StatelessWidget {
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
               ),
               child: const Text(
@@ -110,26 +112,24 @@ Widget _buildMemoField(BuildContext context, TextEditingController controller, {
       hintText: hint ?? '메모를 입력하세요',
       hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
         borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
         borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
         borderSide: BorderSide(color: context.features.health, width: 1.5),
       ),
     ),
   );
 }
 
-Widget _buildLabel(String text) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-  );
+Widget _buildLabel(String text, {bool isRequired = false}) {
+  final label = text.replaceAll(' *', '');
+  return MingrrSectionLabel(label, isRequired: isRequired || text.contains('*'));
 }
 
 // ===== 체중 기록 바텀시트 =====
@@ -181,15 +181,15 @@ class _AddWeightRecordScreenState extends State<AddWeightRecordScreen> {
               hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
               suffixText: 'kg',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 borderSide: BorderSide(color: context.features.health, width: 1.5),
               ),
             ),
@@ -267,31 +267,13 @@ class _AddGroomingRecordScreenState extends State<AddGroomingRecordScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildLabel('종류 *'),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: GroomingType.values.map((type) {
-              final isSelected = _selectedType == type;
-              return GestureDetector(
-                onTap: () => setState(() => _selectedType = type),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: isSelected ? context.features.health.withOpacity(0.15) : Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isSelected ? context.features.health : Theme.of(context).colorScheme.outline, width: isSelected ? 2 : 1),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(type.icon, size: 14, color: isSelected ? context.features.health : Theme.of(context).colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 4),
-                      Text(type.label, style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400, color: isSelected ? context.features.health : Theme.of(context).colorScheme.onSurface)),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
+          MingrrChipSelector<GroomingType>(
+            items: GroomingType.values,
+            selectedItem: _selectedType,
+            onSelected: (type) => setState(() => _selectedType = type),
+            labelBuilder: (type) => type.label,
+            iconBuilder: (type) => type.icon,
+            accentColor: context.features.health,
           ),
           const SizedBox(height: 16),
           _buildLabel('날짜 *'),
@@ -487,15 +469,15 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
               hintText: '예: 심장사상충약, 관절영양제',
               hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 borderSide: BorderSide(color: context.features.health, width: 1.5),
               ),
             ),
@@ -516,7 +498,7 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
                   height: 48,
                   decoration: BoxDecoration(
                     color: isSelected ? color.withOpacity(0.15) : Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     border: Border.all(
                       color: isSelected ? color : Theme.of(context).colorScheme.outline,
                       width: isSelected ? 2 : 1,

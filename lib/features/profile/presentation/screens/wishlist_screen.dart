@@ -55,8 +55,8 @@ class WishlistScreen extends ConsumerWidget {
         if (products.isEmpty) {
           return MingrrEmptyState(
             svgAsset: SvgAssets.emptyWishlist,
-            title: '찜한 상품이 없어요',
-            subtitle: '마켓에서 마음에 드는 상품을 찜해보세요!',
+            title: '아직 데이터가 없어요',
+            subtitle: '마켓에서 마음에 드는 상품을 찜해보세요',
           );
         }
         return ListView.builder(
@@ -90,7 +90,7 @@ class WishlistScreen extends ConsumerWidget {
         );
       },
       loading: () => const MingrrLoadingState(),
-      error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
+      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
     );
   }
   
@@ -98,8 +98,8 @@ class WishlistScreen extends ConsumerWidget {
     // 반려동물 찜 기능은 추후 구현
     return MingrrEmptyState(
       svgAsset: SvgAssets.emptyHeart,
-      title: '찜한 반려동물이 없어요',
-      subtitle: '데이팅에서 마음에 드는 친구를 찜해보세요!',
+      title: '아직 데이터가 없어요',
+      subtitle: '데이팅에서 마음에 드는 친구를 찜해보세요',
     );
   }
   
