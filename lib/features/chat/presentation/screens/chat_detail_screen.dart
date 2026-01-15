@@ -303,7 +303,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   
                   if (messages.isEmpty) {
                     return MingrrEmptyState(
-                      svgAsset: SvgAssets.emptyMessage,
+                      icon: Icons.chat_outlined,
                       title: '대화를 시작해보세요!',
                       subtitle: '반려동물 친구를 만들어보세요',
                     );

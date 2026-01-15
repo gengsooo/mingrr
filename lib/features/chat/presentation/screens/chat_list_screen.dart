@@ -141,7 +141,7 @@ class ChatListScreen extends ConsumerWidget {
             
             if (filteredRooms.isEmpty) {
               return MingrrEmptyState(
-                svgAsset: SvgAssets.emptyChat,
+                icon: Icons.chat_bubble_outline,
                 title: '아직 데이터가 없어요',
                 subtitle: _getEmptyStateMessage(type),
               );
@@ -192,7 +192,7 @@ class ChatListScreen extends ConsumerWidget {
                 
                 if (filteredRooms.isEmpty && pendingRequests.isEmpty) {
                   return MingrrEmptyState(
-                    svgAsset: SvgAssets.emptyChat,
+                    icon: Icons.chat_bubble_outline,
                     title: '아직 데이터가 없어요',
                     subtitle: _getEmptyStateMessage(ChatType.dating),
                   );

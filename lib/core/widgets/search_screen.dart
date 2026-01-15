@@ -118,14 +118,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     if (_lastQuery.isEmpty) {
       return const MingrrEmptyState(
-        svgAsset: SvgAssets.emptySearch,
+        icon: Icons.search,
         title: '검색어를 입력해주세요',
       );
     }
 
     if (_results.isEmpty) {
       return const MingrrEmptyState(
-        svgAsset: SvgAssets.emptySearch,
+        icon: Icons.search_off,
         title: '검색 결과가 없습니다',
       );
     }

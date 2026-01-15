@@ -4,6 +4,7 @@ import '../../models/marketplace_model.dart';
 import '../../models/group_model.dart';
 import '../../models/breeding_model.dart';
 import '../../models/rating_model.dart';
+import '../../models/community_post_model.dart' as community;
 import '../services/firebase_service.dart';
 import '../constants/pet_constants.dart';
 
@@ -22,6 +23,7 @@ class TestDataPrefix {
   static const String user = 'test_user_';
   static const String feedPost = 'test_feed_';
   static const String schedule = 'test_schedule_';
+  static const String comment = 'test_comment_';
 }
 
 class SeedData {
@@ -1153,5 +1155,221 @@ class SeedData {
     await _clearCollection(_firebase.ratingsCollection);
     await _clearCollection(_firebase.firestore.collection('transactionStatuses'));
     print('✅ 꼬순내 평가 데이터 삭제 완료');
+  }
+  
+  // ===== 커뮤니티 게시글 데이터 =====
+  
+  /// 커뮤니티 게시글 데이터 생성
+  Future<void> seedCommunityPosts() async {
+    print('🌱 커뮤니티 게시글 데이터 생성 중...');
+    
+    final userIds = await _getExistingUserIds();
+    if (userIds.isEmpty) {
+      throw Exception('사용자 데이터가 없습니다. 먼저 사용자를 생성해주세요.');
+    }
+    
+    // 사용자 닉네임 가져오기
+    final userNicknames = <String, String>{};
+    for (final userId in userIds) {
+      final userDoc = await _firebase.usersCollection.doc(userId).get();
+      userNicknames[userId] = userDoc.data()?['nickname'] ?? '사용자';
+    }
+    
+    await _seedCommunityPosts(userIds, userNicknames);
+    print('✅ 커뮤니티 게시글 데이터 생성 완료');
+  }
+  
+  Future<void> _seedCommunityPosts(List<String> userIds, Map<String, String> userNicknames) async {
+    final now = DateTime.now();
+    
+    final postDataList = [
+      // 일상 카테고리
+      {'category': 'daily', 'content': '오늘 우리 초코랑 한강 산책 다녀왔어요! 🐕 날씨가 너무 좋아서 2시간이나 걸었네요. 초코가 너무 행복해하는 모습 보니까 저도 기분이 좋아졌어요 ☺️', 'tags': ['산책', '한강', '일상'], 'likeCount': 45, 'commentCount': 12, 'viewCount': 230},
+      {'category': 'daily', 'content': '새로 산 강아지 옷 입혀봤어요! 어떤가요? 너무 귀엽지 않나요? 🎀', 'tags': ['강아지옷', '패션', '귀여움'], 'likeCount': 78, 'commentCount': 23, 'viewCount': 456},
+      {'category': 'daily', 'content': '우리 뭉치 오늘 3살 생일이에요! 🎂 케이크 만들어줬더니 너무 좋아하네요', 'tags': ['생일', '케이크', '축하'], 'likeCount': 156, 'commentCount': 45, 'viewCount': 892},
+      
+      // 질문 카테고리
+      {'category': 'question', 'content': '강아지가 자꾸 발을 핥는데 이유가 뭘까요? 😥 스트레스인가요 아니면 피부 문제일까요?', 'tags': ['질문', '건강', '행동'], 'likeCount': 23, 'commentCount': 34, 'viewCount': 567},
+      {'category': 'question', 'content': '소형견 사료 추천 부탁드려요! 현재 로얄캐닌 먹이고 있는데 다른 좋은 사료 있을까요?', 'tags': ['사료', '추천', '소형견'], 'likeCount': 34, 'commentCount': 56, 'viewCount': 789},
+      {'category': 'question', 'content': '강아지 미용 주기가 어떻게 되나요? 푸들인데 한 달에 한 번이면 될까요?', 'tags': ['미용', '푸들', '질문'], 'likeCount': 19, 'commentCount': 28, 'viewCount': 345},
+      
+      // 정보공유 카테고리
+      {'category': 'info', 'content': '강남역 근처 애견동반 카페 추천해요! ☕🐕\n\n1. 멍멍카페 - 넓고 쾌적함\n2. 도그파크카페 - 놀이터 있음\n3. 퍼피라운지 - 음료 맛있음\n\n모두 소형견~중형견까지 가능해요!', 'tags': ['카페', '강남', '추천'], 'likeCount': 234, 'commentCount': 67, 'viewCount': 1234},
+      {'category': 'info', 'content': '여름철 강아지 열사병 예방법 공유합니다! 🌞\n\n1. 한낮 산책 피하기\n2. 물 자주 마시게 하기\n3. 시원한 매트 깔아주기\n4. 에어컨 적정 온도 유지\n\n모두 건강한 여름 보내세요!', 'tags': ['건강', '여름', '열사병'], 'likeCount': 189, 'commentCount': 45, 'viewCount': 987},
+      
+      // 후기 카테고리
+      {'category': 'review', 'content': '행복 동물병원 후기입니다! ⭐⭐⭐⭐⭐\n\n우리 강아지 중성화 수술 받았는데 원장님이 정말 친절하시고 설명도 자세히 해주셨어요. 수술 후 관리도 꼼꼼하게 해주셔서 회복도 빨랐어요. 강추합니다!', 'tags': ['동물병원', '후기', '중성화'], 'likeCount': 67, 'commentCount': 23, 'viewCount': 456},
+      {'category': 'review', 'content': '강아지 자동 급식기 사용 후기! 📦\n\n출장 갈 때 유용하게 쓰고 있어요. 타이머 설정도 쉽고 양 조절도 잘 돼요. 다만 소리가 좀 나서 처음엔 강아지가 놀랐어요 ㅎㅎ', 'tags': ['급식기', '후기', '용품'], 'likeCount': 45, 'commentCount': 18, 'viewCount': 345},
+      
+      // 실종/목격 카테고리
+      {'category': 'lost', 'content': '⚠️ 실종 신고 ⚠️\n\n잃어버린 날짜: 어제 오후 3시경\n장소: 서울 마포구 상암동 월드컵공원 근처\n특징: 흰색 말티즈, 수컷, 3살, 파란색 목줄\n이름: 하양이\n\n목격하신 분 연락 부탁드립니다 😢', 'tags': ['실종', '말티즈', '마포구'], 'likeCount': 234, 'commentCount': 89, 'viewCount': 2345},
+      
+      // 이벤트 카테고리
+      {'category': 'event', 'content': '🎉 반려견 사진 콘테스트 🎉\n\n이번 주 일요일 오후 2시 한강공원에서 반려견 사진 콘테스트가 열립니다!\n\n참가비: 무료\n상품: 1등 사료 1년치, 2등 간식세트, 3등 장난감세트\n\n많은 참여 부탁드려요!', 'tags': ['이벤트', '콘테스트', '한강'], 'likeCount': 156, 'commentCount': 67, 'viewCount': 1567},
+      
+      // 기타 카테고리
+      {'category': 'other', 'content': '강아지 입양 고민 중이에요... 🤔\n\n직장인인데 강아지 키울 수 있을까요? 출퇴근 시간이 길어서 걱정이에요. 경험 있으신 분들 조언 부탁드려요!', 'tags': ['입양', '고민', '조언'], 'likeCount': 89, 'commentCount': 78, 'viewCount': 678},
+      {'category': 'other', 'content': '오늘 처음 가입했어요! 👋\n\n우리 집 막내 골든리트리버 골디입니다. 앞으로 자주 소통해요~', 'tags': ['가입인사', '골든리트리버', '신규'], 'likeCount': 123, 'commentCount': 34, 'viewCount': 456},
+    ];
+    
+    for (int i = 0; i < postDataList.length; i++) {
+      final data = postDataList[i];
+      final authorId = userIds[i % userIds.length];
+      final postId = '${TestDataPrefix.feedPost}${(i + 1).toString().padLeft(3, '0')}';
+      
+      final post = community.CommunityPostModel(
+        id: postId,
+        authorId: authorId,
+        authorName: userNicknames[authorId] ?? '사용자',
+        category: community.CommunityCategory.values.firstWhere(
+          (e) => e.name == data['category'],
+          orElse: () => community.CommunityCategory.daily,
+        ),
+        content: data['content'] as String,
+        imageUrls: i % 3 == 0 ? [sampleImages[i % sampleImages.length]] : [],
+        tags: List<String>.from(data['tags'] as List),
+        likeCount: data['likeCount'] as int,
+        commentCount: data['commentCount'] as int,
+        viewCount: data['viewCount'] as int,
+        isAnonymous: i % 5 == 0,
+        createdAt: now.subtract(Duration(hours: i * 3)),
+        updatedAt: now.subtract(Duration(hours: i * 3)),
+      );
+      
+      await _firebase.feedPostsCollection.doc(post.id).set(post.toFirestore());
+    }
+    
+    // 댓글도 일부 생성
+    await _seedCommunityComments(userIds, userNicknames);
+    
+    print('  ✓ 커뮤니티 게시글 ${postDataList.length}개 생성 완료');
+  }
+  
+  Future<void> _seedCommunityComments(List<String> userIds, Map<String, String> userNicknames) async {
+    final now = DateTime.now();
+    final commentsCollection = _firebase.firestore.collection('communityComments');
+    
+    final commentDataList = [
+      {'postId': '${TestDataPrefix.feedPost}001', 'content': '너무 귀여워요! 🥰'},
+      {'postId': '${TestDataPrefix.feedPost}001', 'content': '저도 오늘 산책 다녀왔어요~'},
+      {'postId': '${TestDataPrefix.feedPost}002', 'content': '어디서 사셨어요? 저도 사고 싶어요!'},
+      {'postId': '${TestDataPrefix.feedPost}003', 'content': '생일 축하해요! 🎉🎂'},
+      {'postId': '${TestDataPrefix.feedPost}003', 'content': '케이크 레시피 공유해주세요~'},
+      {'postId': '${TestDataPrefix.feedPost}004', 'content': '스트레스일 수도 있어요. 산책 자주 시켜주세요!'},
+      {'postId': '${TestDataPrefix.feedPost}004', 'content': '저희 강아지도 그랬는데 피부 알러지였어요'},
+      {'postId': '${TestDataPrefix.feedPost}005', 'content': '오리젠 추천해요! 우리 강아지 잘 먹어요'},
+      {'postId': '${TestDataPrefix.feedPost}007', 'content': '정보 감사합니다! 저장해둘게요 📌'},
+      {'postId': '${TestDataPrefix.feedPost}011', 'content': '꼭 찾으시길 바랍니다 😢 공유할게요'},
+    ];
+    
+    for (int i = 0; i < commentDataList.length; i++) {
+      final data = commentDataList[i];
+      final authorId = userIds[(i + 1) % userIds.length];
+      final commentId = '${TestDataPrefix.comment}${(i + 1).toString().padLeft(3, '0')}';
+      
+      final comment = community.CommunityCommentModel(
+        id: commentId,
+        postId: data['postId'] as String,
+        authorId: authorId,
+        authorName: userNicknames[authorId] ?? '사용자',
+        content: data['content'] as String,
+        likeCount: i * 2,
+        isAnonymous: i % 4 == 0,
+        createdAt: now.subtract(Duration(hours: i)),
+      );
+      
+      await commentsCollection.doc(comment.id).set(comment.toFirestore());
+    }
+    
+    print('  ✓ 커뮤니티 댓글 ${commentDataList.length}개 생성 완료');
+  }
+  
+  /// 커뮤니티 게시글 데이터 삭제
+  Future<void> clearCommunityPosts() async {
+    print('🗑️ 커뮤니티 게시글 데이터 삭제 중...');
+    await _clearCollection(_firebase.feedPostsCollection);
+    await _clearCollection(_firebase.firestore.collection('communityComments'));
+    await _clearCollection(_firebase.firestore.collection('communityLikes'));
+    await _clearCollection(_firebase.firestore.collection('communityCommentLikes'));
+    print('✅ 커뮤니티 게시글 데이터 삭제 완료');
+  }
+  
+  // ===== 소모임 일정 데이터 =====
+  
+  /// 소모임 일정 데이터 생성
+  Future<void> seedGroupSchedules() async {
+    print('🌱 소모임 일정 데이터 생성 중...');
+    
+    final userIds = await _getExistingUserIds();
+    if (userIds.isEmpty) {
+      throw Exception('사용자 데이터가 없습니다. 먼저 사용자를 생성해주세요.');
+    }
+    
+    // 기존 그룹 ID 가져오기
+    final groupsSnapshot = await _firebase.groupsCollection.limit(5).get();
+    final groupIds = groupsSnapshot.docs.map((doc) => doc.id).toList();
+    
+    if (groupIds.isEmpty) {
+      print('❌ 소모임 데이터가 없습니다. 먼저 소모임을 생성해주세요.');
+      return;
+    }
+    
+    await _seedGroupSchedules(userIds, groupIds);
+    print('✅ 소모임 일정 데이터 생성 완료');
+  }
+  
+  Future<void> _seedGroupSchedules(List<String> userIds, List<String> groupIds) async {
+    final now = DateTime.now();
+    final schedulesCollection = _firebase.firestore.collection('schedules');
+    
+    final scheduleDataList = [
+      {'title': '주말 한강 산책', 'desc': '이번 주 토요일 오후 2시에 한강공원에서 만나요!', 'place': '여의도 한강공원 입구', 'maxParticipants': 10},
+      {'title': '강아지 수영 모임', 'desc': '애견 수영장에서 물놀이해요~', 'place': '멍멍 수영장', 'maxParticipants': 8},
+      {'title': '훈련 스터디', 'desc': '기본 훈련 방법 공유하고 연습해요', 'place': '서울숲 공원', 'maxParticipants': 6},
+      {'title': '수제 간식 만들기', 'desc': '건강한 수제 간식 함께 만들어요', 'place': '마포구 공방', 'maxParticipants': 5},
+      {'title': '애견카페 투어', 'desc': '새로 오픈한 애견카페 탐방!', 'place': '강남역 근처', 'maxParticipants': 8},
+      {'title': '저녁 산책 모임', 'desc': '퇴근 후 가볍게 산책해요', 'place': '올림픽공원', 'maxParticipants': 12},
+      {'title': '반려견 사진 촬영', 'desc': '예쁜 사진 찍어요 📸', 'place': '북서울꿈의숲', 'maxParticipants': 10},
+      {'title': '노령견 케어 정보 공유', 'desc': '노령견 케어 팁 나눠요', 'place': '온라인 (줌)', 'maxParticipants': 20},
+      {'title': '새벽 산책', 'desc': '아침 6시 상쾌한 산책!', 'place': '남산공원', 'maxParticipants': 6},
+      {'title': '퍼피 플레이데이트', 'desc': '1살 미만 퍼피들의 사회화 모임', 'place': '반포 한강공원', 'maxParticipants': 8},
+    ];
+    
+    for (int i = 0; i < scheduleDataList.length; i++) {
+      final data = scheduleDataList[i];
+      final groupId = groupIds[i % groupIds.length];
+      final creatorId = userIds[i % userIds.length];
+      final scheduleId = '${TestDataPrefix.schedule}${(i + 1).toString().padLeft(3, '0')}';
+      
+      // 일정 시간 설정 (과거/현재/미래 다양하게)
+      final daysOffset = i < 3 ? -(i + 1) : (i - 2); // 처음 3개는 과거, 나머지는 미래
+      final startTime = now.add(Duration(days: daysOffset)).copyWith(hour: 14 + (i % 4), minute: 0);
+      
+      final schedule = GroupScheduleModel(
+        id: scheduleId,
+        groupId: groupId,
+        title: data['title'] as String,
+        description: data['desc'] as String,
+        startTime: startTime,
+        endTime: startTime.add(const Duration(hours: 2)),
+        place: data['place'] as String,
+        participantIds: [creatorId, userIds[(i + 1) % userIds.length]],
+        maxParticipants: data['maxParticipants'] as int,
+        creatorId: creatorId,
+        status: daysOffset < 0 ? ScheduleStatus.completed : ScheduleStatus.upcoming,
+        createdAt: now.subtract(Duration(days: 7 - i)),
+      );
+      
+      await schedulesCollection.doc(schedule.id).set(schedule.toFirestore());
+    }
+    
+    print('  ✓ 소모임 일정 ${scheduleDataList.length}개 생성 완료');
+  }
+  
+  /// 소모임 일정 데이터 삭제
+  Future<void> clearGroupSchedules() async {
+    print('🗑️ 소모임 일정 데이터 삭제 중...');
+    await _clearCollection(_firebase.firestore.collection('schedules'));
+    print('✅ 소모임 일정 데이터 삭제 완료');
   }
 }

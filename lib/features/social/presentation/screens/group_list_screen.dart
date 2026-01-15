@@ -347,15 +347,13 @@ class GroupListScreen extends ConsumerWidget {
 
           // 모임 카드들
           if (filteredGroups.isEmpty)
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: MingrrEmptyState(
-                  svgAsset: SvgAssets.emptyGroup,
-                  title: '아직 데이터가 없어요',
-                  subtitle: '새로운 모임을 만들어보세요',
-                ),
-              ),
+            MingrrEmptyState(
+              icon: Icons.groups_outlined,
+              title: '아직 데이터가 없어요',
+              subtitle: '새로운 모임을 만들어보세요',
+              buttonText: '모임 만들기',
+              onButtonPressed: () => _showCreateGroupSheet(context),
+              accentColor: accentColor,
             )
           else
             ...filteredGroups.map((groupWithDistance) => _GroupCard(
@@ -384,16 +382,27 @@ class GroupListScreen extends ConsumerWidget {
         const SizedBox(height: 16),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
             color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(AppSizes.radiusS),
+            borderRadius: BorderRadius.circular(AppSizes.radiusM),
           ),
           child: Column(
             children: [
-              Icon(Icons.groups_outlined, size: 40, color: colorScheme.outlineVariant),
+              Icon(Icons.groups_outlined, size: 48, color: colorScheme.outlineVariant),
+              const SizedBox(height: 16),
+              Text(
+                '가입한 모임이 없어요',
+                style: TextStyle(
+                  color: colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
               const SizedBox(height: 8),
-              Text('아직 데이터가 없어요', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+              Text(
+                '관심 있는 모임에 가입해보세요',
+                style: TextStyle(fontSize: 12, color: colorScheme.outlineVariant),
+              ),
             ],
           ),
         ),

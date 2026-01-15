@@ -98,8 +98,8 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
         data: (notifications) {
           if (notifications.isEmpty) {
             return const MingrrEmptyState(
-              svgAsset: SvgAssets.emptyNotification,
-              title: '아직 데이터가 없어요',
+              icon: Icons.notifications_none,
+              title: '알림이 없어요',
               subtitle: '새로운 소식이 있으면 알려드릴게요',
             );
           }
@@ -145,8 +145,8 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
   Widget _buildNotificationList(List<NotificationModel> notifications) {
     if (notifications.isEmpty) {
       return const MingrrEmptyState(
-        svgAsset: SvgAssets.emptyNotification,
-        title: '아직 데이터가 없어요',
+        icon: Icons.notifications_none,
+        title: '알림이 없어요',
         subtitle: '새로운 소식이 있으면 알려드릴게요',
       );
     }

@@ -60,8 +60,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
       data: (matches) {
         if (matches.isEmpty) {
           return MingrrEmptyState(
-            svgAsset: SvgAssets.emptyMatch,
-            title: '아직 데이터가 없어요',
+            icon: Icons.favorite_border,
+            title: '매칭 내역이 없어요',
             subtitle: '데이팅에서 새로운 친구를 만나보세요',
           );
         }
@@ -92,8 +92,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
       data: (transactions) {
         if (transactions.isEmpty) {
           return MingrrEmptyState(
-            svgAsset: SvgAssets.emptyTransaction,
-            title: '아직 데이터가 없어요',
+            icon: Icons.receipt_long_outlined,
+            title: '거래 내역이 없어요',
             subtitle: '마켓에서 거래해보세요',
           );
         }
@@ -123,8 +123,8 @@ class ActivityHistoryScreen extends ConsumerWidget {
       data: (groups) {
         if (groups.isEmpty) {
           return MingrrEmptyState(
-            svgAsset: SvgAssets.emptyGroup,
-            title: '아직 데이터가 없어요',
+            icon: Icons.groups_outlined,
+            title: '소모임 활동이 없어요',
             subtitle: '소모임에 참여해보세요',
           );
         }

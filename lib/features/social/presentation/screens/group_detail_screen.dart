@@ -63,8 +63,8 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           if (group == null) {
             return const MingrrEmptyState(
               icon: Icons.groups_outlined,
-              title: '아직 데이터가 없어요',
-              subtitle: '모임을 찾을 수 없습니다',
+              title: '모임을 찾을 수 없어요',
+              subtitle: '삭제되었거나 존재하지 않는 모임입니다',
             );
           }
 
@@ -390,9 +390,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         if (members.isEmpty) {
           return Center(
             child: MingrrEmptyState(
-              svgAsset: SvgAssets.emptyGroup,
-              title: '아직 데이터가 없어요',
-              subtitle: '멤버가 없습니다',
+              icon: Icons.people_outline,
+              title: '멤버가 없어요',
+              subtitle: '아직 가입한 멤버가 없습니다',
             ),
           );
         }
@@ -573,8 +573,8 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         if (schedules.isEmpty) {
           return Center(
             child: MingrrEmptyState(
-              svgAsset: SvgAssets.emptySchedule,
-              title: '아직 데이터가 없어요',
+              icon: Icons.event_outlined,
+              title: '일정이 없어요',
               subtitle: isJoined ? '새로운 일정을 만들어보세요' : '예정된 일정이 없습니다',
             ),
           );

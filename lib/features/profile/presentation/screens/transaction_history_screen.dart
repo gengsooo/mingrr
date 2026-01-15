@@ -89,8 +89,8 @@ class TransactionHistoryScreen extends ConsumerWidget {
       data: (products) {
         if (products.isEmpty) {
           return MingrrEmptyState(
-            svgAsset: SvgAssets.emptyTransaction,
-            title: '아직 데이터가 없어요',
+            icon: Icons.sell_outlined,
+            title: '판매 내역이 없어요',
             subtitle: '마켓에서 물건을 판매해보세요',
           );
         }
@@ -106,8 +106,8 @@ class TransactionHistoryScreen extends ConsumerWidget {
       data: (products) {
         if (products.isEmpty) {
           return MingrrEmptyState(
-            svgAsset: SvgAssets.emptyTransaction,
-            title: '아직 데이터가 없어요',
+            icon: Icons.shopping_bag_outlined,
+            title: '구매 내역이 없어요',
             subtitle: '마켓에서 필요한 물건을 구매해보세요',
           );
         }

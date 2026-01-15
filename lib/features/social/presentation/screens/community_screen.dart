@@ -42,15 +42,13 @@ class CommunityScreen extends ConsumerWidget {
             child: postsAsync.when(
               data: (posts) {
                 if (posts.isEmpty) {
-                  return Center(
-                    child: MingrrEmptyState(
-                      svgAsset: SvgAssets.emptyList,
-                      title: '아직 데이터가 없어요',
-                      subtitle: '첫 번째 글을 작성해보세요',
-                      buttonText: '글 작성하기',
-                      onButtonPressed: () => _navigateToWrite(context),
-                      accentColor: accentColor,
-                    ),
+                  return MingrrEmptyState(
+                    icon: Icons.article_outlined,
+                    title: '아직 데이터가 없어요',
+                    subtitle: '첫 번째 글을 작성해보세요',
+                    buttonText: '글 작성하기',
+                    onButtonPressed: () => _navigateToWrite(context),
+                    accentColor: accentColor,
                   );
                 }
                 

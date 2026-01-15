@@ -10,10 +10,12 @@ enum DataCategory {
   pets('반려동물', Icons.pets),
   products('상품', Icons.shopping_bag),
   groups('소모임', Icons.groups),
+  groupSchedules('소모임 일정', Icons.event),
   jobs('알바', Icons.work),
   breeding('교배', Icons.favorite_border),
   likesMatches('좋아요/매칭', Icons.favorite),
   chats('채팅', Icons.chat),
+  communityPosts('커뮤니티', Icons.article),
   ratings('꼬순내 평가', Icons.star),
   healthRecords('건강수첩', Icons.medical_services);
 
@@ -42,10 +44,16 @@ final collectionCountsProvider = StreamProvider.autoDispose<Map<DataCategory, in
     
     counts[DataCategory.chats] = (await _firebaseService.chatRoomsCollection.get()).docs.length;
     
+    // 커뮤니티 게시글 데이터 개수
+    counts[DataCategory.communityPosts] = (await _firebaseService.feedPostsCollection.get()).docs.length;
+    
+    // 소모임 일정 데이터 개수
+    counts[DataCategory.groupSchedules] = (await _firebaseService.firestore.collection('schedules').get()).docs.length;
+    
     // 꼬순내 평가 데이터 개수
     counts[DataCategory.ratings] = (await _firebaseService.ratingsCollection.get()).docs.length;
     
-    // 건강수첩 데이터 개수 (여러 컬렉션 합산)
+    // 건강수첩 데이터 개수 (여러 컴렉션 합산)
     int healthCount = 0;
     healthCount += (await _firebaseService.firestore.collection('weightRecords').get()).docs.length;
     healthCount += (await _firebaseService.firestore.collection('walkRecords').get()).docs.length;
@@ -104,6 +112,8 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
         return '판매/나눔 상품 ${count}개';
       case DataCategory.groups:
         return '모임 ${count}개';
+      case DataCategory.groupSchedules:
+        return '소모임 일정 ${count}개';
       case DataCategory.jobs:
         return '알바 ${count}개';
       case DataCategory.breeding:
@@ -112,6 +122,8 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
         return '좋아요/매칭 ${count}개';
       case DataCategory.chats:
         return '채팅방 ${count}개';
+      case DataCategory.communityPosts:
+        return '커뮤니티 게시글 ${count}개';
       case DataCategory.ratings:
         return '꼬순내 평가 ${count}개';
       case DataCategory.healthRecords:
@@ -156,6 +168,12 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
         }
         if (_selectedCategories[DataCategory.chats]!) {
           await _seedData.seedChats();
+        }
+        if (_selectedCategories[DataCategory.communityPosts]!) {
+          await _seedData.seedCommunityPosts();
+        }
+        if (_selectedCategories[DataCategory.groupSchedules]!) {
+          await _seedData.seedGroupSchedules();
         }
         if (_selectedCategories[DataCategory.ratings]!) {
           await _seedData.seedRatings();
@@ -291,6 +309,12 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
         }
         if (_selectedCategories[DataCategory.chats]!) {
           await _seedData.clearChats();
+        }
+        if (_selectedCategories[DataCategory.communityPosts]!) {
+          await _seedData.clearCommunityPosts();
+        }
+        if (_selectedCategories[DataCategory.groupSchedules]!) {
+          await _seedData.clearGroupSchedules();
         }
         if (_selectedCategories[DataCategory.ratings]!) {
           await _seedData.clearRatings();

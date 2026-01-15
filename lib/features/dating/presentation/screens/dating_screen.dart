@@ -560,24 +560,10 @@ class DatingScreen extends ConsumerWidget {
     }
     
     if (filteredPets.isEmpty) {
-      final colorScheme = Theme.of(context).colorScheme;
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.pets, size: 48, color: colorScheme.outlineVariant),
-            const SizedBox(height: 16),
-            Text(
-              '아직 데이터가 없어요',
-              style: TextStyle(color: colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '거리를 늘리거나 필터를 조정해보세요',
-              style: TextStyle(fontSize: 12, color: colorScheme.outlineVariant),
-            ),
-          ],
-        ),
+      return MingrrEmptyState(
+        icon: Icons.pets,
+        title: '아직 데이터가 없어요',
+        subtitle: '거리를 늘리거나 필터를 조정해보세요',
       );
     }
     
@@ -965,36 +951,26 @@ class DatingScreen extends ConsumerWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => context.push('/profile'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: context.features.dating,
-                      foregroundColor: Colors.white,
+                  SizedBox(
+                    width: 180,
+                    child: ElevatedButton(
+                      onPressed: () => context.push('/profile'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: context.features.dating,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('반려동물 추가하기'),
                     ),
-                    child: const Text('반려동물 추가하기'),
                   ),
                 ],
               ),
             );
           }
           // 내 반려동물은 있지만 근처에 다른 반려동물이 없는 경우
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.location_off, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
-                const SizedBox(height: 16),
-                Text(
-                  '아직 데이터가 없어요',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '거리를 늘려보세요',
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
-                ),
-              ],
-            ),
+          return MingrrEmptyState(
+            icon: Icons.location_off,
+            title: '아직 데이터가 없어요',
+            subtitle: '거리를 늘려보세요',
           );
         }
         
@@ -1290,36 +1266,26 @@ class DatingScreen extends ConsumerWidget {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => context.push('/profile'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: context.features.dating,
-                          foregroundColor: Colors.white,
+                      SizedBox(
+                        width: 180,
+                        child: ElevatedButton(
+                          onPressed: () => context.push('/profile'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: context.features.dating,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('반려동물 추가하기'),
                         ),
-                        child: const Text('반려동물 추가하기'),
                       ),
                     ],
                   ),
                 );
               }
               // 내 반려동물은 있지만 추천할 다른 반려동물이 없는 경우
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.auto_awesome, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
-                    const SizedBox(height: 16),
-                    Text(
-                      '추천할 반려동물이 없습니다',
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '근처에 등록된 반려동물이 없어요',
-                      style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
-                    ),
-                  ],
-                ),
+              return MingrrEmptyState(
+                icon: Icons.auto_awesome,
+                title: '추천할 반려동물이 없어요',
+                subtitle: '근처에 등록된 반려동물이 없어요',
               );
             }
             return ListView.builder(

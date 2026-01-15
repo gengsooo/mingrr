@@ -54,9 +54,9 @@ class WishlistScreen extends ConsumerWidget {
       data: (products) {
         if (products.isEmpty) {
           return MingrrEmptyState(
-            svgAsset: SvgAssets.emptyWishlist,
-            title: '아직 데이터가 없어요',
-            subtitle: '마켓에서 마음에 드는 상품을 찜해보세요',
+            icon: Icons.favorite_border,
+            title: '찜한 상품이 없어요',
+            subtitle: '마켓에서 마음에 드는 상품을 찞해보세요',
           );
         }
         return ListView.builder(
@@ -97,9 +97,9 @@ class WishlistScreen extends ConsumerWidget {
   Widget _buildPetWishlist() {
     // 반려동물 찜 기능은 추후 구현
     return MingrrEmptyState(
-      svgAsset: SvgAssets.emptyHeart,
-      title: '아직 데이터가 없어요',
-      subtitle: '데이팅에서 마음에 드는 친구를 찜해보세요',
+      icon: Icons.pets,
+      title: '찜한 친구가 없어요',
+      subtitle: '데이팅에서 마음에 드는 친구를 찞해보세요',
     );
   }
   

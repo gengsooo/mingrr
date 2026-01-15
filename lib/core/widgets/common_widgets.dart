@@ -431,10 +431,16 @@ class MingrrTextField extends StatelessWidget {
 }
 
 // ===== 빈 상태 위젯 =====
-/// 데이터가 없을 때 표시하는 위젯 (SVG 이미지 지원)
+/// 데이터가 없을 때 표시하는 위젯
+/// 
+/// 디자인 기준: 데이팅-추천친구 빈 상태
+/// - 아이콘: 48px, outlineVariant 색상
+/// - 제목: 기본 크기, onSurfaceVariant, w500
+/// - 부제목: 12px, outlineVariant
+/// - 간격: 아이콘-제목 16px, 제목-부제목 8px, 부제목-버튼 16px
+/// - 버튼: 180px 너비, accentColor 배경
 class MingrrEmptyState extends StatelessWidget {
-  final IconData? icon;
-  final String? svgAsset;
+  final IconData icon;
   final String title;
   final String? subtitle;
   final String? buttonText;
@@ -443,77 +449,62 @@ class MingrrEmptyState extends StatelessWidget {
 
   const MingrrEmptyState({
     super.key,
-    this.icon,
-    this.svgAsset,
+    required this.icon,
     required this.title,
     this.subtitle,
     this.buttonText,
     this.onButtonPressed,
     this.accentColor,
-  }) : assert(icon != null || svgAsset != null, 'icon 또는 svgAsset 중 하나는 필수입니다');
+  });
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSizes.paddingXL),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (svgAsset != null)
-              MingrrSvgIcon(
-                assetPath: svgAsset!,
-                width: 120,
-                height: 120,
-              )
-            else
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  size: 48,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            const SizedBox(height: AppSizes.gapXL),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // 아이콘
+          Icon(icon, size: 48, color: colorScheme.outlineVariant),
+          const SizedBox(height: 16),
+          // 제목
+          Text(
+            title,
+            style: TextStyle(
+              color: colorScheme.onSurfaceVariant,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          // 부제목
+          if (subtitle != null) ...[
+            const SizedBox(height: 8),
             Text(
-              title,
+              subtitle!,
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 12,
+                color: colorScheme.outlineVariant,
               ),
               textAlign: TextAlign.center,
             ),
-            if (subtitle != null) ...[
-              const SizedBox(height: AppSizes.gapS),
-              Text(
-                subtitle!,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-            if (buttonText != null && onButtonPressed != null) ...[
-              const SizedBox(height: AppSizes.gapXL),
-              MingrrButton(
-                text: buttonText!,
-                onPressed: onButtonPressed,
-                width: 200,
-                backgroundColor: accentColor,
-                textColor: Colors.white,
-              ),
-            ],
           ],
-        ),
+          // 버튼
+          if (buttonText != null && onButtonPressed != null) ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              width: 180,
+              child: ElevatedButton(
+                onPressed: onButtonPressed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accentColor ?? colorScheme.primary,
+                  foregroundColor: Colors.white,
+                ),
+                child: Text(buttonText!),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

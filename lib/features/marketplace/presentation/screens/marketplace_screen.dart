@@ -156,27 +156,10 @@ class MarketplaceScreen extends ConsumerWidget {
         final products = ref.watch(filteredProductsProvider((type: type, radiusKm: distanceFilter)));
         
         if (products.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  type == ProductType.sell ? Icons.sell : Icons.volunteer_activism,
-                  size: 48,
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  '아직 데이터가 없어요',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '거리를 늘리거나 다른 카테고리를 확인해보세요',
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
-                ),
-              ],
-            ),
+          return MingrrEmptyState(
+            icon: type == ProductType.sell ? Icons.sell : Icons.volunteer_activism,
+            title: '아직 데이터가 없어요',
+            subtitle: '거리를 늘리거나 다른 카테고리를 확인해보세요',
           );
         }
         return ListView.builder(
@@ -249,23 +232,10 @@ class MarketplaceScreen extends ConsumerWidget {
         return jobsAsync.when(
           data: (jobs) {
             if (jobs.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.work_outline, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
-                    const SizedBox(height: 16),
-                    Text(
-                      '아직 데이터가 없어요',
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      '새로운 알바를 등록해보세요',
-                      style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
-                    ),
-                  ],
-                ),
+              return MingrrEmptyState(
+                icon: Icons.work_outline,
+                title: '아직 데이터가 없어요',
+                subtitle: '새로운 알바를 등록해보세요',
               );
             }
             return ListView.builder(
