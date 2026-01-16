@@ -17,7 +17,7 @@ import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/image_picker_sheet.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/verification_badge.dart';
-import '../../../../core/widgets/warmth_score.dart';
+import '../../../../core/widgets/kkosunnae_widgets.dart';
 import '../../../../core/widgets/location_bubble_widget.dart';
 import '../../../../core/providers/location_verification_provider.dart';
 import '../../../../core/services/geocoding_service.dart';

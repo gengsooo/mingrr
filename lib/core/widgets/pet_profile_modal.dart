@@ -7,7 +7,7 @@ import '../theme/app_theme.dart';
 import '../constants/app_sizes.dart';
 import 'common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
-import 'warmth_score.dart';
+import 'kkosunnae_widgets.dart';
 import 'guardian_profile_modal.dart';
 import 'trait_badge.dart';
 

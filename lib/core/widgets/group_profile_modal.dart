@@ -5,7 +5,7 @@ import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import 'guardian_profile_modal.dart';
 import 'mingrr_bottom_sheet.dart';
-import 'warmth_score.dart';
+import 'kkosunnae_widgets.dart';
 
 /// ============================================================
 /// 소모임(Group) 프로필 모달

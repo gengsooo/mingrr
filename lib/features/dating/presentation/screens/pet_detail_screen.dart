@@ -9,11 +9,12 @@ import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/dating_service.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/request_sheet.dart';
-import '../../../../core/widgets/warmth_score.dart';
+import '../../../../core/widgets/kkosunnae_widgets.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
 import '../../../../core/widgets/trait_badge.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/compatibility_widgets.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../models/user_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -920,29 +921,34 @@ class _PetPhotoSliderState extends State<_PetPhotoSlider> {
           ),
         ),
         
-        // AI 매칭 점수 (데이팅일 때만)
+        // AI 매칭 점수 (데이팅일 때만) - 탭하면 궁합 안내 팝업
         if (widget.matchScore != null)
           Positioned(
             bottom: 16,
             right: 16,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: widget.matchScore! >= 90 
-                    ? context.features.success 
-                    : context.features.dating,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.auto_awesome, size: 14, color: Colors.white),
-                  const SizedBox(width: 4),
-                  Text(
-                    '궁합 ${widget.matchScore}%',
-                    style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w600),
-                  ),
-                ],
+            child: GestureDetector(
+              onTap: () => showCompatibilityGuideModal(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: widget.matchScore! >= 90 
+                      ? context.features.success 
+                      : context.features.dating,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.auto_awesome, size: 14, color: Colors.white),
+                    const SizedBox(width: 4),
+                    Text(
+                      '궁합 ${widget.matchScore}%',
+                      style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.info_outline, size: 12, color: Colors.white70),
+                  ],
+                ),
               ),
             ),
           ),

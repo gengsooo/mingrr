@@ -140,9 +140,9 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
     warningContainer: Color(0xFFFFF3E0),
     info: Color(0xFF64B5F6),
     infoContainer: Color(0xFFE3F2FD),
-    // 그라데이션
+    // 그라데이션 (프로필 상단 배경 - 빅뱅 금색과 구분되도록 연한 색상)
     warmGradient: LinearGradient(
-      colors: [Color(0xFFFFF3E0), Color(0xFFFFECB3)],
+      colors: [Color(0xFFFFFBF5), Color(0xFFFFF8E8)],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ),

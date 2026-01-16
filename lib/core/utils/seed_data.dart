@@ -410,6 +410,7 @@ class SeedData {
   }
   
   /// 채팅 데이터만 생성 (현재 로그인 사용자 기준 테스트 채팅 포함)
+  /// 메시지는 chatRooms/{chatRoomId}/messages 서브컬렉션에 저장
   Future<void> seedChats() async {
     print('🌱 채팅 테스트 데이터 생성 중...');
     
@@ -439,129 +440,166 @@ class SeedData {
     }
     
     final now = DateTime.now();
-    final chatCollection = _firebase.firestore.collection('chatRooms');
-    final messagesCollection = _firebase.firestore.collection('messages');
     
     // 테스트용 상대방 사용자 생성
     final testUsers = [
-      {'id': 'test_user_dating', 'nickname': '김민수', 'petName': '초코', 'petBreed': '포메라니안'},
-      {'id': 'test_user_dating_shiba', 'nickname': '시바견집사', 'petName': '시바', 'petBreed': '시바견'},
-      {'id': 'test_user_market', 'nickname': '이영희', 'petName': null, 'petBreed': null},
-      {'id': 'test_user_community', 'nickname': '박철수', 'petName': '뭉치', 'petBreed': '말티즈'},
+      {'id': '${TestDataPrefix.user}dating_001', 'nickname': '김민수', 'petName': '초코', 'petBreed': '포메라니안'},
+      {'id': '${TestDataPrefix.user}dating_002', 'nickname': '시바견집사', 'petName': '시바', 'petBreed': '시바견'},
+      {'id': '${TestDataPrefix.user}market_001', 'nickname': '이영희', 'petName': null, 'petBreed': null},
+      {'id': '${TestDataPrefix.user}community_001', 'nickname': '박철수', 'petName': '뭉치', 'petBreed': '말티즈'},
     ];
     
     for (final user in testUsers) {
-      await _firebase.usersCollection.doc(user['id'] as String).set({
+      final userId = user['id'] as String;
+      await _firebase.usersCollection.doc(userId).set({
         'nickname': user['nickname'],
         'profileImageUrl': null,
         'kkosunnaeScore': 75.0,
         'isIdentityVerified': true,
         'isPetVerified': true,
         'isLocationVerified': false,
+        'matchCount': 5,
+        'walkCount': 10,
+        'transactionCount': 3,
+        'groupCount': 2,
+        'lastActiveAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 10))),
         'createdAt': Timestamp.fromDate(now.subtract(const Duration(days: 30))),
       }, SetOptions(merge: true));
       
       if (user['petName'] != null) {
-        await _firebase.petsCollection.doc('pet_${user['id']}').set({
-          'ownerId': user['id'],
+        await _firebase.petsCollection.doc('${TestDataPrefix.pet}${userId}').set({
+          'ownerId': userId,
           'name': user['petName'],
           'breed': user['petBreed'] ?? '포메라니안',
-          'age': 3,
+          'birthDate': Timestamp.fromDate(now.subtract(const Duration(days: 365 * 3))),
           'gender': 'male',
-          'profileImageUrl': null,
-          'traits': ['활발함', '친근함'],
-          'introduction': '안녕하세요! ${user['petName']}입니다.',
+          'weight': 5.0,
+          'isNeutered': false,
+          'profileImageUrl': sampleImages[0],
+          'photoUrls': [sampleImages[0], sampleImages[1]],
+          'traits': ['active', 'friendly'],
+          'bio': '안녕하세요! ${user['petName']}입니다.',
           'likeCount': 42,
+          'isPrimary': true,
           'createdAt': Timestamp.fromDate(now.subtract(const Duration(days: 30))),
+          'updatedAt': Timestamp.fromDate(now),
         }, SetOptions(merge: true));
       }
     }
     
-    // 1. 데이팅 채팅방 (초코)
-    await chatCollection.doc('chat_dating_test').set({
-      'participantIds': [currentUserId, 'test_user_dating'],
+    // 1. 데이팅 채팅방 (초코) - 여러 메시지 포함
+    final chatId1 = '${TestDataPrefix.chat}dating_001';
+    final otherUser1 = '${TestDataPrefix.user}dating_001';
+    await _firebase.chatRoomsCollection.doc(chatId1).set({
+      'participantIds': [currentUserId, otherUser1],
       'participants': {
         currentUserId: {'id': currentUserId, 'nickname': currentUserNickname, 'profileImageUrl': currentUserProfileImage, 'petName': myPetName, 'petImageUrl': myPetImageUrl},
-        'test_user_dating': {'id': 'test_user_dating', 'nickname': '김민수', 'profileImageUrl': null, 'petName': '초코', 'petImageUrl': null},
+        otherUser1: {'id': otherUser1, 'nickname': '김민수', 'profileImageUrl': null, 'petName': '초코', 'petImageUrl': sampleImages[0]},
       },
       'type': 'dating',
-      'lastMessage': '안녕하세요! 초코 보호자입니다 😊',
-      'lastMessageSenderId': 'test_user_dating',
+      'lastMessage': '내일 오후 3시 한강공원에서 만나요! 🐕',
+      'lastMessageSenderId': otherUser1,
       'lastMessageAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 5))),
-      'unreadCounts': {currentUserId: 1, 'test_user_dating': 0},
+      'unreadCounts': {currentUserId: 2, otherUser1: 0},
       'isActive': true,
       'createdAt': Timestamp.fromDate(now.subtract(const Duration(hours: 2))),
     });
-    await messagesCollection.doc('msg_dating_1').set({
-      'chatRoomId': 'chat_dating_test',
-      'senderId': 'test_user_dating',
-      'content': '안녕하세요! 초코 보호자입니다 😊',
-      'type': 'text',
-      'isRead': false,
-      'sentAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 5))),
-    });
+    // 메시지들 (서브컬렉션에 저장)
+    final messages1 = [
+      {'content': '안녕하세요! 초코 보호자입니다 😊', 'senderId': otherUser1, 'minutesAgo': 120},
+      {'content': '안녕하세요! 반가워요~', 'senderId': currentUserId, 'minutesAgo': 115},
+      {'content': '초코가 산책 친구를 찾고 있어요!', 'senderId': otherUser1, 'minutesAgo': 110},
+      {'content': '저희 아이도 산책 좋아해요! 언제 만날까요?', 'senderId': currentUserId, 'minutesAgo': 60},
+      {'content': '내일 오후 3시 한강공원에서 만나요! 🐕', 'senderId': otherUser1, 'minutesAgo': 5},
+    ];
+    for (int i = 0; i < messages1.length; i++) {
+      final msg = messages1[i];
+      await _firebase.messagesCollection(chatId1).doc('${TestDataPrefix.message}${chatId1}_$i').set({
+        'senderId': msg['senderId'],
+        'content': msg['content'],
+        'type': 'text',
+        'isRead': msg['senderId'] == currentUserId || i < messages1.length - 2,
+        'sentAt': Timestamp.fromDate(now.subtract(Duration(minutes: msg['minutesAgo'] as int))),
+      });
+    }
     
-    // 2. 데이팅 채팅방 (시바)
-    await chatCollection.doc('chat_dating_shiba_test').set({
-      'participantIds': [currentUserId, 'test_user_dating_shiba'],
+    // 2. 데이팅 채팅방 (시바) - 받은 신청 (pending 상태)
+    final chatId2 = '${TestDataPrefix.chat}dating_002';
+    final otherUser2 = '${TestDataPrefix.user}dating_002';
+    await _firebase.chatRoomsCollection.doc(chatId2).set({
+      'participantIds': [currentUserId, otherUser2],
       'participants': {
         currentUserId: {'id': currentUserId, 'nickname': currentUserNickname, 'profileImageUrl': currentUserProfileImage, 'petName': myPetName, 'petImageUrl': myPetImageUrl},
-        'test_user_dating_shiba': {'id': 'test_user_dating_shiba', 'nickname': '시바견집사', 'profileImageUrl': null, 'petName': '시바', 'petImageUrl': null},
+        otherUser2: {'id': otherUser2, 'nickname': '시바견집사', 'profileImageUrl': null, 'petName': '시바', 'petImageUrl': sampleImages[1]},
       },
       'type': 'dating',
-      'lastMessage': '시바가 산책 친구를 찾고 있어요! 🐕',
-      'lastMessageSenderId': 'test_user_dating_shiba',
+      'lastMessage': '시바가 산책 친구를 찾고 있어요! 같이 놀아요 🐕',
+      'lastMessageSenderId': otherUser2,
       'lastMessageAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 15))),
-      'unreadCounts': {currentUserId: 1, 'test_user_dating_shiba': 0},
+      'unreadCounts': {currentUserId: 1, otherUser2: 0},
       'isActive': true,
       'createdAt': Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
     });
-    await messagesCollection.doc('msg_dating_shiba_1').set({
-      'chatRoomId': 'chat_dating_shiba_test',
-      'senderId': 'test_user_dating_shiba',
-      'content': '시바가 산책 친구를 찾고 있어요! 🐕',
-      'type': 'text',
-      'isRead': false,
-      'sentAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 15))),
-    });
+    final messages2 = [
+      {'content': '시바가 산책 친구를 찾고 있어요! 같이 놀아요 🐕', 'senderId': otherUser2, 'minutesAgo': 15},
+    ];
+    for (int i = 0; i < messages2.length; i++) {
+      final msg = messages2[i];
+      await _firebase.messagesCollection(chatId2).doc('${TestDataPrefix.message}${chatId2}_$i').set({
+        'senderId': msg['senderId'],
+        'content': msg['content'],
+        'type': 'text',
+        'isRead': false,
+        'sentAt': Timestamp.fromDate(now.subtract(Duration(minutes: msg['minutesAgo'] as int))),
+      });
+    }
     
     // 3. 마켓 채팅방
-    await chatCollection.doc('chat_market_test').set({
-      'participantIds': [currentUserId, 'test_user_market'],
+    final chatId3 = '${TestDataPrefix.chat}market_001';
+    final otherUser3 = '${TestDataPrefix.user}market_001';
+    await _firebase.chatRoomsCollection.doc(chatId3).set({
+      'participantIds': [currentUserId, otherUser3],
       'participants': {
         currentUserId: {'id': currentUserId, 'nickname': currentUserNickname, 'profileImageUrl': currentUserProfileImage, 'petName': myPetName, 'petImageUrl': myPetImageUrl},
-        'test_user_market': {'id': 'test_user_market', 'nickname': '이영희', 'profileImageUrl': null, 'petName': null, 'petImageUrl': null},
+        otherUser3: {'id': otherUser3, 'nickname': '이영희', 'profileImageUrl': null, 'petName': null, 'petImageUrl': null},
       },
       'type': 'marketplace',
-      'lastMessage': '강아지 사료 아직 판매하시나요?',
-      'lastMessageSenderId': currentUserId,
+      'lastMessage': '네, 아직 판매중이에요! 직거래 가능하세요?',
+      'lastMessageSenderId': otherUser3,
       'lastMessageAt': Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
-      'unreadCounts': {currentUserId: 0, 'test_user_market': 1},
-      'relatedId': 'product_test_001',
+      'unreadCounts': {currentUserId: 1, otherUser3: 0},
+      'relatedId': '${TestDataPrefix.product}001',
       'isActive': true,
       'createdAt': Timestamp.fromDate(now.subtract(const Duration(hours: 3))),
     });
-    await messagesCollection.doc('msg_market_1').set({
-      'chatRoomId': 'chat_market_test',
-      'senderId': currentUserId,
-      'content': '강아지 사료 아직 판매하시나요?',
-      'type': 'text',
-      'isRead': false,
-      'sentAt': Timestamp.fromDate(now.subtract(const Duration(hours: 1))),
-    });
+    final messages3 = [
+      {'content': '안녕하세요! 강아지 사료 아직 판매하시나요?', 'senderId': currentUserId, 'minutesAgo': 180},
+      {'content': '네, 아직 판매중이에요! 직거래 가능하세요?', 'senderId': otherUser3, 'minutesAgo': 60},
+    ];
+    for (int i = 0; i < messages3.length; i++) {
+      final msg = messages3[i];
+      await _firebase.messagesCollection(chatId3).doc('${TestDataPrefix.message}${chatId3}_$i').set({
+        'senderId': msg['senderId'],
+        'content': msg['content'],
+        'type': 'text',
+        'isRead': i < messages3.length - 1,
+        'sentAt': Timestamp.fromDate(now.subtract(Duration(minutes: msg['minutesAgo'] as int))),
+      });
+    }
     
     // 4. 소모임 채팅방
-    final groupId = 'group_test_001';
-    await _firebase.firestore.collection('groups').doc(groupId).set({
+    final groupId = '${TestDataPrefix.group}chat_001';
+    await _firebase.groupsCollection.doc(groupId).set({
       'name': '말티즈 산책 모임',
       'description': '말티즈 보호자들의 산책 모임입니다. 매주 토요일 오후에 만나요!',
       'type': 'walking',
-      'creatorId': 'test_user_community',
-      'adminIds': ['test_user_community'],
-      'memberIds': [currentUserId, 'test_user_community'],
+      'creatorId': '${TestDataPrefix.user}community_001',
+      'adminIds': ['${TestDataPrefix.user}community_001'],
+      'memberIds': [currentUserId, '${TestDataPrefix.user}community_001'],
       'maxMembers': 20,
+      'location': const GeoPoint(37.5172, 127.0473),
       'address': '서울시 강남구',
-      'isPetAccompanied': true,
+      'imageUrl': sampleImages[2],
       'isPublic': true,
       'requireApproval': false,
       'tags': ['말티즈', '산책', '강남'],
@@ -570,50 +608,99 @@ class SeedData {
       'updatedAt': Timestamp.fromDate(now),
     }, SetOptions(merge: true));
     
-    await chatCollection.doc('chat_community_test').set({
-      'participantIds': [currentUserId, 'test_user_community'],
+    final chatId4 = '${TestDataPrefix.chat}community_001';
+    final otherUser4 = '${TestDataPrefix.user}community_001';
+    await _firebase.chatRoomsCollection.doc(chatId4).set({
+      'participantIds': [currentUserId, otherUser4],
       'participants': {
         currentUserId: {'id': currentUserId, 'nickname': currentUserNickname, 'profileImageUrl': currentUserProfileImage, 'petName': myPetName, 'petImageUrl': myPetImageUrl},
-        'test_user_community': {'id': 'test_user_community', 'nickname': '말티즈 산책 모임', 'profileImageUrl': null, 'petName': null, 'petImageUrl': null},
+        otherUser4: {'id': otherUser4, 'nickname': '박철수', 'profileImageUrl': null, 'petName': '뭉치', 'petImageUrl': sampleImages[3]},
       },
       'type': 'community',
-      'lastMessage': '이번 주 토요일 산책 참여하실 분?',
-      'lastMessageSenderId': 'test_user_community',
+      'lastMessage': '이번 주 토요일 산책 참여하실 분? 🚶‍♂️🐕',
+      'lastMessageSenderId': otherUser4,
       'lastMessageAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 30))),
-      'unreadCounts': {currentUserId: 2, 'test_user_community': 0},
+      'unreadCounts': {currentUserId: 2, otherUser4: 0},
       'relatedId': groupId,
       'isActive': true,
       'createdAt': Timestamp.fromDate(now.subtract(const Duration(days: 7))),
     });
-    await messagesCollection.doc('msg_community_1').set({
-      'chatRoomId': 'chat_community_test',
-      'senderId': 'test_user_community',
-      'content': '이번 주 토요일 산책 참여하실 분?',
-      'type': 'text',
-      'isRead': false,
-      'sentAt': Timestamp.fromDate(now.subtract(const Duration(minutes: 30))),
-    });
+    final messages4 = [
+      {'content': '말티즈 산책 모임에 오신 것을 환영합니다! 🎉', 'senderId': otherUser4, 'minutesAgo': 10080},
+      {'content': '감사합니다! 반가워요~', 'senderId': currentUserId, 'minutesAgo': 10000},
+      {'content': '이번 주 토요일 산책 참여하실 분? 🚶‍♂️🐕', 'senderId': otherUser4, 'minutesAgo': 30},
+    ];
+    for (int i = 0; i < messages4.length; i++) {
+      final msg = messages4[i];
+      await _firebase.messagesCollection(chatId4).doc('${TestDataPrefix.message}${chatId4}_$i').set({
+        'senderId': msg['senderId'],
+        'content': msg['content'],
+        'type': 'text',
+        'isRead': i < messages4.length - 2,
+        'sentAt': Timestamp.fromDate(now.subtract(Duration(minutes: msg['minutesAgo'] as int))),
+      });
+    }
     
     print('✅ 채팅 테스트 데이터 생성 완료');
-    print('   - 데이팅 채팅 (초코): chat_dating_test');
-    print('   - 데이팅 채팅 (시바): chat_dating_shiba_test');
-    print('   - 마켓 채팅: chat_market_test');
-    print('   - 소모임 채팅: chat_community_test');
+    print('   - 데이팅 채팅 (초코): $chatId1 (메시지 ${messages1.length}개)');
+    print('   - 데이팅 채팅 (시바): $chatId2 (메시지 ${messages2.length}개)');
+    print('   - 마켓 채팅: $chatId3 (메시지 ${messages3.length}개)');
+    print('   - 소모임 채팅: $chatId4 (메시지 ${messages4.length}개)');
   }
   
   /// 채팅 테스트 데이터 삭제
   Future<void> clearChats() async {
     print('🗑️ 채팅 테스트 데이터 삭제 중...');
     
-    final testChatIds = ['chat_dating_test', 'chat_dating_shiba_test', 'chat_market_test', 'chat_community_test'];
+    final testChatIds = [
+      '${TestDataPrefix.chat}dating_001',
+      '${TestDataPrefix.chat}dating_002', 
+      '${TestDataPrefix.chat}market_001',
+      '${TestDataPrefix.chat}community_001',
+      // 기존 형식도 삭제
+      'chat_dating_test', 
+      'chat_dating_shiba_test', 
+      'chat_market_test', 
+      'chat_community_test',
+    ];
+    
     for (final chatId in testChatIds) {
-      await _firebase.firestore.collection('chatRooms').doc(chatId).delete();
+      // 서브컬렉션 메시지 먼저 삭제
+      final messagesSnapshot = await _firebase.messagesCollection(chatId).get();
+      for (final doc in messagesSnapshot.docs) {
+        await doc.reference.delete();
+      }
+      // 채팅방 삭제
+      await _firebase.chatRoomsCollection.doc(chatId).delete();
     }
     
+    // 기존 형식 메시지도 삭제 (별도 컬렉션에 저장된 경우)
     final testMessageIds = ['msg_dating_1', 'msg_dating_shiba_1', 'msg_market_1', 'msg_community_1'];
     for (final msgId in testMessageIds) {
       await _firebase.firestore.collection('messages').doc(msgId).delete();
     }
+    
+    // 테스트 사용자 삭제
+    final testUserIds = [
+      '${TestDataPrefix.user}dating_001',
+      '${TestDataPrefix.user}dating_002',
+      '${TestDataPrefix.user}market_001',
+      '${TestDataPrefix.user}community_001',
+      // 기존 형식
+      'test_user_dating',
+      'test_user_dating_shiba',
+      'test_user_market',
+      'test_user_community',
+    ];
+    for (final userId in testUserIds) {
+      await _firebase.usersCollection.doc(userId).delete();
+      await _firebase.petsCollection.doc('${TestDataPrefix.pet}$userId').delete();
+      await _firebase.petsCollection.doc('pet_$userId').delete();
+    }
+    
+    // 테스트 그룹 삭제
+    await _firebase.groupsCollection.doc('${TestDataPrefix.group}chat_001').delete();
+    await _firebase.firestore.collection('groups').doc('group_test_001').delete();
     
     print('✅ 채팅 테스트 데이터 삭제 완료');
   }

@@ -4,7 +4,7 @@ import '../services/bottom_sheet_stack_manager.dart';
 import '../theme/app_theme.dart';
 import 'common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
-import 'warmth_score.dart';
+import 'kkosunnae_widgets.dart';
 import 'verification_badge.dart';
 import 'pet_profile_modal.dart';
 import 'rating_modal.dart';
@@ -228,10 +228,8 @@ class GuardianProfileModal extends StatelessWidget {
         onPressed: () {
           showRatingModal(
             context,
+            targetUserId: guardianId,
             targetName: guardianName,
-            onRatingSelected: (rating) {
-              MingrrSnackBar.success(context, '$guardianName님을 "${rating.label}"로 평가했어요!');
-            },
           );
         },
         style: ElevatedButton.styleFrom(

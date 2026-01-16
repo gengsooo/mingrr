@@ -7,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import 'firebase_options.dart';
 import 'app.dart';
+import 'core/services/kkosunnae_service.dart';
 // import 'core/services/notification_service.dart';
 
 /// ============================================================
@@ -53,6 +54,14 @@ void main() async {
     if (kDebugMode) debugPrint('✅ 카카오맵 SDK 초기화 성공!');
   } catch (e) {
     if (kDebugMode) debugPrint('❌ 카카오맵 초기화 실패: $e');
+  }
+  
+  // 꼬순내지수 등급 구간 로드 (하이브리드 방식)
+  try {
+    await KkosunnaeService.loadGradeThresholds();
+    if (kDebugMode) debugPrint('✅ 꼬순내지수 등급 구간 로드 완료');
+  } catch (e) {
+    if (kDebugMode) debugPrint('❌ 꼬순내지수 등급 구간 로드 실패: $e');
   }
   
   // 앱 실행

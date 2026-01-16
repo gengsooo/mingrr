@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import 'common_widgets.dart';
-import 'warmth_score.dart';
+import 'kkosunnae_widgets.dart';
 import 'verification_badge.dart';
 
 /// ============================================================

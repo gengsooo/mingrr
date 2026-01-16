@@ -104,14 +104,10 @@ class ChatOptionsModal extends StatelessWidget {
               subtitle: '상대방을 평가해주세요',
               color: Theme.of(context).colorScheme.primary,
               onTap: () {
-                // 스택 방식: 현재 바텀시트 위에 평가 모달을 열음
-                // 평가 모달을 닫으면 현재 옵션 바텀시트가 보임
                 showRatingModal(
                   context,
+                  targetUserId: targetId,
                   targetName: chatName,
-                  onRatingSelected: (rating) {
-                    MingrrSnackBar.success(context, '$chatName님을 "${rating.label}"로 평가했어요!');
-                  },
                 );
               },
             ),
