@@ -44,9 +44,14 @@ class FirebaseService {
   CollectionReference<Map<String, dynamic>> get chatRoomsCollection =>
       firestore.collection('chatRooms');
   
-  /// 좋아요(데이팅 신청) 컬렉션
+  /// 데이팅 신청 컬렉션
+  CollectionReference<Map<String, dynamic>> get datingRequestsCollection =>
+      firestore.collection('dating_requests');
+  
+  /// 좋아요(데이팅 신청) 컬렉션 - 하위 호환성
+  @Deprecated('Use datingRequestsCollection instead')
   CollectionReference<Map<String, dynamic>> get likesCollection =>
-      firestore.collection('likes');
+      firestore.collection('dating_requests');
   
   /// 매칭 컬렉션
   CollectionReference<Map<String, dynamic>> get matchesCollection =>

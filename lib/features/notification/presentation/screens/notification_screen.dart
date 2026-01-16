@@ -279,11 +279,15 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
 
   IconData _getNotificationIcon(NotificationType type) {
     switch (type) {
+      case NotificationType.datingRequest:
+      case NotificationType.datingAccepted:
       case NotificationType.likeReceived:
       case NotificationType.likeAccepted:
         return Icons.favorite;
       case NotificationType.matchSuccess:
         return Icons.celebration;
+      case NotificationType.petLike:
+        return Icons.pets;
       case NotificationType.breedingRequest:
       case NotificationType.breedingAccepted:
         return Icons.pets;

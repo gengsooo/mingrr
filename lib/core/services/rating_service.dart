@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/rating_model.dart';
 import 'firebase_service.dart';
 import 'kkosunnae_service.dart';
+import 'notification_service.dart';
 
 /// ============================================================
 /// 평가 서비스
@@ -10,6 +11,7 @@ import 'kkosunnae_service.dart';
 
 class RatingService {
   final FirebaseService _firebase = FirebaseService();
+  final NotificationService _notificationService = NotificationService();
 
   /// 평가 컬렉션 참조
   CollectionReference<Map<String, dynamic>> get _ratingsCollection =>
@@ -22,6 +24,11 @@ class RatingService {
   // ===== 평가 CRUD =====
 
   /// 평가 생성
+  /// 
+  /// 평가 저장 후:
+  /// 1. 대상자 통계 업데이트 (ratingCount, averageRating, noShowCount)
+  /// 2. 꼬순내 지수 재계산
+  /// 3. 상대방에게 알림 발송 (평가 내용은 비공개)
   Future<String> createRating({
     required String raterId,
     required String targetId,
@@ -52,7 +59,37 @@ class RatingService {
     // 대상자의 꼬순내 지수 업데이트
     await _updateTargetUserStats(targetId, result, score);
 
+    // 상대방에게 평가 알림 발송
+    await _sendRatingNotification(raterId, targetId, type, relatedId);
+
     return docRef.id;
+  }
+
+  /// 평가 완료 알림 발송
+  Future<void> _sendRatingNotification(
+    String raterId,
+    String targetId,
+    RatingType type,
+    String? relatedId,
+  ) async {
+    try {
+      // 평가자 정보 조회
+      final raterDoc = await _firebase.usersCollection.doc(raterId).get();
+      if (!raterDoc.exists) return;
+      
+      final raterName = raterDoc.data()?['nickname'] ?? '사용자';
+      
+      // 알림 발송 (평가 내용은 비공개)
+      await _notificationService.sendRatingNotification(
+        recipientId: targetId,
+        raterName: raterName,
+        ratingType: type.name,
+        relatedId: relatedId,
+      );
+    } catch (e) {
+      // 알림 실패는 무시 (평가 자체는 성공)
+      print('평가 알림 발송 실패: $e');
+    }
   }
 
   /// 대상자 통계 업데이트

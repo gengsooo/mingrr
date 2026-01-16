@@ -446,6 +446,116 @@ class NotificationService {
     );
   }
 
+  /// 평가 완료 알림 (상대방에게)
+  /// 
+  /// 평가 내용(별점, 태그)은 비공개로 처리
+  /// 꼬순내지수 변동만 알림
+  Future<void> sendRatingNotification({
+    required String recipientId,
+    required String raterName,
+    required String ratingType,
+    String? relatedId,
+  }) async {
+    await _saveNotification(
+      recipientId: recipientId,
+      type: NotificationType.rating,
+      title: '🐾 평가가 도착했어요!',
+      body: '$raterName님이 평가를 남겼어요. 내 꼬순내지수에 반영됐어요.',
+      data: {
+        'type': 'rating',
+        'ratingType': ratingType,
+        'relatedId': relatedId ?? '',
+      },
+    );
+  }
+
+  /// 평가 요청 리마인더 알림
+  Future<void> sendRatingReminderNotification({
+    required String recipientId,
+    required String partnerName,
+    required String activityType,
+    required String relatedId,
+  }) async {
+    final typeLabel = _getActivityTypeLabel(activityType);
+    await _saveNotification(
+      recipientId: recipientId,
+      type: NotificationType.ratingReminder,
+      title: '📝 평가를 남겨주세요',
+      body: '$partnerName님과의 $typeLabel은 어떠셨나요? 평가를 남겨주세요 🐾',
+      data: {
+        'type': 'ratingReminder',
+        'activityType': activityType,
+        'relatedId': relatedId,
+      },
+    );
+  }
+
+  String _getActivityTypeLabel(String type) {
+    switch (type) {
+      case 'dating':
+        return '만남';
+      case 'marketplace':
+      case 'market':
+        return '거래';
+      case 'breeding':
+        return '교배';
+      case 'community':
+        return '소모임';
+      default:
+        return '활동';
+    }
+  }
+
+  /// 꼬순내지수 등급 변동 알림
+  Future<void> sendGradeChangeNotification({
+    required String recipientId,
+    required String oldGrade,
+    required String newGrade,
+    required int oldScore,
+    required int newScore,
+  }) async {
+    final isUpgrade = newScore > oldScore;
+    final diff = newScore - oldScore;
+    final diffText = isUpgrade ? '+$diff' : '$diff';
+    
+    await _saveNotification(
+      recipientId: recipientId,
+      type: NotificationType.gradeChange,
+      title: isUpgrade ? '🎉 등급이 올랐어요!' : '📉 등급이 변경되었어요',
+      body: '$oldGrade → $newGrade ($diffText점)',
+      data: {
+        'type': 'gradeChange',
+        'oldGrade': oldGrade,
+        'newGrade': newGrade,
+        'oldScore': oldScore.toString(),
+        'newScore': newScore.toString(),
+      },
+    );
+  }
+
+  /// 꼬순내지수 점수 변동 알림 (등급 변동 없이 점수만 변동)
+  Future<void> sendScoreChangeNotification({
+    required String recipientId,
+    required int oldScore,
+    required int newScore,
+  }) async {
+    final isUp = newScore > oldScore;
+    final diff = newScore - oldScore;
+    final diffText = isUp ? '+$diff' : '$diff';
+    
+    await _saveNotification(
+      recipientId: recipientId,
+      type: NotificationType.scoreChange,
+      title: isUp ? '🐾 꼬순내지수가 올랐어요!' : '꼬순내지수가 변동되었어요',
+      body: '$oldScore점 → $newScore점 ($diffText점)',
+      data: {
+        'type': 'scoreChange',
+        'oldScore': oldScore.toString(),
+        'newScore': newScore.toString(),
+      },
+    );
+  }
+
   /// 알림 저장 (Cloud Functions에서 FCM 전송)
   Future<void> _saveNotification({
     required String recipientId,
@@ -524,6 +634,10 @@ enum NotificationType {
   breedingAccepted,
   productLike,
   petLike,
+  rating,           // 평가 완료 알림
+  ratingReminder,   // 평가 리마인더 알림
+  gradeChange,      // 꼬순내지수 등급 변동 알림
+  scoreChange,      // 꼬순내지수 점수 변동 알림
   system,
 }
 

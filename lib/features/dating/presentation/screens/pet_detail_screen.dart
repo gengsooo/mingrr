@@ -656,7 +656,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
     Navigator.pop(context); // 바텀시트 닫기
     
     try {
-      await _datingService.sendLike(
+      await _datingService.sendDatingRequest(
         fromUserId: currentUser.uid,
         fromPetId: myPet.id,
         toUserId: targetPet.ownerId,

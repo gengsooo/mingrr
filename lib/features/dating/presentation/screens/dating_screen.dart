@@ -10,7 +10,7 @@ import '../../../../core/widgets/info_badge.dart';
 import '../../../../core/widgets/trait_badge.dart';
 import '../../../../core/widgets/verification_badge.dart';
 import '../../../../core/widgets/request_sheet.dart';
-import '../../../../core/widgets/profile_icon.dart';
+import '../../../../core/widgets/appbar_actions.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
@@ -84,10 +84,8 @@ class DatingScreen extends ConsumerWidget {
         actions: [
           // 교배찾기 탭에서만 검색 아이콘 표시
           if (selectedTab == 2)
-            IconButton(
-              icon: const Icon(Icons.search),
-              visualDensity: VisualDensity.compact,
-              onPressed: () {
+            AppBarActionButton.search(
+              onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -99,8 +97,8 @@ class DatingScreen extends ConsumerWidget {
                 );
               },
             ),
-          const NotificationIconButton(),
-          buildProfileAction(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
+          AppBarActionButton.notification(),
+          AppBarActionButton.profile(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
         ],
       ),
       body: Column(

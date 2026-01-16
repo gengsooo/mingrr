@@ -9,9 +9,18 @@ import 'package:equatable/equatable.dart';
 /// 알림 타입
 enum NotificationType {
   /// 데이팅 관련
-  likeReceived('좋아요 받음', 'dating'),
-  likeAccepted('좋아요 수락됨', 'dating'),
+  datingRequest('데이팅 신청', 'dating'),
+  datingAccepted('데이팅 수락', 'dating'),
   matchSuccess('매칭 성공', 'dating'),
+  
+  /// 하위 호환성 (deprecated)
+  @Deprecated('Use datingRequest instead')
+  likeReceived('좋아요 받음', 'dating'),
+  @Deprecated('Use datingAccepted instead')
+  likeAccepted('좋아요 수락됨', 'dating'),
+  
+  /// 반려동물 좋아요
+  petLike('반려동물 좋아요', 'pet'),
   
   /// 교배 관련
   breedingRequest('교배 신청', 'breeding'),

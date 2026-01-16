@@ -12,7 +12,7 @@ import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/utils/image_utils.dart';
-import '../../../../core/widgets/rating_sheet.dart';
+import '../../../../core/widgets/rating_widgets.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
 import '../../../../core/widgets/pet_profile_modal.dart';
 import '../../../../core/widgets/group_profile_modal.dart';
@@ -1298,25 +1298,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     if (otherParticipant == null) return;
 
-    RatingSheet.show(
+    showRatingModal(
       context,
       targetUserId: otherParticipant.id,
-      targetUserName: otherParticipant.petName ?? otherParticipant.nickname,
-      targetUserImageUrl: otherParticipant.petImageUrl ?? otherParticipant.profileImageUrl,
+      targetName: otherParticipant.petName ?? otherParticipant.nickname,
+      targetImageUrl: otherParticipant.petImageUrl ?? otherParticipant.profileImageUrl,
       ratingType: _getRatingType(chatType),
       relatedId: widget.chatRoomId,
-      onSubmit: (score, tags, comment, result) async {
-        await _ratingService.createRating(
-          raterId: myUserId,
-          targetId: otherParticipant.id,
-          type: _getRatingType(chatType),
-          relatedId: widget.chatRoomId,
-          result: result,
-          score: score,
-          tags: tags,
-          comment: comment,
-        );
-
+      onComplete: () async {
         // 평가 완료 표시
         if (_transaction != null) {
           final isSeller = myUserId == _transaction!.sellerId;

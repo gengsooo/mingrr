@@ -7,7 +7,7 @@ import 'mingrr_bottom_sheet.dart';
 import 'kkosunnae_widgets.dart';
 import 'verification_badge.dart';
 import 'pet_profile_modal.dart';
-import 'rating_modal.dart';
+import 'rating_widgets.dart';
 /// ============================================================
 /// 보호자 프로필 모달 (공통 위젯)
 /// 

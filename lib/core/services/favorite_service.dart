@@ -1,20 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:uuid/uuid.dart';
 import '../../models/pet_model.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/group_model.dart';
+import '../../models/notification_model.dart';
 import 'firebase_service.dart';
 
 /// ============================================================
-/// 찜 서비스
+/// 찜(좋아요) 서비스
 /// 
 /// 기능:
-/// - 반려동물 찜하기/취소
+/// - 반려동물 좋아요/취소 + 알림 발송
 /// - 상품 찜하기/취소
 /// - 소모임 찜하기/취소
 /// - 찜 목록 조회
 /// ============================================================
 class FavoriteService {
   final FirebaseService _firebase = FirebaseService();
+  final _uuid = const Uuid();
   
   FirebaseFirestore get _firestore => _firebase.firestore;
   
@@ -23,10 +26,10 @@ class FavoriteService {
   CollectionReference<Map<String, dynamic>> get _favoritesCollection =>
       _firestore.collection('favorites');
   
-  // ===== 반려동물 찜 =====
+  // ===== 반려동물 좋아요 =====
   
-  /// 반려동물 찜하기
-  Future<void> favoritePet(String petId) async {
+  /// 반려동물 좋아요 (알림 발송 포함)
+  Future<void> likePet(String petId) async {
     final userId = _firebase.currentUserId;
     if (userId == null) throw Exception('로그인이 필요합니다');
     
@@ -43,10 +46,53 @@ class FavoriteService {
     await _firebase.petsCollection.doc(petId).update({
       'likeCount': FieldValue.increment(1),
     });
+    
+    // 반려동물 주인에게 알림 발송
+    await _sendPetLikeNotification(petId, userId);
   }
   
-  /// 반려동물 찜 취소
-  Future<void> unfavoritePet(String petId) async {
+  /// 반려동물 좋아요 알림 발송
+  Future<void> _sendPetLikeNotification(String petId, String likerId) async {
+    // 반려동물 정보 조회
+    final petDoc = await _firebase.petsCollection.doc(petId).get();
+    if (!petDoc.exists) return;
+    
+    final petData = petDoc.data()!;
+    final ownerId = petData['ownerId'] as String?;
+    final petName = petData['name'] as String? ?? '반려동물';
+    
+    // 자기 자신의 반려동물이면 알림 X
+    if (ownerId == null || ownerId == likerId) return;
+    
+    // 좋아요 누른 사용자 정보 조회
+    final likerDoc = await _firebase.usersCollection.doc(likerId).get();
+    final likerName = likerDoc.exists 
+        ? (likerDoc.data()!['nickname'] as String? ?? '누군가')
+        : '누군가';
+    
+    // 알림 발송
+    final notificationId = _uuid.v4();
+    await _firestore.collection('notifications').doc(notificationId).set({
+      'userId': ownerId,
+      'type': NotificationType.petLike.name,
+      'title': '$petName이(가) 관심을 받았어요!',
+      'body': '$likerName님이 좋아요를 눌렀어요',
+      'data': {
+        'targetId': petId,
+        'targetType': 'pet',
+        'likerId': likerId,
+      },
+      'isRead': false,
+      'createdAt': Timestamp.fromDate(DateTime.now()),
+    });
+  }
+  
+  /// 반려동물 좋아요 - 하위 호환성
+  @Deprecated('Use likePet instead')
+  Future<void> favoritePet(String petId) => likePet(petId);
+  
+  /// 반려동물 좋아요 취소
+  Future<void> unlikePet(String petId) async {
     final userId = _firebase.currentUserId;
     if (userId == null) throw Exception('로그인이 필요합니다');
     
@@ -60,8 +106,12 @@ class FavoriteService {
     });
   }
   
-  /// 반려동물 찜 여부 확인
-  Future<bool> isPetFavorited(String petId) async {
+  /// 반려동물 좋아요 취소 - 하위 호환성
+  @Deprecated('Use unlikePet instead')
+  Future<void> unfavoritePet(String petId) => unlikePet(petId);
+  
+  /// 반려동물 좋아요 여부 확인
+  Future<bool> isPetLiked(String petId) async {
     final userId = _firebase.currentUserId;
     if (userId == null) return false;
     
@@ -287,17 +337,25 @@ class FavoriteService {
   
   // ===== 토글 메서드 =====
   
-  /// 반려동물 찜 토글
-  Future<bool> togglePetFavorite(String petId) async {
-    final isFavorited = await isPetFavorited(petId);
-    if (isFavorited) {
-      await unfavoritePet(petId);
+  /// 반려동물 좋아요 토글
+  Future<bool> togglePetLike(String petId) async {
+    final isLiked = await isPetLiked(petId);
+    if (isLiked) {
+      await unlikePet(petId);
       return false;
     } else {
-      await favoritePet(petId);
+      await likePet(petId);
       return true;
     }
   }
+  
+  /// 반려동물 좋아요 토글 - 하위 호환성
+  @Deprecated('Use togglePetLike instead')
+  Future<bool> togglePetFavorite(String petId) => togglePetLike(petId);
+  
+  /// 반려동물 좋아요 여부 확인 - 하위 호환성
+  @Deprecated('Use isPetLiked instead')
+  Future<bool> isPetFavorited(String petId) => isPetLiked(petId);
   
   /// 상품 찜 토글
   Future<bool> toggleProductFavorite(String productId) async {

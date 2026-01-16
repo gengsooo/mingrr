@@ -7,7 +7,9 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/profile_icon.dart';
+import '../../../../core/widgets/appbar_actions.dart';
+import '../../../../core/widgets/home_reminder_banner.dart';
+import '../../../../core/providers/home_reminder_provider.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../models/group_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
@@ -62,6 +64,9 @@ class HomeScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(AppSizes.paddingM),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
+                  // 홈 리마인더 배너
+                  _buildReminderBanners(context, ref),
+                  
                   // 반려동물 선택기 (여러 마리 지원)
                   if (pets.isNotEmpty)
                     _buildPetSelector(context, ref, pets, selectedIndex),
@@ -143,19 +148,8 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
       actions: [
-        // 알림 버튼
-        IconButton(
-          icon: const Icon(Icons.notifications_outlined),
-          onPressed: () => context.push('/notifications'),
-        ),
-        // 프로필 버튼
-        Padding(
-          padding: const EdgeInsets.only(right: AppSizes.paddingM),
-          child: GestureDetector(
-            onTap: () => context.push('/profile'),
-            child: ProfileButton(size: 36, backgroundColor: theme.scaffoldBackgroundColor),
-          ),
-        ),
+        AppBarActionButton.notification(),
+        AppBarActionButton.profile(backgroundColor: theme.scaffoldBackgroundColor),
       ],
     );
   }
@@ -1058,5 +1052,54 @@ class HomeScreen extends ConsumerWidget {
       );
     }
     return null;
+  }
+
+  /// 홈 리마인더 배너 빌더 (스와이프 캐러셀)
+  Widget _buildReminderBanners(BuildContext context, WidgetRef ref) {
+    final banners = ref.watch(homeReminderBannersProvider);
+    
+    if (banners.isEmpty) return const SizedBox.shrink();
+    
+    // onTap 핸들러를 포함한 배너 데이터 생성
+    final bannersWithHandlers = banners.map((banner) => HomeReminderBannerData(
+      type: banner.type,
+      count: banner.count,
+      onTap: () => _handleBannerTap(context, banner.type),
+    )).toList();
+    
+    return HomeReminderBannerCarousel(
+      banners: bannersWithHandlers,
+      maxVisible: 7,
+    );
+  }
+
+  /// 배너 탭 핸들러
+  void _handleBannerTap(BuildContext context, ReminderBannerType type) {
+    switch (type) {
+      case ReminderBannerType.rating:
+        // TODO: 평가 대기 목록 화면으로 이동
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('평가 대기 목록 (구현 예정)')),
+        );
+        break;
+      case ReminderBannerType.groupSchedule:
+        context.push('/social');
+        break;
+      case ReminderBannerType.petLike:
+        context.push('/profile/received-likes');
+        break;
+      case ReminderBannerType.receivedRating:
+        context.push('/notifications');
+        break;
+      case ReminderBannerType.verification:
+        context.push('/profile');
+        break;
+      case ReminderBannerType.groupJoinRequest:
+        context.push('/social');
+        break;
+      case ReminderBannerType.healthRecord:
+        context.push('/health');
+        break;
+    }
   }
 }

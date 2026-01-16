@@ -2,13 +2,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/dating_model.dart';
 import 'firebase_providers.dart';
 
-final receivedLikesProvider = StreamProvider<List<LikeModel>>((ref) {
+/// 받은 데이팅 신청 목록
+final receivedDatingRequestsProvider = StreamProvider<List<DatingRequestModel>>((ref) {
   final userId = ref.watch(currentUserIdProvider);
   if (userId == null) return Stream.value([]);
   
   final firestoreService = ref.watch(firestoreServiceProvider);
-  return firestoreService.watchReceivedLikes(userId);
+  return firestoreService.watchReceivedDatingRequests(userId);
 });
+
+/// 하위 호환성
+@Deprecated('Use receivedDatingRequestsProvider instead')
+final receivedLikesProvider = receivedDatingRequestsProvider;
 
 final userMatchesProvider = FutureProvider<List<MatchModel>>((ref) async {
   final userId = ref.watch(currentUserIdProvider);

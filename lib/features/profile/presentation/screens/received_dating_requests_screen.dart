@@ -10,29 +10,29 @@ import '../../../../models/pet_model.dart';
 import '../../../dating/presentation/providers/dating_provider.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 
-/// 받은 좋아요 화면
-class ReceivedLikesScreen extends ConsumerStatefulWidget {
-  const ReceivedLikesScreen({super.key});
+/// 받은 데이팅 신청 화면
+class ReceivedDatingRequestsScreen extends ConsumerStatefulWidget {
+  const ReceivedDatingRequestsScreen({super.key});
 
   @override
-  ConsumerState<ReceivedLikesScreen> createState() => _ReceivedLikesScreenState();
+  ConsumerState<ReceivedDatingRequestsScreen> createState() => _ReceivedDatingRequestsScreenState();
 }
 
-class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
+class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingRequestsScreen> {
   final DatingService _datingService = DatingService();
   bool _isProcessing = false;
 
   @override
   Widget build(BuildContext context) {
-    final likesAsync = ref.watch(receivedLikesProvider);
+    final requestsAsync = ref.watch(receivedDatingRequestsProvider);
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('받은 좋아요'),
+        title: const Text('받은 데이팅 신청'),
       ),
-      body: likesAsync.when(
-        data: (likes) {
-          if (likes.isEmpty) {
+      body: requestsAsync.when(
+        data: (requests) {
+          if (requests.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -40,7 +40,7 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
                   Icon(Icons.favorite_border, size: 64, color: Theme.of(context).colorScheme.outlineVariant),
                   const SizedBox(height: 16),
                   Text(
-                    '아직 받은 좋아요가 없어요',
+                    '아직 받은 신청이 없어요',
                     style: TextStyle(
                       fontSize: 16,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -61,10 +61,10 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
           
           return ListView.builder(
             padding: const EdgeInsets.all(AppSizes.paddingM),
-            itemCount: likes.length,
+            itemCount: requests.length,
             itemBuilder: (context, index) {
-              final like = likes[index];
-              return _buildLikeItem(context, like);
+              final request = requests[index];
+              return _buildRequestItem(context, request);
             },
           );
         },
@@ -74,16 +74,15 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
     );
   }
   
-  Widget _buildLikeItem(BuildContext context, LikeModel like) {
-    // 보낸 반려동물 정보 가져오기
-    final petAsync = ref.watch(petByIdProvider(like.fromPetId));
+  Widget _buildRequestItem(BuildContext context, DatingRequestModel request) {
+    final petAsync = ref.watch(petByIdProvider(request.fromPetId));
     
     return MingrrCard(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       child: petAsync.when(
-        data: (pet) => _buildLikeContent(context, like, pet),
+        data: (pet) => _buildRequestContent(context, request, pet),
         loading: () => _buildLoadingContent(),
-        error: (_, __) => _buildLikeContent(context, like, null),
+        error: (_, __) => _buildRequestContent(context, request, null),
       ),
     );
   }
@@ -114,12 +113,12 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
     );
   }
   
-  Widget _buildLikeContent(BuildContext context, LikeModel like, PetModel? pet) {
+  Widget _buildRequestContent(BuildContext context, DatingRequestModel request, PetModel? pet) {
     return Row(
       children: [
         // 프로필 이미지
         GestureDetector(
-          onTap: () => context.push('/dating/detail/${like.fromPetId}'),
+          onTap: () => context.push('/dating/detail/${request.fromPetId}'),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppSizes.radiusS),
             child: pet?.displayImageUrl != null
@@ -137,7 +136,7 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
         // 정보
         Expanded(
           child: GestureDetector(
-            onTap: () => context.push('/dating/detail/${like.fromPetId}'),
+            onTap: () => context.push('/dating/detail/${request.fromPetId}'),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -160,7 +159,7 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
                 ],
                 const SizedBox(height: 4),
                 Text(
-                  like.message ?? '좋아요를 보냈어요!',
+                  request.message ?? '데이팅 신청을 보냈어요!',
                   style: TextStyle(
                     fontSize: 13,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -173,16 +172,16 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
           ),
         ),
         // 수락/거절 버튼
-        if (like.status == LikeStatus.pending)
+        if (request.status == DatingRequestStatus.pending)
           Row(
             children: [
               IconButton(
                 icon: Icon(Icons.close, color: Theme.of(context).colorScheme.outlineVariant),
-                onPressed: _isProcessing ? null : () => _rejectLike(like),
+                onPressed: _isProcessing ? null : () => _rejectRequest(request),
               ),
               IconButton(
                 icon: Icon(Icons.favorite, color: context.features.dating),
-                onPressed: _isProcessing ? null : () => _acceptLike(like),
+                onPressed: _isProcessing ? null : () => _acceptRequest(request),
               ),
             ],
           )
@@ -190,16 +189,16 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: like.status == LikeStatus.accepted 
+              color: request.status == DatingRequestStatus.accepted 
                   ? context.features.success.withOpacity(0.1)
                   : Theme.of(context).colorScheme.outlineVariant.withOpacity(0.1),
               borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Text(
-              like.status == LikeStatus.accepted ? '수락됨' : '거절됨',
+              request.status == DatingRequestStatus.accepted ? '수락됨' : '거절됨',
               style: TextStyle(
                 fontSize: 12,
-                color: like.status == LikeStatus.accepted 
+                color: request.status == DatingRequestStatus.accepted 
                     ? context.features.success 
                     : Theme.of(context).colorScheme.outlineVariant,
               ),
@@ -221,12 +220,12 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
     );
   }
   
-  /// 좋아요 수락
-  Future<void> _acceptLike(LikeModel like) async {
+  /// 데이팅 신청 수락
+  Future<void> _acceptRequest(DatingRequestModel request) async {
     setState(() => _isProcessing = true);
     
     try {
-      final match = await _datingService.acceptLike(like.id);
+      final match = await _datingService.acceptDatingRequest(request.id);
       
       if (mounted) {
         if (match?.chatRoomId != null) {
@@ -252,17 +251,16 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
     }
   }
   
-  /// 좋아요 거절
-  Future<void> _rejectLike(LikeModel like) async {
-    // 확인 다이얼로그
+  /// 데이팅 신청 거절
+  Future<void> _rejectRequest(DatingRequestModel request) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        title: const Text('좋아요 거절'),
-        content: const Text('이 좋아요를 거절하시겠습니까?'),
+        title: const Text('신청 거절'),
+        content: const Text('이 데이팅 신청을 거절하시겠습니까?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -282,10 +280,10 @@ class _ReceivedLikesScreenState extends ConsumerState<ReceivedLikesScreen> {
     setState(() => _isProcessing = true);
     
     try {
-      await _datingService.rejectLike(like.id);
+      await _datingService.rejectDatingRequest(request.id);
       
       if (mounted) {
-        MingrrSnackBar.info(context, '좋아요를 거절했습니다');
+        MingrrSnackBar.info(context, '신청을 거절했습니다');
       }
     } catch (e) {
       if (mounted) {

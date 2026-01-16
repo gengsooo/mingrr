@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/firebase_service.dart';
+import '../../../../core/services/kkosunnae_service.dart';
 import '../../../../models/community_post_model.dart';
 
 /// ============================================================
@@ -127,6 +128,9 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
       );
       
       await docRef.set(post.toFirestore());
+      
+      // 꼬순내 점수 업데이트 (커뮤니티 활동 반영)
+      KkosunnaeService.updateScore(userId);
       
       state = const AsyncValue.data(null);
       return docRef.id;
@@ -276,6 +280,9 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
       await _firebase.feedPostsCollection.doc(postId).update({
         'commentCount': FieldValue.increment(1),
       });
+      
+      // 꼬순내 점수 업데이트 (커뮤니티 활동 반영)
+      KkosunnaeService.updateScore(userId);
       
       return docRef.id;
     } catch (e) {

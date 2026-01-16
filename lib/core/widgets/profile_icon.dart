@@ -50,17 +50,24 @@ class ProfileButton extends StatelessWidget {
   }
 }
 
-/// AppBar actions에 추가할 프로필 버튼
-/// [backgroundColor]로 메뉴별 테마 색상 적용 가능
-Widget buildProfileAction({String? imageUrl, Color? backgroundColor}) {
+/// @deprecated appbar_actions.dart의 AppBarActionButton.profile() 사용 권장
+@Deprecated('Use AppBarActionButton.profile() from appbar_actions.dart instead')
+Widget buildProfileAction({
+  String? imageUrl, 
+  Color? backgroundColor,
+  double rightPadding = AppSizes.paddingM,
+}) {
   return Builder(
-    builder: (context) => IconButton(
-      icon: ProfileButton(
-        imageUrl: imageUrl,
-        backgroundColor: backgroundColor,
+    builder: (context) => Padding(
+      padding: EdgeInsets.only(right: rightPadding),
+      child: GestureDetector(
+        onTap: () => GoRouter.of(context).push('/profile'),
+        child: ProfileButton(
+          imageUrl: imageUrl,
+          size: 36,
+          backgroundColor: backgroundColor,
+        ),
       ),
-      visualDensity: VisualDensity.compact,
-      onPressed: () => GoRouter.of(context).push('/profile'),
     ),
   );
 }

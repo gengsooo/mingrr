@@ -626,8 +626,9 @@ class MingrrBadge extends StatelessWidget {
   }
 }
 
-// ===== 알림 아이콘 버튼 =====
-/// AppBar에서 사용하는 알림 아이콘 (배지 포함)
+// ===== 알림 아이콘 버튼 (Deprecated) =====
+/// @deprecated appbar_actions.dart의 AppBarActionButton.notification() 사용 권장
+@Deprecated('Use AppBarActionButton.notification() from appbar_actions.dart instead')
 class NotificationIconButton extends StatelessWidget {
   final int badgeCount;
   final VoidCallback? onPressed;

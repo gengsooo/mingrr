@@ -7,7 +7,7 @@ import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/product_card.dart';
 import '../../../../core/widgets/search_screen.dart';
 import '../../../../core/widgets/top_navigation.dart';
-import '../../../../core/widgets/profile_icon.dart';
+import '../../../../core/widgets/appbar_actions.dart';
 import '../../../../models/marketplace_model.dart';
 import '../providers/marketplace_provider.dart';
 import 'product_detail_screen.dart';
@@ -79,10 +79,8 @@ class MarketplaceScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('마켓'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            visualDensity: VisualDensity.compact,
-            onPressed: () {
+          AppBarActionButton.search(
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -94,8 +92,8 @@ class MarketplaceScreen extends ConsumerWidget {
               );
             },
           ),
-          const NotificationIconButton(),
-          buildProfileAction(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
+          AppBarActionButton.notification(),
+          AppBarActionButton.profile(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
         ],
       ),
       body: Column(

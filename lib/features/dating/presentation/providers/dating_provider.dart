@@ -137,22 +137,26 @@ final filteredDatingPetsProvider = Provider.autoDispose.family<List<PetWithDista
   return pets.where((p) => p.distanceMeters <= radiusKm * 1000).toList();
 });
 
-// 받은 좋아요 목록
-final receivedLikesProvider = StreamProvider.autoDispose<List<LikeModel>>((ref) {
+// 받은 데이팅 신청 목록
+final receivedDatingRequestsProvider = StreamProvider.autoDispose<List<DatingRequestModel>>((ref) {
   final authState = ref.watch(authStateProvider);
   
   return authState.when(
     data: (user) {
       if (user == null) {
-        return Stream.value(<LikeModel>[]);
+        return Stream.value(<DatingRequestModel>[]);
       }
       final firestoreService = ref.watch(firestoreServiceProvider);
-      return firestoreService.watchReceivedLikes(user.uid);
+      return firestoreService.watchReceivedDatingRequests(user.uid);
     },
     loading: () => const Stream.empty(),
-    error: (_, __) => Stream.value(<LikeModel>[]),
+    error: (_, __) => Stream.value(<DatingRequestModel>[]),
   );
 });
+
+// 받은 좋아요 목록 - 하위 호환성
+@Deprecated('Use receivedDatingRequestsProvider instead')
+final receivedLikesProvider = receivedDatingRequestsProvider;
 
 // 매칭 목록
 final userMatchesProvider = FutureProvider.autoDispose<List<MatchModel>>((ref) async {
@@ -165,11 +169,15 @@ final userMatchesProvider = FutureProvider.autoDispose<List<MatchModel>>((ref) a
   return firestoreService.getUserMatches(userId);
 });
 
-// 받은 좋아요 개수
-final receivedLikesCountProvider = Provider.autoDispose<int>((ref) {
-  final likes = ref.watch(receivedLikesProvider).valueOrNull ?? [];
-  return likes.length;
+// 받은 데이팅 신청 개수
+final receivedDatingRequestsCountProvider = Provider.autoDispose<int>((ref) {
+  final requests = ref.watch(receivedDatingRequestsProvider).valueOrNull ?? [];
+  return requests.where((r) => r.status == DatingRequestStatus.pending).length;
 });
+
+// 받은 좋아요 개수 - 하위 호환성
+@Deprecated('Use receivedDatingRequestsCountProvider instead')
+final receivedLikesCountProvider = receivedDatingRequestsCountProvider;
 
 // 교배 가능한 반려동물 목록 (isBreedingAvailable = true, 거리 정보 포함)
 final breedingPetsProvider = FutureProvider.autoDispose<List<PetWithDistance>>((ref) async {

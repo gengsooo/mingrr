@@ -7,7 +7,7 @@ import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/top_navigation.dart';
-import '../../../../core/widgets/profile_icon.dart';
+import '../../../../core/widgets/appbar_actions.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../models/chat_model.dart';
@@ -61,8 +61,8 @@ class ChatListScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('채팅'),
         actions: [
-          const NotificationIconButton(),
-          buildProfileAction(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
+          AppBarActionButton.notification(),
+          AppBarActionButton.profile(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
         ],
       ),
       body: Column(

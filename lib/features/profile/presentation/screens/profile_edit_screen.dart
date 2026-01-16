@@ -8,6 +8,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../../core/services/firestore_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/image_picker_sheet.dart';
@@ -45,6 +46,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   
   // 프로필 이미지 관련
   final StorageService _storageService = StorageService();
+  final FirestoreService _firestoreService = FirestoreService();
   XFile? _selectedProfileImage;
   String? _profileImageUrl;
   DefaultAvatar? _selectedDefaultAvatar;
@@ -439,6 +441,24 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           throw Exception('로그인이 필요합니다');
         }
         
+        final newNickname = _nicknameController.text.trim();
+        
+        // 닉네임 변경 시 중복 체크
+        if (newNickname != _originalNickname) {
+          final isAvailable = await _firestoreService.isNicknameAvailable(
+            newNickname,
+            excludeUserId: authUser.uid,
+          );
+          
+          if (!isAvailable) {
+            if (mounted) {
+              MingrrSnackBar.error(context, '이미 사용 중인 닉네임입니다');
+            }
+            setState(() => _isLoading = false);
+            return;
+          }
+        }
+        
         // 프로필 이미지 업로드
         String? uploadedImageUrl = _profileImageUrl;
         if (_selectedDefaultAvatar != null) {
@@ -448,7 +468,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         }
         
         final updateData = <String, dynamic>{
-          'nickname': _nicknameController.text.trim(),
+          'nickname': newNickname,
           'gender': _selectedGender?.name,
           'birthDate': _birthDate != null ? Timestamp.fromDate(_birthDate!) : null,
           'bio': _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),

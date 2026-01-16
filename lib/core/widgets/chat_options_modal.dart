@@ -3,7 +3,7 @@ import '../constants/app_sizes.dart';
 import '../services/bottom_sheet_stack_manager.dart';
 import 'common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
-import 'rating_modal.dart';
+import 'rating_widgets.dart';
 
 /// ============================================================
 /// 채팅방 옵션 모달 (공통 위젯)

@@ -48,6 +48,30 @@ class FirestoreService {
     }
   }
   
+  /// 닉네임 중복 체크
+  /// [nickname] 체크할 닉네임
+  /// [excludeUserId] 본인 ID (수정 시 본인 제외)
+  /// Returns: true = 사용 가능, false = 이미 사용 중
+  Future<bool> isNicknameAvailable(String nickname, {String? excludeUserId}) async {
+    try {
+      final query = await _firebase.usersCollection
+          .where('nickname', isEqualTo: nickname)
+          .limit(1)
+          .get();
+      
+      if (query.docs.isEmpty) return true;
+      
+      // 본인인 경우 사용 가능
+      if (excludeUserId != null && query.docs.first.id == excludeUserId) {
+        return true;
+      }
+      
+      return false;
+    } catch (e) {
+      rethrow;
+    }
+  }
+  
   Stream<UserModel?> watchUser(String userId) {
     return _firebase.usersCollection
         .doc(userId)
@@ -184,48 +208,61 @@ class FirestoreService {
             .toList());
   }
   
-  Future<void> createLike(LikeModel like) async {
+  // ===== 데이팅 신청 관련 =====
+  
+  Future<void> createDatingRequest(DatingRequestModel request) async {
     try {
-      await _firebase.likesCollection.doc(like.id).set(like.toFirestore());
+      await _firebase.datingRequestsCollection.doc(request.id).set(request.toFirestore());
     } catch (e) {
       rethrow;
     }
   }
   
-  Future<void> updateLike(LikeModel like) async {
+  Future<void> updateDatingRequest(DatingRequestModel request) async {
     try {
-      await _firebase.likesCollection.doc(like.id).update(like.toFirestore());
+      await _firebase.datingRequestsCollection.doc(request.id).update(request.toFirestore());
     } catch (e) {
       rethrow;
     }
   }
   
-  Future<List<LikeModel>> getReceivedLikes(String userId) async {
+  Future<List<DatingRequestModel>> getReceivedDatingRequests(String userId) async {
     try {
-      final snapshot = await _firebase.likesCollection
+      final snapshot = await _firebase.datingRequestsCollection
           .where('toUserId', isEqualTo: userId)
-          .where('status', isEqualTo: 'pending')
           .orderBy('createdAt', descending: true)
           .get();
       
       return snapshot.docs
-          .map((doc) => LikeModel.fromFirestore(doc.data(), id: doc.id))
+          .map((doc) => DatingRequestModel.fromFirestore(doc.data(), id: doc.id))
           .toList();
     } catch (e) {
       rethrow;
     }
   }
   
-  Stream<List<LikeModel>> watchReceivedLikes(String userId) {
-    return _firebase.likesCollection
+  Stream<List<DatingRequestModel>> watchReceivedDatingRequests(String userId) {
+    return _firebase.datingRequestsCollection
         .where('toUserId', isEqualTo: userId)
-        .where('status', isEqualTo: 'pending')
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => LikeModel.fromFirestore(doc.data(), id: doc.id))
+            .map((doc) => DatingRequestModel.fromFirestore(doc.data(), id: doc.id))
             .toList());
   }
+  
+  // 하위 호환성
+  @Deprecated('Use createDatingRequest instead')
+  Future<void> createLike(DatingRequestModel like) => createDatingRequest(like);
+  
+  @Deprecated('Use updateDatingRequest instead')
+  Future<void> updateLike(DatingRequestModel like) => updateDatingRequest(like);
+  
+  @Deprecated('Use getReceivedDatingRequests instead')
+  Future<List<DatingRequestModel>> getReceivedLikes(String userId) => getReceivedDatingRequests(userId);
+  
+  @Deprecated('Use watchReceivedDatingRequests instead')
+  Stream<List<DatingRequestModel>> watchReceivedLikes(String userId) => watchReceivedDatingRequests(userId);
   
   Future<void> createMatch(MatchModel match) async {
     try {

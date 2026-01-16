@@ -28,7 +28,7 @@ import '../../../../models/pet_model.dart';
 import 'activity_history_screen.dart';
 import 'pet_edit_screen.dart';
 import 'profile_edit_screen.dart';
-import 'received_likes_screen.dart';
+import 'received_dating_requests_screen.dart';
 import 'transaction_history_screen.dart';
 import 'wishlist_screen.dart';
 import '../../../dating/presentation/providers/dating_provider.dart';
@@ -252,7 +252,7 @@ class ProfileScreen extends ConsumerWidget {
               
               // 꼬순내지수 (개선된 디자인)
               currentUser.when(
-                data: (user) => _buildKkosunnaeScore(user?.kkosunnaeScore ?? 50.0),
+                data: (user) => _buildKkosunnaeScore(context, user?.kkosunnaeScore ?? 50.0),
                 loading: () => const SizedBox(),
                 error: (_, __) => const SizedBox(),
               ),
@@ -610,9 +610,9 @@ class ProfileScreen extends ConsumerWidget {
     final menus = [
       {
         'icon': Icons.favorite,
-        'label': '받은 좋아요',
+        'label': '받은 데이팅 신청',
         'badge': likesCount > 0 ? '$likesCount' : null,
-        'screen': const ReceivedLikesScreen(),
+        'screen': const ReceivedDatingRequestsScreen(),
       },
       {
         'icon': Icons.history,
@@ -1503,8 +1503,11 @@ class ProfileScreen extends ConsumerWidget {
   }
   
   /// 꼬순내지수 디자인 (공통 위젯 사용)
-  Widget _buildKkosunnaeScore(double score) {
-    return KkosunnaeScoreMedium(score: score);
+  Widget _buildKkosunnaeScore(BuildContext context, double score) {
+    return KkosunnaeScoreMedium(
+      score: score,
+      onTap: () => showKkosunnaeDetailSheet(context),
+    );
   }
   
   /// 프로필 이미지 위젯
@@ -1721,6 +1724,20 @@ class ProfileScreen extends ConsumerWidget {
                         }
                         
                         try {
+                          // 닉네임 중복 체크
+                          final firestoreService = FirestoreService();
+                          final isAvailable = await firestoreService.isNicknameAvailable(
+                            newNickname,
+                            excludeUserId: user.id,
+                          );
+                          
+                          if (!isAvailable) {
+                            if (context.mounted) {
+                              MingrrSnackBar.error(context, '이미 사용 중인 닉네임입니다');
+                            }
+                            return;
+                          }
+                          
                           final firestore = FirebaseFirestore.instance;
                           await firestore.collection('users').doc(user.id).update({
                             'nickname': newNickname,
