@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/utils/format_utils.dart';
@@ -92,40 +93,31 @@ class CommunityScreen extends ConsumerWidget {
   }
 
   Widget _buildCategoryFilter(BuildContext context, WidgetRef ref, CommunityCategory? selected) {
-    final colorScheme = Theme.of(context).colorScheme;
     final accentColor = context.features.social;
     
-    return Container(
-      height: 50,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(color: colorScheme.outline.withOpacity(0.2)),
-        ),
-      ),
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
-        children: [
-          _CategoryChip(
-            label: '전체',
-            isSelected: selected == null,
-            accentColor: accentColor,
-            onTap: () => ref.read(_selectedCommunityCategory.notifier).state = null,
-          ),
-          const SizedBox(width: 8),
-          ...CommunityCategory.values.map((category) => Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: _CategoryChip(
-              label: '${category.emoji} ${category.label}',
-              isSelected: selected == category,
-              accentColor: accentColor,
-              onTap: () => ref.read(_selectedCommunityCategory.notifier).state = category,
-            ),
-          )),
-        ],
-      ),
+    // 카테고리 목록 생성 (이모지 제거)
+    final categories = [
+      '전체',
+      ...CommunityCategory.values.map((c) => c.label),
+    ];
+    
+    // 선택된 인덱스 계산
+    final selectedIndex = selected == null 
+        ? 0 
+        : CommunityCategory.values.indexOf(selected) + 1;
+    
+    return MingrrCategoryChips(
+      title: '카테고리',
+      categories: categories,
+      selectedIndex: selectedIndex,
+      onSelected: (index) {
+        if (index == 0) {
+          ref.read(_selectedCommunityCategory.notifier).state = null;
+        } else {
+          ref.read(_selectedCommunityCategory.notifier).state = CommunityCategory.values[index - 1];
+        }
+      },
+      accentColor: accentColor,
     );
   }
 
@@ -140,48 +132,6 @@ class CommunityScreen extends ConsumerWidget {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => CommunityDetailScreen(postId: post.id)),
-    );
-  }
-}
-
-/// 카테고리 칩
-class _CategoryChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final Color accentColor;
-  final VoidCallback onTap;
-
-  const _CategoryChip({
-    required this.label,
-    required this.isSelected,
-    required this.accentColor,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? accentColor : colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(AppSizes.radiusS),
-          border: Border.all(
-            color: isSelected ? accentColor : colorScheme.outline.withOpacity(0.3),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ),
     );
   }
 }

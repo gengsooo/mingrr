@@ -8,6 +8,7 @@ import '../../../../core/widgets/product_card.dart';
 import '../../../../core/widgets/search_screen.dart';
 import '../../../../core/widgets/top_navigation.dart';
 import '../../../../core/widgets/appbar_actions.dart';
+import '../../../../core/widgets/filter_components.dart';
 import '../../../../models/marketplace_model.dart';
 import '../providers/marketplace_provider.dart';
 import 'product_detail_screen.dart';
@@ -120,8 +121,9 @@ class MarketplaceScreen extends ConsumerWidget {
           ),
           
           // 카테고리 필터
-          CategoryFilterChips(
-            categories: categories,
+          MingrrCategoryChips(
+            title: '카테고리',
+            categories: categories.map((c) => c.label).toList(),
             selectedIndex: selectedCategory,
             onSelected: (index) {
               ref.read(_selectedCategoryProvider.notifier).state = index;

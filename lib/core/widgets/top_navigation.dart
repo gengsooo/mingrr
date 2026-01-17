@@ -61,7 +61,7 @@ class PillTabBar extends StatelessWidget {
     final colorScheme = theme.colorScheme;
     
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: backgroundColor ?? colorScheme.surface,
       child: Container(
         padding: const EdgeInsets.all(4),
@@ -79,7 +79,7 @@ class PillTabBar extends StatelessWidget {
                 onTap: () => onTabSelected(index),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
                   decoration: BoxDecoration(
                     color: isSelected ? tab.color : Colors.transparent,
                     borderRadius: BorderRadius.circular(25),
@@ -174,7 +174,7 @@ class LocationDistanceBar extends ConsumerWidget {
             : '내 동네');
     
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(
@@ -262,7 +262,6 @@ class LocationDistanceBar extends ConsumerWidget {
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const BottomSheetHandle(),
             // 헤더

@@ -239,7 +239,6 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const BottomSheetHandle(),
           // 타이틀
@@ -456,7 +455,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(

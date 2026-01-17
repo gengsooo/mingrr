@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../constants/app_sizes.dart';
 import '../theme/feature_colors.dart';
+import 'mingrr_bottom_sheet.dart';
 
 /// 지역 선택 결과 (주소 + 좌표)
 class LocationResult {
@@ -442,21 +443,12 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
       ),
       child: Column(
         children: [
-          // 드래그 핸들
-          Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 4),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.4),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
+          const BottomSheetHandle(),
           // 헤더
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5))),
+              border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3))),
             ),
             child: Row(
               children: [
@@ -488,7 +480,7 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border(right: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5))),
+                      border: Border(right: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3))),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -538,7 +530,7 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border(right: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5))),
+                      border: Border(right: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3))),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -715,6 +707,290 @@ void showLocationSelectorWithCoordinates({
       initialLocation: initialLocation,
       accentColor: accentColor,
       onLocationResultSelected: onLocationResultSelected,
+    ),
+  );
+}
+
+/// ============================================================
+/// 지역 선택 바텀시트 (다중 선택용)
+/// 소모임 목록 필터 등에서 사용
+/// ============================================================
+class MultiLocationSelectorSheet extends StatefulWidget {
+  final List<String> initialLocations;
+  final Color? accentColor;
+  final Function(List<String> locations) onLocationsSelected;
+
+  const MultiLocationSelectorSheet({
+    super.key,
+    this.initialLocations = const [],
+    this.accentColor,
+    required this.onLocationsSelected,
+  });
+
+  @override
+  State<MultiLocationSelectorSheet> createState() => _MultiLocationSelectorSheetState();
+}
+
+class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet> {
+  String? _selectedProvince;
+  String? _selectedCity;
+  late List<String> _tempSelected;
+
+  Color get accentColor => widget.accentColor ?? context.features.social;
+
+  @override
+  void initState() {
+    super.initState();
+    _tempSelected = List.from(widget.initialLocations);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final districts = (_selectedProvince != null && _selectedCity != null)
+        ? KoreaLocationData.getDistricts(_selectedProvince!, _selectedCity!)
+        : <String>[];
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.75,
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
+      ),
+      child: Column(
+        children: [
+          const BottomSheetHandle(),
+          // 헤더
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: () => setState(() => _tempSelected.clear()),
+                  child: Text('초기화', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                ),
+                Column(
+                  children: [
+                    const Text('지역 선택', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+                    if (_tempSelected.isNotEmpty)
+                      Text(
+                        '${_tempSelected.length}개 선택됨',
+                        style: TextStyle(fontSize: 12, color: accentColor),
+                      ),
+                  ],
+                ),
+                TextButton(
+                  onPressed: () {
+                    widget.onLocationsSelected(_tempSelected);
+                    Navigator.pop(context);
+                  },
+                  child: Text('완료', style: TextStyle(color: accentColor, fontWeight: FontWeight.w600)),
+                ),
+              ],
+            ),
+          ),
+          // 선택된 지역 칩들
+          if (_tempSelected.isNotEmpty)
+            Container(
+              constraints: const BoxConstraints(maxHeight: 100),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: SingleChildScrollView(
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _tempSelected.map((location) {
+                    return Chip(
+                      label: Text(location, style: const TextStyle(fontSize: 11)),
+                      deleteIcon: const Icon(Icons.close, size: 14),
+                      onDeleted: () => setState(() => _tempSelected.remove(location)),
+                      backgroundColor: accentColor.withOpacity(0.1),
+                      side: BorderSide.none,
+                      labelStyle: TextStyle(color: accentColor),
+                      deleteIconColor: accentColor,
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          const Divider(height: 1),
+          // 3단 선택 영역
+          Expanded(
+            child: Row(
+              children: [
+                // 1단계: 시/도
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerLow,
+                      border: Border(right: BorderSide(color: colorScheme.outline.withOpacity(0.2))),
+                    ),
+                    child: ListView(
+                      children: KoreaLocationData.getProvinces().map((province) {
+                        final isSelected = _selectedProvince == province;
+                        return InkWell(
+                          onTap: () => setState(() {
+                            _selectedProvince = province;
+                            _selectedCity = null;
+                          }),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                            decoration: BoxDecoration(
+                              color: isSelected ? accentColor.withOpacity(0.1) : null,
+                              border: Border(
+                                left: BorderSide(
+                                  color: isSelected ? accentColor : Colors.transparent,
+                                  width: 3,
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              province,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                color: isSelected ? accentColor : colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+                // 2단계: 시/군
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border(right: BorderSide(color: colorScheme.outline.withOpacity(0.2))),
+                    ),
+                    child: _selectedProvince == null
+                        ? Center(
+                            child: Text(
+                              '시/도 선택',
+                              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                            ),
+                          )
+                        : ListView(
+                            children: KoreaLocationData.getCities(_selectedProvince!).map((city) {
+                              final isSelected = _selectedCity == city;
+                              final hasDistricts = KoreaLocationData.getDistricts(_selectedProvince!, city).isNotEmpty;
+                              return InkWell(
+                                onTap: () {
+                                  if (hasDistricts) {
+                                    setState(() => _selectedCity = city);
+                                  } else {
+                                    final locationKey = '$_selectedProvince $city';
+                                    setState(() {
+                                      if (_tempSelected.contains(locationKey)) {
+                                        _tempSelected.remove(locationKey);
+                                      } else {
+                                        _tempSelected.add(locationKey);
+                                      }
+                                    });
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    color: isSelected ? accentColor.withOpacity(0.1) : null,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          city,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                            color: isSelected ? accentColor : colorScheme.onSurface,
+                                          ),
+                                        ),
+                                      ),
+                                      if (hasDistricts)
+                                        Icon(Icons.chevron_right, size: 18, color: colorScheme.onSurfaceVariant)
+                                      else if (_tempSelected.contains('$_selectedProvince $city'))
+                                        Icon(Icons.check, size: 18, color: accentColor),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                  ),
+                ),
+                // 3단계: 구
+                Expanded(
+                  child: districts.isEmpty
+                      ? Center(
+                          child: Text(
+                            _selectedCity == null ? '시/군 선택' : '전체 선택됨',
+                            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                          ),
+                        )
+                      : ListView(
+                          children: districts.map((district) {
+                            final locationKey = '$_selectedProvince $_selectedCity $district';
+                            final isSelected = _tempSelected.contains(locationKey);
+                            return InkWell(
+                              onTap: () {
+                                setState(() {
+                                  if (isSelected) {
+                                    _tempSelected.remove(locationKey);
+                                  } else {
+                                    _tempSelected.add(locationKey);
+                                  }
+                                });
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        district,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                          color: isSelected ? accentColor : colorScheme.onSurface,
+                                        ),
+                                      ),
+                                    ),
+                                    if (isSelected)
+                                      Icon(Icons.check, size: 18, color: accentColor),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 다중 지역 선택 바텀시트 표시 헬퍼 함수
+void showMultiLocationSelector({
+  required BuildContext context,
+  List<String> initialLocations = const [],
+  Color? accentColor,
+  required Function(List<String> locations) onLocationsSelected,
+}) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => MultiLocationSelectorSheet(
+      initialLocations: initialLocations,
+      accentColor: accentColor,
+      onLocationsSelected: onLocationsSelected,
     ),
   );
 }

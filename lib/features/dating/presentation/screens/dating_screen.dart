@@ -11,6 +11,7 @@ import '../../../../core/widgets/trait_badge.dart';
 import '../../../../core/widgets/verification_badge.dart';
 import '../../../../core/widgets/request_sheet.dart';
 import '../../../../core/widgets/appbar_actions.dart';
+import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
@@ -189,7 +190,7 @@ class DatingScreen extends ConsumerWidget {
               _buildBreedFilters(ref),
             ],
           ),
-          const Divider(height: 1),
+          const MingrrFilterSectionDivider(),
           // 2행: 크기 + 나이
           _buildFilterRow(
             context, ref,
@@ -200,7 +201,7 @@ class DatingScreen extends ConsumerWidget {
               _buildAgeFilters(ref),
             ],
           ),
-          const Divider(height: 1),
+          const MingrrFilterSectionDivider(),
           // 3행: 인증 여부
           _buildFilterRow(
             context, ref,
@@ -222,7 +223,7 @@ class DatingScreen extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
     
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: 6),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -251,14 +252,9 @@ class DatingScreen extends ConsumerWidget {
     );
   }
 
-  /// 구분선
+  /// 구분선 (필터 행 내 세로 구분선)
   Widget _buildDivider() {
-    return Builder(
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Container(width: 1, height: 20, color: Theme.of(ctx).colorScheme.outline),
-      ),
-    );
+    return const MingrrFilterDivider();
   }
 
   /// 성별 필터

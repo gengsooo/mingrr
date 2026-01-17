@@ -38,6 +38,13 @@ class KkosunnaeService {
   static const String gradeSolsol = '솔솔';       // 상위 50%
   static const String gradeGrowing = '쑥쑥';      // 하위 50%
 
+  // ===== 등급별 색상 상수 =====
+  static const int colorBigBang = 0xFFFFD700;   // 브라이트 골드 (빅뱅)
+  static const int colorVolcano = 0xFFFF9500;   // 주황색 (화산)
+  static const int colorHot = 0xFFFF6B6B;       // 빨간색 (뜨끈)
+  static const int colorSolsol = 0xFF4A90D9;    // 파란색 (솔솔)
+  static const int colorGrowing = 0xFF4CAF50;   // 초록색 (쑥쑥)
+
   // ===== 등급 구간 (동적 조정 - 초기 기본값) =====
   // 주기적으로 전체 유저 분포 분석 후 업데이트
   static int _thresholdBigBang = 90;   // 빅뱅 진입 점수
@@ -607,11 +614,11 @@ class KkosunnaeService {
 
   /// 등급 색상 가져오기 (동적 구간 기반)
   static int getGradeColor(int score) {
-    if (score >= _thresholdBigBang) return 0xFFFFD700; // 금색 (빅뱅)
-    if (score >= _thresholdVolcano) return 0xFFFF9500; // 주황색 (화산)
-    if (score >= _thresholdHot) return 0xFFFF6B6B;     // 빨간색 (뜨끈)
-    if (score >= _thresholdSolsol) return 0xFF4A90D9; // 파란색 (솔솔)
-    return 0xFF4CAF50;                                 // 초록색 (쑥쑥)
+    if (score >= _thresholdBigBang) return colorBigBang;
+    if (score >= _thresholdVolcano) return colorVolcano;
+    if (score >= _thresholdHot) return colorHot;
+    if (score >= _thresholdSolsol) return colorSolsol;
+    return colorGrowing;
   }
 
   /// 배지 표시 여부 (빅뱅 등급)

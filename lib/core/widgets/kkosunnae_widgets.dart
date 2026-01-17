@@ -67,14 +67,14 @@ class _KkosunaeMasterBadgeSmall extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+          colors: [Color(KkosunnaeService.colorBigBang), Color(KkosunnaeService.colorVolcano)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFFFD700).withOpacity(0.4),
+            color: const Color(KkosunnaeService.colorBigBang).withOpacity(0.4),
             blurRadius: 4,
             spreadRadius: 0.5,
           ),

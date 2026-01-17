@@ -783,7 +783,7 @@ class ProfileScreen extends ConsumerWidget {
               ref: ref,
               badgeType: BadgeType.petRegistration,
               isVerified: verifications[BadgeType.petRegistration] ?? false,
-              description: '동물등록증을 업로드해주세요',
+              description: '동물등록 인증을 완료해주세요',
             ),
             
             // 위치 인증 (당근마켓 스타일)

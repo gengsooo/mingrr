@@ -590,15 +590,11 @@ class _LocationBottomSheetState extends State<LocationBottomSheet> {
 }
 
 /// ------------------------------------------------------------
-/// 카테고리 필터 칩 목록
+/// 카테고리 필터 칩 목록 (Deprecated)
 /// 
-/// 가로 스크롤 가능한 필터 칩 목록
-/// [accentColor]: 테마 색상
-/// [categories]: 카테고리 목록 (label, emoji, icon)
-/// [selectedIndex]: 선택된 인덱스
-/// [onSelected]: 선택 콜백
-/// [showDropdownIcon]: 드롭다운 아이콘 표시 여부
+/// @deprecated filter_components.dart의 MingrrCategoryChips 사용 권장
 /// ------------------------------------------------------------
+@Deprecated('Use MingrrCategoryChips from filter_components.dart instead')
 class CategoryFilterChips extends StatelessWidget {
   final Color accentColor;
   final List<({String label, String? emoji, IconData? icon})> categories;
