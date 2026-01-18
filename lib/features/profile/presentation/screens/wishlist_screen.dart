@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/top_navigation.dart';
 import '../providers/profile_provider.dart';
 
 /// 찜한 목록 화면
@@ -22,18 +23,7 @@ class WishlistScreen extends ConsumerWidget {
         child: Column(
           children: [
             // 탭바
-            Container(
-              color: Theme.of(context).colorScheme.surface,
-              child: TabBar(
-                labelColor: Theme.of(context).colorScheme.primary,
-                unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                indicatorColor: Theme.of(context).colorScheme.primary,
-                tabs: const [
-                  Tab(text: '상품'),
-                  Tab(text: '반려동물'),
-                ],
-              ),
-            ),
+            const MingrrSubTabBar(tabs: ['상품', '반려동물']),
             // 탭 컨텐츠
             Expanded(
               child: TabBarView(
@@ -89,7 +79,7 @@ class WishlistScreen extends ConsumerWidget {
           },
         );
       },
-      loading: () => const MingrrLoadingState(),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.market, message: '찜 목록을 불러오고 있어요'),
       error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
     );
   }

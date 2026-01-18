@@ -1083,7 +1083,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                     .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const MingrrLoadingState();
+                    return const MingrrLoadingState(type: MingrrLoadingType.walk, message: '산책 기록을 불러오고 있어요');
                   }
                   
                   if (snapshot.hasError) {

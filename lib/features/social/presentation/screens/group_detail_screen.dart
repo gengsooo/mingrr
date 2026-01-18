@@ -13,6 +13,7 @@ import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/info_badge.dart';
 import '../../../../core/widgets/mingrr_image_header.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
+import '../../../../core/widgets/top_navigation.dart';
 import '../../../../models/group_model.dart';
 import '../../../../models/chat_model.dart';
 import '../../../chat/presentation/screens/chat_detail_screen.dart';
@@ -84,8 +85,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
               ),
               SliverPersistentHeader(
                 pinned: true,
-                delegate: _TabBarDelegate(
-                  tabController: _tabController,
+                delegate: MingrrSubTabBarDelegate(
+                  tabs: const ['정보', '멤버', '일정'],
+                  controller: _tabController,
                   accentColor: accentColor,
                 ),
               ),
@@ -100,7 +102,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             ),
           );
         },
-        loading: () => const MingrrLoadingState(),
+        loading: () => MingrrLoadingState(
+          type: MingrrLoadingType.community,
+          message: '소모임 정보를 불러오고 있어요',
+          timeout: AppSizes.loadingTimeout,
+          onRetry: () => ref.invalidate(groupDetailProvider(widget.groupId)),
+        ),
         error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       ),
       bottomNavigationBar: groupAsync.whenData((group) {
@@ -353,7 +360,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       future: _loadMembers(group),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const MingrrLoadingState();
+          return const MingrrLoadingState(type: MingrrLoadingType.community, message: '멤버 목록을 불러오고 있어요');
         }
 
         final members = snapshot.data ?? [];
@@ -722,7 +729,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           },
         );
       },
-      loading: () => const MingrrLoadingState(),
+      loading: () => MingrrLoadingState(
+        type: MingrrLoadingType.community,
+        message: '게시글을 불러오고 있어요',
+        timeout: AppSizes.loadingTimeout,
+        onRetry: () => ref.invalidate(groupSchedulesProvider(group.id)),
+      ),
       error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
     );
   }
@@ -973,41 +985,6 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   }
 }
 
-/// 탭바 델리게이트
-class _TabBarDelegate extends SliverPersistentHeaderDelegate {
-  final TabController tabController;
-  final Color accentColor;
-
-  _TabBarDelegate({required this.tabController, required this.accentColor});
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: Theme.of(context).colorScheme.surface,
-      child: TabBar(
-        controller: tabController,
-        indicatorColor: accentColor,
-        indicatorWeight: 3,
-        labelColor: accentColor,
-        unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
-        tabs: const [
-          Tab(text: '정보'),
-          Tab(text: '멤버'),
-          Tab(text: '일정'),
-        ],
-      ),
-    );
-  }
-
-  @override
-  double get maxExtent => 48;
-
-  @override
-  double get minExtent => 48;
-
-  @override
-  bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) => false;
-}
 
 /// 멤버 정보
 class _MemberInfo {

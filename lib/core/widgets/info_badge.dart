@@ -543,3 +543,180 @@ class VerifiedBadge extends StatelessWidget {
     );
   }
 }
+
+/// 빈 상태 안내 배지 (이미지 오버레이용)
+/// 
+/// 사용처:
+/// - 데이팅 상세 이미지 헤더: 위치 정보 없음, 궁합 정보 없음
+/// - 이미지 없을 때 안내
+class EmptyInfoBadge extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final InfoBadgeSize size;
+
+  const EmptyInfoBadge({
+    super.key,
+    required this.icon,
+    required this.text,
+    this.size = InfoBadgeSize.medium,
+  });
+
+  double get _fontSize {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return 10;
+      case InfoBadgeSize.medium:
+        return 12;
+      case InfoBadgeSize.large:
+        return 14;
+    }
+  }
+
+  double get _iconSize {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return 12;
+      case InfoBadgeSize.medium:
+        return 14;
+      case InfoBadgeSize.large:
+        return 16;
+    }
+  }
+
+  EdgeInsets get _padding {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return const EdgeInsets.symmetric(horizontal: 8, vertical: 4);
+      case InfoBadgeSize.medium:
+        return const EdgeInsets.symmetric(horizontal: 10, vertical: 5);
+      case InfoBadgeSize.large:
+        return const EdgeInsets.symmetric(horizontal: 12, vertical: 6);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: _padding,
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: _iconSize, color: Colors.white70),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: _fontSize,
+              fontWeight: FontWeight.w500,
+              color: Colors.white70,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ============================================================
+/// 혈통서 유무 배지
+/// 
+/// 사용처:
+/// - 교배찾기 리스트 카드
+/// - 교배 상세 화면
+/// - 반려동물 선택 바텀시트/카드
+/// ============================================================
+class PedigreeBadge extends StatelessWidget {
+  final bool hasPedigree;
+  final InfoBadgeSize size;
+  final Color? accentColor;
+
+  const PedigreeBadge({
+    super.key,
+    required this.hasPedigree,
+    this.size = InfoBadgeSize.medium,
+    this.accentColor,
+  });
+
+  double get _fontSize {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return 10;
+      case InfoBadgeSize.medium:
+        return 11;
+      case InfoBadgeSize.large:
+        return 12;
+    }
+  }
+
+  double get _iconSize {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return 10;
+      case InfoBadgeSize.medium:
+        return 12;
+      case InfoBadgeSize.large:
+        return 14;
+    }
+  }
+
+  EdgeInsets get _padding {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return const EdgeInsets.symmetric(horizontal: 6, vertical: 2);
+      case InfoBadgeSize.medium:
+        return const EdgeInsets.symmetric(horizontal: 8, vertical: 3);
+      case InfoBadgeSize.large:
+        return const EdgeInsets.symmetric(horizontal: 10, vertical: 4);
+    }
+  }
+
+  double get _borderRadius {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return 6;
+      case InfoBadgeSize.medium:
+        return 8;
+      case InfoBadgeSize.large:
+        return 10;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = accentColor ?? Theme.of(context).extension<FeatureColors>()!.dating;
+    
+    return Container(
+      padding: _padding,
+      decoration: BoxDecoration(
+        color: hasPedigree 
+            ? color.withOpacity(0.1)
+            : colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(_borderRadius),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            hasPedigree ? Icons.verified : Icons.block,
+            size: _iconSize,
+            color: hasPedigree ? color : colorScheme.onSurfaceVariant,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            hasPedigree ? '혈통서' : '혈통서 없음',
+            style: TextStyle(
+              fontSize: _fontSize,
+              fontWeight: hasPedigree ? FontWeight.w600 : FontWeight.w500,
+              color: hasPedigree ? color : colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

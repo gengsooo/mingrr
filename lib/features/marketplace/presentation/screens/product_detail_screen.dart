@@ -124,7 +124,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(),
-        body: const MingrrLoadingState(),
+        body: const MingrrLoadingState(type: MingrrLoadingType.market, message: '상품 정보를 불러오고 있어요'),
       );
     }
 

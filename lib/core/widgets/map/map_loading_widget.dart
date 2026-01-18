@@ -8,7 +8,7 @@ import '../../services/location_helper.dart';
 /// 지도 로딩 위젯 (공통 컴포넌트)
 /// 
 /// 지도가 로딩되는 동안 표시되는 플레이스홀더
-/// 걸어가는 귀여운 강아지 애니메이션 + 진행 상태 표시
+/// 걸어가는 귀여운 반려동물 애니메이션 + 진행 상태 표시
 /// ============================================================
 
 /// 로딩 위젯 타입 (색상 결정용)
@@ -207,7 +207,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 걸어가는 귀여운 강아지 애니메이션
+            // 걸어가는 귀여운 반려동물 애니메이션
             AnimatedBuilder(
               animation: Listenable.merge([_walkAnimation, _legAnimation]),
               builder: (context, child) {
@@ -218,7 +218,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
                     alignment: Alignment.center,
                     transform: Matrix4.identity()
                       ..scale(isMovingRight ? 1.0 : -1.0, 1.0),
-                    child: _buildWalkingDog(),
+                    child: _buildWalkingPet(),
                   ),
                 );
               },
@@ -285,8 +285,8 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
     );
   }
   
-  /// 걷는 강아지 위젯 (SVG 파일 로드 + 동적 색상 적용)
-  Widget _buildWalkingDog() {
+  /// 걷는 반려동물 위젯 (SVG 파일 로드 + 동적 색상 적용)
+  Widget _buildWalkingPet() {
     // SVG 로드 전에는 로딩 표시
     if (_svgString == null) {
       return SizedBox(

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants/app_sizes.dart';
 import '../theme/feature_colors.dart';
 import '../theme/app_theme.dart';
+import '../providers/network_provider.dart';
 import 'mingrr_bottom_sheet.dart';
 import 'svg_icons.dart';
+import 'loading_widgets.dart' show MingrrLoadingType;
 
 // 공통 로딩 위젯 export
 export 'loading_widgets.dart';
@@ -749,7 +752,7 @@ class NotificationIconButton extends StatelessWidget {
 }
 
 // ===== 기본 반려동물 이미지 플레이스홀더 =====
-/// 추가사진이 없을 때 표시하는 기본 강아지 아이콘
+/// 추가사진이 없을 때 표시하는 기본 반려동물 아이콘
 /// 모든 화면에서 통일된 스타일로 사용 (🐶 이모지)
 class DefaultPetImage extends StatelessWidget {
   final double? width;
@@ -2075,34 +2078,194 @@ class MingrrLabel extends StatelessWidget {
 
 // ===== 공통 로딩 상태 위젯 =====
 /// 데이터 로딩 중 표시하는 위젯
-class MingrrLoadingState extends StatelessWidget {
+/// 
+/// Riverpod AsyncValue.when()의 loading 상태에서 사용
+/// MingrrEmptyState와 동일한 디자인 (아이콘 → 로딩 스피너)
+/// 
+/// [timeout] 지정 시 해당 시간 후 타임아웃 UI 표시
+/// [onRetry] 지정 시 타임아웃 후 재시도 버튼 표시
+/// 네트워크 연결 상태 자동 감지
+class MingrrLoadingState extends ConsumerStatefulWidget {
   final String? message;
+  final String? subMessage;
   final Color? color;
+  final MingrrLoadingType type;
+  final Duration? timeout;
+  final VoidCallback? onRetry;
+  final String? retryButtonText;
 
   const MingrrLoadingState({
     super.key,
     this.message,
+    this.subMessage,
     this.color,
+    this.type = MingrrLoadingType.primary,
+    this.timeout,
+    this.onRetry,
+    this.retryButtonText,
   });
 
   @override
+  ConsumerState<MingrrLoadingState> createState() => _MingrrLoadingStateState();
+}
+
+class _MingrrLoadingStateState extends ConsumerState<MingrrLoadingState> {
+  bool _isTimedOut = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimeoutTimer();
+  }
+
+  void _startTimeoutTimer() {
+    if (widget.timeout != null) {
+      Future.delayed(widget.timeout!, () {
+        if (mounted && !_isTimedOut) {
+          setState(() => _isTimedOut = true);
+        }
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isConnected = ref.watch(isConnectedProvider);
+    
+    // 네트워크 연결 끊김 상태
+    if (!isConnected) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.wifi_off,
+              size: 48,
+              color: colorScheme.outlineVariant,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '인터넷 연결이 끊겼어요',
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Wi-Fi 또는 모바일 데이터를 확인해주세요',
+              style: TextStyle(
+                fontSize: 12,
+                color: colorScheme.outlineVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (widget.onRetry != null) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: 180,
+                child: ElevatedButton(
+                  onPressed: widget.onRetry,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text(widget.retryButtonText ?? '다시 시도'),
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+    
+    // 타임아웃 상태
+    if (_isTimedOut) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.hourglass_empty,
+              size: 48,
+              color: colorScheme.outlineVariant,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '로딩이 오래 걸리고 있어요',
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '네트워크 상태를 확인해주세요',
+              style: TextStyle(
+                fontSize: 12,
+                color: colorScheme.outlineVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (widget.onRetry != null) ...[
+              const SizedBox(height: 16),
+              SizedBox(
+                width: 180,
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() => _isTimedOut = false);
+                    _startTimeoutTimer();
+                    widget.onRetry!();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text(widget.retryButtonText ?? '다시 시도'),
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+    
+    // 로딩 상태
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
-            color: color ?? Theme.of(context).colorScheme.primary,
-            strokeWidth: 3,
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: CircularProgressIndicator(
+              color: colorScheme.outlineVariant,
+              strokeWidth: 3,
+            ),
           ),
-          if (message != null) ...[
+          if (widget.message != null) ...[
             const SizedBox(height: 16),
             Text(
-              message!,
+              widget.message!,
               style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                color: colorScheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
               ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+          if (widget.subMessage != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              widget.subMessage!,
+              style: TextStyle(
+                fontSize: 12,
+                color: colorScheme.outlineVariant,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ],

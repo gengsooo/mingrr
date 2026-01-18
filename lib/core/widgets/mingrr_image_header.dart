@@ -22,8 +22,11 @@ class MingrrImageHeader extends StatefulWidget {
   /// 페이지 인디케이터 표시
   final bool showIndicator;
   
-  /// 이미지 없을 때 표시할 위젯
+  /// 이미지 없을 때 표시할 위젯 (deprecated: emptyStateWidget 사용)
   final Widget? placeholder;
+  
+  /// 이미지 없을 때 표시할 빈 상태 위젯 (placeholder보다 우선)
+  final Widget? emptyStateWidget;
   
   /// AppBar 고정 여부
   final bool pinned;
@@ -61,6 +64,7 @@ class MingrrImageHeader extends StatefulWidget {
     this.expandedHeight = 300,
     this.showIndicator = true,
     this.placeholder,
+    this.emptyStateWidget,
     this.pinned = true,
     this.onShare,
     this.onMore,
@@ -154,9 +158,9 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
   }
 
   Widget _buildSliderContent(BuildContext context) {
-    // 이미지가 없으면 placeholder 표시
+    // 이미지가 없으면 emptyStateWidget 또는 placeholder 표시
     if (widget.imageUrls.isEmpty) {
-      return widget.placeholder ?? const DefaultPetImage(height: double.infinity);
+      return widget.emptyStateWidget ?? widget.placeholder ?? const DefaultPetImage(height: double.infinity);
     }
 
     return Stack(

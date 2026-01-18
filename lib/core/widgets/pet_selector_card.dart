@@ -3,6 +3,7 @@ import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import '../../models/pet_model.dart';
 import 'mingrr_bottom_sheet.dart';
+import 'info_badge.dart' show LikeCountText, InfoBadgeSize, PedigreeBadge;
 
 /// ============================================================
 /// 반려동물 선택 카드 컴포넌트
@@ -83,26 +84,11 @@ class PetSelectorCard extends StatelessWidget {
               ),
             ),
             
-            // 좋아요 수
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.favorite,
-                  size: 16,
-                  color: color,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '${pet.likeCount}',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: color,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
+            // 혈통서 유무 배지 (공통 컴포넌트)
+            PedigreeBadge(hasPedigree: pet.hasPedigree, size: InfoBadgeSize.small, accentColor: color),
+            const SizedBox(width: 8),
+            // 좋아요 수 (공통 컴포넌트)
+            LikeCountText(count: pet.likeCount, size: InfoBadgeSize.small),
           ],
         ),
       ),

@@ -5,26 +5,34 @@ import 'mingrr_bottom_sheet.dart';
 import '../providers/location_verification_provider.dart';
 
 /// ============================================================
-/// 공통 상단 네비게이션 컴포넌트
+/// 공통 탭 네비게이션 컴포넌트
 /// 
-/// 이미지 참고 디자인:
-/// - 3개 탭 (pill 형태, 둥근 모서리)
-/// - 위치/거리 필터 바 (선택적)
-/// - 카테고리 필터 (선택적)
+/// 컴포넌트 목록:
+/// - MingrrTabItem: 탭 아이템 정의 클래스
+/// - MingrrMainTabBar: 메인 화면용 탭 바 (Pill 형태, 아이콘+라벨)
+/// - MingrrSubTabBar: 서브 화면용 탭 바 (밑줄 인디케이터, 텍스트만)
+/// - LocationDistanceBar: 위치/거리 필터 바
 /// 
-/// 사용 화면: 데이팅, 마켓, 소모임, 채팅
+/// 사용 화면:
+/// - MingrrMainTabBar: 데이팅, 마켓, 채팅, 소셜
+/// - MingrrSubTabBar: 활동 내역, 거래 내역, 찜한 목록
 /// ============================================================
 
 /// ------------------------------------------------------------
 /// 탭 아이템 정의
+/// 
+/// [label]: 탭 라벨 (필수)
+/// [emoji]: 이모지 (선택)
+/// [icon]: 아이콘 (선택)
+/// [color]: 탭 색상 (필수)
 /// ------------------------------------------------------------
-class TopNavTab {
+class MingrrTabItem {
   final String label;
   final String? emoji;
   final IconData? icon;
   final Color color;
 
-  const TopNavTab({
+  const MingrrTabItem({
     required this.label,
     this.emoji,
     this.icon,
@@ -33,21 +41,27 @@ class TopNavTab {
 }
 
 /// ------------------------------------------------------------
-/// Pill 형태의 탭 바
+/// 메인 화면용 탭 바 (Pill 형태)
 /// 
-/// 3개 탭을 가로로 배치, 선택된 탭은 색상으로 강조
+/// 특징:
+/// - 둥근 pill 형태 디자인
+/// - 아이콘 + 라벨 조합
+/// - 선택 시 피처 컬러 배경
+/// 
+/// 사용처: 데이팅, 마켓, 채팅, 소셜 화면
+/// 
 /// [tabs]: 탭 목록
 /// [selectedIndex]: 선택된 탭 인덱스
 /// [onTabSelected]: 탭 선택 콜백
-/// [backgroundColor]: 배경색 (기본: 투명)
+/// [backgroundColor]: 배경색 (기본: surface)
 /// ------------------------------------------------------------
-class PillTabBar extends StatelessWidget {
-  final List<TopNavTab> tabs;
+class MingrrMainTabBar extends StatelessWidget {
+  final List<MingrrTabItem> tabs;
   final int selectedIndex;
   final ValueChanged<int> onTabSelected;
   final Color? backgroundColor;
 
-  const PillTabBar({
+  const MingrrMainTabBar({
     super.key,
     required this.tabs,
     required this.selectedIndex,
@@ -128,6 +142,102 @@ class PillTabBar extends StatelessWidget {
       ),
     );
   }
+}
+
+/// ------------------------------------------------------------
+/// 서브 화면용 탭 바 (밑줄 인디케이터)
+/// 
+/// 특징:
+/// - 심플한 밑줄 인디케이터
+/// - 텍스트만 표시
+/// - DefaultTabController 또는 외부 TabController와 함께 사용
+/// 
+/// 사용처:
+/// - DefaultTabController 내부: 활동 내역, 거래 내역, 찜한 목록
+/// - AppBar.bottom: 알림 화면
+/// - SliverPersistentHeader: 소모임 상세 (MingrrSubTabBarDelegate 사용)
+/// 
+/// [tabs]: 탭 라벨 목록
+/// [accentColor]: 테마 색상 (기본: primary)
+/// [controller]: 외부 TabController (AppBar.bottom, Sliver용)
+/// [isScrollable]: 스크롤 가능 여부 (기본: false)
+/// ------------------------------------------------------------
+class MingrrSubTabBar extends StatelessWidget implements PreferredSizeWidget {
+  final List<String> tabs;
+  final Color? accentColor;
+  final TabController? controller;
+  final bool isScrollable;
+
+  const MingrrSubTabBar({
+    super.key,
+    required this.tabs,
+    this.accentColor,
+    this.controller,
+    this.isScrollable = false,
+  });
+
+  @override
+  Size get preferredSize => const Size.fromHeight(48);
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final effectiveColor = accentColor ?? colorScheme.primary;
+    
+    return Container(
+      color: colorScheme.surface,
+      child: TabBar(
+        controller: controller,
+        labelColor: effectiveColor,
+        unselectedLabelColor: colorScheme.onSurfaceVariant,
+        indicatorColor: effectiveColor,
+        isScrollable: isScrollable,
+        tabs: tabs.map((label) => Tab(text: label)).toList(),
+      ),
+    );
+  }
+}
+
+/// ------------------------------------------------------------
+/// Sliver용 탭 바 델리게이트
+/// 
+/// NestedScrollView 내 SliverPersistentHeader에서 사용
+/// 스크롤 시 탭바가 상단에 고정됨
+/// 
+/// 사용처: 소모임 상세 화면
+/// 
+/// [tabs]: 탭 라벨 목록
+/// [controller]: TabController
+/// [accentColor]: 테마 색상 (기본: primary)
+/// ------------------------------------------------------------
+class MingrrSubTabBarDelegate extends SliverPersistentHeaderDelegate {
+  final List<String> tabs;
+  final TabController controller;
+  final Color? accentColor;
+
+  MingrrSubTabBarDelegate({
+    required this.tabs,
+    required this.controller,
+    this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return MingrrSubTabBar(
+      tabs: tabs,
+      controller: controller,
+      accentColor: accentColor,
+    );
+  }
+
+  @override
+  double get maxExtent => 48;
+
+  @override
+  double get minExtent => 48;
+
+  @override
+  bool shouldRebuild(covariant MingrrSubTabBarDelegate oldDelegate) => false;
 }
 
 /// ------------------------------------------------------------

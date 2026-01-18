@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 import '../core/constants/pet_constants.dart';
 
 /// ============================================================
-/// 사용자(보호자) 모델 (V2 리팩토링 - 강아지 전용)
+/// 사용자(보호자) 모델 (V2 리팩토링 - 반려동물 전용)
 /// 
 /// 변경사항:
 /// - gender 필드를 UserGender enum으로 변경

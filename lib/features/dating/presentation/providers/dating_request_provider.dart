@@ -166,7 +166,7 @@ final _mockReceivedRequests = [
     receiverPetId: 'pet_1',
     type: DatingRequestType.date,
     status: DatingRequestStatus.pending,
-    message: '우리 강아지들 산책 같이 해요!',
+    message: '우리 반려동물들 산책 같이 해요!',
     createdAt: DateTime.now().subtract(const Duration(hours: 2)),
   ),
   DatingRequestModel(

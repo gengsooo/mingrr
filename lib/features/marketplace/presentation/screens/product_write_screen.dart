@@ -464,7 +464,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
           ),
         );
       },
-      loading: () => const MingrrLoadingState(),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.market, message: '카테고리를 불러오고 있어요'),
       error: (_, __) => const Text('일시적인 오류가 발생했어요'),
     );
   }

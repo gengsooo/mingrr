@@ -35,8 +35,8 @@ class SocialScreen extends ConsumerWidget {
     final selectedTab = ref.watch(_selectedTabProvider);
 
     final tabs = [
-      TopNavTab(label: '커뮤니티', icon: Icons.article_outlined, color: accentColor),
-      TopNavTab(label: '소모임', icon: Icons.groups_outlined, color: accentColor),
+      MingrrTabItem(label: '커뮤니티', icon: Icons.article_outlined, color: accentColor),
+      MingrrTabItem(label: '소모임', icon: Icons.groups_outlined, color: accentColor),
     ];
 
     return Scaffold(
@@ -63,7 +63,7 @@ class SocialScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          PillTabBar(
+          MingrrMainTabBar(
             tabs: tabs,
             selectedIndex: selectedTab,
             onTabSelected: (index) {

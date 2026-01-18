@@ -46,6 +46,9 @@ dependencies:
   carousel_slider: ^5.0.0
   fl_chart: ^0.69.2
 
+  # ===== 네트워크 =====
+  connectivity_plus: ^6.1.1
+
   # ===== 유틸리티 =====
   intl: ^0.20.1
   shared_preferences: ^2.3.4

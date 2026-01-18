@@ -92,15 +92,16 @@ final productDetailProvider = FutureProvider.autoDispose.family<ProductModel?, S
   return firestoreService.getProduct(productId);
 });
 
-// 상품 타입별 필터링 (판매/나눔) - 거리 필터 적용
-final filteredProductsProvider = Provider.autoDispose.family<List<ProductWithDistance>, ({ProductType type, double radiusKm})>((ref, params) {
+// 상품 타입별 필터링 (판매/나눔) - 거리 필터 적용 (AsyncValue 유지)
+final filteredProductsProvider = Provider.autoDispose.family<AsyncValue<List<ProductWithDistance>>, ({ProductType type, double radiusKm})>((ref, params) {
   final productsAsync = ref.watch(_allProductsWithDistanceProvider);
-  final products = productsAsync.valueOrNull ?? [];
   
-  return products
-      .where((p) => p.product.type == params.type)
-      .where((p) => p.distanceMeters <= params.radiusKm * 1000)
-      .toList();
+  return productsAsync.whenData((products) {
+    return products
+        .where((p) => p.product.type == params.type)
+        .where((p) => p.distanceMeters <= params.radiusKm * 1000)
+        .toList();
+  });
 });
 
 // ===== 알바(Job) 관련 Provider =====

@@ -845,7 +845,7 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  /// 기본 강아지 아이콘 (사각형 배경) - 공통 위젯 사용
+  /// 기본 반려동물 아이콘 (사각형 배경) - 공통 위젯 사용
   Widget _buildDefaultPetIcon(double height) {
     return DefaultPetImage(
       height: height,

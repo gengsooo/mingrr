@@ -291,7 +291,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             child: Container(
               color: Theme.of(context).colorScheme.surface,
               child: messagesAsync.when(
-                loading: () => const MingrrLoadingState(),
+                loading: () => MingrrLoadingState(
+                  type: MingrrLoadingType.chat,
+                  message: '메시지를 불러오고 있어요',
+                  timeout: AppSizes.loadingTimeout,
+                  onRetry: () => ref.invalidate(chatMessagesProvider(widget.chatRoomId)),
+                ),
                 error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
                 data: (messages) {
                   // 검색 필터링

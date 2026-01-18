@@ -16,7 +16,8 @@ import '../../../../core/widgets/trait_badge.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/compatibility_widgets.dart';
-import '../../../../core/widgets/info_badge.dart' show LikeButton, InfoBadgeSize;
+import '../../../../core/widgets/info_badge.dart' show LikeButton, InfoBadgeSize, EmptyInfoBadge, PedigreeBadge;
+import '../../../../core/widgets/svg_icons.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../models/user_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -258,23 +259,55 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
     final distance = petWithDistance?.distanceMeters ?? 0;
     final distanceKm = distance > 0 ? distance / 1000 : 0.0;
     final matchScore = petWithDistance?.matchScore;
+    final hasDistance = distance > 0;
+    final hasMatchScore = matchScore != null && !widget.isBreeding;
     
     return MingrrImageHeader(
       imageUrls: photos,
       expandedHeight: 350,
       onMore: () => _showMoreOptions(context),
+      // 이미지 없을 때 빈 상태 UI
+      emptyStateWidget: _buildEmptyImageState(context),
       topLeftOverlay: GenderBadge(isMale: isMale),
-      topRightOverlay: !widget.isBreeding && matchScore != null
+      // 궁합 정보: 있으면 점수 표시, 없으면 안내 배지
+      topRightOverlay: hasMatchScore
           ? ImageHeaderMatchBadge(
               score: matchScore,
               onTap: () => showCompatibilityGuideModal(context),
             )
-          : null,
+          : !widget.isBreeding
+              ? const EmptyInfoBadge(
+                  icon: Icons.auto_awesome_outlined,
+                  text: '궁합 정보 없음',
+                )
+              : null,
+      // 거리 정보 (DistanceBadge가 0일 때 자동으로 "위치정보 없음" 표시)
       bottomLeftOverlay: DistanceBadge(distanceKm: distanceKm),
       bottomRightOverlay: LikeBadge(
         count: _likeCount,
         isLiked: _isLiked,
         onTap: _toggleLike,
+      ),
+    );
+  }
+
+  /// 이미지 없을 때 빈 상태 UI
+  Widget _buildEmptyImageState(BuildContext context) {
+    return Container(
+      color: context.features.datingContainer,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          DefaultPetIcon(size: 80),
+          const SizedBox(height: 12),
+          Text(
+            '사진이 없어요',
+            style: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -328,9 +361,18 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                pet.name,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+              Row(
+                children: [
+                  Text(
+                    pet.name,
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+                  ),
+                  // 교배찾기에서 혈통서 유무 배지 표시
+                  if (widget.isBreeding) ...[
+                    const SizedBox(width: 8),
+                    PedigreeBadge(hasPedigree: pet.hasPedigree),
+                  ],
+                ],
               ),
               const SizedBox(height: 4),
               Text(

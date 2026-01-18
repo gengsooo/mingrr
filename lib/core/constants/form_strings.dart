@@ -178,7 +178,7 @@ class SwitchStrings {
   
   // ===== 교배 =====
   static const String sameBreedOnly = '같은 품종만';
-  static const String sameBreedOnlyDesc = '같은 품종의 강아지만 매칭됩니다';
+  static const String sameBreedOnlyDesc = '같은 품종의 반려동물만 매칭됩니다';
   
   // ===== 반려동물 =====
   static const String neutered = '중성화 여부';

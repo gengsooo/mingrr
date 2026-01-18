@@ -128,13 +128,13 @@ final datingPetsProvider = FutureProvider.autoDispose<List<PetWithDistance>>((re
   return result;
 });
 
-/// 거리 필터가 적용된 데이팅 펫 목록
-final filteredDatingPetsProvider = Provider.autoDispose.family<List<PetWithDistance>, double>((ref, radiusKm) {
+/// 거리 필터가 적용된 데이팅 펫 목록 (AsyncValue 유지)
+final filteredDatingPetsProvider = Provider.autoDispose.family<AsyncValue<List<PetWithDistance>>, double>((ref, radiusKm) {
   final petsAsync = ref.watch(datingPetsProvider);
-  final pets = petsAsync.valueOrNull ?? [];
   
-  // 거리 필터 적용
-  return pets.where((p) => p.distanceMeters <= radiusKm * 1000).toList();
+  return petsAsync.whenData((pets) {
+    return pets.where((p) => p.distanceMeters <= radiusKm * 1000).toList();
+  });
 });
 
 // 받은 데이팅 신청 목록
@@ -246,12 +246,13 @@ final breedingPetsProvider = FutureProvider.autoDispose<List<PetWithDistance>>((
   return result;
 });
 
-/// 거리 필터가 적용된 교배 펫 목록
-final filteredBreedingPetsProvider = Provider.autoDispose.family<List<PetWithDistance>, double>((ref, radiusKm) {
+/// 거리 필터가 적용된 교배 펫 목록 (AsyncValue 유지)
+final filteredBreedingPetsProvider = Provider.autoDispose.family<AsyncValue<List<PetWithDistance>>, double>((ref, radiusKm) {
   final petsAsync = ref.watch(breedingPetsProvider);
-  final pets = petsAsync.valueOrNull ?? [];
   
-  return pets.where((p) => p.distanceMeters <= radiusKm * 1000).toList();
+  return petsAsync.whenData((pets) {
+    return pets.where((p) => p.distanceMeters <= radiusKm * 1000).toList();
+  });
 });
 
 // 추천 반려동물 목록 (궁합 알고리즘 적용)

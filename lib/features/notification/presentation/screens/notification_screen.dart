@@ -5,6 +5,7 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/top_navigation.dart';
 import '../../../../models/notification_model.dart';
 import '../providers/notification_provider.dart';
 
@@ -28,18 +29,12 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   
-  final _tabs = const [
-    Tab(text: '전체'),
-    Tab(text: '데이팅'),
-    Tab(text: '채팅'),
-    Tab(text: '마켓'),
-    Tab(text: '소모임'),
-  ];
+  static const _tabLabels = ['전체', '데이팅', '채팅', '마켓', '소모임'];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController = TabController(length: _tabLabels.length, vsync: this);
   }
 
   @override
@@ -85,13 +80,10 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
               child: const Text('전체 읽음'),
             ),
         ],
-        bottom: TabBar(
+        bottom: MingrrSubTabBar(
+          tabs: _tabLabels,
           controller: _tabController,
-          labelColor: Theme.of(context).colorScheme.primary,
-          unselectedLabelColor: Theme.of(context).colorScheme.outlineVariant,
-          indicatorColor: Theme.of(context).colorScheme.primary,
           isScrollable: true,
-          tabs: _tabs,
         ),
       ),
       body: notificationsAsync.when(
@@ -130,7 +122,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
             ],
           );
         },
-        loading: () => const MingrrLoadingState(),
+        loading: () => const MingrrLoadingState(type: MingrrLoadingType.primary, message: '알림을 불러오고 있어요'),
         error: (_, __) => MingrrErrorState(
           title: '일시적인 오류가 발생했어요',
           subtitle: '잠시 후 다시 시도해주세요',

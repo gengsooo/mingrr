@@ -114,7 +114,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const MingrrLoadingState();
+      return const MingrrLoadingState(type: MingrrLoadingType.primary, message: '검색 중이에요');
     }
 
     if (_lastQuery.isEmpty) {

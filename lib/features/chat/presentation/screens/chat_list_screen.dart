@@ -18,7 +18,7 @@ import '../providers/chat_provider.dart';
 import 'chat_detail_screen.dart';
 
 /// ============================================================
-/// 채팅 목록 화면 (V4 - 강아지 전용 + 교배 배지)
+/// 채팅 목록 화면 (V4 - 반려동물 전용 + 교배 배지)
 /// 
 /// 변경사항:
 /// - 3개 탭 (데이팅/소모임/마켓) - pill 형태
@@ -44,9 +44,9 @@ class ChatListScreen extends ConsumerWidget {
     // 탭 정의 (아이콘 사용 - 선택 시 흰색으로 변경됨)
     // 순서: 데이팅 → 마켓 → 소모임
     final tabs = [
-      TopNavTab(label: '데이팅', icon: Icons.favorite, color: features.dating),
-      TopNavTab(label: '마켓', icon: Icons.store, color: features.market),
-      TopNavTab(label: '소모임', icon: Icons.groups, color: features.social),
+      MingrrTabItem(label: '데이팅', icon: Icons.favorite, color: features.dating),
+      MingrrTabItem(label: '마켓', icon: Icons.store, color: features.market),
+      MingrrTabItem(label: '소모임', icon: Icons.groups, color: features.social),
     ];
 
     // 탭별 배경색 (채팅 목록은 각 탭의 테마색 유지)
@@ -68,7 +68,7 @@ class ChatListScreen extends ConsumerWidget {
       body: Column(
         children: [
           // 3개 탭 (pill 형태)
-          PillTabBar(
+          MingrrMainTabBar(
             tabs: tabs,
             selectedIndex: _getTabIndex(selectedTab),
             onTabSelected: (index) {
@@ -155,7 +155,12 @@ class ChatListScreen extends ConsumerWidget {
               },
             );
           },
-          loading: () => const MingrrLoadingState(),
+          loading: () => MingrrLoadingState(
+            type: MingrrLoadingType.chat,
+            message: '채팅 목록을 불러오고 있어요',
+            timeout: AppSizes.loadingTimeout,
+            onRetry: () => ref.invalidate(userChatRoomsProvider),
+          ),
           error: (_, __) => const MingrrErrorState(
             title: '일시적인 오류가 발생했어요',
             subtitle: '잠시 후 다시 시도해주세요',
@@ -214,7 +219,12 @@ class ChatListScreen extends ConsumerWidget {
                   ],
                 );
               },
-              loading: () => const MingrrLoadingState(),
+              loading: () => MingrrLoadingState(
+                type: MingrrLoadingType.chat,
+                message: '채팅 목록을 불러오고 있어요',
+                timeout: AppSizes.loadingTimeout,
+                onRetry: () => ref.invalidate(userChatRoomsProvider),
+              ),
               error: (_, __) => const SizedBox.shrink(),
             ),
           ],
@@ -784,7 +794,7 @@ class ChatListScreen extends ConsumerWidget {
       case ChatType.market:
         return [
           {'id': '8', 'name': '콩이', 'owner': '박민수', 'lastMessage': '간식 아직 있나요?', 'time': '1시간 전', 'unread': 1, 'productName': '수제 간식 세트'},
-          {'id': '9', 'name': '두부', 'owner': '정수진', 'lastMessage': '네, 직거래 가능해요', 'time': '3시간 전', 'unread': 0, 'productName': '강아지 옷 (M사이즈)'},
+          {'id': '9', 'name': '두부', 'owner': '정수진', 'lastMessage': '네, 직거래 가능해요', 'time': '3시간 전', 'unread': 0, 'productName': '반려동물 옷 (M사이즈)'},
         ];
     }
   }

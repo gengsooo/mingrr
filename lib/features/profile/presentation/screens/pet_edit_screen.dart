@@ -27,7 +27,7 @@ import '../../../pet/presentation/providers/pet_provider.dart';
 /// 반려동물 추가/수정 화면
 /// 
 /// 기능:
-/// - 강아지 기본 정보 입력 (이름, 품종, 성별, 생년월일, 체중)
+/// - 반려동물 기본 정보 입력 (이름, 품종, 성별, 생년월일, 체중)
 /// - 특성 선택 (최소 5개)
 /// - 소개글 작성
 /// - 중성화 여부, 혈통서 여부
@@ -141,7 +141,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         ],
       ),
       body: _isLoading && isEditMode && !_isDataLoaded
-          ? const MingrrLoadingState()
+          ? const MingrrLoadingState(type: MingrrLoadingType.primary, message: '반려동물 정보를 불러오고 있어요')
           : Form(
         key: _formKey,
         child: ListView(

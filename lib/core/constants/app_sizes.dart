@@ -84,4 +84,9 @@ class AppSizes {
   // 바텀시트 버튼 영역 패딩 (키보드 대응 바텀시트용)
   static const double bottomSheetButtonPaddingH = 20.0;
   static const double bottomSheetButtonPaddingV = 16.0;
+
+  // ===== 로딩 타임아웃 =====
+  static const Duration loadingTimeout = Duration(seconds: 15);
+  static const Duration loadingTimeoutShort = Duration(seconds: 10);
+  static const Duration loadingTimeoutLong = Duration(seconds: 30);
 }

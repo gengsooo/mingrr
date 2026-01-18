@@ -35,7 +35,7 @@ class HealthScreen extends ConsumerWidget {
         ),
       ),
       body: petsAsync.when(
-        loading: () => const MingrrLoadingState(),
+        loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
         error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
         data: (pets) {
           if (pets.isEmpty) {
@@ -320,7 +320,7 @@ class HealthScreen extends ConsumerWidget {
     final recordsAsync = ref.watch(weightRecordsProvider(pet.id));
     
     return recordsAsync.when(
-      loading: () => const MingrrLoadingState(),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
       error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       data: (records) {
         if (records.isEmpty) {
@@ -353,7 +353,7 @@ class HealthScreen extends ConsumerWidget {
     final recordsAsync = ref.watch(walkRecordsProvider(pet.id));
     
     return recordsAsync.when(
-      loading: () => const MingrrLoadingState(),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
       error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       data: (records) {
         if (records.isEmpty) {
@@ -432,7 +432,7 @@ class HealthScreen extends ConsumerWidget {
     final recordsAsync = ref.watch(weightRecordsProvider(pet.id));
     
     return recordsAsync.when(
-      loading: () => const MingrrLoadingState(),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
       error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
@@ -458,7 +458,7 @@ class HealthScreen extends ConsumerWidget {
     final recordsAsync = ref.watch(walkRecordsProvider(pet.id));
     
     return recordsAsync.when(
-      loading: () => const MingrrLoadingState(),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
       error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
@@ -492,7 +492,7 @@ class HealthScreen extends ConsumerWidget {
     final recordsAsync = ref.watch(groomingRecordsProvider(pet.id));
     
     return recordsAsync.when(
-      loading: () => const MingrrLoadingState(),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
       error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
@@ -516,7 +516,7 @@ class HealthScreen extends ConsumerWidget {
     final recordsAsync = ref.watch(vaccinationRecordsProvider(pet.id));
     
     return recordsAsync.when(
-      loading: () => const MingrrLoadingState(),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
       error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
@@ -540,7 +540,7 @@ class HealthScreen extends ConsumerWidget {
     final recordsAsync = ref.watch(checkupRecordsProvider(pet.id));
     
     return recordsAsync.when(
-      loading: () => const MingrrLoadingState(),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
       error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
@@ -564,7 +564,7 @@ class HealthScreen extends ConsumerWidget {
     final recordsAsync = ref.watch(medicationRecordsProvider(pet.id));
     
     return recordsAsync.when(
-      loading: () => const MingrrLoadingState(),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
       error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);

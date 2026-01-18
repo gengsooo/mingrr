@@ -4,6 +4,7 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/top_navigation.dart';
 import '../../../dating/presentation/providers/dating_provider.dart';
 import '../providers/profile_provider.dart';
 
@@ -26,19 +27,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
         child: Column(
           children: [
             // 탭바
-            Container(
-              color: Theme.of(context).colorScheme.surface,
-              child: TabBar(
-                labelColor: Theme.of(context).colorScheme.primary,
-                unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                indicatorColor: Theme.of(context).colorScheme.primary,
-                tabs: const [
-                  Tab(text: '매칭'),
-                  Tab(text: '거래'),
-                  Tab(text: '모임'),
-                ],
-              ),
-            ),
+            const MingrrSubTabBar(tabs: ['매칭', '거래', '모임']),
             // 탭 컨텐츠
             Expanded(
               child: TabBarView(
@@ -81,7 +70,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
           },
         );
       },
-      loading: () => const MingrrLoadingState(),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.dating, message: '활동 내역을 불러오고 있어요'),
       error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
     );
   }
@@ -113,7 +102,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
           },
         );
       },
-      loading: () => const MingrrLoadingState(),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.community, message: '활동 내역을 불러오고 있어요'),
       error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
     );
   }
@@ -144,7 +133,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
           },
         );
       },
-      loading: () => const MingrrLoadingState(),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.community, message: '활동 내역을 불러오고 있어요'),
       error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
     );
   }

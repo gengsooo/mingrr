@@ -379,13 +379,46 @@
 
 ### 슬리버 (Sliver)
 
-**정의**: CustomScrollView 내부에서 사용하는 스크롤 가능 요소입니다.
+**정의**: CustomScrollView 또는 NestedScrollView 내부에서 사용하는 스크롤 가능 요소입니다.
 
-**종류**
-- SliverList: 리스트 형태
-- SliverGrid: 그리드 형태
-- SliverAppBar: 스크롤 시 축소되는 앱바
-- SliverFillRemaining: 남은 공간 채우기
+**왜 필요한가?**
+- 일반 위젯(ListView, Column 등)은 CustomScrollView 안에 직접 넣을 수 없습니다.
+- Sliver는 스크롤 영역 내에서 "조각(slice)"처럼 동작하는 특수 위젯입니다.
+- 복잡한 스크롤 효과(앱바 축소, 탭바 고정 등)를 구현할 때 필수입니다.
+
+**주요 Sliver 위젯**
+- `SliverList`: 리스트 형태의 스크롤 요소
+- `SliverGrid`: 그리드 형태의 스크롤 요소
+- `SliverAppBar`: 스크롤 시 축소/확장되는 앱바
+- `SliverToBoxAdapter`: 일반 위젯을 Sliver로 변환
+- `SliverPersistentHeader`: 스크롤 시 상단에 고정되는 헤더 (탭바 고정에 사용)
+- `SliverFillRemaining`: 남은 공간을 채우는 요소
+
+**SliverPersistentHeader와 SliverPersistentHeaderDelegate**
+- `SliverPersistentHeader`: 스크롤해도 상단에 고정되는 헤더 위젯
+- `SliverPersistentHeaderDelegate`: 헤더의 크기와 빌드 방법을 정의하는 추상 클래스
+- 탭바를 스크롤 시 상단에 고정하려면 이 조합이 필요합니다.
+
+**MINGRR 사용처**
+- `group_detail_screen.dart`: 소모임 상세 화면에서 탭바 고정
+- `MingrrImageHeader`: 이미지 헤더 (SliverAppBar 기반)
+
+**일반 위젯과의 차이**
+```dart
+// ❌ 불가능: 일반 위젯을 CustomScrollView에 직접 사용
+CustomScrollView(
+  slivers: [
+    Container(),  // 에러 발생
+  ],
+)
+
+// ✅ 가능: SliverToBoxAdapter로 감싸기
+CustomScrollView(
+  slivers: [
+    SliverToBoxAdapter(child: Container()),
+  ],
+)
+```
 
 ---
 

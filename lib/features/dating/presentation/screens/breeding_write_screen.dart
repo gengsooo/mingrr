@@ -87,8 +87,8 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 교배할 강아지 선택
-              const MingrrSectionLabel('교배할 강아지'),
+              // 교배할 반려동물 선택
+              const MingrrSectionLabel('교배할 반려동물'),
               _buildPetSelector(petsAsync),
               const SizedBox(height: AppSizes.gapXL),
 
@@ -140,6 +140,10 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
                 ],
               ),
               const SizedBox(height: AppSizes.gapL),
+              
+              // 선택된 반려동물 혈통서 정보 표시
+              if (_selectedPet != null)
+                _buildPedigreeInfo(),
 
               // 나이 범위
               const MingrrSectionLabel('원하는 상대 나이'),
@@ -188,7 +192,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
                     children: [
                       Icon(Icons.pets, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
                       const SizedBox(width: 12),
-                      Text('강아지를 선택해주세요', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
+                      Text('반려동물을 선택해주세요', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
                       const Spacer(),
                       Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
                     ],
@@ -196,7 +200,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
                 ),
         );
       },
-      loading: () => const MingrrLoadingState(),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.dating, message: '반려동물 정보를 불러오고 있어요'),
       error: (_, __) => const Text('일시적인 오류가 발생했어요'),
     );
   }
@@ -206,8 +210,8 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
       context,
       pets: pets,
       selectedPet: _selectedPet,
-      title: '교배할 강아지 선택',
-      description: '교배 글에 등록할 강아지를 선택해주세요',
+      title: '교배할 반려동물 선택',
+      description: '교배 글에 등록할 반려동물을 선택해주세요',
       accentColor: context.features.dating,
       onSelect: (pet) {
         setState(() => _selectedPet = pet);
@@ -276,9 +280,71 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
     );
   }
 
+  /// 선택된 반려동물의 혈통서 정보 표시
+  Widget _buildPedigreeInfo() {
+    final hasPedigree = _selectedPet?.hasPedigree ?? false;
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(AppSizes.paddingM),
+          decoration: BoxDecoration(
+            color: hasPedigree 
+                ? context.features.dating.withOpacity(0.1)
+                : colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: hasPedigree 
+                  ? context.features.dating.withOpacity(0.3)
+                  : colorScheme.outline.withOpacity(0.3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                hasPedigree ? Icons.verified : Icons.info_outline,
+                size: 20,
+                color: hasPedigree ? context.features.dating : colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hasPedigree ? '혈통서 보유' : '혈통서 미보유',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: hasPedigree ? context.features.dating : colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      hasPedigree 
+                          ? '${_selectedPet!.name}의 혈통서가 등록되어 있어요'
+                          : '반려동물 정보에서 혈통서를 등록할 수 있어요',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSizes.gapL),
+      ],
+    );
+  }
+
   Future<void> _onSubmit() async {
     if (_selectedPet == null) {
-      MingrrSnackBar.warning(context, '교배할 강아지를 선택해주세요');
+      MingrrSnackBar.warning(context, '교배할 반려동물을 선택해주세요');
       return;
     }
 

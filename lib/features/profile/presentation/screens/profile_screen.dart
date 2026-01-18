@@ -389,7 +389,7 @@ class ProfileScreen extends ConsumerWidget {
           height: 180,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            itemCount: pets.length + 1, // 강아지들 + 추가 버튼
+            itemCount: pets.length + 1, // 반려동물들 + 추가 버튼
             itemBuilder: (context, index) {
               if (index == pets.length) {
                 // 추가 버튼
@@ -441,12 +441,12 @@ class ProfileScreen extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const MingrrLoadingState(),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.primary, message: '반려동물 정보를 불러오고 있어요'),
       error: (_, __) => const SizedBox(),
     );
   }
 
-  /// 강아지 카드 (V2: 건강수첩 버튼 포함)
+  /// 반려동물 카드 (V2: 건강수첩 버튼 포함)
   Widget _buildPetCard(BuildContext context, pet) {
     return Container(
       width: 150,

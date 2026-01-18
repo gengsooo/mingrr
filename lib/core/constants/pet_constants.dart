@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// ============================================================
 /// MINGRR 반려동물 전용 앱 상수
 /// 
-/// 이 앱은 반려동물(강아지) 전용 서비스입니다.
+/// 이 앱은 반려동물 전용 서비스입니다.
 /// - 반려동물 품종, 크기, 성별
 /// - 특성 (50개)
 /// - 건강수첩 카테고리
@@ -421,7 +421,7 @@ class BreedingFilterOptions {
   static const List<double> weightMaxOptions = [4, 10, 25, 45, 100];
 }
 
-/// 인기 품종 목록 (한국 기준, 강아지)
+/// 인기 품종 목록 (한국 기준)
 class PetBreeds {
   PetBreeds._();
   

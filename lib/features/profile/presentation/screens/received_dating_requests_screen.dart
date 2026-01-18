@@ -68,7 +68,7 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
             },
           );
         },
-        loading: () => const MingrrLoadingState(),
+        loading: () => const MingrrLoadingState(type: MingrrLoadingType.dating, message: '받은 신청을 불러오고 있어요'),
         error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       ),
     );

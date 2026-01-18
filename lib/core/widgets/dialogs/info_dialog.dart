@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 /// InfoDialog - 정보성 안내 팝업
 /// 
 /// 귀엽고 예쁜 디자인의 정보 안내용 다이얼로그
-/// 강아지 크기 안내, 꼬순내지수 안내 등 정보성 데이터 표시에 사용
+/// 반려동물 크기 안내, 꼬순내지수 안내 등 정보성 데이터 표시에 사용
 /// 
 /// 사용법:
 /// ```dart
 /// // 1. 기본 사용 (리스트 아이템)
 /// showInfoDialog(
 ///   context,
-///   title: '강아지 크기 안내',
+///   title: '반려동물 크기 안내',
 ///   icon: Icons.pets,
 ///   accentColor: context.features.dating,
 ///   items: [

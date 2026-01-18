@@ -407,26 +407,36 @@ class MingrrFAB extends StatelessWidget {
 
 ---
 
-### 9. 탭 화면 레이아웃
+### 9. 탭 화면 레이아웃 ✅ 완료
 **현황:** TabBar/IndexedStack 사용 화면들이 유사한 구조
 
-**제안:**
+**구현된 컴포넌트:** (`top_navigation.dart`)
 ```dart
-/// 탭 화면 공통 레이아웃
-class MingrrTabScreen extends StatelessWidget {
-  final List<MingrrTab> tabs;
+/// 탭 아이템 정의
+class MingrrTabItem {
+  final String label;
+  final String? emoji;
+  final IconData? icon;
+  final Color color;
+}
+
+/// 메인 화면용 탭 바 (Pill 형태)
+class MingrrMainTabBar extends StatelessWidget {
+  final List<MingrrTabItem> tabs;
   final int selectedIndex;
-  final ValueChanged<int> onTabChanged;
-  final IndexedWidgetBuilder tabBuilder;
+  final ValueChanged<int> onTabSelected;
+}
+
+/// 서브 화면용 탭 바 (밑줄 인디케이터)
+class MingrrSubTabBar extends StatelessWidget {
+  final List<String> tabs;
+  final Color? accentColor;
 }
 ```
 
-**영향 범위:**
-- `social_screen.dart`
-- `notification_screen.dart`
-- `activity_history_screen.dart`
-- `transaction_history_screen.dart`
-- `wishlist_screen.dart`
+**적용 화면:**
+- `MingrrMainTabBar`: `dating_screen.dart`, `marketplace_screen.dart`, `chat_list_screen.dart`, `social_screen.dart`
+- `MingrrSubTabBar`: `activity_history_screen.dart`, `transaction_history_screen.dart`, `wishlist_screen.dart`
 
 ---
 
@@ -481,7 +491,7 @@ class MingrrTabScreen extends StatelessWidget {
 12. ✅ 프로필 모달 통일 (완료) - `profile_modal_components.dart`
 
 ### Phase 4: 장기 (1개월)
-13. 탭 화면 레이아웃 통일
+13. ✅ 탭 화면 레이아웃 통일 (완료) - `MingrrMainTabBar`, `MingrrSubTabBar`
 14. 전체 코드 리뷰 및 Deprecated 항목 제거
 
 ---
@@ -1340,6 +1350,851 @@ ProfileModalItemCard(
 | 빈 상태 UI 일관성 | 낮음 | 높음 ✅ |
 | 이모지 사용 | 있음 | 제거 ✅ |
 | 컴포넌트 재사용성 | 낮음 | 높음 ✅ |
+
+---
+
+## 📊 Phase 4 상세: 탭 화면 레이아웃 통일
+
+> 완료일: 2026-01-18
+> 목적: 탭 컴포넌트 명칭 통일 및 서브 화면 탭 바 공통화
+
+### 변경 사항
+
+#### 1. 명칭 리네이밍 (하위 호환성 없이 깔끔하게 정리)
+
+| Before | After | 설명 |
+|--------|-------|------|
+| `TopNavTab` | `MingrrTabItem` | 탭 아이템 정의 클래스 |
+| `PillTabBar` | `MingrrMainTabBar` | 메인 화면용 탭 바 (Pill 형태) |
+| (없음) | `MingrrSubTabBar` | 서브 화면용 탭 바 (밑줄 인디케이터) |
+
+#### 2. 구현된 컴포넌트
+
+| 컴포넌트 | 용도 | 특징 |
+|---------|------|------|
+| `MingrrTabItem` | 탭 아이템 정의 | label, emoji, icon, color |
+| `MingrrMainTabBar` | 메인 화면 탭 바 | Pill 형태, 아이콘+라벨, 피처 컬러 배경 |
+| `MingrrSubTabBar` | 서브 화면 탭 바 | 밑줄 인디케이터, controller/isScrollable 지원, PreferredSizeWidget 구현 |
+| `MingrrSubTabBarDelegate` | Sliver용 탭 바 | SliverPersistentHeader에서 사용, 스크롤 시 탭바 고정 |
+
+#### 3. 적용 화면
+
+**MingrrMainTabBar (4개 화면):**
+- `dating_screen.dart` - 추천친구 / 근처 검색 / 교배찾기
+- `marketplace_screen.dart` - 판매 / 나눔 / 알바
+- `chat_list_screen.dart` - 데이팅 / 마켓 / 소모임
+- `social_screen.dart` - 커뮤니티 / 소모임
+
+**MingrrSubTabBar (5개 화면):**
+- `activity_history_screen.dart` - 매칭 / 거래 / 모임 (DefaultTabController)
+- `transaction_history_screen.dart` - 판매 / 구매 (DefaultTabController)
+- `wishlist_screen.dart` - 상품 / 반려동물 (DefaultTabController)
+- `notification_screen.dart` - 전체 / 데이팅 / 채팅 / 마켓 / 소모임 (AppBar.bottom, isScrollable)
+- `group_detail_screen.dart` - 정보 / 멤버 / 일정 (MingrrSubTabBarDelegate 사용)
+
+### 코드 예시
+
+**MingrrMainTabBar 사용:**
+```dart
+final tabs = [
+  MingrrTabItem(label: '추천친구', icon: Icons.auto_awesome, color: features.dating),
+  MingrrTabItem(label: '근처 검색', icon: Icons.location_on, color: features.dating),
+  MingrrTabItem(label: '교배찾기', icon: Icons.pets, color: features.dating),
+];
+
+MingrrMainTabBar(
+  tabs: tabs,
+  selectedIndex: selectedTab,
+  onTabSelected: (index) => ref.read(_selectedTabProvider.notifier).state = index,
+)
+```
+
+**MingrrSubTabBar 사용 (DefaultTabController):**
+```dart
+body: DefaultTabController(
+  length: 3,
+  child: Column(
+    children: [
+      const MingrrSubTabBar(tabs: ['매칭', '거래', '모임']),
+      Expanded(
+        child: TabBarView(children: [...]),
+      ),
+    ],
+  ),
+)
+```
+
+**MingrrSubTabBar 사용 (AppBar.bottom):**
+```dart
+appBar: AppBar(
+  title: Text('알림'),
+  bottom: MingrrSubTabBar(
+    tabs: _tabLabels,
+    controller: _tabController,
+    isScrollable: true,
+  ),
+),
+```
+
+**MingrrSubTabBarDelegate 사용 (SliverPersistentHeader):**
+```dart
+SliverPersistentHeader(
+  pinned: true,
+  delegate: MingrrSubTabBarDelegate(
+    tabs: const ['정보', '멤버', '일정'],
+    controller: _tabController,
+    accentColor: accentColor,
+  ),
+),
+```
+
+### 실제 효과
+
+| 항목 | Before | After |
+|------|--------|-------|
+| 공통화 범위 | 7/9 화면 (78%) | **9/9 화면 (100%)** |
+| 명칭 통일성 | 불일치 (`PillTabBar`, `TopNavTab`) | 통일 (`MingrrMainTabBar`, `MingrrSubTabBar`) |
+| 코드 절감 | - | ~70줄 (서브 화면 5개 + _TabBarDelegate 삭제) |
+| TabBar 스타일 | 5곳 개별 정의 | 1곳 중앙 관리 |
+| 유지보수 | 각 화면 개별 수정 | 공통 컴포넌트 1곳 수정 |
+
+### 변경된 파일 (10개)
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `top_navigation.dart` | 명칭 리네이밍 + `MingrrSubTabBar` 확장 + `MingrrSubTabBarDelegate` 추가 |
+| `dating_screen.dart` | `TopNavTab` → `MingrrTabItem`, `PillTabBar` → `MingrrMainTabBar` |
+| `marketplace_screen.dart` | 동일 |
+| `chat_list_screen.dart` | 동일 |
+| `social_screen.dart` | 동일 |
+| `activity_history_screen.dart` | `MingrrSubTabBar` 적용 |
+| `transaction_history_screen.dart` | `MingrrSubTabBar` 적용 |
+| `wishlist_screen.dart` | `MingrrSubTabBar` 적용 |
+| `notification_screen.dart` | `MingrrSubTabBar` 적용 (AppBar.bottom, isScrollable) |
+| `group_detail_screen.dart` | `MingrrSubTabBarDelegate` 적용, `_TabBarDelegate` 삭제 |
+
+---
+
+## 📊 Phase 5 상세: 데이팅 카드 디자인 통일 및 상세화면 개선
+
+> 작성일: 2026-01-18
+> 완료일: 2026-01-18
+> 목적: 데이팅 3개 탭(추천친구/근처검색/교배찾기) 카드 디자인 통일 및 상세화면 빈 상태 UI 개선
+> 상태: ✅ 완료
+
+---
+
+### 1. 현재 문제점 분석
+
+#### 1-1. 카드 디자인 불일치
+
+| 탭 | 카드 형태 | 레이아웃 | 표시 정보 | 문제점 |
+|---|---------|---------|----------|--------|
+| **추천친구** | 대형 카드 (280px) | 전체 이미지 + 하단 오버레이 | 성별, 궁합점수, 이름, 나이, 품종, 거리, 특성 | ✅ 가장 완성도 높음 |
+| **근처검색** | 그리드 카드 | 상단 이미지 + 하단 정보 | 거리, 궁합점수, 이름, 품종/나이, 특성 | ⚠️ 정보 배치 불일치 |
+| **교배찾기** | 가로형 카드 | 좌측 이미지 + 우측 정보 | 성별, 이름, 거리, 품종/나이, 조건태그, 버튼 | ⚠️ 디자인 스타일 상이 |
+
+#### 1-2. 상세화면 빈 상태 UI 부재
+
+| 영역 | 현재 상태 | 문제점 |
+|-----|---------|--------|
+| **이미지 헤더** | 이미지 없으면 빈 공간 | 사용자에게 오류처럼 보임 |
+| **거리 정보** | 거리 0이면 "0.0km" 표시 | 위치 정보 없음 안내 필요 |
+| **궁합 점수** | 점수 없으면 배지 미표시 | 궁합 정보 없음 안내 필요 |
+
+---
+
+### 2. 리팩토링 계획
+
+#### Phase 5-1: 공통 카드 컴포넌트 설계 (우선순위: 높음)
+
+**목표**: 3개 탭에서 사용할 수 있는 통일된 카드 컴포넌트 설계
+
+**새로운 컴포넌트:**
+
+| 컴포넌트 | 용도 | 파일 |
+|---------|------|------|
+| `MingrrDatingCard` | 데이팅 공통 카드 (추천/근처) | `dating_card.dart` |
+| `MingrrBreedingCard` | 교배찾기 전용 카드 | `dating_card.dart` |
+| `DatingCardBadge` | 카드 내 배지 (성별, 거리, 궁합) | `dating_card.dart` |
+
+**통일할 디자인 요소:**
+- 카드 모서리 반경: `AppSizes.radiusL` (16px)
+- 그림자: `BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 15)`
+- 이미지 없을 때: `DefaultPetIcon` + 배경 그라데이션
+- 성별 배지: 좌상단 고정
+- 거리 배지: 우상단 고정
+
+#### Phase 5-2: 카드 정보 구조 통일 (우선순위: 높음)
+
+**공통 표시 정보 (모든 탭):**
+1. **필수**: 이름, 품종, 나이, 성별
+2. **선택**: 거리, 궁합점수, 특성태그
+
+**탭별 추가 정보:**
+| 탭 | 추가 정보 |
+|---|----------|
+| 추천친구 | 궁합점수 (필수) |
+| 근처검색 | 거리 (필수), 궁합점수 (선택) |
+| 교배찾기 | 거리 (필수), 교배조건태그, 교배신청버튼 |
+
+#### Phase 5-3: 상세화면 빈 상태 UI 개선 (우선순위: 높음)
+
+**이미지 헤더 개선:**
+```dart
+// 이미지 없을 때
+MingrrImageHeader(
+  imageUrls: [],  // 빈 배열
+  emptyStateWidget: _buildEmptyImageState(),  // 신규 파라미터
+)
+
+Widget _buildEmptyImageState() {
+  return Container(
+    color: context.features.datingContainer,
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        DefaultPetIcon(size: 80),
+        SizedBox(height: 12),
+        Text('사진이 없어요', style: TextStyle(color: Colors.white70)),
+      ],
+    ),
+  );
+}
+```
+
+**거리/궁합 정보 빈 상태:**
+```dart
+// 거리 정보 없을 때
+bottomLeftOverlay: distance > 0
+    ? DistanceBadge(distanceKm: distanceKm)
+    : EmptyInfoBadge(icon: Icons.location_off, text: '위치 정보 없음'),
+
+// 궁합 정보 없을 때 (데이팅 탭)
+topRightOverlay: matchScore != null
+    ? ImageHeaderMatchBadge(score: matchScore)
+    : EmptyInfoBadge(icon: Icons.auto_awesome_outlined, text: '궁합 정보 없음'),
+```
+
+**새로운 컴포넌트:**
+| 컴포넌트 | 용도 | 파일 |
+|---------|------|------|
+| `EmptyInfoBadge` | 빈 상태 안내 배지 | `info_badge.dart` |
+
+---
+
+### 3. 상세 작업 목록
+
+#### 3-1. 공통 컴포넌트 생성
+
+| 순서 | 작업 | 파일 | 예상 시간 |
+|-----|------|------|----------|
+| 1 | `EmptyInfoBadge` 컴포넌트 생성 | `info_badge.dart` | 30분 |
+| 2 | `MingrrImageHeader`에 `emptyStateWidget` 파라미터 추가 | `mingrr_image_header.dart` | 30분 |
+| 3 | `MingrrDatingCard` 공통 카드 컴포넌트 생성 | `dating_card.dart` (신규) | 2시간 |
+| 4 | `MingrrBreedingCard` 교배찾기 카드 컴포넌트 생성 | `dating_card.dart` | 1시간 |
+
+#### 3-2. 화면 적용
+
+| 순서 | 작업 | 파일 | 예상 시간 |
+|-----|------|------|----------|
+| 5 | 추천친구 탭 `MingrrDatingCard` 적용 | `dating_screen.dart` | 30분 |
+| 6 | 근처검색 탭 `MingrrDatingCard` 적용 | `dating_screen.dart` | 30분 |
+| 7 | 교배찾기 탭 `MingrrBreedingCard` 적용 | `dating_screen.dart` | 30분 |
+| 8 | 상세화면 빈 상태 UI 적용 | `pet_detail_screen.dart` | 1시간 |
+
+#### 3-3. 정리 및 테스트
+
+| 순서 | 작업 | 예상 시간 |
+|-----|------|----------|
+| 9 | 기존 카드 빌드 메서드 삭제 | 30분 |
+| 10 | 전체 테스트 및 검증 | 1시간 |
+
+**총 예상 시간: 8시간**
+
+---
+
+### 4. 디자인 가이드
+
+#### 4-1. 카드 디자인 통일 원칙
+
+**추천친구 카드 (대형):**
+```
+┌─────────────────────────────────┐
+│ [성별]              [궁합 90%] │  ← 상단 배지
+│                                 │
+│         (이미지 영역)           │
+│                                 │
+│ ┌─────────────────────────────┐ │
+│ │ 이름 · 나이                 │ │  ← 하단 오버레이
+│ │ 품종 · 📍 거리              │ │
+│ │ [활발함] [친화적]           │ │
+│ └─────────────────────────────┘ │
+└─────────────────────────────────┘
+```
+
+**근처검색 카드 (그리드):**
+```
+┌─────────────────┐
+│        [거리]  │  ← 상단 배지
+│   (이미지)     │
+├─────────────────┤
+│ [궁합 85%]     │
+│ 이름           │
+│ 품종 · 나이    │
+│ [활발함]       │
+└─────────────────┘
+```
+
+**교배찾기 카드 (가로형):**
+```
+┌──────────┬────────────────────────┐
+│ [성별]   │ 이름          [거리]  │
+│          │ 품종 · 나이           │
+│ (이미지) │ [혈통서] [예방접종]   │
+│          │ ┌──────────────────┐  │
+│          │ │   교배 신청      │  │
+│          │ └──────────────────┘  │
+└──────────┴────────────────────────┘
+```
+
+#### 4-2. 빈 상태 UI 디자인
+
+**이미지 없음:**
+```
+┌─────────────────────────────────┐
+│                                 │
+│           🐕 (아이콘)           │
+│                                 │
+│        "사진이 없어요"          │
+│                                 │
+└─────────────────────────────────┘
+```
+
+**위치 정보 없음:**
+```
+┌─────────────────┐
+│ 📍 위치 정보 없음 │
+└─────────────────┘
+```
+
+**궁합 정보 없음:**
+```
+┌─────────────────┐
+│ ✨ 궁합 정보 없음 │
+└─────────────────┘
+```
+
+---
+
+### 5. 예상 효과
+
+| 항목 | Before | After |
+|------|--------|-------|
+| 카드 디자인 통일성 | 3개 탭 모두 다름 | 공통 디자인 시스템 |
+| 코드 중복 | ~300줄 (3개 카드 빌드 메서드) | ~100줄 (공통 컴포넌트) |
+| 빈 상태 안내 | 없음 (오류처럼 보임) | 친절한 안내 메시지 |
+| 유지보수 | 각 탭 개별 수정 | 공통 컴포넌트 1곳 수정 |
+
+---
+
+### 6. 구현 결과
+
+#### 6-1. 생성된 컴포넌트
+
+| 컴포넌트 | 용도 | 파일 |
+|---------|------|------|
+| `DatingRecommendCard` | 추천친구 탭용 대형 카드 | `dating_card.dart` |
+| `DatingNearbyCard` | 근처검색 탭용 그리드 카드 | `dating_card.dart` |
+| `DatingBreedingCard` | 교배찾기 탭용 가로형 카드 | `dating_card.dart` |
+| `EmptyInfoBadge` | 빈 상태 안내 배지 | `info_badge.dart` |
+
+#### 6-2. 변경된 파일 (5개)
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `info_badge.dart` | `EmptyInfoBadge` 컴포넌트 추가 |
+| `mingrr_image_header.dart` | `emptyStateWidget` 파라미터 추가 |
+| `dating_card.dart` (신규) | `DatingRecommendCard`, `DatingNearbyCard`, `DatingBreedingCard` 생성 |
+| `dating_screen.dart` | 3개 카드 빌드 메서드 → 공통 컴포넌트 교체, 더미 데이터용 메서드 삭제 (~200줄 절감) |
+| `pet_detail_screen.dart` | 빈 상태 UI 적용 (이미지 없음, 궁합 정보 없음) |
+
+#### 6-3. 실제 효과
+
+| 항목 | Before | After |
+|------|--------|-------|
+| 카드 디자인 통일성 | 3개 탭 모두 다름 | **공통 디자인 시스템** |
+| 코드 중복 | ~350줄 (3개 카드 + 더미 메서드) | **~100줄 (공통 컴포넌트)** |
+| 빈 상태 안내 | 없음 (오류처럼 보임) | **친절한 안내 메시지** |
+| 유지보수 | 각 탭 개별 수정 | **공통 컴포넌트 1곳 수정** |
+
+---
+
+## 📊 Phase 6 상세: 교배찾기 혈통서 기능 강화
+
+> 작성일: 2026-01-18
+> 완료일: 2026-01-18
+> 목적: 교배찾기 관련 화면에 혈통서 보유 여부 기능 강화
+> 상태: ✅ 완료
+
+---
+
+### 1. 구현 현황
+
+| 영역 | 파일 | 혈통서 관련 필드 | 상태 |
+|------|------|-----------------|------|
+| **데이터 모델** | `pet_model.dart` | `hasPedigree`, `pedigreeImageUrl` | ✅ 구현됨 |
+| **반려동물 편집** | `pet_edit_screen.dart` | 혈통서 유무 입력 | ✅ 구현됨 |
+| **교배찾기 카드** | `dating_card.dart` | `hasPedigree` 조건 태그 표시 | ✅ 구현됨 |
+| **교배 등록** | `breeding_write_screen.dart` | 혈통서 정보 표시 | ✅ **신규 구현** |
+| **교배 상세** | `pet_detail_screen.dart` | 혈통서 배지 표시 | ✅ **신규 구현** |
+| **교배찾기 필터** | `dating_screen.dart` | 혈통서 필터 | ✅ **신규 구현** |
+
+---
+
+### 2. 구현 결과
+
+#### Phase 6-1: 교배찾기 필터에 혈통서 필터 추가 ✅
+
+```dart
+// dating_screen.dart
+final _breedingPedigreeFilterProvider = StateProvider<bool?>((ref) => null);
+
+// 필터 UI - 3행에 추가
+MingrrFilterRow(
+  title: '혈통서',
+  children: [
+    MingrrFilterChip(label: '전체', isSelected: filter == null),
+    MingrrFilterChip(label: '혈통서 보유', icon: Icons.verified, isSelected: filter == true),
+  ],
+),
+
+// 필터 적용 로직
+if (pedigreeFilter == true) {
+  filteredPets = filteredPets.where((p) => p.pet.hasPedigree).toList();
+}
+```
+
+#### Phase 6-2: 교배 등록 화면에 혈통서 정보 표시 ✅
+
+- 선택된 반려동물의 혈통서 보유 여부 자동 표시
+- 혈통서 보유 시: 핑크 배경 + "혈통서 보유" 메시지
+- 혈통서 미보유 시: 회색 배경 + "반려동물 정보에서 혈통서를 등록할 수 있어요" 안내
+
+#### Phase 6-3: 교배 상세 화면에 혈통서 배지 표시 ✅
+
+- 기본 정보 섹션에서 이름 옆에 "혈통서" 배지 표시
+- `widget.isBreeding && pet.hasPedigree` 조건으로 교배찾기에서만 표시
+
+---
+
+### 3. 변경된 파일 (5개)
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `dating_screen.dart` | `_breedingPedigreeFilterProvider` 추가, `_buildPedigreeFilters()` 메서드 추가, 필터 적용 로직 추가 |
+| `breeding_write_screen.dart` | `_buildPedigreeInfo()` 메서드 추가, 선택된 강아지 혈통서 정보 표시 |
+| `pet_detail_screen.dart` | `_buildPedigreeBadge()` 메서드 추가, 혈통서 유무에 따른 배지 표시 (있음/없음) |
+| `dating_card.dart` | `DatingBreedingCard`에 `_buildPedigreeBadge()` 추가, 혈통서 유무 항상 표시 |
+| `pet_selector_card.dart` | `_buildPedigreeBadge()` 추가, `LikeCountText` 공통 컴포넌트 적용 |
+
+### 4. 추가 개선 사항 (Phase 6 보완)
+
+| 화면 | 개선 내용 |
+|------|----------|
+| **교배 상세** | 혈통서 없을 때도 "혈통서 없음" 배지 표시 |
+| **교배찾기 리스트카드** | 혈통서 유무 항상 표시 (있음: 핑크, 없음: 회색) |
+| **강아지 선택 바텀시트** | 혈통서 유무 배지 + `LikeCountText` 공통 컴포넌트 적용 |
+| **교배할 강아지 섹션** | `PetSelectorCard` 공통 사용으로 자동 적용 |
+
+### 5. PedigreeBadge 공통 컴포넌트화 ✅
+
+#### 생성된 컴포넌트
+
+| 컴포넌트 | 파일 | 용도 |
+|---------|------|------|
+| `PedigreeBadge` | `info_badge.dart` | 혈통서 유무 배지 (3곳 → 1곳 관리) |
+
+#### 컴포넌트 사양
+
+| 파라미터 | 타입 | 설명 |
+|---------|------|------|
+| `hasPedigree` | `bool` (필수) | 혈통서 보유 여부 |
+| `size` | `InfoBadgeSize` | 크기 (small/medium/large) |
+| `accentColor` | `Color?` | 커스텀 색상 (기본: dating 색상) |
+
+#### 디자인
+
+| 상태 | 배경색 | 아이콘 | 텍스트 |
+|------|--------|--------|--------|
+| **혈통서 보유** | 핑크 10% | `Icons.verified` | "혈통서" |
+| **혈통서 없음** | 회색 | `Icons.block` | "혈통서 없음" |
+
+#### 적용된 파일 (3개 → 공통 컴포넌트 사용)
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `pet_detail_screen.dart` | `_buildPedigreeBadge()` 삭제 → `PedigreeBadge` 사용 |
+| `dating_card.dart` | `_buildPedigreeBadge()` 삭제 → `PedigreeBadge` 사용 |
+| `pet_selector_card.dart` | `_buildPedigreeBadge()` 삭제 → `PedigreeBadge` 사용 |
+
+#### 효과
+
+| 항목 | Before | After |
+|------|--------|-------|
+| 코드 중복 | 3곳에 동일 코드 (~90줄) | **1곳 (~30줄)** |
+| 유지보수 | 3곳 수정 필요 | **1곳 수정** |
+| 디자인 통일성 | 수동 관리 | **자동 보장** |
+
+---
+
+## Phase 7: 로딩 상태 공통화 ✅ 완료
+
+### 1. 문제점 및 해결
+
+#### 문제점
+- **데이터 로딩 중 빈 상태 표시**: 거리 필터 50km 설정 시 데이터 로딩이 오래 걸리면 "아직 데이터가 없어요" 메시지가 먼저 표시됨
+- **로딩 상태 미표시**: `AsyncValue`의 `loading` 상태를 제대로 처리하지 않는 화면 존재
+- **일관성 부족**: 화면마다 로딩 UI가 다르거나 누락됨
+
+#### 해결 방안
+1. **Provider 수정**: `filteredBreedingPetsProvider`, `filteredDatingPetsProvider`, `filteredProductsProvider`가 `AsyncValue`를 유지하도록 수정
+2. **MingrrLoadingState 개선**: `type`, `message`, `subMessage` 파라미터 추가로 기능별 색상 및 메시지 지원
+3. **전체 화면 적용**: 모든 화면에서 `AsyncValue.when()`의 `loading` 상태에 개선된 로딩 UI 적용
+
+#### 로딩 컴포넌트 현황 (`loading_widgets.dart` + `common_widgets.dart`)
+
+| 컴포넌트 | 용도 | 현황 |
+|---------|------|------|
+| `MingrrLoadingDialog` | 팝업 형태 로딩 (작업 중 화면 차단) | ✅ 구현됨 |
+| `MingrrLoadingOverlay` | 화면 내 오버레이 로딩 | ✅ 구현됨 |
+| `MingrrLoadingIndicator` | 인라인 로딩 인디케이터 | ✅ 구현됨 |
+| `MingrrFullScreenLoading` | 전체 화면 로딩 | ✅ 구현됨 |
+| `MingrrLoadingState` | Riverpod AsyncValue용 로딩 | ✅ **개선됨** (type, message 지원) |
+
+#### 로딩 필요 화면 분석 (24개 파일)
+
+| 카테고리 | 파일 | 로딩 필요 상황 |
+|---------|------|---------------|
+| **데이팅** | `dating_screen.dart` | 추천/근처/교배 리스트 로딩 |
+| **데이팅** | `pet_detail_screen.dart` | 반려동물 상세 정보 로딩 |
+| **데이팅** | `breeding_write_screen.dart` | 내 반려동물 목록 로딩 |
+| **채팅** | `chat_list_screen.dart` | 채팅 목록 로딩 |
+| **채팅** | `chat_detail_screen.dart` | 메시지 목록 로딩 |
+| **마켓** | `marketplace_screen.dart` | 상품 목록 로딩 |
+| **마켓** | `product_detail_screen.dart` | 상품 상세 로딩 |
+| **커뮤니티** | `community_screen.dart` | 게시글 목록 로딩 |
+| **커뮤니티** | `community_detail_screen.dart` | 게시글 상세 로딩 |
+| **소모임** | `group_list_screen.dart` | 소모임 목록 로딩 |
+| **소모임** | `group_detail_screen.dart` | 소모임 상세 로딩 |
+| **건강** | `health_screen.dart` | 건강 기록 로딩 |
+| **프로필** | `profile_screen.dart` | 사용자/반려동물 정보 로딩 |
+| **프로필** | `activity_history_screen.dart` | 활동 내역 로딩 |
+| **프로필** | `transaction_history_screen.dart` | 거래 내역 로딩 |
+| **프로필** | `wishlist_screen.dart` | 찜 목록 로딩 |
+| **알림** | `notification_screen.dart` | 알림 목록 로딩 |
+| **산책** | `walk_screen.dart` | 지도/산책 데이터 로딩 |
+| **홈** | `home_screen.dart` | 대시보드 데이터 로딩 |
+
+---
+
+### 2. 개선 방안
+
+#### 2-1. AsyncValue 래퍼 컴포넌트 생성
+
+```dart
+/// Riverpod AsyncValue를 위한 공통 래퍼
+class MingrrAsyncBuilder<T> extends StatelessWidget {
+  final AsyncValue<T> asyncValue;
+  final Widget Function(T data) builder;
+  final Widget? loading;
+  final Widget Function(Object error, StackTrace? stack)? errorBuilder;
+  final MingrrLoadingType loadingType;
+  final String? loadingMessage;
+  final bool showLoadingOnRefresh; // 새로고침 시에도 로딩 표시
+
+  const MingrrAsyncBuilder({
+    required this.asyncValue,
+    required this.builder,
+    this.loading,
+    this.errorBuilder,
+    this.loadingType = MingrrLoadingType.primary,
+    this.loadingMessage,
+    this.showLoadingOnRefresh = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return asyncValue.when(
+      data: builder,
+      loading: () => loading ?? MingrrLoadingState(
+        type: loadingType,
+        message: loadingMessage,
+      ),
+      error: (e, s) => errorBuilder?.call(e, s) ?? MingrrErrorState(error: e),
+    );
+  }
+}
+```
+
+#### 2-2. 리스트 로딩 컴포넌트 생성
+
+```dart
+/// 리스트 데이터 로딩용 컴포넌트
+class MingrrListBuilder<T> extends StatelessWidget {
+  final AsyncValue<List<T>> asyncValue;
+  final Widget Function(List<T> data) builder;
+  final Widget? emptyWidget;
+  final MingrrLoadingType loadingType;
+  final String? loadingMessage;
+  final String? emptyTitle;
+  final String? emptySubtitle;
+  final IconData? emptyIcon;
+
+  const MingrrListBuilder({
+    required this.asyncValue,
+    required this.builder,
+    this.emptyWidget,
+    this.loadingType = MingrrLoadingType.primary,
+    this.loadingMessage,
+    this.emptyTitle,
+    this.emptySubtitle,
+    this.emptyIcon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return asyncValue.when(
+      data: (data) {
+        if (data.isEmpty) {
+          return emptyWidget ?? MingrrEmptyState(
+            icon: emptyIcon ?? Icons.inbox,
+            title: emptyTitle ?? '데이터가 없어요',
+            subtitle: emptySubtitle,
+          );
+        }
+        return builder(data);
+      },
+      loading: () => MingrrLoadingState(
+        type: loadingType,
+        message: loadingMessage,
+      ),
+      error: (e, s) => MingrrErrorState(error: e),
+    );
+  }
+}
+```
+
+#### 2-3. 스켈레톤 로딩 컴포넌트 생성
+
+```dart
+/// 스켈레톤 로딩 (카드/리스트 형태)
+class MingrrSkeletonLoader extends StatelessWidget {
+  final int itemCount;
+  final SkeletonType type;
+  final double? height;
+
+  const MingrrSkeletonLoader({
+    this.itemCount = 3,
+    this.type = SkeletonType.card,
+    this.height,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      itemCount: itemCount,
+      itemBuilder: (_, __) => _buildSkeletonItem(context),
+    );
+  }
+}
+
+enum SkeletonType { card, listTile, grid }
+```
+
+---
+
+### 2. 구현 완료 내역
+
+#### Provider 수정 (AsyncValue 유지)
+
+| Provider | 파일 | 변경 내용 |
+|----------|------|----------|
+| `filteredBreedingPetsProvider` | `dating_provider.dart` | `List<PetWithDistance>` → `AsyncValue<List<PetWithDistance>>` |
+| `filteredDatingPetsProvider` | `dating_provider.dart` | `List<PetWithDistance>` → `AsyncValue<List<PetWithDistance>>` |
+| `filteredProductsProvider` | `marketplace_provider.dart` | `List<ProductWithDistance>` → `AsyncValue<List<ProductWithDistance>>` |
+
+#### MingrrLoadingState 개선 (`common_widgets.dart`)
+
+```dart
+class MingrrLoadingState extends StatelessWidget {
+  final String? message;
+  final String? subMessage;
+  final Color? color;
+  final MingrrLoadingType type; // 기능별 색상 자동 적용
+
+  // type: primary, walk, dating, market, community, chat, health, success
+}
+```
+
+#### 적용된 화면 (18개 파일)
+
+| 카테고리 | 파일 | 로딩 메시지 |
+|---------|------|------------|
+| **데이팅** | `dating_screen.dart` | "궁합 맞는 친구를 찾고 있어요", "근처 반려동물을 찾고 있어요", "교배 가능한 반려동물을 찾고 있어요" |
+| **마켓** | `marketplace_screen.dart` | "판매 상품을 불러오고 있어요", "나눔 상품을 불러오고 있어요", "알바 정보를 불러오고 있어요" |
+| **커뮤니티** | `community_screen.dart` | "게시글을 불러오고 있어요" |
+| **채팅** | `chat_list_screen.dart` | "채팅 목록을 불러오고 있어요" |
+| **건강** | `health_screen.dart` | "건강 정보를 불러오고 있어요" (9곳) |
+| **프로필** | `profile_screen.dart` | "반려동물 정보를 불러오고 있어요" |
+| **프로필** | `wishlist_screen.dart` | "찜 목록을 불러오고 있어요" |
+| **프로필** | `received_dating_requests_screen.dart` | "받은 신청을 불러오고 있어요" |
+| **프로필** | `transaction_history_screen.dart` | "거래 내역을 불러오고 있어요" |
+| **프로필** | `activity_history_screen.dart` | "활동 내역을 불러오고 있어요" |
+| **알림** | `notification_screen.dart` | "알림을 불러오고 있어요" |
+
+---
+
+### 3. 효과
+
+| 항목 | Before | After |
+|------|--------|-------|
+| **사용자 경험** | 빈 화면 → 데이터 표시 | **로딩 → 데이터 표시** |
+| **로딩 UI** | 단순 스피너 | **기능별 색상 + 메시지** |
+| **디자인 통일성** | 화면마다 다름 | **일관된 로딩 UI** |
+| **유지보수** | 개별 처리 | **공통 컴포넌트 사용** |
+
+---
+
+## Phase 8: 로딩 타임아웃 처리 ✅ 완료
+
+### 1. 문제점 및 해결
+
+#### 문제점
+- **무한 로딩**: 네트워크 느림/서버 응답 지연 시 무한 로딩
+- **사용자 액션 불가**: 재시도 방법 없음
+- **앱 멈춤 인식**: 사용자가 앱이 멈춘 것으로 인식
+
+#### 해결 방안
+- `MingrrLoadingState`를 `StatefulWidget`으로 변경
+- `timeout` 파라미터로 타임아웃 시간 지정 (기본 15초)
+- `onRetry` 콜백으로 재시도 버튼 표시
+
+### 2. 구현 내역
+
+#### MingrrLoadingState 개선 (`common_widgets.dart`)
+
+```dart
+class MingrrLoadingState extends StatefulWidget {
+  final String? message;
+  final String? subMessage;
+  final MingrrLoadingType type;
+  final Duration? timeout;        // 타임아웃 시간
+  final VoidCallback? onRetry;    // 재시도 콜백
+  final String? retryButtonText;  // 재시도 버튼 텍스트
+}
+```
+
+#### 타임아웃 UI
+
+| 상태 | UI |
+|------|-----|
+| **로딩 중** | 스피너 + 메시지 |
+| **타임아웃** | ⏳ 아이콘 + "로딩이 오래 걸리고 있어요" + "네트워크 상태를 확인해주세요" + 재시도 버튼 |
+
+#### 적용된 화면 (5곳)
+
+| 화면 | Provider | 타임아웃 |
+|------|----------|---------|
+| 데이팅 - 교배찾기 | `filteredBreedingPetsProvider` | 15초 |
+| 데이팅 - 근처 검색 | `filteredDatingPetsProvider` | 15초 |
+| 데이팅 - 추천 | `recommendedPetsProvider` | 15초 |
+| 마켓 - 상품 목록 | `filteredProductsProvider` | 15초 |
+| 마켓 - 알바 목록 | `jobsProvider` | 15초 |
+
+### 3. 효과
+
+| 항목 | Before | After |
+|------|--------|-------|
+| **사용자 경험** | 무한 로딩 → 앱 종료 | **타임아웃 → 재시도 가능** |
+| **에러 복구** | 불가능 | **재시도 버튼으로 복구** |
+| **사용자 피드백** | 없음 | **"로딩이 오래 걸리고 있어요" 메시지** |
+
+### 4. 하위 호환성
+
+| 항목 | 처리 방안 |
+|------|----------|
+| **기존 사용처** | `timeout`, `onRetry` 미지정 시 기존 동작 유지 |
+| **const 제거** | `ConsumerStatefulWidget`으로 변경되어 `const` 제거 필요 |
+
+---
+
+## Phase 9: 로딩 타임아웃 개선 ✅ 완료
+
+### 1. 개선 내역
+
+#### 9-1. 타임아웃 시간 상수화 (`app_sizes.dart`)
+
+```dart
+// ===== 로딩 타임아웃 =====
+static const Duration loadingTimeout = Duration(seconds: 15);
+static const Duration loadingTimeoutShort = Duration(seconds: 10);
+static const Duration loadingTimeoutLong = Duration(seconds: 30);
+```
+
+#### 9-2. 추가 화면 타임아웃 적용 (8곳)
+
+| 화면 | Provider | 타임아웃 |
+|------|----------|---------|
+| 채팅 목록 (일반) | `userChatRoomsProvider` | 15초 |
+| 채팅 목록 (데이팅) | `userChatRoomsProvider` | 15초 |
+| 채팅 상세 | `chatMessagesProvider` | 15초 |
+| 커뮤니티 목록 | `communityPostsProvider` | 15초 |
+| 커뮤니티 상세 | `communityPostDetailProvider` | 15초 |
+| 소모임 상세 | `groupDetailProvider` | 15초 |
+| 소모임 일정 | `groupSchedulesProvider` | 15초 |
+
+#### 9-3. 네트워크 상태 감지 연동
+
+**새 파일**: `lib/core/providers/network_provider.dart`
+
+```dart
+// 네트워크 연결 상태 Provider
+final connectivityProvider = StreamProvider<List<ConnectivityResult>>((ref) {
+  return Connectivity().onConnectivityChanged;
+});
+
+// 현재 네트워크 연결 여부 Provider
+final isConnectedProvider = Provider<bool>((ref) {
+  final connectivity = ref.watch(connectivityProvider);
+  return connectivity.when(
+    data: (results) => !results.contains(ConnectivityResult.none),
+    loading: () => true,
+    error: (_, __) => true,
+  );
+});
+```
+
+**MingrrLoadingState 개선**:
+- `StatefulWidget` → `ConsumerStatefulWidget` 변경
+- 네트워크 연결 끊김 시 자동 감지
+- Wi-Fi 끊김 아이콘 + "인터넷 연결이 끊겼어요" 메시지
+
+### 2. 로딩 상태 UI 분기
+
+| 상태 | 아이콘 | 메시지 |
+|------|--------|--------|
+| **로딩 중** | ⏳ 스피너 | 사용자 지정 메시지 |
+| **네트워크 끊김** | 📶 wifi_off | "인터넷 연결이 끊겼어요" |
+| **타임아웃** | ⏳ hourglass_empty | "로딩이 오래 걸리고 있어요" |
+
+### 3. 효과
+
+| 항목 | Before | After |
+|------|--------|-------|
+| **타임아웃 관리** | 하드코딩 (15초) | **상수화 (AppSizes.loadingTimeout)** |
+| **적용 범위** | 5곳 | **13곳** |
+| **네트워크 감지** | 없음 | **실시간 감지 + 맞춤 메시지** |
 
 ---
 

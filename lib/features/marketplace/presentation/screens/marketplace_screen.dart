@@ -45,9 +45,9 @@ class MarketplaceScreen extends ConsumerWidget {
 
     // 탭 정의 (판매 / 나눔 / 알바)
     final tabs = [
-      TopNavTab(label: '판매', icon: Icons.sell, color: context.features.market),
-      TopNavTab(label: '나눔', icon: Icons.volunteer_activism, color: context.features.market),
-      TopNavTab(label: '알바', icon: Icons.work_outline, color: context.features.market),
+      MingrrTabItem(label: '판매', icon: Icons.sell, color: context.features.market),
+      MingrrTabItem(label: '나눔', icon: Icons.volunteer_activism, color: context.features.market),
+      MingrrTabItem(label: '알바', icon: Icons.work_outline, color: context.features.market),
     ];
 
     // 카테고리 정의 (탭에 따라 다름)
@@ -102,7 +102,7 @@ class MarketplaceScreen extends ConsumerWidget {
           // 2개 탭 (판매 / 나눠)
           Container(
             color: isDark ? colorScheme.surface : context.features.marketContainer,
-            child: PillTabBar(
+            child: MingrrMainTabBar(
               tabs: tabs,
               selectedIndex: selectedTab,
               onTabSelected: (index) {
@@ -152,20 +152,35 @@ class MarketplaceScreen extends ConsumerWidget {
     return Consumer(
       builder: (context, ref, child) {
         final distanceFilter = ref.watch(_distanceFilterProvider);
-        final products = ref.watch(filteredProductsProvider((type: type, radiusKm: distanceFilter)));
+        final productsAsync = ref.watch(filteredProductsProvider((type: type, radiusKm: distanceFilter)));
         
-        if (products.isEmpty) {
-          return MingrrEmptyState(
-            icon: type == ProductType.sell ? Icons.sell : Icons.volunteer_activism,
-            title: '아직 데이터가 없어요',
-            subtitle: '거리를 늘리거나 다른 카테고리를 확인해보세요',
-          );
-        }
-        return ListView.builder(
-          padding: const EdgeInsets.all(AppSizes.paddingM),
-          itemCount: products.length,
-          itemBuilder: (ctx, index) {
-            return _buildProductModelItem(context, products[index]);
+        return productsAsync.when(
+          loading: () => MingrrLoadingState(
+            type: MingrrLoadingType.market,
+            message: type == ProductType.sell ? '판매 상품을 불러오고 있어요' : '나눔 상품을 불러오고 있어요',
+            timeout: AppSizes.loadingTimeout,
+            onRetry: () => ref.invalidate(filteredProductsProvider((type: type, radiusKm: distanceFilter))),
+          ),
+          error: (e, _) => MingrrEmptyState(
+            icon: Icons.error_outline,
+            title: '데이터를 불러올 수 없어요',
+            subtitle: '잠시 후 다시 시도해주세요',
+          ),
+          data: (products) {
+            if (products.isEmpty) {
+              return MingrrEmptyState(
+                icon: type == ProductType.sell ? Icons.sell : Icons.volunteer_activism,
+                title: '아직 데이터가 없어요',
+                subtitle: '거리를 늘리거나 다른 카테고리를 확인해보세요',
+              );
+            }
+            return ListView.builder(
+              padding: const EdgeInsets.all(AppSizes.paddingM),
+              itemCount: products.length,
+              itemBuilder: (ctx, index) {
+                return _buildProductModelItem(context, products[index]);
+              },
+            );
           },
         );
       },
@@ -245,7 +260,12 @@ class MarketplaceScreen extends ConsumerWidget {
               },
             );
           },
-          loading: () => const MingrrLoadingState(),
+          loading: () => MingrrLoadingState(
+            type: MingrrLoadingType.market,
+            message: '알바 정보를 불러오고 있어요',
+            timeout: AppSizes.loadingTimeout,
+            onRetry: () => ref.invalidate(jobsProvider),
+          ),
           error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
         );
       },
