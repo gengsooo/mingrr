@@ -8,6 +8,8 @@ import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/widgets/info_badge.dart';
+import '../../../../core/widgets/guardian_profile_modal.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../models/community_post_model.dart';
@@ -135,15 +137,17 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 작성자 정보
-          Row(
-            children: [
-              MingrrAvatar(
-                size: 48,
-                imageUrl: post.isAnonymous ? null : post.authorProfileUrl,
-                placeholderIcon: Icons.person,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
+          GestureDetector(
+            onTap: post.isAnonymous ? null : () => _showAuthorProfile(context, post),
+            child: Row(
+              children: [
+                MingrrAvatar(
+                  size: 48,
+                  imageUrl: post.isAnonymous ? null : post.authorProfileUrl,
+                  placeholderIcon: Icons.person,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -175,7 +179,8 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                   ],
                 ),
               ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 20),
 
@@ -194,7 +199,11 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
           // 이미지
           if (post.hasImages) ...[
             const SizedBox(height: 16),
-            _buildImages(context, post.imageUrls),
+            MingrrImageGallery(
+              imageUrls: post.imageUrls,
+              height: 200,
+              enableViewer: true,
+            ),
           ],
 
           // 태그
@@ -217,16 +226,16 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
           // 액션 바
           Row(
             children: [
-              // 좋아요
-              _buildActionButton(
-                icon: isLiked ? Icons.favorite : Icons.favorite_border,
-                label: '좋아요 ${post.likeCount}',
-                color: isLiked ? Colors.red : colorScheme.onSurfaceVariant,
+              // 좋아요 (공통 컴포넌트)
+              LikeButton(
+                count: post.likeCount,
+                isLiked: isLiked,
                 onTap: () async {
                   await ref.read(communityNotifierProvider.notifier).toggleLike(post.id);
                   ref.invalidate(communityPostDetailProvider(widget.postId));
                   ref.invalidate(isCommunityPostLikedProvider(widget.postId));
                 },
+                size: InfoBadgeSize.medium,
               ),
               const SizedBox(width: 24),
               // 댓글
@@ -353,69 +362,6 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
     );
   }
 
-  Widget _buildImages(BuildContext context, List<String> imageUrls) {
-    if (imageUrls.length == 1) {
-      return GestureDetector(
-        onTap: () => _showImageViewer(context, imageUrls, 0),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppSizes.radiusS),
-          child: Image.network(
-            imageUrls.first,
-            width: double.infinity,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              height: 200,
-              color: Theme.of(context).colorScheme.surfaceContainerLow,
-              child: const Center(child: Icon(Icons.image_not_supported)),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return SizedBox(
-      height: 200,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: imageUrls.length,
-        itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () => _showImageViewer(context, imageUrls, index),
-            child: Padding(
-              padding: EdgeInsets.only(right: index < imageUrls.length - 1 ? 8 : 0),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                child: Image.network(
-                  imageUrls[index],
-                  width: 200,
-                  height: 200,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    width: 200,
-                    height: 200,
-                    color: Theme.of(context).colorScheme.surfaceContainerLow,
-                    child: const Center(child: Icon(Icons.image_not_supported)),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _showImageViewer(BuildContext context, List<String> imageUrls, int initialIndex) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => _ImageViewerScreen(
-          imageUrls: imageUrls,
-          initialIndex: initialIndex,
-        ),
-      ),
-    );
-  }
 
   Widget _buildActionButton({
     required IconData icon,
@@ -513,10 +459,13 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              MingrrAvatar(
-                size: 36,
-                imageUrl: comment.isAnonymous ? null : comment.authorProfileUrl,
-                placeholderIcon: Icons.person,
+              GestureDetector(
+                onTap: comment.isAnonymous ? null : () => _showCommentAuthorProfile(context, comment),
+                child: MingrrAvatar(
+                  size: 36,
+                  imageUrl: comment.isAnonymous ? null : comment.authorProfileUrl,
+                  placeholderIcon: Icons.person,
+                ),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -608,10 +557,13 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          MingrrAvatar(
-            size: 28,
-            imageUrl: reply.isAnonymous ? null : reply.authorProfileUrl,
-            placeholderIcon: Icons.person,
+          GestureDetector(
+            onTap: reply.isAnonymous ? null : () => _showCommentAuthorProfile(context, reply),
+            child: MingrrAvatar(
+              size: 28,
+              imageUrl: reply.isAnonymous ? null : reply.authorProfileUrl,
+              placeholderIcon: Icons.person,
+            ),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -826,46 +778,28 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
     
     final isMyPost = FirebaseService().currentUserId == post.authorId;
 
-    showMingrrOptionsSheet(
+    showDetailOptionsSheet(
       context: context,
-      options: [
-        if (isMyPost) ...[
-          MingrrOptionItem(
-            icon: Icons.edit_outlined,
-            label: '수정하기',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => CommunityWriteScreen(post: post)),
-              ).then((result) {
-                if (result == true) {
-                  ref.invalidate(communityPostDetailProvider(widget.postId));
-                }
-              });
-            },
-          ),
-          MingrrOptionItem(
-            icon: Icons.delete_outline,
-            label: '삭제하기',
-            isDestructive: true,
-            onTap: () => _deletePost(post),
-          ),
-        ] else ...[
-          MingrrOptionItem(
-            icon: Icons.report_outlined,
-            label: '신고하기',
-            isDestructive: true,
-            onTap: () {
-              showReportSheet(
-                context,
-                targetId: post.id,
-                targetName: '이 게시글',
-                targetType: ReportTargetType.feed,
-              );
-            },
-          ),
-        ],
-      ],
+      isOwner: isMyPost,
+      onEdit: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => CommunityWriteScreen(post: post)),
+        ).then((result) {
+          if (result == true) {
+            ref.invalidate(communityPostDetailProvider(widget.postId));
+          }
+        });
+      },
+      onDelete: () => _deletePost(post),
+      onReport: () {
+        showReportSheet(
+          context,
+          targetId: post.id,
+          targetName: '이 게시글',
+          targetType: ReportTargetType.feed,
+        );
+      },
     );
   }
 
@@ -886,74 +820,84 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
     }
   }
 
-}
-
-/// 이미지 뷰어 화면
-class _ImageViewerScreen extends StatefulWidget {
-  final List<String> imageUrls;
-  final int initialIndex;
-
-  const _ImageViewerScreen({
-    required this.imageUrls,
-    required this.initialIndex,
-  });
-
-  @override
-  State<_ImageViewerScreen> createState() => _ImageViewerScreenState();
-}
-
-class _ImageViewerScreenState extends State<_ImageViewerScreen> {
-  late PageController _pageController;
-  late int _currentIndex;
-
-  @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.initialIndex;
-    _pageController = PageController(initialPage: widget.initialIndex);
+  /// 게시글 작성자 프로필 바텀시트 표시
+  Future<void> _showAuthorProfile(BuildContext context, CommunityPostModel post) async {
+    await _showUserProfile(context, post.authorId, post.authorName, post.authorProfileUrl);
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
+  /// 댓글 작성자 프로필 바텀시트 표시
+  Future<void> _showCommentAuthorProfile(BuildContext context, CommunityCommentModel comment) async {
+    await _showUserProfile(context, comment.authorId, comment.authorName, comment.authorProfileUrl);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: Text(
-          '${_currentIndex + 1} / ${widget.imageUrls.length}',
-          style: const TextStyle(color: Colors.white),
-        ),
-      ),
-      body: PageView.builder(
-        controller: _pageController,
-        itemCount: widget.imageUrls.length,
-        onPageChanged: (index) => setState(() => _currentIndex = index),
-        itemBuilder: (context, index) {
-          return InteractiveViewer(
-            child: Center(
-              child: Image.network(
-                widget.imageUrls[index],
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(
-                  Icons.image_not_supported,
-                  color: Colors.white54,
-                  size: 64,
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
+  /// 사용자 프로필 바텀시트 표시 (공통)
+  Future<void> _showUserProfile(BuildContext context, String userId, String userName, String? profileUrl) async {
+    try {
+      final userDoc = await FirebaseService().usersCollection.doc(userId).get();
+      final userData = userDoc.data();
+      
+      final kkosunnaeScore = (userData?['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0;
+      final isIdentityVerified = userData?['isIdentityVerified'] as bool? ?? false;
+      final isPetVerified = userData?['isPetVerified'] as bool? ?? false;
+      final isLocationVerified = userData?['isLocationVerified'] as bool? ?? false;
+      final genderStr = userData?['gender'] as String?;
+      final age = userData?['age'] as int?;
+      
+      GuardianGender gender = GuardianGender.unknown;
+      if (genderStr == 'male') gender = GuardianGender.male;
+      if (genderStr == 'female') gender = GuardianGender.female;
+      
+      // 반려동물 정보 조회
+      List<GuardianPetInfo> pets = [];
+      final petsSnapshot = await FirebaseService().petsCollection
+          .where('ownerId', isEqualTo: userId)
+          .get();
+      
+      for (final petDoc in petsSnapshot.docs) {
+        final petData = petDoc.data();
+        pets.add(GuardianPetInfo(
+          id: petDoc.id,
+          name: petData['name'] ?? '반려동물',
+          breed: petData['breed'],
+          ageString: petData['age'] != null ? '${petData['age']}살' : null,
+          introduction: petData['introduction'],
+          traits: List<String>.from(petData['traits'] ?? []),
+          photoUrls: List<String>.from(petData['photoUrls'] ?? []),
+          profileImageUrl: petData['profileImageUrl'],
+          likeCount: petData['likeCount'] ?? 0,
+        ));
+      }
+      
+      if (!mounted) return;
+      
+      showGuardianProfileModal(
+        context,
+        guardianId: userId,
+        guardianName: userName,
+        kkosunnaeScore: kkosunnaeScore,
+        profileImageUrl: profileUrl ?? userData?['profileImageUrl'],
+        gender: gender,
+        age: age,
+        isIdentityVerified: isIdentityVerified,
+        isPetVerified: isPetVerified,
+        isLocationVerified: isLocationVerified,
+        pets: pets,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      showGuardianProfileModal(
+        context,
+        guardianId: userId,
+        guardianName: userName,
+        kkosunnaeScore: 50.0,
+        profileImageUrl: profileUrl,
+        pets: [],
+      );
+    }
   }
+
 }
+
 
 /// 동영상 플레이어 화면
 class _VideoPlayerScreen extends StatefulWidget {

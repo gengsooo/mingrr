@@ -76,11 +76,12 @@ class _ReportSheetState extends State<ReportSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    
     return Container(
-      padding: EdgeInsets.only(
-        left: AppSizes.paddingL,
-        right: AppSizes.paddingL,
-        bottom: MediaQuery.of(context).padding.bottom + AppSizes.paddingL,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -88,141 +89,169 @@ class _ReportSheetState extends State<ReportSheet> {
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Center(child: BottomSheetHandle()),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(Icons.report_outlined, color: Colors.red),
-              const SizedBox(width: 8),
-              Text(
-                '${widget.targetName} 신고하기',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '신고 사유를 선택해주세요. 허위 신고 시 제재를 받을 수 있습니다.',
-            style: TextStyle(
-              fontSize: 13,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // 신고 유형 선택
-          ...ReportType.values.map((type) {
-            final isSelected = _selectedType == type;
-            return GestureDetector(
-              onTap: () => setState(() => _selectedType = type),
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: isSelected ? Colors.red.withOpacity(0.1) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: isSelected ? Colors.red : Theme.of(context).colorScheme.outline,
+          // 스크롤 가능한 콘텐츠 영역
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      const Icon(Icons.report_outlined, color: Colors.red),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${widget.targetName} 신고하기',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-                      size: 20,
-                      color: isSelected ? Colors.red : Theme.of(context).colorScheme.outlineVariant,
+                  const SizedBox(height: 8),
+                  Text(
+                    '신고 사유를 선택해주세요. 허위 신고 시 제재를 받을 수 있습니다.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
-                    const SizedBox(width: 12),
-                    Text(
-                      type.label,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isSelected ? Colors.red : Theme.of(context).colorScheme.onSurface,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // 신고 유형 선택
+                  ...ReportType.values.map((type) {
+                    final isSelected = _selectedType == type;
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedType = type),
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.red.withValues(alpha: 0.1) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected ? Colors.red : Theme.of(context).colorScheme.outline,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                              size: 20,
+                              color: isSelected ? Colors.red : Theme.of(context).colorScheme.outlineVariant,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              type.label,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isSelected ? Colors.red : Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+
+                  // 상세 내용 (기타 선택 시)
+                  if (_selectedType == ReportType.other) ...[
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _detailController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: '신고 사유를 자세히 적어주세요',
+                        hintStyle: TextStyle(color: Theme.of(context).colorScheme.outlineVariant, fontSize: 13),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: const BorderSide(color: Colors.red),
+                        ),
                       ),
                     ),
                   ],
-                ),
-              ),
-            );
-          }),
-
-          // 상세 내용 (기타 선택 시)
-          if (_selectedType == ReportType.other) ...[
-            const SizedBox(height: 12),
-            TextField(
-              controller: _detailController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: '신고 사유를 자세히 적어주세요',
-                hintStyle: TextStyle(color: Theme.of(context).colorScheme.outlineVariant, fontSize: 13),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.red),
-                ),
+                  const SizedBox(height: 16),
+                ],
               ),
             ),
-          ],
-
-          const SizedBox(height: 24),
-
-          // 제출 버튼
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton(
-              onPressed: (_selectedType != null && !_isSubmitting)
-                  ? () async {
-                      setState(() => _isSubmitting = true);
-                      try {
-                        final currentUser = FirebaseAuth.instance.currentUser;
-                        if (currentUser == null) throw Exception('로그인이 필요합니다');
-                        
-                        await _firebase.reportsCollection.add({
-                          'reporterId': currentUser.uid,
-                          'targetId': widget.targetId,
-                          'targetType': widget.targetType.name,
-                          'reportType': _selectedType!.name,
-                          'detail': _detailController.text.trim(),
-                          'status': 'pending',
-                          'createdAt': FieldValue.serverTimestamp(),
-                        });
-                        
-                        if (mounted) {
-                          Navigator.pop(context);
-                          widget.onSubmit?.call();
-                          MingrrSnackBar.success(context, '신고가 접수되었습니다. 검토 후 조치하겠습니다.');
-                        }
-                      } catch (e) {
-                        if (mounted) {
-                          MingrrSnackBar.error(context, '신고 실패: $e');
-                        }
-                      } finally {
-                        if (mounted) setState(() => _isSubmitting = false);
-                      }
-                    }
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                disabledBackgroundColor: Theme.of(context).colorScheme.outline,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          ),
+          // 제출 버튼 (키보드 위에 고정)
+          Container(
+            padding: EdgeInsets.only(
+              left: AppSizes.bottomSheetButtonPaddingH,
+              right: AppSizes.bottomSheetButtonPaddingH,
+              top: AppSizes.bottomSheetButtonPaddingV,
+              bottom: keyboardHeight > 0 
+                  ? keyboardHeight + AppSizes.bottomSheetButtonPaddingV 
+                  : bottomPadding + AppSizes.bottomSheetButtonPaddingV,
+            ),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
                 ),
-              ),
-              child: const Text(
-                '신고하기',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
+              ],
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: (_selectedType != null && !_isSubmitting)
+                    ? () async {
+                        setState(() => _isSubmitting = true);
+                        try {
+                          final currentUser = FirebaseAuth.instance.currentUser;
+                          if (currentUser == null) throw Exception('로그인이 필요합니다');
+                          
+                          await _firebase.reportsCollection.add({
+                            'reporterId': currentUser.uid,
+                            'targetId': widget.targetId,
+                            'targetType': widget.targetType.name,
+                            'reportType': _selectedType!.name,
+                            'detail': _detailController.text.trim(),
+                            'status': 'pending',
+                            'createdAt': FieldValue.serverTimestamp(),
+                          });
+                          
+                          if (mounted) {
+                            Navigator.pop(context);
+                            widget.onSubmit?.call();
+                            MingrrSnackBar.success(context, '신고가 접수되었습니다. 검토 후 조치하겠습니다.');
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            MingrrSnackBar.error(context, '신고 실패: $e');
+                          }
+                        } finally {
+                          if (mounted) setState(() => _isSubmitting = false);
+                        }
+                      }
+                    : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  disabledBackgroundColor: Theme.of(context).colorScheme.outline,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  '신고하기',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),

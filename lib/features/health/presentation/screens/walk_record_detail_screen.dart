@@ -616,28 +616,11 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          SizedBox(
+          MingrrImageGallery(
+            imageUrls: record.photoUrls,
             height: 100,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: record.photoUrls.length,
-              itemBuilder: (context, index) {
-                return Container(
-                  width: 100,
-                  height: 100,
-                  margin: const EdgeInsets.only(right: 8),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.outline,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                  ),
-                  child: Icon(
-                    Icons.image,
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                    size: 32,
-                  ),
-                );
-              },
-            ),
+            itemWidth: 100,
+            enableViewer: true,
           ),
         ],
       ),

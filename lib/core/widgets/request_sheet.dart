@@ -65,12 +65,12 @@ class _RequestSheetState extends State<RequestSheet> {
   Widget build(BuildContext context) {
     final config = _getConfig();
     final showInput = widget.showMessageInput && widget.type != RequestSheetType.groupJoin;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
     
     return Container(
-      padding: const EdgeInsets.only(
-        left: AppSizes.paddingL,
-        right: AppSizes.paddingL,
-        bottom: AppSizes.paddingL,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
@@ -80,150 +80,178 @@ class _RequestSheetState extends State<RequestSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const BottomSheetHandle(),
-          
-          // 아이콘
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: config.color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(config.icon, size: 28, color: config.color),
-          ),
-          const SizedBox(height: AppSizes.gapM),
-          
-          // 제목
-          Text(
-            config.title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: AppSizes.gapXS),
-          
-          // 설명
-          Text(
-            config.description,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.4),
-          ),
-          
-          // 반려동물 선택 (데이트/교배 신청 시)
-          if (widget.type != RequestSheetType.groupJoin) ...[
-            const SizedBox(height: AppSizes.gapM),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '신청할 반려동물 선택',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-              ),
-            ),
-            const SizedBox(height: AppSizes.gapS),
-            if (widget.myPets == null || widget.myPets!.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Theme.of(context).colorScheme.outlineVariant, size: 20),
-                    const SizedBox(width: 8),
-                    Expanded(
+          // 스크롤 가능한 콘텐츠 영역
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
+              child: Column(
+                children: [
+                  // 아이콘
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: config.color.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(config.icon, size: 28, color: config.color),
+                  ),
+                  const SizedBox(height: AppSizes.gapM),
+                  
+                  // 제목
+                  Text(
+                    config.title,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: AppSizes.gapXS),
+                  
+                  // 설명
+                  Text(
+                    config.description,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.4),
+                  ),
+                  
+                  // 반려동물 선택 (데이트/교배 신청 시)
+                  if (widget.type != RequestSheetType.groupJoin) ...[
+                    const SizedBox(height: AppSizes.gapM),
+                    const Align(
+                      alignment: Alignment.centerLeft,
                       child: Text(
-                        '등록된 반려동물이 없습니다.\n프로필에서 반려동물을 먼저 등록해주세요.',
-                        style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        '신청할 반려동물 선택',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                     ),
+                    const SizedBox(height: AppSizes.gapS),
+                    if (widget.myPets == null || widget.myPets!.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surface,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Theme.of(context).colorScheme.outlineVariant, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                '등록된 반려동물이 없습니다.\n프로필에서 반려동물을 먼저 등록해주세요.',
+                                style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 180),
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: widget.myPets!.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 8),
+                          itemBuilder: (context, index) {
+                            final pet = widget.myPets![index];
+                            return PetSelectorCard(
+                              pet: pet,
+                              isSelected: _selectedPet?.id == pet.id,
+                              accentColor: config.color,
+                              onTap: () => setState(() => _selectedPet = pet),
+                            );
+                          },
+                        ),
+                      ),
                   ],
-                ),
-              )
-            else
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 180),
-                child: ListView.separated(
-                  shrinkWrap: true,
-                  itemCount: widget.myPets!.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final pet = widget.myPets![index];
-                    return PetSelectorCard(
-                      pet: pet,
-                      isSelected: _selectedPet?.id == pet.id,
-                      accentColor: config.color,
-                      onTap: () => setState(() => _selectedPet = pet),
-                    );
-                  },
-                ),
+                  
+                  // 메시지 입력 (데이트/교배 신청만)
+                  if (showInput) ...[
+                    const SizedBox(height: AppSizes.gapM),
+                    TextField(
+                      controller: _messageController,
+                      maxLength: 20,
+                      decoration: InputDecoration(
+                        hintText: '한줄 메시지를 남겨보세요 (선택)',
+                        hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant, fontWeight: FontWeight.w400),
+                        filled: true,
+                        fillColor: Theme.of(context).colorScheme.surface,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
+                        counterText: '',
+                      ),
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ],
+                  const SizedBox(height: AppSizes.gapS),
+                ],
               ),
-          ],
-          
-          // 메시지 입력 (데이트/교배 신청만)
-          if (showInput) ...[
-            const SizedBox(height: AppSizes.gapM),
-            TextField(
-              controller: _messageController,
-              maxLength: 20,
-              decoration: InputDecoration(
-                hintText: '한줄 메시지를 남겨보세요 (선택)',
-                hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant, fontWeight: FontWeight.w400),
-                filled: true,
-                fillColor: Theme.of(context).colorScheme.surface,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
-                counterText: '',
-              ),
-              style: const TextStyle(fontSize: 14),
             ),
-          ],
-          const SizedBox(height: AppSizes.gapM),
-          
-          // 버튼
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    widget.onCancel?.call();
-                  },
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    side: BorderSide(color: Theme.of(context).colorScheme.outline),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: const Text('취소', style: TextStyle(fontSize: 14)),
-                ),
-              ),
-              const SizedBox(width: AppSizes.gapM),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _canSubmit ? () {
-                    final message = _messageController.text.trim();
-                    Navigator.pop(context);
-                    widget.onConfirm(message.isEmpty ? null : message, selectedPet: _selectedPet);
-                  } : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: config.color,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: Text(
-                    config.confirmText,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
-                  ),
-                ),
-              ),
-            ],
           ),
-          SizedBox(height: MediaQuery.of(context).padding.bottom),
+          // 버튼 (키보드 위에 고정)
+          Container(
+            padding: EdgeInsets.only(
+              left: AppSizes.bottomSheetButtonPaddingH,
+              right: AppSizes.bottomSheetButtonPaddingH,
+              top: AppSizes.bottomSheetButtonPaddingV,
+              bottom: keyboardHeight > 0 
+                  ? keyboardHeight + AppSizes.bottomSheetButtonPaddingV 
+                  : bottomPadding + AppSizes.bottomSheetButtonPaddingV,
+            ),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      widget.onCancel?.call();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: BorderSide(color: Theme.of(context).colorScheme.outline),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text('취소', style: TextStyle(fontSize: 14)),
+                  ),
+                ),
+                const SizedBox(width: AppSizes.gapM),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _canSubmit ? () {
+                      final message = _messageController.text.trim();
+                      Navigator.pop(context);
+                      widget.onConfirm(message.isEmpty ? null : message, selectedPet: _selectedPet);
+                    } : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: config.color,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: Text(
+                      config.confirmText,
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

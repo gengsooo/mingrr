@@ -5,12 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/form_strings.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/form_components.dart';
 import '../../../../core/widgets/image_picker_sheet.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
 import '../../../../core/models/location_model.dart';
@@ -100,8 +102,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: const Text('프로필 수정'),
+      appBar: MingrrFormAppBar(
+        title: '프로필 수정',
+        onClose: () => Navigator.pop(context),
       ),
       body: Form(
         key: _formKey,
@@ -113,19 +116,19 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             const SizedBox(height: AppSizes.gapXL),
             
             // 기본 정보 섹션
-            _buildSectionTitle('기본 정보'),
+            const MingrrSectionLabel('기본 정보'),
             const SizedBox(height: AppSizes.gapM),
             _buildBasicInfoSection(),
             const SizedBox(height: AppSizes.gapXL),
             
             // 자기소개 섹션
-            _buildSectionTitle('자기소개'),
+            const MingrrSectionLabel('자기소개'),
             const SizedBox(height: AppSizes.gapM),
             _buildBioSection(),
             const SizedBox(height: AppSizes.gapXL),
             
             // 위치 정보 섹션
-            _buildSectionTitle('위치 정보'),
+            const MingrrSectionLabel('위치 정보'),
             const SizedBox(height: AppSizes.gapM),
             _buildLocationSection(),
             const SizedBox(height: AppSizes.gapXL),
@@ -140,16 +143,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w700,
-        color: Theme.of(context).colorScheme.onSurface,
-      ),
-    );
-  }
 
   Widget _buildProfilePhoto() {
     return Center(
@@ -301,16 +294,13 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       child: Column(
         children: [
           // 닉네임
-          TextFormField(
+          MingrrTextField(
             controller: _nicknameController,
-            decoration: const InputDecoration(
-              labelText: '닉네임',
-              hintText: '닉네임을 입력해주세요',
-              border: OutlineInputBorder(),
-            ),
+            labelText: FormStrings.labelNickname,
+            hintText: FormStrings.hintNickname,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return '닉네임을 입력해주세요';
+                return FormStrings.hintNickname;
               }
               if (value.length < 2) {
                 return '닉네임은 2자 이상이어야 합니다';
@@ -368,18 +358,14 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '다른 보호자들에게 보여질 자기소개를 작성해주세요.',
+            FormStrings.hintUserBio,
             style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
           ),
           const SizedBox(height: AppSizes.gapM),
-          TextFormField(
+          MingrrTextField(
             controller: _bioController,
             maxLines: 4,
-            maxLength: 200,
-            decoration: const InputDecoration(
-              hintText: '예: 반려동물과 함께하는 행복한 일상을 보내고 있습니다.\n산책 친구를 찾고 있어요!',
-              border: OutlineInputBorder(),
-            ),
+            hintText: '예: 반려동물과 함께하는 행복한 일상을 보내고 있습니다.\n산책 친구를 찾고 있어요!',
           ),
         ],
       ),

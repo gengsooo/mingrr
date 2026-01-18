@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 
 /// ============================================================
 /// 커뮤니티(Community) 게시판 모델
@@ -17,7 +18,6 @@ enum CommunityCategory {
   question,   // 질문
   info,       // 정보공유
   review,     // 후기
-  lost,       // 실종/목격
   event,      // 이벤트
   other,      // 기타
 }
@@ -33,8 +33,6 @@ extension CommunityCategoryLabel on CommunityCategory {
         return '정보공유';
       case CommunityCategory.review:
         return '후기';
-      case CommunityCategory.lost:
-        return '실종/목격';
       case CommunityCategory.event:
         return '이벤트';
       case CommunityCategory.other:
@@ -45,19 +43,34 @@ extension CommunityCategoryLabel on CommunityCategory {
   String get emoji {
     switch (this) {
       case CommunityCategory.daily:
-        return '🐕';
+        return '☀️';
       case CommunityCategory.question:
         return '❓';
       case CommunityCategory.info:
         return '📢';
       case CommunityCategory.review:
         return '⭐';
-      case CommunityCategory.lost:
-        return '🔍';
       case CommunityCategory.event:
         return '🎉';
       case CommunityCategory.other:
         return '💬';
+    }
+  }
+  
+  IconData get icon {
+    switch (this) {
+      case CommunityCategory.daily:
+        return Icons.wb_sunny_outlined;
+      case CommunityCategory.question:
+        return Icons.help_outline;
+      case CommunityCategory.info:
+        return Icons.campaign_outlined;
+      case CommunityCategory.review:
+        return Icons.star_outline;
+      case CommunityCategory.event:
+        return Icons.celebration_outlined;
+      case CommunityCategory.other:
+        return Icons.chat_bubble_outline;
     }
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'common_widgets.dart';
 
 /// ============================================================
 /// 성격&특성 배지 위젯
@@ -144,6 +145,7 @@ class TraitSection extends StatelessWidget {
   final List<String> traits;
   final TraitBadgeSize size;
   final int? maxCount;
+  final bool showEmptyState;
 
   const TraitSection({
     super.key,
@@ -151,11 +153,34 @@ class TraitSection extends StatelessWidget {
     required this.traits,
     this.size = TraitBadgeSize.medium,
     this.maxCount,
+    this.showEmptyState = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (traits.isEmpty) return const SizedBox.shrink();
+    // 빈 상태 처리
+    if (traits.isEmpty) {
+      if (!showEmptyState) return const SizedBox.shrink();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const MingrrEmptySection(
+            icon: Icons.pets_outlined,
+            message: '등록된 특성이 없어요',
+            height: 60,
+          ),
+        ],
+      );
+    }
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

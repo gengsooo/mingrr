@@ -15,6 +15,31 @@ import '../constants/app_sizes.dart';
 /// ============================================================
 
 /// ------------------------------------------------------------
+/// 필터 타이틀 위젯 (공통)
+/// 
+/// 모든 필터 컴포넌트에서 동일한 타이틀 스타일 사용
+/// - 배경 없음
+/// - fontSize: 12, fontWeight: w700
+/// - color: onSurface
+/// ------------------------------------------------------------
+class _FilterTitle extends StatelessWidget {
+  final String title;
+  const _FilterTitle(this.title);
+  
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        color: Theme.of(context).colorScheme.onSurface,
+      ),
+    );
+  }
+}
+
+/// ------------------------------------------------------------
 /// 기본 필터 칩
 /// 
 /// [label]: 칩 텍스트
@@ -28,6 +53,7 @@ class MingrrFilterChip extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final IconData? icon;
+  final double iconSize;
   final Color? accentColor;
 
   const MingrrFilterChip({
@@ -36,6 +62,7 @@ class MingrrFilterChip extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     this.icon,
+    this.iconSize = 12,
     this.accentColor,
   });
 
@@ -61,7 +88,7 @@ class MingrrFilterChip extends StatelessWidget {
             if (icon != null) ...[
               Icon(
                 icon,
-                size: 12,
+                size: iconSize,
                 color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
               ),
               const SizedBox(width: 4),
@@ -219,23 +246,9 @@ class MingrrFilterRow extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            // 타이틀
+            // 타이틀 (공통 위젯 사용)
             if (showTitle && title != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: colorScheme.onSurfaceVariant.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  title!,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
+              _FilterTitle(title!),
               const SizedBox(width: 12),
             ],
             // 칩 목록
@@ -333,23 +346,9 @@ class MingrrCategoryChips extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            // 타이틀
+            // 타이틀 (공통 위젯 사용)
             if (title != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: colorScheme.onSurfaceVariant.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  title!,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
+              _FilterTitle(title!),
               const SizedBox(width: 12),
             ],
             // 카테고리 칩 목록
@@ -431,23 +430,9 @@ class MingrrCategoryChipsWithIcon extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            // 타이틀
+            // 타이틀 (공통 위젯 사용)
             if (title != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: colorScheme.onSurfaceVariant.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  title!,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
+              _FilterTitle(title!),
               const SizedBox(width: 12),
             ],
             // 카테고리 칩 목록
@@ -531,23 +516,9 @@ class MingrrSortChips extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            // 타이틀
+            // 타이틀 (공통 위젯 사용)
             if (title != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: colorScheme.onSurfaceVariant.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  title!,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ),
+              _FilterTitle(title!),
               const SizedBox(width: 12),
             ],
             // 정렬 칩 목록

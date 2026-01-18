@@ -112,54 +112,18 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
 
   /// 이미지 헤더 (상품 상세와 동일한 스타일)
   Widget _buildImageHeader(BuildContext context, JobModel job) {
-    return SliverAppBar(
+    return MingrrImageHeader(
+      imageUrls: job.imageUrls,
       expandedHeight: 200,
-      pinned: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      leading: IconButton(
-        icon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.3),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
-        ),
-        onPressed: () => Navigator.pop(context),
-      ),
-      actions: [
-        IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.share, color: Colors.white, size: 20),
-          ),
-          onPressed: () => _shareJob(job),
-        ),
-        IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.more_vert, color: Colors.white, size: 20),
-          ),
-          onPressed: () => _showMoreOptions(context, job),
-        ),
-      ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          color: context.features.marketContainer,
-          child: Center(
-            child: Icon(
-              _getJobIcon(job.type),
-              size: 80,
-              color: context.features.market,
-            ),
+      onShare: () => _shareJob(job),
+      onMore: () => _showMoreOptions(context, job),
+      placeholder: Container(
+        color: context.features.marketContainer,
+        child: Center(
+          child: Icon(
+            _getJobIcon(job.type),
+            size: 80,
+            color: context.features.market,
           ),
         ),
       ),
@@ -328,34 +292,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        SizedBox(
+        MingrrImageGallery(
+          imageUrls: job.imageUrls,
           height: 120,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: job.imageUrls.length,
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: EdgeInsets.only(
-                  right: index < job.imageUrls.length - 1 ? 8 : 0,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                  child: Image.network(
-                    job.imageUrls[index],
-                    width: 120,
-                    height: 120,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 120,
-                      height: 120,
-                      color: Theme.of(context).colorScheme.outline,
-                      child: Icon(Icons.image, color: Theme.of(context).colorScheme.outlineVariant),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
+          itemWidth: 120,
+          enableViewer: true,
         ),
       ],
     );
@@ -454,23 +395,18 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
   }
 
   void _showMoreOptions(BuildContext context, JobModel job) {
-    showMingrrOptionsSheet(
+    showDetailOptionsSheet(
       context: context,
-      options: [
-        MingrrOptionItem(
-          icon: Icons.report_outlined,
-          label: '신고하기',
-          isDestructive: true,
-          onTap: () {
-            showReportSheet(
-              context,
-              targetId: job.id,
-              targetName: '이 알바 글',
-              targetType: ReportTargetType.product,
-            );
-          },
-        ),
-      ],
+      isOwner: false, // TODO: 본인 글 여부 확인 로직 추가
+      onShare: () => _shareJob(job),
+      onReport: () {
+        showReportSheet(
+          context,
+          targetId: job.id,
+          targetName: '이 알바 글',
+          targetType: ReportTargetType.product,
+        );
+      },
     );
   }
 

@@ -10,6 +10,9 @@ import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/widgets/info_badge.dart';
+import '../../../../core/widgets/mingrr_image_header.dart';
+import '../../../../core/widgets/guardian_profile_modal.dart';
 import '../../../../models/group_model.dart';
 import '../../../../models/chat_model.dart';
 import '../../../chat/presentation/screens/chat_detail_screen.dart';
@@ -110,62 +113,21 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   Widget _buildAppBar(BuildContext context, GroupModel group, bool isLiked) {
     final accentColor = context.features.social;
 
-    return SliverAppBar(
+    return MingrrImageHeader(
+      imageUrls: group.imageUrl != null ? [group.imageUrl!] : [],
       expandedHeight: 200,
-      pinned: true,
-      backgroundColor: accentColor,
-      leading: IconButton(
-        icon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.3),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
-        ),
-        onPressed: () => Navigator.pop(context),
+      showIndicator: false,
+      bottomRightOverlay: LikeOverlayBadge(
+        count: group.likeCount,
+        isLiked: isLiked,
+        onTap: () async {
+          await ref.read(groupNotifierProvider.notifier).toggleLike(group.id);
+          ref.invalidate(groupDetailProvider(widget.groupId));
+          ref.invalidate(isGroupLikedProvider(widget.groupId));
+        },
       ),
-      actions: [
-        IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              isLiked ? Icons.favorite : Icons.favorite_border,
-              color: isLiked ? Colors.red : Colors.white,
-              size: 20,
-            ),
-          ),
-          onPressed: () async {
-            await ref.read(groupNotifierProvider.notifier).toggleLike(group.id);
-            ref.invalidate(groupDetailProvider(widget.groupId));
-            ref.invalidate(isGroupLikedProvider(widget.groupId));
-          },
-        ),
-        IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.more_vert, color: Colors.white, size: 20),
-          ),
-          onPressed: () => _showMoreOptions(context, group),
-        ),
-      ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: group.imageUrl != null
-            ? Image.network(
-                group.imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildDefaultCover(accentColor),
-              )
-            : _buildDefaultCover(accentColor),
-      ),
+      onMore: () => _showMoreOptions(context, group),
+      placeholder: _buildDefaultCover(accentColor),
     );
   }
 
@@ -273,7 +235,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             children: [
               _buildInfoChip(Icons.people_outline, '${group.memberCount}명', colorScheme),
               const SizedBox(width: 16),
-              _buildInfoChip(Icons.favorite_outline, '${group.likeCount}', colorScheme),
+              LikeCountText(count: group.likeCount, size: InfoBadgeSize.small),
               const SizedBox(width: 16),
               if (group.maxMembers > 0)
                 _buildInfoChip(Icons.group_add_outlined, '정원 ${group.maxMembers}명', colorScheme),
@@ -313,39 +275,26 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   }
 
   Widget _buildInfoTab(BuildContext context, GroupModel group) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSizes.paddingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 모임 소개
-          const Text('모임 소개', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          _buildSectionTitle('모임 소개'),
           const SizedBox(height: 12),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(AppSizes.radiusS),
-            ),
+          _buildSectionBox(
             child: Text(
               group.description,
-              style: TextStyle(fontSize: 14, height: 1.6, color: colorScheme.onSurface),
+              style: TextStyle(fontSize: 14, height: 1.6, color: Theme.of(context).colorScheme.onSurface),
             ),
           ),
           const SizedBox(height: 24),
 
           // 모임 설정
-          const Text('모임 설정', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          _buildSectionTitle('모임 설정'),
           const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: colorScheme.surface,
-              borderRadius: BorderRadius.circular(AppSizes.radiusS),
-            ),
+          _buildSectionBox(
             child: Column(
               children: [
                 _buildSettingRow('공개 모임', group.isPublic ? '예' : '아니오', Icons.visibility_outlined),
@@ -359,6 +308,27 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           const SizedBox(height: 100),
         ],
       ),
+    );
+  }
+
+  /// 섹션 타이틀
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+    );
+  }
+
+  /// 섹션 박스 (배경색 있는 컨테이너)
+  Widget _buildSectionBox({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: context.sectionBackground,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: child,
     );
   }
 
@@ -388,12 +358,20 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
 
         final members = snapshot.data ?? [];
         if (members.isEmpty) {
-          return Center(
-            child: MingrrEmptyState(
-              icon: Icons.people_outline,
-              title: '멤버가 없어요',
-              subtitle: '아직 가입한 멤버가 없습니다',
-            ),
+          // NestedScrollView 내부에서는 Center 대신 CustomScrollView 사용
+          return CustomScrollView(
+            slivers: [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: MingrrEmptyState(
+                    icon: Icons.people_outline,
+                    title: '멤버가 없어요',
+                    subtitle: '아직 가입한 멤버가 없습니다',
+                  ),
+                ),
+              ),
+            ],
           );
         }
 
@@ -402,22 +380,24 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           itemCount: members.length,
           itemBuilder: (context, index) {
             final member = members[index];
-            return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(AppSizes.radiusS),
-              ),
-              child: Row(
-                children: [
-                  MingrrAvatar(
-                    size: 48,
-                    imageUrl: member.profileUrl,
-                    placeholderIcon: Icons.person,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
+            return GestureDetector(
+              onTap: () => _showMemberProfile(context, member),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                ),
+                child: Row(
+                  children: [
+                    MingrrAvatar(
+                      size: 48,
+                      imageUrl: member.profileUrl,
+                      placeholderIcon: Icons.person,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -467,13 +447,80 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                         ),
                       ],
                     ),
-                ],
+                  ],
+                ),
               ),
             );
           },
         );
       },
     );
+  }
+
+  /// 멤버 프로필 바텀시트 표시
+  Future<void> _showMemberProfile(BuildContext context, _MemberInfo member) async {
+    try {
+      final userDoc = await FirebaseService().usersCollection.doc(member.id).get();
+      final userData = userDoc.data();
+      
+      final kkosunnaeScore = (userData?['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0;
+      final isIdentityVerified = userData?['isIdentityVerified'] as bool? ?? false;
+      final isPetVerified = userData?['isPetVerified'] as bool? ?? false;
+      final isLocationVerified = userData?['isLocationVerified'] as bool? ?? false;
+      final genderStr = userData?['gender'] as String?;
+      final age = userData?['age'] as int?;
+      
+      GuardianGender gender = GuardianGender.unknown;
+      if (genderStr == 'male') gender = GuardianGender.male;
+      if (genderStr == 'female') gender = GuardianGender.female;
+      
+      // 반려동물 정보 조회
+      List<GuardianPetInfo> pets = [];
+      final petsSnapshot = await FirebaseService().petsCollection
+          .where('ownerId', isEqualTo: member.id)
+          .get();
+      
+      for (final petDoc in petsSnapshot.docs) {
+        final petData = petDoc.data();
+        pets.add(GuardianPetInfo(
+          id: petDoc.id,
+          name: petData['name'] ?? '반려동물',
+          breed: petData['breed'],
+          ageString: petData['age'] != null ? '${petData['age']}살' : null,
+          introduction: petData['introduction'],
+          traits: List<String>.from(petData['traits'] ?? []),
+          photoUrls: List<String>.from(petData['photoUrls'] ?? []),
+          profileImageUrl: petData['profileImageUrl'],
+          likeCount: petData['likeCount'] ?? 0,
+        ));
+      }
+      
+      if (!mounted) return;
+      
+      showGuardianProfileModal(
+        context,
+        guardianId: member.id,
+        guardianName: member.nickname,
+        kkosunnaeScore: kkosunnaeScore,
+        profileImageUrl: member.profileUrl,
+        gender: gender,
+        age: age,
+        isIdentityVerified: isIdentityVerified,
+        isPetVerified: isPetVerified,
+        isLocationVerified: isLocationVerified,
+        pets: pets,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      showGuardianProfileModal(
+        context,
+        guardianId: member.id,
+        guardianName: member.nickname,
+        kkosunnaeScore: 50.0,
+        profileImageUrl: member.profileUrl,
+        pets: [],
+      );
+    }
   }
 
   Widget _buildRoleBadge(String label, Color color) {
@@ -571,12 +618,20 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     return schedulesAsync.when(
       data: (schedules) {
         if (schedules.isEmpty) {
-          return Center(
-            child: MingrrEmptyState(
-              icon: Icons.event_outlined,
-              title: '일정이 없어요',
-              subtitle: isJoined ? '새로운 일정을 만들어보세요' : '예정된 일정이 없습니다',
-            ),
+          // NestedScrollView 내부에서는 Center 대신 CustomScrollView 사용
+          return CustomScrollView(
+            slivers: [
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: MingrrEmptyState(
+                    icon: Icons.event_outlined,
+                    title: '일정이 없어요',
+                    subtitle: isJoined ? '새로운 일정을 만들어보세요' : '예정된 일정이 없습니다',
+                  ),
+                ),
+              ),
+            ],
           );
         }
 
@@ -900,29 +955,20 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     final myUserId = FirebaseService().currentUserId;
     final isCreator = myUserId != null && group.isCreator(myUserId);
 
-    showMingrrOptionsSheet(
+    showDetailOptionsSheet(
       context: context,
-      options: [
-        MingrrOptionItem(
-          icon: Icons.share_outlined,
-          label: '공유하기',
-          onTap: () {},
-        ),
-        if (!isCreator)
-          MingrrOptionItem(
-            icon: Icons.report_outlined,
-            label: '신고하기',
-            isDestructive: true,
-            onTap: () {
-              showReportSheet(
-                context,
-                targetId: group.id,
-                targetName: group.name,
-                targetType: ReportTargetType.group,
-              );
-            },
-          ),
-      ],
+      isOwner: isCreator,
+      onShare: () {
+        // TODO: 공유 기능 구현
+      },
+      onReport: () {
+        showReportSheet(
+          context,
+          targetId: group.id,
+          targetName: group.name,
+          targetType: ReportTargetType.group,
+        );
+      },
     );
   }
 }

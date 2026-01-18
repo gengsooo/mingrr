@@ -445,32 +445,28 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
         children: [
           const BottomSheetHandle(),
           // 헤더
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3))),
-            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const SizedBox(width: 60),
-                const Expanded(
-                  child: Text(
-                    '지역 선택',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
                 TextButton(
                   onPressed: () {
                     widget.onLocationSelected?.call('');
                     widget.onLocationResultSelected?.call(const LocationResult(address: ''));
                     Navigator.pop(context);
                   },
-                  child: Text('초기화', style: TextStyle(color: accentColor)),
+                  child: Text('초기화', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 ),
+                const Text(
+                  '지역 선택',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(width: 60),
               ],
             ),
           ),
+          const Divider(height: 1),
           
           // 3단계 선택 영역
           Expanded(
@@ -909,10 +905,10 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
                                           ),
                                         ),
                                       ),
-                                      if (hasDistricts)
-                                        Icon(Icons.chevron_right, size: 18, color: colorScheme.onSurfaceVariant)
-                                      else if (_tempSelected.contains('$_selectedProvince $city'))
-                                        Icon(Icons.check, size: 18, color: accentColor),
+                                      if (_tempSelected.contains('$_selectedProvince $city'))
+                                        Icon(Icons.check, size: 18, color: accentColor)
+                                      else if (!hasDistricts)
+                                        Icon(Icons.add, size: 18, color: accentColor),
                                     ],
                                   ),
                                 ),
@@ -959,7 +955,9 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
                                       ),
                                     ),
                                     if (isSelected)
-                                      Icon(Icons.check, size: 18, color: accentColor),
+                                      Icon(Icons.check, size: 18, color: accentColor)
+                                    else
+                                      Icon(Icons.add, size: 18, color: accentColor),
                                   ],
                                 ),
                               ),

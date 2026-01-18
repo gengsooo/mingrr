@@ -8,6 +8,7 @@ import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/location_selector.dart';
+import '../../../../core/widgets/info_badge.dart';
 import '../providers/group_provider.dart';
 import 'group_detail_screen.dart';
 import 'group_write_screen.dart';
@@ -60,12 +61,11 @@ class GroupListScreen extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: 'group_fab',
+      floatingActionButton: MingrrFAB.add(
         onPressed: () => _showCreateGroupSheet(context),
         backgroundColor: accentColor,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white),
+        heroTag: 'group_fab',
+        tooltip: '모임 만들기',
       ),
     );
   }
@@ -398,7 +398,7 @@ class _MyGroupCard extends StatelessWidget {
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.transparent,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(color: accentColor.withOpacity(0.3)),
         ),
@@ -556,12 +556,7 @@ class _GroupCard extends StatelessWidget {
                         style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                       ),
                       const SizedBox(width: 12),
-                      Icon(Icons.favorite_outline, size: 14, color: colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${group.likeCount}',
-                        style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
-                      ),
+                      LikeCountText(count: group.likeCount, size: InfoBadgeSize.small),
                     ],
                   ),
                 ],

@@ -663,46 +663,11 @@ class ProfileScreen extends ConsumerWidget {
 
           return Column(
             children: [
-              ListTile(
-                leading: Icon(
-                  menu['icon'] as IconData,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-                title: Text(
-                  menu['label'] as String,
-                  style: const TextStyle(
-                    fontSize: 15,
-                  ),
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (menu['badge'] != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: context.features.dating,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          menu['badge'] as String,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      Icons.chevron_right,
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
-                  ],
-                ),
+              MingrrSettingsTile.badge(
+                icon: menu['icon'] as IconData,
+                title: menu['label'] as String,
+                badgeText: menu['badge'] as String?,
+                badgeColor: context.features.dating,
                 onTap: () {
                   final screen = menu['screen'] as Widget?;
                   if (screen != null) {

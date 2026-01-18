@@ -16,7 +16,7 @@ import '../../../../models/pet_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 
 /// ============================================================
-/// 교배 글쓰기 화면
+/// 교배 등록 화면
 /// Firebase Firestore와 연동하여 실제 데이터 저장
 /// ============================================================
 
@@ -241,40 +241,21 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
       (value: 'giant', label: '초대형 (45kg~)'),
     ];
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: sizes.map((size) {
-        final isSelected = _preferredSizes.contains(size.value);
-        return GestureDetector(
-          onTap: () {
-            setState(() {
-              if (isSelected) {
-                _preferredSizes.remove(size.value);
-              } else {
-                _preferredSizes.add(size.value);
-              }
-            });
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected ? context.features.dating : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected ? context.features.dating : Theme.of(context).colorScheme.outline,
-              ),
-            ),
-            child: Text(
-              size.label,
-              style: TextStyle(
-                fontSize: 12,
-                color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-              ),
-            ),
-          ),
-        );
-      }).toList(),
+    return MingrrChipSelector<({String value, String label})>(
+      items: sizes,
+      selectedItems: sizes.where((s) => _preferredSizes.contains(s.value)).toSet(),
+      onSelected: (size) {
+        setState(() {
+          if (_preferredSizes.contains(size.value)) {
+            _preferredSizes.remove(size.value);
+          } else {
+            _preferredSizes.add(size.value);
+          }
+        });
+      },
+      labelBuilder: (size) => size.label,
+      accentColor: context.features.dating,
+      multiSelect: true,
     );
   }
 

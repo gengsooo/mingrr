@@ -126,7 +126,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
               MingrrTextField(
                 controller: _nameController,
                 labelText: '소모임 이름',
-                hintText: '소모임 이름을 입력해주세요',
+                hintText: FormStrings.hintGroupName,
                 validator: (value) {
                   if (value == null || value.isEmpty) return FormStrings.errorRequired;
                   return null;
@@ -138,7 +138,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
               MingrrTextField(
                 controller: _descriptionController,
                 labelText: '소모임 소개',
-                hintText: '소모임에 대해 소개해주세요',
+                hintText: FormStrings.hintGroupDescription,
                 maxLines: 5,
                 validator: (value) {
                   if (value == null || value.isEmpty) return FormStrings.errorRequired;
@@ -228,40 +228,16 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
   }
 
   Widget _buildTypeSelector(Color accentColor) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: GroupCategory.values.map((category) {
-        final type = _categoryToGroupType(category);
-        final isSelected = _selectedType == type;
-        return GestureDetector(
-          onTap: () => setState(() => _selectedType = type),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected ? accentColor : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected ? accentColor : Theme.of(context).colorScheme.outline,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(category.icon, size: 14, color: isSelected ? Colors.white : accentColor),
-                const SizedBox(width: 4),
-                Text(
-                  category.label.replaceAll(' 모임', ''),
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
+    return MingrrChipSelector<GroupCategory>(
+      items: GroupCategory.values,
+      selectedItem: GroupCategory.values.firstWhere(
+        (c) => _categoryToGroupType(c) == _selectedType,
+        orElse: () => GroupCategory.other,
+      ),
+      onSelected: (category) => setState(() => _selectedType = _categoryToGroupType(category)),
+      labelBuilder: (category) => category.label.replaceAll(' 모임', ''),
+      iconBuilder: (category) => category.icon,
+      accentColor: accentColor,
     );
   }
 

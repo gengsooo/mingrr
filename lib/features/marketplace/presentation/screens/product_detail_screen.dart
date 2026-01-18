@@ -187,53 +187,17 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
   /// 이미지 헤더
   Widget _buildImageHeader(BuildContext context) {
-    return SliverAppBar(
+    return MingrrImageHeader(
+      imageUrls: _product?.imageUrls ?? [],
       expandedHeight: 300,
-      pinned: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      leading: IconButton(
-        icon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.3),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
-        ),
-        onPressed: () => Navigator.pop(context),
-      ),
-      actions: [
-        IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.share, color: Colors.white, size: 20),
-          ),
-          onPressed: () {
-            // TODO: 상품 공유 기능 구현 예정
-          },
-        ),
-        IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.more_vert, color: Colors.white, size: 20),
-          ),
-          onPressed: () => _showMoreOptions(context),
-        ),
-      ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          color: context.features.marketContainer,
-          child: Center(
-            child: Icon(Icons.image, size: 80, color: context.features.market),
-          ),
+      onShare: () {
+        // TODO: 상품 공유 기능 구현 예정
+      },
+      onMore: () => _showMoreOptions(context),
+      placeholder: Container(
+        color: context.features.marketContainer,
+        child: Center(
+          child: Icon(Icons.image, size: 80, color: context.features.market),
         ),
       ),
     );
@@ -529,44 +493,22 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
   /// 더보기 옵션 메뉴
   void _showMoreOptions(BuildContext context) {
-    final options = <MingrrOptionItem>[];
-    
-    if (_isOwner) {
-      options.addAll([
-        MingrrOptionItem(
-          icon: Icons.edit_outlined,
-          label: '수정하기',
-          onTap: _editProduct,
-        ),
-        MingrrOptionItem(
-          icon: Icons.delete_outline,
-          label: '삭제하기',
-          isDestructive: true,
-          onTap: _confirmDelete,
-        ),
-      ]);
-    } else {
-      options.addAll([
-        MingrrOptionItem(
-          icon: Icons.block_outlined,
-          label: '이 판매자 차단하기',
-          onTap: () {},
-        ),
-        MingrrOptionItem(
-          icon: Icons.report_outlined,
-          label: '신고하기',
-          isDestructive: true,
-          onTap: () => showReportSheet(
-            context,
-            targetId: widget.productId,
-            targetName: '이 상품',
-            targetType: ReportTargetType.product,
-          ),
-        ),
-      ]);
-    }
-    
-    showMingrrOptionsSheet(context: context, options: options);
+    showDetailOptionsSheet(
+      context: context,
+      isOwner: _isOwner,
+      onEdit: _editProduct,
+      onDelete: _confirmDelete,
+      onBlock: () {
+        // TODO: 판매자 차단 기능 구현
+      },
+      blockLabel: '이 판매자 차단하기',
+      onReport: () => showReportSheet(
+        context,
+        targetId: widget.productId,
+        targetName: '이 상품',
+        targetType: ReportTargetType.product,
+      ),
+    );
   }
 
   /// 상품 수정

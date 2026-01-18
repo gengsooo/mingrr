@@ -273,6 +273,99 @@ Future<void> showMingrrOptionsSheet({
 }
 
 /// ============================================================
+/// showDetailOptionsSheet - 상세 화면 더보기 옵션 헬퍼
+/// ============================================================
+/// 
+/// 📌 용도: 상세 화면의 더보기(⋮) 버튼 클릭 시 표시되는 옵션
+/// 
+/// ✅ 특징:
+/// - 본인 글: 수정/삭제 옵션 표시
+/// - 타인 글: 차단/신고 옵션 표시
+/// - 추가 옵션 지원 (공유 등)
+/// 
+/// ✅ 사용 예시:
+/// ```dart
+/// showDetailOptionsSheet(
+///   context: context,
+///   isOwner: _isOwner,
+///   onEdit: () => _editProduct(),
+///   onDelete: () => _confirmDelete(),
+///   onBlock: () => _blockUser(),
+///   onReport: () => showReportSheet(...),
+/// );
+/// ```
+/// 
+/// 📁 사용처: pet_detail, product_detail, job_detail, 
+///           community_detail, group_detail
+/// ============================================================
+Future<void> showDetailOptionsSheet({
+  required BuildContext context,
+  required bool isOwner,
+  VoidCallback? onEdit,
+  VoidCallback? onDelete,
+  VoidCallback? onBlock,
+  VoidCallback? onReport,
+  VoidCallback? onShare,
+  String? blockLabel,
+  String? reportLabel,
+  List<MingrrOptionItem>? additionalOptions,
+}) {
+  final options = <MingrrOptionItem>[];
+  
+  // 공유 옵션 (항상 표시)
+  if (onShare != null) {
+    options.add(MingrrOptionItem(
+      icon: Icons.share_outlined,
+      label: '공유하기',
+      onTap: onShare,
+    ));
+  }
+  
+  if (isOwner) {
+    // 본인 글: 수정/삭제
+    if (onEdit != null) {
+      options.add(MingrrOptionItem(
+        icon: Icons.edit_outlined,
+        label: '수정하기',
+        onTap: onEdit,
+      ));
+    }
+    if (onDelete != null) {
+      options.add(MingrrOptionItem(
+        icon: Icons.delete_outline,
+        label: '삭제하기',
+        isDestructive: true,
+        onTap: onDelete,
+      ));
+    }
+  } else {
+    // 타인 글: 차단/신고
+    if (onBlock != null) {
+      options.add(MingrrOptionItem(
+        icon: Icons.block_outlined,
+        label: blockLabel ?? '차단하기',
+        onTap: onBlock,
+      ));
+    }
+    if (onReport != null) {
+      options.add(MingrrOptionItem(
+        icon: Icons.report_outlined,
+        label: reportLabel ?? '신고하기',
+        isDestructive: true,
+        onTap: onReport,
+      ));
+    }
+  }
+  
+  // 추가 옵션
+  if (additionalOptions != null) {
+    options.addAll(additionalOptions);
+  }
+  
+  return showMingrrOptionsSheet(context: context, options: options);
+}
+
+/// ============================================================
 /// MingrrBottomButtonBar - 상세 화면 하단 고정 버튼 영역
 /// ============================================================
 /// 
@@ -418,6 +511,236 @@ class MingrrSubmitButtonBar extends StatelessWidget {
                   ),
                 ),
         ),
+      ),
+    );
+  }
+}
+
+/// ============================================================
+/// MingrrInputBottomSheet - 텍스트 입력이 있는 바텀시트
+/// ============================================================
+/// 
+/// 📌 용도: TextField가 포함된 바텀시트 (키보드 가림 문제 해결)
+/// 
+/// ✅ 특징:
+/// - 키보드가 올라와도 저장 버튼이 키보드 위에 표시
+/// - 스크롤 가능한 콘텐츠 영역
+/// - 자동 다크모드 대응
+/// 
+/// ✅ 사용 예시:
+/// ```dart
+/// MingrrInputBottomSheet.show(
+///   context: context,
+///   title: '체중 기록',
+///   buttonLabel: '저장',
+///   buttonColor: context.features.health,
+///   onSave: () => _saveRecord(),
+///   child: Column(children: [...]),
+/// );
+/// ```
+/// 
+/// 📁 사용처: health_record_add_screens, report_sheet, request_sheet
+/// ============================================================
+class MingrrInputBottomSheet extends StatelessWidget {
+  final String title;
+  final Widget child;
+  final String? buttonLabel;
+  final VoidCallback? onSave;
+  final Color? buttonColor;
+  final bool isLoading;
+  final Widget? customButton; // 커스텀 버튼 (취소/확인 등)
+  final Widget? headerIcon; // 헤더 아이콘 (신고, 신청 등)
+  final String? subtitle; // 부제목/설명
+
+  const MingrrInputBottomSheet({
+    super.key,
+    required this.title,
+    required this.child,
+    this.onSave,
+    this.buttonLabel = '저장',
+    this.buttonColor,
+    this.isLoading = false,
+    this.customButton,
+    this.headerIcon,
+    this.subtitle,
+  });
+
+  /// 바텀시트 표시 헬퍼 함수 (기본 버튼)
+  static void show({
+    required BuildContext context,
+    required String title,
+    required Widget child,
+    required VoidCallback onSave,
+    String buttonLabel = '저장',
+    Color? buttonColor,
+    bool isLoading = false,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => MingrrInputBottomSheet(
+        title: title,
+        buttonLabel: buttonLabel,
+        buttonColor: buttonColor,
+        onSave: onSave,
+        isLoading: isLoading,
+        child: child,
+      ),
+    );
+  }
+
+  /// 바텀시트 표시 헬퍼 함수 (커스텀 버튼)
+  static void showWithCustomButton({
+    required BuildContext context,
+    required String title,
+    required Widget child,
+    required Widget customButton,
+    Widget? headerIcon,
+    String? subtitle,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => MingrrInputBottomSheet(
+        title: title,
+        customButton: customButton,
+        headerIcon: headerIcon,
+        subtitle: subtitle,
+        child: child,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    final effectiveButtonColor = buttonColor ?? Theme.of(context).colorScheme.primary;
+    
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const BottomSheetHandle(),
+          // 헤더 (아이콘 + 제목 + 부제목)
+          _buildHeader(context),
+          // 컨텐츠 (스크롤 가능)
+          Flexible(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.fromLTRB(
+                AppSizes.bottomSheetButtonPaddingH,
+                12,
+                AppSizes.bottomSheetButtonPaddingH,
+                AppSizes.bottomSheetButtonPaddingH,
+              ),
+              child: child,
+            ),
+          ),
+          // 하단 버튼 영역 (키보드 위에 고정)
+          _buildButtonArea(context, keyboardHeight, bottomPadding, effectiveButtonColor),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSizes.bottomSheetButtonPaddingH,
+        8,
+        AppSizes.bottomSheetButtonPaddingH,
+        subtitle != null ? 4 : 8,
+      ),
+      child: Column(
+        children: [
+          // 아이콘 (선택)
+          if (headerIcon != null) ...[
+            headerIcon!,
+            const SizedBox(height: AppSizes.gapM),
+          ],
+          // 제목
+          Text(
+            title,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          // 부제목 (선택)
+          if (subtitle != null) ...[
+            const SizedBox(height: AppSizes.gapXS),
+            Text(
+              subtitle!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildButtonArea(BuildContext context, double keyboardHeight, double bottomPadding, Color effectiveButtonColor) {
+    return Container(
+      padding: EdgeInsets.only(
+        left: AppSizes.bottomSheetButtonPaddingH,
+        right: AppSizes.bottomSheetButtonPaddingH,
+        top: AppSizes.bottomSheetButtonPaddingV,
+        bottom: keyboardHeight > 0 
+            ? keyboardHeight + AppSizes.bottomSheetButtonPaddingV 
+            : bottomPadding + AppSizes.bottomSheetButtonPaddingV,
+      ),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: customButton ?? _buildDefaultButton(context, effectiveButtonColor),
+    );
+  }
+
+  Widget _buildDefaultButton(BuildContext context, Color effectiveButtonColor) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: isLoading ? null : onSave,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: effectiveButtonColor,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
+          ),
+        ),
+        child: isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Text(
+                buttonLabel ?? '저장',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
       ),
     );
   }

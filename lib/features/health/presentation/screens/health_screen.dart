@@ -65,7 +65,7 @@ class HealthScreen extends ConsumerWidget {
       ),
       floatingActionButton: petsAsync.maybeWhen(
         data: (pets) => pets.isNotEmpty
-            ? FloatingActionButton(
+            ? MingrrFAB.add(
                 onPressed: () {
                   final selectedPet = pets.firstWhere(
                     (p) => p.id == selectedPetId,
@@ -74,7 +74,7 @@ class HealthScreen extends ConsumerWidget {
                   _showAddRecordSheet(context, ref, categories[selectedTab], selectedPet);
                 },
                 backgroundColor: context.features.health,
-                child: const Icon(Icons.add, color: Colors.white),
+                tooltip: '건강 기록 추가',
               )
             : null,
         orElse: () => null,
@@ -195,46 +195,46 @@ class HealthScreen extends ConsumerWidget {
 
   Widget _buildCategoryTabs(BuildContext context, WidgetRef ref, List<HealthCategory> categories, int selectedTab) {
     return Container(
-      height: 50,
       margin: const EdgeInsets.symmetric(vertical: 8),
-      child: ListView.builder(
+      child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final category = categories[index];
-          final isSelected = index == selectedTab;
-          
-          return GestureDetector(
-            onTap: () => ref.read(selectedHealthTabProvider.notifier).state = index,
-            child: Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: isSelected ? context.features.health : Colors.transparent,
-                borderRadius: BorderRadius.circular(25),
-                border: Border.all(
-                  color: isSelected ? context.features.health : Theme.of(context).colorScheme.outline,
+        child: Row(
+          children: List.generate(categories.length, (index) {
+            final category = categories[index];
+            final isSelected = index == selectedTab;
+            
+            return GestureDetector(
+              onTap: () => ref.read(selectedHealthTabProvider.notifier).state = index,
+              child: Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? context.features.health : Colors.transparent,
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(
+                    color: isSelected ? context.features.health : Theme.of(context).colorScheme.outline,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(category.icon, size: 18, color: isSelected ? Colors.white : context.features.health),
+                    const SizedBox(width: 6),
+                    Text(
+                      category.label,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                        color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(category.icon, size: 16, color: isSelected ? Colors.white : context.features.health),
-                  const SizedBox(width: 6),
-                  Text(
-                    category.label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+            );
+          }),
+        ),
       ),
     );
   }
@@ -439,9 +439,9 @@ class HealthScreen extends ConsumerWidget {
         
         return Column(
           children: records.take(5).map((record) {
-            return _buildRecordItem(
-              context,
+            return MingrrRecordTile(
               icon: Icons.monitor_weight_outlined,
+              iconColor: context.features.health,
               title: '${record.weight.toStringAsFixed(1)}kg',
               subtitle: _formatDate(record.recordDate),
               onTap: () {
@@ -465,9 +465,9 @@ class HealthScreen extends ConsumerWidget {
         
         return Column(
           children: records.take(5).map((record) {
-            return _buildRecordItem(
-              context,
+            return MingrrRecordTile(
               icon: Icons.directions_walk,
+              iconColor: context.features.walk,
               title: '${record.durationMinutes}분, ${record.distanceString}',
               subtitle: _formatDateTime(record.startTime),
               onTap: () {
@@ -499,9 +499,9 @@ class HealthScreen extends ConsumerWidget {
         
         return Column(
           children: records.take(5).map((record) {
-            return _buildRecordItem(
-              context,
+            return MingrrRecordTile(
               icon: Icons.content_cut,
+              iconColor: context.features.health,
               title: record.groomingType.label,
               subtitle: '${_formatDate(record.recordDate)} • ${record.location ?? ""}',
               onTap: () {},
@@ -523,9 +523,9 @@ class HealthScreen extends ConsumerWidget {
         
         return Column(
           children: records.take(5).map((record) {
-            return _buildRecordItem(
-              context,
+            return MingrrRecordTile(
               icon: Icons.vaccines_outlined,
+              iconColor: context.features.health,
               title: record.vaccineName,
               subtitle: '${_formatDate(record.vaccinationDate)} • ${record.hospitalName ?? ""}',
               onTap: () {},
@@ -547,9 +547,9 @@ class HealthScreen extends ConsumerWidget {
         
         return Column(
           children: records.take(5).map((record) {
-            return _buildRecordItem(
-              context,
+            return MingrrRecordTile(
               icon: Icons.local_hospital_outlined,
+              iconColor: context.features.health,
               title: record.diagnosis ?? '정기 검진',
               subtitle: '${_formatDate(record.checkupDate)} • ${record.hospitalName ?? ""}',
               onTap: () {},
@@ -579,25 +579,11 @@ class HealthScreen extends ConsumerWidget {
             final displayName = parsed.name;
             final iconColor = Color(iconType.colorValue);
             
-            return _buildMedicationRecordItem(
-              context,
+            return MingrrRecordTile.medication(
               iconColor: iconColor,
               title: displayName,
               subtitle: '${record.dosage ?? ""} • ${record.intervalString}',
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isActive ? context.features.success.withOpacity(0.1) : Theme.of(context).colorScheme.outlineVariant.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  isActive ? '복용 중' : '완료',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: isActive ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
-                  ),
-                ),
-              ),
+              isActive: isActive,
               onTap: () {
                 // TODO: 약 상세 화면 구현 시 연결
                 MingrrSnackBar.info(context, '약 상세 화면은 준비 중입니다');
@@ -630,59 +616,6 @@ class HealthScreen extends ConsumerWidget {
     return (iconType: MedicationIconType.blue, name: name.isEmpty ? medicationName : name);
   }
   
-  /// 약 기록 아이템 (Material Icon 사용)
-  Widget _buildMedicationRecordItem(
-    BuildContext context, {
-    required Color iconColor,
-    required String title,
-    required String subtitle,
-    Widget? trailing,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(AppSizes.radiusS),
-          border: Border.all(color: Theme.of(context).colorScheme.outline),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(Icons.medication, size: 22, color: iconColor),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ),
-            if (trailing != null) trailing,
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildEmptyRecords(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(32),
@@ -700,61 +633,6 @@ class HealthScreen extends ConsumerWidget {
               '+ 버튼을 눌러 첫 기록을 추가해보세요',
               style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecordItem(
-    BuildContext context, {
-    required IconData icon,
-    Color? iconColor,
-    required String title,
-    required String subtitle,
-    Widget? trailing,
-    required VoidCallback onTap,
-  }) {
-    final color = iconColor ?? context.features.health;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(AppSizes.radiusS),
-          border: Border.all(color: Theme.of(context).colorScheme.outline),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, size: 22, color: color),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ),
-            if (trailing != null) trailing,
-            Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
           ],
         ),
       ),

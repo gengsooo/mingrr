@@ -125,7 +125,7 @@ class _MingrrTagInputState extends State<MingrrTagInput> {
                   '#',
                   style: TextStyle(
                     color: widget.accentColor,
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

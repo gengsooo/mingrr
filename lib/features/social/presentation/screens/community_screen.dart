@@ -5,6 +5,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/info_badge.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../models/community_post_model.dart';
 import '../providers/community_provider.dart';
@@ -83,11 +84,10 @@ class CommunityScreen extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: MingrrFAB.write(
         onPressed: () => _navigateToWrite(context),
         backgroundColor: accentColor,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.edit, color: Colors.white),
+        tooltip: '게시글 작성',
       ),
     );
   }
@@ -243,12 +243,7 @@ class _CommunityPostCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       // 좋아요
-                      Icon(Icons.favorite_border, size: 14, color: colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 3),
-                      Text(
-                        '${post.likeCount}',
-                        style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
-                      ),
+                      LikeCountText(count: post.likeCount, size: InfoBadgeSize.small),
                       const SizedBox(width: 12),
                       // 조회수
                       Icon(Icons.visibility_outlined, size: 14, color: colorScheme.onSurfaceVariant),

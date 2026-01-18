@@ -118,31 +118,17 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
               selectedItem: _selectedCategory,
               onSelected: (category) => setState(() => _selectedCategory = category),
               labelBuilder: (category) => category.label,
-              emojiBuilder: (category) => category.emoji,
+              iconBuilder: (category) => category.icon,
               accentColor: _accentColor,
             ),
             const SizedBox(height: AppSizes.gapXL),
 
             // 본문 입력
             const MingrrSectionLabel(FormStrings.labelContent, isRequired: true),
-            Container(
-              decoration: BoxDecoration(
-                color: context.inputBackground,
-                borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.3)),
-              ),
-              child: TextField(
-                controller: _contentController,
-                maxLines: 6,
-                maxLength: 2000,
-                decoration: InputDecoration(
-                  hintText: FormStrings.hintContent,
-                  hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.all(16),
-                  counterStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                ),
-              ),
+            MingrrTextField(
+              controller: _contentController,
+              maxLines: 6,
+              hintText: FormStrings.hintContent,
             ),
             const SizedBox(height: AppSizes.gapL),
 

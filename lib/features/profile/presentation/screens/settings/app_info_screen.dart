@@ -117,49 +117,19 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
                     style: theme.textTheme.titleLarge,
                   ),
                 ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.description_outlined, color: Theme.of(context).colorScheme.primary),
-                  ),
-                  title: const Text('이용약관'),
-                  trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+                MingrrSettingsTile(
+                  icon: Icons.description_outlined,
+                  title: '이용약관',
                   onTap: () => _showTerms(context),
                 ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.privacy_tip_outlined, color: Theme.of(context).colorScheme.primary),
-                  ),
-                  title: const Text('개인정보처리방침'),
-                  trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+                MingrrSettingsTile(
+                  icon: Icons.privacy_tip_outlined,
+                  title: '개인정보처리방침',
                   onTap: () => _showPrivacyPolicy(context),
                 ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.code, color: Theme.of(context).colorScheme.primary),
-                  ),
-                  title: const Text('오픈소스 라이선스'),
-                  trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+                MingrrSettingsTile(
+                  icon: Icons.code,
+                  title: '오픈소스 라이선스',
                   onTap: () => _showLicenses(context),
                 ),
               ],

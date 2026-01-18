@@ -41,8 +41,8 @@ final _distanceFilterProvider = StateProvider<double>((ref) => 3.0);
 /// 교배찾기 필터 Provider
 /// ============================================================
 
-/// 성별 필터 (null: 전체, 'male', 'female')
-final _breedingGenderFilterProvider = StateProvider<String?>((ref) => null);
+/// 성별 필터 (중복 선택 가능)
+final _breedingGenderFilterProvider = StateProvider<List<String>>((ref) => []);
 
 /// 같은 품종만 필터 (true: 같은 품종만, false/null: 무관)
 final _breedingSameBreedFilterProvider = StateProvider<bool?>((ref) => null);
@@ -135,14 +135,12 @@ class DatingScreen extends ConsumerWidget {
         ],
       ),
       // 교배찾기 탭에서 글쓰기 FAB 표시
-      floatingActionButton: selectedTab == 2
-          ? FloatingActionButton(
-              onPressed: () => _showBreedingWriteSheet(context),
-              backgroundColor: features.dating,
-              shape: const CircleBorder(),
-              child: const Icon(Icons.edit, color: Colors.white),
-            )
-          : null,
+      floatingActionButton: MingrrFAB.write(
+        onPressed: () => _showBreedingWriteSheet(context),
+        backgroundColor: features.dating,
+        visible: selectedTab == 2,
+        tooltip: '교배 등록',
+      ),
     );
   }
 
@@ -175,164 +173,125 @@ class DatingScreen extends ConsumerWidget {
 
   /// 교배찾기 필터 섹션
   Widget _buildBreedingFilters(BuildContext context, WidgetRef ref) {
-    return Container(
-      color: Theme.of(context).colorScheme.surface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1행: 성별 + 품종
-          _buildFilterRow(
-            context, ref,
-            title: '성별/품종',
-            children: [
-              _buildGenderFilters(ref),
-              _buildDivider(),
-              _buildBreedFilters(ref),
-            ],
-          ),
-          const MingrrFilterSectionDivider(),
-          // 2행: 크기 + 나이
-          _buildFilterRow(
-            context, ref,
-            title: '크기/나이',
-            children: [
-              _buildSizeFilters(context, ref),
-              _buildDivider(),
-              _buildAgeFilters(ref),
-            ],
-          ),
-          const MingrrFilterSectionDivider(),
-          // 3행: 인증 여부
-          _buildFilterRow(
-            context, ref,
-            title: '인증',
-            children: [
-              _buildVerificationFilters(ref),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 필터 행 위젯
-  Widget _buildFilterRow(BuildContext context, WidgetRef ref, {
-    required String title,
-    required List<Widget> children,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: 6),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
+    final accentColor = context.features.dating;
+    return MingrrFilterSection(
+      rows: [
+        // 1행: 성별 + 품종
+        MingrrFilterRow(
+          title: '성별/품종',
           children: [
-            // 필터 제목
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: colorScheme.onSurfaceVariant.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            ...children,
+            _buildGenderFilters(ref, accentColor),
+            const MingrrFilterDivider(),
+            _buildBreedFilters(ref, accentColor),
           ],
         ),
-      ),
+        // 2행: 크기 + 나이
+        MingrrFilterRow(
+          title: '크기/나이',
+          children: [
+            _buildSizeFilters(context, ref, accentColor),
+            const MingrrFilterDivider(),
+            _buildAgeFilters(ref, accentColor),
+          ],
+        ),
+        // 3행: 인증 여부
+        MingrrFilterRow(
+          title: '인증',
+          children: [
+            _buildVerificationFilters(ref, accentColor),
+          ],
+        ),
+      ],
     );
   }
 
-  /// 구분선 (필터 행 내 세로 구분선)
-  Widget _buildDivider() {
-    return const MingrrFilterDivider();
-  }
-
-  /// 성별 필터
-  Widget _buildGenderFilters(WidgetRef ref) {
-    final genderFilter = ref.watch(_breedingGenderFilterProvider);
+  /// 성별 필터 (중복 선택 가능)
+  Widget _buildGenderFilters(WidgetRef ref, Color accentColor) {
+    final selectedGenders = ref.watch(_breedingGenderFilterProvider);
     return Row(
       children: [
-        _buildFilterChip(
-          label: '전체',
-          isSelected: genderFilter == null,
-          onTap: () => ref.read(_breedingGenderFilterProvider.notifier).state = null,
-        ),
-        const SizedBox(width: 6),
-        _buildGenderFilterChip(
+        MingrrFilterChip(
           label: '남아',
           icon: Icons.male,
-          isSelected: genderFilter == 'male',
-          onTap: () => ref.read(_breedingGenderFilterProvider.notifier).state = 'male',
+          iconSize: 14,
+          isSelected: selectedGenders.contains('male'),
+          onTap: () {
+            final current = List<String>.from(selectedGenders);
+            if (current.contains('male')) {
+              current.remove('male');
+            } else {
+              current.add('male');
+            }
+            ref.read(_breedingGenderFilterProvider.notifier).state = current;
+          },
+          accentColor: accentColor,
         ),
         const SizedBox(width: 6),
-        _buildGenderFilterChip(
+        MingrrFilterChip(
           label: '여아',
           icon: Icons.female,
-          isSelected: genderFilter == 'female',
-          onTap: () => ref.read(_breedingGenderFilterProvider.notifier).state = 'female',
+          iconSize: 14,
+          isSelected: selectedGenders.contains('female'),
+          onTap: () {
+            final current = List<String>.from(selectedGenders);
+            if (current.contains('female')) {
+              current.remove('female');
+            } else {
+              current.add('female');
+            }
+            ref.read(_breedingGenderFilterProvider.notifier).state = current;
+          },
+          accentColor: accentColor,
         ),
       ],
     );
   }
 
   /// 품종 필터 (같은 품종/무관)
-  Widget _buildBreedFilters(WidgetRef ref) {
+  Widget _buildBreedFilters(WidgetRef ref, Color accentColor) {
     final sameBreedFilter = ref.watch(_breedingSameBreedFilterProvider);
     return Row(
       children: [
-        _buildFilterChip(
+        MingrrFilterChip(
           label: '품종 무관',
           isSelected: sameBreedFilter == null || sameBreedFilter == false,
           onTap: () => ref.read(_breedingSameBreedFilterProvider.notifier).state = null,
+          accentColor: accentColor,
         ),
         const SizedBox(width: 6),
-        _buildFilterChip(
+        MingrrFilterChip(
           label: '같은 품종만',
           isSelected: sameBreedFilter == true,
           onTap: () => ref.read(_breedingSameBreedFilterProvider.notifier).state = true,
+          accentColor: accentColor,
         ),
       ],
     );
   }
 
   /// 크기 필터 (중복 선택 가능)
-  Widget _buildSizeFilters(BuildContext context, WidgetRef ref) {
+  Widget _buildSizeFilters(BuildContext context, WidgetRef ref, Color accentColor) {
     final selectedSizes = ref.watch(_breedingSizeFilterProvider);
     final sizes = [
-      {'key': 'xs', 'label': '초소형', 'weight': '0~4kg'},
-      {'key': 's', 'label': '소형', 'weight': '4~10kg'},
-      {'key': 'm', 'label': '중형', 'weight': '10~25kg'},
-      {'key': 'l', 'label': '대형', 'weight': '25~45kg'},
-      {'key': 'xl', 'label': '초대형', 'weight': '45kg~'},
+      {'key': 'xs', 'label': '초소형'},
+      {'key': 's', 'label': '소형'},
+      {'key': 'm', 'label': '중형'},
+      {'key': 'l', 'label': '대형'},
+      {'key': 'xl', 'label': '초대형'},
     ];
     return Row(
       children: [
         // 안내 버튼
-        Builder(
-          builder: (ctx) {
-            final features = Theme.of(ctx).extension<FeatureColors>()!;
-            return GestureDetector(
-              onTap: () => _showSizeGuideModal(ctx),
-              child: Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: features.dating.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.help_outline, size: 14, color: features.dating),
-              ),
-            );
-          },
+        GestureDetector(
+          onTap: () => _showSizeGuideModal(context),
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: accentColor.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.help_outline, size: 14, color: accentColor),
+          ),
         ),
         const SizedBox(width: 8),
         // 크기 필터 칩들
@@ -341,7 +300,7 @@ class DatingScreen extends ConsumerWidget {
           final isSelected = selectedSizes.contains(key);
           return Padding(
             padding: const EdgeInsets.only(right: 6),
-            child: _buildFilterChip(
+            child: MingrrFilterChip(
               label: size['label'] as String,
               isSelected: isSelected,
               onTap: () {
@@ -353,6 +312,7 @@ class DatingScreen extends ConsumerWidget {
                 }
                 ref.read(_breedingSizeFilterProvider.notifier).state = current;
               },
+              accentColor: accentColor,
             ),
           );
         }),
@@ -381,23 +341,23 @@ class DatingScreen extends ConsumerWidget {
   }
 
   /// 나이 필터
-  Widget _buildAgeFilters(WidgetRef ref) {
+  Widget _buildAgeFilters(WidgetRef ref, Color accentColor) {
     final ageFilter = ref.watch(_breedingAgeFilterProvider);
     final ages = [
       {'key': null, 'label': '전체'},
       {'key': 3, 'label': '3세 이하'},
       {'key': 5, 'label': '5세 이하'},
       {'key': 10, 'label': '10세 이하'},
-      {'key': 15, 'label': '15세 이하'},
     ];
     return Row(
       children: ages.map((age) {
         return Padding(
           padding: const EdgeInsets.only(right: 6),
-          child: _buildFilterChip(
+          child: MingrrFilterChip(
             label: age['label'] as String,
             isSelected: ageFilter == age['key'],
             onTap: () => ref.read(_breedingAgeFilterProvider.notifier).state = age['key'] as int?,
+            accentColor: accentColor,
           ),
         );
       }).toList(),
@@ -405,135 +365,40 @@ class DatingScreen extends ConsumerWidget {
   }
 
   /// 인증 필터
-  Widget _buildVerificationFilters(WidgetRef ref) {
+  Widget _buildVerificationFilters(WidgetRef ref, Color accentColor) {
     final identityVerified = ref.watch(_breedingIdentityVerifiedFilterProvider);
     final petVerified = ref.watch(_breedingPetVerifiedFilterProvider);
     final locationVerified = ref.watch(_breedingLocationVerifiedFilterProvider);
     
     return Row(
       children: [
-        _buildFilterChip(
+        MingrrFilterChip(
           label: '본인인증',
           isSelected: identityVerified == true,
           onTap: () => ref.read(_breedingIdentityVerifiedFilterProvider.notifier).state = 
               identityVerified == true ? null : true,
           icon: Icons.person_outline,
+          accentColor: accentColor,
         ),
         const SizedBox(width: 6),
-        _buildFilterChip(
+        MingrrFilterChip(
           label: '동물인증',
           isSelected: petVerified == true,
           onTap: () => ref.read(_breedingPetVerifiedFilterProvider.notifier).state = 
               petVerified == true ? null : true,
           icon: Icons.pets,
+          accentColor: accentColor,
         ),
         const SizedBox(width: 6),
-        _buildFilterChip(
+        MingrrFilterChip(
           label: '위치인증',
           isSelected: locationVerified == true,
           onTap: () => ref.read(_breedingLocationVerifiedFilterProvider.notifier).state = 
               locationVerified == true ? null : true,
           icon: Icons.location_on_outlined,
+          accentColor: accentColor,
         ),
       ],
-    );
-  }
-
-  /// 필터 칩
-  Widget _buildFilterChip({
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-    Color? color,
-    IconData? icon,
-  }) {
-    return Builder(
-      builder: (ctx) {
-        final features = Theme.of(ctx).extension<FeatureColors>()!;
-        final colorScheme = Theme.of(ctx).colorScheme;
-        final chipColor = color ?? features.dating;
-        return GestureDetector(
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: isSelected ? chipColor : Colors.transparent,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isSelected ? chipColor : colorScheme.outline,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (icon != null) ...[
-                  Icon(
-                    icon,
-                    size: 12,
-                    color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
-                  ),
-                  const SizedBox(width: 4),
-                ],
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  /// 성별 필터 칩 (아이콘 포함)
-  Widget _buildGenderFilterChip({
-    required String label,
-    required IconData icon,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return Builder(
-      builder: (ctx) {
-        final features = Theme.of(ctx).extension<FeatureColors>()!;
-        final colorScheme = Theme.of(ctx).colorScheme;
-        return GestureDetector(
-          onTap: onTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: isSelected ? features.dating : Colors.transparent,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isSelected ? features.dating : colorScheme.outline,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 14,
-                  color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -903,7 +768,7 @@ class DatingScreen extends ConsumerWidget {
     );
   }
 
-  /// 교배 글쓰기 화면 이동
+  /// 교배 등록 화면 이동
   void _showBreedingWriteSheet(BuildContext context) async {
     final result = await Navigator.push(
       context,

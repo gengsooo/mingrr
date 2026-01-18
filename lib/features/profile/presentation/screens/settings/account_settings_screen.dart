@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../core/theme/feature_colors.dart';
 import '../../../../../core/constants/app_sizes.dart';
 import '../../../../../core/widgets/common_widgets.dart';
 import '../../../../../core/widgets/dialogs/dialogs.dart';
@@ -39,7 +38,6 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     final isGoogleLogin = providerData.any((p) => p.providerId == 'google.com');
 
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     
     return Scaffold(
       appBar: AppBar(
@@ -61,33 +59,26 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                     style: theme.textTheme.titleLarge,
                   ),
                 ),
-                _buildProviderTile(
-                  context: context,
+                MingrrSettingsTile.connection(
                   icon: Icons.email_outlined,
                   title: '이메일',
-                  subtitle: authUser?.email ?? '연동되지 않음',
                   isConnected: isEmailLogin,
+                  connectedText: authUser?.email ?? '연동됨',
                 ),
-                _buildProviderTile(
-                  context: context,
+                MingrrSettingsTile.connection(
                   icon: Icons.chat_bubble_outline,
                   title: '카카오',
-                  subtitle: isKakaoLogin ? '연동됨' : '연동되지 않음',
                   isConnected: isKakaoLogin,
                   iconColor: const Color(0xFFFEE500),
                 ),
-                _buildProviderTile(
-                  context: context,
+                MingrrSettingsTile.connection(
                   icon: Icons.apple,
                   title: 'Apple',
-                  subtitle: isAppleLogin ? '연동됨' : '연동되지 않음',
                   isConnected: isAppleLogin,
                 ),
-                _buildProviderTile(
-                  context: context,
+                MingrrSettingsTile.connection(
                   icon: Icons.g_mobiledata,
                   title: 'Google',
-                  subtitle: isGoogleLogin ? '연동됨' : '연동되지 않음',
                   isConnected: isGoogleLogin,
                   iconColor: const Color(0xFF4285F4),
                 ),
@@ -111,23 +102,10 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                       style: theme.textTheme.titleLarge,
                     ),
                   ),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Icon(Icons.lock_outline, color: Theme.of(context).colorScheme.primary),
-                    ),
-                    title: const Text('비밀번호 변경'),
-                    subtitle: Text(
-                      '비밀번호 재설정 이메일을 발송합니다',
-                      style: theme.textTheme.bodySmall,
-                    ),
-                    trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+                  MingrrSettingsTile(
+                    icon: Icons.lock_outline,
+                    title: '비밀번호 변경',
+                    subtitle: '비밀번호 재설정 이메일을 발송합니다',
                     onTap: _sendPasswordResetEmail,
                   ),
                 ],
@@ -149,39 +127,17 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                     style: theme.textTheme.titleLarge,
                   ),
                 ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.email_outlined, color: Theme.of(context).colorScheme.primary),
-                  ),
-                  title: const Text('이메일'),
-                  subtitle: Text(
-                    authUser?.email ?? '등록되지 않음',
-                    style: theme.textTheme.bodySmall,
-                  ),
+                MingrrSettingsTile(
+                  icon: Icons.email_outlined,
+                  title: '이메일',
+                  subtitle: authUser?.email ?? '등록되지 않음',
+                  showChevron: false,
                 ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.phone_outlined, color: Theme.of(context).colorScheme.primary),
-                  ),
-                  title: const Text('전화번호'),
-                  subtitle: Text(
-                    currentUser?.phoneNumber ?? '등록되지 않음',
-                    style: theme.textTheme.bodySmall,
-                  ),
+                MingrrSettingsTile(
+                  icon: Icons.phone_outlined,
+                  title: '전화번호',
+                  subtitle: currentUser?.phoneNumber ?? '등록되지 않음',
+                  showChevron: false,
                 ),
               ],
             ),
@@ -192,27 +148,12 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           // 회원 탈퇴
           MingrrCard(
             margin: EdgeInsets.zero,
-            child: ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.person_remove_outlined, color: Colors.red),
-              ),
-              title: const Text(
-                '회원 탈퇴',
-                style: TextStyle(color: Colors.red),
-              ),
-              subtitle: Text(
-                '계정과 모든 데이터가 삭제됩니다',
-                style: theme.textTheme.bodySmall,
-              ),
-              trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+            child: MingrrSettingsTile.destructive(
+              icon: Icons.person_remove_outlined,
+              title: '회원 탈퇴',
+              subtitle: '계정과 모든 데이터가 삭제됩니다',
               onTap: _showDeleteAccountDialog,
+              showChevron: true,
             ),
           ),
           
@@ -228,44 +169,6 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildProviderTile({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required bool isConnected,
-    Color? iconColor,
-  }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: isConnected 
-              ? (iconColor ?? Theme.of(context).colorScheme.primary).withOpacity(0.1)
-              : colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(
-          icon,
-          color: isConnected ? (iconColor ?? Theme.of(context).colorScheme.primary) : colorScheme.onSurfaceVariant,
-        ),
-      ),
-      title: Text(title),
-      subtitle: Text(
-        subtitle,
-        style: theme.textTheme.bodySmall,
-      ),
-      trailing: isConnected
-          ? Icon(Icons.check_circle, color: context.features.success, size: 20)
-          : Icon(Icons.circle_outlined, color: colorScheme.onSurfaceVariant, size: 20),
     );
   }
 

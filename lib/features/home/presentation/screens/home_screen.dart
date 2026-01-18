@@ -436,18 +436,17 @@ class HomeScreen extends ConsumerWidget {
 
   /// 건강 카테고리 설정 바텀시트
   void _showHealthCategorySettings(BuildContext context, WidgetRef ref) {
-    final currentCategories = ref.read(_homeHealthCategoriesProvider);
     final availableCategories = HealthCategory.homeDisplayable;
     
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        final colorScheme = Theme.of(context).colorScheme;
+      builder: (sheetContext) {
+        final colorScheme = Theme.of(sheetContext).colorScheme;
         
         return Container(
-          height: MediaQuery.of(context).size.height * 0.6,
+          height: MediaQuery.of(sheetContext).size.height * 0.6,
           decoration: BoxDecoration(
             color: colorScheme.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
@@ -455,71 +454,78 @@ class HomeScreen extends ConsumerWidget {
           child: Column(
             children: [
               const BottomSheetHandle(),
-            // 헤더
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: const Text(
-                '메인화면 건강기록 설정',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                textAlign: TextAlign.center,
+              // 헤더
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: 12),
+                child: const Text(
+                  '메인화면 건강기록 설정',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  textAlign: TextAlign.center,
+                ),
               ),
-            ),
-            // 안내 문구
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                '메인화면에 표시할 건강기록을 선택하세요 (최소 1개, 최대 5개)',
-                style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+              // 안내 문구
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
+                child: Text(
+                  '메인화면에 표시할 건강기록을 선택하세요 (최소 1개, 최대 5개)',
+                  style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            // 카테고리 목록
-            Expanded(
-              child: ListView.builder(
-                itemCount: availableCategories.length,
-                itemBuilder: (context, index) {
-                  final category = availableCategories[index];
-                  final isSelected = currentCategories.contains(category);
-                  
-                  return CheckboxListTile(
-                    value: isSelected,
-                    onChanged: (value) {
-                      final updated = List<HealthCategory>.from(currentCategories);
-                      if (value == true) {
-                        if (updated.length < 5) {
-                          updated.add(category);
-                        } else {
-                          MingrrSnackBar.warning(context, '최대 5개까지 선택 가능합니다');
-                          return;
-                        }
-                      } else {
-                        if (updated.length > 1) {
-                          updated.remove(category);
-                        } else {
-                          MingrrSnackBar.warning(context, '최소 1개는 선택해야 합니다');
-                          return;
-                        }
-                      }
-                      ref.read(_homeHealthCategoriesProvider.notifier).state = updated;
-                    },
-                    title: Row(
-                      children: [
-                        Icon(category.icon, size: 20, color: context.features.health),
-                        const SizedBox(width: 12),
-                        Text(category.label),
-                      ],
-                    ),
-                    subtitle: Text(
-                      category.description,
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    activeColor: colorScheme.primary,
-                  );
-                },
+              const SizedBox(height: 16),
+              // 카테고리 목록 (Consumer로 상태 변경 감지)
+              Expanded(
+                child: Consumer(
+                  builder: (ctx, watchRef, _) {
+                    final currentCategories = watchRef.watch(_homeHealthCategoriesProvider);
+                    
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS),
+                      itemCount: availableCategories.length,
+                      itemBuilder: (context, index) {
+                        final category = availableCategories[index];
+                        final isSelected = currentCategories.contains(category);
+                        
+                        return CheckboxListTile(
+                          value: isSelected,
+                          onChanged: (value) {
+                            final updated = List<HealthCategory>.from(currentCategories);
+                            if (value == true) {
+                              if (updated.length < 5) {
+                                updated.add(category);
+                              } else {
+                                MingrrSnackBar.warning(context, '최대 5개까지 선택 가능합니다');
+                                return;
+                              }
+                            } else {
+                              if (updated.length > 1) {
+                                updated.remove(category);
+                              } else {
+                                MingrrSnackBar.warning(context, '최소 1개는 선택해야 합니다');
+                                return;
+                              }
+                            }
+                            ref.read(_homeHealthCategoriesProvider.notifier).state = updated;
+                          },
+                          title: Row(
+                            children: [
+                              Icon(category.icon, size: 20, color: sheetContext.features.health),
+                              const SizedBox(width: 12),
+                              Text(category.label),
+                            ],
+                          ),
+                          subtitle: Text(
+                            category.description,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          activeColor: sheetContext.features.health,
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         );
       },
     );
@@ -528,6 +534,7 @@ class HomeScreen extends ConsumerWidget {
   /// 산책 시작하기 카드 (위치 불일치 배너 포함)
   Widget _buildWalkStartCardWithLocationBanner(BuildContext context, WidgetRef ref) {
     final features = Theme.of(context).extension<FeatureColors>()!;
+    final accentColor = features.health; // 건강수첩 색상으로 통일
     
     // 위치 불일치 상태 감지
     final mismatchAsync = ref.watch(locationMismatchProvider);
@@ -541,7 +548,7 @@ class HomeScreen extends ConsumerWidget {
         if (shouldShowBubble)
           LocationMismatchBanner(
             savedAddress: user?.homeAddress,
-            accentColor: features.walk,
+            accentColor: accentColor,
             onUpdateLocation: () => _handleLocationUpdateFromHome(context, ref),
             onDismiss: () => _handleLocationDismissFromHome(ref),
           ),
@@ -556,14 +563,14 @@ class HomeScreen extends ConsumerWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  features.walk,
-                  features.walk.withOpacity(0.8),
+                  accentColor,
+                  accentColor.withOpacity(0.8),
                 ],
               ),
               borderRadius: BorderRadius.circular(AppSizes.radiusL),
               boxShadow: [
                 BoxShadow(
-                  color: features.walk.withOpacity(0.3),
+                  color: accentColor.withOpacity(0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -580,7 +587,7 @@ class HomeScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: const Center(
-                    child: Icon(Icons.pets, size: 32, color: Colors.white),
+                    child: Icon(Icons.directions_walk, size: 32, color: Colors.white),
                   ),
                 ),
                 const SizedBox(width: AppSizes.gapM),
@@ -670,9 +677,9 @@ class HomeScreen extends ConsumerWidget {
           height: 44,
           decoration: BoxDecoration(
             color: color.withOpacity(0.15),
-            shape: BoxShape.circle,
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(icon, size: 20, color: color),
+          child: Icon(icon, size: 22, color: color),
         ),
         const SizedBox(height: AppSizes.gapS),
         Builder(
@@ -717,21 +724,9 @@ class HomeScreen extends ConsumerWidget {
     }
   }
 
-  /// 카테고리별 색상
+  /// 카테고리별 색상 (건강수첩과 동일하게 health 색상 통일)
   Color _getCategoryColor(BuildContext context, HealthCategory category) {
-    final features = context.features;
-    switch (category) {
-      case HealthCategory.weight:
-        return features.health;
-      case HealthCategory.walk:
-        return features.walk;
-      case HealthCategory.grooming:
-        return features.health;
-      case HealthCategory.medication:
-        return features.social;
-      default:
-        return Theme.of(context).colorScheme.onSurfaceVariant;
-    }
+    return context.features.health;
   }
 
   /// 추천친구 섹션 (사각형 카드)

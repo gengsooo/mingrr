@@ -227,27 +227,207 @@ class GenderAgeBadge extends StatelessWidget {
   }
 }
 
-/// 좋아요 수 배지
-class LikeCountBadge extends StatelessWidget {
+// ===== 좋아요 관련 컴포넌트 =====
+
+/// 좋아요 수 텍스트 (정보 표시용, 클릭 불가)
+/// 
+/// 사용처:
+/// - 보호자 프로필 모달 > 반려동물 카드
+/// - 소모임 상세 > 정보 칩
+/// - 커뮤니티 게시글 카드
+class LikeCountText extends StatelessWidget {
   final int count;
   final InfoBadgeSize size;
-  final bool showIcon;
 
-  const LikeCountBadge({
+  const LikeCountText({
     super.key,
     required this.count,
     this.size = InfoBadgeSize.medium,
-    this.showIcon = true,
+  });
+
+  double get _iconSize {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return 12.0;
+      case InfoBadgeSize.medium:
+        return 14.0;
+      case InfoBadgeSize.large:
+        return 16.0;
+    }
+  }
+
+  double get _fontSize {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return 10.0;
+      case InfoBadgeSize.medium:
+        return 12.0;
+      case InfoBadgeSize.large:
+        return 14.0;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.onSurfaceVariant;
+    
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.favorite,
+          size: _iconSize,
+          color: color,
+        ),
+        const SizedBox(width: 2),
+        Text(
+          '$count',
+          style: TextStyle(
+            fontSize: _fontSize,
+            fontWeight: FontWeight.w500,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 좋아요 버튼 (인터랙티브, 배경 없음)
+/// 
+/// 사용처:
+/// - 반려동물 프로필 모달 헤더
+/// - 데이팅 상세 하단 버튼
+/// - 커뮤니티 상세 액션 바
+class LikeButton extends StatelessWidget {
+  final int count;
+  final bool isLiked;
+  final VoidCallback? onTap;
+  final InfoBadgeSize size;
+
+  const LikeButton({
+    super.key,
+    required this.count,
+    required this.isLiked,
+    this.onTap,
+    this.size = InfoBadgeSize.medium,
+  });
+
+  double get _iconSize {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return 16.0;
+      case InfoBadgeSize.medium:
+        return 20.0;
+      case InfoBadgeSize.large:
+        return 24.0;
+    }
+  }
+
+  double get _fontSize {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return 11.0;
+      case InfoBadgeSize.medium:
+        return 13.0;
+      case InfoBadgeSize.large:
+        return 15.0;
+    }
+  }
+
+  EdgeInsets get _padding {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return const EdgeInsets.symmetric(horizontal: 6, vertical: 4);
+      case InfoBadgeSize.medium:
+        return const EdgeInsets.symmetric(horizontal: 8, vertical: 6);
+      case InfoBadgeSize.large:
+        return const EdgeInsets.symmetric(horizontal: 10, vertical: 8);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = context.features.dating;
+    
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: _padding,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isLiked ? Icons.favorite : Icons.favorite_border,
+              size: _iconSize,
+              color: color,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '$count',
+              style: TextStyle(
+                fontSize: _fontSize,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 이미지 오버레이용 좋아요 배지 (반투명 배경)
+/// 
+/// 사용처:
+/// - 데이팅 상세 이미지 헤더
+/// - 소모임 상세 이미지 헤더
+class LikeOverlayBadge extends StatelessWidget {
+  final int count;
+  final bool isLiked;
+  final VoidCallback? onTap;
+
+  const LikeOverlayBadge({
+    super.key,
+    required this.count,
+    required this.isLiked,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InfoBadge(
-      text: '$count',
-      icon: showIcon ? Icons.favorite : null,
-      backgroundColor: context.features.dating.withOpacity(0.1),
-      textColor: context.features.dating,
-      size: size,
+    final likedColor = context.features.dating;
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isLiked ? Icons.favorite : Icons.favorite_border,
+              size: 16.0,
+              color: isLiked ? likedColor : Colors.white,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              '$count',
+              style: TextStyle(
+                fontSize: 13.0,
+                fontWeight: FontWeight.w600,
+                color: isLiked ? likedColor : Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

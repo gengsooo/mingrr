@@ -10,6 +10,20 @@ import 'svg_icons.dart';
 // 공통 로딩 위젯 export
 export 'loading_widgets.dart';
 
+// 공통 FAB export
+export 'mingrr_fab.dart';
+
+// 공통 설정 타일 export
+export 'mingrr_settings_tile.dart';
+
+// 공통 기록 타일 export
+export 'mingrr_record_tile.dart';
+
+// 공통 이미지 컴포넌트 export
+export 'mingrr_image_viewer.dart';
+export 'mingrr_image_gallery.dart';
+export 'mingrr_image_header.dart';
+
 /// ============================================================
 /// MINGRR 공통 위젯 모음
 /// 앱 전체에서 재사용되는 UI 컴포넌트들
@@ -505,6 +519,62 @@ class MingrrEmptyState extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+// ===== 섹션 내 빈 상태 위젯 =====
+/// 섹션 내에서 데이터가 없을 때 표시하는 작은 빈 상태 위젯
+/// 
+/// 사용처:
+/// - 프로필 모달 > 사진 갤러리 (사진 없음)
+/// - 프로필 모달 > 성격&특성 (특성 없음)
+/// - 프로필 모달 > 소개 (소개 없음)
+class MingrrEmptySection extends StatelessWidget {
+  final IconData icon;
+  final String message;
+  final double height;
+
+  const MingrrEmptySection({
+    super.key,
+    required this.icon,
+    required this.message,
+    this.height = 80,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: colorScheme.outline.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 24,
+              color: colorScheme.outlineVariant,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              message,
+              style: TextStyle(
+                fontSize: 12,
+                color: colorScheme.outlineVariant,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

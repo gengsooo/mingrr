@@ -280,14 +280,13 @@ enum BadgeType {
 /// 소모임 카테고리
 /// ============================================================
 enum GroupCategory {
-  walk('산책 모임', Icons.directions_walk, '함께 산책해요'),
-  play('놀이 모임', Icons.sports_tennis, '함께 놀아요'),
-  share('나눔 모임', Icons.card_giftcard, '물품을 나눠요'),
-  coffee('커피 모임', Icons.coffee, '보호자끼리 모여요'),
+  walk('산책 모임', Icons.directions_walk_outlined, '함께 산책해요'),
+  play('놀이 모임', Icons.sports_tennis_outlined, '함께 놀아요'),
+  share('나눔 모임', Icons.card_giftcard_outlined, '물품을 나눠요'),
+  coffee('커피 모임', Icons.coffee_outlined, '보호자끼리 모여요'),
   training('훈련 모임', Icons.school_outlined, '함께 훈련해요'),
-  health('건강 모임', Icons.fitness_center, '건강 정보를 나눠요'),
-  breeding('교배 모임', Icons.favorite_outline, '교배 정보를 나눠요'),
-  other('기타', Icons.more_horiz, '기타 모임이에요');
+  health('건강 모임', Icons.fitness_center_outlined, '건강 정보를 나눠요'),
+  other('기타', Icons.more_horiz_outlined, '기타 모임이에요');
 
   final String label;
   final IconData icon;

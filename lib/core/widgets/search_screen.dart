@@ -6,6 +6,7 @@ import '../constants/app_sizes.dart';
 import '../services/firestore_service.dart';
 import 'common_widgets.dart';
 import 'svg_icons.dart';
+import 'info_badge.dart';
 import '../utils/format_utils.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/group_model.dart';
@@ -223,14 +224,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             Text(' ${group.memberCount}', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant)),
           ],
         ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.favorite, size: 14, color: context.features.breeding),
-            const SizedBox(width: 2),
-            Text('${group.likeCount}', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant)),
-          ],
-        ),
+        trailing: LikeCountText(count: group.likeCount, size: InfoBadgeSize.small),
         onTap: () {
           Navigator.pop(context);
           context.push('/social/group/${group.id}');
@@ -344,8 +338,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            Icon(Icons.favorite, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
-            Text(' ${post.likeCount}', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant)),
+            LikeCountText(count: post.likeCount, size: InfoBadgeSize.small),
             const SizedBox(width: 8),
             Icon(Icons.chat_bubble_outline, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
             Text(' ${post.commentCount}', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant)),

@@ -22,7 +22,6 @@ class CustomerServiceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     
     return Scaffold(
       appBar: AppBar(
@@ -44,42 +43,18 @@ class CustomerServiceScreen extends StatelessWidget {
                     style: theme.textTheme.titleLarge,
                   ),
                 ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEE500).withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.chat_bubble_outline, color: Color(0xFF3C1E1E)),
-                  ),
-                  title: const Text('카카오톡 문의'),
-                  subtitle: Text(
-                    '평일 10:00 ~ 18:00 (주말/공휴일 휴무)',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+                MingrrSettingsTile(
+                  icon: Icons.chat_bubble_outline,
+                  title: '카카오톡 문의',
+                  subtitle: '평일 10:00 ~ 18:00 (주말/공휴일 휴무)',
+                  iconColor: const Color(0xFF3C1E1E),
+                  iconBackgroundColor: const Color(0xFFFEE500).withValues(alpha: 0.2),
                   onTap: () => _openKakaoChannel(context),
                 ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.email_outlined, color: Theme.of(context).colorScheme.primary),
-                  ),
-                  title: const Text('이메일 문의'),
-                  subtitle: Text(
-                    'support@mingrr.com',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+                MingrrSettingsTile(
+                  icon: Icons.email_outlined,
+                  title: '이메일 문의',
+                  subtitle: 'support@mingrr.com',
                   onTap: () => _sendEmail(context),
                 ),
               ],

@@ -7,12 +7,14 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/form_strings.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/image_crop_service.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/utils/image_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/form_components.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/image_picker_sheet.dart';
@@ -127,8 +129,9 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: Text(isEditMode ? '반려동물 수정' : '반려동물 추가'),
+      appBar: MingrrFormAppBar(
+        title: isEditMode ? '반려동물 수정' : '반려동물 추가',
+        onClose: () => Navigator.pop(context),
         actions: [
           if (isEditMode && !_isLoading)
             IconButton(
@@ -149,31 +152,31 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
             const SizedBox(height: AppSizes.gapXL),
             
             // 기본 정보 섹션
-            _buildSectionTitle('기본 정보'),
+            const MingrrSectionLabel('기본 정보'),
             const SizedBox(height: AppSizes.gapM),
             _buildBasicInfoSection(),
             const SizedBox(height: AppSizes.gapXL),
             
             // 신체 정보 섹션
-            _buildSectionTitle('신체 정보'),
+            const MingrrSectionLabel('신체 정보'),
             const SizedBox(height: AppSizes.gapM),
             _buildPhysicalInfoSection(),
             const SizedBox(height: AppSizes.gapXL),
             
             // 특성 선택 섹션
-            _buildSectionTitle('특성 선택', subtitle: '최소 5개 이상 선택해주세요'),
+            const MingrrSectionLabel('특성 선택', suffix: '최소 5개 이상 선택해주세요'),
             const SizedBox(height: AppSizes.gapM),
             _buildTraitsSection(),
             const SizedBox(height: AppSizes.gapXL),
             
             // 소개글 섹션
-            _buildSectionTitle('소개글'),
+            const MingrrSectionLabel('소개글'),
             const SizedBox(height: AppSizes.gapM),
             _buildBioSection(),
             const SizedBox(height: AppSizes.gapXL),
             
             // 추가 정보 섹션
-            _buildSectionTitle('추가 정보'),
+            const MingrrSectionLabel('추가 정보'),
             const SizedBox(height: AppSizes.gapM),
             _buildAdditionalInfoSection(),
             const SizedBox(height: AppSizes.gapXL),
@@ -185,32 +188,6 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         isLoading: _isLoading,
         onPressed: _selectedTraits.length >= 5 ? _savePet : null,
       ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title, {String? subtitle}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        if (subtitle != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
-          ),
-        ],
-      ],
     );
   }
 
@@ -367,16 +344,13 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       child: Column(
         children: [
           // 이름
-          TextFormField(
+          MingrrTextField(
             controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: '이름',
-              hintText: '반려동물 이름을 입력해주세요',
-              border: OutlineInputBorder(),
-            ),
+            labelText: FormStrings.labelName,
+            hintText: FormStrings.hintPetName,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return '반려동물 이름을 입력해주세요';
+                return FormStrings.hintPetName;
               }
               return null;
             },
@@ -384,13 +358,10 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           const SizedBox(height: AppSizes.gapM),
           
           // 품종
-          TextFormField(
+          MingrrTextField(
             controller: _breedController,
-            decoration: const InputDecoration(
-              labelText: '품종',
-              hintText: '예: 골든 리트리버, 말티즈',
-              border: OutlineInputBorder(),
-            ),
+            labelText: '품종',
+            hintText: FormStrings.hintBreed,
           ),
           const SizedBox(height: AppSizes.gapM),
           
@@ -445,30 +416,25 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       child: Column(
         children: [
           // 체중
-          TextFormField(
+          MingrrTextField(
             controller: _weightController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: '체중 (kg)',
-              hintText: '예: 5.5',
-              border: OutlineInputBorder(),
-              suffixText: 'kg',
-            ),
+            labelText: '체중 (kg)',
+            hintText: FormStrings.hintWeight,
           ),
           const SizedBox(height: AppSizes.gapM),
           
           // 중성화 여부
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('중성화 여부'),
-            subtitle: Text(_isNeutered ? '중성화 완료' : '중성화 안함'),
-            value: _isNeutered,
-            onChanged: (value) {
-              setState(() {
-                _isNeutered = value;
-              });
-            },
-            activeColor: Theme.of(context).colorScheme.primary,
+          MingrrSwitchCard(
+            accentColor: Theme.of(context).colorScheme.primary,
+            items: [
+              MingrrSwitchItem(
+                title: SwitchStrings.neutered,
+                subtitle: _isNeutered ? SwitchStrings.neuteredYes : SwitchStrings.neuteredNo,
+                value: _isNeutered,
+                onChanged: (value) => setState(() => _isNeutered = value),
+              ),
+            ],
           ),
         ],
       ),
@@ -542,11 +508,24 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
                   }
                 });
               },
-              selectedColor: Theme.of(context).colorScheme.surface,
+              selectedColor: Theme.of(context).colorScheme.primaryContainer,
+              backgroundColor: Theme.of(context).colorScheme.surface,
               checkmarkColor: Theme.of(context).colorScheme.primary,
+              showCheckmark: false,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               labelStyle: TextStyle(
                 fontSize: 12,
-                color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
+                color: isSelected 
+                    ? Theme.of(context).colorScheme.tertiary
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              side: BorderSide(
+                color: isSelected 
+                    ? Theme.of(context).colorScheme.primary 
+                    : Theme.of(context).colorScheme.outline,
+                width: isSelected ? 1.5 : 1,
               ),
             );
           }).toList(),
@@ -559,14 +538,10 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
   Widget _buildBioSection() {
     return MingrrCard(
       margin: EdgeInsets.zero,
-      child: TextFormField(
+      child: MingrrTextField(
         controller: _bioController,
         maxLines: 4,
-        maxLength: 200,
-        decoration: const InputDecoration(
-          hintText: '반려동물을 소개해주세요\n예: 활발하고 사람을 좋아하는 아이입니다.',
-          border: OutlineInputBorder(),
-        ),
+        hintText: FormStrings.hintPetBio,
       ),
     );
   }
@@ -578,19 +553,17 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 혈통서 보유 여부
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('혈통서 보유'),
-            subtitle: Text(_hasPedigree ? '혈통서 있음' : '혈통서 없음'),
-            value: _hasPedigree,
-            onChanged: (value) {
-              setState(() {
-                _hasPedigree = value;
-              });
-            },
-            activeColor: Theme.of(context).colorScheme.primary,
+          MingrrSwitchCard(
+            accentColor: Theme.of(context).colorScheme.primary,
+            items: [
+              MingrrSwitchItem(
+                title: SwitchStrings.hasPedigree,
+                subtitle: _hasPedigree ? SwitchStrings.hasPedigreeYes : SwitchStrings.hasPedigreeNo,
+                value: _hasPedigree,
+                onChanged: (value) => setState(() => _hasPedigree = value),
+              ),
+            ],
           ),
-          const Divider(),
           const SizedBox(height: AppSizes.gapM),
           
           // 추가 사진 섹션

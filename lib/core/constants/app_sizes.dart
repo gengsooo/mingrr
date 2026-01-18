@@ -80,4 +80,8 @@ class AppSizes {
   static const double bottomSheetHandleHeight = 4.0;
   static const double bottomSheetHandleTop = 16.0;
   static const double bottomSheetHandleBottom = 12.0;
+  
+  // 바텀시트 버튼 영역 패딩 (키보드 대응 바텀시트용)
+  static const double bottomSheetButtonPaddingH = 20.0;
+  static const double bottomSheetButtonPaddingV = 16.0;
 }

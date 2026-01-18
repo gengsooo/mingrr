@@ -20,79 +20,21 @@ import '../providers/health_provider.dart';
 
 final _healthService = HealthService();
 
-// ===== 공통 바텀시트 래퍼 =====
-class _RecordBottomSheet extends StatelessWidget {
-  final String title;
-  final VoidCallback onSave;
-  final Widget child;
-
-  const _RecordBottomSheet({required this.title, required this.onSave, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const BottomSheetHandle(),
-          // 헤더
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          // 컨텐츠
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-              child: child,
-            ),
-          ),
-          // 하단 저장 버튼
-          Container(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 16,
-              bottom: MediaQuery.of(context).padding.bottom + 16,
-            ),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: ElevatedButton(
-              onPressed: onSave,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.features.health,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                ),
-              ),
-              child: const Text(
-                '저장',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+// ===== 공통 바텀시트 래퍼 (MingrrInputBottomSheet 사용) =====
+// 키보드가 올라와도 저장 버튼이 키보드 위에 표시됨
+Widget _buildRecordBottomSheet({
+  required BuildContext context,
+  required String title,
+  required VoidCallback onSave,
+  required Widget child,
+}) {
+  return MingrrInputBottomSheet(
+    title: title,
+    buttonLabel: '저장',
+    buttonColor: context.features.health,
+    onSave: onSave,
+    child: child,
+  );
 }
 
 // ===== 공통 위젯 (MingrrDateSelector 사용) =====
@@ -166,7 +108,8 @@ class _AddWeightRecordScreenState extends State<AddWeightRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return _RecordBottomSheet(
+    return _buildRecordBottomSheet(
+      context: context,
       title: '체중 기록',
       onSave: _saveRecord,
       child: Column(
@@ -260,7 +203,8 @@ class _AddGroomingRecordScreenState extends State<AddGroomingRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return _RecordBottomSheet(
+    return _buildRecordBottomSheet(
+      context: context,
       title: '그루밍 기록',
       onSave: _saveRecord,
       child: Column(
@@ -331,7 +275,8 @@ class _AddVaccinationRecordScreenState extends State<AddVaccinationRecordScreen>
 
   @override
   Widget build(BuildContext context) {
-    return _RecordBottomSheet(
+    return _buildRecordBottomSheet(
+      context: context,
       title: '예방접종 기록',
       onSave: _saveRecord,
       child: Column(
@@ -392,7 +337,8 @@ class _AddCheckupRecordScreenState extends State<AddCheckupRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return _RecordBottomSheet(
+    return _buildRecordBottomSheet(
+      context: context,
       title: '검진 기록',
       onSave: _saveRecord,
       child: Column(
@@ -456,7 +402,8 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return _RecordBottomSheet(
+    return _buildRecordBottomSheet(
+      context: context,
       title: '약 기록',
       onSave: _saveRecord,
       child: Column(
@@ -580,7 +527,8 @@ class _AddSpecialRecordScreenState extends State<AddSpecialRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return _RecordBottomSheet(
+    return _buildRecordBottomSheet(
+      context: context,
       title: '특이사항 기록',
       onSave: _saveRecord,
       child: Column(

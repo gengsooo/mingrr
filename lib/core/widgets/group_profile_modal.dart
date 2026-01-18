@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/bottom_sheet_stack_manager.dart';
-import '../theme/app_theme.dart';
 import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import 'guardian_profile_modal.dart';
-import 'mingrr_bottom_sheet.dart';
-import 'kkosunnae_widgets.dart';
+import 'profile_modal_components.dart';
 
 /// ============================================================
 /// 소모임(Group) 프로필 모달
@@ -44,26 +42,10 @@ void showGroupProfileModal(
   bool isJoined = true,
   List<GroupMember> members = const [],
 }) {
-  final stackManager = BottomSheetStackManager();
-  final sheetId = BottomSheetStackManager.createSheetId(BottomSheetType.group, groupId);
-  
-  // 순환 감지: 같은 소모임 바텀시트가 이미 열려있으면 해당 바텀시트까지 닫기
-  if (stackManager.hasCycle(sheetId)) {
-    final closeCount = stackManager.popUntilAndGetCount(sheetId);
-    for (int i = 0; i < closeCount; i++) {
-      if (Navigator.canPop(context)) {
-        Navigator.pop(context);
-      }
-    }
-  }
-  
-  // 스택에 등록
-  stackManager.push(sheetId);
-  
-  showModalBottomSheet(
+  showStackedProfileModal(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+    type: BottomSheetType.group,
+    id: groupId,
     builder: (sheetContext) => GroupProfileModal(
       groupId: groupId,
       groupName: groupName,
@@ -76,10 +58,7 @@ void showGroupProfileModal(
       isJoined: isJoined,
       members: members,
     ),
-  ).then((_) {
-    // 바텀시트가 닫힐 때 스택에서 제거
-    stackManager.pop(sheetId);
-  });
+  );
 }
 
 /// 소모임 프로필 모달 위젯
@@ -111,380 +90,209 @@ class GroupProfileModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
-      ),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    return ProfileModalContainer(
+      title: '소모임 정보',
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const BottomSheetHandle(),
-          // 헤더
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: 8),
-            child: const Text(
-              '소모임 정보',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
-            ),
-          ),
+          // 소모임 기본 정보
+          _buildGroupInfo(context),
+          const SizedBox(height: AppSizes.gapL),
           
-          // 본문
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 소모임 기본 정보
-                  _buildGroupInfo(context),
-                  const SizedBox(height: AppSizes.gapL),
-                  
-                  // 태그
-                  if (tags.isNotEmpty) ...[
-                    _buildTags(context),
-                    const SizedBox(height: AppSizes.gapL),
-                  ],
-                  
-                  // 소개
-                  if (description != null && description!.isNotEmpty) ...[
-                    _buildDescription(context),
-                    const SizedBox(height: AppSizes.gapL),
-                  ],
-                  
-                  // 멤버 리스트
-                  if (members.isNotEmpty) ...[
-                    _buildMembersSection(context),
-                    const SizedBox(height: AppSizes.gapL),
-                  ],
-                  
-                  // 상세 정보
-                  _buildDetails(context),
-                ],
-              ),
-            ),
-          ),
+          // 태그
+          if (tags.isNotEmpty) ...[
+            _buildTags(context),
+            const SizedBox(height: AppSizes.gapL),
+          ],
+          
+          // 소개
+          if (description != null && description!.isNotEmpty) ...[
+            _buildDescription(context),
+            const SizedBox(height: AppSizes.gapL),
+          ],
+          
+          // 멤버 리스트
+          if (members.isNotEmpty) ...[
+            _buildMembersSection(context),
+            const SizedBox(height: AppSizes.gapL),
+          ],
+          
+          // 상세 정보
+          _buildDetails(context),
         ],
       ),
     );
   }
 
-  /// 멤버 리스트 섹션 (좌우 스와이프 가능)
+  /// 멤버 리스트 섹션
   Widget _buildMembersSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '참여 멤버 (${members.length})',
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: AppSizes.gapS),
-        SizedBox(
-          height: 120,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: members.length,
-            itemBuilder: (context, index) => _buildMemberItem(context, members[index]),
-          ),
-        ),
-      ],
+    return ProfileModalSection(
+      title: '참여 멤버',
+      count: '${members.length}명',
+      content: ProfileModalHorizontalList<GroupMember>(
+        items: members,
+        height: 120,
+        itemSpacing: 12,
+        itemBuilder: (context, member, index) => _buildMemberItem(context, member),
+      ),
     );
   }
 
-  /// 멤버 아이템 (클릭 시 보호자 프로필)
+  /// 멤버 아이템
   Widget _buildMemberItem(BuildContext context, GroupMember member) {
-    return GestureDetector(
-      onTap: () {
-        // 스택 방식: 현재 바텀시트 위에 보호자 정보 바텀시트를 열음
-        showGuardianProfileModal(
-          context,
-          guardianId: member.id,
-          guardianName: member.nickname,
-          kkosunnaeScore: member.kkosunnaeScore,
-          gender: GuardianGender.unknown,
-          isIdentityVerified: true,
-          isPetVerified: true,
-          isLocationVerified: false,
-          pets: [
-            GuardianPetInfo(
-              id: 'pet_${member.id}',
-              name: '멍멍이',
-              breed: '골든 리트리버',
-              ageString: '3살',
-              likeCount: 42,
-            ),
-          ],
-          activityInfo: const GuardianActivityInfo(
-            walkCount: 85,
-            datingCount: 12,
-            marketCount: 5,
-            groupCount: 18,
+    return ProfileModalItemCard(
+      width: 100,
+      avatar: Stack(
+        children: [
+          ProfileModalAvatar(
+            size: 50,
+            fallbackIcon: Icons.person,
           ),
-        );
-      },
-      child: Container(
-        width: 100,
-        margin: const EdgeInsets.only(right: 12),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: context.sectionBackground,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Stack(
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Stack(
-                  children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.person, size: 24, color: Theme.of(context).colorScheme.primary),
-                    ),
-                    if (member.isOnline)
-                      Positioned(
-                        bottom: 0,
-                        right: 0,
-                        child: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: context.features.success,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  member.nickname,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                KkosunnaeScoreSmall(score: member.kkosunnaeScore),
-              ],
-            ),
-            // 모임장 배지 (좌측 상단)
-            if (member.isCreator)
-              Positioned(
-                top: 0,
-                left: 0,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: context.features.social,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    '모임장',
-                    style: TextStyle(
-                      fontSize: 8,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+          if (member.isOnline)
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: context.features.success,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
                 ),
               ),
-          ],
+            ),
+        ],
+      ),
+      title: member.nickname,
+      subtitleWidget: null,
+      badge: member.isCreator ? _buildCreatorBadge(context) : null,
+      onTap: () => _openMemberProfile(context, member),
+    );
+  }
+
+  /// 모임장 배지
+  Widget _buildCreatorBadge(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: context.features.social,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: const Text(
+        '모임장',
+        style: TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.w500),
+      ),
+    );
+  }
+
+  /// 멤버 프로필 모달 열기
+  void _openMemberProfile(BuildContext context, GroupMember member) {
+    showGuardianProfileModal(
+      context,
+      guardianId: member.id,
+      guardianName: member.nickname,
+      kkosunnaeScore: member.kkosunnaeScore,
+      gender: GuardianGender.unknown,
+      isIdentityVerified: true,
+      isPetVerified: true,
+      isLocationVerified: false,
+      pets: [
+        GuardianPetInfo(
+          id: 'pet_${member.id}',
+          name: '멍멍이',
+          breed: '골든 리트리버',
+          ageString: '3살',
+          likeCount: 42,
         ),
+      ],
+      activityInfo: const GuardianActivityInfo(
+        walkCount: 85,
+        datingCount: 12,
+        marketCount: 5,
+        groupCount: 18,
       ),
     );
   }
 
   /// 소모임 기본 정보
   Widget _buildGroupInfo(BuildContext context) {
-    return Row(
-      children: [
-        // 프로필 이미지 (보호자/반려동물 정보와 동일한 60x60 크기)
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: context.features.social.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            Icons.groups,
-            size: 30,
-            color: context.features.social,
-          ),
-        ),
-        const SizedBox(width: AppSizes.gapM),
-        
-        // 정보
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                groupName,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              if (category != null) ...[
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: context.features.social.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    category!,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: context.features.social,
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ],
+    return ProfileModalHeader(
+      avatar: ProfileModalAvatar(
+        fallbackIcon: Icons.groups,
+        backgroundColor: context.features.social.withValues(alpha: 0.1),
+        iconColor: context.features.social,
+      ),
+      name: groupName,
+      subtitle: category != null ? _buildCategoryBadge(context) : null,
+    );
+  }
+
+  /// 카테고리 배지
+  Widget _buildCategoryBadge(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: context.features.social.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        category!,
+        style: TextStyle(fontSize: 11, color: context.features.social),
+      ),
     );
   }
 
   /// 태그
   Widget _buildTags(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '관심사',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: AppSizes.gapS),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: tags.map((tag) => Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: context.features.social.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Text(
-              '#$tag',
-              style: TextStyle(
-                fontSize: 13,
-                color: context.features.social,
-              ),
-            ),
-          )).toList(),
-        ),
-      ],
+    return ProfileModalSection(
+      title: '관심사',
+      content: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: tags.map((tag) => Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: context.features.social.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Text(
+            '#$tag',
+            style: TextStyle(fontSize: 13, color: context.features.social),
+          ),
+        )).toList(),
+      ),
     );
   }
 
   /// 소개
   Widget _buildDescription(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '소개',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: AppSizes.gapS),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: context.sectionBackground,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            description!,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.5,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-        ),
-      ],
+    return ProfileModalSection(
+      title: '소개',
+      content: ProfileModalDescriptionBox(text: description!),
     );
   }
 
   /// 상세 정보
   Widget _buildDetails(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          '상세 정보',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: AppSizes.gapS),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: context.sectionBackground,
-            borderRadius: BorderRadius.circular(12),
+    return ProfileModalSection(
+      title: '상세 정보',
+      content: ProfileModalDetailsBox(
+        children: [
+          if (location != null)
+            ProfileModalDetailRow(icon: Icons.location_on, label: '활동 지역', value: location!),
+          if (createdAt != null) ...[
+            if (location != null) const Divider(height: 16),
+            ProfileModalDetailRow(icon: Icons.calendar_today, label: '개설일', value: createdAt!),
+          ],
+          const Divider(height: 16),
+          ProfileModalDetailRow(
+            icon: Icons.check_circle,
+            label: '가입 상태',
+            value: isJoined ? '가입됨' : '미가입',
           ),
-          child: Column(
-            children: [
-              if (location != null)
-                _buildDetailRow(context, Icons.location_on, '활동 지역', location!),
-              if (createdAt != null) ...[
-                if (location != null) const Divider(height: 16),
-                _buildDetailRow(context, Icons.calendar_today, '개설일', createdAt!),
-              ],
-              const Divider(height: 16),
-              _buildDetailRow(
-                context,
-                Icons.check_circle,
-                '가입 상태',
-                isJoined ? '가입됨' : '미가입',
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDetailRow(BuildContext context, IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
-        const SizedBox(width: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 13,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const Spacer(),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

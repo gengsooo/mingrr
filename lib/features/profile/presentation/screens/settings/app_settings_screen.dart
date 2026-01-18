@@ -27,7 +27,6 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> {
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -49,7 +48,12 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> {
                     style: theme.textTheme.titleLarge,
                   ),
                 ),
-                ...AppThemeMode.values.map((mode) => _buildThemeModeOption(context, mode, themeMode)),
+                ...AppThemeMode.values.map((mode) => MingrrSettingsTile.radio(
+                  icon: mode.icon,
+                  title: mode.displayName,
+                  isSelected: mode == themeMode,
+                  onTap: () => ref.read(themeModeProvider.notifier).setThemeMode(mode),
+                )),
               ],
             ),
           ),
@@ -69,29 +73,10 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> {
                     style: theme.textTheme.titleLarge,
                   ),
                 ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.delete_outline, color: Colors.red),
-                  ),
-                  title: const Text('캐시 삭제'),
-                  subtitle: Text(
-                    '이미지 캐시를 삭제하여 저장 공간을 확보합니다',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  trailing: _isClearing
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+                MingrrSettingsTile.destructive(
+                  icon: Icons.delete_outline,
+                  title: '캐시 삭제',
+                  subtitle: '이미지 캐시를 삭제하여 저장 공간을 확보합니다',
                   onTap: _isClearing ? null : _clearCache,
                 ),
               ],
@@ -99,41 +84,6 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildThemeModeOption(BuildContext context, AppThemeMode mode, AppThemeMode currentMode) {
-    final isSelected = mode == currentMode;
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.2) : colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(
-          mode.icon,
-          color: isSelected ? Theme.of(context).colorScheme.primary : colorScheme.onSurfaceVariant,
-        ),
-      ),
-      title: Text(
-        mode.displayName,
-        style: TextStyle(
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-          color: isSelected ? Theme.of(context).colorScheme.primary : colorScheme.onSurface,
-        ),
-      ),
-      trailing: isSelected
-          ? Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
-          : Icon(Icons.circle_outlined, color: colorScheme.onSurfaceVariant),
-      onTap: () {
-        ref.read(themeModeProvider.notifier).setThemeMode(mode);
-      },
     );
   }
 

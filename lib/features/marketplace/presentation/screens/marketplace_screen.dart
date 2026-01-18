@@ -139,11 +139,10 @@ class MarketplaceScreen extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: MingrrFAB.write(
         onPressed: () => _showAddSheet(context, selectedTab),
         backgroundColor: context.features.market,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.edit, color: Colors.white),
+        tooltip: '상품/알바 등록',
       ),
     );
   }

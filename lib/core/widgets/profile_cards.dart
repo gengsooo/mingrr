@@ -4,6 +4,7 @@ import '../constants/app_sizes.dart';
 import 'common_widgets.dart';
 import 'kkosunnae_widgets.dart';
 import 'verification_badge.dart';
+import 'info_badge.dart';
 
 /// ============================================================
 /// 프로필 카드 공통 위젯
@@ -337,17 +338,7 @@ class PetProfileCard extends StatelessWidget {
   }
 
   Widget _buildLikeCount(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Icon(Icons.favorite, size: 12, color: Colors.red),
-        const SizedBox(width: 2),
-        Text(
-          '$likeCount',
-          style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
-        ),
-      ],
-    );
+    return LikeCountText(count: likeCount ?? 0, size: InfoBadgeSize.small);
   }
 
   String _buildSubtitle() {

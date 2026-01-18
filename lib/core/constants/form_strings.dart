@@ -59,6 +59,15 @@ class FormStrings {
   static const String hintMaxMembers = '0 = 무제한';
   static const String hintSearch = '검색어를 입력해주세요';
   
+  // ===== 프로필/반려동물 관련 힌트 =====
+  static const String hintPetName = '반려동물 이름을 입력해주세요';
+  static const String hintBreed = '예: 골든 리트리버, 말티즈';
+  static const String hintWeight = '예: 5.5';
+  static const String hintPetBio = '반려동물을 소개해주세요\n예: 활발하고 사람을 좋아하는 아이입니다.';
+  static const String hintUserBio = '다른 보호자들에게 보여질 자기소개를 작성해주세요.';
+  static const String hintGroupName = '소모임 이름을 입력해주세요';
+  static const String hintGroupDescription = '소모임에 대해 소개해주세요';
+  
   // ===== 유효성 검사 메시지 =====
   static const String errorRequired = '필수 입력 항목입니다';
   static const String errorTitleRequired = '제목을 입력해주세요';
@@ -116,9 +125,9 @@ class ScreenTitles {
   ScreenTitles._();
   
   // ===== 커뮤니티 =====
-  static const String communityWrite = '글 작성';
+  static const String communityWrite = '글 쓰기';
   static const String communityEdit = '글 수정';
-  static const String communityDetail = '게시글';
+  static const String communityDetail = '글쓰기';
   
   // ===== 소모임 =====
   static const String groupWrite = '소모임 만들기';
@@ -133,8 +142,8 @@ class ScreenTitles {
   static const String marketplace = '마켓';
   
   // ===== 교배 =====
-  static const String breedingWrite = '교배 글쓰기';
-  static const String breedingEdit = '교배 글 수정';
+  static const String breedingWrite = '교배 등록';
+  static const String breedingEdit = '교배 수정';
   static const String breedingDetail = '교배';
   
   // ===== 펫 =====
@@ -170,4 +179,12 @@ class SwitchStrings {
   // ===== 교배 =====
   static const String sameBreedOnly = '같은 품종만';
   static const String sameBreedOnlyDesc = '같은 품종의 강아지만 매칭됩니다';
+  
+  // ===== 반려동물 =====
+  static const String neutered = '중성화 여부';
+  static const String neuteredYes = '중성화 완료';
+  static const String neuteredNo = '중성화 안함';
+  static const String hasPedigree = '혈통서 보유';
+  static const String hasPedigreeYes = '혈통서 있음';
+  static const String hasPedigreeNo = '혈통서 없음';
 }

@@ -308,43 +308,44 @@ service cloud.firestore {
     
     // ============================================================
     // 건강수첩 컬렉션들 (체중, 산책, 그루밍, 예방접종, 검진, 약, 특이사항)
+    // 코드에서 camelCase 사용: weightRecords, walkRecords 등
     // ============================================================
-    match /weight_records/{recordId} {
+    match /weightRecords/{recordId} {
       allow read: if isAdmin() || isSignedIn();
       allow create: if isAdmin() || isSignedIn();
       allow update: if isAdmin() || isSignedIn();
       allow delete: if isAdmin() || isSignedIn();
     }
     
-    match /walk_records/{recordId} {
+    match /walkRecords/{recordId} {
       allow read: if isAdmin() || isSignedIn();
       allow create: if isAdmin() || isSignedIn();
       allow update: if isAdmin() || isSignedIn();
       allow delete: if isAdmin() || isSignedIn();
     }
     
-    match /grooming_records/{recordId} {
+    match /groomingRecords/{recordId} {
       allow read: if isAdmin() || isSignedIn();
       allow create: if isAdmin() || isSignedIn();
       allow update: if isAdmin() || isSignedIn();
       allow delete: if isAdmin() || isSignedIn();
     }
     
-    match /vaccination_records/{recordId} {
+    match /vaccinationRecords/{recordId} {
       allow read: if isAdmin() || isSignedIn();
       allow create: if isAdmin() || isSignedIn();
       allow update: if isAdmin() || isSignedIn();
       allow delete: if isAdmin() || isSignedIn();
     }
     
-    match /checkup_records/{recordId} {
+    match /checkupRecords/{recordId} {
       allow read: if isAdmin() || isSignedIn();
       allow create: if isAdmin() || isSignedIn();
       allow update: if isAdmin() || isSignedIn();
       allow delete: if isAdmin() || isSignedIn();
     }
     
-    match /medication_records/{recordId} {
+    match /medicationRecords/{recordId} {
       allow read: if isAdmin() || isSignedIn();
       allow create: if isAdmin() || isSignedIn();
       allow update: if isAdmin() || isSignedIn();
