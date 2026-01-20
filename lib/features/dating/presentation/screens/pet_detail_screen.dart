@@ -20,6 +20,7 @@ import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/dialogs/confirm_sheet.dart';
 import '../../../../core/widgets/compatibility_widgets.dart';
 import '../../../../core/widgets/info_badge.dart' show LikeButton, InfoBadgeSize, EmptyInfoBadge, PedigreeBadge;
+import '../../../../core/widgets/mingrr_image_header.dart' show ImageHeaderDistanceBadge, LikeBadge;
 import '../../../../core/widgets/svg_icons.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../models/user_model.dart';
@@ -285,8 +286,8 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                   text: '궁합 정보 없음',
                 )
               : null,
-      // 거리 정보 (DistanceBadge가 0일 때 자동으로 "위치정보 없음" 표시)
-      bottomLeftOverlay: DistanceBadge(distanceKm: distanceKm),
+      // 거리 정보 (ImageHeaderDistanceBadge가 0일 때 자동으로 "위치정보 없음" 표시)
+      bottomLeftOverlay: ImageHeaderDistanceBadge(distanceKm: distanceKm),
       bottomRightOverlay: LikeBadge(
         count: _likeCount,
         isLiked: _isLiked,

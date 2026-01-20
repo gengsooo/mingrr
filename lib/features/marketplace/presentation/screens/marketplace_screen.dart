@@ -382,15 +382,16 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     );
   }
 
-  /// Firebase JobModel을 사용한 알바 아이템
-  Widget _buildJobModelItem(BuildContext context, JobModel job) {
+  /// Firebase JobWithDistance를 사용한 알바 아이템
+  Widget _buildJobModelItem(BuildContext context, JobWithDistance jobWithDistance) {
     return JobCard(
-      job: job,
+      job: jobWithDistance.job,
+      distanceString: jobWithDistance.distanceString,
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => JobDetailScreen(jobId: job.id),
+            builder: (context) => JobDetailScreen(jobId: jobWithDistance.job.id),
           ),
         );
       },

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/chat_service.dart';
@@ -227,11 +228,11 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           // 정보 행
           Row(
             children: [
-              Icon(Icons.location_on_outlined, size: 16, color: colorScheme.onSurfaceVariant),
+              Icon(LocationConstants.distanceIcon, size: 16, color: colorScheme.onSurfaceVariant),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
-                  group.address ?? '지역 미설정',
+                  group.address ?? LocationConstants.noLocationText,
                   style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

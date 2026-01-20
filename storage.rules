@@ -85,7 +85,16 @@ service firebase.storage {
       allow delete: if isAuthenticated();
     }
     
-    // 상품 이미지
+    // 상품 이미지 (1단계 경로)
+    match /products/{imageId} {
+      allow read: if true;
+      allow write: if isAuthenticated() 
+                   && isValidImageSize() 
+                   && isValidImageType();
+      allow delete: if isAuthenticated();
+    }
+    
+    // 상품 이미지 (2단계 경로 - 레거시 호환)
     match /products/{productId}/{imageId} {
       allow read: if true;
       allow write: if isAuthenticated() 
@@ -94,8 +103,26 @@ service firebase.storage {
       allow delete: if isAuthenticated();
     }
     
-    // 소모임 이미지
+    // 소모임 이미지 (1단계 경로)
+    match /groups/{imageId} {
+      allow read: if true;
+      allow write: if isAuthenticated() 
+                   && isValidImageSize() 
+                   && isValidImageType();
+      allow delete: if isAuthenticated();
+    }
+    
+    // 소모임 이미지 (2단계 경로 - 레거시 호환)
     match /groups/{groupId}/{imageId} {
+      allow read: if true;
+      allow write: if isAuthenticated() 
+                   && isValidImageSize() 
+                   && isValidImageType();
+      allow delete: if isAuthenticated();
+    }
+    
+    // 알바 이미지 (1단계 경로)
+    match /jobs/{imageId} {
       allow read: if true;
       allow write: if isAuthenticated() 
                    && isValidImageSize() 

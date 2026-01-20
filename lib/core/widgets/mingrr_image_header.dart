@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/pet_constants.dart';
 import 'common_widgets.dart';
 import 'info_badge.dart';
 
@@ -287,14 +288,18 @@ class GenderBadge extends StatelessWidget {
   }
 }
 
-/// 거리 배지
-class DistanceBadge extends StatelessWidget {
+/// 이미지 헤더용 거리 배지 (오버레이 스타일)
+class ImageHeaderDistanceBadge extends StatelessWidget {
   final double distanceKm;
 
-  const DistanceBadge({super.key, required this.distanceKm});
+  const ImageHeaderDistanceBadge({super.key, required this.distanceKm});
 
   @override
   Widget build(BuildContext context) {
+    final distanceText = distanceKm > 0 && distanceKm.isFinite 
+        ? '${distanceKm.toStringAsFixed(1)}km'
+        : LocationConstants.noLocationText;
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -304,12 +309,10 @@ class DistanceBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.location_on, size: 14, color: Colors.white),
+          Icon(LocationConstants.distanceIcon, size: 14, color: Colors.white),
           const SizedBox(width: 2),
           Text(
-            distanceKm > 0 && distanceKm.isFinite 
-              ? '${distanceKm.toStringAsFixed(1)}km'
-              : '위치정보 없음',
+            distanceText,
             style: const TextStyle(
               fontSize: 13, 
               color: Colors.white, 

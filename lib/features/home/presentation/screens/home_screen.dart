@@ -983,10 +983,10 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 Row(
                   children: [
-                    Icon(Icons.location_on, size: 12, color: colorScheme.outlineVariant),
+                    Icon(LocationConstants.distanceIcon, size: 12, color: colorScheme.outlineVariant),
                     const SizedBox(width: 2),
                     Text(
-                      group.address ?? '위치 미상',
+                      group.address ?? LocationConstants.noLocationText,
                       style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
                     ),
                     const SizedBox(width: 8),

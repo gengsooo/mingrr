@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_sizes.dart';
+import '../constants/pet_constants.dart';
 import '../theme/feature_colors.dart';
 import 'common_widgets.dart';
 import 'info_badge.dart';
@@ -162,7 +163,7 @@ class DatingRecommendCard extends StatelessWidget {
                             style: const TextStyle(fontSize: 13, color: Colors.white70),
                           ),
                           const SizedBox(width: 8),
-                          const Icon(Icons.location_on, size: 12, color: Colors.white70),
+                          Icon(LocationConstants.distanceIcon, size: 12, color: Colors.white70),
                           const SizedBox(width: 2),
                           Text(
                             distanceString,
@@ -480,7 +481,7 @@ class DatingBreedingCard extends StatelessWidget {
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(Icons.location_on, size: 12, color: colorScheme.onSurfaceVariant),
+                                  Icon(LocationConstants.distanceIcon, size: 12, color: colorScheme.onSurfaceVariant),
                                   const SizedBox(width: 2),
                                   Text(
                                     distanceString,

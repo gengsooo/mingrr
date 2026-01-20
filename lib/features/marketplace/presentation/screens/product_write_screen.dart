@@ -637,38 +637,45 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
   }
 
   Future<void> _pickImages() async {
-    final totalImages = _existingImageUrls.length + _selectedImages.length;
-    if (totalImages >= ImageLimits.maxImageCount) {
+    final picker = ImagePicker();
+    final remaining = ImageLimits.maxImageCount - (_existingImageUrls.length + _selectedImages.length);
+    
+    if (remaining <= 0) {
       MingrrSnackBar.warning(context, '이미지는 최대 ${ImageLimits.maxImageCount}장까지 업로드 가능합니다');
       return;
     }
-
-    // 이미지 소스 선택 다이얼로그
-    final source = await ImageUtils.showImageSourceDialog(context);
-    if (source == null || !mounted) return;
-
-    // 이미지 선택 및 크롭
-    final croppedFile = await ImageUtils.pickAndCropImage(
-      context: context,
-      source: source,
-      toolbarColor: context.features.market,
-      maxWidth: ImageLimits.maxResolution,
-      maxHeight: ImageLimits.maxResolution,
+    
+    // 바로 갤러리에서 다중 이미지 선택 (커뮤니티와 동일한 UX)
+    final images = await picker.pickMultiImage(
+      maxWidth: ImageLimits.maxResolution.toDouble(),
+      maxHeight: ImageLimits.maxResolution.toDouble(),
       imageQuality: ImageLimits.imageQuality,
     );
-
-    if (croppedFile != null && mounted) {
-      // 파일 크기 검사
-      final fileSize = await croppedFile.length();
-      if (fileSize > ImageLimits.maxFileSizeBytes) {
-        final sizeMB = (fileSize / (1024 * 1024)).toStringAsFixed(1);
-        MingrrSnackBar.warning(
-          context, 
-          '이미지 크기가 너무 큽니다 (${sizeMB}MB). 최대 ${ImageLimits.maxFileSizeMB}MB까지 업로드 가능합니다',
-        );
-        return;
+    
+    if (images.isNotEmpty) {
+      // 각 이미지 파일 크기 검사
+      final validImages = <XFile>[];
+      for (final image in images.take(remaining)) {
+        final file = File(image.path);
+        final fileSize = await file.length();
+        if (fileSize > ImageLimits.maxFileSizeBytes) {
+          if (mounted) {
+            final sizeMB = (fileSize / (1024 * 1024)).toStringAsFixed(1);
+            MingrrSnackBar.warning(
+              context, 
+              '이미지 크기가 너무 큽니다 (${sizeMB}MB). 최대 ${ImageLimits.maxFileSizeMB}MB까지 업로드 가능합니다',
+            );
+          }
+          continue;
+        }
+        validImages.add(image);
       }
-      setState(() => _selectedImages.add(XFile(croppedFile.path)));
+      
+      if (validImages.isNotEmpty) {
+        setState(() {
+          _selectedImages.addAll(validImages);
+        });
+      }
     }
   }
 
@@ -703,9 +710,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
             File(image.path),
             'jobs/${const Uuid().v4()}',
           );
-          if (url != null) {
-            imageUrls.add(url);
-          }
+          imageUrls.add(url);
         }
         
         final job = JobModel(
@@ -763,6 +768,8 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
         category: _selectedCategory!,
         status: _isEditMode ? widget.product!.status : ProductStatus.available,
         imageUrls: imageUrls,
+        location: _selectedLocation?.toGeoPoint(),
+        address: _selectedLocation?.displayAddress,
         viewCount: _isEditMode ? widget.product!.viewCount : 0,
         likeCount: _isEditMode ? widget.product!.likeCount : 0,
         chatCount: _isEditMode ? widget.product!.chatCount : 0,

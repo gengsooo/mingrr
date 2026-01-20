@@ -386,6 +386,14 @@ class LocationConstants {
   /// 위치 인증 만료 기간 (90일)
   /// - 인증 후 이 기간이 지나면 재인증 필요
   static const int verificationExpirationDays = 90;
+  
+  // ===== 거리 표시 관련 상수 =====
+  
+  /// 위치 정보 없음 기본 텍스트
+  static const String noLocationText = '위치 정보 없음';
+  
+  /// 거리 표시 아이콘
+  static const IconData distanceIcon = Icons.location_on_outlined;
 }
 
 // ============================================================

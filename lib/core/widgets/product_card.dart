@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
+import '../constants/pet_constants.dart';
 import '../../models/marketplace_model.dart';
 import 'common_widgets.dart';
+import 'distance_badge.dart';
 
 /// ============================================================
 /// 상품 카드 컴포넌트
@@ -50,7 +52,7 @@ class ProductCard extends StatelessWidget {
                 Text(
                   distanceString != null 
                       ? '$distanceString · ${_formatTime(product.createdAt)}'
-                      : '${product.address ?? '위치 미상'} · ${_formatTime(product.createdAt)}',
+                      : '${product.address ?? LocationConstants.noLocationText} · ${_formatTime(product.createdAt)}',
                   style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
                 ),
                 const SizedBox(height: 6),
@@ -189,11 +191,13 @@ class ProductCard extends StatelessWidget {
 /// 알바 카드 컴포넌트
 class JobCard extends StatelessWidget {
   final JobModel job;
+  final String? distanceString;
   final VoidCallback? onTap;
 
   const JobCard({
     super.key,
     required this.job,
+    this.distanceString,
     this.onTap,
   });
 
@@ -271,7 +275,7 @@ class JobCard extends StatelessWidget {
             ),
           const SizedBox(height: 12),
 
-          // 하단: 급여
+          // 하단: 급여 + 거리
           Row(
             children: [
               Text(
@@ -283,6 +287,13 @@ class JobCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
+              if (distanceString != null) ...[
+                DistanceBadge.small(
+                  distanceString: distanceString!,
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
+                const SizedBox(width: 8),
+              ],
               Row(
                 children: [
                   Icon(Icons.chat_bubble_outline, size: 14, color: Theme.of(context).colorScheme.outlineVariant),

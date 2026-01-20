@@ -12,7 +12,6 @@ import '../../../../core/constants/form_strings.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/utils/image_utils.dart';
-import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
@@ -259,14 +258,20 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
   }
 
   Future<void> _pickImage() async {
-    final croppedFile = await ImageUtils.pickCoverImage(
-      context: context,
-      toolbarColor: context.features.social,
+    final picker = ImagePicker();
+    
+    // 바로 갤러리에서 이미지 선택 (커뮤니티와 동일한 UX)
+    final image = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: ImageLimits.maxResolution.toDouble(),
+      maxHeight: ImageLimits.maxResolution.toDouble(),
+      imageQuality: ImageLimits.imageQuality,
     );
 
-    if (croppedFile != null) {
+    if (image != null) {
       // 파일 크기 검사
-      final fileSize = await croppedFile.length();
+      final file = File(image.path);
+      final fileSize = await file.length();
       if (fileSize > ImageLimits.maxFileSizeBytes) {
         if (mounted) {
           final sizeMB = (fileSize / (1024 * 1024)).toStringAsFixed(1);
@@ -277,7 +282,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
         }
         return;
       }
-      setState(() => _selectedImage = XFile(croppedFile.path));
+      setState(() => _selectedImage = image);
     }
   }
 

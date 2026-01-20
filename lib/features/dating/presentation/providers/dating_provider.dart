@@ -21,23 +21,22 @@ import '../../../pet/presentation/providers/pet_provider.dart';
 
 final _firebase = FirebaseService();
 
-/// 펫 + 거리 + 궁합 정보
-class PetWithDistance {
-  final PetModel pet;
-  final double distanceMeters;
+/// 펫 + 거리 + 궁합 정보 (ItemWithDistance<PetModel> 확장)
+class PetWithDistance extends ItemWithDistance<PetModel> {
   final String ownerAddress;
   final int matchScore;
   final String matchGrade;
   
   PetWithDistance({
-    required this.pet,
-    required this.distanceMeters,
+    required PetModel pet,
+    required double distanceMeters,
     this.ownerAddress = '',
     this.matchScore = 0,
     this.matchGrade = '',
-  });
+  }) : super(item: pet, distanceMeters: distanceMeters);
   
-  String get distanceString => LocationService.formatDistance(distanceMeters);
+  /// 기존 코드 호환성을 위한 접근자
+  PetModel get pet => item;
 }
 
 // 모든 반려동물 목록 (데이팅용 - 내 반려동물 제외, 거리 및 궁합 정보 포함)

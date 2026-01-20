@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
+import '../constants/pet_constants.dart';
 
 /// ============================================================
 /// 위치 정보 통합 모델
@@ -120,7 +121,7 @@ class LocationData extends Equatable {
     if (fullAddress != null && fullAddress!.isNotEmpty) {
       return fullAddress!;
     }
-    return '위치 정보 없음';
+    return LocationConstants.noLocationText;
   }
   
   /// 주소 정보가 있는지 확인

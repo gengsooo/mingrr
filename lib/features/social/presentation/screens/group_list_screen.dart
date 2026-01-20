@@ -121,7 +121,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.location_on, size: 18, color: accentColor),
+              Icon(LocationConstants.distanceIcon, size: 18, color: accentColor),
               const SizedBox(width: 6),
               GestureDetector(
                 onTap: () => _showLocationSelector(context, ref),
@@ -594,11 +594,11 @@ class _GroupCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Icon(Icons.location_on_outlined, size: 14, color: colorScheme.onSurfaceVariant),
+                      Icon(LocationConstants.distanceIcon, size: 14, color: colorScheme.onSurfaceVariant),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          group.address ?? '지역 미설정',
+                          group.address ?? LocationConstants.noLocationText,
                           style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

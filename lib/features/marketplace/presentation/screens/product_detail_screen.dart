@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/chat_service.dart';
@@ -19,6 +20,7 @@ import '../../../../core/models/location_model.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../../models/chat_model.dart';
 import '../../../../core/providers/refresh_notifier.dart';
+import '../../../../core/mixins/distance_calculator_mixin.dart';
 import '../../../chat/presentation/screens/chat_detail_screen.dart';
 import 'product_write_screen.dart';
 
@@ -48,7 +50,8 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
-class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
+class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
+    with DistanceCalculatorMixin {
   final FirestoreService _firestoreService = FirestoreService();
   final FirebaseService _firebaseService = FirebaseService();
   
@@ -58,6 +61,11 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   bool _isWishlisted = false;
   bool _isWishlistLoading = false;
   String? _sellerNickname;
+
+  /// 거리 문자열 계산 (Mixin 활용)
+  String _getDistanceString() {
+    return getDistanceFromLocation(_product?.location, _product?.address);
+  }
 
   @override
   void initState() {
@@ -319,9 +327,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
-        // 시간, 조회수
+        // 시간, 조회수, 거리
         Text(
-          '${_product?.address ?? ''} · ${formatRelativeTime(_product?.createdAt ?? DateTime.now())} · 조회 ${_product?.viewCount ?? 0}',
+          '${_getDistanceString()} · ${formatRelativeTime(_product?.createdAt ?? DateTime.now())} · 조회 ${_product?.viewCount ?? 0}',
           style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 16),
@@ -375,7 +383,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         displayAddress.isEmpty || 
         displayAddress.contains('Instance of') ||
         displayAddress.contains('GeoPoint')) {
-      displayAddress = '위치 정보 없음';
+      displayAddress = LocationConstants.noLocationText;
     }
     
     final locationData = LocationData(

@@ -112,13 +112,16 @@ class InfoBadge extends StatelessWidget {
   }
 }
 
-/// 거리 배지
-class DistanceBadge extends StatelessWidget {
+/// 거리 배지 (InfoBadge 스타일)
+/// 
+/// 참고: 일반적인 거리 표시는 distance_badge.dart의 DistanceBadge 사용 권장
+@Deprecated('Use DistanceBadge from distance_badge.dart instead')
+class InfoDistanceBadge extends StatelessWidget {
   final double distanceKm;
   final InfoBadgeSize size;
   final bool showIcon;
 
-  const DistanceBadge({
+  const InfoDistanceBadge({
     super.key,
     required this.distanceKm,
     this.size = InfoBadgeSize.medium,

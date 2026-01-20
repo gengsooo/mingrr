@@ -9,6 +9,8 @@ import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/profile_cards.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
+import '../../../../core/constants/pet_constants.dart';
+import '../../../../core/mixins/distance_calculator_mixin.dart';
 import '../../../../models/marketplace_model.dart';
 import '../providers/marketplace_provider.dart';
 
@@ -33,7 +35,13 @@ class JobDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<JobDetailScreen> createState() => _JobDetailScreenState();
 }
 
-class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
+class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
+    with DistanceCalculatorMixin {
+  /// 거리 문자열 계산 (Mixin 활용)
+  String _getDistanceString(JobModel job) {
+    return getDistanceFromLocation(job.location, job.address);
+  }
+
   @override
   Widget build(BuildContext context) {
     final jobAsync = ref.watch(jobByIdProvider(widget.jobId));
@@ -202,7 +210,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
           const SizedBox(height: 4),
         ],
         Text(
-          '${job.address ?? ''} · ${formatRelativeTime(job.createdAt)}',
+          '${_getDistanceString(job)} · ${formatRelativeTime(job.createdAt)}',
           style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: 16),

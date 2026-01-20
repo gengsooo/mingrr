@@ -127,7 +127,7 @@ class LocationService {
   static String formatDistance(double distanceMeters) {
     // 거리 정보가 없거나 무한대인 경우
     if (distanceMeters == 0 || distanceMeters.isInfinite || distanceMeters.isNaN) {
-      return '거리 정보 없음';
+      return LocationConstants.noLocationText;
     }
     if (distanceMeters < 1000) {
       return '${distanceMeters.round()}m';
