@@ -117,6 +117,10 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         buttonText: '글 작성하기',
         onButtonPressed: () => _navigateToWrite(context),
         accentColor: accentColor,
+        onRefresh: () async {
+          final selectedCategory = ref.read(_selectedCommunityCategory);
+          await ref.read(paginatedCommunityPostsProvider(selectedCategory).notifier).refresh();
+        },
       );
     }
 

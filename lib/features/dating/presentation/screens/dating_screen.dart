@@ -479,6 +479,10 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
         icon: Icons.pets,
         title: '아직 데이터가 없어요',
         subtitle: '거리를 늘리거나 필터를 조정해보세요',
+        accentColor: context.features.dating,
+        onRefresh: () async {
+          await ref.read(paginatedBreedingPetsProvider(distanceFilter).notifier).refresh();
+        },
       );
     }
     
@@ -613,6 +617,10 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
         icon: Icons.location_off,
         title: '아직 데이터가 없어요',
         subtitle: '거리를 늘려보세요',
+        accentColor: context.features.dating,
+        onRefresh: () async {
+          await ref.read(paginatedNearbyPetsProvider(distanceFilter).notifier).refresh();
+        },
       );
     }
     
@@ -730,6 +738,10 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
         icon: Icons.auto_awesome,
         title: '추천할 반려동물이 없어요',
         subtitle: '근처에 등록된 반려동물이 없어요',
+        accentColor: context.features.dating,
+        onRefresh: () async {
+          await ref.read(paginatedRecommendedPetsProvider.notifier).refresh();
+        },
       );
     }
     

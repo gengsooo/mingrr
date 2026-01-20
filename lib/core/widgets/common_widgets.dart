@@ -451,6 +451,7 @@ class MingrrTextField extends StatelessWidget {
 /// - 부제목: 12px, outlineVariant
 /// - 간격: 아이콘-제목 16px, 제목-부제목 8px, 부제목-버튼 16px
 /// - 버튼: 180px 너비, accentColor 배경
+/// - onRefresh: pull-to-refresh 지원 (선택)
 class MingrrEmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -458,6 +459,7 @@ class MingrrEmptyState extends StatelessWidget {
   final String? buttonText;
   final VoidCallback? onButtonPressed;
   final Color? accentColor;
+  final Future<void> Function()? onRefresh;
 
   const MingrrEmptyState({
     super.key,
@@ -467,58 +469,90 @@ class MingrrEmptyState extends StatelessWidget {
     this.buttonText,
     this.onButtonPressed,
     this.accentColor,
+    this.onRefresh,
   });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // 아이콘
-          Icon(icon, size: 48, color: colorScheme.outlineVariant),
-          const SizedBox(height: 16),
-          // 제목
-          Text(
-            title,
-            style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          // 부제목
-          if (subtitle != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              subtitle!,
-              style: TextStyle(
-                fontSize: 12,
-                color: colorScheme.outlineVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-          // 버튼
-          if (buttonText != null && onButtonPressed != null) ...[
-            const SizedBox(height: 16),
-            SizedBox(
-              width: 180,
-              child: ElevatedButton(
-                onPressed: onButtonPressed,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: accentColor ?? colorScheme.primary,
-                  foregroundColor: Colors.white,
+    final content = CustomScrollView(
+      physics: onRefresh != null 
+          ? const AlwaysScrollableScrollPhysics() 
+          : const NeverScrollableScrollPhysics(),
+      slivers: [
+        SliverFillRemaining(
+          hasScrollBody: false,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // 아이콘
+                Icon(icon, size: 48, color: colorScheme.outlineVariant),
+                const SizedBox(height: 16),
+                // 제목
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                child: Text(buttonText!),
-              ),
+                // 부제목
+                if (subtitle != null) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    subtitle!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.outlineVariant,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+                // 버튼
+                if (buttonText != null && onButtonPressed != null) ...[
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: 180,
+                    child: ElevatedButton(
+                      onPressed: onButtonPressed,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accentColor ?? colorScheme.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Text(buttonText!),
+                    ),
+                  ),
+                ],
+                // 새로고침 힌트
+                if (onRefresh != null) ...[
+                  const SizedBox(height: 24),
+                  Text(
+                    '아래로 당겨서 새로고침',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colorScheme.outlineVariant,
+                    ),
+                  ),
+                ],
+              ],
             ),
-          ],
-        ],
-      ),
+          ),
+        ),
+      ],
     );
+    
+    if (onRefresh != null) {
+      return RefreshIndicator(
+        onRefresh: onRefresh!,
+        color: accentColor ?? colorScheme.primary,
+        child: content,
+      );
+    }
+    
+    return content;
   }
 }
 

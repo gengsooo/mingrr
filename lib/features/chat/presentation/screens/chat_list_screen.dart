@@ -145,6 +145,10 @@ class ChatListScreen extends ConsumerWidget {
                 icon: Icons.chat_bubble_outline,
                 title: '아직 데이터가 없어요',
                 subtitle: _getEmptyStateMessage(type),
+                accentColor: _getTabColor(context, type),
+                onRefresh: () async {
+                  ref.invalidate(userChatRoomsProvider);
+                },
               );
             }
             
@@ -211,6 +215,11 @@ class ChatListScreen extends ConsumerWidget {
                     icon: Icons.chat_bubble_outline,
                     title: '아직 데이터가 없어요',
                     subtitle: _getEmptyStateMessage(ChatType.dating),
+                    accentColor: context.features.dating,
+                    onRefresh: () async {
+                      ref.invalidate(userChatRoomsProvider);
+                      ref.invalidate(receivedRequestsProvider);
+                    },
                   );
                 }
                 

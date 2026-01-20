@@ -219,6 +219,10 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
         icon: type == ProductType.sell ? Icons.sell : Icons.volunteer_activism,
         title: '아직 데이터가 없어요',
         subtitle: '거리를 늘리거나 다른 카테고리를 확인해보세요',
+        accentColor: context.features.market,
+        onRefresh: () async {
+          await ref.read(paginatedProductsProvider((type: type, radiusKm: distanceFilter)).notifier).refresh();
+        },
       );
     }
     
@@ -331,6 +335,10 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
         icon: Icons.work_outline,
         title: '아직 데이터가 없어요',
         subtitle: '새로운 알바를 등록해보세요',
+        accentColor: context.features.market,
+        onRefresh: () async {
+          await ref.read(paginatedJobsProvider.notifier).refresh();
+        },
       );
     }
     
