@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import '../../models/pet_model.dart';
+import 'common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
 import 'info_badge.dart' show LikeCountText, InfoBadgeSize, PedigreeBadge;
 
@@ -216,32 +217,17 @@ class _PetSelectorSheetState extends State<PetSelectorSheet> {
           const SizedBox(height: AppSizes.gapM),
           
           // 선택 버튼
-          SizedBox(
-            width: double.infinity,
+          MingrrButton(
+            text: '선택하기',
+            onPressed: _selectedPet != null
+                ? () {
+                    widget.onSelect(_selectedPet!);
+                    Navigator.pop(context);
+                  }
+                : null,
+            backgroundColor: color,
+            textColor: Colors.white,
             height: 52,
-            child: ElevatedButton(
-              onPressed: _selectedPet != null
-                  ? () {
-                      widget.onSelect(_selectedPet!);
-                      Navigator.pop(context);
-                    }
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: color,
-                disabledBackgroundColor: Theme.of(context).colorScheme.outline,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                '선택하기',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
           ),
           SizedBox(height: MediaQuery.of(context).padding.bottom),
         ],

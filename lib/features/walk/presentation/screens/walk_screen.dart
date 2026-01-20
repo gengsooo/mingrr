@@ -14,6 +14,7 @@ import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../../core/services/location_helper.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../health/presentation/providers/health_provider.dart';
@@ -77,8 +78,8 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
   
   /// 현재 위치 가져오기 (LocationHelper 사용 - 3단계 전략)
   Future<void> _getCurrentLocation() async {
-    debugPrint('\n📍 [WalkScreen] === 위치 가져오기 시작 ===');
-    debugPrint('📍 [WalkScreen] mounted: $mounted');
+    AppLogger.debug('WalkScreen', '=== 위치 가져오기 시작 ===');
+    AppLogger.debug('WalkScreen', 'mounted: $mounted');
     
     setState(() {
       _isLocationLoading = true;
@@ -94,18 +95,18 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       },
     );
     
-    debugPrint('📍 [WalkScreen] 위치 결과: isSuccess=${result.isSuccess}, source=${result.source}, errorType=${result.errorType}');
+    AppLogger.debug('WalkScreen', '위치 결과: isSuccess=${result.isSuccess}, source=${result.source}, errorType=${result.errorType}');
     if (result.position != null) {
-      debugPrint('📍 [WalkScreen] 위치: ${result.position!.latitude}, ${result.position!.longitude}');
+      AppLogger.debug('WalkScreen', '위치: ${result.position!.latitude}, ${result.position!.longitude}');
     }
     
     if (!mounted) {
-      debugPrint('📍 [WalkScreen] ⚠️ mounted=false, 상태 업데이트 스킵');
+      AppLogger.warning('WalkScreen', 'mounted=false, 상태 업데이트 스킵');
       return;
     }
     
     if (result.isSuccess && result.position != null) {
-      debugPrint('📍 [WalkScreen] ✅ 위치 가져오기 성공 (source: ${result.source})');
+      AppLogger.info('WalkScreen', '위치 가져오기 성공 (source: ${result.source})');
       setState(() {
         _currentPosition = result.position;
         _isLocationLoading = false;
@@ -115,7 +116,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       // 백그라운드에서 high 정확도 위치 업데이트
       _updateHighAccuracyPosition();
     } else {
-      debugPrint('📍 [WalkScreen] ❌ 위치 가져오기 실패 - 오류 팝업 표시');
+      AppLogger.warning('WalkScreen', '위치 가져오기 실패 - 오류 팝업 표시');
       setState(() {
         _isLocationLoading = false;
         _locationProgress = null;
@@ -133,7 +134,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
     
     // 50m 이상 차이나면 지도 업데이트
     if (LocationHelper.shouldUpdatePosition(_currentPosition!, highPosition)) {
-      debugPrint('📍 [WalkScreen] 🔄 high 정확도 위치로 업데이트 (50m+ 차이)');
+      AppLogger.debug('WalkScreen', 'high 정확도 위치로 업데이트 (50m+ 차이)');
       
       setState(() => _currentPosition = highPosition);
       
@@ -148,7 +149,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         );
       }
     } else {
-      debugPrint('📍 [WalkScreen] high 정확도 위치 차이 50m 미만 - 업데이트 스킵');
+      AppLogger.debug('WalkScreen', 'high 정확도 위치 차이 50m 미만 - 업데이트 스킵');
     }
   }
   
@@ -176,7 +177,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
   
   /// 위치 관련 상태 초기화 (재시도 시 깨끗한 상태에서 시작)
   void _resetLocationState() {
-    debugPrint('📍 [WalkScreen] 🔄 위치 상태 초기화');
+    AppLogger.debug('WalkScreen', '위치 상태 초기화');
     setState(() {
       _currentPosition = null;
       _initialMapPosition = null;
@@ -317,17 +318,17 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
 
   /// 지도 위젯 (플랫폼별 분기)
   Widget _buildKakaoMap() {
-    debugPrint('📍 [WalkScreen] _buildKakaoMap: kIsWeb=$kIsWeb, _isLocationLoading=$_isLocationLoading, _currentPosition=${_currentPosition != null}');
+    AppLogger.debug('WalkScreen', '_buildKakaoMap: kIsWeb=$kIsWeb, _isLocationLoading=$_isLocationLoading, _currentPosition=${_currentPosition != null}');
     
     // 웹에서는 단순 플레이스홀더 표시
     if (kIsWeb) {
-      debugPrint('📍 [WalkScreen] → 웹 플레이스홀더 표시');
+      AppLogger.debug('WalkScreen', '웹 플레이스홀더 표시');
       return _buildWebMapPlaceholder();
     }
     
     // 위치 로딩 중이면 로딩 위젯 표시
     if (_isLocationLoading) {
-      debugPrint('📍 [WalkScreen] → 로딩 위젯 표시 (progress: $_locationProgress)');
+      AppLogger.debug('WalkScreen', '로딩 위젯 표시 (progress: $_locationProgress)');
       return MapLoadingWidget.walk(progress: _locationProgress);
     }
     
@@ -339,7 +340,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         _currentPosition!.longitude,
       );
       
-      debugPrint('📍 [WalkScreen] → 카카오맵 렌더링: ${_initialMapPosition!.latitude}, ${_initialMapPosition!.longitude}');
+      AppLogger.debug('WalkScreen', '카카오맵 렌더링: ${_initialMapPosition!.latitude}, ${_initialMapPosition!.longitude}');
       
       return KakaoMap(
         key: const ValueKey('kakao_map_walk'), // 리빌드 방지
@@ -354,13 +355,13 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
     }
     
     // 위치 정보가 없으면 로딩 위젯
-    debugPrint('📍 [WalkScreen] → 위치 없음, 오류 메시지 표시');
+    AppLogger.warning('WalkScreen', '위치 없음, 오류 메시지 표시');
     return MapLoadingWidget.walk(message: '위치를 확인할 수 없습니다');
   }
   
   /// 카카오맵 생성 완료 콜백
   void _onMapReady(KakaoMapController controller) {
-    debugPrint('📍 [WalkScreen] onMapReady 호출됨');
+    AppLogger.debug('WalkScreen', 'onMapReady 호출됨');
     _mapController = controller;
     setState(() => _isMapReady = true);
   }
@@ -397,7 +398,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         animation: const CameraAnimation(300),
       );
     } catch (e) {
-      debugPrint('경로 그리기 실패: $e');
+      AppLogger.error('WalkScreen', '경로 그리기 실패', e);
     }
   }
   
@@ -414,7 +415,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         animation: const CameraAnimation(500),
       );
     } catch (e) {
-      debugPrint('카메라 이동 실패: $e');
+      AppLogger.error('WalkScreen', '카메라 이동 실패', e);
     }
   }
   
@@ -917,7 +918,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       
       if (mounted) MingrrSnackBar.success(context, '산책을 시작했습니다! 🐾');
     } catch (e) {
-      debugPrint('산책 시작 오류: $e');
+      AppLogger.error('WalkScreen', '산책 시작 오류', e);
       if (mounted) MingrrSnackBar.error(context, '산책 시작 중 오류가 발생했습니다: $e');
     }
   }
@@ -976,7 +977,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         );
       }
     } catch (e) {
-      debugPrint('경로 업데이트 오류: $e');
+      AppLogger.error('WalkScreen', '경로 업데이트 오류', e);
     }
   }
   
@@ -1004,7 +1005,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       
       if (mounted) MingrrSnackBar.success(context, '발자국을 남겼습니다! 🐾');
     } catch (e) {
-      debugPrint('발자국 추가 오류: $e');
+      AppLogger.error('WalkScreen', '발자국 추가 오류', e);
     }
   }
   
@@ -1038,7 +1039,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         });
       }
     } catch (e) {
-      debugPrint('산책 종료 오류: $e');
+      AppLogger.error('WalkScreen', '산책 종료 오류', e);
       if (mounted) MingrrSnackBar.error(context, '산책 종료 중 오류가 발생했습니다: $e');
     }
   }
@@ -1087,7 +1088,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                   }
                   
                   if (snapshot.hasError) {
-                    debugPrint('산책 기록 로드 오류: ${snapshot.error}');
+                    AppLogger.error('WalkScreen', '산책 기록 로드 오류', snapshot.error);
                     return Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -14,6 +14,8 @@ import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/animal_registration_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/widgets/loading_widgets.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../core/widgets/image_picker_sheet.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/verification_badge.dart';
@@ -834,25 +836,16 @@ class ProfileScreen extends ConsumerWidget {
                 )
               // 다른 인증: 체크 아이콘만
               : Icon(Icons.check_circle, color: context.features.success)
-          : ElevatedButton(
+          : MingrrButton(
+              text: '인증하기',
               onPressed: () async {
                 Navigator.pop(context);
                 await _processVerification(context, ref, badgeType);
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.features.success,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                minimumSize: const Size(70, 32),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-              child: const Text(
-                '인증하기',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              ),
+              backgroundColor: context.features.success,
+              textColor: Colors.white,
+              height: 32,
+              width: 70,
             ),
     );
   }
@@ -873,7 +866,7 @@ class ProfileScreen extends ConsumerWidget {
       switch (badgeType) {
         case BadgeType.identity:
           // 본인인증 - 실제로는 PASS 등 본인인증 서비스 연동 필요
-          await _showIdentityVerificationDialog(context, firestoreService, userId);
+          _showIdentityVerificationDialog(context, firestoreService, userId);
           break;
         case BadgeType.location:
           // 위치인증 - 현재 위치 기반 인증 (거리 검증 포함)
@@ -892,38 +885,17 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   /// 본인인증 다이얼로그
-  Future<void> _showIdentityVerificationDialog(BuildContext context, FirestoreService firestoreService, String userId) async {
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('본인인증'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('본인인증을 진행하시겠습니까?'),
-            const SizedBox(height: 12),
-            Text(
-              '※ 실제 서비스에서는 PASS, 카카오 인증 등의 본인인증 서비스가 연동됩니다.',
-              style: TextStyle(fontSize: 12, color: Theme.of(ctx).colorScheme.outlineVariant),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('취소')),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.primary),
-            child: const Text('인증하기', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
+  void _showIdentityVerificationDialog(BuildContext context, FirestoreService firestoreService, String userId) {
+    showConfirmSheet(
+      context,
+      type: ConfirmSheetType.identityVerify,
+      onConfirm: () async {
+        await firestoreService.verifyIdentity(userId);
+        if (context.mounted) {
+          MingrrSnackBar.success(context, '본인인증이 완료되었습니다! ');
+        }
+      },
     );
-
-    if (result == true && context.mounted) {
-      await firestoreService.verifyIdentity(userId);
-      MingrrSnackBar.success(context, '본인인증이 완료되었습니다! ');
-    }
   }
 
   /// 위치 획득 헬퍼 함수 (타임아웃 포함)
@@ -932,11 +904,11 @@ class ProfileScreen extends ConsumerWidget {
       // 마지막 알려진 위치 먼저 시도 (즉시 반환)
       final lastPosition = await Geolocator.getLastKnownPosition();
       if (lastPosition != null) {
-        debugPrint('마지막 위치 사용: ${lastPosition.latitude}, ${lastPosition.longitude}');
+        AppLogger.debug('ProfileScreen', '마지막 위치 사용: ${lastPosition.latitude}, ${lastPosition.longitude}');
         return lastPosition;
       }
     } catch (e) {
-      debugPrint('마지막 위치 획득 실패: $e');
+      AppLogger.warning('ProfileScreen', '마지막 위치 획득 실패: $e');
     }
     
     // 현재 위치 획득 시도
@@ -1011,214 +983,42 @@ class ProfileScreen extends ConsumerWidget {
   /// 첫 위치 인증 다이얼로그
   Future<bool?> _showFirstTimeVerificationDialog(BuildContext context, String addressText) {
     final colorScheme = Theme.of(context).colorScheme;
-    final color = colorScheme.primary;
     
-    return showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => Dialog(
-        backgroundColor: colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 아이콘
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.location_on, size: 28, color: color),
-              ),
-              const SizedBox(height: 16),
-              
-              // 제목
-              const Text(
-                '위치 인증',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              
-              // 메시지
-              Text(
-                '현재 위치를 내 동네로 등록하시겠습니까?',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
-              ),
-              const SizedBox(height: 16),
-              
-              // 주소 표시
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.my_location, color: color, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        addressText,
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: colorScheme.onSurface),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              
-              // 버튼
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(ctx, false),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(color: colorScheme.outline),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      child: Text('취소', style: TextStyle(fontSize: 15, color: colorScheme.onSurfaceVariant)),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx, true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: color,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      child: const Text('인증하기', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+    return showInfoActionDialog(
+      context,
+      icon: Icons.location_on,
+      iconColor: colorScheme.primary,
+      title: '위치 인증',
+      message: '현재 위치를 내 동네로 등록하시겠습니까?',
+      infoBoxes: [
+        InfoBoxItem(
+          icon: Icons.my_location,
+          content: addressText,
         ),
-      ),
+      ],
+      confirmText: '인증하기',
     );
   }
   
   /// 재인증 다이얼로그 (500m 이내)
   Future<bool?> _showReVerificationDialog(BuildContext context, String addressText, double distance) {
-    final colorScheme = Theme.of(context).colorScheme;
     final color = context.features.success;
     
-    return showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => Dialog(
-        backgroundColor: colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 아이콘
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.check_circle, size: 28, color: color),
-              ),
-              const SizedBox(height: 16),
-              
-              // 제목
-              const Text(
-                '위치 인증 갱신',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              
-              // 메시지
-              Text(
-                '현재 위치에서 인증을 갱신하시겠습니까?',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
-              ),
-              const SizedBox(height: 16),
-              
-              // 주소 표시
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.my_location, color: color, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            addressText,
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: colorScheme.onSurface),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '저장된 위치에서 ${distance.round()}m',
-                            style: TextStyle(fontSize: 12, color: color),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              
-              // 버튼
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(ctx, false),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(color: colorScheme.outline),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      child: Text('취소', style: TextStyle(fontSize: 15, color: colorScheme.onSurfaceVariant)),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx, true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: color,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      child: const Text('인증 갱신', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+    return showInfoActionDialog(
+      context,
+      icon: Icons.check_circle,
+      iconColor: color,
+      title: '위치 인증 갱신',
+      message: '현재 위치에서 인증을 갱신하시겠습니까?',
+      infoBoxes: [
+        InfoBoxItem(
+          icon: Icons.my_location,
+          content: addressText,
+          subtitle: '저장된 위치에서 ${distance.round()}m',
+          color: color,
         ),
-      ),
+      ],
+      confirmText: '인증 갱신',
     );
   }
   
@@ -1236,133 +1036,28 @@ class ProfileScreen extends ConsumerWidget {
   /// 동네 변경 제안 다이얼로그 (1km 이상)
   Future<bool?> _showLocationChangeDialog(BuildContext context, String newAddress, double distance, String? savedAddress) {
     final colorScheme = Theme.of(context).colorScheme;
-    final color = colorScheme.primary;
     
-    return showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => Dialog(
-        backgroundColor: colorScheme.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 아이콘
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.swap_horiz, size: 28, color: color),
-              ),
-              const SizedBox(height: 16),
-              
-              // 제목
-              const Text(
-                '동네 변경',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              
-              // 메시지
-              Text(
-                '현재 위치가 저장된 동네와\n${LocationService.formatDistance(distance)} 떨어져 있어요.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
-              ),
-              const SizedBox(height: 16),
-              
-              // 저장된 위치
-              if (savedAddress != null) ...[
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.outline.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.location_on_outlined, color: colorScheme.onSurfaceVariant, size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('저장된 동네', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant)),
-                            Text(savedAddress, style: TextStyle(fontSize: 13, color: colorScheme.onSurface)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-              
-              // 현재 위치
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.my_location, color: color, size: 20),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('현재 위치', style: TextStyle(fontSize: 11, color: color)),
-                          Text(newAddress, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: colorScheme.onSurface)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              
-              // 버튼
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(ctx, false),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(color: colorScheme.outline),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      child: Text('취소', style: TextStyle(fontSize: 15, color: colorScheme.onSurfaceVariant)),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(ctx, true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: color,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                      child: const Text('동네 변경', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+    return showInfoActionDialog(
+      context,
+      icon: Icons.swap_horiz,
+      iconColor: colorScheme.primary,
+      title: '동네 변경',
+      message: '현재 위치가 저장된 동네와\n${LocationService.formatDistance(distance)} 떨어져 있어요.',
+      infoBoxes: [
+        if (savedAddress != null)
+          InfoBoxItem(
+            icon: Icons.location_on_outlined,
+            label: '저장된 동네',
+            content: savedAddress,
+            isPrimary: false,
           ),
+        InfoBoxItem(
+          icon: Icons.my_location,
+          label: '현재 위치',
+          content: newAddress,
         ),
-      ),
+      ],
+      confirmText: '동네 변경',
     );
   }
 
@@ -1600,149 +1295,53 @@ class ProfileScreen extends ConsumerWidget {
   }
   
   /// 닉네임 수정 다이얼로그
-  void _showNicknameEditDialog(BuildContext context, WidgetRef ref, dynamic user) {
+  void _showNicknameEditDialog(BuildContext context, WidgetRef ref, dynamic user) async {
     if (user == null) return;
     
-    final controller = TextEditingController(text: user.nickname);
-    
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 헤더 + X 버튼
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    '닉네임 변경',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Icon(Icons.close, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              
-              // 입력 필드
-              TextField(
-                controller: controller,
-                decoration: InputDecoration(
-                  hintText: '새 닉네임을 입력해주세요',
-                  hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
-                  filled: true,
-                  fillColor: Theme.of(context).colorScheme.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.5),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  counterText: '',
-                ),
-                style: const TextStyle(fontSize: 14),
-                maxLength: 10,
-              ),
-              const SizedBox(height: 16),
-              
-              // 버튼
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        side: BorderSide(color: Theme.of(context).colorScheme.outline),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        '취소',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final newNickname = controller.text.trim();
-                        if (newNickname.isEmpty || newNickname == user.nickname) {
-                          Navigator.pop(context);
-                          return;
-                        }
-                        
-                        try {
-                          // 닉네임 중복 체크
-                          final firestoreService = FirestoreService();
-                          final isAvailable = await firestoreService.isNicknameAvailable(
-                            newNickname,
-                            excludeUserId: user.id,
-                          );
-                          
-                          if (!isAvailable) {
-                            if (context.mounted) {
-                              MingrrSnackBar.error(context, '이미 사용 중인 닉네임입니다');
-                            }
-                            return;
-                          }
-                          
-                          final firestore = FirebaseFirestore.instance;
-                          await firestore.collection('users').doc(user.id).update({
-                            'nickname': newNickname,
-                          });
-                          
-                          if (context.mounted) {
-                            Navigator.pop(context);
-                            MingrrSnackBar.success(context, '닉네임이 변경되었습니다!');
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            MingrrSnackBar.error(context, '닉네임 변경 실패: $e');
-                          }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        '변경',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+    final newNickname = await showInputDialog(
+      context,
+      title: '닉네임 변경',
+      hintText: '새 닉네임을 입력해주세요',
+      initialValue: user.nickname,
+      maxLength: 10,
+      confirmText: '변경',
+      validator: (value) {
+        if (value.trim().isEmpty) return '닉네임을 입력해주세요';
+        if (value.trim().length < 2) return '2자 이상 입력해주세요';
+        return null;
+      },
     );
+    
+    if (newNickname == null || newNickname.trim() == user.nickname) return;
+    
+    try {
+      // 닉네임 중복 체크
+      final firestoreService = FirestoreService();
+      final isAvailable = await firestoreService.isNicknameAvailable(
+        newNickname.trim(),
+        excludeUserId: user.id,
+      );
+      
+      if (!isAvailable) {
+        if (context.mounted) {
+          MingrrSnackBar.error(context, '이미 사용 중인 닉네임입니다');
+        }
+        return;
+      }
+      
+      final firestore = FirebaseFirestore.instance;
+      await firestore.collection('users').doc(user.id).update({
+        'nickname': newNickname.trim(),
+      });
+      
+      if (context.mounted) {
+        MingrrSnackBar.success(context, '닉네임이 변경되었습니다!');
+      }
+    } catch (e) {
+      if (context.mounted) {
+        MingrrSnackBar.error(context, '닉네임 변경 실패: $e');
+      }
+    }
   }
 }
 
@@ -1828,7 +1427,7 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
           ).timeout(const Duration(seconds: 8));
         }
       } catch (e) {
-        debugPrint('위치 획득 실패: $e');
+        AppLogger.warning('ProfileScreen', '위치 획득 실패: $e');
         setState(() {
           _isLoading = false;
           _errorMessage = 'GPS 신호를 찾을 수 없습니다.\n실외로 이동 후 다시 시도해주세요.';
@@ -1875,7 +1474,7 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
       setState(() => _isLoading = false);
       
     } catch (e) {
-      debugPrint('위치 인증 오류: $e');
+      AppLogger.error('ProfileScreen', '위치 인증 오류', e);
       setState(() {
         _isLoading = false;
         _errorMessage = '위치 확인 중 오류가 발생했습니다.';
@@ -1918,7 +1517,7 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
       
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      debugPrint('인증 처리 오류: $e');
+      AppLogger.error('ProfileScreen', '인증 처리 오류', e);
       setState(() {
         _isLoading = false;
         _errorMessage = '인증 처리 중 오류가 발생했습니다.';
@@ -1960,7 +1559,7 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
             child: SizedBox(
               width: 28,
               height: 28,
-              child: CircularProgressIndicator(strokeWidth: 3, color: color),
+              child: MingrrLoadingIndicator(strokeWidth: 3, customColor: color),
             ),
           ),
         ),
@@ -2004,18 +1603,12 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
           style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant, height: 1.5),
         ),
         const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: () => Navigator.pop(context, false),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: colorScheme.primary,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('확인', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-          ),
+        MingrrButton(
+          text: '확인',
+          onPressed: () => Navigator.pop(context, false),
+          backgroundColor: colorScheme.primary,
+          textColor: Colors.white,
+          height: 48,
         ),
       ],
     );
@@ -2137,45 +1730,35 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
         // 버튼
         if (isTooFar)
           // 조금 더 가까이: 확인 버튼만
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context, false),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: themeColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: Text(buttonText, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-            ),
+          MingrrButton(
+            text: buttonText,
+            onPressed: () => Navigator.pop(context, false),
+            backgroundColor: themeColor,
+            textColor: Colors.white,
+            height: 48,
           )
         else
           // 인증/동네변경: 취소/확인 버튼
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
+                child: MingrrButton(
+                  text: '취소',
                   onPressed: () => Navigator.pop(context, false),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    side: BorderSide(color: colorScheme.outline),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: Text('취소', style: TextStyle(fontSize: 15, color: colorScheme.onSurfaceVariant)),
+                  isOutlined: true,
+                  backgroundColor: colorScheme.outline,
+                  textColor: colorScheme.onSurfaceVariant,
+                  height: 48,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: ElevatedButton(
+                child: MingrrButton(
+                  text: buttonText,
                   onPressed: _doVerification,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: themeColor,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: Text(buttonText, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                  backgroundColor: themeColor,
+                  textColor: Colors.white,
+                  height: 48,
                 ),
               ),
             ],
@@ -2288,7 +1871,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
         });
       }
     } catch (e) {
-      debugPrint('동물등록 인증 오류: $e');
+      AppLogger.error('ProfileScreen', '동물등록 인증 오류', e);
       setState(() {
         _step = _VerificationStep.error;
         _errorMessage = '인증 중 오류가 발생했습니다.';
@@ -2328,7 +1911,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
       
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      debugPrint('인증 저장 오류: $e');
+      AppLogger.error('ProfileScreen', '인증 저장 오류', e);
       setState(() {
         _step = _VerificationStep.error;
         _errorMessage = '인증 정보 저장 중 오류가 발생했습니다.';
@@ -2457,15 +2040,12 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: ElevatedButton(
+              child: MingrrButton(
+                text: '인증하기',
                 onPressed: _startVerification,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: const Text('인증하기', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                backgroundColor: primaryColor,
+                textColor: Colors.white,
+                height: 48,
               ),
             ),
           ],
@@ -2490,7 +2070,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             child: SizedBox(
               width: 28,
               height: 28,
-              child: CircularProgressIndicator(strokeWidth: 3, color: primaryColor),
+              child: MingrrLoadingIndicator(strokeWidth: 3, customColor: primaryColor),
             ),
           ),
         ),
@@ -2597,18 +2177,12 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
         const SizedBox(height: 20),
         
         // 완료 버튼
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: _completeVerification,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: successColor,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('완료', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-          ),
+        MingrrButton(
+          text: '완료',
+          onPressed: _completeVerification,
+          backgroundColor: successColor,
+          textColor: Colors.white,
+          height: 48,
         ),
       ],
     );
@@ -2668,18 +2242,15 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: ElevatedButton(
+              child: MingrrButton(
+                text: '다시 시도',
                 onPressed: () => setState(() {
                   _step = _VerificationStep.input;
                   _errorMessage = null;
                 }),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: const Text('다시 시도', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                backgroundColor: colorScheme.primary,
+                textColor: Colors.white,
+                height: 48,
               ),
             ),
           ],
@@ -2796,17 +2367,14 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: ElevatedButton(
+              child: MingrrButton(
+                text: '다음',
                 onPressed: () {
                   setState(() => _step = _VerificationStep.success);
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                child: const Text('다음', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                backgroundColor: primaryColor,
+                textColor: Colors.white,
+                height: 48,
               ),
             ),
           ],

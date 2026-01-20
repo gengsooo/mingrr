@@ -34,6 +34,7 @@ class CommunityWriteScreen extends ConsumerStatefulWidget {
 }
 
 class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
+  final _titleController = TextEditingController();
   final _contentController = TextEditingController();
   
   CommunityCategory _selectedCategory = CommunityCategory.daily;
@@ -53,6 +54,7 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
     super.initState();
     if (_isEditMode) {
       final post = widget.post!;
+      _titleController.text = post.title;
       _contentController.text = post.content;
       _selectedCategory = post.category;
       _existingImageUrls.addAll(post.imageUrls);
@@ -65,6 +67,7 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
 
   @override
   void dispose() {
+    _titleController.dispose();
     _contentController.dispose();
     super.dispose();
   }
@@ -122,6 +125,15 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
               accentColor: _accentColor,
             ),
             const SizedBox(height: AppSizes.gapXL),
+
+            // 제목 입력
+            const MingrrSectionLabel('제목', isRequired: true),
+            MingrrTextField(
+              controller: _titleController,
+              maxLines: 1,
+              hintText: '제목을 입력해주세요',
+            ),
+            const SizedBox(height: AppSizes.gapL),
 
             // 본문 입력
             const MingrrSectionLabel(FormStrings.labelContent, isRequired: true),
@@ -233,7 +245,13 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
   }
 
   Future<void> _onSubmit() async {
+    final title = _titleController.text.trim();
     final content = _contentController.text.trim();
+    
+    if (title.isEmpty) {
+      MingrrSnackBar.warning(context, '제목을 입력해주세요');
+      return;
+    }
     if (content.isEmpty) {
       MingrrSnackBar.warning(context, FormStrings.errorContentRequired);
       return;
@@ -285,6 +303,7 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
       if (_isEditMode) {
         await notifier.updatePost(
           postId: widget.post!.id,
+          title: title,
           content: content,
           imageUrls: uploadedUrls,
           videoUrl: videoUrl,
@@ -298,6 +317,7 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
       } else {
         final postId = await notifier.createPost(
           category: _selectedCategory,
+          title: title,
           content: content,
           imageUrls: uploadedUrls,
           videoUrl: videoUrl,

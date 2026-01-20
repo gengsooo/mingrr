@@ -1,5 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/models/paginated_state.dart';
+import '../../../../core/providers/block_provider.dart';
+import '../../../../core/providers/paginated_provider.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/kkosunnae_service.dart';
 import '../../../../models/community_post_model.dart';
@@ -14,12 +17,13 @@ import '../../../../models/community_post_model.dart';
 /// - 조회수 증가
 /// ============================================================
 
-/// 커뮤니티 게시글 목록 (카테고리 필터)
+/// 커뮤니티 게시글 목록 (카테고리 필터, 차단된 사용자 제외)
 final communityPostsProvider = FutureProvider.autoDispose.family<List<CommunityPostModel>, CommunityCategory?>((ref, category) async {
   // 캐시 유지 - 자주 사용되는 데이터이므로 자동 해제 방지
   ref.keepAlive();
   
   final firebase = FirebaseService();
+  final blockedUserIds = ref.watch(blockedUserIdsProvider).valueOrNull ?? [];
   
   Query<Map<String, dynamic>> query = firebase.feedPostsCollection
       .orderBy('createdAt', descending: true)
@@ -33,9 +37,12 @@ final communityPostsProvider = FutureProvider.autoDispose.family<List<CommunityP
   }
   
   final snapshot = await query.get();
-  return snapshot.docs
+  final posts = snapshot.docs
       .map((doc) => CommunityPostModel.fromFirestore(doc.data(), id: doc.id))
       .toList();
+  
+  // 차단된 사용자 게시글 제외
+  return posts.where((post) => !blockedUserIds.contains(post.authorId)).toList();
 });
 
 /// 특정 게시글 상세
@@ -87,6 +94,7 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
   /// 게시글 작성
   Future<String?> createPost({
     required CommunityCategory category,
+    required String title,
     required String content,
     List<String> imageUrls = const [],
     String? videoUrl,
@@ -115,6 +123,7 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
         authorName: userData?['nickname'] ?? '사용자',
         authorProfileUrl: userData?['profileImageUrl'],
         category: category,
+        title: title,
         content: content,
         imageUrls: imageUrls,
         videoUrl: videoUrl,
@@ -143,6 +152,7 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
   /// 게시글 수정
   Future<bool> updatePost({
     required String postId,
+    required String title,
     required String content,
     List<String>? imageUrls,
     String? videoUrl,
@@ -153,6 +163,7 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
     
     try {
       final updateData = <String, dynamic>{
+        'title': title,
         'content': content,
         'updatedAt': Timestamp.now(),
       };
@@ -321,4 +332,62 @@ final isCommunityPostLikedProvider = FutureProvider.autoDispose.family<bool, Str
   final likeId = '${userId}_$postId';
   final doc = await firebase.feedLikesCollection.doc(likeId).get();
   return doc.exists;
+});
+
+/// ============================================================
+/// 페이지네이션 커뮤니티 게시글 Provider
+/// 
+/// 서버 사이드 필터링 + 커서 기반 무한 스크롤 + 캐싱
+/// - 카테고리별 서버 필터링
+/// - 차단된 사용자 제외
+/// - 20개씩 로드
+/// - keepAlive로 화면 전환 시 상태 유지
+/// ============================================================
+
+const int _communityPageSize = 20;
+
+/// 페이지네이션 커뮤니티 게시글 Provider (카테고리별)
+final paginatedCommunityPostsProvider = StateNotifierProvider
+    .family<PaginatedNotifier<CommunityPostModel>, PaginatedState<CommunityPostModel>, CommunityCategory?>((ref, category) {
+  // 캐싱: 화면 전환 시 상태 유지 (5분 후 자동 해제)
+  final link = ref.keepAlive();
+  Future.delayed(const Duration(minutes: 5), () => link.close());
+  
+  final blockedUserIds = ref.watch(blockedUserIdsProvider).valueOrNull ?? [];
+  
+  return PaginatedNotifier<CommunityPostModel>(
+    pageSize: _communityPageSize,
+    fetchPage: (lastDocument, pageSize) async {
+      final firebase = FirebaseService();
+      
+      // 서버 사이드 필터링
+      Query<Map<String, dynamic>> query = firebase.feedPostsCollection;
+      
+      if (category != null) {
+        query = query.where('category', isEqualTo: category.name);
+      }
+      
+      query = query.orderBy('createdAt', descending: true);
+      
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
+      }
+      
+      query = query.limit(pageSize);
+      
+      final snapshot = await query.get();
+      
+      // 차단된 사용자 게시글 제외 (클라이언트 사이드)
+      final posts = snapshot.docs
+          .map((doc) => CommunityPostModel.fromFirestore(doc.data(), id: doc.id))
+          .where((post) => !blockedUserIds.contains(post.authorId))
+          .toList();
+      
+      return PaginatedResult<CommunityPostModel>(
+        items: posts,
+        lastDocument: snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+        hasMore: snapshot.docs.length >= pageSize,
+      );
+    },
+  );
 });

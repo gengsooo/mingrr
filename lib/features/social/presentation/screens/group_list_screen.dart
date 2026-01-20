@@ -9,6 +9,7 @@ import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/location_selector.dart';
 import '../../../../core/widgets/info_badge.dart';
+import '../../../../core/widgets/refresh_wrapper.dart';
 import '../providers/group_provider.dart';
 import 'group_detail_screen.dart';
 import 'group_write_screen.dart';
@@ -26,14 +27,40 @@ final _selectedLocationsProvider = StateProvider<List<String>>((ref) => []);
 /// 선택된 카테고리 인덱스
 final _selectedCategoryProvider = StateProvider<int>((ref) => 0);
 
-class GroupListScreen extends ConsumerWidget {
+class GroupListScreen extends ConsumerStatefulWidget {
   const GroupListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GroupListScreen> createState() => _GroupListScreenState();
+}
+
+class _GroupListScreenState extends ConsumerState<GroupListScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      ref.read(paginatedGroupsProvider.notifier).loadMore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final selectedLocations = ref.watch(_selectedLocationsProvider);
     final selectedCategory = ref.watch(_selectedCategoryProvider);
-    final colorScheme = Theme.of(context).colorScheme;
     final accentColor = context.features.social;
 
     // 카테고리 목록 (아이콘 제거)
@@ -212,25 +239,32 @@ class GroupListScreen extends ConsumerWidget {
   }
 
   Widget _buildGroupList(BuildContext context, WidgetRef ref, List<String> locationFilter) {
-    final sortedGroups = ref.watch(sortedGroupsProvider);
+    final paginatedState = ref.watch(paginatedGroupsProvider);
     final myGroupsAsync = ref.watch(userGroupsProvider);
-    final colorScheme = Theme.of(context).colorScheme;
     final accentColor = context.features.social;
 
+    // 지역 필터 적용
+    final allGroups = paginatedState.items;
     final filteredGroups = locationFilter.isEmpty
-        ? sortedGroups
-        : sortedGroups.where((g) {
+        ? allGroups
+        : allGroups.where((g) {
             final address = g.group.address ?? '';
             return locationFilter.any((loc) => address.contains(loc));
           }).toList();
 
-    return RefreshIndicator(
+    // 초기 로딩 상태
+    if (paginatedState.isInitialLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return MingrrRefreshWrapper(
       color: accentColor,
       onRefresh: () async {
-        ref.invalidate(sortedGroupsProvider);
+        await ref.read(paginatedGroupsProvider.notifier).refresh();
         ref.invalidate(userGroupsProvider);
       },
       child: ListView(
+        controller: _scrollController,
         padding: const EdgeInsets.all(16),
         children: [
           // 내 모임 섹션
@@ -270,6 +304,19 @@ class GroupListScreen extends ConsumerWidget {
                     ),
                   ),
                 )),
+
+          // 로딩 인디케이터
+          if (paginatedState.hasMore)
+            const Padding(
+              padding: EdgeInsets.all(AppSizes.paddingL),
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
 
           const SizedBox(height: 80),
         ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_sizes.dart';
+import 'common_widgets.dart';
 
 /// ============================================================
 /// MINGRR 공통 바텀시트 & 하단 버튼 위젯 모음
@@ -48,6 +49,7 @@ import '../constants/app_sizes.dart';
 Future<T?> showMingrrBottomSheet<T>({
   required BuildContext context,
   required Widget child,
+  String? title,
   bool isScrollControlled = false,
   bool showHandle = true,
   bool useSafeArea = true,
@@ -63,6 +65,7 @@ Future<T?> showMingrrBottomSheet<T>({
       showHandle: showHandle,
       height: height,
       padding: padding,
+      title: title,
       child: child,
     ),
   );
@@ -71,6 +74,7 @@ Future<T?> showMingrrBottomSheet<T>({
 /// 바텀시트 컨테이너 위젯
 class MingrrBottomSheet extends StatelessWidget {
   final Widget child;
+  final String? title;
   final bool showHandle;
   final double? height;
   final EdgeInsets? padding;
@@ -80,6 +84,7 @@ class MingrrBottomSheet extends StatelessWidget {
   const MingrrBottomSheet({
     super.key,
     required this.child,
+    this.title,
     this.showHandle = true,
     this.height,
     this.padding,
@@ -110,6 +115,17 @@ class MingrrBottomSheet extends StatelessWidget {
         mainAxisSize: height != null ? MainAxisSize.max : MainAxisSize.min,
         children: [
           if (showHandle) _buildHandle(context),
+          if (title != null) ...[
+            Text(
+              title!,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: AppSizes.gapM),
+          ],
           if (height != null)
             Expanded(child: child)
           else
@@ -481,36 +497,13 @@ class MingrrSubmitButtonBar extends StatelessWidget {
     final theme = Theme.of(context);
     
     return MingrrBottomButtonBar(
-      child: SizedBox(
-        width: double.infinity,
+      child: MingrrButton(
+        text: label,
+        onPressed: onPressed,
+        isLoading: isLoading,
+        backgroundColor: backgroundColor ?? theme.colorScheme.primary,
+        textColor: foregroundColor ?? Colors.white,
         height: 52,
-        child: ElevatedButton(
-          onPressed: isLoading ? null : onPressed,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: backgroundColor ?? theme.colorScheme.primary,
-            foregroundColor: foregroundColor ?? Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            elevation: 0,
-          ),
-          child: isLoading
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-        ),
       ),
     );
   }
@@ -716,32 +709,13 @@ class MingrrInputBottomSheet extends StatelessWidget {
   }
 
   Widget _buildDefaultButton(BuildContext context, Color effectiveButtonColor) {
-    return SizedBox(
-      width: double.infinity,
+    return MingrrButton(
+      text: buttonLabel ?? '저장',
+      onPressed: onSave,
+      isLoading: isLoading,
+      backgroundColor: effectiveButtonColor,
+      textColor: Colors.white,
       height: 50,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onSave,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: effectiveButtonColor,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusS),
-          ),
-        ),
-        child: isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
-            : Text(
-                buttonLabel ?? '저장',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-      ),
     );
   }
 }

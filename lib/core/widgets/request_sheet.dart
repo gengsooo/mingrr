@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import '../../models/pet_model.dart';
+import 'common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
 import 'pet_selector_card.dart';
 
@@ -230,23 +231,16 @@ class _RequestSheetState extends State<RequestSheet> {
                 ),
                 const SizedBox(width: AppSizes.gapM),
                 Expanded(
-                  child: ElevatedButton(
+                  child: MingrrButton(
+                    text: config.confirmText,
                     onPressed: _canSubmit ? () {
                       final message = _messageController.text.trim();
                       Navigator.pop(context);
                       widget.onConfirm(message.isEmpty ? null : message, selectedPet: _selectedPet);
                     } : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: config.color,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      config.confirmText,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
-                    ),
+                    backgroundColor: config.color,
+                    textColor: Colors.white,
+                    height: 44,
                   ),
                 ),
               ],

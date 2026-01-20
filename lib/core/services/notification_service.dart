@@ -1,7 +1,11 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import 'firebase_service.dart';
+import '../widgets/common_widgets.dart';
+import '../../../app.dart' show rootNavigatorKey;
 
 /// ============================================================
 /// 푸시 알림 서비스
@@ -133,22 +137,121 @@ class NotificationService {
   /// 알림 탭 처리
   void _handleNotificationTap(RemoteMessage message) {
     final data = message.data;
-    final type = data['type'];
-    final targetId = data['targetId'];
+    final type = data['type'] as String?;
 
     if (kDebugMode) {
-      print('알림 탭 처리: type=$type, targetId=$targetId');
+      print('알림 탭 처리: type=$type, data=$data');
     }
 
-    // TODO: 네비게이션 처리
-    // 예: GoRouter를 사용하여 해당 화면으로 이동
-    // context.go('/chat/$targetId');
+    // 네비게이션 처리
+    _navigateToScreen(type, data);
+  }
+
+  /// 알림 타입에 따른 화면 이동
+  void _navigateToScreen(String? type, Map<String, dynamic> data) {
+    final context = rootNavigatorKey.currentContext;
+    if (context == null) return;
+
+    switch (type) {
+      // 채팅 관련
+      case 'chat':
+      case 'marketInquiry':
+        final chatRoomId = data['chatRoomId'] as String?;
+        if (chatRoomId != null) {
+          context.push('/chat/detail/$chatRoomId');
+        } else {
+          context.go('/chat');
+        }
+        break;
+
+      // 데이팅 관련
+      case 'datingRequest':
+      case 'breedingRequest':
+      case 'datingAccepted':
+      case 'breedingAccepted':
+      case 'datingRejected':
+      case 'breedingRejected':
+        context.go('/chat'); // 채팅 목록으로 이동 (신청 탭)
+        break;
+
+      // 마켓 관련
+      case 'marketSold':
+      case 'productLike':
+        final productId = data['productId'] as String?;
+        if (productId != null) {
+          context.push('/market/product/$productId');
+        } else {
+          context.go('/market');
+        }
+        break;
+
+      // 소모임 관련
+      case 'groupJoinRequest':
+      case 'groupJoinApproved':
+      case 'groupJoinRejected':
+      case 'groupSchedule':
+        final groupId = data['groupId'] as String?;
+        if (groupId != null) {
+          context.push('/social/group/$groupId');
+        } else {
+          context.go('/social');
+        }
+        break;
+
+      // 산책 관련
+      case 'walkInvite':
+      case 'walkReminder':
+        context.go('/walk');
+        break;
+
+      // 반려동물 좋아요
+      case 'petLike':
+        final petId = data['petId'] as String?;
+        if (petId != null) {
+          context.push('/dating/detail/$petId');
+        } else {
+          context.go('/dating');
+        }
+        break;
+
+      // 평가/꼬순내지수 관련
+      case 'rating':
+      case 'ratingReminder':
+      case 'gradeChange':
+      case 'scoreChange':
+        context.go('/profile');
+        break;
+
+      // 기본: 알림 화면으로 이동
+      default:
+        context.go('/notifications');
+        break;
+    }
   }
 
   /// 인앱 알림 표시
   void _showInAppNotification(RemoteMessage message) {
-    // TODO: 인앱 알림 UI 구현
-    // 예: OverlayEntry, SnackBar 등
+    final context = rootNavigatorKey.currentContext;
+    if (context == null) return;
+
+    final notification = message.notification;
+    if (notification == null) return;
+
+    // SnackBar로 인앱 알림 표시
+    MingrrSnackBar.withAction(
+      context,
+      message: '${notification.title}: ${notification.body}',
+      actionLabel: '보기',
+      onAction: () => _navigateToScreen(
+        message.data['type'] as String?,
+        message.data,
+      ),
+    );
+  }
+
+  /// 알림 모델에서 화면 이동 (알림 화면에서 클릭 시)
+  void navigateFromNotification(BuildContext context, NotificationModel notification) {
+    _navigateToScreen(notification.data['type'] as String?, notification.data);
   }
 
   /// 특정 토픽 구독

@@ -1,12 +1,227 @@
 # MINGRR 2차 리팩토링 가이드 (V2)
 
 > 작성일: 2026-01-18  
-> 상태: 📋 **계획 중**  
+> 최종 업데이트: 2026-01-19  
+> 상태: 🚧 **진행 중** (Phase 1 완료)  
 > 목적: V1 완료 후 디자인 통일성, 성능, UX, 백엔드 연동 종합 분석 및 개선
 
 ---
 
-## 📊 V2 리팩토링 개요
+## ✅ 완료된 작업 (2026-01-19)
+
+### Phase 1: 백엔드 연동 완료
+
+| 작업 | 수정 파일 | 상태 |
+|------|----------|:----:|
+| **차단 기능 구현** | `firebase_service.dart`, `firestore_service.dart`, `pet_detail_screen.dart`, `product_detail_screen.dart` | ✅ 완료 |
+| **찜 목록 백엔드 연동** | `firestore_service.dart`, `product_detail_screen.dart` | ✅ 완료 |
+| **알림 네비게이션 구현** | `notification_service.dart`, `app.dart` | ✅ 완료 |
+| **인앱 알림 UI 구현** | `notification_service.dart` | ✅ 완료 |
+| **채팅 차단 기능 추가** | `chat_detail_screen.dart` | ✅ 완료 |
+| **차단된 사용자 필터링** | `block_provider.dart`, `dating_provider.dart`, `marketplace_provider.dart`, `community_provider.dart` | ✅ 완료 |
+| **찜 목록 API 개선** | `profile_provider.dart`, `wishlist_screen.dart` | ✅ 완료 |
+| **가입 신청 관리 화면** | `group_detail_screen.dart`, `firestore_service.dart`, `firebase_service.dart` | ✅ 완료 |
+| **고객센터 URL 설정** | `customer_service_screen.dart` | ✅ 완료 |
+| **앱 정보 URL 설정 + 공통화** | `app_info_screen.dart` | ✅ 완료 |
+
+### Phase 2: 공통 컴포넌트 통일
+
+| 작업 | 수정 파일 | 상태 |
+|------|----------|:----:|
+| **ElevatedButton → MingrrButton** | `pet_detail_screen.dart`, `product_detail_screen.dart`, `dating_screen.dart`, `onboarding_screen.dart`, `profile_screen.dart`, `rating_widgets.dart`, `chat_list_screen.dart`, `mingrr_bottom_sheet.dart`, `app_dialog.dart`, `confirm_sheet.dart`, `error_dialog.dart`, `info_dialog.dart`, `request_sheet.dart`, `report_sheet.dart`, `guardian_profile_modal.dart`, `image_picker_sheet.dart`, `dating_card.dart`, `health_screen.dart`, `job_detail_screen.dart`, `map_location_picker.dart`, `pet_selector_card.dart`, `group_detail_screen.dart`, `home_screen.dart`, `community_detail_screen.dart` | ✅ 완료 |
+| **debugPrint → AppLogger** | `pet_detail_screen.dart`, `location_helper.dart` | ✅ 완료 |
+
+### 신규 추가된 기능
+
+#### 1. 차단 기능 (`firestore_service.dart`)
+```dart
+// 사용자 차단
+await firestoreService.blockUser(blockerId, blockedId);
+
+// 차단 해제
+await firestoreService.unblockUser(blockerId, blockedId);
+
+// 차단 여부 확인
+final isBlocked = await firestoreService.isUserBlocked(blockerId, blockedId);
+
+// 차단한 사용자 목록
+final blockedIds = await firestoreService.getBlockedUserIds(userId);
+```
+
+#### 2. 상품 찜 기능 (`firestore_service.dart`)
+```dart
+// 찜하기 토글
+final isNowLiked = await firestoreService.toggleProductLike(productId, userId);
+
+// 찜 여부 확인
+final isLiked = await firestoreService.isProductLiked(productId, userId);
+
+// 찜한 상품 목록
+final likedProducts = await firestoreService.getUserLikedProducts(userId);
+```
+
+#### 3. 알림 네비게이션 (`notification_service.dart`)
+- 알림 타입별 화면 이동 로직 구현
+- 인앱 알림 SnackBar UI 구현
+- `navigateFromNotification()` 메서드 추가
+
+---
+
+## �️ V2 개발 로드맵 (체크리스트)
+
+> 하나씩 차근히 진행하세요. 완료되면 체크 표시(✅)로 변경합니다.
+
+### 📅 Phase 1: 백엔드 연동 (우선순위: 높음)
+
+| # | 작업 | 대상 파일 | 예상 시간 | 상태 |
+|:-:|------|----------|:--------:|:----:|
+| 1-1 | 차단 기능 구현 | `firestore_service.dart`, `pet_detail_screen.dart`, `product_detail_screen.dart` | 2시간 | ✅ 완료 |
+| 1-2 | 찜 목록 백엔드 연동 | `firestore_service.dart`, `product_detail_screen.dart` | 1시간 | ✅ 완료 |
+| 1-3 | 알림 네비게이션 구현 | `notification_service.dart` | 1시간 | ✅ 완료 |
+| 1-4 | 인앱 알림 UI 구현 | `notification_service.dart` | 30분 | ✅ 완료 |
+| 1-5 | 채팅 차단 기능 추가 | `chat_detail_screen.dart` | 30분 | ✅ 완료 |
+| 1-6 | 차단된 사용자 필터링 | `block_provider.dart`, `dating_provider.dart`, `marketplace_provider.dart`, `community_provider.dart` | 1시간 | ✅ 완료 |
+| 1-7 | 가입 신청 관리 화면 | `group_detail_screen.dart`, `firestore_service.dart`, `firebase_service.dart` | 2시간 | ✅ 완료 |
+| 1-8 | 고객센터 URL 설정 | `customer_service_screen.dart` | 30분 | ✅ 완료 |
+| 1-9 | 앱 정보 URL 설정 + 공통화 | `app_info_screen.dart` | 30분 | ✅ 완료 |
+
+### 📅 Phase 2: 디자인 통일성 - 버튼 (우선순위: 높음)
+
+| # | 작업 | 대상 파일 | 변경 수 | 상태 |
+|:-:|------|----------|:------:|:----:|
+| 2-1 | ElevatedButton → MingrrButton | `profile_screen.dart` | 14개 | ✅ 완료 |
+| 2-2 | ElevatedButton → MingrrButton | `rating_widgets.dart` | 6개 | ✅ 완료 |
+| 2-3 | ElevatedButton → MingrrButton | `chat_list_screen.dart` | 3개 | ✅ 완료 |
+| 2-4 | ElevatedButton → MingrrButton | `mingrr_bottom_sheet.dart` | 2개 | ✅ 완료 |
+| 2-5 | ElevatedButton → MingrrButton | `app_dialog.dart` | 4개 | ✅ 완료 |
+| 2-6 | ElevatedButton → MingrrButton | `pet_detail_screen.dart` | - | ✅ 완료 |
+| 2-7 | ElevatedButton → MingrrButton | `product_detail_screen.dart` | - | ✅ 완료 |
+| 2-8 | ElevatedButton → MingrrButton | `dating_screen.dart` | - | ✅ 완료 |
+| 2-9 | ElevatedButton → MingrrButton | `onboarding_screen.dart` | - | ✅ 완료 |
+| 2-10 | ElevatedButton → MingrrButton | `confirm_sheet.dart` | 1개 | ✅ 완료 |
+| 2-11 | ElevatedButton → MingrrButton | `error_dialog.dart` | 1개 | ✅ 완료 |
+| 2-12 | ElevatedButton → MingrrButton | `info_dialog.dart` | 1개 | ✅ 완료 |
+| 2-13 | ElevatedButton → MingrrButton | `request_sheet.dart` | 1개 | ✅ 완료 |
+| 2-14 | ElevatedButton → MingrrButton | `report_sheet.dart` | 1개 | ✅ 완료 |
+| 2-15 | ElevatedButton → MingrrButton | `guardian_profile_modal.dart` | 1개 | ✅ 완료 |
+| 2-16 | ElevatedButton → MingrrButton | `image_picker_sheet.dart` | 1개 | ✅ 완료 |
+| 2-17 | ElevatedButton → MingrrButton | `dating_card.dart` | 1개 | ✅ 완료 |
+| 2-18 | ElevatedButton → MingrrButton | `health_screen.dart` | 1개 | ✅ 완료 |
+| 2-19 | ElevatedButton → MingrrButton | `job_detail_screen.dart` | 1개 | ✅ 완료 |
+| 2-20 | ElevatedButton → MingrrButton | `map_location_picker.dart` | 1개 | ✅ 완료 |
+| 2-21 | ElevatedButton → MingrrButton | `pet_selector_card.dart` | 1개 | ✅ 완료 |
+| 2-22 | ElevatedButton → MingrrButton | `group_detail_screen.dart` | 1개 | ✅ 완료 |
+| 2-23 | ElevatedButton → MingrrButton | `home_screen.dart` | 1개 | ✅ 완료 |
+| 2-24 | ElevatedButton → MingrrButton | `community_detail_screen.dart` | 1개 | ✅ 완료 |
+
+### 📅 Phase 3: 디자인 통일성 - 로딩/바텀시트 (우선순위: 중간)
+
+| # | 작업 | 대상 파일 | 변경 수 | 상태 |
+|:-:|------|----------|:------:|:----:|
+| 3-1 | CircularProgressIndicator → MingrrLoadingIndicator | `kkosunnae_widgets.dart` | 1개 | ✅ 완료 |
+| 3-2 | CircularProgressIndicator → MingrrLoadingIndicator | `map_location_picker.dart` | 1개 | ✅ 완료 |
+| 3-3 | CircularProgressIndicator → MingrrLoadingIndicator | `chat_detail_screen.dart` | 3개 | ✅ 완료 |
+| 3-4 | CircularProgressIndicator → MingrrLoadingIndicator | `profile_screen.dart` | 2개 | ✅ 완료 |
+| 3-5 | CircularProgressIndicator → MingrrLoadingIndicator | `community_detail_screen.dart` | 2개 | ✅ 완료 |
+| 3-6 | CircularProgressIndicator → MingrrLoadingIndicator | `home_screen.dart` | 1개 | ✅ 완료 |
+| 3-7 | CircularProgressIndicator → MingrrLoadingIndicator | `group_detail_screen.dart` | 1개 | ✅ 완료 |
+| 3-8 | showModalBottomSheet | 공통 컴포넌트 내부 사용 | - | ⏭️ 스킵 |
+| 3-9 | MingrrLoadingIndicator 진행률 옵션 추가 | `loading_widgets.dart` | 1개 | ✅ 완료 |
+| 3-10 | MingrrButton 내부 로딩 통일 | `common_widgets.dart` | 3개 | ✅ 완료 |
+| 3-11 | 지도 로딩 위젯 통일 | `map_loading_widget.dart` | 2개 | ✅ 완료 |
+| 3-12 | 채팅 이미지 진행률 통일 | `chat_detail_screen.dart` | 1개 | ✅ 완료 |
+| 3-13 | 건강 기록 진행률 통일 | `health_record_detail_screens.dart` | 1개 | ✅ 완료 |
+
+### 📅 Phase 4: 성능 최적화 - 로깅 (우선순위: 중간)
+
+| # | 작업 | 대상 파일 | 변경 수 | 상태 |
+|:-:|------|----------|:------:|:----:|
+| 4-1 | debugPrint → AppLogger | `location_helper.dart` | 39개 | ✅ 완료 |
+| 4-2 | debugPrint → AppLogger | `main.dart` | 6개 | ✅ 완료 |
+| 4-3 | debugPrint → AppLogger | `firebase_service.dart` | 3개 | ✅ 완료 |
+| 4-4 | debugPrint → AppLogger | `geocoding_service.dart` | 3개 | ✅ 완료 |
+| 4-5 | debugPrint → AppLogger | `animal_registration_service.dart` | 5개 | ✅ 완료 |
+| 4-6 | debugPrint → AppLogger | `bottom_sheet_stack_manager.dart` | 4개 | ✅ 완료 |
+| 4-7 | debugPrint → AppLogger | `location_verification_provider.dart` | 6개 | ✅ 완료 |
+| 4-8 | debugPrint → AppLogger | `video_utils.dart` | 3개 | ✅ 완료 |
+| 4-9 | debugPrint → AppLogger | `image_utils.dart` | 2개 | ✅ 완료 |
+| 4-10 | debugPrint → AppLogger | `pet_profile_modal.dart` | 2개 | ✅ 완료 |
+| 4-11 | debugPrint → AppLogger | `svg_icons.dart` | 1개 | ✅ 완료 |
+| 4-12 | debugPrint → AppLogger | `map_location_picker.dart` | 15개 | ✅ 완료 |
+| 4-13 | debugPrint → AppLogger | `walk_screen.dart` | 23개 | ✅ 완료 |
+| 4-14 | debugPrint → AppLogger | `chat_detail_screen.dart` | 17개 | ✅ 완료 |
+| 4-15 | debugPrint → AppLogger | `profile_screen.dart` | 8개 | ✅ 완료 |
+| 4-16 | debugPrint → AppLogger | `walk_record_detail_screen.dart` | 1개 | ✅ 완료 |
+
+### 📅 Phase 5: 신규 공통 컴포넌트 (우선순위: 낮음)
+
+| # | 작업 | 생성 파일 | 예상 시간 | 상태 |
+|:-:|------|----------|:--------:|:----:|
+| 5-1-1 | 스켈레톤 기본 컴포넌트 생성 | `skeleton_widgets.dart` | 1시간 | ✅ 완료 |
+| 5-1-2 | dating_screen.dart 적용 | `dating_screen.dart` | 30분 | ✅ 완료 |
+| 5-1-3 | chat_list_screen.dart 적용 | `chat_list_screen.dart` | 20분 | ✅ 완료 |
+| 5-1-4 | marketplace_screen.dart 적용 | `marketplace_screen.dart` | 20분 | ✅ 완료 |
+| 5-1-5 | notification_screen.dart 적용 | `notification_screen.dart` | 15분 | ✅ 완료 |
+| 5-1-6 | community_screen.dart 적용 | `community_screen.dart` | 15분 | ✅ 완료 |
+| 5-1-7 | home_screen.dart 적용 | `home_screen.dart` | 15분 | ✅ 완료 |
+| 5-1-8 | activity_history_screen.dart 적용 | `activity_history_screen.dart` | 15분 | ✅ 완료 |
+| 5-1-9 | transaction_history_screen.dart 적용 | `transaction_history_screen.dart` | 15분 | ✅ 완료 |
+| 5-1-10 | wishlist_screen.dart 적용 | `wishlist_screen.dart` | 10분 | ✅ 완료 |
+| 5-1-11 | received_dating_requests_screen.dart 적용 | `received_dating_requests_screen.dart` | 10분 | ✅ 완료 |
+| 5-1-12 | group_detail_screen.dart 적용 | `group_detail_screen.dart` | 15분 | ✅ 완료 |
+| 5-2-1 | ConfirmSheetType 확장 (차단/거절) | `confirm_sheet.dart` | 15분 | ✅ 완료 |
+| 5-2-2 | 4개 화면 AlertDialog → ConfirmSheet | 4개 화면 | 20분 | ✅ 완료 |
+| 5-2-3 | MingrrSelectionDialog 생성 | `selection_dialog.dart` | 30분 | ✅ 완료 |
+| 5-2-4 | MingrrImageViewer 생성 | `image_viewer.dart` | 30분 | ✅ 완료 |
+| 5-2-5 | MingrrInputDialog 생성 | `input_dialog.dart` | 30분 | ✅ 완료 |
+| 5-2-6 | 이미지 뷰어 통합 | `mingrr_image_viewer.dart` | 30분 | ✅ 완료 |
+| 5-2-7 | MingrrInfoActionDialog 생성 | `info_action_dialog.dart` | 30분 | ✅ 완료 |
+| 5-2-8 | MingrrActionPromptDialog 생성 | `action_prompt_dialog.dart` | 30분 | ✅ 완료 |
+| 5-2-9 | 본인인증 다이얼로그 → ConfirmSheet | `profile_screen.dart` | 10분 | ✅ 완료 |
+| 5-3-1 | MingrrRefreshWrapper 생성 | `refresh_wrapper.dart` | 30분 | ✅ 완료 |
+| 5-3-2 | 기존 3개 화면 교체 | community, community_detail, group_list | 15분 | ✅ 완료 |
+| 5-3-3 | chat_list_screen 적용 | `chat_list_screen.dart` | 10분 | ✅ 완료 |
+| 5-3-4 | notification_screen 적용 | `notification_screen.dart` | 10분 | ✅ 완료 |
+| 5-3-5 | marketplace_screen 적용 | `marketplace_screen.dart` | 10분 | ✅ 완료 |
+| 5-3-6 | dating_screen 적용 (3개 탭) | `dating_screen.dart` | 15분 | ✅ 완료 |
+| 5-4-1 | PaginatedState 모델 생성 | `paginated_state.dart` | 20분 | ✅ 완료 |
+| 5-4-2 | PaginatedNotifier 생성 | `paginated_provider.dart` | 40분 | ✅ 완료 |
+| 5-4-3 | community_screen 페이지네이션 적용 | `community_screen.dart` | 30분 | ✅ 완료 |
+| 5-4-4 | group_list_screen 페이지네이션 적용 | `group_list_screen.dart` | 25분 | ✅ 완료 |
+| 5-4-5 | marketplace_screen 페이지네이션 적용 | `marketplace_screen.dart` | 30분 | ✅ 완료 |
+| 5-4-6 | dating_screen 페이지네이션 적용 (3개 탭) | `dating_screen.dart` | 40분 | ✅ 완료 |
+| 5-5-1 | GeoHash 서비스 생성 | `geohash_service.dart` | 30분 | ✅ 완료 |
+| 5-5-2 | 서버 사이드 필터링 메서드 추가 | `firestore_service.dart` | 40분 | ✅ 완료 |
+| 5-5-3 | 캐싱 전략 적용 (keepAlive) | 모든 페이지네이션 Provider | 20분 | ✅ 완료 |
+| 5-5-4 | Firestore GeoHash 인덱스 추가 | `firestore.indexes.json` | 10분 | ✅ 완료 |
+| 5-6 | MingrrSearchBar 위젯 분리 | `search_bar.dart` | 20분 | ✅ 완료 |
+
+### 📅 Phase 6: 코드 정리 (우선순위: 낮음)
+
+| # | 작업 | 대상 | 예상 시간 | 상태 |
+|:-:|------|------|:--------:|:----:|
+| 6-1 | Deprecated 항목 제거 | 전체 | 1시간 | ⬜ 대기 |
+| 6-2 | 미사용 import 정리 | 전체 | 30분 | ⬜ 대기 |
+| 6-3 | TODO 주석 정리 | 전체 (63개) | 2시간 | ⬜ 대기 |
+| 6-4 | Mock 데이터 분리 | `seed_data.dart` 등 | 1시간 | ⬜ 대기 |
+
+---
+
+### 📊 진행 현황 요약
+
+| Phase | 전체 | 완료 | 진행률 |
+|:-----:|:----:|:----:|:------:|
+| Phase 1: 백엔드 연동 | 9 | 9 | **100%** ✅ |
+| Phase 2: 버튼 통일 | 24 | 24 | **100%** ✅ |
+| Phase 3: 로딩/바텀시트 | 13 | 12 | **92%** ✅ |
+| Phase 4: 로깅 최적화 | 16 | 16 | **100%** ✅ |
+| Phase 5: 신규 컴포넌트 | 41 | 41 | **100%** ✅ |
+| Phase 6: 코드 정리 | 4 | 0 | **0%** |
+| **전체** | **107** | **102** | **95%** |
+
+---
+
+## �📊 V2 리팩토링 개요
 
 V1에서 공통 컴포넌트화를 완료했습니다. V2에서는 다음 영역을 집중적으로 개선합니다:
 
@@ -82,10 +297,10 @@ V1에서 공통 컴포넌트화를 완료했습니다. V2에서는 다음 영역
 
 | 기능 | 현재 상태 | 필요 작업 |
 |------|----------|----------|
-| **차단 기능** | TODO 상태 | `blocks` 컬렉션 생성, 차단 로직 구현 |
-| **찜 목록 (상품)** | 로컬 상태만 | `productLikes` 컬렉션 연동 |
-| **알림 네비게이션** | TODO 상태 | GoRouter 연동 |
-| **인앱 알림 UI** | TODO 상태 | OverlayEntry 또는 SnackBar 구현 |
+| ~~**차단 기능**~~ | ✅ 완료 | ~~`blocks` 컬렉션 생성, 차단 로직 구현~~ |
+| ~~**찜 목록 (상품)**~~ | ✅ 완료 | ~~`productLikes` 컬렉션 연동~~ |
+| ~~**알림 네비게이션**~~ | ✅ 완료 | ~~GoRouter 연동~~ |
+| ~~**인앱 알림 UI**~~ | ✅ 완료 | ~~OverlayEntry 또는 SnackBar 구현~~ |
 | **가입 신청 관리** | TODO 상태 | 화면 및 로직 구현 |
 | **FCM 푸시 알림** | 주석 처리됨 | Personal Team 제한 해제 후 활성화 |
 

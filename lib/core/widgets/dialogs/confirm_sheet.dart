@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/feature_colors.dart';
 import '../../constants/app_sizes.dart';
+import '../common_widgets.dart';
 
 /// ============================================================
 /// ConfirmSheet - 확인 바텀시트
@@ -64,7 +65,17 @@ enum ConfirmSheetType {
   // 일반
   generalDelete(Icons.delete_outline, '삭제', '정말 삭제하시겠습니까?\n삭제된 항목은 복구할 수 없습니다.', '삭제하기'),
   generalCancel(Icons.cancel_outlined, '취소', '정말 취소하시겠습니까?', '확인'),
-  generalConfirm(Icons.check_circle_outline, '확인', '계속 진행하시겠습니까?', '확인');
+  generalConfirm(Icons.check_circle_outline, '확인', '계속 진행하시겠습니까?', '확인'),
+  
+  // 차단 관련
+  userBlock(Icons.block, '사용자 차단', '이 사용자를 차단하시겠습니까?\n차단하면 서로의 게시물과 프로필을 볼 수 없습니다.', '차단하기'),
+  sellerBlock(Icons.block, '판매자 차단', '이 판매자를 차단하시겠습니까?\n차단하면 서로의 게시물과 프로필을 볼 수 없습니다.', '차단하기'),
+  
+  // 데이팅 거절
+  dateReject(Icons.close, '신청 거절', '이 데이팅 신청을 거절하시겠습니까?', '거절하기'),
+  
+  // 인증 관련
+  identityVerify(Icons.verified_user, '본인인증', '본인인증을 진행하시겠습니까?\n※ 실제 서비스에서는 PASS, 카카오 인증 등의 본인인증 서비스가 연동됩니다.', '인증하기');
 
   final IconData icon;
   final String title;
@@ -97,7 +108,11 @@ enum ConfirmSheetType {
       case ConfirmSheetType.walkRecordDelete:
         return features.walk;
       case ConfirmSheetType.accountDelete:
+      case ConfirmSheetType.userBlock:
+      case ConfirmSheetType.sellerBlock:
         return Colors.red;
+      case ConfirmSheetType.dateReject:
+        return features.dating;
       default:
         return Theme.of(context).colorScheme.primary;
     }
@@ -273,23 +288,12 @@ class ConfirmSheet extends StatelessWidget {
                   ),
                   const SizedBox(width: AppSizes.gapM),
                   Expanded(
-                    child: ElevatedButton(
+                    child: MingrrButton(
+                      text: confirmText ?? type.confirmText,
                       onPressed: onConfirm,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: type.getColor(context),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        confirmText ?? type.confirmText,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      backgroundColor: type.getColor(context),
+                      textColor: Colors.white,
+                      height: 52,
                     ),
                   ),
                 ],

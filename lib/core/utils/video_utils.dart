@@ -1,7 +1,8 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:path_provider/path_provider.dart';
+import 'app_logger.dart';
 
 /// ============================================================
 /// 비디오 유틸리티
@@ -90,7 +91,7 @@ class VideoUtils {
       }
       return null;
     } catch (e) {
-      debugPrint('썸네일 생성 오류: $e');
+      AppLogger.error('VideoUtils', '썸네일 생성 오류', e);
       return null;
     }
   }
@@ -116,7 +117,7 @@ class VideoUtils {
       );
       return thumbnailData;
     } catch (e) {
-      debugPrint('썸네일 데이터 생성 오류: $e');
+      AppLogger.error('VideoUtils', '썸네일 데이터 생성 오류', e);
       return null;
     }
   }
@@ -168,7 +169,7 @@ class VideoUtils {
 
       return VideoValidationResult.valid(fileSizeBytes: fileSizeBytes);
     } catch (e) {
-      debugPrint('동영상 유효성 검사 오류: $e');
+      AppLogger.error('VideoUtils', '동영상 유효성 검사 오류', e);
       return VideoValidationResult.invalid('동영상 파일을 확인할 수 없습니다');
     }
   }

@@ -82,6 +82,7 @@ class CommunityPostModel extends Equatable {
   final String authorName;
   final String? authorProfileUrl;
   final CommunityCategory category;
+  final String title;
   final String content;
   final List<String> imageUrls;
   final String? videoUrl;
@@ -102,6 +103,7 @@ class CommunityPostModel extends Equatable {
     required this.authorName,
     this.authorProfileUrl,
     required this.category,
+    this.title = '',
     required this.content,
     this.imageUrls = const [],
     this.videoUrl,
@@ -142,6 +144,7 @@ class CommunityPostModel extends Equatable {
         (e) => e.name == data['category'],
         orElse: () => CommunityCategory.daily,
       ),
+      title: data['title'] ?? '',
       content: data['content'] ?? '',
       imageUrls: List<String>.from(data['imageUrls'] ?? []),
       videoUrl: data['videoUrl'],
@@ -168,6 +171,7 @@ class CommunityPostModel extends Equatable {
       'authorName': authorName,
       'authorProfileUrl': authorProfileUrl,
       'category': category.name,
+      'title': title,
       'content': content,
       'imageUrls': imageUrls,
       'videoUrl': videoUrl,
@@ -190,6 +194,7 @@ class CommunityPostModel extends Equatable {
     String? authorName,
     String? authorProfileUrl,
     CommunityCategory? category,
+    String? title,
     String? content,
     List<String>? imageUrls,
     String? videoUrl,
@@ -210,6 +215,7 @@ class CommunityPostModel extends Equatable {
       authorName: authorName ?? this.authorName,
       authorProfileUrl: authorProfileUrl ?? this.authorProfileUrl,
       category: category ?? this.category,
+      title: title ?? this.title,
       content: content ?? this.content,
       imageUrls: imageUrls ?? this.imageUrls,
       videoUrl: videoUrl ?? this.videoUrl,
@@ -228,7 +234,7 @@ class CommunityPostModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id, authorId, authorName, authorProfileUrl, category, content,
+        id, authorId, authorName, authorProfileUrl, category, title, content,
         imageUrls, videoUrl, videoThumbnailUrl, tags, likeCount, commentCount, 
         viewCount, isAnonymous, location, geoPoint, createdAt, updatedAt,
       ];

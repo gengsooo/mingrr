@@ -174,55 +174,29 @@ class HomeScreen extends ConsumerWidget {
             style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: AppSizes.gapM),
-          ElevatedButton(
+          MingrrButton(
+            text: '반려동물 추가하기',
             onPressed: () => context.push('/profile'),
-            child: const Text('반려동물 추가하기'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            textColor: Colors.white,
+            height: 44,
+            width: 160,
           ),
         ],
       ),
     );
   }
 
-  /// 로딩 중 반려동물 카드 (Skeleton UI)
+  /// 로딩 중 반려동물 카드
   Widget _buildLoadingPetsCard() {
-    return Builder(
-      builder: (context) {
-        final colorScheme = Theme.of(context).colorScheme;
-        
-        return MingrrCard(
-          margin: EdgeInsets.zero,
-          child: Column(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: colorScheme.outline,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(height: AppSizes.gapM),
-              Container(
-                width: 150,
-                height: 16,
-                decoration: BoxDecoration(
-                  color: colorScheme.outline,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              const SizedBox(height: AppSizes.gapS),
-              Container(
-                width: 200,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: colorScheme.outline,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+    return MingrrCard(
+      margin: EdgeInsets.zero,
+      child: const Center(
+        child: Padding(
+          padding: EdgeInsets.all(AppSizes.paddingL),
+          child: MingrrLoadingIndicator.medium(type: MingrrLoadingType.primary),
+        ),
+      ),
     );
   }
 
@@ -942,7 +916,7 @@ class HomeScreen extends ConsumerWidget {
           loading: () => const Center(
             child: Padding(
               padding: EdgeInsets.all(AppSizes.paddingL),
-              child: CircularProgressIndicator(),
+              child: MingrrLoadingIndicator(),
             ),
           ),
           error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),

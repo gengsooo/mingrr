@@ -319,29 +319,15 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
             ),
           ),
           // 채팅하기 버튼
-          SizedBox(
+          MingrrButton(
+            text: '채팅하기',
+            onPressed: job.status == JobStatus.recruiting
+                ? () => _startChat(job)
+                : null,
+            backgroundColor: context.features.market,
+            textColor: Colors.white,
+            height: 48,
             width: 100,
-            child: ElevatedButton(
-              onPressed: job.status == JobStatus.recruiting
-                  ? () => _startChat(job)
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.features.market,
-                disabledBackgroundColor: Theme.of(context).colorScheme.outline,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              child: const Text(
-                '채팅하기',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
           ),
         ],
       ),

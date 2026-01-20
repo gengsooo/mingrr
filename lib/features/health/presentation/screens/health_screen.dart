@@ -111,13 +111,13 @@ class HealthScreen extends ConsumerWidget {
             style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 24),
-          ElevatedButton(
+          MingrrButton(
+            text: '돌아가기',
             onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: context.features.health,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('돌아가기'),
+            backgroundColor: context.features.health,
+            textColor: Colors.white,
+            height: 44,
+            width: 120,
           ),
         ],
       ),

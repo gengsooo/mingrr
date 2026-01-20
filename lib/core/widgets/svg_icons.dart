@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../utils/app_logger.dart';
 
 /// ============================================================
 /// SVG 아이콘 관리 클래스
@@ -112,7 +113,7 @@ class _MingrrSvgIconState extends State<MingrrSvgIcon> {
         }
       }
     } catch (e) {
-      debugPrint('SVG 로드 실패: ${widget.assetPath} - $e');
+      AppLogger.error('SvgIcons', 'SVG 로드 실패: ${widget.assetPath}', e);
     }
   }
 

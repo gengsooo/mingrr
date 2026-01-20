@@ -121,7 +121,7 @@ class ImageUtils {
       if (croppedFile == null) return null;
       return File(croppedFile.path);
     } catch (e) {
-      debugPrint('이미지 선택/크롭 오류: $e');
+      AppLogger.error('ImageUtils', '이미지 선택/크롭 오류', e);
       return null;
     }
   }
@@ -393,7 +393,7 @@ class ImageUtils {
 
       return ImageValidationResult.valid(fileSizeBytes: fileSizeBytes);
     } catch (e) {
-      debugPrint('이미지 유효성 검사 오류: $e');
+      AppLogger.error('ImageUtils', '이미지 유효성 검사 오류', e);
       return ImageValidationResult.invalid('이미지 파일을 확인할 수 없습니다');
     }
   }

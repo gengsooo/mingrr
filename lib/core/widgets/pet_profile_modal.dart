@@ -5,6 +5,7 @@ import '../services/bottom_sheet_stack_manager.dart';
 import '../theme/feature_colors.dart';
 import '../theme/app_theme.dart';
 import '../constants/app_sizes.dart';
+import '../utils/app_logger.dart';
 import 'common_widgets.dart';
 import 'kkosunnae_widgets.dart';
 import 'guardian_profile_modal.dart';
@@ -176,7 +177,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
         _isLiked = likeDoc.exists;
       });
     } catch (e) {
-      debugPrint('좋아요 상태 로드 오류: $e');
+      AppLogger.error('PetProfileModal', '좋아요 상태 로드 오류', e);
     }
   }
 
@@ -234,7 +235,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
       messenger.showSnackBar(
         const SnackBar(content: Text('좋아요 처리 중 오류가 발생했습니다')),
       );
-      debugPrint('좋아요 토글 오류: $e');
+      AppLogger.error('PetProfileModal', '좋아요 토글 오류', e);
     }
   }
 

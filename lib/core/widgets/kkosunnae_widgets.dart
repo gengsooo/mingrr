@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/kkosunnae_service.dart';
 import '../constants/app_sizes.dart';
+import 'loading_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
 
 /// ============================================================
@@ -419,7 +420,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
       ),
       child: SafeArea(
         child: _isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? const Center(child: MingrrLoadingIndicator())
             : _error != null
                 ? Center(child: Text(_error!))
                 : _buildContent(),

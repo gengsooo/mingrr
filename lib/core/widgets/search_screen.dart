@@ -7,6 +7,7 @@ import '../services/firestore_service.dart';
 import 'common_widgets.dart';
 import 'svg_icons.dart';
 import 'info_badge.dart';
+import 'search_bar.dart';
 import '../utils/format_utils.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/group_model.dart';
@@ -74,25 +75,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildSearchField() {
-    return Container(
-      height: 40,
-      margin: const EdgeInsets.only(left: 16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: TextField(
+    return Padding(
+      padding: const EdgeInsets.only(left: 16),
+      child: MingrrSearchBar(
         controller: _searchController,
+        hintText: _getHintText(),
+        accentColor: widget.accentColor,
         autofocus: true,
-        decoration: InputDecoration(
-          hintText: _getHintText(),
-          hintStyle: TextStyle(color: Theme.of(context).colorScheme.outlineVariant, fontSize: 13),
-          prefixIcon: Icon(Icons.search, color: widget.accentColor, size: 20),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        ),
-        onSubmitted: _onSearch,
-        textInputAction: TextInputAction.search,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        onSearch: _onSearch,
       ),
     );
   }

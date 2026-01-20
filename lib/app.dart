@@ -72,10 +72,14 @@ final _authInitializedProvider = FutureProvider<bool>((ref) async {
   return !authState.isLoading;
 });
 
+/// 전역 네비게이터 키 (알림 서비스에서 사용)
+final rootNavigatorKey = GlobalKey<NavigatorState>();
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authStateListenable = ref.watch(_authStateListenableProvider);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
     refreshListenable: authStateListenable,
     

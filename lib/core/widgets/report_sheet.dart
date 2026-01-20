@@ -203,57 +203,43 @@ class _ReportSheetState extends State<ReportSheet> {
                 ),
               ],
             ),
-            child: SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: (_selectedType != null && !_isSubmitting)
-                    ? () async {
-                        setState(() => _isSubmitting = true);
-                        try {
-                          final currentUser = FirebaseAuth.instance.currentUser;
-                          if (currentUser == null) throw Exception('로그인이 필요합니다');
-                          
-                          await _firebase.reportsCollection.add({
-                            'reporterId': currentUser.uid,
-                            'targetId': widget.targetId,
-                            'targetType': widget.targetType.name,
-                            'reportType': _selectedType!.name,
-                            'detail': _detailController.text.trim(),
-                            'status': 'pending',
-                            'createdAt': FieldValue.serverTimestamp(),
-                          });
-                          
-                          if (mounted) {
-                            Navigator.pop(context);
-                            widget.onSubmit?.call();
-                            MingrrSnackBar.success(context, '신고가 접수되었습니다. 검토 후 조치하겠습니다.');
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            MingrrSnackBar.error(context, '신고 실패: $e');
-                          }
-                        } finally {
-                          if (mounted) setState(() => _isSubmitting = false);
+            child: MingrrButton(
+              text: '신고하기',
+              isLoading: _isSubmitting,
+              onPressed: (_selectedType != null && !_isSubmitting)
+                  ? () async {
+                      setState(() => _isSubmitting = true);
+                      try {
+                        final currentUser = FirebaseAuth.instance.currentUser;
+                        if (currentUser == null) throw Exception('로그인이 필요합니다');
+                        
+                        await _firebase.reportsCollection.add({
+                          'reporterId': currentUser.uid,
+                          'targetId': widget.targetId,
+                          'targetType': widget.targetType.name,
+                          'reportType': _selectedType!.name,
+                          'detail': _detailController.text.trim(),
+                          'status': 'pending',
+                          'createdAt': FieldValue.serverTimestamp(),
+                        });
+                        
+                        if (mounted) {
+                          Navigator.pop(context);
+                          widget.onSubmit?.call();
+                          MingrrSnackBar.success(context, '신고가 접수되었습니다. 검토 후 조치하겠습니다.');
                         }
+                      } catch (e) {
+                        if (mounted) {
+                          MingrrSnackBar.error(context, '신고 실패: $e');
+                        }
+                      } finally {
+                        if (mounted) setState(() => _isSubmitting = false);
                       }
-                    : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  disabledBackgroundColor: Theme.of(context).colorScheme.outline,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  '신고하기',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
+                    }
+                  : null,
+              backgroundColor: Colors.red,
+              textColor: Colors.white,
+              height: 52,
             ),
           ),
         ],

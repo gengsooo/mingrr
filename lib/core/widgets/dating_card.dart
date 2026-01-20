@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_sizes.dart';
 import '../theme/feature_colors.dart';
+import 'common_widgets.dart';
 import 'info_badge.dart';
 import 'trait_badge.dart';
 import 'svg_icons.dart';
@@ -511,23 +512,12 @@ class DatingBreedingCard extends StatelessWidget {
                       ),
                       // 하단: 교배 신청 버튼
                       const SizedBox(height: AppSizes.gapS),
-                      SizedBox(
-                        width: double.infinity,
+                      MingrrButton(
+                        text: '교배 신청',
+                        onPressed: onBreedingRequest,
+                        backgroundColor: features.dating,
+                        textColor: Colors.white,
                         height: 34,
-                        child: ElevatedButton(
-                          onPressed: onBreedingRequest,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: features.dating,
-                            padding: EdgeInsets.zero,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                          ),
-                          child: const Text(
-                            '교배 신청',
-                            style: TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.w600),
-                          ),
-                        ),
                       ),
                     ],
                   ),

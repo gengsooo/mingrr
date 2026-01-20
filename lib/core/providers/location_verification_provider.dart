@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -8,6 +7,7 @@ import '../services/firebase_service.dart';
 import '../services/location_service.dart';
 import '../services/location_helper.dart';
 import '../services/geocoding_service.dart';
+import '../utils/app_logger.dart';
 import '../widgets/common_widgets.dart';
 import '../../models/user_model.dart';
 
@@ -382,11 +382,11 @@ class LocationVerificationService {
       // 마지막 알려진 위치 먼저 시도 (즉시 반환)
       final lastPosition = await Geolocator.getLastKnownPosition();
       if (lastPosition != null) {
-        debugPrint('마지막 위치 사용: ${lastPosition.latitude}, ${lastPosition.longitude}');
+        AppLogger.debug('LocationVerification', '마지막 위치 사용: ${lastPosition.latitude}, ${lastPosition.longitude}');
         return lastPosition;
       }
     } catch (e) {
-      debugPrint('마지막 위치 획득 실패: $e');
+      AppLogger.warning('LocationVerification', '마지막 위치 획득 실패: $e');
     }
     
     // 현재 위치 획득 시도
@@ -453,9 +453,9 @@ class LocationVerificationService {
       try {
         position = await _getPositionWithTimeout()
             .timeout(const Duration(seconds: 8));
-        debugPrint('위치 획득 성공: ${position?.latitude}, ${position?.longitude}');
+        AppLogger.info('LocationVerification', '위치 획득 성공: ${position?.latitude}, ${position?.longitude}');
       } catch (e) {
-        debugPrint('위치 획득 실패: $e');
+        AppLogger.warning('LocationVerification', '위치 획득 실패: $e');
         if (context.mounted) Navigator.pop(context);
         if (context.mounted) {
           MingrrSnackBar.error(context, 'GPS 신호를 찾을 수 없습니다.');
@@ -539,10 +539,10 @@ class AppStartLocationChecker {
         ref.invalidate(locationMismatchProvider);
       } catch (e) {
         // ref가 dispose된 경우 무시 (정상적인 상황)
-        debugPrint('위치 체크 Provider invalidate 스킵 (위젯 dispose됨)');
+        AppLogger.debug('LocationVerification', '위치 체크 Provider invalidate 스킵 (위젯 dispose됨)');
       }
     } catch (e) {
-      debugPrint('앱 시작 시 위치 체크 실패: $e');
+      AppLogger.warning('LocationVerification', '앱 시작 시 위치 체크 실패: $e');
     }
   }
   

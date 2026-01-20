@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/models/paginated_state.dart';
 import '../../../../core/providers/firebase_providers.dart';
 import '../../../../core/providers/location_provider.dart';
+import '../../../../core/providers/paginated_provider.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../../models/group_model.dart';
@@ -445,4 +447,84 @@ final groupSchedulesProvider = FutureProvider.autoDispose.family<List<GroupSched
   return snapshot.docs
       .map((doc) => GroupScheduleModel.fromFirestore(doc.data(), id: doc.id))
       .toList();
+});
+
+/// ============================================================
+/// 페이지네이션 소모임 목록 Provider
+/// 
+/// 서버 사이드 필터링 + 클라이언트 거리/추천점수 계산 + 캐싱
+/// - 정렬 옵션 지원
+/// - 20개씩 로드
+/// - keepAlive로 화면 전환 시 상태 유지
+/// ============================================================
+
+/// 페이지네이션 소모임 목록 Provider
+final paginatedGroupsProvider = StateNotifierProvider<
+    ClientPaginatedNotifier<GroupWithDistance>,
+    PaginatedState<GroupWithDistance>>((ref) {
+  // 캐싱: 화면 전환 시 상태 유지 (5분 후 자동 해제)
+  final link = ref.keepAlive();
+  Future.delayed(const Duration(minutes: 5), () => link.close());
+  
+  final sortState = ref.watch(groupSortStateProvider);
+  final userLocation = ref.watch(currentUserLocationProvider);
+  
+  return ClientPaginatedNotifier<GroupWithDistance>(
+    pageSize: 20,
+    fetchAll: () async {
+      final firestoreService = ref.read(firestoreServiceProvider);
+      final groups = await firestoreService.getPublicGroups(limit: 100);
+      
+      final result = <GroupWithDistance>[];
+      for (final group in groups) {
+        double distance = 0;
+        if (userLocation != null && group.location != null) {
+          distance = LocationService.calculateDistanceFromGeoPoints(
+            userLocation,
+            group.location!,
+          );
+        } else if (group.location == null) {
+          distance = double.infinity;
+        }
+        
+        final recommendScore = GroupRecommendationService.calculateRecommendScore(
+          group: group,
+          distanceMeters: distance,
+        );
+        
+        result.add(GroupWithDistance(
+          group: group,
+          distanceMeters: distance,
+          recommendScore: recommendScore,
+        ));
+      }
+      
+      // 정렬 적용
+      final isAsc = sortState.direction == SortDirection.ascending;
+      switch (sortState.option) {
+        case GroupSortOption.recommended:
+          result.sort((a, b) => isAsc
+              ? a.recommendScore.compareTo(b.recommendScore)
+              : b.recommendScore.compareTo(a.recommendScore));
+          break;
+        case GroupSortOption.members:
+          result.sort((a, b) => isAsc
+              ? a.group.memberCount.compareTo(b.group.memberCount)
+              : b.group.memberCount.compareTo(a.group.memberCount));
+          break;
+        case GroupSortOption.latest:
+          result.sort((a, b) => isAsc
+              ? a.group.createdAt.compareTo(b.group.createdAt)
+              : b.group.createdAt.compareTo(a.group.createdAt));
+          break;
+        case GroupSortOption.likes:
+          result.sort((a, b) => isAsc
+              ? a.group.likeCount.compareTo(b.group.likeCount)
+              : b.group.likeCount.compareTo(a.group.likeCount));
+          break;
+      }
+      
+      return result;
+    },
+  );
 });

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/common_widgets.dart';
 
 /// ============================================================
 /// 온보딩 화면
@@ -180,26 +181,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   const SizedBox(height: AppSizes.gapXL),
                   
                   // 다음/시작 버튼
-                  SizedBox(
-                    width: double.infinity,
-                    height: AppSizes.buttonHeightL,
-                    child: ElevatedButton(
-                      onPressed: _nextPage,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(context).colorScheme.onSurface,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppSizes.radiusL),
-                        ),
-                      ),
-                      child: Text(
-                        _currentPage == _pages.length - 1 ? '시작하기' : '다음',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                  MingrrButton(
+                    text: _currentPage == _pages.length - 1 ? '시작하기' : '다음',
+                    onPressed: _nextPage,
                   ),
                 ],
               ),

@@ -12,6 +12,7 @@ import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/dating_card.dart';
+import '../../../../core/widgets/refresh_wrapper.dart';
 import '../providers/dating_provider.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import 'breeding_write_screen.dart';
@@ -52,11 +53,62 @@ final _breedingAgeFilterProvider = StateProvider<int?>((ref) => null);
 /// 혈통서 필터 (null: 전체, true: 혈통서 보유만)
 final _breedingPedigreeFilterProvider = StateProvider<bool?>((ref) => null);
 
-class DatingScreen extends ConsumerWidget {
+class DatingScreen extends ConsumerStatefulWidget {
   const DatingScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DatingScreen> createState() => _DatingScreenState();
+}
+
+class _DatingScreenState extends ConsumerState<DatingScreen> {
+  final ScrollController _breedingScrollController = ScrollController();
+  final ScrollController _nearbyScrollController = ScrollController();
+  final ScrollController _recommendScrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _breedingScrollController.addListener(_onBreedingScroll);
+    _nearbyScrollController.addListener(_onNearbyScroll);
+    _recommendScrollController.addListener(_onRecommendScroll);
+  }
+
+  @override
+  void dispose() {
+    _breedingScrollController.removeListener(_onBreedingScroll);
+    _nearbyScrollController.removeListener(_onNearbyScroll);
+    _recommendScrollController.removeListener(_onRecommendScroll);
+    _breedingScrollController.dispose();
+    _nearbyScrollController.dispose();
+    _recommendScrollController.dispose();
+    super.dispose();
+  }
+
+  void _onBreedingScroll() {
+    if (_breedingScrollController.position.pixels >=
+        _breedingScrollController.position.maxScrollExtent - 200) {
+      final distanceFilter = ref.read(_distanceFilterProvider);
+      ref.read(paginatedBreedingPetsProvider(distanceFilter).notifier).loadMore();
+    }
+  }
+
+  void _onNearbyScroll() {
+    if (_nearbyScrollController.position.pixels >=
+        _nearbyScrollController.position.maxScrollExtent - 200) {
+      final distanceFilter = ref.read(_distanceFilterProvider);
+      ref.read(paginatedNearbyPetsProvider(distanceFilter).notifier).loadMore();
+    }
+  }
+
+  void _onRecommendScroll() {
+    if (_recommendScrollController.position.pixels >=
+        _recommendScrollController.position.maxScrollExtent - 200) {
+      ref.read(paginatedRecommendedPetsProvider.notifier).loadMore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final selectedTab = ref.watch(_selectedTabProvider);
     final distanceFilter = ref.watch(_distanceFilterProvider);
     // 내 반려동물 목록 미리 로드 (교배 신청 시 사용)
@@ -383,57 +435,75 @@ class DatingScreen extends ConsumerWidget {
     );
   }
 
-  /// 교배찾기 리스트 (Firebase 연동 + 거리 필터링)
+  /// 교배찾기 리스트 (Firebase 연동 + 거리 필터링 + 페이지네이션)
   Widget _buildBreedingList(BuildContext context, WidgetRef ref, double distanceFilter) {
-    // 거리 필터가 적용된 교배 펫 목록 사용 (AsyncValue)
-    final filteredAsync = ref.watch(filteredBreedingPetsProvider(distanceFilter));
+    final paginatedState = ref.watch(paginatedBreedingPetsProvider(distanceFilter));
     final genderFilter = ref.watch(_breedingGenderFilterProvider);
     final pedigreeFilter = ref.watch(_breedingPedigreeFilterProvider);
     
-    return filteredAsync.when(
-      loading: () => MingrrLoadingState(
+    // 초기 로딩 상태
+    if (paginatedState.isInitialLoading) {
+      return MingrrLoadingState(
         type: MingrrLoadingType.dating,
         message: '교배 가능한 반려동물을 찾고 있어요',
         timeout: AppSizes.loadingTimeout,
-        onRetry: () => ref.invalidate(filteredBreedingPetsProvider(distanceFilter)),
-      ),
-      error: (e, _) => MingrrEmptyState(
-        icon: Icons.error_outline,
+        onRetry: () => ref.read(paginatedBreedingPetsProvider(distanceFilter).notifier).loadInitial(),
+      );
+    }
+    
+    // 에러 상태
+    if (paginatedState.hasError && paginatedState.items.isEmpty) {
+      return MingrrErrorState(
         title: '데이터를 불러올 수 없어요',
         subtitle: '잠시 후 다시 시도해주세요',
-      ),
-      data: (filteredByDistance) {
-        // 성별 필터 적용
-        var filteredPets = filteredByDistance;
-        if (genderFilter.isNotEmpty) {
-          filteredPets = filteredPets.where((p) {
-            if (genderFilter.contains('male') && p.pet.gender == PetGender.male) return true;
-            if (genderFilter.contains('female') && p.pet.gender == PetGender.female) return true;
-            return false;
-          }).toList();
-        }
-        
-        // 혈통서 필터 적용
-        if (pedigreeFilter == true) {
-          filteredPets = filteredPets.where((p) => p.pet.hasPedigree).toList();
-        }
-        
-        if (filteredPets.isEmpty) {
-          return MingrrEmptyState(
-            icon: Icons.pets,
-            title: '아직 데이터가 없어요',
-            subtitle: '거리를 늘리거나 필터를 조정해보세요',
-          );
-        }
-        
-        return ListView.builder(
-          padding: const EdgeInsets.all(AppSizes.paddingM),
-          itemCount: filteredPets.length,
-          itemBuilder: (context, index) {
-            return _buildBreedingPetCard(context, ref, filteredPets[index]);
-          },
-        );
+        onRetry: () => ref.read(paginatedBreedingPetsProvider(distanceFilter).notifier).loadInitial(),
+      );
+    }
+    
+    // 성별/혈통서 필터 적용
+    var filteredPets = paginatedState.items.toList();
+    if (genderFilter.isNotEmpty) {
+      filteredPets = filteredPets.where((p) {
+        if (genderFilter.contains('male') && p.pet.gender == PetGender.male) return true;
+        if (genderFilter.contains('female') && p.pet.gender == PetGender.female) return true;
+        return false;
+      }).toList();
+    }
+    if (pedigreeFilter == true) {
+      filteredPets = filteredPets.where((p) => p.pet.hasPedigree).toList();
+    }
+    
+    // 빈 상태
+    if (filteredPets.isEmpty) {
+      return MingrrEmptyState(
+        icon: Icons.pets,
+        title: '아직 데이터가 없어요',
+        subtitle: '거리를 늘리거나 필터를 조정해보세요',
+      );
+    }
+    
+    // 데이터 있음
+    return MingrrRefreshWrapper(
+      color: context.features.dating,
+      onRefresh: () async {
+        await ref.read(paginatedBreedingPetsProvider(distanceFilter).notifier).refresh();
       },
+      child: ListView.builder(
+        controller: _breedingScrollController,
+        padding: const EdgeInsets.all(AppSizes.paddingM),
+        itemCount: filteredPets.length + (paginatedState.hasMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index >= filteredPets.length) {
+            return const Padding(
+              padding: EdgeInsets.all(AppSizes.paddingL),
+              child: Center(
+                child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
+              ),
+            );
+          }
+          return _buildBreedingPetCard(context, ref, filteredPets[index]);
+        },
+      ),
     );
   }
   
@@ -483,87 +553,104 @@ class DatingScreen extends ConsumerWidget {
     }
   }
 
-  /// 근처 검색 그리드 뷰 (Firebase 연동 + 거리 필터링)
+  /// 근처 검색 그리드 뷰 (Firebase 연동 + 거리 필터링 + 페이지네이션)
   Widget _buildNearbyGrid(BuildContext context, double distanceFilter) {
-    return Consumer(
-      builder: (context, ref, child) {
-        // 거리 필터가 적용된 펫 목록 사용 (AsyncValue)
-        final filteredAsync = ref.watch(filteredDatingPetsProvider(distanceFilter));
-        final myPetsAsync = ref.watch(userPetsProvider);
-        final hasMyPet = myPetsAsync.valueOrNull?.isNotEmpty ?? false;
-        
-        return filteredAsync.when(
-          loading: () => MingrrLoadingState(
-            type: MingrrLoadingType.dating,
-            message: '근처 반려동물을 찾고 있어요',
-            timeout: AppSizes.loadingTimeout,
-            onRetry: () => ref.invalidate(filteredDatingPetsProvider(distanceFilter)),
+    final paginatedState = ref.watch(paginatedNearbyPetsProvider(distanceFilter));
+    final myPetsAsync = ref.watch(userPetsProvider);
+    final hasMyPet = myPetsAsync.valueOrNull?.isNotEmpty ?? false;
+    
+    // 초기 로딩 상태
+    if (paginatedState.isInitialLoading) {
+      return MingrrLoadingState(
+        type: MingrrLoadingType.dating,
+        message: '근처 반려동물을 찾고 있어요',
+        timeout: AppSizes.loadingTimeout,
+        onRetry: () => ref.read(paginatedNearbyPetsProvider(distanceFilter).notifier).loadInitial(),
+      );
+    }
+    
+    // 에러 상태
+    if (paginatedState.hasError && paginatedState.items.isEmpty) {
+      return MingrrErrorState(
+        title: '데이터를 불러올 수 없어요',
+        subtitle: '잠시 후 다시 시도해주세요',
+        onRetry: () => ref.read(paginatedNearbyPetsProvider(distanceFilter).notifier).loadInitial(),
+      );
+    }
+    
+    // 빈 상태
+    if (paginatedState.isEmpty) {
+      if (!hasMyPet) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.pets, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
+              const SizedBox(height: 16),
+              Text(
+                '반려동물을 먼저 등록해주세요',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '반려동물을 등록하면 근처의\n친구들을 찾아드려요',
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              MingrrButton(
+                text: '반려동물 추가하기',
+                onPressed: () => context.push('/profile'),
+                backgroundColor: context.features.dating,
+                textColor: Colors.white,
+                width: 180,
+              ),
+            ],
           ),
-          error: (e, _) => MingrrEmptyState(
-            icon: Icons.error_outline,
-            title: '데이터를 불러올 수 없어요',
-            subtitle: '잠시 후 다시 시도해주세요',
-          ),
-          data: (filteredPets) {
-            if (filteredPets.isEmpty) {
-              // 내 반려동물이 없는 경우
-              if (!hasMyPet) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.pets, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
-                      const SizedBox(height: 16),
-                      Text(
-                        '반려동물을 먼저 등록해주세요',
-                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '반려동물을 등록하면 근처의\n친구들을 찾아드려요',
-                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: 180,
-                        child: ElevatedButton(
-                          onPressed: () => context.push('/profile'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: context.features.dating,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: const Text('반려동물 추가하기'),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-              // 내 반려동물은 있지만 근처에 다른 반려동물이 없는 경우
-              return MingrrEmptyState(
-                icon: Icons.location_off,
-                title: '아직 데이터가 없어요',
-                subtitle: '거리를 늘려보세요',
-              );
-            }
-            
-            return GridView.builder(
-              padding: const EdgeInsets.all(AppSizes.paddingM),
+        );
+      }
+      return MingrrEmptyState(
+        icon: Icons.location_off,
+        title: '아직 데이터가 없어요',
+        subtitle: '거리를 늘려보세요',
+      );
+    }
+    
+    // 데이터 있음
+    return MingrrRefreshWrapper(
+      color: context.features.dating,
+      onRefresh: () async {
+        await ref.read(paginatedNearbyPetsProvider(distanceFilter).notifier).refresh();
+      },
+      child: CustomScrollView(
+        controller: _nearbyScrollController,
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.all(AppSizes.paddingM),
+            sliver: SliverGrid(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 crossAxisSpacing: AppSizes.gapM,
                 mainAxisSpacing: AppSizes.gapM,
                 childAspectRatio: 0.75,
               ),
-              itemCount: filteredPets.length,
-              itemBuilder: (context, index) {
-                return _buildNearbyPetCard(context, filteredPets[index]);
-              },
-            );
-          },
-        );
-      },
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => _buildNearbyPetCard(context, paginatedState.items[index]),
+                childCount: paginatedState.items.length,
+              ),
+            ),
+          ),
+          if (paginatedState.hasMore)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(AppSizes.paddingL),
+                child: Center(
+                  child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
   
@@ -583,75 +670,91 @@ class DatingScreen extends ConsumerWidget {
     );
   }
 
-  /// 추천 리스트 (궁합 알고리즘 적용)
+  /// 추천 리스트 (궁합 알고리즘 적용 + 페이지네이션)
   Widget _buildRecommendList(BuildContext context) {
-    return Consumer(
-      builder: (context, ref, child) {
-        final petsAsync = ref.watch(recommendedPetsProvider);
-        final myPetsAsync = ref.watch(userPetsProvider);
-        final hasMyPet = myPetsAsync.valueOrNull?.isNotEmpty ?? false;
-        
-        return petsAsync.when(
-          data: (pets) {
-            if (pets.isEmpty) {
-              // 내 반려동물이 없는 경우
-              if (!hasMyPet) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.pets, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
-                      const SizedBox(height: 16),
-                      Text(
-                        '반려동물을 먼저 등록해주세요',
-                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '반려동물을 등록하면 궁합이 맞는\n친구들을 추천해드려요',
-                        style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: 180,
-                        child: ElevatedButton(
-                          onPressed: () => context.push('/profile'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: context.features.dating,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: const Text('반려동물 추가하기'),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-              // 내 반려동물은 있지만 추천할 다른 반려동물이 없는 경우
-              return MingrrEmptyState(
-                icon: Icons.auto_awesome,
-                title: '추천할 반려동물이 없어요',
-                subtitle: '근처에 등록된 반려동물이 없어요',
-              );
-            }
-            return ListView.builder(
-              padding: const EdgeInsets.all(AppSizes.paddingM),
-              itemCount: pets.length,
-              itemBuilder: (context, index) {
-                return _buildRecommendPetCard(context, pets[index]);
-              },
-            );
-          },
-          loading: () => MingrrLoadingState(
-            type: MingrrLoadingType.dating,
-            message: '궁합 맞는 친구를 찾고 있어요',
-            timeout: AppSizes.loadingTimeout,
-            onRetry: () => ref.invalidate(recommendedPetsProvider),
+    final paginatedState = ref.watch(paginatedRecommendedPetsProvider);
+    final myPetsAsync = ref.watch(userPetsProvider);
+    final hasMyPet = myPetsAsync.valueOrNull?.isNotEmpty ?? false;
+    
+    // 초기 로딩 상태
+    if (paginatedState.isInitialLoading) {
+      return MingrrLoadingState(
+        type: MingrrLoadingType.dating,
+        message: '추천 반려동물을 불러오고 있어요',
+        timeout: AppSizes.loadingTimeout,
+        onRetry: () => ref.read(paginatedRecommendedPetsProvider.notifier).loadInitial(),
+      );
+    }
+    
+    // 에러 상태
+    if (paginatedState.hasError && paginatedState.items.isEmpty) {
+      return MingrrErrorState(
+        title: '일시적인 오류가 발생했어요',
+        subtitle: '잠시 후 다시 시도해주세요',
+        onRetry: () => ref.read(paginatedRecommendedPetsProvider.notifier).loadInitial(),
+      );
+    }
+    
+    // 빈 상태
+    if (paginatedState.isEmpty) {
+      if (!hasMyPet) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.pets, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
+              const SizedBox(height: 16),
+              Text(
+                '반려동물을 먼저 등록해주세요',
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '반려동물을 등록하면 궁합이 맞는\n친구들을 추천해드려요',
+                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              MingrrButton(
+                text: '반려동물 추가하기',
+                onPressed: () => context.push('/profile'),
+                backgroundColor: context.features.dating,
+                textColor: Colors.white,
+                width: 180,
+              ),
+            ],
           ),
-          error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
         );
+      }
+      return MingrrEmptyState(
+        icon: Icons.auto_awesome,
+        title: '추천할 반려동물이 없어요',
+        subtitle: '근처에 등록된 반려동물이 없어요',
+      );
+    }
+    
+    // 데이터 있음
+    return MingrrRefreshWrapper(
+      color: context.features.dating,
+      onRefresh: () async {
+        await ref.read(paginatedRecommendedPetsProvider.notifier).refresh();
       },
+      child: ListView.builder(
+        controller: _recommendScrollController,
+        padding: const EdgeInsets.all(AppSizes.paddingM),
+        itemCount: paginatedState.items.length + (paginatedState.hasMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index >= paginatedState.items.length) {
+            return const Padding(
+              padding: EdgeInsets.all(AppSizes.paddingL),
+              child: Center(
+                child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
+              ),
+            );
+          }
+          return _buildRecommendPetCard(context, paginatedState.items[index]);
+        },
+      ),
     );
   }
 

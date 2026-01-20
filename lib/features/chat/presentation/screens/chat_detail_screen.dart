@@ -5,13 +5,18 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/services/firebase_service.dart';
+import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/rating_service.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/loading_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/mingrr_image_viewer.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/utils/image_utils.dart';
+import '../../../../core/utils/app_logger.dart';
+import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/rating_widgets.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
 import '../../../../core/widgets/pet_profile_modal.dart';
@@ -51,6 +56,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   final _scrollController = ScrollController();
   final _chatService = ChatService();
   final _firebaseService = FirebaseService();
+  final _firestoreService = FirestoreService();
   final _ratingService = RatingService();
   final _imagePicker = ImagePicker();
   
@@ -105,7 +111,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         setState(() => _communityName = groupDoc.data()?['name']);
       }
     } catch (e) {
-      debugPrint('Failed to load community name: $e');
+      AppLogger.error('ChatDetail', 'Failed to load community name', e);
     }
   }
 
@@ -361,27 +367,27 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     _isShowingProfile = true;
     
     // 디버깅: chatType 확인
-    debugPrint('🔍 _showProfileByType - chatType: "$chatType", participant.id: ${participant.id}');
+    AppLogger.debug('ChatDetail', '_showProfileByType - chatType: "$chatType", participant.id: ${participant.id}');
     
     try {
       // chatType을 소문자로 정규화
       final normalizedType = chatType.toLowerCase().trim();
-      debugPrint('🔍 normalizedType: "$normalizedType"');
+      AppLogger.debug('ChatDetail', 'normalizedType: "$normalizedType"');
       
       if (normalizedType == 'dating' || normalizedType == 'breeding') {
-        debugPrint('🔍 -> _showPetProfile 호출');
+        AppLogger.debug('ChatDetail', '-> _showPetProfile 호출');
         // 데이팅/교배: 반려동물 프로필 모달
         await _showPetProfile(context, participant);
       } else if (normalizedType == 'marketplace' || normalizedType == 'market') {
-        debugPrint('🔍 -> _showGuardianProfile 호출 (마켓)');
+        AppLogger.debug('ChatDetail', '-> _showGuardianProfile 호출 (마켓)');
         // 마켓: 보호자 프로필 모달
         await _showGuardianProfile(context, participant);
       } else if (normalizedType == 'community') {
-        debugPrint('🔍 -> _showCommunityProfile 호출');
+        AppLogger.debug('ChatDetail', '-> _showCommunityProfile 호출');
         // 소모임: 소모임 정보 모달
         await _showCommunityProfile(context);
       } else {
-        debugPrint('🔍 -> _showGuardianProfile 호출 (기본, normalizedType이 매칭 안됨)');
+        AppLogger.debug('ChatDetail', '-> _showGuardianProfile 호출 (기본)');
         // 기본: 보호자 프로필 모달
         await _showGuardianProfile(context, participant);
       }
@@ -394,7 +400,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   /// 추천친구-상세와 동일한 내용을 표시하기 위해 보호자 정보도 함께 조회
   Future<void> _showPetProfile(BuildContext context, ChatParticipant participant) async {
     try {
-      debugPrint('🐕 _showPetProfile 시작 - participant.id: ${participant.id}');
+      AppLogger.debug('ChatDetail', '_showPetProfile 시작 - participant.id: ${participant.id}');
       
       // 반려동물 정보 조회
       final petsSnapshot = await _firebaseService.firestore
@@ -402,10 +408,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           .where('ownerId', isEqualTo: participant.id)
           .get();
       
-      debugPrint('🐕 반려동물 조회 결과: ${petsSnapshot.docs.length}개');
+      AppLogger.debug('ChatDetail', '반려동물 조회 결과: ${petsSnapshot.docs.length}개');
       
       if (petsSnapshot.docs.isEmpty) {
-        debugPrint('🐕 반려동물 없음 - 스낵바 표시');
+        AppLogger.debug('ChatDetail', '반려동물 없음 - 스낵바 표시');
         if (!mounted) return;
         MingrrSnackBar.info(context, '반려동물 정보가 없어요!');
         return;
@@ -484,7 +490,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         ),
       );
     } catch (e) {
-      debugPrint('🐕 _showPetProfile 에러: $e');
+      AppLogger.error('ChatDetail', '_showPetProfile 에러', e);
       if (!mounted) return;
       MingrrSnackBar.error(context, '반려동물 정보를 불러오는데 실패했습니다');
     }
@@ -492,19 +498,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   /// 소모임 프로필 모달 표시
   Future<void> _showCommunityProfile(BuildContext context) async {
-    debugPrint('🏠 _showCommunityProfile 시작');
-    debugPrint('🏠 _chatRoom: ${_chatRoom != null ? "있음" : "null"}');
-    debugPrint('🏠 _chatRoom?.relatedId: ${_chatRoom?.relatedId}');
+    AppLogger.debug('ChatDetail', '_showCommunityProfile 시작');
+    AppLogger.debug('ChatDetail', '_chatRoom: ${_chatRoom != null ? "있음" : "null"}');
+    AppLogger.debug('ChatDetail', '_chatRoom?.relatedId: ${_chatRoom?.relatedId}');
     
     if (_chatRoom == null) {
-      debugPrint('🏠 _chatRoom이 null - 스낵바 표시');
+      AppLogger.debug('ChatDetail', '_chatRoom이 null - 스낵바 표시');
       if (!mounted) return;
       MingrrSnackBar.info(context, '채팅방 정보를 불러오는 중입니다');
       return;
     }
     
     if (_chatRoom!.relatedId == null) {
-      debugPrint('🏠 relatedId가 null - 스낵바 표시');
+      AppLogger.debug('ChatDetail', 'relatedId가 null - 스낵바 표시');
       if (!mounted) return;
       MingrrSnackBar.info(context, '소모임 정보가 연결되지 않았습니다');
       return;
@@ -518,7 +524,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           .get();
       
       if (!groupDoc.exists) {
-        debugPrint('🏠 소모임 문서가 존재하지 않음');
+        AppLogger.warning('ChatDetail', '소모임 문서가 존재하지 않음');
         if (!mounted) return;
         MingrrSnackBar.info(context, '소모임 정보를 불러오는데 실패했습니다!');
         return;
@@ -860,12 +866,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        CircularProgressIndicator(
-                          strokeWidth: 2,
+                        MingrrLoadingIndicator.progress(
                           value: progress.expectedTotalBytes != null
                               ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
                               : null,
-                          color: themeColor,
+                          strokeWidth: 2,
+                          customColor: themeColor,
                         ),
                         if (progress.expectedTotalBytes != null) ...[
                           const SizedBox(height: 8),
@@ -909,77 +915,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   /// 전체 화면 이미지 보기 (핀치 줌, 저장 기능)
   void _showFullScreenImage(BuildContext context, String imageUrl) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.black,
-        insetPadding: EdgeInsets.zero,
-        child: Stack(
-          children: [
-            // 이미지 (핀치 줌 가능)
-            Center(
-              child: InteractiveViewer(
-                minScale: 0.5,
-                maxScale: 4.0,
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    );
-                  },
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.image_not_supported,
-                    color: Colors.white54,
-                    size: 60,
-                  ),
-                ),
-              ),
-            ),
-            // 상단 버튼들
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 8,
-              left: 8,
-              right: 8,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // 닫기 버튼
-                  IconButton(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.close, color: Colors.white, size: 24),
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  // 저장 버튼
-                  IconButton(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.download, color: Colors.white, size: 24),
-                    ),
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      MingrrSnackBar.info(context, '이미지 저장 기능은 추후 업데이트 예정입니다');
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    showImageViewer(context, imageUrl: imageUrl, showSaveButton: true);
   }
 
   Widget _buildTimeText(DateTime time) {
@@ -1021,13 +957,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     ? Stack(
                         alignment: Alignment.center,
                         children: [
-                          SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: themeColor,
-                            ),
+                          MingrrLoadingIndicator(
+                            size: 24,
+                            strokeWidth: 2,
+                            customColor: themeColor,
                           ),
                           Icon(Icons.image, color: themeColor, size: 12),
                         ],
@@ -1075,10 +1008,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     customBorder: const CircleBorder(),
                     child: Center(
                       child: _isSending
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          ? const MingrrLoadingIndicator(
+                              size: 20,
+                              strokeWidth: 2,
+                              customColor: Colors.white,
                             )
                           : const Icon(Icons.send, color: Colors.white, size: 20),
                     ),
@@ -1213,6 +1146,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         onTap: () => MingrrSnackBar.success(context, '알림이 꺼졌습니다'),
       ),
       MingrrOptionItem(
+        icon: Icons.block_outlined,
+        label: '차단하기',
+        color: Colors.orange,
+        onTap: () => _blockUser(context),
+      ),
+      MingrrOptionItem(
         icon: Icons.report_outlined,
         label: '신고하기',
         color: Colors.orange,
@@ -1227,6 +1166,36 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     ]);
     
     showMingrrOptionsSheet(context: context, options: options);
+  }
+
+  /// 상대방 차단
+  Future<void> _blockUser(BuildContext context) async {
+    final myUserId = ref.read(authStateProvider).valueOrNull?.uid;
+    if (myUserId == null) {
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
+      return;
+    }
+
+    final otherParticipant = _chatRoom?.getOtherParticipant(myUserId);
+    if (otherParticipant == null) return;
+
+    showConfirmSheet(
+      context,
+      type: ConfirmSheetType.userBlock,
+      onConfirm: () async {
+        try {
+          await _firestoreService.blockUser(myUserId, otherParticipant.id);
+          if (mounted) {
+            MingrrSnackBar.success(context, '${otherParticipant.nickname}님을 차단했습니다');
+            Navigator.pop(context); // 채팅 상세 화면 닫기
+          }
+        } catch (e) {
+          if (mounted) {
+            MingrrSnackBar.error(context, '차단 실패: $e');
+          }
+        }
+      },
+    );
   }
 
   void _showCompleteDialog() {
@@ -1334,58 +1303,32 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     }
   }
 
-  void _showReportDialog() {
+  void _showReportDialog() async {
     final myUserId = ref.read(authStateProvider).valueOrNull?.uid ?? '';
     final otherParticipant = _chatRoom?.getOtherParticipant(myUserId);
 
     if (otherParticipant == null) return;
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        String? selectedReason;
-        return StatefulBuilder(
-          builder: (context, setState) => AlertDialog(
-            title: const Text('신고하기'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('신고 사유를 선택해주세요'),
-                const SizedBox(height: 16),
-                ...['욕설/비방', '사기/허위정보', '노쇼', '부적절한 행동', '기타'].map((reason) => 
-                  RadioListTile<String>(
-                    title: Text(reason),
-                    value: reason,
-                    groupValue: selectedReason,
-                    onChanged: (value) => setState(() => selectedReason = value),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('취소'),
-              ),
-              TextButton(
-                onPressed: selectedReason == null ? null : () async {
-                  Navigator.pop(context);
-                  await _ratingService.reportUser(
-                    myUserId,
-                    otherParticipant.id,
-                    selectedReason!,
-                  );
-                  if (mounted) {
-                    MingrrSnackBar.success(context, '신고가 접수되었습니다');
-                  }
-                },
-                child: const Text('신고', style: TextStyle(color: Colors.red)),
-              ),
-            ],
-          ),
-        );
-      },
+    final reason = await showSelectionDialog(
+      context,
+      title: '신고하기',
+      subtitle: '신고 사유를 선택해주세요',
+      options: ['욕설/비방', '사기/허위정보', '노쇼', '부적절한 행동', '기타'],
+      confirmText: '신고',
+      confirmColor: Colors.red,
+      icon: Icons.report_outlined,
     );
+
+    if (reason != null && mounted) {
+      await _ratingService.reportUser(
+        myUserId,
+        otherParticipant.id,
+        reason,
+      );
+      if (mounted) {
+        MingrrSnackBar.success(context, '신고가 접수되었습니다');
+      }
+    }
   }
 
   Future<void> _leaveChatRoom(BuildContext context) async {

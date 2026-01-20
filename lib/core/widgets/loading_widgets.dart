@@ -276,11 +276,17 @@ class MingrrLoadingOverlay extends StatelessWidget {
 // ============================================================
 
 /// 인라인 로딩 인디케이터 (버튼 내부, 리스트 아이템 등)
+/// 
+/// 무한 회전 로딩과 진행률 표시 모두 지원:
+/// - value가 null이면 무한 회전 (indeterminate)
+/// - value가 0.0~1.0이면 진행률 표시 (determinate)
 class MingrrLoadingIndicator extends StatelessWidget {
   final double size;
   final double strokeWidth;
   final MingrrLoadingType type;
   final Color? customColor;
+  final double? value;           // null = 무한 회전, 0.0~1.0 = 진행률
+  final Color? backgroundColor;  // 진행률 배경색
 
   const MingrrLoadingIndicator({
     super.key,
@@ -288,6 +294,8 @@ class MingrrLoadingIndicator extends StatelessWidget {
     this.strokeWidth = 2.5,
     this.type = MingrrLoadingType.primary,
     this.customColor,
+    this.value,
+    this.backgroundColor,
   });
   
   /// 작은 사이즈 (버튼 내부용)
@@ -295,6 +303,8 @@ class MingrrLoadingIndicator extends StatelessWidget {
     super.key,
     this.type = MingrrLoadingType.primary,
     this.customColor,
+    this.value,
+    this.backgroundColor,
   }) : size = 18, strokeWidth = 2;
   
   /// 중간 사이즈 (기본)
@@ -302,6 +312,8 @@ class MingrrLoadingIndicator extends StatelessWidget {
     super.key,
     this.type = MingrrLoadingType.primary,
     this.customColor,
+    this.value,
+    this.backgroundColor,
   }) : size = 24, strokeWidth = 2.5;
   
   /// 큰 사이즈 (전체 화면용)
@@ -309,7 +321,20 @@ class MingrrLoadingIndicator extends StatelessWidget {
     super.key,
     this.type = MingrrLoadingType.primary,
     this.customColor,
+    this.value,
+    this.backgroundColor,
   }) : size = 32, strokeWidth = 3;
+  
+  /// 진행률 표시 전용 (0.0~1.0)
+  const MingrrLoadingIndicator.progress({
+    super.key,
+    required this.value,
+    this.size = 24,
+    this.strokeWidth = 2.5,
+    this.type = MingrrLoadingType.primary,
+    this.customColor,
+    this.backgroundColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -321,6 +346,8 @@ class MingrrLoadingIndicator extends StatelessWidget {
       child: CircularProgressIndicator(
         strokeWidth: strokeWidth,
         color: color,
+        value: value,
+        backgroundColor: backgroundColor,
       ),
     );
   }

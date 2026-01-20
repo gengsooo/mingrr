@@ -55,6 +55,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   bool _isLoading = true;
   bool _isDeleting = false;
   bool _isWishlisted = false;
+  bool _isWishlistLoading = false;
   String? _sellerNickname;
 
   @override
@@ -64,6 +65,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       _product = widget.product;
       _isLoading = false;
       _loadSellerNickname();
+      _loadWishlistStatus();
     } else {
       _loadProduct();
     }
@@ -106,17 +108,61 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     }
   }
 
+  /// 찜 상태 로드
+  Future<void> _loadWishlistStatus() async {
+    final userId = _firebaseService.currentUserId;
+    if (userId == null || _product == null) return;
+    
+    try {
+      final isLiked = await _firestoreService.isProductLiked(_product!.id, userId);
+      if (mounted) {
+        setState(() => _isWishlisted = isLiked);
+      }
+    } catch (e) {
+      // 찜 상태 로드 실패 시 무시
+    }
+  }
+
   bool get _isOwner {
     final currentUserId = _firebaseService.currentUserId;
     return currentUserId != null && _product?.sellerId == currentUserId;
   }
 
-  /// 찜하기 토글
-  void _toggleWishlist() {
-    setState(() => _isWishlisted = !_isWishlisted);
-    
-    // TODO: 백엔드 연동 - 찜 목록에 추가/제거
-    MingrrSnackBar.success(context, _isWishlisted ? '찜 목록에 추가했어요' : '찜 목록에서 제거했어요');
+  /// 찜하기 토글 (백엔드 연동)
+  Future<void> _toggleWishlist() async {
+    final userId = _firebaseService.currentUserId;
+    if (userId == null) {
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
+      return;
+    }
+    if (_product == null || _isWishlistLoading) return;
+
+    // 낙관적 업데이트
+    final wasWishlisted = _isWishlisted;
+    setState(() {
+      _isWishlisted = !_isWishlisted;
+      _isWishlistLoading = true;
+    });
+
+    try {
+      final isNowLiked = await _firestoreService.toggleProductLike(_product!.id, userId);
+      if (mounted) {
+        setState(() {
+          _isWishlisted = isNowLiked;
+          _isWishlistLoading = false;
+        });
+        MingrrSnackBar.success(context, isNowLiked ? '찜 목록에 추가했어요' : '찜 목록에서 제거했어요');
+      }
+    } catch (e) {
+      // 실패 시 롤백
+      if (mounted) {
+        setState(() {
+          _isWishlisted = wasWishlisted;
+          _isWishlistLoading = false;
+        });
+        MingrrSnackBar.error(context, '찜하기 실패: $e');
+      }
+    }
   }
 
   @override
@@ -465,26 +511,13 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
             ),
           ),
           // 채팅하기 버튼
-          SizedBox(
+          MingrrButton(
+            text: '채팅하기',
+            onPressed: _isOwner ? null : () => _startChat(),
+            backgroundColor: context.features.market,
+            textColor: Colors.white,
             width: 100,
-            child: ElevatedButton(
-              onPressed: _isOwner ? null : () => _startChat(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.features.market,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              child: const Text(
-                '채팅하기',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+            height: 48,
           ),
         ],
       ),
@@ -498,9 +531,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       isOwner: _isOwner,
       onEdit: _editProduct,
       onDelete: _confirmDelete,
-      onBlock: () {
-        // TODO: 판매자 차단 기능 구현
-      },
+      onBlock: () => _blockSeller(context),
       blockLabel: '이 판매자 차단하기',
       onReport: () => showReportSheet(
         context,
@@ -508,6 +539,40 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         targetName: '이 상품',
         targetType: ReportTargetType.product,
       ),
+    );
+  }
+
+  /// 판매자 차단
+  Future<void> _blockSeller(BuildContext context) async {
+    final currentUserId = _firebaseService.currentUserId;
+    if (currentUserId == null) {
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
+      return;
+    }
+
+    final sellerId = _product?.sellerId;
+    if (sellerId == null || sellerId == currentUserId) {
+      MingrrSnackBar.warning(context, '본인은 차단할 수 없습니다');
+      return;
+    }
+
+    // 차단 확인 시트
+    showConfirmSheet(
+      context,
+      type: ConfirmSheetType.sellerBlock,
+      onConfirm: () async {
+        try {
+          await _firestoreService.blockUser(currentUserId, sellerId);
+          if (mounted) {
+            MingrrSnackBar.success(context, '판매자를 차단했습니다');
+            Navigator.pop(context); // 상세 화면 닫기
+          }
+        } catch (e) {
+          if (mounted) {
+            MingrrSnackBar.error(context, '차단 실패: $e');
+          }
+        }
+      },
     );
   }
 

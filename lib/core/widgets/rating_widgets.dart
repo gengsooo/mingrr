@@ -7,6 +7,7 @@ import '../constants/app_sizes.dart';
 import '../../models/rating_model.dart';
 import 'common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
+import 'dialogs/action_prompt_dialog.dart';
 
 /// ============================================================
 /// 꼬순내지수 평가 시스템 통합 위젯
@@ -400,36 +401,13 @@ class _RatingModalState extends State<RatingModal> {
     
     return Padding(
       padding: const EdgeInsets.all(AppSizes.paddingL),
-      child: SizedBox(
-        width: double.infinity,
+      child: MingrrButton(
+        text: '평가 완료',
+        onPressed: canSubmit ? _submitRating : null,
+        isLoading: _isSubmitting,
+        backgroundColor: _themeColor,
+        textColor: Colors.white,
         height: 52,
-        child: ElevatedButton(
-          onPressed: (canSubmit && !_isSubmitting) ? _submitRating : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: _themeColor,
-            disabledBackgroundColor: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: _isSubmitting
-              ? const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Text(
-                  '평가 완료',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-        ),
       ),
     );
   }
@@ -492,7 +470,7 @@ class _RatingModalState extends State<RatingModal> {
 // ============================================================
 
 /// 활동 완료 후 평가 유도 팝업 표시
-Future<void> showActivityCompleteDialog(
+void showActivityCompleteDialog(
   BuildContext context, {
   required String activityType,
   required String partnerName,
@@ -504,104 +482,27 @@ Future<void> showActivityCompleteDialog(
   final typeLabel = _getActivityTypeLabel(activityType);
   final ratingType = _getRatingType(activityType);
   
-  return showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 아이콘
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: Colors.green.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.check_circle_outline,
-                size: 40,
-                color: Colors.green,
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // 타이틀
-            Text(
-              '🎉 $typeLabel이 완료되었어요!',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            
-            // 서브타이틀
-            Text(
-              '$partnerName님과의 $typeLabel은 어떠셨나요?',
-              style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            
-            // 지금 평가하기 버튼
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  showRatingModal(
-                    context,
-                    targetUserId: partnerUserId,
-                    targetName: partnerName,
-                    targetImageUrl: partnerImageUrl,
-                    ratingType: ratingType,
-                    relatedId: relatedId,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  '지금 평가하기',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            
-            // 나중에 하기 버튼
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                onRateLater?.call();
-              },
-              child: Text(
-                '나중에 하기',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+  showActionPromptDialog(
+    context,
+    icon: MingrrActionPromptDialog.buildCircleIcon(
+      icon: Icons.check_circle_outline,
+      color: Colors.green,
     ),
+    title: '🎉 $typeLabel이 완료되었어요!',
+    message: '$partnerName님과의 $typeLabel은 어떠셨나요?',
+    primaryButtonText: '지금 평가하기',
+    onPrimaryPressed: () {
+      showRatingModal(
+        context,
+        targetUserId: partnerUserId,
+        targetName: partnerName,
+        targetImageUrl: partnerImageUrl,
+        ratingType: ratingType,
+        relatedId: relatedId,
+      );
+    },
+    secondaryButtonText: '나중에 하기',
+    onSecondaryPressed: onRateLater,
   );
 }
 
@@ -643,86 +544,16 @@ RatingType _getRatingType(String type) {
 
 /// 평가 완료 후 피드백 다이얼로그 표시
 void showRatingCompleteDialog(BuildContext context) {
-  showDialog(
-    context: context,
-    barrierDismissible: true,
-    builder: (context) => Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 아이콘
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.amber.shade300,
-                    Colors.orange.shade400,
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.pets,
-                size: 32,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 16),
-            
-            // 타이틀
-            const Text(
-              '✨ 평가 완료!',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            
-            // 메시지
-            Text(
-              '당신의 평가가 더 좋은 커뮤니티를\n만드는 데 도움이 돼요 🐾',
-              style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.4,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 24),
-            
-            // 확인 버튼
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  '확인',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+  showActionPromptDialog(
+    context,
+    icon: MingrrActionPromptDialog.buildGradientIcon(
+      icon: Icons.pets,
+      colors: [Colors.amber.shade300, Colors.orange.shade400],
     ),
+    title: '✨ 평가 완료!',
+    message: '당신의 평가가 더 좋은 커뮤니티를\n만드는 데 도움이 돼요 🐾',
+    primaryButtonText: '확인',
+    onPrimaryPressed: () {},
   );
 }
 
@@ -876,23 +707,12 @@ class RatingReceivedBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onRateBack,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text(
-                '평가하러 가기',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-              ),
-            ),
+          MingrrButton(
+            text: '평가하러 가기',
+            onPressed: onRateBack,
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            textColor: Colors.white,
+            height: 40,
           ),
         ],
       ),
@@ -977,44 +797,29 @@ class TransactionCompleteDialog extends StatelessWidget {
             const SizedBox(height: 24),
             
             // 완료 버튼
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  onComplete();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: context.features.success,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('완료했어요'),
-              ),
+            MingrrButton(
+              text: '완료했어요',
+              onPressed: () {
+                Navigator.pop(context);
+                onComplete();
+              },
+              backgroundColor: context.features.success,
+              textColor: Colors.white,
+              height: 48,
             ),
             const SizedBox(height: 8),
             
             // 노쇼 버튼
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  onNoShow();
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: const BorderSide(color: Colors.red),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('상대방이 안 나왔어요'),
-              ),
+            MingrrButton(
+              text: '상대방이 안 나왔어요',
+              onPressed: () {
+                Navigator.pop(context);
+                onNoShow();
+              },
+              isOutlined: true,
+              backgroundColor: Colors.red,
+              textColor: Colors.red,
+              height: 48,
             ),
             const SizedBox(height: 8),
             

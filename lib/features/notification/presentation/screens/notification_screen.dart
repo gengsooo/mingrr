@@ -6,6 +6,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/top_navigation.dart';
+import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../models/notification_model.dart';
 import '../providers/notification_provider.dart';
 
@@ -100,29 +101,36 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
             controller: _tabController,
             children: [
               // 전체
-              _buildNotificationList(notifications),
+              _buildNotificationList(ref, notifications),
               // 데이팅
               _buildNotificationList(
+                ref,
                 notifications.where((n) => 
                   n.type.category == 'dating' || n.type.category == 'breeding'
                 ).toList(),
               ),
               // 채팅
               _buildNotificationList(
+                ref,
                 notifications.where((n) => n.type.category == 'chat').toList(),
               ),
               // 마켓
               _buildNotificationList(
+                ref,
                 notifications.where((n) => n.type.category == 'market').toList(),
               ),
               // 소모임
               _buildNotificationList(
+                ref,
                 notifications.where((n) => n.type.category == 'community').toList(),
               ),
             ],
           );
         },
-        loading: () => const MingrrLoadingState(type: MingrrLoadingType.primary, message: '알림을 불러오고 있어요'),
+        loading: () => const MingrrLoadingState(
+          type: MingrrLoadingType.primary,
+          message: '알림을 불러오고 있어요',
+        ),
         error: (_, __) => MingrrErrorState(
           title: '일시적인 오류가 발생했어요',
           subtitle: '잠시 후 다시 시도해주세요',
@@ -134,7 +142,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
   }
 
 
-  Widget _buildNotificationList(List<NotificationModel> notifications) {
+  Widget _buildNotificationList(WidgetRef ref, List<NotificationModel> notifications) {
     if (notifications.isEmpty) {
       return const MingrrEmptyState(
         icon: Icons.notifications_none,
@@ -150,36 +158,42 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
       grouped.putIfAbsent(dateKey, () => []).add(notification);
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
-      itemCount: grouped.length,
-      itemBuilder: (context, index) {
-        final dateKey = grouped.keys.elementAt(index);
-        final items = grouped[dateKey]!;
-        
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 날짜 헤더
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.paddingM,
-                vertical: AppSizes.paddingS,
-              ),
-              child: Text(
-                dateKey,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+    return MingrrRefreshWrapper(
+      color: Theme.of(context).colorScheme.primary,
+      onRefresh: () async {
+        ref.invalidate(userNotificationsProvider);
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
+        itemCount: grouped.length,
+        itemBuilder: (context, index) {
+          final dateKey = grouped.keys.elementAt(index);
+          final items = grouped[dateKey]!;
+          
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 날짜 헤더
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.paddingM,
+                  vertical: AppSizes.paddingS,
+                ),
+                child: Text(
+                  dateKey,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
-            ),
-            // 알림 아이템들
-            ...items.map((n) => _buildNotificationItem(n)),
-          ],
-        );
-      },
+              // 알림 아이템들
+              ...items.map((n) => _buildNotificationItem(n)),
+            ],
+          );
+        },
+      ),
     );
   }
 

@@ -111,9 +111,10 @@ class CustomerServiceScreen extends StatelessWidget {
     );
   }
 
-  // TODO: 실제 카카오톡 채널 URL로 변경
+  /// 카카오톡 채널 열기
   Future<void> _openKakaoChannel(BuildContext context) async {
-    const kakaoChannelUrl = 'https://pf.kakao.com/_xxxxx'; // TODO: 실제 URL로 변경
+    // TODO: 실제 카카오톡 채널 URL로 변경 필요
+    const kakaoChannelUrl = 'https://pf.kakao.com/_mingrr';
     
     try {
       final uri = Uri.parse(kakaoChannelUrl);
@@ -131,9 +132,10 @@ class CustomerServiceScreen extends StatelessWidget {
     }
   }
 
-  // TODO: 실제 이메일 주소로 변경
+  /// 이메일 문의 열기
   Future<void> _sendEmail(BuildContext context) async {
-    const email = 'support@mingrr.com'; // TODO: 실제 이메일로 변경
+    // TODO: 실제 이메일 주소로 변경 필요
+    const email = 'support@mingrr.com';
     final uri = Uri(
       scheme: 'mailto',
       path: email,

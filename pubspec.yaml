@@ -30,7 +30,7 @@ dependencies:
   # ===== 위치 기반 =====
   geolocator: ^13.0.2
   kakao_map_sdk: ^1.2.3  # 네이티브 카카오맵 SDK (폴리라인/마커 지원)
-  # geoflutterfire_plus: ^0.0.28  # 위치 기반 쿼리
+  geoflutterfire_plus: ^0.0.28  # 위치 기반 GeoHash 쿼리
 
   # ===== UI/UX =====
   cupertino_icons: ^1.0.8
@@ -40,6 +40,7 @@ dependencies:
   cached_network_image: ^3.4.1
   image_picker: ^1.1.2
   image_cropper: ^8.0.2
+  gal: ^2.3.0
   flutter_animate: ^4.5.2
   shimmer: ^3.0.0
   flutter_staggered_grid_view: ^0.7.0

@@ -171,7 +171,9 @@ class GuardianProfileModal extends StatelessWidget {
   /// 꼬순내지수 평가 버튼
   Widget _buildRatingButton(BuildContext context) {
     return MingrrBottomButtonBar(
-      child: ElevatedButton(
+      child: MingrrButton(
+        text: '꼬순내지수 평가하기',
+        icon: Icons.pets,
         onPressed: () {
           showRatingModal(
             context,
@@ -179,25 +181,9 @@ class GuardianProfileModal extends StatelessWidget {
             targetName: guardianName,
           );
         },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          foregroundColor: Colors.white,
-          minimumSize: const Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.pets, size: 20),
-            SizedBox(width: 8),
-            Text(
-              '꼬순내지수 평가하기',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        textColor: Colors.white,
+        height: 50,
       ),
     );
   }

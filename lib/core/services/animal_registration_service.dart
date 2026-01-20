@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../config/api_config.dart';
+import '../utils/app_logger.dart';
 
 /// ============================================================
 /// 동물등록 정보조회 API 서비스
@@ -35,15 +35,15 @@ class AnimalRegistrationService {
       final url = Uri.parse('${ApiConfig.animalRegistrationBaseUrl}/animalInfo_v3')
           .replace(queryParameters: queryParams);
       
-      debugPrint('동물등록 API 호출: $url');
+      AppLogger.debug('AnimalRegistration', '동물등록 API 호출: $url');
       
       // API 호출
       final response = await http.get(url).timeout(
         Duration(seconds: ApiConfig.animalRegistrationTimeoutSeconds),
       );
       
-      debugPrint('동물등록 API 응답 코드: ${response.statusCode}');
-      debugPrint('동물등록 API 응답: ${response.body}');
+      AppLogger.debug('AnimalRegistration', '동물등록 API 응답 코드: ${response.statusCode}');
+      AppLogger.debug('AnimalRegistration', '동물등록 API 응답: ${response.body}');
       
       if (response.statusCode == 200) {
         return _parseResponse(response.body);
@@ -54,7 +54,7 @@ class AnimalRegistrationService {
         );
       }
     } catch (e) {
-      debugPrint('동물등록 API 오류: $e');
+      AppLogger.error('AnimalRegistration', '동물등록 API 오류', e);
       return AnimalRegistrationResult.error(
         errorCode: 'NETWORK_ERROR',
         errorMessage: '네트워크 오류가 발생했습니다.',
@@ -99,7 +99,7 @@ class AnimalRegistrationService {
         animalInfo: AnimalInfo.fromJson(item),
       );
     } catch (e) {
-      debugPrint('응답 파싱 오류: $e');
+      AppLogger.error('AnimalRegistration', '응답 파싱 오류', e);
       return AnimalRegistrationResult.error(
         errorCode: 'PARSE_ERROR',
         errorMessage: '응답 처리 중 오류가 발생했습니다.',

@@ -79,7 +79,10 @@ class WishlistScreen extends ConsumerWidget {
           },
         );
       },
-      loading: () => const MingrrLoadingState(type: MingrrLoadingType.market, message: '찜 목록을 불러오고 있어요'),
+      loading: () => const MingrrLoadingState(
+        type: MingrrLoadingType.market,
+        message: '찜한 상품을 불러오고 있어요',
+      ),
       error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
     );
   }

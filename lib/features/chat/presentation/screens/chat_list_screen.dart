@@ -9,6 +9,7 @@ import '../../../../core/widgets/svg_icons.dart';
 import '../../../../core/widgets/top_navigation.dart';
 import '../../../../core/widgets/appbar_actions.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
+import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../models/chat_model.dart';
 import '../../../../models/dating_request_model.dart';
@@ -147,19 +148,23 @@ class ChatListScreen extends ConsumerWidget {
               );
             }
             
-            return ListView.builder(
-              padding: const EdgeInsets.all(AppSizes.paddingM),
-              itemCount: filteredRooms.length,
-              itemBuilder: (context, index) {
-                return _buildChatRoomItem(context, ref, filteredRooms[index], type, currentUserId ?? '');
+            return MingrrRefreshWrapper(
+              color: _getTabColor(context, type),
+              onRefresh: () async {
+                ref.invalidate(userChatRoomsProvider);
               },
+              child: ListView.builder(
+                padding: const EdgeInsets.all(AppSizes.paddingM),
+                itemCount: filteredRooms.length,
+                itemBuilder: (context, index) {
+                  return _buildChatRoomItem(context, ref, filteredRooms[index], type, currentUserId ?? '');
+                },
+              ),
             );
           },
           loading: () => MingrrLoadingState(
             type: MingrrLoadingType.chat,
             message: '채팅 목록을 불러오고 있어요',
-            timeout: AppSizes.loadingTimeout,
-            onRetry: () => ref.invalidate(userChatRoomsProvider),
           ),
           error: (_, __) => const MingrrErrorState(
             title: '일시적인 오류가 발생했어요',
@@ -179,17 +184,23 @@ class ChatListScreen extends ConsumerWidget {
         final chatRoomsAsync = ref.watch(userChatRoomsProvider);
         final currentUserId = ref.watch(authStateProvider).valueOrNull?.uid;
 
-        return ListView(
-          padding: const EdgeInsets.all(AppSizes.paddingM),
-          children: [
-            // 대기 중인 신청이 있으면 표시
-            if (pendingRequests.isNotEmpty) ...[
-              _buildRequestsSection(context, ref, pendingRequests),
-              const SizedBox(height: AppSizes.gapL),
-            ],
-            
-            // 채팅 목록
-            chatRoomsAsync.when(
+        return MingrrRefreshWrapper(
+          color: context.features.dating,
+          onRefresh: () async {
+            ref.invalidate(userChatRoomsProvider);
+            ref.invalidate(receivedRequestsProvider);
+          },
+          child: ListView(
+            padding: const EdgeInsets.all(AppSizes.paddingM),
+            children: [
+              // 대기 중인 신청이 있으면 표시
+              if (pendingRequests.isNotEmpty) ...[
+                _buildRequestsSection(context, ref, pendingRequests),
+                const SizedBox(height: AppSizes.gapL),
+              ],
+              
+              // 채팅 목록
+              chatRoomsAsync.when(
               data: (allChatRooms) {
                 final filteredRooms = allChatRooms.where((room) {
                   return room.type == 'dating' || room.type == 'breeding';
@@ -219,15 +230,16 @@ class ChatListScreen extends ConsumerWidget {
                   ],
                 );
               },
-              loading: () => MingrrLoadingState(
-                type: MingrrLoadingType.chat,
-                message: '채팅 목록을 불러오고 있어요',
-                timeout: AppSizes.loadingTimeout,
-                onRetry: () => ref.invalidate(userChatRoomsProvider),
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(AppSizes.paddingXL),
+                  child: MingrrLoadingIndicator.medium(type: MingrrLoadingType.chat),
+                ),
               ),
               error: (_, __) => const SizedBox.shrink(),
             ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -380,17 +392,12 @@ class ChatListScreen extends ConsumerWidget {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: SizedBox(
+                  child: MingrrButton(
+                    text: '수락',
+                    onPressed: () => _showAcceptConfirmation(context, ref, request),
+                    backgroundColor: accentColor,
+                    textColor: Colors.white,
                     height: 36,
-                    child: ElevatedButton(
-                      onPressed: () => _showAcceptConfirmation(context, ref, request),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: accentColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: const Text('수락', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    ),
                   ),
                 ),
               ],
@@ -460,18 +467,16 @@ class ChatListScreen extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton(
+                  child: MingrrButton(
+                    text: '수락하기',
                     onPressed: () {
                       ref.read(receivedRequestsProvider.notifier).acceptRequest(request.id);
                       Navigator.pop(ctx);
                       MingrrSnackBar.success(context, '${request.senderPetName}의 ${request.typeLabel}을 수락했어요! 💕');
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: context.features.dating,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('수락하기', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                    backgroundColor: context.features.dating,
+                    textColor: Colors.white,
+                    height: 48,
                   ),
                 ),
               ],
@@ -527,18 +532,16 @@ class ChatListScreen extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: ElevatedButton(
+                  child: MingrrButton(
+                    text: '거절하기',
                     onPressed: () {
                       ref.read(receivedRequestsProvider.notifier).rejectRequest(request.id);
                       Navigator.pop(ctx);
                       MingrrSnackBar.info(context, '신청을 거절했어요');
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('거절하기', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                    backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                    textColor: Colors.white,
+                    height: 48,
                   ),
                 ),
               ],

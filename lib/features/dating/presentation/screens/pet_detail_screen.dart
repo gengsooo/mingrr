@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/firebase_service.dart';
+import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/dating_service.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/request_sheet.dart';
@@ -15,6 +17,7 @@ import '../../../../core/widgets/pet_profile_modal.dart';
 import '../../../../core/widgets/trait_badge.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/dialogs/confirm_sheet.dart';
 import '../../../../core/widgets/compatibility_widgets.dart';
 import '../../../../core/widgets/info_badge.dart' show LikeButton, InfoBadgeSize, EmptyInfoBadge, PedigreeBadge;
 import '../../../../core/widgets/svg_icons.dart';
@@ -55,6 +58,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
   // ignore: unused_field - 향후 로딩 상태 표시용
   bool _likeLoaded = false;
   final FirebaseService _firebase = FirebaseService();
+  final FirestoreService _firestoreService = FirestoreService();
   final DatingService _datingService = DatingService();
 
   @override
@@ -89,7 +93,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         _likeLoaded = true;
       });
     } catch (e) {
-      debugPrint('좋아요 상태 로드 오류: $e');
+      AppLogger.error('PetDetail', '좋아요 상태 로드 오류', e);
       setState(() => _likeLoaded = true);
     }
   }
@@ -139,7 +143,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         _isLiked = wasLiked;
         _likeCount += wasLiked ? 1 : -1;
       });
-      debugPrint('좋아요 토글 오류: $e');
+      AppLogger.error('PetDetail', '좋아요 토글 오류', e);
     }
   }
 
@@ -683,25 +687,12 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
           const SizedBox(width: 12),
           // 신청 버튼
           Expanded(
-            child: SizedBox(
+            child: MingrrButton(
+              text: widget.isBreeding ? '교배 신청하기' : '데이트 신청하기',
+              onPressed: () => _showRequestConfirmation(context),
+              backgroundColor: context.features.dating,
+              textColor: Colors.white,
               height: 56,
-              child: ElevatedButton(
-                onPressed: () => _showRequestConfirmation(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: context.features.dating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: Text(
-                  widget.isBreeding ? '교배 신청하기' : '데이트 신청하기',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
             ),
           ),
         ],
@@ -830,9 +821,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
     showDetailOptionsSheet(
       context: context,
       isOwner: false, // 상대방 반려동물 상세 화면
-      onBlock: () {
-        // TODO: 차단 기능 구현
-      },
+      onBlock: () => _blockUser(context),
       onReport: () {
         showReportSheet(
           context,
@@ -840,6 +829,44 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
           targetName: '이 사용자',
           targetType: ReportTargetType.user,
         );
+      },
+    );
+  }
+
+  /// 사용자 차단
+  Future<void> _blockUser(BuildContext context) async {
+    final currentUserId = _firebase.currentUserId;
+    if (currentUserId == null) {
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
+      return;
+    }
+
+    // 반려동물 주인 ID 조회
+    final pet = ref.read(petByIdProvider(widget.petId)).valueOrNull;
+    if (pet == null) return;
+
+    final targetUserId = pet.ownerId;
+    if (targetUserId == currentUserId) {
+      MingrrSnackBar.warning(context, '본인은 차단할 수 없습니다');
+      return;
+    }
+
+    // 차단 확인 시트
+    showConfirmSheet(
+      context,
+      type: ConfirmSheetType.userBlock,
+      onConfirm: () async {
+        try {
+          await _firestoreService.blockUser(currentUserId, targetUserId);
+          if (mounted) {
+            MingrrSnackBar.success(context, '사용자를 차단했습니다');
+            Navigator.pop(context); // 상세 화면 닫기
+          }
+        } catch (e) {
+          if (mounted) {
+            MingrrSnackBar.error(context, '차단 실패: $e');
+          }
+        }
       },
     );
   }

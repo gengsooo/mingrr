@@ -5,6 +5,7 @@ import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/svg_icons.dart';
@@ -163,7 +164,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
       // 경로 전체가 보이도록 카메라 조정
       _fitBoundsToRoute();
     } catch (e) {
-      debugPrint('경로 그리기 실패: $e');
+      AppLogger.error('WalkRecordDetail', '경로 그리기 실패', e);
     }
   }
   

@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../config/api_config.dart';
+import '../utils/app_logger.dart';
 
 /// ============================================================
 /// 지오코딩 서비스
@@ -60,7 +60,7 @@ class GeocodingService {
       
       return null;
     } catch (e) {
-      if (kDebugMode) debugPrint('역지오코딩 오류: $e');
+      AppLogger.error('GeocodingService', '역지오코딩 오류', e);
       return null;
     }
   }
@@ -110,7 +110,7 @@ class GeocodingService {
       
       return null;
     } catch (e) {
-      if (kDebugMode) debugPrint('지오코딩 오류: $e');
+      AppLogger.error('GeocodingService', '지오코딩 오류', e);
       return null;
     }
   }
@@ -161,7 +161,7 @@ class GeocodingService {
       
       return [];
     } catch (e) {
-      if (kDebugMode) debugPrint('장소 검색 오류: $e');
+      AppLogger.error('GeocodingService', '장소 검색 오류', e);
       return [];
     }
   }

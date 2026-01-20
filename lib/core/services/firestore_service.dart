@@ -8,6 +8,7 @@ import '../../models/group_model.dart';
 import '../../models/breeding_model.dart';
 import '../../models/community_post_model.dart';
 import 'firebase_service.dart';
+import 'geohash_service.dart';
 
 class FirestoreService {
   final FirebaseService _firebase = FirebaseService();
@@ -325,6 +326,7 @@ class FirestoreService {
   Future<List<ProductModel>> getProducts({
     ProductStatus? status,
     ProductCategory? category,
+    ProductType? type,
     int limit = 20,
   }) async {
     try {
@@ -332,6 +334,10 @@ class FirestoreService {
       
       if (status != null) {
         query = query.where('status', isEqualTo: status.name);
+      }
+      
+      if (type != null) {
+        query = query.where('type', isEqualTo: type.name);
       }
       
       if (category != null) {
@@ -979,5 +985,634 @@ class FirestoreService {
         'petRegistration': verifications?['petRegistration'] ?? false,
       };
     });
+  }
+
+  // ============================================================
+  // 차단 관련 메서드
+  // ============================================================
+
+  /// 사용자 차단
+  /// [blockerId] 차단하는 사용자 ID
+  /// [blockedId] 차단당하는 사용자 ID
+  /// [reason] 차단 사유 (선택)
+  Future<void> blockUser(String blockerId, String blockedId, {String? reason}) async {
+    try {
+      final blockId = '${blockerId}_$blockedId';
+      await _firebase.blocksCollection.doc(blockId).set({
+        'blockerId': blockerId,
+        'blockedId': blockedId,
+        'reason': reason,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 사용자 차단 해제
+  Future<void> unblockUser(String blockerId, String blockedId) async {
+    try {
+      final blockId = '${blockerId}_$blockedId';
+      await _firebase.blocksCollection.doc(blockId).delete();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 차단 여부 확인
+  Future<bool> isUserBlocked(String blockerId, String blockedId) async {
+    try {
+      final blockId = '${blockerId}_$blockedId';
+      final doc = await _firebase.blocksCollection.doc(blockId).get();
+      return doc.exists;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// 내가 차단한 사용자 목록 조회
+  Future<List<String>> getBlockedUserIds(String userId) async {
+    try {
+      final snapshot = await _firebase.blocksCollection
+          .where('blockerId', isEqualTo: userId)
+          .get();
+      return snapshot.docs.map((doc) => doc.data()['blockedId'] as String).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// 차단한 사용자 목록 스트림
+  Stream<List<String>> watchBlockedUserIds(String userId) {
+    return _firebase.blocksCollection
+        .where('blockerId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => doc.data()['blockedId'] as String)
+            .toList());
+  }
+
+  // ============================================================
+  // 상품 찜(북마크) 관련 메서드
+  // ============================================================
+
+  /// 상품 찜하기 토글
+  /// Returns: true = 찜 추가됨, false = 찜 해제됨
+  Future<bool> toggleProductLike(String productId, String userId) async {
+    try {
+      final likeId = '${userId}_$productId';
+      final likeDoc = await _firebase.productLikesCollection.doc(likeId).get();
+      
+      if (likeDoc.exists) {
+        // 찜 해제
+        await _firebase.productLikesCollection.doc(likeId).delete();
+        await _firebase.productsCollection.doc(productId).update({
+          'likeCount': FieldValue.increment(-1),
+        });
+        return false;
+      } else {
+        // 찜 추가
+        await _firebase.productLikesCollection.doc(likeId).set({
+          'userId': userId,
+          'productId': productId,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        await _firebase.productsCollection.doc(productId).update({
+          'likeCount': FieldValue.increment(1),
+        });
+        return true;
+      }
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 상품 찜 여부 확인
+  Future<bool> isProductLiked(String productId, String userId) async {
+    try {
+      final likeId = '${userId}_$productId';
+      final doc = await _firebase.productLikesCollection.doc(likeId).get();
+      return doc.exists;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// 사용자가 찜한 상품 ID 목록
+  Future<List<String>> getUserLikedProductIds(String userId) async {
+    try {
+      final snapshot = await _firebase.productLikesCollection
+          .where('userId', isEqualTo: userId)
+          .orderBy('createdAt', descending: true)
+          .get();
+      return snapshot.docs.map((doc) => doc.data()['productId'] as String).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// 사용자가 찜한 상품 목록 조회
+  Future<List<ProductModel>> getUserLikedProducts(String userId) async {
+    try {
+      final productIds = await getUserLikedProductIds(userId);
+      if (productIds.isEmpty) return [];
+      
+      final products = <ProductModel>[];
+      for (final id in productIds) {
+        final product = await getProduct(id);
+        if (product != null) {
+          products.add(product);
+        }
+      }
+      return products;
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// 찜한 상품 ID 목록 스트림
+  Stream<List<String>> watchUserLikedProductIds(String userId) {
+    return _firebase.productLikesCollection
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => doc.data()['productId'] as String)
+            .toList());
+  }
+
+  // ============================================================
+  // 소모임 가입 신청 관련 메서드
+  // ============================================================
+
+  /// 가입 신청 생성
+  Future<void> createJoinRequest({
+    required String groupId,
+    required String userId,
+    String? message,
+  }) async {
+    try {
+      await _firebase.groupJoinRequestsCollection.add({
+        'groupId': groupId,
+        'userId': userId,
+        'message': message,
+        'status': JoinRequestStatus.pending.name,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 특정 모임의 가입 신청 목록 조회 (대기중만)
+  Future<List<GroupJoinRequestModel>> getPendingJoinRequests(String groupId) async {
+    try {
+      final snapshot = await _firebase.groupJoinRequestsCollection
+          .where('groupId', isEqualTo: groupId)
+          .where('status', isEqualTo: JoinRequestStatus.pending.name)
+          .orderBy('createdAt', descending: true)
+          .get();
+      return snapshot.docs.map((doc) => GroupJoinRequestModel.fromFirestore(doc)).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// 특정 모임의 가입 신청 목록 스트림 (대기중만)
+  Stream<List<GroupJoinRequestModel>> watchPendingJoinRequests(String groupId) {
+    return _firebase.groupJoinRequestsCollection
+        .where('groupId', isEqualTo: groupId)
+        .where('status', isEqualTo: JoinRequestStatus.pending.name)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => GroupJoinRequestModel.fromFirestore(doc))
+            .toList());
+  }
+
+  /// 가입 신청 승인
+  Future<void> approveJoinRequest({
+    required String requestId,
+    required String groupId,
+    required String userId,
+    required String respondedBy,
+  }) async {
+    try {
+      final batch = _firestore.batch();
+      
+      // 1. 신청 상태 업데이트
+      batch.update(_firebase.groupJoinRequestsCollection.doc(requestId), {
+        'status': JoinRequestStatus.approved.name,
+        'respondedAt': FieldValue.serverTimestamp(),
+        'respondedBy': respondedBy,
+      });
+      
+      // 2. 모임 멤버 목록에 추가
+      batch.update(_firebase.groupsCollection.doc(groupId), {
+        'memberIds': FieldValue.arrayUnion([userId]),
+      });
+      
+      await batch.commit();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 가입 신청 거절
+  Future<void> rejectJoinRequest({
+    required String requestId,
+    required String respondedBy,
+  }) async {
+    try {
+      await _firebase.groupJoinRequestsCollection.doc(requestId).update({
+        'status': JoinRequestStatus.rejected.name,
+        'respondedAt': FieldValue.serverTimestamp(),
+        'respondedBy': respondedBy,
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 사용자가 해당 모임에 가입 신청했는지 확인
+  Future<bool> hasUserRequestedJoin(String groupId, String userId) async {
+    try {
+      final snapshot = await _firebase.groupJoinRequestsCollection
+          .where('groupId', isEqualTo: groupId)
+          .where('userId', isEqualTo: userId)
+          .where('status', isEqualTo: JoinRequestStatus.pending.name)
+          .limit(1)
+          .get();
+      return snapshot.docs.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// 대기중인 가입 신청 수 조회
+  Future<int> getPendingJoinRequestCount(String groupId) async {
+    try {
+      final snapshot = await _firebase.groupJoinRequestsCollection
+          .where('groupId', isEqualTo: groupId)
+          .where('status', isEqualTo: JoinRequestStatus.pending.name)
+          .count()
+          .get();
+      return snapshot.count ?? 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  // ===== 서버 사이드 필터링 + GeoHash 쿼리 =====
+
+  /// 상품 목록 조회 (서버 사이드 필터링 + 페이지네이션)
+  /// 
+  /// [type] 상품 타입 (sell/share/job)
+  /// [status] 상품 상태
+  /// [lastDocument] 페이지네이션 커서
+  /// [limit] 페이지 크기
+  Future<({List<ProductModel> items, DocumentSnapshot? lastDoc, bool hasMore})> 
+      getProductsPaginated({
+    ProductType? type,
+    ProductStatus? status,
+    DocumentSnapshot? lastDocument,
+    int limit = 20,
+  }) async {
+    try {
+      Query<Map<String, dynamic>> query = _firebase.productsCollection;
+      
+      // 서버 사이드 필터링
+      if (status != null) {
+        query = query.where('status', isEqualTo: status.name);
+      }
+      if (type != null) {
+        query = query.where('type', isEqualTo: type.name);
+      }
+      
+      query = query.orderBy('createdAt', descending: true);
+      
+      // 페이지네이션
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
+      }
+      
+      final snapshot = await query.limit(limit + 1).get();
+      final hasMore = snapshot.docs.length > limit;
+      final docs = hasMore ? snapshot.docs.take(limit).toList() : snapshot.docs;
+      
+      return (
+        items: docs.map((doc) => ProductModel.fromFirestore(doc.data(), id: doc.id)).toList(),
+        lastDoc: docs.isNotEmpty ? docs.last : null,
+        hasMore: hasMore,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// GeoHash 기반 상품 검색 (반경 내)
+  /// 
+  /// [centerGeohash] 중심점 GeoHash
+  /// [radiusKm] 반경 (km)
+  /// [type] 상품 타입
+  /// [status] 상품 상태
+  Future<List<ProductModel>> getProductsByGeohash({
+    required String centerGeohash,
+    required double radiusKm,
+    ProductType? type,
+    ProductStatus? status,
+  }) async {
+    try {
+      final bounds = GeoHashService.getBoundsForRadius(
+        GeoPoint(0, 0), // 실제로는 centerGeohash에서 역산 필요
+        radiusKm,
+      );
+      
+      // GeoHash prefix 기반 범위 쿼리
+      final precision = radiusKm <= 1 ? 6 : (radiusKm <= 5 ? 5 : 4);
+      final prefix = centerGeohash.substring(0, precision);
+      
+      Query<Map<String, dynamic>> query = _firebase.productsCollection
+          .where('geohash', isGreaterThanOrEqualTo: prefix)
+          .where('geohash', isLessThan: '$prefix~');
+      
+      if (status != null) {
+        query = query.where('status', isEqualTo: status.name);
+      }
+      
+      final snapshot = await query.get();
+      
+      var products = snapshot.docs
+          .map((doc) => ProductModel.fromFirestore(doc.data(), id: doc.id))
+          .toList();
+      
+      // 타입 필터 (클라이언트 사이드 - 복합 인덱스 제한)
+      if (type != null) {
+        products = products.where((p) => p.type == type).toList();
+      }
+      
+      return products;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 소모임 목록 조회 (서버 사이드 필터링 + 페이지네이션)
+  Future<({List<GroupModel> items, DocumentSnapshot? lastDoc, bool hasMore})> 
+      getGroupsPaginated({
+    bool? isPublic,
+    String? category,
+    DocumentSnapshot? lastDocument,
+    int limit = 20,
+  }) async {
+    try {
+      Query<Map<String, dynamic>> query = _firebase.groupsCollection;
+      
+      // 서버 사이드 필터링
+      if (isPublic != null) {
+        query = query.where('isPublic', isEqualTo: isPublic);
+      }
+      if (category != null) {
+        query = query.where('category', isEqualTo: category);
+      }
+      
+      query = query.orderBy('createdAt', descending: true);
+      
+      // 페이지네이션
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
+      }
+      
+      final snapshot = await query.limit(limit + 1).get();
+      final hasMore = snapshot.docs.length > limit;
+      final docs = hasMore ? snapshot.docs.take(limit).toList() : snapshot.docs;
+      
+      return (
+        items: docs.map((doc) => GroupModel.fromFirestore(doc.data(), id: doc.id)).toList(),
+        lastDoc: docs.isNotEmpty ? docs.last : null,
+        hasMore: hasMore,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// GeoHash 기반 소모임 검색 (반경 내)
+  Future<List<GroupModel>> getGroupsByGeohash({
+    required String centerGeohash,
+    required double radiusKm,
+    bool? isPublic,
+  }) async {
+    try {
+      final precision = radiusKm <= 1 ? 6 : (radiusKm <= 5 ? 5 : 4);
+      final prefix = centerGeohash.substring(0, precision.clamp(1, centerGeohash.length));
+      
+      Query<Map<String, dynamic>> query = _firebase.groupsCollection
+          .where('geohash', isGreaterThanOrEqualTo: prefix)
+          .where('geohash', isLessThan: '$prefix~');
+      
+      if (isPublic != null) {
+        query = query.where('isPublic', isEqualTo: isPublic);
+      }
+      
+      final snapshot = await query.get();
+      
+      return snapshot.docs
+          .map((doc) => GroupModel.fromFirestore(doc.data(), id: doc.id))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 반려동물 목록 조회 (서버 사이드 필터링 + 페이지네이션)
+  Future<({List<PetModel> items, DocumentSnapshot? lastDoc, bool hasMore})> 
+      getPetsPaginated({
+    bool? isBreedingAvailable,
+    String? species,
+    DocumentSnapshot? lastDocument,
+    int limit = 20,
+  }) async {
+    try {
+      Query<Map<String, dynamic>> query = _firebase.petsCollection;
+      
+      // 서버 사이드 필터링
+      if (isBreedingAvailable != null) {
+        query = query.where('isBreedingAvailable', isEqualTo: isBreedingAvailable);
+      }
+      if (species != null) {
+        query = query.where('species', isEqualTo: species);
+      }
+      
+      query = query.orderBy('createdAt', descending: true);
+      
+      // 페이지네이션
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
+      }
+      
+      final snapshot = await query.limit(limit + 1).get();
+      final hasMore = snapshot.docs.length > limit;
+      final docs = hasMore ? snapshot.docs.take(limit).toList() : snapshot.docs;
+      
+      return (
+        items: docs.map((doc) => PetModel.fromFirestore(doc)).toList(),
+        lastDoc: docs.isNotEmpty ? docs.last : null,
+        hasMore: hasMore,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// GeoHash 기반 반려동물 검색 (반경 내 - 주인 위치 기준)
+  Future<List<PetModel>> getPetsByOwnerGeohash({
+    required String centerGeohash,
+    required double radiusKm,
+    bool? isBreedingAvailable,
+  }) async {
+    try {
+      final precision = radiusKm <= 1 ? 6 : (radiusKm <= 5 ? 5 : 4);
+      final prefix = centerGeohash.substring(0, precision.clamp(1, centerGeohash.length));
+      
+      // 먼저 해당 범위 내 사용자 조회
+      final usersSnapshot = await _firebase.usersCollection
+          .where('geohash', isGreaterThanOrEqualTo: prefix)
+          .where('geohash', isLessThan: '$prefix~')
+          .get();
+      
+      final userIds = usersSnapshot.docs.map((doc) => doc.id).toSet();
+      if (userIds.isEmpty) return [];
+      
+      // 해당 사용자들의 반려동물 조회
+      Query<Map<String, dynamic>> query = _firebase.petsCollection
+          .where('ownerId', whereIn: userIds.take(10).toList()); // Firestore whereIn 제한
+      
+      if (isBreedingAvailable != null) {
+        query = query.where('isBreedingAvailable', isEqualTo: isBreedingAvailable);
+      }
+      
+      final snapshot = await query.get();
+      
+      return snapshot.docs
+          .map((doc) => PetModel.fromFirestore(doc))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 커뮤니티 게시글 조회 (서버 사이드 필터링 + 페이지네이션)
+  Future<({List<CommunityPostModel> items, DocumentSnapshot? lastDoc, bool hasMore})> 
+      getCommunityPostsPaginated({
+    CommunityCategory? category,
+    DocumentSnapshot? lastDocument,
+    int limit = 20,
+  }) async {
+    try {
+      Query<Map<String, dynamic>> query = _firebase.feedPostsCollection;
+      
+      // 서버 사이드 필터링
+      if (category != null) {
+        query = query.where('category', isEqualTo: category.name);
+      }
+      
+      query = query.orderBy('createdAt', descending: true);
+      
+      // 페이지네이션
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
+      }
+      
+      final snapshot = await query.limit(limit + 1).get();
+      final hasMore = snapshot.docs.length > limit;
+      final docs = hasMore ? snapshot.docs.take(limit).toList() : snapshot.docs;
+      
+      return (
+        items: docs.map((doc) => CommunityPostModel.fromFirestore(doc.data(), id: doc.id)).toList(),
+        lastDoc: docs.isNotEmpty ? docs.last : null,
+        hasMore: hasMore,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 알바 목록 조회 (서버 사이드 필터링 + 페이지네이션)
+  Future<({List<JobModel> items, DocumentSnapshot? lastDoc, bool hasMore})> 
+      getJobsPaginated({
+    JobType? type,
+    String? status,
+    DocumentSnapshot? lastDocument,
+    int limit = 20,
+  }) async {
+    try {
+      Query<Map<String, dynamic>> query = _firebase.jobsCollection;
+      
+      // 서버 사이드 필터링
+      if (status != null) {
+        query = query.where('status', isEqualTo: status);
+      }
+      if (type != null) {
+        query = query.where('type', isEqualTo: type.name);
+      }
+      
+      query = query.orderBy('createdAt', descending: true);
+      
+      // 페이지네이션
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
+      }
+      
+      final snapshot = await query.limit(limit + 1).get();
+      final hasMore = snapshot.docs.length > limit;
+      final docs = hasMore ? snapshot.docs.take(limit).toList() : snapshot.docs;
+      
+      return (
+        items: docs.map((doc) => JobModel.fromFirestore(doc.data(), id: doc.id)).toList(),
+        lastDoc: docs.isNotEmpty ? docs.last : null,
+        hasMore: hasMore,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 사용자 GeoHash 업데이트
+  Future<void> updateUserGeohash(String userId, GeoPoint location) async {
+    try {
+      final geohash = GeoHashService.encodeGeoPoint(location);
+      await _firebase.usersCollection.doc(userId).update({
+        'geohash': geohash,
+        'homeLocation': location,
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 상품 GeoHash 업데이트
+  Future<void> updateProductGeohash(String productId, GeoPoint location) async {
+    try {
+      final geohash = GeoHashService.encodeGeoPoint(location);
+      await _firebase.productsCollection.doc(productId).update({
+        'geohash': geohash,
+        'location': location,
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 소모임 GeoHash 업데이트
+  Future<void> updateGroupGeohash(String groupId, GeoPoint location) async {
+    try {
+      final geohash = GeoHashService.encodeGeoPoint(location);
+      await _firebase.groupsCollection.doc(groupId).update({
+        'geohash': geohash,
+        'location': location,
+      });
+    } catch (e) {
+      rethrow;
+    }
   }
 }

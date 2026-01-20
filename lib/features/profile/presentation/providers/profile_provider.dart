@@ -108,25 +108,8 @@ final wishlistProductsProvider = FutureProvider.autoDispose<List<ProductModel>>(
   
   if (userId == null) return [];
   
-  // 찜한 상품 ID 목록 조회
-  final likesSnapshot = await _firebaseService.productLikesCollection
-      .where('userId', isEqualTo: userId)
-      .get();
-  
-  if (likesSnapshot.docs.isEmpty) return [];
-  
-  final productIds = likesSnapshot.docs.map((doc) => doc.data()['productId'] as String).toList();
-  
-  // 상품 정보 조회
-  final products = <ProductModel>[];
-  for (final productId in productIds) {
-    final productDoc = await _firebaseService.productsCollection.doc(productId).get();
-    if (productDoc.exists) {
-      products.add(ProductModel.fromFirestore(productDoc.data()!, id: productDoc.id));
-    }
-  }
-  
-  return products;
+  final firestoreService = ref.watch(_firestoreServiceProvider);
+  return firestoreService.getUserLikedProducts(userId);
 });
 
 /// 사용자 인증 상태 Provider

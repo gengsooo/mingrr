@@ -9,6 +9,7 @@ import '../../../../core/widgets/search_screen.dart';
 import '../../../../core/widgets/top_navigation.dart';
 import '../../../../core/widgets/appbar_actions.dart';
 import '../../../../core/widgets/filter_components.dart';
+import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../models/marketplace_model.dart';
 import '../providers/marketplace_provider.dart';
 import 'product_detail_screen.dart';
@@ -34,11 +35,52 @@ final _selectedCategoryProvider = StateProvider<int>((ref) => 0);
 /// 거리 필터
 final _distanceFilterProvider = StateProvider<double>((ref) => 3.0);
 
-class MarketplaceScreen extends ConsumerWidget {
+class MarketplaceScreen extends ConsumerStatefulWidget {
   const MarketplaceScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MarketplaceScreen> createState() => _MarketplaceScreenState();
+}
+
+class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
+  final ScrollController _productScrollController = ScrollController();
+  final ScrollController _jobScrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _productScrollController.addListener(_onProductScroll);
+    _jobScrollController.addListener(_onJobScroll);
+  }
+
+  @override
+  void dispose() {
+    _productScrollController.removeListener(_onProductScroll);
+    _jobScrollController.removeListener(_onJobScroll);
+    _productScrollController.dispose();
+    _jobScrollController.dispose();
+    super.dispose();
+  }
+
+  void _onProductScroll() {
+    if (_productScrollController.position.pixels >=
+        _productScrollController.position.maxScrollExtent - 200) {
+      final selectedTab = ref.read(_selectedTabProvider);
+      final distanceFilter = ref.read(_distanceFilterProvider);
+      final type = selectedTab == 0 ? ProductType.sell : ProductType.share;
+      ref.read(paginatedProductsProvider((type: type, radiusKm: distanceFilter)).notifier).loadMore();
+    }
+  }
+
+  void _onJobScroll() {
+    if (_jobScrollController.position.pixels >=
+        _jobScrollController.position.maxScrollExtent - 200) {
+      ref.read(paginatedJobsProvider.notifier).loadMore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final selectedTab = ref.watch(_selectedTabProvider);
     final selectedCategory = ref.watch(_selectedCategoryProvider);
     final distanceFilter = ref.watch(_distanceFilterProvider);
@@ -147,46 +189,69 @@ class MarketplaceScreen extends ConsumerWidget {
     );
   }
 
-  /// 상품 목록 (Firebase 연동 + 거리 필터링)
+  /// 상품 목록 (Firebase 연동 + 거리 필터링 + 페이지네이션)
   Widget _buildProductList(BuildContext context, ProductType type) {
-    return Consumer(
-      builder: (context, ref, child) {
-        final distanceFilter = ref.watch(_distanceFilterProvider);
-        final productsAsync = ref.watch(filteredProductsProvider((type: type, radiusKm: distanceFilter)));
-        
-        return productsAsync.when(
-          loading: () => MingrrLoadingState(
-            type: MingrrLoadingType.market,
-            message: type == ProductType.sell ? '판매 상품을 불러오고 있어요' : '나눔 상품을 불러오고 있어요',
-            timeout: AppSizes.loadingTimeout,
-            onRetry: () => ref.invalidate(filteredProductsProvider((type: type, radiusKm: distanceFilter))),
-          ),
-          error: (e, _) => MingrrEmptyState(
-            icon: Icons.error_outline,
-            title: '데이터를 불러올 수 없어요',
-            subtitle: '잠시 후 다시 시도해주세요',
-          ),
-          data: (products) {
-            if (products.isEmpty) {
-              return MingrrEmptyState(
-                icon: type == ProductType.sell ? Icons.sell : Icons.volunteer_activism,
-                title: '아직 데이터가 없어요',
-                subtitle: '거리를 늘리거나 다른 카테고리를 확인해보세요',
-              );
-            }
-            return ListView.builder(
-              padding: const EdgeInsets.all(AppSizes.paddingM),
-              itemCount: products.length,
-              itemBuilder: (ctx, index) {
-                return _buildProductModelItem(context, products[index]);
-              },
-            );
-          },
-        );
+    final distanceFilter = ref.watch(_distanceFilterProvider);
+    final paginatedState = ref.watch(paginatedProductsProvider((type: type, radiusKm: distanceFilter)));
+    
+    // 초기 로딩 상태
+    if (paginatedState.isInitialLoading) {
+      return MingrrLoadingState(
+        type: MingrrLoadingType.market,
+        message: '상품을 불러오고 있어요',
+        timeout: AppSizes.loadingTimeout,
+        onRetry: () => ref.read(paginatedProductsProvider((type: type, radiusKm: distanceFilter)).notifier).loadInitial(),
+      );
+    }
+    
+    // 에러 상태
+    if (paginatedState.hasError && paginatedState.items.isEmpty) {
+      return MingrrErrorState(
+        title: '데이터를 불러올 수 없어요',
+        subtitle: '잠시 후 다시 시도해주세요',
+        onRetry: () => ref.read(paginatedProductsProvider((type: type, radiusKm: distanceFilter)).notifier).loadInitial(),
+      );
+    }
+    
+    // 빈 상태
+    if (paginatedState.isEmpty) {
+      return MingrrEmptyState(
+        icon: type == ProductType.sell ? Icons.sell : Icons.volunteer_activism,
+        title: '아직 데이터가 없어요',
+        subtitle: '거리를 늘리거나 다른 카테고리를 확인해보세요',
+      );
+    }
+    
+    // 데이터 있음
+    return MingrrRefreshWrapper(
+      color: context.features.market,
+      onRefresh: () async {
+        await ref.read(paginatedProductsProvider((type: type, radiusKm: distanceFilter)).notifier).refresh();
       },
+      child: ListView.builder(
+        controller: _productScrollController,
+        padding: const EdgeInsets.all(AppSizes.paddingM),
+        itemCount: paginatedState.items.length + (paginatedState.hasMore ? 1 : 0),
+        itemBuilder: (ctx, index) {
+          // 로딩 인디케이터
+          if (index >= paginatedState.items.length) {
+            return const Padding(
+              padding: EdgeInsets.all(AppSizes.paddingL),
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            );
+          }
+          return _buildProductModelItem(context, paginatedState.items[index]);
+        },
+      ),
     );
   }
-  
+
   /// Firebase ProductWithDistance를 사용한 상품 아이템
   Widget _buildProductModelItem(BuildContext context, ProductWithDistance productWithDistance) {
     return ProductCard(
@@ -237,38 +302,65 @@ class MarketplaceScreen extends ConsumerWidget {
     }
   }
 
-  /// 알바 목록 (Firebase 연동)
+  /// 알바 목록 (Firebase 연동 + 페이지네이션)
   Widget _buildJobList(BuildContext context) {
-    return Consumer(
-      builder: (context, ref, child) {
-        final jobsAsync = ref.watch(jobsProvider);
-        
-        return jobsAsync.when(
-          data: (jobs) {
-            if (jobs.isEmpty) {
-              return MingrrEmptyState(
-                icon: Icons.work_outline,
-                title: '아직 데이터가 없어요',
-                subtitle: '새로운 알바를 등록해보세요',
-              );
-            }
-            return ListView.builder(
-              padding: const EdgeInsets.all(AppSizes.paddingM),
-              itemCount: jobs.length,
-              itemBuilder: (ctx, index) {
-                return _buildJobModelItem(context, jobs[index]);
-              },
-            );
-          },
-          loading: () => MingrrLoadingState(
-            type: MingrrLoadingType.market,
-            message: '알바 정보를 불러오고 있어요',
-            timeout: AppSizes.loadingTimeout,
-            onRetry: () => ref.invalidate(jobsProvider),
-          ),
-          error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
-        );
+    final paginatedState = ref.watch(paginatedJobsProvider);
+    
+    // 초기 로딩 상태
+    if (paginatedState.isInitialLoading) {
+      return MingrrLoadingState(
+        type: MingrrLoadingType.market,
+        message: '알바를 불러오고 있어요',
+        timeout: AppSizes.loadingTimeout,
+        onRetry: () => ref.read(paginatedJobsProvider.notifier).loadInitial(),
+      );
+    }
+    
+    // 에러 상태
+    if (paginatedState.hasError && paginatedState.items.isEmpty) {
+      return MingrrErrorState(
+        title: '일시적인 오류가 발생했어요',
+        subtitle: '잠시 후 다시 시도해주세요',
+        onRetry: () => ref.read(paginatedJobsProvider.notifier).loadInitial(),
+      );
+    }
+    
+    // 빈 상태
+    if (paginatedState.isEmpty) {
+      return MingrrEmptyState(
+        icon: Icons.work_outline,
+        title: '아직 데이터가 없어요',
+        subtitle: '새로운 알바를 등록해보세요',
+      );
+    }
+    
+    // 데이터 있음
+    return MingrrRefreshWrapper(
+      color: context.features.market,
+      onRefresh: () async {
+        await ref.read(paginatedJobsProvider.notifier).refresh();
       },
+      child: ListView.builder(
+        controller: _jobScrollController,
+        padding: const EdgeInsets.all(AppSizes.paddingM),
+        itemCount: paginatedState.items.length + (paginatedState.hasMore ? 1 : 0),
+        itemBuilder: (ctx, index) {
+          // 로딩 인디케이터
+          if (index >= paginatedState.items.length) {
+            return const Padding(
+              padding: EdgeInsets.all(AppSizes.paddingL),
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            );
+          }
+          return _buildJobModelItem(context, paginatedState.items[index]);
+        },
+      ),
     );
   }
 

@@ -5,6 +5,7 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/services/dating_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/dialogs/confirm_sheet.dart';
 import '../../../../models/dating_model.dart';
 import '../../../../models/pet_model.dart';
 import '../../../dating/presentation/providers/dating_provider.dart';
@@ -68,7 +69,10 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
             },
           );
         },
-        loading: () => const MingrrLoadingState(type: MingrrLoadingType.dating, message: '받은 신청을 불러오고 있어요'),
+        loading: () => const MingrrLoadingState(
+          type: MingrrLoadingType.dating,
+          message: '받은 신청을 불러오고 있어요',
+        ),
         error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
       ),
     );
@@ -253,46 +257,28 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
   
   /// 데이팅 신청 거절
   Future<void> _rejectRequest(DatingRequestModel request) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        title: const Text('신청 거절'),
-        content: const Text('이 데이팅 신청을 거절하시겠습니까?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('거절'),
-          ),
-        ],
-      ),
+    showConfirmSheet(
+      context,
+      type: ConfirmSheetType.dateReject,
+      onConfirm: () async {
+        setState(() => _isProcessing = true);
+        
+        try {
+          await _datingService.rejectDatingRequest(request.id);
+          
+          if (mounted) {
+            MingrrSnackBar.info(context, '신청을 거절했습니다');
+          }
+        } catch (e) {
+          if (mounted) {
+            MingrrSnackBar.error(context, '오류가 발생했습니다: $e');
+          }
+        } finally {
+          if (mounted) {
+            setState(() => _isProcessing = false);
+          }
+        }
+      },
     );
-    
-    if (confirmed != true) return;
-    
-    setState(() => _isProcessing = true);
-    
-    try {
-      await _datingService.rejectDatingRequest(request.id);
-      
-      if (mounted) {
-        MingrrSnackBar.info(context, '신청을 거절했습니다');
-      }
-    } catch (e) {
-      if (mounted) {
-        MingrrSnackBar.error(context, '오류가 발생했습니다: $e');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isProcessing = false);
-      }
-    }
   }
 }

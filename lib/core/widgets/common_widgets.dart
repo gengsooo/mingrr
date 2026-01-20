@@ -8,7 +8,7 @@ import '../theme/app_theme.dart';
 import '../providers/network_provider.dart';
 import 'mingrr_bottom_sheet.dart';
 import 'svg_icons.dart';
-import 'loading_widgets.dart' show MingrrLoadingType;
+import 'loading_widgets.dart' show MingrrLoadingType, MingrrLoadingIndicator;
 
 // 공통 로딩 위젯 export
 export 'loading_widgets.dart';
@@ -61,13 +61,8 @@ class MingrrButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final buttonChild = isLoading
-        ? SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-              strokeWidth: 2.5,
-              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.onSurface),
-            ),
+        ? MingrrLoadingIndicator.small(
+            customColor: Theme.of(context).colorScheme.onSurface,
           )
         : Row(
             mainAxisSize: MainAxisSize.min,
@@ -601,13 +596,10 @@ class MingrrLoading extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
-            width: size,
-            height: size,
-            child: CircularProgressIndicator(
-              strokeWidth: 3,
-              valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
-            ),
+          MingrrLoadingIndicator(
+            size: size,
+            strokeWidth: 3,
+            customColor: Theme.of(context).colorScheme.primary,
           ),
           if (message != null) ...[
             const SizedBox(height: AppSizes.gapM),
@@ -2238,13 +2230,10 @@ class _MingrrLoadingStateState extends ConsumerState<MingrrLoadingState> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          SizedBox(
-            width: 48,
-            height: 48,
-            child: CircularProgressIndicator(
-              color: colorScheme.outlineVariant,
-              strokeWidth: 3,
-            ),
+          MingrrLoadingIndicator(
+            size: 48,
+            strokeWidth: 3,
+            customColor: colorScheme.outlineVariant,
           ),
           if (widget.message != null) ...[
             const SizedBox(height: 16),

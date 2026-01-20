@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../common_widgets.dart';
 
 /// ============================================================
 /// InfoDialog - 정보성 안내 팝업
@@ -348,27 +349,12 @@ class InfoDialog extends StatelessWidget {
           ],
           
           // 확인 버튼
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accentColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: Text(
-                confirmText,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+          MingrrButton(
+            text: confirmText,
+            onPressed: () => Navigator.pop(context),
+            backgroundColor: accentColor,
+            textColor: Colors.white,
+            height: 48,
           ),
         ],
       ),

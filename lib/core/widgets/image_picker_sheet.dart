@@ -326,7 +326,8 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
                 const SizedBox(width: 12),
               Expanded(
                 flex: 2,
-                child: ElevatedButton(
+                child: MingrrButton(
+                  text: '저장',
                   onPressed: (_selectedImage != null || _selectedDefaultAvatar != null)
                       ? () {
                           Navigator.pop(context, ImagePickerResult(
@@ -335,16 +336,9 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
                           ));
                         }
                       : null,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: Theme.of(context).colorScheme.outline,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text('저장'),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  textColor: Colors.white,
+                  height: 48,
                 ),
               ),
             ],

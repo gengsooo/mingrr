@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/foundation.dart';
+import '../utils/app_logger.dart';
 
 /// ============================================================
 /// Firebase 서비스
@@ -93,9 +93,17 @@ class FirebaseService {
   CollectionReference<Map<String, dynamic>> get groupLikesCollection =>
       firestore.collection('groupLikes');
   
+  /// 소모임 가입 신청 컬렉션
+  CollectionReference<Map<String, dynamic>> get groupJoinRequestsCollection =>
+      firestore.collection('groupJoinRequests');
+  
   /// 신고 컬렉션
   CollectionReference<Map<String, dynamic>> get reportsCollection =>
       firestore.collection('reports');
+  
+  /// 차단 컬렉션
+  CollectionReference<Map<String, dynamic>> get blocksCollection =>
+      firestore.collection('blocks');
   
   /// 평가(꼬순내지수) 컬렉션
   CollectionReference<Map<String, dynamic>> get ratingsCollection =>
@@ -176,7 +184,7 @@ class FirebaseService {
       
       throw Exception('Invalid file type: ${file.runtimeType}');
     } catch (e) {
-      debugPrint('이미지 업로드 오류: $e');
+      AppLogger.error('FirebaseService', '이미지 업로드 오류', e);
       rethrow;
     }
   }
@@ -191,7 +199,7 @@ class FirebaseService {
       final snapshot = await ref.putFile(file, metadata);
       return await snapshot.ref.getDownloadURL();
     } catch (e) {
-      debugPrint('비디오 업로드 오류: $e');
+      AppLogger.error('FirebaseService', '비디오 업로드 오류', e);
       rethrow;
     }
   }
@@ -219,7 +227,7 @@ class FirebaseService {
         'thumbnailUrl': thumbnailUrl,
       };
     } catch (e) {
-      debugPrint('비디오/썸네일 업로드 오류: $e');
+      AppLogger.error('FirebaseService', '비디오/썸네일 업로드 오류', e);
       rethrow;
     }
   }

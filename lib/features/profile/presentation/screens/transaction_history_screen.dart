@@ -86,7 +86,10 @@ class TransactionHistoryScreen extends ConsumerWidget {
         }
         return _buildProductList(products, isSell: true);
       },
-      loading: () => const MingrrLoadingState(type: MingrrLoadingType.market, message: '거래 내역을 불러오고 있어요'),
+      loading: () => const MingrrLoadingState(
+        type: MingrrLoadingType.market,
+        message: '판매 내역을 불러오고 있어요',
+      ),
       error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
     );
   }
@@ -103,7 +106,10 @@ class TransactionHistoryScreen extends ConsumerWidget {
         }
         return _buildProductList(products, isSell: false);
       },
-      loading: () => const MingrrLoadingState(type: MingrrLoadingType.market, message: '거래 내역을 불러오고 있어요'),
+      loading: () => const MingrrLoadingState(
+        type: MingrrLoadingType.market,
+        message: '구매 내역을 불러오고 있어요',
+      ),
       error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
     );
   }

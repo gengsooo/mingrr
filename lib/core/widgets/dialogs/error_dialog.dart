@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_sizes.dart';
 import '../svg_icons.dart';
+import '../common_widgets.dart';
 
 /// ============================================================
 /// ErrorDialog - 오류 다이얼로그
@@ -284,21 +285,13 @@ class ErrorDialog extends StatelessWidget {
         ),
         const SizedBox(width: AppSizes.gapM),
         Expanded(
-          child: ElevatedButton.icon(
+          child: MingrrButton(
+            text: retryText ?? '재시도',
+            icon: Icons.refresh,
             onPressed: () => Navigator.pop(context, ErrorResult.retry),
-            icon: const Icon(Icons.refresh, size: 18),
-            label: Text(
-              retryText ?? '재시도',
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: color,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
+            backgroundColor: color,
+            textColor: Colors.white,
+            height: 48,
           ),
         ),
       ],

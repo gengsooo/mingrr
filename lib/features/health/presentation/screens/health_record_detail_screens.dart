@@ -167,11 +167,12 @@ class WeightRecordDetailScreen extends StatelessWidget {
                         height: 80,
                         child: Stack(
                           children: [
-                            CircularProgressIndicator(
+                            MingrrLoadingIndicator.progress(
                               value: _calculateProgress(record),
+                              size: 80,
                               strokeWidth: 8,
                               backgroundColor: Theme.of(context).colorScheme.outline,
-                              valueColor: AlwaysStoppedAnimation(context.features.health),
+                              customColor: context.features.health,
                             ),
                             Center(
                               child: Text(

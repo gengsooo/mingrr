@@ -5,11 +5,13 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/loading_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/report_sheet.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/info_badge.dart';
 import '../../../../core/widgets/guardian_profile_modal.dart';
+import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../models/community_post_model.dart';
@@ -87,7 +89,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
           return Column(
             children: [
               Expanded(
-                child: RefreshIndicator(
+                child: MingrrRefreshWrapper(
                   color: accentColor,
                   onRefresh: () async {
                     ref.invalidate(communityPostDetailProvider(widget.postId));
@@ -188,6 +190,19 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
             ),
           ),
           const SizedBox(height: 20),
+
+          // 제목
+          if (post.title.isNotEmpty) ...[
+            Text(
+              post.title,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
 
           // 본문
           Text(
@@ -435,7 +450,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                 }).toList(),
               );
             },
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: MingrrLoadingIndicator()),
             error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
           ),
           
@@ -978,7 +993,7 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
 
   Widget _buildLoadingState() {
     return const Center(
-      child: CircularProgressIndicator(color: Colors.white),
+      child: MingrrLoadingIndicator(customColor: Colors.white),
     );
   }
 
@@ -994,12 +1009,16 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
             style: TextStyle(color: Colors.white, fontSize: 16),
           ),
           const SizedBox(height: 24),
-          ElevatedButton(
+          MingrrButton(
+            text: '다시 시도',
             onPressed: () {
               setState(() => _hasError = false);
               _initializeVideo();
             },
-            child: const Text('다시 시도'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            textColor: Colors.white,
+            height: 44,
+            width: 120,
           ),
         ],
       ),

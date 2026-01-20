@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../theme/feature_colors.dart';
 import '../../services/location_helper.dart';
+import '../loading_widgets.dart';
 
 /// ============================================================
 /// 지도 로딩 위젯 (공통 컴포넌트)
@@ -247,13 +248,10 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: _accentColor,
-                      ),
+                    MingrrLoadingIndicator(
+                      size: 18,
+                      strokeWidth: 2.5,
+                      customColor: _accentColor,
                     ),
                     const SizedBox(width: 12),
                     Text(
@@ -293,9 +291,9 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
         width: 100,
         height: 80,
         child: Center(
-          child: CircularProgressIndicator(
+          child: MingrrLoadingIndicator(
             strokeWidth: 2,
-            color: _accentColor,
+            customColor: _accentColor,
           ),
         ),
       );
