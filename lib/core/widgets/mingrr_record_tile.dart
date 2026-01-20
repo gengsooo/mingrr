@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_sizes.dart';
+import '../theme/app_text_styles.dart';
 import '../theme/feature_colors.dart';
 
 /// ============================================================
@@ -94,8 +95,8 @@ class MingrrRecordTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.only(bottom: AppSizes.paddingS),
+        padding: const EdgeInsets.all(AppSizes.paddingM),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusS),
@@ -109,11 +110,11 @@ class MingrrRecordTile extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
               child: Icon(icon, size: 22, color: color),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSizes.gapM),
             
             // 제목 + 부제목
             Expanded(
@@ -122,7 +123,7 @@ class MingrrRecordTile extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                    style: AppTextStyles.labelLarge(context),
                   ),
                   Text(
                     subtitle,
@@ -171,10 +172,10 @@ class MingrrRecordStatusBadge extends StatelessWidget {
         : Theme.of(context).colorScheme.outlineVariant;
     
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Text(
         text,

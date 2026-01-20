@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
@@ -36,7 +37,9 @@ class HealthScreen extends ConsumerWidget {
       ),
       body: petsAsync.when(
         loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-        error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+        error: (_, __) => MingrrErrorState(
+          onRetry: () => ref.invalidate(userPetsProvider),
+        ),
         data: (pets) {
           if (pets.isEmpty) {
             return _buildNoPetsView(context);
@@ -100,17 +103,17 @@ class HealthScreen extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const DefaultPetIcon(size: 60),
-          const SizedBox(height: 16),
-          const Text(
+          const SizedBox(height: AppSizes.gapL),
+          Text(
             '등록된 반려동물이 없습니다',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            style: AppTextStyles.sectionTitle(context),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSizes.gapS),
           Text(
             '반려동물을 먼저 등록해주세요',
             style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSizes.gapXL),
           MingrrButton(
             text: '돌아가기',
             onPressed: () => Navigator.pop(context),
@@ -127,7 +130,7 @@ class HealthScreen extends ConsumerWidget {
   /// 반려동물 선택기 (동그란 프로필 + 이름만)
   Widget _buildPetSelector(BuildContext context, WidgetRef ref, List<PetModel> pets, PetModel selectedPet) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM, horizontal: 16),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -138,7 +141,7 @@ class HealthScreen extends ConsumerWidget {
             return GestureDetector(
               onTap: () => ref.read(selectedPetIdProvider.notifier).state = pet.id,
               child: Container(
-                margin: const EdgeInsets.only(right: 16),
+                margin: const EdgeInsets.only(right: AppSizes.paddingL),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -148,14 +151,14 @@ class HealthScreen extends ConsumerWidget {
                       height: 56,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: context.features.health.withOpacity(0.1),
+                        color: context.features.health.withValues(alpha: 0.1),
                         border: Border.all(
                           color: isSelected ? context.features.health : Theme.of(context).colorScheme.outline,
                           width: isSelected ? 3 : 1,
                         ),
                         boxShadow: isSelected ? [
                           BoxShadow(
-                            color: context.features.health.withOpacity(0.3),
+                            color: context.features.health.withValues(alpha: 0.3),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -173,7 +176,7 @@ class HealthScreen extends ConsumerWidget {
                             )
                           : null,
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSizes.gapSM),
                     // 이름
                     Text(
                       pet.name,
@@ -195,10 +198,10 @@ class HealthScreen extends ConsumerWidget {
 
   Widget _buildCategoryTabs(BuildContext context, WidgetRef ref, List<HealthCategory> categories, int selectedTab) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
         child: Row(
           children: List.generate(categories.length, (index) {
             final category = categories[index];
@@ -207,11 +210,11 @@ class HealthScreen extends ConsumerWidget {
             return GestureDetector(
               onTap: () => ref.read(selectedHealthTabProvider.notifier).state = index,
               child: Container(
-                margin: const EdgeInsets.only(right: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                margin: const EdgeInsets.only(right: AppSizes.paddingS),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
                 decoration: BoxDecoration(
                   color: isSelected ? context.features.health : Colors.transparent,
-                  borderRadius: BorderRadius.circular(25),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXL),
                   border: Border.all(
                     color: isSelected ? context.features.health : Theme.of(context).colorScheme.outline,
                   ),
@@ -220,7 +223,7 @@ class HealthScreen extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(category.icon, size: 18, color: isSelected ? Colors.white : context.features.health),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSizes.gapSM),
                     Text(
                       category.label,
                       style: TextStyle(
@@ -241,20 +244,20 @@ class HealthScreen extends ConsumerWidget {
 
   Widget _buildTabContent(BuildContext context, WidgetRef ref, HealthCategory category, PetModel pet) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSizes.paddingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 요약 카드
           _buildSummaryCard(context, ref, category, pet),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSizes.gapLL),
           
           // 최근 기록
-          const Text(
+          Text(
             '최근 기록',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: AppTextStyles.sectionTitle(context),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           _buildRecentRecords(context, ref, category, pet),
         ],
       ),
@@ -273,7 +276,7 @@ class HealthScreen extends ConsumerWidget {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: context.features.health.withOpacity(0.15),
+                  color: context.features.health.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Icon(category.icon, size: 24, color: context.features.health),
@@ -285,20 +288,20 @@ class HealthScreen extends ConsumerWidget {
                   children: [
                     Text(
                       '${pet.name}의 ${category.label}',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      style: AppTextStyles.sectionTitle(context),
                     ),
                     Text(
                       category.description,
-                      style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      style: AppTextStyles.secondarySmall(context),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           const Divider(),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           _buildCategorySummary(context, ref, category, pet),
         ],
       ),
@@ -321,7 +324,9 @@ class HealthScreen extends ConsumerWidget {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(weightRecordsProvider(pet.id)),
+      ),
       data: (records) {
         if (records.isEmpty) {
           return Center(
@@ -336,13 +341,14 @@ class HealthScreen extends ConsumerWidget {
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildSummaryItem('현재', '${latest.weight.toStringAsFixed(1)}kg', context.features.health),
+            _buildSummaryItem(context, '현재', '${latest.weight.toStringAsFixed(1)}kg', context.features.health),
             _buildSummaryItem(
+              context,
               '변화',
               '${change >= 0 ? '+' : ''}${change.toStringAsFixed(1)}kg',
               change > 0 ? Colors.orange : context.features.success,
             ),
-            _buildSummaryItem('기록 수', '${records.length}회', Theme.of(context).colorScheme.onSurfaceVariant),
+            _buildSummaryItem(context, '기록 수', '${records.length}회', Theme.of(context).colorScheme.onSurfaceVariant),
           ],
         );
       },
@@ -354,7 +360,9 @@ class HealthScreen extends ConsumerWidget {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(walkRecordsProvider(pet.id)),
+      ),
       data: (records) {
         if (records.isEmpty) {
           return Center(
@@ -373,9 +381,9 @@ class HealthScreen extends ConsumerWidget {
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildSummaryItem('이번 주', '${thisWeekRecords.length}회', context.features.health),
-            _buildSummaryItem('총 거리', '${(totalDistance / 1000).toStringAsFixed(1)}km', context.features.walk),
-            _buildSummaryItem('총 시간', '${totalMinutes}분', context.features.success),
+            _buildSummaryItem(context, '이번 주', '${thisWeekRecords.length}회', context.features.health),
+            _buildSummaryItem(context, '총 거리', '${(totalDistance / 1000).toStringAsFixed(1)}km', context.features.walk),
+            _buildSummaryItem(context, '총 시간', '${totalMinutes}분', context.features.success),
           ],
         );
       },
@@ -386,24 +394,24 @@ class HealthScreen extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _buildSummaryItem('총 기록', '-', context.features.health),
-        _buildSummaryItem('최근', '-', Theme.of(context).colorScheme.onSurfaceVariant),
-        _buildSummaryItem('다음', '-', context.features.success),
+        _buildSummaryItem(context, '총 기록', '-', context.features.health),
+        _buildSummaryItem(context, '최근', '-', Theme.of(context).colorScheme.onSurfaceVariant),
+        _buildSummaryItem(context, '다음', '-', context.features.success),
       ],
     );
   }
 
-  Widget _buildSummaryItem(String label, String value, Color color, {Color? labelColor}) {
+  Widget _buildSummaryItem(BuildContext context, String label, String value, Color color, {Color? labelColor}) {
     return Column(
       children: [
         Text(
           value,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
+          style: AppTextStyles.headlineSmall(context).copyWith(color: color),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSizes.gapXS),
         Text(
           label,
-          style: TextStyle(fontSize: 12, color: labelColor ?? color.withOpacity(0.7)),
+          style: AppTextStyles.secondarySmall(context).copyWith(color: labelColor ?? color.withValues(alpha: 0.7)),
         ),
       ],
     );
@@ -433,7 +441,9 @@ class HealthScreen extends ConsumerWidget {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(weightRecordsProvider(pet.id)),
+      ),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
@@ -459,7 +469,9 @@ class HealthScreen extends ConsumerWidget {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(walkRecordsProvider(pet.id)),
+      ),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
@@ -493,7 +505,9 @@ class HealthScreen extends ConsumerWidget {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(groomingRecordsProvider(pet.id)),
+      ),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
@@ -517,7 +531,9 @@ class HealthScreen extends ConsumerWidget {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(vaccinationRecordsProvider(pet.id)),
+      ),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
@@ -541,7 +557,9 @@ class HealthScreen extends ConsumerWidget {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(checkupRecordsProvider(pet.id)),
+      ),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
@@ -565,7 +583,9 @@ class HealthScreen extends ConsumerWidget {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(medicationRecordsProvider(pet.id)),
+      ),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
@@ -618,20 +638,20 @@ class HealthScreen extends ConsumerWidget {
   
   Widget _buildEmptyRecords(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(AppSizes.paddingXL),
       child: Center(
         child: Column(
           children: [
             Icon(Icons.note_alt_outlined, size: 40, color: Theme.of(context).colorScheme.outlineVariant),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSizes.gapM),
             Text(
               '아직 기록이 없습니다',
               style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSizes.gapXS),
             Text(
               '+ 버튼을 눌러 첫 기록을 추가해보세요',
-              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+              style: AppTextStyles.secondarySmall(context),
             ),
           ],
         ),

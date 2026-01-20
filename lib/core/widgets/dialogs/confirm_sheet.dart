@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/feature_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../constants/app_sizes.dart';
 import '../common_widgets.dart';
 
@@ -234,7 +235,7 @@ class ConfirmSheet extends StatelessWidget {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: type.getColor(context).withOpacity(0.1),
+                  color: type.getColor(context).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(type.icon, size: 32, color: type.getColor(context)),
@@ -244,9 +245,7 @@ class ConfirmSheet extends StatelessWidget {
               // 제목
               Text(
                 title ?? type.title,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+                style: AppTextStyles.headlineSmall(context).copyWith(
                   color: type.getColor(context),
                 ),
               ),
@@ -256,8 +255,7 @@ class ConfirmSheet extends StatelessWidget {
               Text(
                 message ?? type.message,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
+                style: AppTextStyles.bodyMedium(context).copyWith(
                   color: colorScheme.onSurfaceVariant,
                   height: 1.5,
                 ),
@@ -271,16 +269,15 @@ class ConfirmSheet extends StatelessWidget {
                     child: OutlinedButton(
                       onPressed: onCancel ?? () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingL),
                         side: BorderSide(color: colorScheme.outline),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                       ),
                       child: Text(
                         cancelText ?? '취소',
-                        style: TextStyle(
-                          fontSize: 16,
+                        style: AppTextStyles.button(context).copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),

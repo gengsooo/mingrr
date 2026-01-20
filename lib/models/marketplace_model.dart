@@ -438,7 +438,15 @@ class JobModel extends Equatable {
     }
   }
 
-  String get priceString => '$price원/$priceUnit';
+  String get priceString => '${_formatPrice(price)}원/$priceUnit';
+  
+  /// 가격 포맷팅 (천 단위 콤마)
+  String _formatPrice(int price) {
+    return price.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]},',
+    );
+  }
 
   String get periodString {
     if (startDate != null && endDate != null) {

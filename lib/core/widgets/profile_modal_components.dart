@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_sizes.dart';
 import '../services/bottom_sheet_stack_manager.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_text_styles.dart';
 import 'mingrr_bottom_sheet.dart';
 
 /// ============================================================
@@ -54,17 +55,17 @@ class ProfileModalContainer extends StatelessWidget {
           const BottomSheetHandle(),
           // 헤더
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 4),
+            padding: const EdgeInsets.fromLTRB(AppSizes.paddingL, 4, 20, 4),
             child: Text(
               title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              style: AppTextStyles.headlineSmall(context),
               textAlign: TextAlign.center,
             ),
           ),
           // 본문
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+              padding: const EdgeInsets.fromLTRB(AppSizes.paddingL, 8, 20, 20),
               child: body,
             ),
           ),
@@ -113,21 +114,18 @@ class ProfileModalHeader extends StatelessWidget {
                   Flexible(
                     child: Text(
                       name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTextStyles.headlineSmall(context),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   if (badge != null) ...[
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSizes.gapS),
                     badge!,
                   ],
                 ],
               ),
               if (subtitle != null) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSizes.gapXS),
                 subtitle!,
               ],
             ],
@@ -168,15 +166,12 @@ class ProfileModalSection extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              style: AppTextStyles.titleMedium(context),
             ),
             if (count != null)
               Text(
                 count!,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                style: AppTextStyles.secondarySmall(context),
               ),
           ],
         ),
@@ -252,10 +247,10 @@ class ProfileModalDescriptionBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSizes.paddingM),
       decoration: BoxDecoration(
         color: backgroundColor ?? context.sectionBackground,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Text(
         text,
@@ -297,7 +292,7 @@ class ProfileModalDetailRow extends StatelessWidget {
           size: 18,
           color: iconColor ?? Theme.of(context).colorScheme.onSurfaceVariant,
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSizes.gapS),
         Text(
           label,
           style: TextStyle(
@@ -336,10 +331,10 @@ class ProfileModalDetailsBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSizes.paddingM),
       decoration: BoxDecoration(
         color: backgroundColor ?? context.sectionBackground,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Column(
         children: children,
@@ -438,10 +433,10 @@ class ProfileModalItemCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: width,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSizes.paddingM),
         decoration: BoxDecoration(
           color: context.sectionBackground,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
         ),
         child: Stack(
           children: [
@@ -450,7 +445,7 @@ class ProfileModalItemCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 avatar,
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSizes.gapS),
                 SizedBox(
                   width: double.infinity,
                   child: Text(
@@ -465,7 +460,7 @@ class ProfileModalItemCard extends StatelessWidget {
                   ),
                 ),
                 if (subtitleWidget != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSizes.gapXS),
                   subtitleWidget!,
                 ],
               ],
@@ -511,7 +506,7 @@ class ProfileModalActivityItem extends StatelessWidget {
           size: 20,
           color: iconColor ?? Theme.of(context).colorScheme.onSurfaceVariant,
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSizes.gapXS),
         Text(
           '$count회',
           style: const TextStyle(

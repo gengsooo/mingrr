@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../constants/pet_constants.dart';
+import '../constants/location_constants.dart';
 import '../providers/location_provider.dart';
 import '../services/location_service.dart';
 

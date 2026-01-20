@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/firebase_service.dart';
@@ -177,7 +178,9 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       ),
       error: (_, __) => Scaffold(
         appBar: AppBar(title: const Text('반려동물 정보')),
-        body: const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+        body: MingrrErrorState(
+          onRetry: () => ref.invalidate(petByIdProvider(widget.petId)),
+        ),
       ),
     );
   }
@@ -304,7 +307,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           DefaultPetIcon(size: 80),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           Text(
             '사진이 없어요',
             style: TextStyle(
@@ -370,11 +373,11 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                 children: [
                   Text(
                     pet.name,
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+                    style: AppTextStyles.headlineLarge(context),
                   ),
                   // 교배찾기에서 혈통서 유무 배지 표시
                   if (widget.isBreeding) ...[
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSizes.gapS),
                     PedigreeBadge(hasPedigree: pet.hasPedigree),
                   ],
                 ],
@@ -382,7 +385,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
               const SizedBox(height: 4),
               Text(
                 '${pet.breed ?? '품종 미상'} · ${age}살 · ${pet.weight ?? 0}kg ($sizeStr)',
-                style: TextStyle(fontSize: 15, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: AppTextStyles.bodyLarge(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ),
@@ -455,20 +458,20 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           '소개',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          style: AppTextStyles.sectionTitle(context),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSizes.gapM),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSizes.paddingL),
           decoration: BoxDecoration(
             color: context.sectionBackground,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
           child: Text(
             pet.bio ?? '소개글이 없습니다.',
-            style: TextStyle(fontSize: 14, height: 1.6, color: Theme.of(context).colorScheme.onSurface),
+            style: AppTextStyles.bodyMedium(context).copyWith(height: 1.6),
           ),
         ),
       ],
@@ -501,18 +504,18 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               '보호자 정보',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: AppTextStyles.sectionTitle(context),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSizes.gapM),
             GestureDetector(
               onTap: () => _showGuardianProfile(context, pet, owner),
               child: Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSizes.paddingL),
                 decoration: BoxDecoration(
                   color: context.sectionBackground,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Column(
                   children: [
@@ -539,7 +542,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                                 )
                               : Icon(Icons.person, size: 24, color: Theme.of(context).colorScheme.primary),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppSizes.gapM),
                         // 닉네임 + 꼬순내지수 (성별/나이 제거 - 개인정보 보호)
                         Expanded(
                           child: Column(
@@ -547,7 +550,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                             children: [
                               Text(
                                 nickname,
-                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                                style: AppTextStyles.cardTitle(context),
                               ),
                               const SizedBox(height: 4),
                               KkosunnaeScoreSmall(score: kkosunnaeScore),
@@ -559,9 +562,9 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                       ],
                     ),
                     // 인증 배지 (소형)
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSizes.gapM),
                     const Divider(height: 1),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSizes.gapM),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
@@ -677,7 +680,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         children: [
           // 좋아요 버튼 (공통 컴포넌트)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS),
             child: LikeButton(
               count: _likeCount,
               isLiked: _isLiked,
@@ -685,7 +688,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
               size: InfoBadgeSize.large,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSizes.gapM),
           // 신청 버튼
           Expanded(
             child: MingrrButton(

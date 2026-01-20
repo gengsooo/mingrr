@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../constants/pet_constants.dart';
+import '../constants/app_sizes.dart';
+import '../constants/location_constants.dart';
 import 'common_widgets.dart';
 import 'info_badge.dart';
 
@@ -102,9 +103,9 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
   Widget _buildBackButton(BuildContext context) {
     return IconButton(
       icon: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(AppSizes.paddingS),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.3),
+          color: Colors.black.withValues(alpha: 0.3),
           shape: BoxShape.circle,
         ),
         child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
@@ -126,9 +127,9 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
       actions.add(
         IconButton(
           icon: Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(AppSizes.paddingS),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.share, color: Colors.white, size: 20),
@@ -143,9 +144,9 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
       actions.add(
         IconButton(
           icon: Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(AppSizes.paddingS),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
+              color: Colors.black.withValues(alpha: 0.3),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.more_vert, color: Colors.white, size: 20),
@@ -197,12 +198,12 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
                 (index) => Container(
                   width: 8,
                   height: 8,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  margin: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _currentIndex == index
                         ? Colors.white
-                        : Colors.white.withOpacity(0.5),
+                        : Colors.white.withValues(alpha: 0.5),
                   ),
                 ),
               ),
@@ -258,12 +259,12 @@ class GenderBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
       decoration: BoxDecoration(
         color: isMale 
             ? const Color(0xFF2196F3)  // 파란색
             : const Color(0xFFE91E63), // 핑크색
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -301,10 +302,10 @@ class ImageHeaderDistanceBadge extends StatelessWidget {
         : LocationConstants.noLocationText;
     
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(12),
+        color: Colors.black.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -346,18 +347,18 @@ class ImageHeaderMatchBadge extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
         decoration: BoxDecoration(
           color: score >= 90 
               ? const Color(0xFF4CAF50)  // 성공 색상 (90% 이상)
               : const Color(0xFFFF8A80), // 데이팅 색상 (핑크/코랄)
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.auto_awesome, size: 14, color: Colors.white),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSizes.gapXS),
             Text(
               '궁합 $score%',
               style: const TextStyle(
@@ -366,7 +367,7 @@ class ImageHeaderMatchBadge extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSizes.gapXS),
             const Icon(Icons.info_outline, size: 12, color: Colors.white70),
           ],
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../constants/app_sizes.dart';
 import '../../theme/feature_colors.dart';
 import '../../services/location_helper.dart';
 import '../loading_widgets.dart';
@@ -224,19 +225,19 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
                 );
               },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSizes.gapXL),
             // 발자국 트레일
             _buildPawPrints(),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSizes.gapXL),
             // 메시지
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: Container(
                 key: ValueKey(_progressMessage),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXL, vertical: AppSizes.paddingM),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXL),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.1),
@@ -253,7 +254,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
                       strokeWidth: 2.5,
                       customColor: _accentColor,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSizes.gapM),
                     Text(
                       _progressMessage,
                       style: TextStyle(
@@ -268,7 +269,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
             ),
             // 서브 메시지
             if (widget.subMessage != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSizes.gapM),
               Text(
                 widget.subMessage!,
                 style: TextStyle(
@@ -327,7 +328,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
           children: List.generate(5, (index) {
             final opacity = _calculatePawOpacity(index, progress);
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS),
               child: Opacity(
                 opacity: opacity,
                 child: Icon(

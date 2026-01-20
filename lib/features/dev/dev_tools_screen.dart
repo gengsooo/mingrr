@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/constants/app_sizes.dart';
+import '../../core/theme/app_text_styles.dart';
 import '../../core/services/firebase_service.dart';
 import '../../core/utils/seed_data.dart';
 import '../auth/presentation/providers/auth_provider.dart';
@@ -359,9 +361,9 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
             children: [
               const Icon(Icons.lock, size: 80, color: Colors.red),
               const SizedBox(height: 24),
-              const Text(
+              Text(
                 '관리자 전용 페이지입니다',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: AppTextStyles.headlineMedium(context),
               ),
               const SizedBox(height: 8),
               const Text(
@@ -404,19 +406,19 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
           // 상단 안내
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSizes.paddingL),
             color: Colors.orange.shade50,
-            child: const Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Firebase 테스트 데이터 관리',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: AppTextStyles.headlineSmall(context),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   '항목을 선택하고 생성 또는 삭제 버튼을 눌러주세요.',
-                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                  style: AppTextStyles.secondary(context),
                 ),
               ],
             ),
@@ -425,7 +427,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
           // 체크박스 목록
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSizes.paddingL),
               children: [
                 // 전체 선택
                 Card(
@@ -457,7 +459,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                       value: _selectedCategories[category],
                       onChanged: _isLoading ? null : (v) => _toggleCategory(category, v),
                       title: Text(category.label),
-                      subtitle: Text(description, style: const TextStyle(fontSize: 12)),
+                      subtitle: Text(description, style: AppTextStyles.secondarySmall(context)),
                       secondary: Icon(category.icon, color: Colors.orange),
                       activeColor: Colors.orange,
                     ),
@@ -477,7 +479,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(AppSizes.paddingL),
                         ),
                       ),
                     ),
@@ -490,7 +492,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(AppSizes.paddingL),
                         ),
                       ),
                     ),
@@ -509,7 +511,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(AppSizes.paddingL),
                     ),
                   ),
                 ),
@@ -523,14 +525,14 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                 // 메시지 표시
                 if (_message.isNotEmpty)
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppSizes.paddingL),
                     decoration: BoxDecoration(
                       color: _message.startsWith('✅')
                           ? Colors.green.shade50
                           : _message.startsWith('⚠️')
                               ? Colors.orange.shade50
                               : Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                       border: Border.all(
                         color: _message.startsWith('✅')
                             ? Colors.green

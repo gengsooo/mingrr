@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import '../constants/app_sizes.dart';
 import '../theme/feature_colors.dart';
 
 /// ============================================================
@@ -79,8 +80,8 @@ class _WebMapWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(12),
+        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
         border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Center(
@@ -92,7 +93,7 @@ class _WebMapWidget extends StatelessWidget {
               size: 48,
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             Text(
               '지도 영역',
               style: TextStyle(
@@ -101,7 +102,7 @@ class _WebMapWidget extends StatelessWidget {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSizes.gapXS),
             Text(
               '모바일 앱에서 확인 가능',
               style: TextStyle(
@@ -184,7 +185,7 @@ class _MobileMapWidgetState extends State<_MobileMapWidget> {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.outline,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Stack(
         children: [
@@ -197,13 +198,13 @@ class _MobileMapWidgetState extends State<_MobileMapWidget> {
           // 중앙 안내
           Center(
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSizes.paddingL),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 8,
                   ),
                 ],
@@ -214,9 +215,9 @@ class _MobileMapWidgetState extends State<_MobileMapWidget> {
                   Icon(
                     Icons.map,
                     size: 48,
-                    color: context.features.walk.withOpacity(0.7),
+                    color: context.features.walk.withValues(alpha: 0.7),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSizes.gapS),
                   const Text(
                     '카카오맵',
                     style: TextStyle(
@@ -224,7 +225,7 @@ class _MobileMapWidgetState extends State<_MobileMapWidget> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSizes.gapXS),
                   Text(
                     '카카오맵 SDK 설정 후\n지도가 표시됩니다',
                     textAlign: TextAlign.center,
@@ -234,12 +235,12 @@ class _MobileMapWidgetState extends State<_MobileMapWidget> {
                     ),
                   ),
                   if (widget.latitude != null && widget.longitude != null) ...[
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSizes.gapS),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                       decoration: BoxDecoration(
-                        color: context.features.walk.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        color: context.features.walk.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
                       ),
                       child: Text(
                         '${widget.latitude!.toStringAsFixed(4)}, ${widget.longitude!.toStringAsFixed(4)}',
@@ -280,7 +281,7 @@ class _MapGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.grey.withOpacity(0.2)
+      ..color = Colors.grey.withValues(alpha: 0.2)
       ..strokeWidth = 1;
     
     const spacing = 30.0;

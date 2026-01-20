@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/loading_widgets.dart';
@@ -129,7 +130,9 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
           timeout: AppSizes.loadingTimeout,
           onRetry: () => ref.invalidate(communityPostDetailProvider(widget.postId)),
         ),
-        error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+        error: (_, __) => MingrrErrorState(
+          onRetry: () => ref.invalidate(communityPostDetailProvider(widget.postId)),
+        ),
       ),
     );
   }
@@ -154,7 +157,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                   imageUrl: post.isAnonymous ? null : post.authorProfileUrl,
                   placeholderIcon: Icons.person,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSizes.gapM),
                 Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,26 +166,26 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                       children: [
                         Text(
                           post.displayAuthorName,
-                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                          style: AppTextStyles.cardTitle(context),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSizes.gapS),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 3),
                           decoration: BoxDecoration(
-                            color: accentColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(4),
+                            color: accentColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                           ),
                           child: Text(
                             post.category.label,
-                            style: TextStyle(fontSize: 11, color: accentColor, fontWeight: FontWeight.w500),
+                            style: AppTextStyles.tagSmall(context).copyWith(color: accentColor),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSizes.gapXS),
                     Text(
                       formatDateTime(post.createdAt),
-                      style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                      style: AppTextStyles.secondarySmall(context),
                     ),
                   ],
                 ),
@@ -190,36 +193,32 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSizes.gapLL),
 
           // 제목
           if (post.title.isNotEmpty) ...[
             Text(
               post.title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                height: 1.4,
-              ),
+              style: AppTextStyles.headlineSmall(context).copyWith(height: 1.4),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSizes.gapM),
           ],
 
           // 본문
           Text(
             post.content,
-            style: const TextStyle(fontSize: 15, height: 1.6),
+            style: AppTextStyles.bodyLarge(context).copyWith(height: 1.6),
           ),
 
           // 동영상
           if (post.hasVideo) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             _buildVideoPlayer(context, post.videoUrl!, post.videoThumbnailUrl),
           ],
 
           // 이미지
           if (post.hasImages) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             MingrrImageGallery(
               imageUrls: post.imageUrls,
               height: 200,
@@ -229,20 +228,20 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
 
           // 태그
           if (post.tags.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             Wrap(
               spacing: 8,
               runSpacing: 6,
               children: post.tags.map((tag) => Text(
                 '#$tag',
-                style: TextStyle(fontSize: 14, color: accentColor),
+                style: AppTextStyles.bodyMedium(context).copyWith(color: accentColor),
               )).toList(),
             ),
           ],
 
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSizes.gapLL),
           const Divider(),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
 
           // 액션 바
           Row(
@@ -318,7 +317,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: 0.6),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -333,19 +332,19 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               left: 12,
               bottom: 12,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(4),
+                  color: Colors.black.withValues(alpha: 0.7),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.videocam, color: Colors.white, size: 16),
-                    SizedBox(width: 4),
+                    const Icon(Icons.videocam, color: Colors.white, size: 16),
+                    const SizedBox(width: AppSizes.gapXS),
                     Text(
                       '동영상',
-                      style: TextStyle(color: Colors.white, fontSize: 12),
+                      style: AppTextStyles.secondarySmall(context).copyWith(color: Colors.white),
                     ),
                   ],
                 ),
@@ -395,8 +394,8 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
       child: Row(
         children: [
           Icon(icon, size: 22, color: color),
-          const SizedBox(width: 6),
-          Text(label, style: TextStyle(fontSize: 14, color: color)),
+          const SizedBox(width: AppSizes.gapSM),
+          Text(label, style: AppTextStyles.bodyMedium(context).copyWith(color: color)),
         ],
       ),
     );
@@ -417,20 +416,20 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
         children: [
           Text(
             '댓글 ${post.commentCount}',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: AppTextStyles.sectionTitle(context),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           
           commentsAsync.when(
             data: (comments) {
               if (comments.isEmpty) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingXL),
                   child: Center(
                     child: Column(
                       children: [
                         Icon(Icons.chat_bubble_outline, size: 40, color: colorScheme.outlineVariant),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSizes.gapS),
                         Text(
                           '첫 번째 댓글을 남겨보세요!',
                           style: TextStyle(color: colorScheme.onSurfaceVariant),
@@ -452,7 +451,9 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               );
             },
             loading: () => const Center(child: MingrrLoadingIndicator()),
-            error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+            error: (_, __) => MingrrErrorState(
+              onRetry: () => ref.invalidate(communityCommentsProvider(widget.postId)),
+            ),
           ),
           
           const SizedBox(height: 80),
@@ -476,7 +477,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
       children: [
         // 댓글
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -497,42 +498,42 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                       children: [
                         Text(
                           comment.displayAuthorName,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          style: AppTextStyles.titleSmall(context),
                         ),
                         if (comment.authorId == post.authorId) ...[
-                          const SizedBox(width: 6),
+                          const SizedBox(width: AppSizes.gapSM),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                             decoration: BoxDecoration(
-                              color: accentColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
+                              color: accentColor.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                             ),
                             child: Text(
                               '작성자',
-                              style: TextStyle(fontSize: 10, color: accentColor),
+                              style: AppTextStyles.badgeSmall(context).copyWith(color: accentColor),
                             ),
                           ),
                         ],
                         const Spacer(),
                         Text(
                           formatRelativeTime(comment.createdAt),
-                          style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                          style: AppTextStyles.cardMeta(context),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSizes.gapSM),
                     Text(
                       comment.content,
-                      style: const TextStyle(fontSize: 14, height: 1.4),
+                      style: AppTextStyles.bodyMedium(context).copyWith(height: 1.4),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSizes.gapS),
                     Row(
                       children: [
                         GestureDetector(
                           onTap: () => _setReplyTo(comment),
                           child: Text(
                             '답글',
-                            style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                            style: AppTextStyles.secondarySmall(context),
                           ),
                         ),
                         if (isMyComment) ...[
@@ -541,7 +542,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                             onTap: () => _deleteComment(comment, post.id),
                             child: Text(
                               '삭제',
-                              style: TextStyle(fontSize: 12, color: colorScheme.error),
+                              style: AppTextStyles.secondarySmall(context).copyWith(color: colorScheme.error),
                             ),
                           ),
                         ],
@@ -557,13 +558,13 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
         // 대댓글
         if (replies.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.only(left: 46),
+            padding: const EdgeInsets.only(left: AppSizes.paddingXXL),
             child: Column(
               children: replies.map((reply) => _buildReplyItem(context, reply, post)).toList(),
             ),
           ),
         
-        Divider(color: colorScheme.outline.withOpacity(0.2)),
+        Divider(color: colorScheme.outline.withValues(alpha: 0.2)),
       ],
     );
   }
@@ -574,7 +575,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
     final isMyComment = FirebaseService().currentUserId == reply.authorId;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -586,7 +587,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               placeholderIcon: Icons.person,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSizes.gapS),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -595,41 +596,41 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                   children: [
                     Text(
                       reply.displayAuthorName,
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                      style: AppTextStyles.labelMedium(context),
                     ),
                     if (reply.authorId == post.authorId) ...[
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSizes.gapXS),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS, vertical: AppSizes.paddingXXS),
                         decoration: BoxDecoration(
-                          color: accentColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(3),
+                          color: accentColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                         ),
                         child: Text(
                           '작성자',
-                          style: TextStyle(fontSize: 9, color: accentColor),
+                          style: AppTextStyles.badgeSmall(context).copyWith(color: accentColor),
                         ),
                       ),
                     ],
                     const Spacer(),
                     Text(
                       formatRelativeTime(reply.createdAt),
-                      style: TextStyle(fontSize: 10, color: colorScheme.onSurfaceVariant),
+                      style: AppTextStyles.caption(context),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSizes.gapXS),
                 Text(
                   reply.content,
-                  style: const TextStyle(fontSize: 13, height: 1.4),
+                  style: AppTextStyles.bodySmall(context).copyWith(height: 1.4),
                 ),
                 if (isMyComment) ...[
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSizes.gapSM),
                   GestureDetector(
                     onTap: () => _deleteComment(reply, post.id),
                     child: Text(
                       '삭제',
-                      style: TextStyle(fontSize: 11, color: colorScheme.error),
+                      style: AppTextStyles.cardMeta(context).copyWith(color: colorScheme.error),
                     ),
                   ),
                 ],
@@ -645,10 +646,10 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+      padding: EdgeInsets.fromLTRB(AppSizes.paddingL, AppSizes.paddingM, AppSizes.paddingL, MediaQuery.of(context).padding.bottom + AppSizes.paddingM),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        border: Border(top: BorderSide(color: colorScheme.outline.withOpacity(0.2))),
+        border: Border(top: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -656,16 +657,16 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
           // 답글 대상 표시
           if (_replyToCommentId != null) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+                color: accentColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
               child: Row(
                 children: [
                   Text(
                     '$_replyToAuthorName님에게 답글',
-                    style: TextStyle(fontSize: 12, color: accentColor),
+                    style: AppTextStyles.secondarySmall(context).copyWith(color: accentColor),
                   ),
                   const Spacer(),
                   GestureDetector(
@@ -675,7 +676,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
           ],
           
           Row(
@@ -684,12 +685,12 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               GestureDetector(
                 onTap: () => setState(() => _isAnonymousComment = !_isAnonymousComment),
                 child: Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(AppSizes.paddingS),
                   decoration: BoxDecoration(
-                    color: _isAnonymousComment ? accentColor.withOpacity(0.1) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
+                    color: _isAnonymousComment ? accentColor.withValues(alpha: 0.1) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                     border: Border.all(
-                      color: _isAnonymousComment ? accentColor : colorScheme.outline.withOpacity(0.3),
+                      color: _isAnonymousComment ? accentColor : colorScheme.outline.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Icon(
@@ -699,34 +700,34 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSizes.gapM),
               
               // 입력 필드
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusXL),
                   ),
                   child: TextField(
                     controller: _commentController,
                     decoration: InputDecoration(
                       hintText: _isAnonymousComment ? '익명으로 댓글 작성...' : '댓글을 입력하세요...',
-                      hintStyle: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 14),
+                      hintStyle: AppTextStyles.bodyMedium(context).copyWith(color: colorScheme.onSurfaceVariant),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
                     ),
                     maxLines: null,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSizes.gapM),
               
               // 전송 버튼
               GestureDetector(
                 onTap: _submitComment,
                 child: Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(AppSizes.paddingS),
                   decoration: BoxDecoration(
                     color: accentColor,
                     shape: BoxShape.circle,
@@ -1006,12 +1007,12 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.error_outline, color: Colors.white54, size: 64),
-          const SizedBox(height: 16),
-          const Text(
+          const SizedBox(height: AppSizes.gapL),
+          Text(
             '동영상을 재생할 수 없습니다',
-            style: TextStyle(color: Colors.white, fontSize: 16),
+            style: AppTextStyles.titleLarge(context).copyWith(color: Colors.white),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSizes.gapXL),
           MingrrButton(
             text: '다시 시도',
             onPressed: () {
@@ -1056,7 +1057,7 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: 0.6),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -1072,12 +1073,12 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
               right: 0,
               bottom: 0,
               child: Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSizes.paddingL),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                    colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
                   ),
                 ),
                 child: Column(
@@ -1092,18 +1093,18 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
                         backgroundColor: Colors.white24,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSizes.gapS),
                     // 시간 표시
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           _formatDuration(_controller.value.position),
-                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                          style: AppTextStyles.secondarySmall(context).copyWith(color: Colors.white),
                         ),
                         Text(
                           _formatDuration(_controller.value.duration),
-                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                          style: AppTextStyles.secondarySmall(context).copyWith(color: Colors.white),
                         ),
                       ],
                     ),

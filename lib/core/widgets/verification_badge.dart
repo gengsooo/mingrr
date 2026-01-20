@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_sizes.dart';
 import '../theme/feature_colors.dart';
 
 /// ============================================================
@@ -58,8 +59,8 @@ class VerificationBadgeSmall extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(right: 4),
-      padding: const EdgeInsets.all(4),
+      margin: const EdgeInsets.only(right: AppSizes.paddingXS),
+      padding: const EdgeInsets.all(AppSizes.paddingXS),
       decoration: BoxDecoration(
         color: isVerified ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
         shape: BoxShape.circle,
@@ -88,12 +89,12 @@ class VerificationBadgeMedium extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
         decoration: BoxDecoration(
           color: isVerified 
-              ? context.features.success.withOpacity(0.1) 
-              : Theme.of(context).colorScheme.outline.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(12),
+              ? context.features.success.withValues(alpha: 0.1) 
+              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
         ),
         child: Column(
           children: [
@@ -102,7 +103,7 @@ class VerificationBadgeMedium extends StatelessWidget {
               size: 24,
               color: isVerified ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSizes.gapSM),
             Text(
               type.label,
               style: TextStyle(
@@ -111,7 +112,7 @@ class VerificationBadgeMedium extends StatelessWidget {
                 color: isVerified ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: AppSizes.gapXXS),
             Icon(
               isVerified ? Icons.check_circle : Icons.cancel_outlined,
               size: 14,
@@ -142,14 +143,14 @@ class VerificationBadgeLarge extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingL, horizontal: 12),
         decoration: BoxDecoration(
           color: isVerified 
-              ? context.features.success.withOpacity(0.1) 
+              ? context.features.success.withValues(alpha: 0.1) 
               : Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(
-            color: isVerified ? context.features.success.withOpacity(0.3) : Theme.of(context).colorScheme.outline,
+            color: isVerified ? context.features.success.withValues(alpha: 0.3) : Theme.of(context).colorScheme.outline,
           ),
         ),
         child: Column(
@@ -159,7 +160,7 @@ class VerificationBadgeLarge extends StatelessWidget {
               size: 32,
               color: isVerified ? context.features.success : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             Text(
               type.label,
               style: TextStyle(
@@ -168,16 +169,16 @@ class VerificationBadgeLarge extends StatelessWidget {
                 color: isVerified ? context.features.success : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSizes.gapXS),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
               decoration: BoxDecoration(
                 color: isVerified 
                     ? context.features.success 
                     : Theme.of(context).brightness == Brightness.dark
                         ? Theme.of(context).colorScheme.surfaceContainerHighest
                         : Theme.of(context).colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
               child: Text(
                 isVerified ? '완료' : '미인증',
@@ -223,12 +224,12 @@ class VerificationBadgeRow extends StatelessWidget {
             type: VerificationBadgeType.identity,
             isVerified: isIdentityVerified,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSizes.gapM),
           VerificationBadgeMedium(
             type: VerificationBadgeType.pet,
             isVerified: isPetVerified,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSizes.gapM),
           VerificationBadgeMedium(
             type: VerificationBadgeType.location,
             isVerified: isLocationVerified,

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/bottom_sheet_stack_manager.dart';
 import '../theme/feature_colors.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_text_styles.dart';
 import '../constants/app_sizes.dart';
 import '../utils/app_logger.dart';
 import 'common_widgets.dart';
@@ -331,10 +332,10 @@ class _PetProfileModalState extends State<PetProfileModal> {
   Widget _buildGenderBadge(bool isMale) {
     final genderText = isMale ? '남아' : '여아';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 3),
       decoration: BoxDecoration(
         color: isMale ? Colors.blue.withValues(alpha: 0.15) : Colors.pink.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -395,9 +396,9 @@ class _PetProfileModalState extends State<PetProfileModal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           '보호자 정보',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          style: AppTextStyles.titleMedium(context),
         ),
         const SizedBox(height: AppSizes.gapS),
         GestureDetector(
@@ -416,10 +417,10 @@ class _PetProfileModalState extends State<PetProfileModal> {
             );
           },
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSizes.paddingM),
             decoration: BoxDecoration(
               color: context.sectionBackground,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Column(
               children: [
@@ -434,7 +435,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
                       ),
                       child: Icon(Icons.person, size: 22, color: Theme.of(context).colorScheme.primary),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSizes.gapM),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,7 +447,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: AppSizes.gapXXS),
                           KkosunnaeScoreSmall(score: guardian.kkosunnaeScore),
                         ],
                       ),
@@ -499,7 +500,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
           size: 18,
           color: isVerified ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: AppSizes.gapXXS),
         Text(
           label,
           style: TextStyle(

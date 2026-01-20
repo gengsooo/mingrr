@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_sizes.dart';
 
 /// ============================================================
 /// MingrrSearchBar - 공통 검색 바 위젯
@@ -89,8 +90,8 @@ class MingrrSearchBar extends StatelessWidget {
           suffixIcon: suffix,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 10,
+            horizontal: AppSizes.paddingL,
+            vertical: AppSizes.paddingS,
           ),
         ),
         onSubmitted: onSearch,

@@ -7,8 +7,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
+import '../../../../core/constants/location_constants.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/animal_registration_service.dart';
@@ -179,7 +181,7 @@ class ProfileScreen extends ConsumerWidget {
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.only(top: 48, bottom: 12), // 앱바 높이만큼 상단 패딩
+          padding: const EdgeInsets.only(top: AppSizes.paddingXXL, bottom: 12), // 앱바 높이만큼 상단 패딩
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -229,11 +231,11 @@ class ProfileScreen extends ConsumerWidget {
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSizes.gapSM),
                     GestureDetector(
                       onTap: () => _showNicknameEditDialog(context, ref, user),
                       child: Container(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(AppSizes.paddingXS),
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.primary,
                           shape: BoxShape.circle,
@@ -250,7 +252,7 @@ class ProfileScreen extends ConsumerWidget {
                 loading: () => const Text('로딩 중...'),
                 error: (_, __) => const Text('사용자'),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSizes.gapSM),
               
               // 꼬순내지수 (개선된 디자인)
               currentUser.when(
@@ -283,7 +285,7 @@ class ProfileScreen extends ConsumerWidget {
         // 위치 불일치 말풍선 (위치 인증 카드 위에 표시)
         if (shouldShowBubble)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: AppSizes.paddingS),
             child: LocationMismatchBanner(
               savedAddress: user?.homeAddress,
               accentColor: context.features.success,
@@ -485,17 +487,17 @@ class ProfileScreen extends ConsumerWidget {
             GestureDetector(
               onTap: () => context.push('/health'),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
                 decoration: BoxDecoration(
-                  color: context.features.health.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: context.features.health.withOpacity(0.3)),
+                  color: context.features.health.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                  border: Border.all(color: context.features.health.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.medical_services, size: 16, color: context.features.health),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSizes.gapSM),
                     Text(
                       '건강수첩',
                       style: TextStyle(
@@ -584,7 +586,7 @@ class ProfileScreen extends ConsumerWidget {
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: AppSizes.gapXXS),
         Text(
           label,
           style: TextStyle(
@@ -713,7 +715,7 @@ class ProfileScreen extends ConsumerWidget {
           children: [
             const BottomSheetHandle(),
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
+              padding: EdgeInsets.symmetric(vertical: AppSizes.paddingS),
               child: Text(
                 '인증 관리',
                 style: TextStyle(
@@ -733,7 +735,7 @@ class ProfileScreen extends ConsumerWidget {
                 height: 1.4,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             
             // 본인인증
             _buildVerificationTile(
@@ -786,8 +788,8 @@ class ProfileScreen extends ConsumerWidget {
         height: 44,
         decoration: BoxDecoration(
           color: isVerified
-              ? context.features.success.withOpacity(0.1)
-              : Theme.of(context).colorScheme.outline.withOpacity(0.5),
+              ? context.features.success.withValues(alpha: 0.1)
+              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(AppSizes.radiusS),
         ),
         child: Center(
@@ -812,7 +814,7 @@ class ProfileScreen extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.check_circle, color: context.features.success, size: 20),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSizes.gapS),
                     TextButton(
                       onPressed: () async {
                         Navigator.pop(context);
@@ -821,31 +823,39 @@ class ProfileScreen extends ConsumerWidget {
                       style: TextButton.styleFrom(
                         foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
                         backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
                         minimumSize: const Size(50, 28),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         '재인증',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                        style: AppTextStyles.tag(context),
                       ),
                     ),
                   ],
                 )
               // 다른 인증: 체크 아이콘만
               : Icon(Icons.check_circle, color: context.features.success)
-          : MingrrButton(
-              text: '인증하기',
+          : TextButton(
               onPressed: () async {
                 Navigator.pop(context);
                 await _processVerification(context, ref, badgeType);
               },
-              backgroundColor: context.features.success,
-              textColor: Colors.white,
-              height: 32,
-              width: 70,
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor: context.features.success,
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
+                minimumSize: const Size(60, 28),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                ),
+              ),
+              child: Text(
+                '인증하기',
+                style: AppTextStyles.tag(context),
+              ),
             ),
     );
   }
@@ -1225,7 +1235,7 @@ class ProfileScreen extends ConsumerWidget {
       width: 100,
       height: 100,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 3),
       ),
@@ -1532,9 +1542,9 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
     
     return Dialog(
       backgroundColor: colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusL)),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSizes.paddingXXL),
         child: _isLoading 
             ? _buildLoadingContent(colorScheme, color)
             : _errorMessage != null
@@ -1552,7 +1562,7 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -1563,16 +1573,16 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
             ),
           ),
         ),
-        const SizedBox(height: 20),
-        const Text(
+        const SizedBox(height: AppSizes.gapLL),
+        Text(
           '현재 위치 확인 중',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          style: AppTextStyles.headlineSmall(context),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.gapS),
         Text(
           _statusMessage,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+          style: AppTextStyles.secondary(context),
         ),
       ],
     );
@@ -1586,23 +1596,23 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: Colors.red.withOpacity(0.1),
+            color: Colors.red.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.location_off, size: 28, color: Colors.red),
         ),
-        const SizedBox(height: 20),
-        const Text(
+        const SizedBox(height: AppSizes.gapLL),
+        Text(
           '위치 확인 실패',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          style: AppTextStyles.headlineSmall(context),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.gapS),
         Text(
           _errorMessage!,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant, height: 1.5),
+          style: AppTextStyles.bodyMedium(context).copyWith(color: colorScheme.onSurfaceVariant, height: 1.5),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppSizes.gapLL),
         MingrrButton(
           text: '확인',
           onPressed: () => Navigator.pop(context, false),
@@ -1669,35 +1679,35 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: themeColor.withOpacity(0.1),
+            color: themeColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, size: 28, color: themeColor),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSizes.gapL),
         
         // 제목
         Text(
           title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          style: AppTextStyles.headlineSmall(context),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.gapS),
         
         // 메시지
         Text(
           message,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant, height: 1.4),
+          style: AppTextStyles.secondary(context).copyWith(height: 1.4),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSizes.gapL),
         
         // 주소 표시
         if (_addressText != null)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSizes.paddingM),
             decoration: BoxDecoration(
-              color: themeColor.withOpacity(0.08),
+              color: themeColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Row(
@@ -1710,13 +1720,13 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
                     children: [
                       Text(
                         _addressText!,
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: colorScheme.onSurface),
+                        style: AppTextStyles.labelLarge(context),
                       ),
                       if (!_isFirstTime && _distance != null) ...[
-                        const SizedBox(height: 2),
+                        const SizedBox(height: AppSizes.gapXXS),
                         Text(
                           '저장된 위치에서 ${_distance!.round()}m',
-                          style: TextStyle(fontSize: 12, color: themeColor),
+                          style: AppTextStyles.secondarySmall(context).copyWith(color: themeColor),
                         ),
                       ],
                     ],
@@ -1725,7 +1735,7 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
               ],
             ),
           ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppSizes.gapLL),
         
         // 버튼
         if (isTooFar)
@@ -1751,7 +1761,7 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
                   height: 48,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSizes.gapM),
               Expanded(
                 child: MingrrButton(
                   text: buttonText,
@@ -1926,10 +1936,10 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
     
     return Dialog(
       backgroundColor: colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusL)),
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AppSizes.paddingXXL),
           child: _buildContent(colorScheme, primaryColor),
         ),
       ),
@@ -1961,25 +1971,25 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: primaryColor.withOpacity(0.1),
+            color: primaryColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(Icons.pets, size: 28, color: primaryColor),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSizes.gapL),
         
         // 제목
-        const Text(
+        Text(
           '동물등록 인증',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          style: AppTextStyles.headlineSmall(context),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.gapS),
         Text(
           '동물등록번호와 소유자 성명을 입력해주세요.',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+          style: AppTextStyles.secondary(context),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppSizes.gapLL),
         
         // 동물등록번호 입력
         TextField(
@@ -1994,7 +2004,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
           keyboardType: TextInputType.number,
           maxLength: 15,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSizes.gapM),
         
         // 소유자 성명 입력
         TextField(
@@ -2010,19 +2020,19 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
         
         // 에러 메시지
         if (_errorMessage != null) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           Text(
             _errorMessage!,
-            style: const TextStyle(fontSize: 13, color: Colors.red),
+            style: AppTextStyles.error(context),
           ),
         ],
         
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.gapS),
         Text(
           '※ 동물등록번호는 동물보호관리시스템(animal.go.kr)에서 확인할 수 있습니다.',
-          style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+          style: AppTextStyles.caption(context),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppSizes.gapLL),
         
         // 버튼
         Row(
@@ -2031,14 +2041,14 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context, false),
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
                   side: BorderSide(color: colorScheme.outline),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusS)),
                 ),
-                child: Text('취소', style: TextStyle(fontSize: 15, color: colorScheme.onSurfaceVariant)),
+                child: Text('취소', style: AppTextStyles.listTitle(context).copyWith(color: colorScheme.onSurfaceVariant)),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSizes.gapM),
             Expanded(
               child: MingrrButton(
                 text: '인증하기',
@@ -2063,7 +2073,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: primaryColor.withOpacity(0.1),
+            color: primaryColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -2074,16 +2084,16 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             ),
           ),
         ),
-        const SizedBox(height: 20),
-        const Text(
+        const SizedBox(height: AppSizes.gapLL),
+        Text(
           '동물등록 인증 중',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          style: AppTextStyles.headlineSmall(context),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.gapS),
         Text(
           _statusMessage,
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+          style: AppTextStyles.secondary(context),
         ),
       ],
     );
@@ -2101,27 +2111,27 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: successColor.withOpacity(0.1),
+            color: successColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(Icons.check_circle, size: 28, color: successColor),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSizes.gapL),
         
         // 제목
-        const Text(
+        Text(
           '인증 완료',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          style: AppTextStyles.headlineSmall(context),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSizes.gapL),
         
         // 동물 정보 카드
         if (_animalInfo != null)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSizes.paddingL),
             decoration: BoxDecoration(
-              color: successColor.withOpacity(0.08),
+              color: successColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Column(
@@ -2130,14 +2140,14 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
                 Row(
                   children: [
                     Icon(Icons.pets, color: successColor, size: 20),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSizes.gapS),
                     Text(
                       _animalInfo!.dogNm,
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      style: AppTextStyles.titleLarge(context),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSizes.gapM),
                 
                 // 상세 정보
                 _buildInfoRow('품종', _animalInfo!.kindNm ?? '정보 없음'),
@@ -2151,22 +2161,22 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
         
         // 매칭된 반려동물 정보
         if (_selectedPet != null) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSizes.paddingM),
             decoration: BoxDecoration(
-              color: primaryColor.withOpacity(0.08),
+              color: primaryColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Row(
               children: [
                 Icon(Icons.link, color: primaryColor, size: 18),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSizes.gapS),
                 Expanded(
                   child: Text(
                     '내 반려동물 "${_selectedPet!.name}"과 연결됨',
-                    style: TextStyle(fontSize: 13, color: primaryColor),
+                    style: AppTextStyles.secondary(context).copyWith(color: primaryColor),
                   ),
                 ),
               ],
@@ -2174,7 +2184,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
           ),
         ],
         
-        const SizedBox(height: 20),
+        const SizedBox(height: AppSizes.gapLL),
         
         // 완료 버튼
         MingrrButton(
@@ -2190,12 +2200,12 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
   
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingXXS),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
-          Text(value, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500)),
+          Text(label, style: AppTextStyles.secondary(context)),
+          Text(value, style: AppTextStyles.titleSmall(context)),
         ],
       ),
     );
@@ -2210,37 +2220,37 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: Colors.red.withOpacity(0.1),
+            color: Colors.red.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.error_outline, size: 28, color: Colors.red),
         ),
-        const SizedBox(height: 20),
-        const Text(
+        const SizedBox(height: AppSizes.gapLL),
+        Text(
           '인증 실패',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          style: AppTextStyles.headlineSmall(context),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.gapS),
         Text(
           _errorMessage ?? '알 수 없는 오류가 발생했습니다.',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant, height: 1.5),
+          style: AppTextStyles.secondary(context).copyWith(height: 1.5),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppSizes.gapLL),
         Row(
           children: [
             Expanded(
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context, false),
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
                   side: BorderSide(color: colorScheme.outline),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusS)),
                 ),
-                child: Text('닫기', style: TextStyle(fontSize: 15, color: colorScheme.onSurfaceVariant)),
+                child: Text('닫기', style: AppTextStyles.listTitle(context).copyWith(color: colorScheme.onSurfaceVariant)),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSizes.gapM),
             Expanded(
               child: MingrrButton(
                 text: '다시 시도',
@@ -2269,50 +2279,50 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: primaryColor.withOpacity(0.1),
+            color: primaryColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(Icons.pets, size: 28, color: primaryColor),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSizes.gapL),
         
         // 제목
-        const Text(
+        Text(
           '반려동물 연결',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          style: AppTextStyles.headlineSmall(context),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.gapS),
         Text(
           '인증된 동물 정보를 연결할 반려동물을 선택해주세요.',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant),
+          style: AppTextStyles.secondary(context),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSizes.gapL),
         
         // 인증된 동물 정보
         if (_animalInfo != null)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSizes.paddingM),
             decoration: BoxDecoration(
-              color: primaryColor.withOpacity(0.08),
+              color: primaryColor.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Row(
               children: [
                 Icon(Icons.verified, color: primaryColor, size: 20),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSizes.gapS),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         _animalInfo!.dogNm,
-                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                        style: AppTextStyles.labelLarge(context).copyWith(fontWeight: FontWeight.w600),
                       ),
                       Text(
                         '${_animalInfo!.kindNm ?? ''} · ${_animalInfo!.sexNm ?? ''}',
-                        style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                        style: AppTextStyles.secondarySmall(context),
                       ),
                     ],
                   ),
@@ -2320,7 +2330,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
               ],
             ),
           ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSizes.gapL),
         
         // 반려동물 목록
         Container(
@@ -2349,7 +2359,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             },
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: AppSizes.gapLL),
         
         // 버튼
         Row(
@@ -2358,14 +2368,14 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
               child: OutlinedButton(
                 onPressed: () => Navigator.pop(context, false),
                 style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
                   side: BorderSide(color: colorScheme.outline),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusS)),
                 ),
-                child: Text('취소', style: TextStyle(fontSize: 15, color: colorScheme.onSurfaceVariant)),
+                child: Text('취소', style: AppTextStyles.listTitle(context).copyWith(color: colorScheme.onSurfaceVariant)),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSizes.gapM),
             Expanded(
               child: MingrrButton(
                 text: '다음',
@@ -2389,10 +2399,10 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
     return GestureDetector(
       onTap: () => setState(() => _selectedPet = pet),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.only(bottom: AppSizes.paddingS),
+        padding: const EdgeInsets.all(AppSizes.paddingM),
         decoration: BoxDecoration(
-          color: isSelected ? colorScheme.primary.withOpacity(0.1) : colorScheme.surfaceContainerHighest,
+          color: isSelected ? colorScheme.primary.withValues(alpha: 0.1) : colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(
             color: isSelected ? colorScheme.primary : Colors.transparent,
@@ -2407,11 +2417,11 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
               height: 40,
               decoration: BoxDecoration(
                 color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
               child: pet?.displayImageUrl != null
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                       child: Image.network(pet!.displayImageUrl!, fit: BoxFit.cover),
                     )
                   : Icon(
@@ -2420,7 +2430,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
                       size: 20,
                     ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSizes.gapM),
             
             // 정보
             Expanded(
@@ -2429,15 +2439,14 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
-                      fontSize: 14,
+                    style: AppTextStyles.labelLarge(context).copyWith(
                       fontWeight: FontWeight.w600,
                       color: isSelected ? colorScheme.primary : colorScheme.onSurface,
                     ),
                   ),
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                    style: AppTextStyles.secondarySmall(context),
                   ),
                 ],
               ),

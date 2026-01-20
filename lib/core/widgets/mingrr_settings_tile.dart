@@ -159,10 +159,10 @@ class MingrrSettingsTile extends StatelessWidget {
         children: [
           if (badgeText != null)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
               decoration: BoxDecoration(
                 color: badgeColor ?? Colors.orange,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
                 badgeText,
@@ -173,7 +173,7 @@ class MingrrSettingsTile extends StatelessWidget {
                 ),
               ),
             ),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSizes.gapXS),
           const Icon(Icons.chevron_right, color: Colors.grey),
         ],
       ),

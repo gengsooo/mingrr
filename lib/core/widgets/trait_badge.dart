@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_sizes.dart';
 import '../theme/app_theme.dart';
 import 'common_widgets.dart';
 
@@ -47,11 +48,11 @@ class TraitBadge extends StatelessWidget {
   EdgeInsets get _padding {
     switch (size) {
       case TraitBadgeSize.small:
-        return const EdgeInsets.symmetric(horizontal: 8, vertical: 3);
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 3);
       case TraitBadgeSize.medium:
-        return const EdgeInsets.symmetric(horizontal: 12, vertical: 6);
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS);
       case TraitBadgeSize.large:
-        return const EdgeInsets.symmetric(horizontal: 16, vertical: 8);
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS);
     }
   }
 
@@ -172,7 +173,7 @@ class TraitSection extends StatelessWidget {
               color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           const MingrrEmptySection(
             icon: Icons.pets_outlined,
             message: '등록된 특성이 없어요',
@@ -193,7 +194,7 @@ class TraitSection extends StatelessWidget {
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSizes.gapM),
         TraitBadgeList(
           traits: traits,
           size: size,

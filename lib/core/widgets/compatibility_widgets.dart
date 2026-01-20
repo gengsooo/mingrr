@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../constants/app_sizes.dart';
+import '../theme/app_text_styles.dart';
 import '../theme/feature_colors.dart';
 import 'dialogs/dialogs.dart';
 
@@ -169,14 +171,14 @@ class _CompatibilityGuideContent extends StatelessWidget {
       children: [
         // 등급 안내
         _buildSectionTitle(context, '등급 안내'),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.gapS),
         ...compatibilityGrades.map((grade) => _buildGradeRow(context, grade)),
         
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSizes.gapL),
         
         // 점수 구성 요소
         _buildSectionTitle(context, '점수 구성 요소'),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.gapS),
         ...compatibilityFactors.map((factor) => _buildFactorRow(context, factor)),
       ],
     );
@@ -197,26 +199,25 @@ class _CompatibilityGuideContent extends StatelessWidget {
     final isTop = grade.minScore >= 85;
     
     return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      margin: const EdgeInsets.only(bottom: AppSizes.paddingXS),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingS),
       decoration: BoxDecoration(
-        color: isTop ? Colors.white : grade.color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: grade.color.withOpacity(isTop ? 0.5 : 0.2)),
+        color: isTop ? Colors.white : grade.color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
+        border: Border.all(color: grade.color.withValues(alpha: isTop ? 0.5 : 0.2)),
         boxShadow: isTop ? [
-          BoxShadow(color: grade.color.withOpacity(0.2), blurRadius: 4, spreadRadius: 0.5),
+          BoxShadow(color: grade.color.withValues(alpha: 0.2), blurRadius: 4, spreadRadius: 0.5),
         ] : null,
       ),
       child: Row(
         children: [
-          Text(grade.emoji, style: const TextStyle(fontSize: 14)),
-          const SizedBox(width: 8),
+          Text(grade.emoji, style: AppTextStyles.labelLarge(context)),
+          const SizedBox(width: AppSizes.gapS),
           SizedBox(
             width: 55,
             child: Text(
               '${grade.minScore}%~',
-              style: TextStyle(
-                fontSize: 11,
+              style: AppTextStyles.labelSmall(context).copyWith(
                 fontWeight: FontWeight.w600,
                 color: grade.color,
               ),
@@ -224,13 +225,12 @@ class _CompatibilityGuideContent extends StatelessWidget {
           ),
           Text(
             grade.grade,
-            style: TextStyle(
-              fontSize: 11,
+            style: AppTextStyles.labelSmall(context).copyWith(
               fontWeight: FontWeight.w600,
               color: grade.color,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSizes.gapS),
           Expanded(
             child: Text(
               grade.description,
@@ -249,22 +249,22 @@ class _CompatibilityGuideContent extends StatelessWidget {
     final features = Theme.of(context).extension<FeatureColors>()!;
     
     return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      margin: const EdgeInsets.only(bottom: AppSizes.paddingXS),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingS),
       decoration: BoxDecoration(
-        color: features.dating.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(8),
+        color: features.dating.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(AppSizes.radiusXS),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(factor.icon, size: 16, color: features.dating),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSizes.gapS),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
             decoration: BoxDecoration(
-              color: features.dating.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(4),
+              color: features.dating.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
             ),
             child: Text(
               '${factor.percentage}%',
@@ -275,7 +275,7 @@ class _CompatibilityGuideContent extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSizes.gapMS),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -288,7 +288,7 @@ class _CompatibilityGuideContent extends StatelessWidget {
                     color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSizes.gapXXS),
                 Text(
                   factor.description,
                   style: TextStyle(
@@ -326,18 +326,18 @@ class CompatibilityScoreBadge extends StatelessWidget {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: showLabel ? 8 : 6,
-        vertical: 4,
+        vertical: AppSizes.paddingXS,
       ),
       decoration: BoxDecoration(
         color: score >= 85 ? features.success : features.dating,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(Icons.auto_awesome, size: badgeSize, color: Colors.white),
           if (showLabel) ...[
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSizes.gapXS),
             Text(
               '궁합 $score%',
               style: TextStyle(
@@ -370,11 +370,11 @@ class CompatibilityScoreCard extends StatelessWidget {
     final features = Theme.of(context).extension<FeatureColors>()!;
     
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSizes.paddingM),
       decoration: BoxDecoration(
-        color: grade.color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: grade.color.withOpacity(0.3)),
+        color: grade.color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
+        border: Border.all(color: grade.color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -397,7 +397,7 @@ class CompatibilityScoreCard extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSizes.gapM),
           // 등급 정보
           Expanded(
             child: Column(
@@ -407,9 +407,9 @@ class CompatibilityScoreCard extends StatelessWidget {
                   children: [
                     Text(
                       grade.emoji,
-                      style: const TextStyle(fontSize: 16),
+                      style: AppTextStyles.titleLarge(context),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppSizes.gapXS),
                     Text(
                       grade.grade,
                       style: TextStyle(
@@ -420,7 +420,7 @@ class CompatibilityScoreCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSizes.gapXXS),
                 Text(
                   grade.description,
                   style: TextStyle(
@@ -436,9 +436,9 @@ class CompatibilityScoreCard extends StatelessWidget {
             GestureDetector(
               onTap: onInfoTap,
               child: Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(AppSizes.paddingXS),
                 decoration: BoxDecoration(
-                  color: features.dating.withOpacity(0.1),
+                  color: features.dating.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(

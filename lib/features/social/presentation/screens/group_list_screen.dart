@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
@@ -10,6 +11,8 @@ import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/location_selector.dart';
 import '../../../../core/widgets/info_badge.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
+import '../../../../core/widgets/top_navigation.dart';
+import '../../../../core/constants/location_constants.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 import '../providers/group_provider.dart';
 import 'group_detail_screen.dart';
@@ -107,99 +110,16 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
   }
 
   Widget _buildLocationFilterBar(BuildContext context, WidgetRef ref, List<String> selectedLocations) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final accentColor = context.features.social;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(bottom: BorderSide(color: colorScheme.outline.withOpacity(0.3))),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(LocationConstants.distanceIcon, size: 18, color: accentColor),
-              const SizedBox(width: 6),
-              GestureDetector(
-                onTap: () => _showLocationSelector(context, ref),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        selectedLocations.isEmpty ? '전체 지역' : '지역 선택',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: accentColor),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(Icons.keyboard_arrow_down, size: 18, color: accentColor),
-                    ],
-                  ),
-                ),
-              ),
-              const Spacer(),
-              if (selectedLocations.isNotEmpty)
-                GestureDetector(
-                  onTap: () => ref.read(_selectedLocationsProvider.notifier).state = [],
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.refresh, size: 14, color: colorScheme.onSurfaceVariant),
-                        const SizedBox(width: 2),
-                        Text('초기화', style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant)),
-                      ],
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          if (selectedLocations.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: selectedLocations.map((location) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: accentColor.withOpacity(0.3)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(location, style: TextStyle(fontSize: 12, color: accentColor, fontWeight: FontWeight.w500)),
-                      const SizedBox(width: 4),
-                      GestureDetector(
-                        onTap: () {
-                          final current = ref.read(_selectedLocationsProvider);
-                          ref.read(_selectedLocationsProvider.notifier).state =
-                              current.where((l) => l != location).toList();
-                        },
-                        child: Icon(Icons.close, size: 14, color: accentColor),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-        ],
-      ),
+    return LocationRegionBar(
+      accentColor: context.features.social,
+      selectedLocations: selectedLocations,
+      onTap: () => _showLocationSelector(context, ref),
+      onReset: () => ref.read(_selectedLocationsProvider.notifier).state = [],
+      onRemoveLocation: (location) {
+        final current = ref.read(_selectedLocationsProvider);
+        ref.read(_selectedLocationsProvider.notifier).state =
+            current.where((l) => l != location).toList();
+      },
     );
   }
 
@@ -263,7 +183,10 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
 
     // 초기 로딩 상태
     if (paginatedState.isInitialLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return MingrrLoadingState(
+        type: MingrrLoadingType.community,
+        message: '모임 목록을 불러오고 있어요',
+      );
     }
 
     return MingrrRefreshWrapper(
@@ -274,7 +197,8 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
       },
       child: ListView(
         controller: _scrollController,
-        padding: const EdgeInsets.all(16),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSizes.paddingL),
         children: [
           // 내 모임 섹션
           myGroupsAsync.when(
@@ -287,11 +211,11 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSizes.gapXL),
 
           // 모임 목록 헤더
-          const Text('모임 목록', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 12),
+          Text('모임 목록', style: AppTextStyles.sectionTitle(context)),
+          const SizedBox(height: AppSizes.gapM),
 
           // 모임 카드들
           if (filteredGroups.isEmpty)
@@ -304,12 +228,15 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
               accentColor: accentColor,
             )
           else
-            ...filteredGroups.map((groupWithDistance) => _GroupCard(
-                  groupWithDistance: groupWithDistance,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => GroupDetailScreen(groupId: groupWithDistance.group.id),
+            ...filteredGroups.asMap().entries.map((entry) => MingrrAnimatedListItem(
+                  index: entry.key,
+                  child: _GroupCard(
+                    groupWithDistance: entry.value,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => GroupDetailScreen(groupId: entry.value.group.id),
+                      ),
                     ),
                   ),
                 )),
@@ -339,11 +266,11 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('내 모임', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 16),
+        Text('내 모임', style: AppTextStyles.sectionTitle(context)),
+        const SizedBox(height: AppSizes.gapL),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.all(AppSizes.paddingXL),
           decoration: BoxDecoration(
             color: Colors.transparent,
             borderRadius: BorderRadius.circular(AppSizes.radiusM),
@@ -351,7 +278,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
           child: Column(
             children: [
               Icon(Icons.groups_outlined, size: 48, color: colorScheme.outlineVariant),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSizes.gapL),
               Text(
                 '가입한 모임이 없어요',
                 style: TextStyle(
@@ -359,10 +286,10 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSizes.gapS),
               Text(
                 '관심 있는 모임에 가입해보세요',
-                style: TextStyle(fontSize: 12, color: colorScheme.outlineVariant),
+                style: AppTextStyles.secondarySmall(context),
               ),
             ],
           ),
@@ -378,16 +305,16 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('내 모임', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text('내 모임', style: AppTextStyles.sectionTitle(context)),
             TextButton(
               onPressed: () {},
-              child: const Text('전체보기', style: TextStyle(fontSize: 13)),
+              child: Text('전체보기', style: AppTextStyles.secondary(context)),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.gapS),
         SizedBox(
-          height: 110,
+          height: 120,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: myGroups.length,
@@ -451,12 +378,12 @@ class _MyGroupCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 140,
-        margin: const EdgeInsets.only(right: 12),
-        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.only(right: AppSizes.paddingM),
+        padding: const EdgeInsets.all(AppSizes.paddingM),
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusS),
-          border: Border.all(color: accentColor.withOpacity(0.3)),
+          border: Border.all(color: accentColor.withValues(alpha: 0.3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -466,22 +393,22 @@ class _MyGroupCard extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+                color: accentColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
               child: Icon(Icons.groups, size: 20, color: accentColor),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             Text(
               name,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              style: AppTextStyles.titleSmall(context),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: AppSizes.gapXXS),
             Text(
               '멤버 $memberCount명',
-              style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+              style: AppTextStyles.cardMeta(context),
             ),
           ],
         ),
@@ -509,13 +436,13 @@ class _GroupCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
+        margin: const EdgeInsets.only(bottom: AppSizes.paddingM),
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppSizes.radiusM),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -535,7 +462,7 @@ class _GroupCard extends StatelessWidget {
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
                     height: 120,
-                    color: accentColor.withOpacity(0.1),
+                    color: accentColor.withValues(alpha: 0.1),
                     child: Center(child: Icon(Icons.groups, size: 40, color: accentColor)),
                   ),
                 ),
@@ -544,7 +471,7 @@ class _GroupCard extends StatelessWidget {
               Container(
                 height: 80,
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.1),
+                  color: accentColor.withValues(alpha: 0.1),
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                 ),
                 child: Center(child: Icon(Icons.groups, size: 40, color: accentColor)),
@@ -552,66 +479,66 @@ class _GroupCard extends StatelessWidget {
 
             // 정보
             Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(AppSizes.paddingM),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 3),
                         decoration: BoxDecoration(
-                          color: accentColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(4),
+                          color: accentColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                         ),
                         child: Text(
                           group.typeString,
-                          style: TextStyle(fontSize: 11, color: accentColor, fontWeight: FontWeight.w500),
+                          style: AppTextStyles.tagSmall(context).copyWith(color: accentColor),
                         ),
                       ),
                       const Spacer(),
                       if (groupWithDistance.distanceMeters.isFinite)
                         Text(
                           groupWithDistance.distanceString,
-                          style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                          style: AppTextStyles.secondarySmall(context),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSizes.gapS),
                   Text(
                     group.name,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: AppTextStyles.sectionTitle(context),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSizes.gapXS),
                   Text(
                     group.description,
-                    style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                    style: AppTextStyles.secondary(context),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSizes.gapM),
                   Row(
                     children: [
                       Icon(LocationConstants.distanceIcon, size: 14, color: colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSizes.gapXS),
                       Expanded(
                         child: Text(
                           group.address ?? LocationConstants.noLocationText,
-                          style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                          style: AppTextStyles.secondarySmall(context),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSizes.gapM),
                       Icon(Icons.people_outline, size: 14, color: colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSizes.gapXS),
                       Text(
                         '${group.memberCount}명',
-                        style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                        style: AppTextStyles.secondarySmall(context),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSizes.gapM),
                       LikeCountText(count: group.likeCount, size: InfoBadgeSize.small),
                     ],
                   ),

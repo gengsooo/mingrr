@@ -183,16 +183,16 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
                   accentColor: context.features.dating,
                 )
               : Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppSizes.paddingM),
                   decoration: BoxDecoration(
                     color: context.inputBackground,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     border: Border.all(color: Theme.of(context).colorScheme.outline),
                   ),
                   child: Row(
                     children: [
                       Icon(Icons.pets, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSizes.gapM),
                       Text('반려동물을 선택해주세요', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
                       const Spacer(),
                       Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
@@ -293,13 +293,13 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
           padding: const EdgeInsets.all(AppSizes.paddingM),
           decoration: BoxDecoration(
             color: hasPedigree 
-                ? context.features.dating.withOpacity(0.1)
+                ? context.features.dating.withValues(alpha: 0.1)
                 : colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
             border: Border.all(
               color: hasPedigree 
-                  ? context.features.dating.withOpacity(0.3)
-                  : colorScheme.outline.withOpacity(0.3),
+                  ? context.features.dating.withValues(alpha: 0.3)
+                  : colorScheme.outline.withValues(alpha: 0.3),
             ),
           ),
           child: Row(
@@ -309,7 +309,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
                 size: 20,
                 color: hasPedigree ? context.features.dating : colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSizes.gapM),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -322,7 +322,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
                         color: hasPedigree ? context.features.dating : colorScheme.onSurface,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSizes.gapXXS),
                     Text(
                       hasPedigree 
                           ? '${_selectedPet!.name}의 혈통서가 등록되어 있어요'

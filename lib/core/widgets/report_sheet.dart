@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../constants/app_sizes.dart';
+import '../theme/app_text_styles.dart';
 import '../services/firebase_service.dart';
 import 'common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
@@ -98,11 +99,11 @@ class _ReportSheetState extends State<ReportSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSizes.gapM),
                   Row(
                     children: [
                       const Icon(Icons.report_outlined, color: Colors.red),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSizes.gapS),
                       Text(
                         '${widget.targetName} 신고하기',
                         style: const TextStyle(
@@ -112,7 +113,7 @@ class _ReportSheetState extends State<ReportSheet> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSizes.gapS),
                   Text(
                     '신고 사유를 선택해주세요. 허위 신고 시 제재를 받을 수 있습니다.',
                     style: TextStyle(
@@ -120,7 +121,7 @@ class _ReportSheetState extends State<ReportSheet> {
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSizes.gapLL),
 
                   // 신고 유형 선택
                   ...ReportType.values.map((type) {
@@ -128,11 +129,11 @@ class _ReportSheetState extends State<ReportSheet> {
                     return GestureDetector(
                       onTap: () => setState(() => _selectedType = type),
                       child: Container(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        margin: const EdgeInsets.only(bottom: AppSizes.paddingS),
+                        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingM),
                         decoration: BoxDecoration(
                           color: isSelected ? Colors.red.withValues(alpha: 0.1) : Colors.transparent,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                           border: Border.all(
                             color: isSelected ? Colors.red : Theme.of(context).colorScheme.outline,
                           ),
@@ -144,7 +145,7 @@ class _ReportSheetState extends State<ReportSheet> {
                               size: 20,
                               color: isSelected ? Colors.red : Theme.of(context).colorScheme.outlineVariant,
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: AppSizes.gapM),
                             Text(
                               type.label,
                               style: TextStyle(
@@ -160,25 +161,25 @@ class _ReportSheetState extends State<ReportSheet> {
 
                   // 상세 내용 (기타 선택 시)
                   if (_selectedType == ReportType.other) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSizes.gapM),
                     TextField(
                       controller: _detailController,
                       maxLines: 3,
                       decoration: InputDecoration(
                         hintText: '신고 사유를 자세히 적어주세요',
-                        hintStyle: TextStyle(color: Theme.of(context).colorScheme.outlineVariant, fontSize: 13),
+                        hintStyle: AppTextStyles.secondary(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                           borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                           borderSide: const BorderSide(color: Colors.red),
                         ),
                       ),
                     ),
                   ],
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSizes.gapL),
                 ],
               ),
             ),

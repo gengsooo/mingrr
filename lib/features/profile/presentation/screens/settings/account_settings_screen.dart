@@ -53,7 +53,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                   child: Text(
                     '연동 계정',
                     style: theme.textTheme.titleLarge,
@@ -96,7 +96,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                     child: Text(
                       '보안',
                       style: theme.textTheme.titleLarge,
@@ -121,7 +121,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                   child: Text(
                     '개인정보',
                     style: theme.textTheme.titleLarge,
@@ -161,7 +161,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           
           // 안내 문구
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS),
             child: Text(
               '* 회원 탈퇴 시 30일간 데이터가 보관되며, 이 기간 내 재가입 시 복구가 가능합니다.',
               style: theme.textTheme.labelSmall,

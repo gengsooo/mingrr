@@ -185,6 +185,283 @@ class AppTextStyles {
     fontWeight: FontWeight.w500,
     color: Theme.of(context).colorScheme.onPrimary,
   );
+
+  // ===== 카드용 스타일 =====
+  
+  /// 카드 제목 (15px, SemiBold)
+  static TextStyle cardTitle(BuildContext context) => TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w600,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  /// 카드 부제목 (13px, Regular)
+  static TextStyle cardSubtitle(BuildContext context) => TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  /// 카드 메타 정보 (11px, onSurfaceVariant)
+  static TextStyle cardMeta(BuildContext context) => TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w400,
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
+  );
+
+  /// 카드 가격 (16px, Bold)
+  static TextStyle cardPrice(BuildContext context) => TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w700,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  // ===== 리스트용 스타일 =====
+  
+  /// 리스트 제목 (15px, Medium)
+  static TextStyle listTitle(BuildContext context) => TextStyle(
+    fontSize: 15,
+    fontWeight: FontWeight.w500,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  /// 리스트 부제목 (13px, onSurfaceVariant)
+  static TextStyle listSubtitle(BuildContext context) => TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
+  );
+
+  /// 리스트 트레일링 (12px, onSurfaceVariant)
+  static TextStyle listTrailing(BuildContext context) => TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
+  );
+
+  // ===== 배지/태그용 스타일 =====
+  
+  /// 배지 텍스트 소형 (9px, Medium)
+  static TextStyle badgeSmall(BuildContext context) => TextStyle(
+    fontSize: 9,
+    fontWeight: FontWeight.w500,
+    color: Theme.of(context).colorScheme.onPrimary,
+  );
+
+  /// 태그 텍스트 (12px, Medium)
+  static TextStyle tag(BuildContext context) => TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  /// 태그 텍스트 소형 (11px, Medium)
+  static TextStyle tagSmall(BuildContext context) => TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w500,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  // ===== 오버레이용 스타일 (이미지 위 텍스트) =====
+  
+  /// 오버레이 제목 (16px, SemiBold, 흰색)
+  static TextStyle overlayTitle(BuildContext context) => const TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+  );
+
+  /// 오버레이 부제목 (13px, Regular, 흰색 70%)
+  static TextStyle overlaySubtitle(BuildContext context) => TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    color: Colors.white.withValues(alpha: 0.7),
+  );
+
+  /// 오버레이 메타 (11px, Medium, 흰색)
+  static TextStyle overlayMeta(BuildContext context) => const TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w500,
+    color: Colors.white,
+  );
+
+  // ===== 숫자/통계용 스타일 =====
+  
+  /// 대형 숫자 (24px, Bold)
+  static TextStyle numberLarge(BuildContext context) => TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.w700,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  /// 중형 숫자 (18px, SemiBold)
+  static TextStyle numberMedium(BuildContext context) => TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  /// 소형 숫자 (14px, Medium)
+  static TextStyle numberSmall(BuildContext context) => TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  // ===== 채팅용 스타일 =====
+  
+  /// 채팅 메시지 (14px, Regular)
+  static TextStyle chatMessage(BuildContext context) => TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    color: Theme.of(context).colorScheme.onSurface,
+    height: 1.4,
+  );
+
+  /// 채팅 시간 (10px, onSurfaceVariant)
+  static TextStyle chatTime(BuildContext context) => TextStyle(
+    fontSize: 10,
+    fontWeight: FontWeight.w400,
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
+  );
+
+  /// 채팅 발신자 (12px, Medium)
+  static TextStyle chatSender(BuildContext context) => TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
+  );
+
+  // ===== 폼용 스타일 =====
+  
+  /// 폼 라벨 (14px, Medium)
+  static TextStyle formLabel(BuildContext context) => TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  /// 폼 힌트 (13px, onSurfaceVariant)
+  static TextStyle formHint(BuildContext context) => TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
+  );
+
+  /// 폼 헬퍼 텍스트 (12px, onSurfaceVariant)
+  static TextStyle formHelper(BuildContext context) => TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
+  );
+
+  /// 폼 에러 텍스트 (12px, error)
+  static TextStyle formError(BuildContext context) => TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    color: Theme.of(context).colorScheme.error,
+  );
+
+  // ===== 섹션용 스타일 =====
+  
+  /// 섹션 제목 (16px, SemiBold)
+  static TextStyle sectionTitle(BuildContext context) => TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  /// 섹션 부제목 (13px, onSurfaceVariant)
+  static TextStyle sectionSubtitle(BuildContext context) => TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w400,
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
+  );
+
+  /// 섹션 더보기 (13px, primary)
+  static TextStyle sectionMore(BuildContext context) => TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w500,
+    color: Theme.of(context).colorScheme.primary,
+  );
+
+  // ===== 필터용 스타일 =====
+  
+  /// 필터 타이틀 (12px, Bold) - 필터 섹션 제목
+  static TextStyle filterTitle(BuildContext context) => TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w700,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  /// 필터 칩 텍스트 (11px, Regular) - 필터 칩 내부 텍스트
+  static TextStyle filterChip(BuildContext context) => TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w400,
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
+  );
+
+  /// 필터 칩 선택됨 (11px, SemiBold) - 선택된 필터 칩
+  static TextStyle filterChipSelected(BuildContext context) => TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w600,
+    color: Colors.white,
+  );
+
+  // ===== 점수/통계용 스타일 =====
+  
+  /// 대형 점수 (36px, Bold) - 꼬순내 점수 등
+  static TextStyle scoreLarge(BuildContext context) => TextStyle(
+    fontSize: 36,
+    fontWeight: FontWeight.w700,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  /// 중형 점수 (28px, Bold)
+  static TextStyle scoreMedium(BuildContext context) => TextStyle(
+    fontSize: 28,
+    fontWeight: FontWeight.w700,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  /// 소형 점수 (20px, SemiBold)
+  static TextStyle scoreSmall(BuildContext context) => TextStyle(
+    fontSize: 20,
+    fontWeight: FontWeight.w600,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  // ===== 로그인/온보딩용 스타일 =====
+  
+  /// 앱 타이틀 (36px, Bold) - 로그인 화면 앱 이름
+  static TextStyle appTitle(BuildContext context) => TextStyle(
+    fontSize: 36,
+    fontWeight: FontWeight.w700,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  /// 앱 슬로건 (14px, Regular) - 로그인 화면 슬로건
+  static TextStyle appSlogan(BuildContext context) => TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w400,
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
+  );
+
+  // ===== 알림용 스타일 =====
+  
+  /// 알림 제목 (13px, Medium)
+  static TextStyle notificationTitle(BuildContext context) => TextStyle(
+    fontSize: 13,
+    fontWeight: FontWeight.w500,
+    color: Theme.of(context).colorScheme.onSurface,
+  );
+
+  /// 알림 시간 (12px, onSurfaceVariant)
+  static TextStyle notificationTime(BuildContext context) => TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
+  );
 }
 
 /// TextStyle 확장 메서드 - 색상 변경 편의 기능

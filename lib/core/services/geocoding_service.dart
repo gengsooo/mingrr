@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../config/api_config.dart';
-import '../constants/pet_constants.dart';
+import '../constants/location_constants.dart';
 import '../utils/app_logger.dart';
 
 /// ============================================================

@@ -166,14 +166,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       _pages.length,
                       (index) => AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        margin: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS),
                         width: _currentPage == index ? 24 : 8,
                         height: 8,
                         decoration: BoxDecoration(
                           color: _currentPage == index
                               ? Theme.of(context).colorScheme.primary
                               : Theme.of(context).colorScheme.outline,
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                         ),
                       ),
                     ),

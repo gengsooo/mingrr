@@ -105,8 +105,8 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusL),
                   ),
                   child: Icon(
                     Icons.pets,
@@ -114,24 +114,24 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
                     color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSizes.gapL),
                 Text(
                   '밍그르',
                   style: theme.textTheme.headlineMedium,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSizes.gapXS),
                 Text(
                   '반려동물과 함께하는 일상',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSizes.gapL),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusL),
                   ),
                   child: Text(
                     'v$_version ($_buildNumber)',
@@ -152,7 +152,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                   child: Text(
                     '약관 및 정책',
                     style: theme.textTheme.titleLarge,
@@ -228,10 +228,10 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
       applicationIcon: Container(
         width: 60,
         height: 60,
-        margin: const EdgeInsets.only(top: 20),
+        margin: const EdgeInsets.only(top: AppSizes.paddingL),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(15),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(AppSizes.radiusM),
         ),
         child: Icon(
           Icons.pets,

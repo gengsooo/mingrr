@@ -137,3 +137,50 @@ class AppStrings {
   static const String permissionDenied = '권한이 필요합니다';
   static const String locationPermission = '위치 권한을 허용해주세요';
 }
+
+/// ============================================================
+/// 에러 메시지 상수
+/// 에러 타입별 제목/부제목을 중앙에서 관리
+/// ============================================================
+class ErrorStrings {
+  ErrorStrings._();
+
+  // ===== 기본 에러 =====
+  static const String defaultTitle = '일시적인 오류가 발생했어요';
+  static const String defaultSubtitle = '잠시 후 다시 시도해주세요';
+  static const String retryButton = '다시 시도';
+
+  // ===== 네트워크 에러 =====
+  static const String networkTitle = '인터넷 연결을 확인해주세요';
+  static const String networkSubtitle = 'Wi-Fi 또는 모바일 데이터 연결 상태를 확인해주세요';
+
+  // ===== 서버 에러 =====
+  static const String serverTitle = '서버에 문제가 발생했어요';
+  static const String serverSubtitle = '잠시 후 다시 시도해주세요';
+
+  // ===== 인증 에러 =====
+  static const String authTitle = '로그인이 필요해요';
+  static const String authSubtitle = '로그인 후 이용해주세요';
+  static const String authButton = '로그인하기';
+
+  // ===== 권한 에러 =====
+  static const String permissionTitle = '권한이 필요해요';
+  static const String permissionSubtitle = '설정에서 권한을 허용해주세요';
+  static const String permissionButton = '설정으로 이동';
+
+  // ===== 데이터 없음 =====
+  static const String emptyTitle = '데이터가 없어요';
+  static const String emptySubtitle = '아직 등록된 내용이 없습니다';
+
+  // ===== 찾을 수 없음 =====
+  static const String notFoundTitle = '요청한 정보를 찾을 수 없어요';
+  static const String notFoundSubtitle = '삭제되었거나 존재하지 않는 정보입니다';
+
+  // ===== 시간 초과 =====
+  static const String timeoutTitle = '응답 시간이 초과되었어요';
+  static const String timeoutSubtitle = '네트워크 상태를 확인하고 다시 시도해주세요';
+
+  // ===== 로딩 실패 =====
+  static const String loadFailedTitle = '불러오기에 실패했어요';
+  static const String loadFailedSubtitle = '잠시 후 다시 시도해주세요';
+}

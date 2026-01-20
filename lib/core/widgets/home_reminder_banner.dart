@@ -111,12 +111,12 @@ class HomeReminderBanner extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: AppSizes.gapM),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingM),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(AppSizes.radiusM),
           border: Border.all(
-            color: colorScheme.outlineVariant.withOpacity(0.3),
+            color: colorScheme.outlineVariant.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -136,7 +136,7 @@ class HomeReminderBanner extends StatelessWidget {
                 color: colorScheme.primary,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSizes.gapM),
             // 텍스트
             Expanded(
               child: Column(
@@ -150,7 +150,7 @@ class HomeReminderBanner extends StatelessWidget {
                       color: colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSizes.gapXXS),
                   Text(
                     config.subtitle(count),
                     style: TextStyle(
@@ -166,7 +166,7 @@ class HomeReminderBanner extends StatelessWidget {
               GestureDetector(
                 onTap: onDismiss,
                 child: Padding(
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.all(AppSizes.paddingXS),
                   child: Icon(
                     Icons.close,
                     size: 18,
@@ -257,7 +257,7 @@ class _HomeReminderBannerCarouselState extends State<HomeReminderBannerCarousel>
             itemBuilder: (context, index) {
               final banner = visibleBanners[index];
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXXS),
                 child: _BannerCard(
                   type: banner.type,
                   count: banner.count,
@@ -267,7 +267,7 @@ class _HomeReminderBannerCarouselState extends State<HomeReminderBannerCarousel>
             },
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.gapS),
         // 점 인디케이터
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -276,12 +276,12 @@ class _HomeReminderBannerCarouselState extends State<HomeReminderBannerCarousel>
             (index) => Container(
               width: 6,
               height: 6,
-              margin: const EdgeInsets.symmetric(horizontal: 3),
+              margin: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXXS),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: index == _currentPage
                     ? colorScheme.primary
-                    : colorScheme.outlineVariant.withOpacity(0.5),
+                    : colorScheme.outlineVariant.withValues(alpha: 0.5),
               ),
             ),
           ),
@@ -312,12 +312,12 @@ class _BannerCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingM),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(AppSizes.radiusM),
           border: Border.all(
-            color: colorScheme.outlineVariant.withOpacity(0.3),
+            color: colorScheme.outlineVariant.withValues(alpha: 0.3),
             width: 1,
           ),
         ),
@@ -337,7 +337,7 @@ class _BannerCard extends StatelessWidget {
                 color: colorScheme.primary,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSizes.gapM),
             // 텍스트
             Expanded(
               child: Column(
@@ -354,7 +354,7 @@ class _BannerCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSizes.gapXXS),
                   Text(
                     config.subtitle(count),
                     style: TextStyle(

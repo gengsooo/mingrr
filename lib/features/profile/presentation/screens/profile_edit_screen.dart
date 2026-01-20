@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/form_strings.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/storage_service.dart';
@@ -250,7 +251,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       width: 120,
       height: 120,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
         shape: BoxShape.circle,
         border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
       ),
@@ -313,7 +314,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           // 성별
           Row(
             children: [
-              const Text('성별', style: TextStyle(fontSize: 14)),
+              Text('성별', style: AppTextStyles.labelLarge(context)),
               const Spacer(),
               SegmentedButton<UserGender>(
                 segments: UserGender.values.map((gender) {
@@ -334,11 +335,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           const SizedBox(height: AppSizes.gapM),
           
           // 생년월일
-          const Align(
+          Align(
             alignment: Alignment.centerLeft,
-            child: Text('생년월일', style: TextStyle(fontSize: 14)),
+            child: Text('생년월일', style: AppTextStyles.labelLarge(context)),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSizes.gapS),
           MingrrDateSelector(
             date: _birthDate,
             onSelect: (d) => setState(() => _birthDate = d),
@@ -359,7 +360,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         children: [
           Text(
             FormStrings.hintUserBio,
-            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+            style: AppTextStyles.secondarySmall(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
           ),
           const SizedBox(height: AppSizes.gapM),
           MingrrTextField(
@@ -387,11 +388,11 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         Row(
           children: [
             Icon(Icons.info_outline, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSizes.gapXS),
             Expanded(
               child: Text(
                 '위치 정보는 근처 마켓 상품 추천에 사용됩니다',
-                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+                style: AppTextStyles.secondarySmall(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
               ),
             ),
           ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/filter_components.dart';
@@ -137,10 +138,13 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
       color: accentColor,
       onRefresh: () async {
         final selectedCategory = ref.read(_selectedCommunityCategory);
-        await ref.read(paginatedCommunityPostsProvider(selectedCategory).notifier).refresh();
+        ref.invalidate(paginatedCommunityPostsProvider(selectedCategory));
+        // invalidate 후 새 데이터 로딩 대기
+        await Future.delayed(const Duration(milliseconds: 500));
       },
       child: ListView.builder(
         controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(AppSizes.paddingM),
         itemCount: paginatedState.items.length + (paginatedState.hasMore ? 1 : 0),
         itemBuilder: (context, index) {
@@ -159,10 +163,13 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
           }
 
           final post = paginatedState.items[index];
-          return _CommunityPostCard(
-            post: post,
-            onTap: () => _navigateToDetail(context, post),
-            onLike: () => ref.read(communityNotifierProvider.notifier).toggleLike(post.id),
+          return MingrrAnimatedListItem(
+            index: index,
+            child: _CommunityPostCard(
+              post: post,
+              onTap: () => _navigateToDetail(context, post),
+              onLike: () => ref.read(communityNotifierProvider.notifier).toggleLike(post.id),
+            ),
           );
         },
       ),
@@ -236,14 +243,14 @@ class _CommunityPostCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        margin: const EdgeInsets.only(bottom: AppSizes.paddingS),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withValues(alpha: 0.03),
               blurRadius: 6,
               offset: const Offset(0, 1),
             ),
@@ -267,10 +274,10 @@ class _CommunityPostCard extends StatelessWidget {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                               decoration: BoxDecoration(
-                                color: accentColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
+                                color: accentColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                               ),
                               child: Text(
                                 post.category.label,
@@ -282,12 +289,12 @@ class _CommunityPostCard extends StatelessWidget {
                               ),
                             ),
                             if (post.isAnonymous) ...[
-                              const SizedBox(width: 4),
+                              const SizedBox(width: AppSizes.gapXS),
                               Icon(Icons.visibility_off, size: 10, color: colorScheme.outlineVariant),
                             ],
                           ],
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppSizes.gapXS),
                         
                         // 제목
                         if (post.title.isNotEmpty)
@@ -301,7 +308,7 @@ class _CommunityPostCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        if (post.title.isNotEmpty) const SizedBox(height: 2),
+                        if (post.title.isNotEmpty) const SizedBox(height: AppSizes.gapXXS),
                         
                         // 본문 내용
                         Text(
@@ -317,12 +324,12 @@ class _CommunityPostCard extends StatelessWidget {
                       ],
                     ),
                     
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSizes.gapSM),
                     
                     // 작성자 · 시간
                     Text(
                       '${post.displayAuthorName} · ${formatRelativeTime(post.createdAt)}',
-                      style: TextStyle(fontSize: 10, color: colorScheme.outlineVariant),
+                      style: AppTextStyles.chatTime(context).copyWith(color: colorScheme.outlineVariant),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -338,7 +345,7 @@ class _CommunityPostCard extends StatelessWidget {
                   // 썸네일 이미지 (미디어가 있을 때만)
                   if (hasMedia)
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                       child: Stack(
                         children: [
                           Image.network(
@@ -372,15 +379,15 @@ class _CommunityPostCard extends StatelessWidget {
                     children: [
                       Icon(Icons.chat_bubble_outline, size: 10, color: colorScheme.outlineVariant),
                       const SizedBox(width: 2),
-                      Text('${post.commentCount}', style: TextStyle(fontSize: 10, color: colorScheme.outlineVariant)),
-                      _dot(colorScheme),
+                      Text('${post.commentCount}', style: AppTextStyles.chatTime(context).copyWith(color: colorScheme.outlineVariant)),
+                      _dot(context, colorScheme),
                       Icon(Icons.favorite_border, size: 10, color: colorScheme.outlineVariant),
                       const SizedBox(width: 2),
-                      Text('${post.likeCount}', style: TextStyle(fontSize: 10, color: colorScheme.outlineVariant)),
-                      _dot(colorScheme),
+                      Text('${post.likeCount}', style: AppTextStyles.chatTime(context).copyWith(color: colorScheme.outlineVariant)),
+                      _dot(context, colorScheme),
                       Icon(Icons.visibility_outlined, size: 10, color: colorScheme.outlineVariant),
                       const SizedBox(width: 2),
-                      Text('${post.viewCount}', style: TextStyle(fontSize: 10, color: colorScheme.outlineVariant)),
+                      Text('${post.viewCount}', style: AppTextStyles.chatTime(context).copyWith(color: colorScheme.outlineVariant)),
                     ],
                   ),
                 ],
@@ -392,10 +399,10 @@ class _CommunityPostCard extends StatelessWidget {
     );
   }
 
-  Widget _dot(ColorScheme colorScheme) {
+  Widget _dot(BuildContext context, ColorScheme colorScheme) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 3),
-      child: Text('·', style: TextStyle(fontSize: 10, color: colorScheme.outlineVariant)),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXXS),
+      child: Text('·', style: AppTextStyles.chatTime(context).copyWith(color: colorScheme.outlineVariant)),
     );
   }
 

@@ -147,7 +147,7 @@ class _ShareBottomSheet extends StatelessWidget {
           const BottomSheetHandle(),
           // 제목
           const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
+            padding: EdgeInsets.symmetric(vertical: AppSizes.paddingS),
             child: Text(
               '공유하기',
               style: TextStyle(
@@ -210,10 +210,10 @@ class _ShareBottomSheet extends StatelessWidget {
           // 공유 내용 미리보기
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSizes.paddingM),
             decoration: BoxDecoration(
               color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Text(
               text,

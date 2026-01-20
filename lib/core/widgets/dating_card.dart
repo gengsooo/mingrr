@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../constants/app_sizes.dart';
+import '../constants/location_constants.dart';
 import '../constants/pet_constants.dart';
 import '../theme/feature_colors.dart';
+import '../theme/app_text_styles.dart';
 import 'common_widgets.dart';
 import 'info_badge.dart';
 import 'trait_badge.dart';
@@ -73,7 +75,7 @@ class DatingRecommendCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppSizes.radiusXL),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
@@ -106,19 +108,19 @@ class DatingRecommendCard extends StatelessWidget {
                 top: 12,
                 right: 12,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                   decoration: BoxDecoration(
                     color: matchColor,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Icon(Icons.auto_awesome, size: 14, color: Colors.white),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSizes.gapXS),
                       Text(
                         '궁합 $matchScore%',
-                        style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600),
+                        style: AppTextStyles.tagSmall(context).copyWith(color: Colors.white),
                       ),
                     ],
                   ),
@@ -140,38 +142,34 @@ class DatingRecommendCard extends StatelessWidget {
                         children: [
                           Text(
                             name,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                            ),
+                            style: AppTextStyles.headlineMedium(context).copyWith(color: Colors.white),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSizes.gapS),
                           Text(
                             ageString,
-                            style: const TextStyle(fontSize: 16, color: Colors.white70),
+                            style: AppTextStyles.overlaySubtitle(context).copyWith(fontSize: 16),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSizes.gapXS),
                       
                       // 품종과 거리
                       Row(
                         children: [
                           Text(
                             breed ?? '품종 미상',
-                            style: const TextStyle(fontSize: 13, color: Colors.white70),
+                            style: AppTextStyles.overlaySubtitle(context),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSizes.gapS),
                           Icon(LocationConstants.distanceIcon, size: 12, color: Colors.white70),
                           const SizedBox(width: 2),
                           Text(
                             distanceString,
-                            style: const TextStyle(fontSize: 12, color: Colors.white70),
+                            style: AppTextStyles.overlaySubtitle(context).copyWith(fontSize: 12),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSizes.gapS),
                       
                       // 특성 태그
                       if (traits.isNotEmpty)
@@ -208,7 +206,7 @@ class DatingRecommendCard extends StatelessWidget {
         gradient: LinearGradient(
           colors: [
             context.features.datingContainer,
-            context.features.dating.withOpacity(0.2),
+            context.features.dating.withValues(alpha: 0.2),
           ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -231,7 +229,7 @@ class DatingRecommendCard extends StatelessWidget {
           gradient: LinearGradient(
             colors: [
               Colors.transparent,
-              Colors.black.withOpacity(0.7),
+              Colors.black.withValues(alpha: 0.7),
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -288,7 +286,7 @@ class DatingNearbyCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
             ),
           ],
@@ -338,14 +336,14 @@ class DatingNearbyCard extends StatelessWidget {
             top: 8,
             right: 8,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
                 color: Colors.black54,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
                 distanceString,
-                style: const TextStyle(fontSize: 10, color: Colors.white),
+                style: AppTextStyles.badgeSmall(context),
               ),
             ),
           ),
@@ -363,15 +361,15 @@ class DatingNearbyCard extends StatelessWidget {
           // 이름
           Text(
             name,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            style: AppTextStyles.cardTitle(context).copyWith(fontSize: 14),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSizes.gapXXS),
           // 품종 · 나이
           Text(
             '${breed ?? '품종 미상'} · $ageString',
-            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: AppTextStyles.cardMeta(context),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -445,7 +443,7 @@ class DatingBreedingCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -474,7 +472,7 @@ class DatingBreedingCard extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   name,
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                  style: AppTextStyles.cardTitle(context).copyWith(fontSize: 16),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -485,16 +483,16 @@ class DatingBreedingCard extends StatelessWidget {
                                   const SizedBox(width: 2),
                                   Text(
                                     distanceString,
-                                    style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                                    style: AppTextStyles.cardMeta(context),
                                   ),
                                 ],
                               ),
                             ],
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: AppSizes.gapSM),
                           Text(
                             '${breed ?? '품종 미상'} · $ageString',
-                            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                            style: AppTextStyles.listSubtitle(context),
                           ),
                         ],
                       ),
@@ -570,19 +568,19 @@ class DatingBreedingCard extends StatelessWidget {
   Widget _buildConditionTag(BuildContext context, String text, IconData icon) {
     final color = context.features.dating;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppSizes.radiusXS),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 10, color: color),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSizes.gapXS),
           Text(
             text,
-            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w500, color: color),
+            style: AppTextStyles.badgeSmall(context).copyWith(color: color),
           ),
         ],
       ),

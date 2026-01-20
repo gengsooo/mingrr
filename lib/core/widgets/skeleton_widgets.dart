@@ -130,7 +130,7 @@ class MingrrSkeletonBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         shape: isCircle ? BoxShape.circle : BoxShape.rectangle,
-        borderRadius: isCircle ? null : (borderRadius ?? BorderRadius.circular(4)),
+        borderRadius: isCircle ? null : (borderRadius ?? BorderRadius.circular(AppSizes.radiusXXS)),
       ),
     );
   }
@@ -324,8 +324,8 @@ class MingrrSkeletonCard extends StatelessWidget {
                   spacing: AppSizes.gapXS,
                   runSpacing: AppSizes.gapXS,
                   children: [
-                    MingrrSkeletonBox(width: 45, height: 20, borderRadius: BorderRadius.circular(10)),
-                    MingrrSkeletonBox(width: 55, height: 20, borderRadius: BorderRadius.circular(10)),
+                    MingrrSkeletonBox(width: 45, height: 20, borderRadius: BorderRadius.circular(AppSizes.radiusS)),
+                    MingrrSkeletonBox(width: 55, height: 20, borderRadius: BorderRadius.circular(AppSizes.radiusS)),
                   ],
                 ),
               ],

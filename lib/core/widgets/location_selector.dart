@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../constants/app_sizes.dart';
 import '../theme/feature_colors.dart';
+import '../theme/app_text_styles.dart';
 import 'mingrr_bottom_sheet.dart';
 
 /// 지역 선택 결과 (주소 + 좌표)
@@ -446,7 +447,7 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
           const BottomSheetHandle(),
           // 헤더
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
+            padding: const EdgeInsets.fromLTRB(AppSizes.paddingS, AppSizes.paddingS, AppSizes.paddingS, AppSizes.paddingM),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -458,9 +459,9 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
                   },
                   child: Text('초기화', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                 ),
-                const Text(
+                Text(
                   '지역 선택',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                  style: AppTextStyles.headlineSmall(context),
                 ),
                 const SizedBox(width: 60),
               ],
@@ -476,16 +477,16 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border(right: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3))),
+                      border: Border(right: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3))),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
                           color: Theme.of(context).colorScheme.surface,
-                          child: Text('도/광역시', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                          child: Text('도/광역시', style: AppTextStyles.secondarySmall(context).copyWith(fontWeight: FontWeight.w600)),
                         ),
                         Expanded(
                           child: ListView.builder(
@@ -502,8 +503,8 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
                                   });
                                 },
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                  color: isSelected ? accentColor.withOpacity(0.1) : Colors.transparent,
+                                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingM),
+                                  color: isSelected ? accentColor.withValues(alpha: 0.1) : Colors.transparent,
                                   child: Text(
                                     province,
                                     style: TextStyle(
@@ -526,20 +527,20 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border(right: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.3))),
+                      border: Border(right: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3))),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
                           color: Theme.of(context).colorScheme.surface,
-                          child: Text('시/군', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                          child: Text('시/군', style: AppTextStyles.secondarySmall(context).copyWith(fontWeight: FontWeight.w600)),
                         ),
                         Expanded(
                           child: cities.isEmpty
-                              ? Center(child: Text('도/광역시를\n선택하세요', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant)))
+                              ? Center(child: Text('도/광역시를\n선택하세요', textAlign: TextAlign.center, style: AppTextStyles.secondarySmall(context)))
                               : ListView.builder(
                                   itemCount: cities.length,
                                   itemBuilder: (context, index) {
@@ -567,8 +568,8 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
                                         }
                                       },
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                        color: isSelected ? accentColor.withOpacity(0.1) : Colors.transparent,
+                                        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingM),
+                                        color: isSelected ? accentColor.withValues(alpha: 0.1) : Colors.transparent,
                                         child: Row(
                                           children: [
                                             Expanded(
@@ -606,13 +607,13 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
                     children: [
                       Container(
                         width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
                         color: Theme.of(context).colorScheme.surface,
-                        child: Text('구/군', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                        child: Text('구/군', style: AppTextStyles.secondarySmall(context).copyWith(fontWeight: FontWeight.w600)),
                       ),
                       Expanded(
                         child: districts.isEmpty
-                            ? Center(child: Text('시/군을\n선택하세요', textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant)))
+                            ? Center(child: Text('시/군을\n선택하세요', textAlign: TextAlign.center, style: AppTextStyles.secondarySmall(context)))
                             : ListView.builder(
                                 itemCount: districts.length,
                                 itemBuilder: (context, index) {
@@ -631,8 +632,8 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
                                       Navigator.pop(context);
                                     },
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                                      color: isSelected ? accentColor.withOpacity(0.1) : Colors.transparent,
+                                      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingM),
+                                      color: isSelected ? accentColor.withValues(alpha: 0.1) : Colors.transparent,
                                       child: Row(
                                         children: [
                                           Expanded(
@@ -758,7 +759,7 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
           const BottomSheetHandle(),
           // 헤더
           Padding(
-            padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
+            padding: const EdgeInsets.fromLTRB(AppSizes.paddingS, AppSizes.paddingS, AppSizes.paddingS, AppSizes.paddingM),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -768,11 +769,11 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
                 ),
                 Column(
                   children: [
-                    const Text('지역 선택', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
+                    Text('지역 선택', style: AppTextStyles.headlineSmall(context)),
                     if (_tempSelected.isNotEmpty)
                       Text(
                         '${_tempSelected.length}개 선택됨',
-                        style: TextStyle(fontSize: 12, color: accentColor),
+                        style: AppTextStyles.secondarySmall(context).copyWith(color: accentColor),
                       ),
                   ],
                 ),
@@ -790,17 +791,17 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
           if (_tempSelected.isNotEmpty)
             Container(
               constraints: const BoxConstraints(maxHeight: 100),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
               child: SingleChildScrollView(
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: _tempSelected.map((location) {
                     return Chip(
-                      label: Text(location, style: const TextStyle(fontSize: 11)),
+                      label: Text(location, style: AppTextStyles.tagSmall(context)),
                       deleteIcon: const Icon(Icons.close, size: 14),
                       onDeleted: () => setState(() => _tempSelected.remove(location)),
-                      backgroundColor: accentColor.withOpacity(0.1),
+                      backgroundColor: accentColor.withValues(alpha: 0.1),
                       side: BorderSide.none,
                       labelStyle: TextStyle(color: accentColor),
                       deleteIconColor: accentColor,
@@ -821,7 +822,7 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
                   child: Container(
                     decoration: BoxDecoration(
                       color: colorScheme.surfaceContainerLow,
-                      border: Border(right: BorderSide(color: colorScheme.outline.withOpacity(0.2))),
+                      border: Border(right: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2))),
                     ),
                     child: ListView(
                       children: KoreaLocationData.getProvinces().map((province) {
@@ -832,9 +833,9 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
                             _selectedCity = null;
                           }),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingM),
                             decoration: BoxDecoration(
-                              color: isSelected ? accentColor.withOpacity(0.1) : null,
+                              color: isSelected ? accentColor.withValues(alpha: 0.1) : null,
                               border: Border(
                                 left: BorderSide(
                                   color: isSelected ? accentColor : Colors.transparent,
@@ -860,13 +861,13 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      border: Border(right: BorderSide(color: colorScheme.outline.withOpacity(0.2))),
+                      border: Border(right: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2))),
                     ),
                     child: _selectedProvince == null
                         ? Center(
                             child: Text(
                               '시/도 선택',
-                              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                              style: AppTextStyles.secondary(context),
                             ),
                           )
                         : ListView(
@@ -889,9 +890,9 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
                                   }
                                 },
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingM),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? accentColor.withOpacity(0.1) : null,
+                                    color: isSelected ? accentColor.withValues(alpha: 0.1) : null,
                                   ),
                                   child: Row(
                                     children: [
@@ -923,7 +924,7 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
                       ? Center(
                           child: Text(
                             _selectedCity == null ? '시/군 선택' : '전체 선택됨',
-                            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                            style: AppTextStyles.secondary(context),
                           ),
                         )
                       : ListView(
@@ -941,7 +942,7 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
                                 });
                               },
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingM),
                                 child: Row(
                                   children: [
                                     Expanded(

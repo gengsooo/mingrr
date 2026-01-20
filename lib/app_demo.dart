@@ -175,7 +175,7 @@ class DemoBottomNavBar extends StatelessWidget {
         color: Colors.white,  // 배경색: 흰색
         boxShadow: [  // 그림자 효과
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),  // 검은색 5% 투명도
+            color: Colors.black.withValues(alpha: 0.05),  // 검은색 5% 투명도
             blurRadius: 20,  // 그림자 흐림 정도
             offset: const Offset(0, -5),  // 그림자 위치 (위쪽으로 5픽셀)
           ),
@@ -314,11 +314,11 @@ class DemoBottomNavBar extends StatelessWidget {
                 // AnimatedContainer: 속성이 변할 때 애니메이션 효과
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),  // 애니메이션 시간
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(AppSizes.paddingS),
                   decoration: BoxDecoration(
                     // 활성 상태면 배경색 표시, 아니면 투명
                     color: isActive
-                        ? activeColor.withOpacity(0.15)  // 15% 투명도
+                        ? activeColor.withValues(alpha: 0.15)  // 15% 투명도
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(AppSizes.radiusM),  // 둥근 모서리
                   ),
@@ -343,7 +343,7 @@ class DemoBottomNavBar extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: Colors.red,  // 빨간색 배경
-                        borderRadius: BorderRadius.circular(10),  // 둥근 모양
+                        borderRadius: BorderRadius.circular(AppSizes.radiusS),  // 둥근 모양
                       ),
                       child: Text(
                         badge > 99 ? '99+' : '$badge',  // 99 초과면 '99+' 표시

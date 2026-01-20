@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
@@ -181,7 +182,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             color: Theme.of(context).colorScheme.surface,
             boxShadow: isDark ? null : [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -197,7 +198,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           behavior: HitTestBehavior.opaque,
           onTap: () => _showProfileByType(context, chatType, otherParticipant),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS, horizontal: 4),
             child: Row(
               children: [
                 // 프로필 아바타 + 채팅 타입 배지
@@ -224,18 +225,18 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSizes.gapM),
                 Expanded(
                   child: Row(
                     children: [
                       Flexible(
                         child: Text(
                           otherName,
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                          style: AppTextStyles.sectionTitle(context),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSizes.gapXS),
                       Icon(Icons.chevron_right, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
                     ],
                   ),
@@ -273,21 +274,21 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           if (_isSearching)
             Container(
               color: Theme.of(context).colorScheme.surface,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
               child: TextField(
                 controller: _searchController,
                 autofocus: true,
                 decoration: InputDecoration(
                   hintText: '메시지 검색...',
-                  hintStyle: TextStyle(color: Theme.of(context).colorScheme.outlineVariant, fontSize: 13),
+                  hintStyle: AppTextStyles.secondary(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
                   prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.outlineVariant),
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusXL),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
                 ),
                 onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
               ),
@@ -303,7 +304,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   timeout: AppSizes.loadingTimeout,
                   onRetry: () => ref.invalidate(chatMessagesProvider(widget.chatRoomId)),
                 ),
-                error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+                error: (_, __) => MingrrErrorState(
+                  onRetry: () => ref.invalidate(chatMessagesProvider(widget.chatRoomId)),
+                ),
                 data: (messages) {
                   // 검색 필터링
                   final filteredMessages = _searchQuery.isEmpty
@@ -331,7 +334,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   return ListView.builder(
                     controller: _scrollController,
                     reverse: true,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingM),
                     itemCount: filteredMessages.length,
                     itemBuilder: (context, index) {
                       final message = filteredMessages[index];
@@ -675,9 +678,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: themeColor.withOpacity(0.1),
+        color: themeColor.withValues(alpha: 0.1),
         shape: BoxShape.circle,
-        border: Border.all(color: themeColor.withOpacity(0.3), width: 1),
+        border: Border.all(color: themeColor.withValues(alpha: 0.3), width: 1),
       ),
       child: hasValidImage
           ? ClipOval(
@@ -723,15 +726,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   Widget _buildDateDivider(DateTime date) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingL),
       child: Row(
         children: [
           Expanded(child: Divider(color: Theme.of(context).colorScheme.outline)),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
             child: Text(
               _formatDate(date),
-              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: AppTextStyles.secondarySmall(context),
             ),
           ),
           Expanded(child: Divider(color: Theme.of(context).colorScheme.outline)),
@@ -744,15 +747,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     // 시스템 메시지
     if (message.type == MessageType.system) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
         child: Center(
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppSizes.radiusM),
             ),
-            child: Text(message.content, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            child: Text(message.content, style: AppTextStyles.secondarySmall(context)),
           ),
         ),
       );
@@ -761,7 +764,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final bubbleColor = isMe ? themeColor : Theme.of(context).colorScheme.surfaceContainerHighest;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: AppSizes.paddingXS),
       child: Row(
         mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -776,12 +779,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 if (message.isRead)
                   Text(
                     '읽음',
-                    style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outlineVariant),
+                    style: AppTextStyles.caption(context),
                   ),
                 _buildTimeText(message.sentAt),
               ],
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSizes.gapSM),
           ],
           
           // 메시지 버블 + 꼬리
@@ -804,8 +807,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   child: Container(
                     constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
                     padding: message.type == MessageType.image 
-                        ? const EdgeInsets.all(4) 
-                        : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        ? const EdgeInsets.all(AppSizes.paddingXS) 
+                        : const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
                     decoration: BoxDecoration(
                       color: bubbleColor,
                       borderRadius: BorderRadius.only(
@@ -816,7 +819,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -838,7 +841,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             ),
           ),
           
-          if (!isMe && showTime) const SizedBox(width: 6),
+          if (!isMe && showTime) const SizedBox(width: AppSizes.gapSM),
           if (!isMe && showTime) _buildTimeText(message.sentAt),
         ],
       ),
@@ -851,7 +854,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         return GestureDetector(
           onTap: () => _showFullScreenImage(context, message.imageUrl!),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
             child: Image.network(
               message.imageUrl!,
               width: 200,
@@ -874,10 +877,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           customColor: themeColor,
                         ),
                         if (progress.expectedTotalBytes != null) ...[
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSizes.gapS),
                           Text(
                             '${((progress.cumulativeBytesLoaded / progress.expectedTotalBytes!) * 100).toInt()}%',
-                            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            style: AppTextStyles.secondarySmall(context),
                           ),
                         ],
                       ],
@@ -893,7 +896,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.location_on, color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface, size: 18),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSizes.gapSM),
             Flexible(
               child: Text(
                 message.content,
@@ -921,7 +924,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   Widget _buildTimeText(DateTime time) {
     return Text(
       '${time.hour}:${time.minute.toString().padLeft(2, '0')}',
-      style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+      style: AppTextStyles.cardMeta(context),
     );
   }
 
@@ -931,7 +934,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -940,7 +943,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -948,9 +951,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               Container(
                 width: 40,
                 height: 40,
-                margin: const EdgeInsets.only(bottom: 2),
+                margin: const EdgeInsets.only(bottom: AppSizes.paddingXXS),
                 decoration: BoxDecoration(
-                  color: themeColor.withOpacity(0.1),
+                  color: themeColor.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: _isUploadingImage
@@ -971,22 +974,22 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                         padding: EdgeInsets.zero,
                       ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSizes.gapS),
               // 텍스트 입력
               Expanded(
                 child: Container(
                   constraints: const BoxConstraints(minHeight: 44),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: 4),
                   child: TextField(
                     controller: _messageController,
                     decoration: InputDecoration(
                       hintText: '메시지를 입력하세요',
-                      hintStyle: TextStyle(color: Theme.of(context).colorScheme.outlineVariant, fontSize: 13),
+                      hintStyle: AppTextStyles.secondary(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
                       border: InputBorder.none,
                       isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
                     ),
-                    style: const TextStyle(fontSize: 14),
+                    style: AppTextStyles.bodyMedium(context),
                     maxLines: 4,
                     minLines: 1,
                     textInputAction: TextInputAction.send,
@@ -994,12 +997,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSizes.gapS),
               // 전송 버튼
               Container(
                 width: 44,
                 height: 44,
-                margin: const EdgeInsets.only(bottom: 2),
+                margin: const EdgeInsets.only(bottom: AppSizes.paddingXXS),
                 child: Material(
                   color: themeColor,
                   shape: const CircleBorder(),

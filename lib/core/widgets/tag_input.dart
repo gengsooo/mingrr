@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_text_styles.dart';
 import '../theme/app_theme.dart';
 import '../constants/app_sizes.dart';
 
@@ -93,7 +94,7 @@ class _MingrrTagInputState extends State<MingrrTagInput> {
         if (widget.labelText != null) ...[
           Text(
             widget.labelText!,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            style: AppTextStyles.labelLarge(context).copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: AppSizes.gapS),
         ],
@@ -102,8 +103,8 @@ class _MingrrTagInputState extends State<MingrrTagInput> {
         Container(
           decoration: BoxDecoration(
             color: context.inputBackground,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
+            border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
           ),
           child: TextField(
             controller: _controller,
@@ -118,9 +119,9 @@ class _MingrrTagInputState extends State<MingrrTagInput> {
                 fontSize: 14,
               ),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingM),
               prefixIcon: Padding(
-                padding: const EdgeInsets.only(left: 16, right: 4),
+                padding: const EdgeInsets.only(left: 16, right: AppSizes.paddingXS),
                 child: Text(
                   '#',
                   style: TextStyle(
@@ -132,7 +133,7 @@ class _MingrrTagInputState extends State<MingrrTagInput> {
               ),
               prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
             ),
-            style: const TextStyle(fontSize: 14),
+            style: AppTextStyles.bodyMedium(context),
             textInputAction: TextInputAction.done,
             onSubmitted: _addTag,
           ),
@@ -140,7 +141,7 @@ class _MingrrTagInputState extends State<MingrrTagInput> {
         
         // 태그 목록
         if (widget.tags.isNotEmpty) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -171,10 +172,10 @@ class _TagChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.only(left: 10, top: 6, bottom: 6, right: 4),
+      padding: const EdgeInsets.only(left: 10, top: 6, bottom: 6, right: AppSizes.paddingXS),
       decoration: BoxDecoration(
-        color: accentColor.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
+        color: accentColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppSizes.radiusM),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -191,7 +192,7 @@ class _TagChip extends StatelessWidget {
             onTap: onRemove,
             behavior: HitTestBehavior.opaque,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               child: Icon(
                 Icons.close,
                 size: 14,

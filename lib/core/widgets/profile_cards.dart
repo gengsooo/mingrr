@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../theme/app_text_styles.dart';
 import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import 'common_widgets.dart';
@@ -98,11 +99,11 @@ class GuardianProfileCard extends StatelessWidget {
                       ),
                     ),
                     if (gender != null) ...[
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSizes.gapXS),
                       _buildGenderIcon(),
                     ],
                     if (_hasVerification) ...[
-                      const SizedBox(width: 6),
+                      const SizedBox(width: AppSizes.gapSM),
                       _buildVerificationBadges(),
                     ],
                   ],
@@ -149,7 +150,7 @@ class GuardianProfileCard extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
       child: Icon(Icons.person, size: size * 0.5, color: color),
@@ -269,11 +270,11 @@ class PetProfileCard extends StatelessWidget {
                       ),
                     ),
                     if (gender != null) ...[
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSizes.gapXS),
                       _buildGenderIcon(),
                     ],
                     if (likeCount != null && likeCount! > 0) ...[
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSizes.gapS),
                       _buildLikeCount(context),
                     ],
                   ],
@@ -291,8 +292,8 @@ class PetProfileCard extends StatelessWidget {
                 
                 // 성격 태그
                 if (showTraits && traits.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  _buildTraits(color),
+                  const SizedBox(height: AppSizes.gapSM),
+                  _buildTraits(context, color),
                 ],
               ],
             ),
@@ -321,7 +322,7 @@ class PetProfileCard extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
       child: Icon(Icons.pets, size: size * 0.5, color: color),
@@ -349,20 +350,20 @@ class PetProfileCard extends StatelessWidget {
     return parts.isEmpty ? '정보 없음' : parts.join(' · ');
   }
 
-  Widget _buildTraits(Color color) {
+  Widget _buildTraits(BuildContext context, Color color) {
     return Wrap(
       spacing: 4,
       runSpacing: 4,
       children: traits.take(3).map((trait) {
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
           ),
           child: Text(
             trait,
-            style: TextStyle(fontSize: 10, color: color),
+            style: AppTextStyles.chatTime(context).copyWith(color: color),
           ),
         );
       }).toList(),
@@ -405,7 +406,7 @@ class ProfileCardWrapper extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSizes.radiusM),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

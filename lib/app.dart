@@ -487,7 +487,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
       
       child: Container(
         padding: const EdgeInsets.symmetric(
-          horizontal: 4,
+          horizontal: AppSizes.paddingXS,
           vertical: AppSizes.paddingS,
         ),
         
@@ -502,7 +502,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
                 // AnimatedContainer: 속성이 변할 때 애니메이션 효과
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),  // 애니메이션 시간
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(AppSizes.paddingS),
                   decoration: BoxDecoration(
                     // 활성 상태면 배경색 표시, 아니면 투명
                     color: isActive
@@ -535,7 +535,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
                       ),
                       decoration: BoxDecoration(
                         color: Colors.red,  // 빨간색 배경
-                        borderRadius: BorderRadius.circular(10),  // 둥근 모양
+                        borderRadius: BorderRadius.circular(AppSizes.radiusS),  // 둥근 모양
                       ),
                       child: Text(
                         badge > 99 ? '99+' : '$badge',  // 99 초과면 '99+' 표시

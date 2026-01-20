@@ -55,12 +55,12 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
           children: [
             const Text('알림'),
             if (unreadCount > 0) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSizes.gapS),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
                 decoration: BoxDecoration(
                   color: Colors.red,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Text(
                   unreadCount > 99 ? '99+' : '$unreadCount',
@@ -164,33 +164,37 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
         ref.invalidate(userNotificationsProvider);
       },
       child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
         itemCount: grouped.length,
         itemBuilder: (context, index) {
           final dateKey = grouped.keys.elementAt(index);
           final items = grouped[dateKey]!;
           
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 날짜 헤더
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSizes.paddingM,
-                  vertical: AppSizes.paddingS,
-                ),
-                child: Text(
-                  dateKey,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+          return MingrrAnimatedListItem(
+            index: index,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 날짜 헤더
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.paddingM,
+                    vertical: AppSizes.paddingS,
+                  ),
+                  child: Text(
+                    dateKey,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
-              ),
-              // 알림 아이템들
-              ...items.map((n) => _buildNotificationItem(n)),
-            ],
+                // 알림 아이템들
+                ...items.map((n) => _buildNotificationItem(n)),
+              ],
+            ),
           );
         },
       ),
@@ -205,7 +209,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
         decoration: BoxDecoration(
           color: notification.isRead ? Colors.white : Theme.of(context).colorScheme.primaryContainer,
           border: Border(
-            bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
+            bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5)),
           ),
         ),
         child: Row(
@@ -217,7 +221,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
               height: 44,
               decoration: BoxDecoration(
                 color: _getIconBackgroundColor(notification.type),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Icon(
                 _getNotificationIcon(notification.type),
@@ -225,7 +229,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                 size: 22,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSizes.gapM),
             // 내용
             Expanded(
               child: Column(
@@ -256,7 +260,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                         ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSizes.gapM),
                   Text(
                     notification.body,
                     style: TextStyle(
@@ -266,7 +270,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSizes.gapM),
                   Text(
                     _formatTime(notification.createdAt),
                     style: TextStyle(
@@ -333,7 +337,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
       case 'breeding':
         return context.features.datingContainer;
       case 'chat':
-        return context.features.chat.withOpacity(0.2);
+        return context.features.chat.withValues(alpha: 0.2);
       case 'market':
         return context.features.marketContainer;
       case 'community':

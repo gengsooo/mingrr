@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
@@ -63,8 +64,8 @@ class TransactionHistoryScreen extends ConsumerWidget {
             Expanded(
               child: TabBarView(
                 children: [
-                  _buildSellHistory(sellAsync),
-                  _buildBuyHistory(buyAsync),
+                  _buildSellHistory(ref, sellAsync),
+                  _buildBuyHistory(ref, buyAsync),
                 ],
               ),
             ),
@@ -74,7 +75,7 @@ class TransactionHistoryScreen extends ConsumerWidget {
     );
   }
   
-  Widget _buildSellHistory(AsyncValue<List<ProductModel>> sellAsync) {
+  Widget _buildSellHistory(WidgetRef ref, AsyncValue<List<ProductModel>> sellAsync) {
     return sellAsync.when(
       data: (products) {
         if (products.isEmpty) {
@@ -90,11 +91,13 @@ class TransactionHistoryScreen extends ConsumerWidget {
         type: MingrrLoadingType.market,
         message: '판매 내역을 불러오고 있어요',
       ),
-      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(sellHistoryProvider),
+      ),
     );
   }
   
-  Widget _buildBuyHistory(AsyncValue<List<ProductModel>> buyAsync) {
+  Widget _buildBuyHistory(WidgetRef ref, AsyncValue<List<ProductModel>> buyAsync) {
     return buyAsync.when(
       data: (products) {
         if (products.isEmpty) {
@@ -110,29 +113,31 @@ class TransactionHistoryScreen extends ConsumerWidget {
         type: MingrrLoadingType.market,
         message: '구매 내역을 불러오고 있어요',
       ),
-      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(buyHistoryProvider),
+      ),
     );
   }
   
   Widget _buildProductList(List<ProductModel> products, {required bool isSell}) {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSizes.paddingL),
       itemCount: products.length,
       itemBuilder: (context, index) {
         final product = products[index];
         return Card(
-          margin: const EdgeInsets.only(bottom: 12),
+          margin: const EdgeInsets.only(bottom: AppSizes.paddingM),
           child: ListTile(
             leading: Container(
               width: 60,
               height: 60,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.outline,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
               child: product.imageUrls.isNotEmpty
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                       child: Image.network(product.imageUrls.first, fit: BoxFit.cover),
                     )
                   : Icon(Icons.image, color: Theme.of(context).colorScheme.outlineVariant),
@@ -140,12 +145,12 @@ class TransactionHistoryScreen extends ConsumerWidget {
             title: Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis),
             subtitle: Text('${product.price.toStringAsFixed(0)}원'),
             trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
                 color: product.status == ProductStatus.completed 
-                    ? context.features.success.withOpacity(0.1)
-                    : Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
+                    ? context.features.success.withValues(alpha: 0.1)
+                    : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
               ),
               child: Text(
                 product.status == ProductStatus.completed ? '거래완료' : '판매중',

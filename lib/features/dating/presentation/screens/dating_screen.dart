@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/top_navigation.dart';
@@ -282,7 +283,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
           },
           accentColor: accentColor,
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: AppSizes.gapSM),
         MingrrFilterChip(
           label: '여아',
           icon: Icons.female,
@@ -314,7 +315,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
           onTap: () => ref.read(_breedingSameBreedFilterProvider.notifier).state = null,
           accentColor: accentColor,
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: AppSizes.gapSM),
         MingrrFilterChip(
           label: '같은 품종만',
           isSelected: sameBreedFilter == true,
@@ -341,21 +342,21 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
         GestureDetector(
           onTap: () => _showSizeGuideModal(context),
           child: Container(
-            padding: const EdgeInsets.all(6),
+            padding: const EdgeInsets.all(AppSizes.paddingXS),
             decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.1),
+              color: accentColor.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.help_outline, size: 14, color: accentColor),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSizes.gapS),
         // 크기 필터 칩들
         ...sizes.map((size) {
           final key = size['key'] as String;
           final isSelected = selectedSizes.contains(key);
           return Padding(
-            padding: const EdgeInsets.only(right: 6),
+            padding: const EdgeInsets.only(right: AppSizes.paddingXS),
             child: MingrrFilterChip(
               label: size['label'] as String,
               isSelected: isSelected,
@@ -408,7 +409,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
     return Row(
       children: ages.map((age) {
         return Padding(
-          padding: const EdgeInsets.only(right: 6),
+          padding: const EdgeInsets.only(right: AppSizes.paddingXS),
           child: MingrrFilterChip(
             label: age['label'] as String,
             isSelected: ageFilter == age['key'],
@@ -431,7 +432,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
           onTap: () => ref.read(_breedingPedigreeFilterProvider.notifier).state = null,
           accentColor: accentColor,
         ),
-        const SizedBox(width: 6),
+        const SizedBox(width: AppSizes.gapSM),
         MingrrFilterChip(
           label: '혈통서 보유',
           icon: Icons.verified,
@@ -504,6 +505,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
       },
       child: ListView.builder(
         controller: _breedingScrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(AppSizes.paddingM),
         itemCount: filteredPets.length + (paginatedState.hasMore ? 1 : 0),
         itemBuilder: (context, index) {
@@ -515,7 +517,10 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
               ),
             );
           }
-          return _buildBreedingPetCard(context, ref, filteredPets[index]);
+          return MingrrAnimatedListItem(
+            index: index,
+            child: _buildBreedingPetCard(context, ref, filteredPets[index]),
+          );
         },
       ),
     );
@@ -600,7 +605,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.pets, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSizes.gapL),
               Text(
                 '반려동물을 먼저 등록해주세요',
                 style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
@@ -608,10 +613,10 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
               const SizedBox(height: 8),
               Text(
                 '반려동물을 등록하면 근처의\n친구들을 찾아드려요',
-                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+                style: AppTextStyles.secondarySmall(context),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSizes.gapL),
               MingrrButton(
                 text: '반려동물 추가하기',
                 onPressed: () => context.push('/profile'),
@@ -721,7 +726,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.pets, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSizes.gapL),
               Text(
                 '반려동물을 먼저 등록해주세요',
                 style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
@@ -729,10 +734,10 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
               const SizedBox(height: 8),
               Text(
                 '반려동물을 등록하면 궁합이 맞는\n친구들을 추천해드려요',
-                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+                style: AppTextStyles.secondarySmall(context),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSizes.gapL),
               MingrrButton(
                 text: '반려동물 추가하기',
                 onPressed: () => context.push('/profile'),
@@ -763,6 +768,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
       },
       child: ListView.builder(
         controller: _recommendScrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(AppSizes.paddingM),
         itemCount: paginatedState.items.length + (paginatedState.hasMore ? 1 : 0),
         itemBuilder: (context, index) {
@@ -774,7 +780,10 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
               ),
             );
           }
-          return _buildRecommendPetCard(context, paginatedState.items[index]);
+          return MingrrAnimatedListItem(
+            index: index,
+            child: _buildRecommendPetCard(context, paginatedState.items[index]),
+          );
         },
       ),
     );

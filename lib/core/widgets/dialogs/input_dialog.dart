@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_sizes.dart';
+import '../../theme/app_text_styles.dart';
 import '../common_widgets.dart';
 
 /// ============================================================
@@ -182,7 +183,7 @@ class _MingrrInputDialogState extends State<MingrrInputDialog> {
                 ),
                 errorText: _errorText,
                 filled: true,
-                fillColor: colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppSizes.radiusM),
                   borderSide: BorderSide.none,
@@ -200,12 +201,12 @@ class _MingrrInputDialogState extends State<MingrrInputDialog> {
                   borderSide: const BorderSide(color: Colors.red, width: 1.5),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 12,
+                  horizontal: AppSizes.paddingM,
+                  vertical: AppSizes.paddingM,
                 ),
                 counterText: '',
               ),
-              style: const TextStyle(fontSize: 14),
+              style: AppTextStyles.labelLarge(context),
             ),
             
             const SizedBox(height: AppSizes.gapM),
@@ -217,7 +218,7 @@ class _MingrrInputDialogState extends State<MingrrInputDialog> {
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppSizes.radiusM),
                       ),

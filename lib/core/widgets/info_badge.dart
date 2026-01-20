@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../constants/app_sizes.dart';
 import '../theme/feature_colors.dart';
 
 /// ============================================================
@@ -60,11 +62,11 @@ class InfoBadge extends StatelessWidget {
   EdgeInsets get _padding {
     switch (size) {
       case InfoBadgeSize.small:
-        return const EdgeInsets.symmetric(horizontal: 6, vertical: 2);
+        return const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS);
       case InfoBadgeSize.medium:
-        return const EdgeInsets.symmetric(horizontal: 8, vertical: 4);
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS);
       case InfoBadgeSize.large:
-        return const EdgeInsets.symmetric(horizontal: 10, vertical: 6);
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS);
     }
   }
 
@@ -156,8 +158,8 @@ class MatchScoreBadge extends StatelessWidget {
   /// 점수에 따른 배경색
   Color _getBackgroundColor(BuildContext context) {
     final features = context.features;
-    if (score >= 90) return features.success.withOpacity(0.15);
-    if (score >= 70) return features.dating.withOpacity(0.15);
+    if (score >= 90) return features.success.withValues(alpha: 0.15);
+    if (score >= 70) return features.dating.withValues(alpha: 0.15);
     return Theme.of(context).colorScheme.surface;
   }
 
@@ -296,17 +298,24 @@ class LikeCountText extends StatelessWidget {
   }
 }
 
-/// 좋아요 버튼 (인터랙티브, 배경 없음)
+/// 좋아요 버튼 (애니메이션 포함)
+/// 
+/// 기능:
+/// - 탭 시 바운스 애니메이션
+/// - 좋아요 시 스케일 + 컬러 애니메이션
+/// - 햅틱 피드백
 /// 
 /// 사용처:
 /// - 반려동물 프로필 모달 헤더
 /// - 데이팅 상세 하단 버튼
 /// - 커뮤니티 상세 액션 바
-class LikeButton extends StatelessWidget {
+class LikeButton extends StatefulWidget {
   final int count;
   final bool isLiked;
   final VoidCallback? onTap;
   final InfoBadgeSize size;
+  final bool showCount;
+  final bool enableHaptic;
 
   const LikeButton({
     super.key,
@@ -314,10 +323,54 @@ class LikeButton extends StatelessWidget {
     required this.isLiked,
     this.onTap,
     this.size = InfoBadgeSize.medium,
+    this.showCount = true,
+    this.enableHaptic = true,
   });
 
+  @override
+  State<LikeButton> createState() => _LikeButtonState();
+}
+
+class _LikeButtonState extends State<LikeButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  bool _wasLiked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _wasLiked = widget.isLiked;
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
+      TweenSequenceItem(tween: Tween(begin: 1.3, end: 0.9), weight: 25),
+      TweenSequenceItem(tween: Tween(begin: 0.9, end: 1.0), weight: 25),
+    ]).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void didUpdateWidget(LikeButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isLiked && !_wasLiked) {
+      _controller.forward(from: 0);
+      if (widget.enableHaptic) {
+        HapticFeedback.lightImpact();
+      }
+    }
+    _wasLiked = widget.isLiked;
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
   double get _iconSize {
-    switch (size) {
+    switch (widget.size) {
       case InfoBadgeSize.small:
         return 16.0;
       case InfoBadgeSize.medium:
@@ -328,7 +381,7 @@ class LikeButton extends StatelessWidget {
   }
 
   double get _fontSize {
-    switch (size) {
+    switch (widget.size) {
       case InfoBadgeSize.small:
         return 11.0;
       case InfoBadgeSize.medium:
@@ -339,13 +392,22 @@ class LikeButton extends StatelessWidget {
   }
 
   EdgeInsets get _padding {
-    switch (size) {
+    switch (widget.size) {
       case InfoBadgeSize.small:
-        return const EdgeInsets.symmetric(horizontal: 6, vertical: 4);
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS, vertical: AppSizes.paddingXS);
       case InfoBadgeSize.medium:
-        return const EdgeInsets.symmetric(horizontal: 8, vertical: 6);
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS);
       case InfoBadgeSize.large:
-        return const EdgeInsets.symmetric(horizontal: 10, vertical: 8);
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingS);
+    }
+  }
+
+  void _handleTap() {
+    if (widget.onTap != null) {
+      if (widget.enableHaptic) {
+        HapticFeedback.selectionClick();
+      }
+      widget.onTap!();
     }
   }
 
@@ -354,28 +416,65 @@ class LikeButton extends StatelessWidget {
     final color = context.features.dating;
     
     return GestureDetector(
-      onTap: onTap,
+      onTap: _handleTap,
       behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: _padding,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isLiked ? Icons.favorite : Icons.favorite_border,
-              size: _iconSize,
-              color: color,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              '$count',
-              style: TextStyle(
-                fontSize: _fontSize,
-                fontWeight: FontWeight.w600,
-                color: color,
+      child: Semantics(
+        button: true,
+        label: widget.isLiked ? '좋아요 취소, ${widget.count}개' : '좋아요, ${widget.count}개',
+        child: Padding(
+          padding: _padding,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedBuilder(
+                animation: _scaleAnimation,
+                builder: (context, child) {
+                  return Transform.scale(
+                    scale: _scaleAnimation.value,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      transitionBuilder: (child, animation) {
+                        return ScaleTransition(scale: animation, child: child);
+                      },
+                      child: Icon(
+                        widget.isLiked ? Icons.favorite : Icons.favorite_border,
+                        key: ValueKey(widget.isLiked),
+                        size: _iconSize,
+                        color: color,
+                      ),
+                    ),
+                  );
+                },
               ),
-            ),
-          ],
+              if (widget.showCount) ...[
+                const SizedBox(width: AppSizes.gapXS),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, 0.5),
+                          end: Offset.zero,
+                        ).animate(animation),
+                        child: child,
+                      ),
+                    );
+                  },
+                  child: Text(
+                    '${widget.count}',
+                    key: ValueKey(widget.count),
+                    style: TextStyle(
+                      fontSize: _fontSize,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -406,10 +505,10 @@ class LikeOverlayBadge extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -419,7 +518,7 @@ class LikeOverlayBadge extends StatelessWidget {
               size: 16.0,
               color: isLiked ? likedColor : Colors.white,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSizes.gapXS),
             Text(
               '$count',
               style: TextStyle(
@@ -473,11 +572,11 @@ class PetGenderBadge extends StatelessWidget {
   EdgeInsets get _padding {
     switch (size) {
       case InfoBadgeSize.small:
-        return const EdgeInsets.symmetric(horizontal: 6, vertical: 2);
+        return const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS);
       case InfoBadgeSize.medium:
-        return const EdgeInsets.symmetric(horizontal: 8, vertical: 3);
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 3);
       case InfoBadgeSize.large:
-        return const EdgeInsets.symmetric(horizontal: 10, vertical: 4);
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS);
     }
   }
 
@@ -493,7 +592,7 @@ class PetGenderBadge extends StatelessWidget {
       padding: _padding,
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -539,7 +638,7 @@ class VerifiedBadge extends StatelessWidget {
       text: label,
       icon: isVerified ? Icons.check_circle : Icons.cancel_outlined,
       backgroundColor: isVerified 
-          ? context.features.success.withOpacity(0.1) 
+          ? context.features.success.withValues(alpha: 0.1) 
           : Theme.of(context).colorScheme.surface,
       textColor: isVerified ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
       size: size,
@@ -589,11 +688,11 @@ class EmptyInfoBadge extends StatelessWidget {
   EdgeInsets get _padding {
     switch (size) {
       case InfoBadgeSize.small:
-        return const EdgeInsets.symmetric(horizontal: 8, vertical: 4);
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS);
       case InfoBadgeSize.medium:
-        return const EdgeInsets.symmetric(horizontal: 10, vertical: 5);
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS);
       case InfoBadgeSize.large:
-        return const EdgeInsets.symmetric(horizontal: 12, vertical: 6);
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS);
     }
   }
 
@@ -603,13 +702,13 @@ class EmptyInfoBadge extends StatelessWidget {
       padding: _padding,
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppSizes.radiusM),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: _iconSize, color: Colors.white70),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSizes.gapXS),
           Text(
             text,
             style: TextStyle(
@@ -669,11 +768,11 @@ class PedigreeBadge extends StatelessWidget {
   EdgeInsets get _padding {
     switch (size) {
       case InfoBadgeSize.small:
-        return const EdgeInsets.symmetric(horizontal: 6, vertical: 2);
+        return const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS);
       case InfoBadgeSize.medium:
-        return const EdgeInsets.symmetric(horizontal: 8, vertical: 3);
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 3);
       case InfoBadgeSize.large:
-        return const EdgeInsets.symmetric(horizontal: 10, vertical: 4);
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS);
     }
   }
 
@@ -697,7 +796,7 @@ class PedigreeBadge extends StatelessWidget {
       padding: _padding,
       decoration: BoxDecoration(
         color: hasPedigree 
-            ? color.withOpacity(0.1)
+            ? color.withValues(alpha: 0.1)
             : colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(_borderRadius),
       ),
@@ -709,7 +808,7 @@ class PedigreeBadge extends StatelessWidget {
             size: _iconSize,
             color: hasPedigree ? color : colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSizes.gapXS),
           Text(
             hasPedigree ? '혈통서' : '혈통서 없음',
             style: TextStyle(

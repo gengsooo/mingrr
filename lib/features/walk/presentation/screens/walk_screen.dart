@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
@@ -211,11 +212,11 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                       Container(
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.surface,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusL),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(
-                                Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.1
+                              color: Colors.black.withValues(
+                                alpha: Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.1
                               ),
                               blurRadius: 10,
                             ),
@@ -256,13 +257,13 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(AppSizes.paddingM),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: context.features.health.withOpacity(0.3),
+                                  color: context.features.health.withValues(alpha: 0.3),
                                   blurRadius: 15,
                                   spreadRadius: 3,
                                 ),
@@ -279,15 +280,15 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                             height: 20,
                             decoration: BoxDecoration(
                               color: context.features.health,
-                              borderRadius: BorderRadius.circular(2),
+                              borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                             ),
                           ),
                           Container(
                             width: 12,
                             height: 6,
                             decoration: BoxDecoration(
-                              color: context.features.health.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(6),
+                              color: context.features.health.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                             ),
                           ),
                         ],
@@ -451,7 +452,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       width: double.infinity,
       height: double.infinity,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
       ),
       child: Center(
         child: Column(
@@ -462,7 +463,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
               size: 64,
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSizes.gapM),
             Text(
               '지도 영역',
               style: TextStyle(
@@ -471,7 +472,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSizes.gapXS),
             Text(
               '모바일 앱에서 확인 가능',
               style: TextStyle(
@@ -495,8 +496,8 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            context.features.health.withOpacity(0.1),
-            context.features.health.withOpacity(0.2),
+            context.features.health.withValues(alpha: 0.1),
+            context.features.health.withValues(alpha: 0.2),
           ],
         ),
       ),
@@ -513,13 +514,13 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSizes.paddingL),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: context.features.health.withOpacity(0.3),
+                        color: context.features.health.withValues(alpha: 0.3),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),
@@ -531,15 +532,15 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                     color: context.features.health,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSizes.gapL),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 10,
                       ),
                     ],
@@ -554,7 +555,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSizes.gapS),
                 Text(
                   '현재 위치를 중심으로 지도가 표시됩니다',
                   style: TextStyle(
@@ -689,7 +690,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                                     ),
                                 ],
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: AppSizes.gapXS),
                               Text(
                                 pet.name,
                                 style: TextStyle(
@@ -769,7 +770,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
     return Column(
       children: [
         Icon(icon, color: Colors.white, size: 20),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSizes.gapXS),
         Text(
           value,
           style: const TextStyle(
@@ -799,7 +800,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
           color: Theme.of(context).colorScheme.surface,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 20,
               offset: const Offset(0, -5),
             ),
@@ -831,7 +832,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const PawPrintIcon(size: 16),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSizes.gapSM),
                     Text(
                       '발바닥 ${_footprints.length}개 남김',
                       style: TextStyle(
@@ -1065,11 +1066,11 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
           children: [
             const BottomSheetHandle(),
             // 헤더
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXL, vertical: AppSizes.paddingS),
               child: Text(
                 '산책 기록',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                style: AppTextStyles.headlineSmall(context),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -1094,15 +1095,15 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.error_outline, size: 64, color: Colors.red),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppSizes.gapL),
                           Text(
                             '산책 기록을 불러올 수 없어요',
                             style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSizes.gapS),
                           Text(
                             '${snapshot.error}',
-                            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+                            style: AppTextStyles.secondarySmall(context),
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -1116,15 +1117,15 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.pets, size: 64, color: Theme.of(context).colorScheme.outlineVariant),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppSizes.gapL),
                           Text(
                             '아직 산책 기록이 없어요',
                             style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSizes.gapS),
                           Text(
                             '산책을 시작하면 기록이 저장됩니다',
-                            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
+                            style: AppTextStyles.secondary(context),
                           ),
                         ],
                       ),
@@ -1132,7 +1133,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                   }
                   
                   return ListView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppSizes.paddingL),
                     itemCount: snapshot.data!.docs.length,
                     itemBuilder: (context, index) {
                       final doc = snapshot.data!.docs[index];
@@ -1142,11 +1143,11 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                       final duration = data['duration'] as int? ?? 0;
                       
                       return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
+                        margin: const EdgeInsets.only(bottom: AppSizes.paddingM),
+                        padding: const EdgeInsets.all(AppSizes.paddingL),
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Row(
                           children: [
@@ -1154,12 +1155,12 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: context.features.health.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(12),
+                                color: context.features.health.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                               ),
                               child: Icon(Icons.directions_walk, color: context.features.health),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: AppSizes.gapM),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1173,7 +1174,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                                       fontSize: 15,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: AppSizes.gapXS),
                                   Text(
                                     '${_formatDistance(distance)} · ${_formatDuration(duration)}',
                                     style: TextStyle(
@@ -1210,7 +1211,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         title: Row(
           children: [
             Icon(Icons.celebration, color: context.features.health),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSizes.gapS),
             const Text('산책 완료!'),
           ],
         ),
@@ -1247,7 +1248,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
   /// 요약 행
   Widget _buildSummaryRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingXS),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -1289,7 +1290,7 @@ class _MapGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withOpacity(0.1)
+      ..color = color.withValues(alpha: 0.1)
       ..strokeWidth = 1;
 
     const spacing = 40.0;

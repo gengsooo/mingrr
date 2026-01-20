@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
@@ -123,9 +124,9 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
               Row(
                 children: [
                   _buildTypeButton(ProductType.sell, '판매', Icons.sell),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSizes.gapS),
                   _buildTypeButton(ProductType.share, '나눔', Icons.volunteer_activism),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSizes.gapS),
                   _buildTypeButton(ProductType.job, '알바', Icons.work_outline),
                 ],
               ),
@@ -272,7 +273,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
       child: GestureDetector(
         onTap: () => _onTypeChanged(type),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
           decoration: BoxDecoration(
             color: isSelected ? context.features.market : Colors.transparent,
             borderRadius: BorderRadius.circular(AppSizes.radiusS),
@@ -284,7 +285,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 18, color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSizes.gapSM),
               Text(
                 label,
                 style: TextStyle(
@@ -407,7 +408,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
             children: [
               ...selectedPets.map((pet) {
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: AppSizes.paddingS),
                   child: GestureDetector(
                     onTap: () => _showPetSelectorSheet(pets),
                     child: PetSelectorCard(
@@ -422,7 +423,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
               GestureDetector(
                 onTap: () => _showPetSelectorSheet(pets),
                 child: Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppSizes.paddingM),
                   decoration: BoxDecoration(
                     color: context.inputBackground,
                     borderRadius: BorderRadius.circular(AppSizes.radiusS),
@@ -431,7 +432,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
                   child: Row(
                     children: [
                       Icon(Icons.pets, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSizes.gapM),
                       Text('반려동물 추가', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
                       const Spacer(),
                       Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
@@ -447,7 +448,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
         return GestureDetector(
           onTap: () => _showPetSelectorSheet(pets),
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSizes.paddingM),
             decoration: BoxDecoration(
               color: context.inputBackground,
               borderRadius: BorderRadius.circular(AppSizes.radiusS),
@@ -456,7 +457,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
             child: Row(
               children: [
                 Icon(Icons.pets, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSizes.gapM),
                 Text('반려동물을 선택해주세요', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
                 const Spacer(),
                 Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
@@ -495,10 +496,10 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
             onTap: () => setState(() => _priceUnit = unit),
             child: Container(
               margin: EdgeInsets.only(right: unit != '일' ? 8 : 0),
-              padding: const EdgeInsets.symmetric(vertical: 10),
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
               decoration: BoxDecoration(
-                color: isSelected ? context.features.market.withOpacity(0.1) : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
+                color: isSelected ? context.features.market.withValues(alpha: 0.1) : Colors.transparent,
+                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                 border: Border.all(
                   color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
                 ),
@@ -542,7 +543,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
           borderRadius: BorderRadius.circular(AppSizes.radiusS),
           borderSide: BorderSide(color: context.features.market),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingM),
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
@@ -590,7 +591,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(isJob ? '시급' : '가격', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        Text(isJob ? '시급' : '가격', style: AppTextStyles.labelLarge(context).copyWith(fontWeight: FontWeight.w600)),
         const SizedBox(height: AppSizes.gapS),
         TextFormField(
           controller: _priceController,
@@ -614,7 +615,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
               borderRadius: BorderRadius.circular(AppSizes.radiusS),
               borderSide: BorderSide(color: context.features.market),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingM),
           ),
           validator: (value) {
             if (_selectedType == ProductType.sell && (value == null || value.isEmpty)) {

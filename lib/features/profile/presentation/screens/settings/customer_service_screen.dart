@@ -37,7 +37,7 @@ class CustomerServiceScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                   child: Text(
                     '문의하기',
                     style: theme.textTheme.titleLarge,
@@ -70,7 +70,7 @@ class CustomerServiceScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                   child: Text(
                     '자주 묻는 질문',
                     style: theme.textTheme.titleLarge,
@@ -187,7 +187,7 @@ class CustomerServiceScreen extends StatelessWidget {
       ),
       children: [
         Padding(
-          padding: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.only(bottom: AppSizes.paddingL),
           child: Text(
             faq['answer']!,
             style: theme.textTheme.bodySmall?.copyWith(height: 1.5),
@@ -224,11 +224,11 @@ class CustomerServiceScreen extends StatelessWidget {
         children: [
           if (notice['isNew'] == true) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
+              margin: const EdgeInsets.only(right: AppSizes.paddingS),
               decoration: BoxDecoration(
                 color: Colors.red,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
               ),
               child: const Text(
                 'NEW',
@@ -281,14 +281,14 @@ class CustomerServiceScreen extends StatelessWidget {
           children: [
             const Center(child: BottomSheetHandle()),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
               child: Text(
                 notice['title'] as String,
                 style: theme.textTheme.headlineSmall,
                 textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             Text(
               notice['date'] as String,
               style: theme.textTheme.labelSmall,

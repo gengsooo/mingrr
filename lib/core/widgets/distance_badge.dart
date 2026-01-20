@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../constants/pet_constants.dart';
+import '../constants/location_constants.dart';
 
 /// ============================================================
 /// 거리 표시 배지 공통 위젯

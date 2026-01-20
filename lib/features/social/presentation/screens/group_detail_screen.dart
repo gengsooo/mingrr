@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
+import '../../../../core/constants/location_constants.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/chat_service.dart';
@@ -111,7 +113,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           type: MingrrLoadingType.community,
           message: '모임 정보를 불러오고 있어요',
         ),
-        error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+        error: (_, __) => MingrrErrorState(
+          onRetry: () => ref.invalidate(groupDetailProvider(widget.groupId)),
+        ),
       ),
       bottomNavigationBar: groupAsync.whenData((group) {
         if (group == null) return const SizedBox.shrink();
@@ -147,7 +151,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [accentColor.withOpacity(0.8), accentColor],
+          colors: [accentColor.withValues(alpha: 0.8), accentColor],
         ),
       ),
       child: const Center(
@@ -170,32 +174,32 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                 decoration: BoxDecoration(
-                  color: accentColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
+                  color: accentColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                 ),
                 child: Text(
                   group.typeString,
-                  style: TextStyle(fontSize: 12, color: accentColor, fontWeight: FontWeight.w500),
+                  style: AppTextStyles.tag(context).copyWith(color: accentColor),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSizes.gapS),
               if (group.isPetAccompanied)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                   decoration: BoxDecoration(
-                    color: context.features.dating.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
+                    color: context.features.dating.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(Icons.pets, size: 12, color: context.features.dating),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSizes.gapXS),
                       Text(
                         '반려동물 동반',
-                        style: TextStyle(fontSize: 11, color: context.features.dating),
+                        style: AppTextStyles.tagSmall(context).copyWith(color: context.features.dating),
                       ),
                     ],
                   ),
@@ -203,44 +207,44 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
               if (isJoined) ...[
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                   decoration: BoxDecoration(
                     color: accentColor,
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                   ),
-                  child: const Text(
+                  child: Text(
                     '가입됨',
-                    style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w500),
+                    style: AppTextStyles.tagSmall(context).copyWith(color: Colors.white),
                   ),
                 ),
               ],
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
 
           // 모임 이름
           Text(
             group.name,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+            style: AppTextStyles.headlineLarge(context).copyWith(fontSize: 22),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
 
           // 정보 행
           Row(
             children: [
               Icon(LocationConstants.distanceIcon, size: 16, color: colorScheme.onSurfaceVariant),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSizes.gapXS),
               Expanded(
                 child: Text(
                   group.address ?? LocationConstants.noLocationText,
-                  style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                  style: AppTextStyles.secondary(context),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSizes.gapS),
           Row(
             children: [
               _buildInfoChip(Icons.people_outline, '${group.memberCount}명', colorScheme),
@@ -254,17 +258,17 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
 
           // 태그
           if (group.tags.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             Wrap(
               spacing: 8,
               runSpacing: 6,
               children: group.tags.map((tag) => Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                 decoration: BoxDecoration(
                   color: colorScheme.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
-                child: Text('#$tag', style: TextStyle(fontSize: 12, color: accentColor)),
+                child: Text('#$tag', style: AppTextStyles.tag(context).copyWith(color: accentColor)),
               )).toList(),
             ),
           ],
@@ -278,8 +282,8 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: colorScheme.onSurfaceVariant),
-        const SizedBox(width: 4),
-        Text(text, style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant)),
+        const SizedBox(width: AppSizes.gapXS),
+        Text(text, style: AppTextStyles.secondarySmall(context).copyWith(color: colorScheme.onSurfaceVariant)),
       ],
     );
   }
@@ -292,18 +296,18 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         children: [
           // 모임 소개
           _buildSectionTitle('모임 소개'),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           _buildSectionBox(
             child: Text(
               group.description,
-              style: TextStyle(fontSize: 14, height: 1.6, color: Theme.of(context).colorScheme.onSurface),
+              style: AppTextStyles.bodyMedium(context).copyWith(height: 1.6),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSizes.gapXL),
 
           // 모임 설정
           _buildSectionTitle('모임 설정'),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           _buildSectionBox(
             child: Column(
               children: [
@@ -325,7 +329,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+      style: AppTextStyles.titleMedium(context),
     );
   }
 
@@ -333,10 +337,10 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   Widget _buildSectionBox({required Widget child}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSizes.paddingL),
       decoration: BoxDecoration(
         color: context.sectionBackground,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: child,
     );
@@ -347,10 +351,10 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     return Row(
       children: [
         Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
-        const SizedBox(width: 12),
-        Text(label, style: const TextStyle(fontSize: 14)),
+        const SizedBox(width: AppSizes.gapM),
+        Text(label, style: AppTextStyles.bodyMedium(context)),
         const Spacer(),
-        Text(value, style: TextStyle(fontSize: 14, color: colorScheme.onSurfaceVariant)),
+        Text(value, style: AppTextStyles.listSubtitle(context)),
       ],
     );
   }
@@ -398,8 +402,8 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             return GestureDetector(
               onTap: () => _showMemberProfile(context, member),
               child: Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: AppSizes.paddingS),
+                padding: const EdgeInsets.all(AppSizes.paddingM),
                 decoration: BoxDecoration(
                   color: colorScheme.surface,
                   borderRadius: BorderRadius.circular(AppSizes.radiusS),
@@ -411,7 +415,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                       imageUrl: member.profileUrl,
                       placeholderIcon: Icons.person,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSizes.gapM),
                     Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -420,9 +424,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                           children: [
                             Text(
                               member.nickname,
-                              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                              style: AppTextStyles.cardTitle(context),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: AppSizes.gapS),
                             if (member.isCreator)
                               _buildRoleBadge('모임장', accentColor)
                             else if (member.isAdmin)
@@ -430,14 +434,14 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                           ],
                         ),
                         if (member.petNames.isNotEmpty && group.isPetAccompanied) ...[
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppSizes.gapXS),
                           Row(
                             children: [
                               Icon(Icons.pets, size: 12, color: context.features.dating),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: AppSizes.gapXS),
                               Text(
                                 member.petNames.join(', '),
-                                style: TextStyle(fontSize: 12, color: context.features.dating),
+                                style: AppTextStyles.secondarySmall(context).copyWith(color: context.features.dating),
                               ),
                             ],
                           ),
@@ -540,14 +544,14 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
 
   Widget _buildRoleBadge(String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(4),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600),
+        style: AppTextStyles.badgeSmall(context).copyWith(color: color),
       ),
     );
   }
@@ -658,12 +662,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             final isPast = schedule.isPast;
 
             return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: AppSizes.paddingM),
+              padding: const EdgeInsets.all(AppSizes.paddingL),
               decoration: BoxDecoration(
                 color: colorScheme.surface,
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                border: isPast ? null : Border.all(color: accentColor.withOpacity(0.3)),
+                border: isPast ? null : Border.all(color: accentColor.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -671,59 +675,55 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                         decoration: BoxDecoration(
                           color: isPast
                               ? colorScheme.surfaceContainerLow
-                              : accentColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(4),
+                              : accentColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                         ),
                         child: Text(
                           isPast ? '종료' : '예정',
-                          style: TextStyle(
-                            fontSize: 11,
+                          style: AppTextStyles.tagSmall(context).copyWith(
                             color: isPast ? colorScheme.onSurfaceVariant : accentColor,
-                            fontWeight: FontWeight.w500,
                           ),
                         ),
                       ),
                       const Spacer(),
                       Text(
                         '${schedule.participantCount}명 참여',
-                        style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                        style: AppTextStyles.secondarySmall(context),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSizes.gapM),
                   Text(
                     schedule.title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: isPast ? colorScheme.onSurfaceVariant : colorScheme.onSurface,
+                    style: AppTextStyles.sectionTitle(context).copyWith(
+                      color: isPast ? colorScheme.onSurfaceVariant : null,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSizes.gapS),
                   Row(
                     children: [
                       Icon(Icons.calendar_today, size: 14, color: colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: AppSizes.gapSM),
                       Text(
                         _formatScheduleDate(schedule.startTime),
-                        style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                        style: AppTextStyles.secondary(context),
                       ),
                     ],
                   ),
                   if (schedule.place != null) ...[
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSizes.gapSM),
                     Row(
                       children: [
                         Icon(Icons.location_on_outlined, size: 14, color: colorScheme.onSurfaceVariant),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: AppSizes.gapSM),
                         Expanded(
                           child: Text(
                             schedule.place!,
-                            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                            style: AppTextStyles.secondary(context),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -743,7 +743,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           child: MingrrLoadingIndicator.medium(type: MingrrLoadingType.community),
         ),
       ),
-      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(groupSchedulesProvider(group.id)),
+      ),
     );
   }
 
@@ -771,13 +773,13 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                 onPressed: () => _openGroupChat(context, group),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(color: accentColor),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusM)),
                   padding: EdgeInsets.zero,
                 ),
                 child: Icon(Icons.chat_bubble_outline, color: accentColor),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSizes.gapM),
           ],
           // 메인 버튼
           Expanded(
@@ -1160,7 +1162,7 @@ class _JoinRequestTileState extends State<_JoinRequestTile> {
             _user?.nickname ?? '알 수 없음',
             style: theme.textTheme.titleSmall,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSizes.gapS),
           Text(
             timeAgo,
             style: theme.textTheme.bodySmall?.copyWith(
@@ -1171,7 +1173,7 @@ class _JoinRequestTileState extends State<_JoinRequestTile> {
       ),
       subtitle: widget.request.message != null && widget.request.message!.isNotEmpty
           ? Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: AppSizes.paddingXS),
               child: Text(
                 widget.request.message!,
                 style: theme.textTheme.bodySmall,
@@ -1193,7 +1195,7 @@ class _JoinRequestTileState extends State<_JoinRequestTile> {
                   onPressed: _reject,
                   tooltip: '거절',
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSizes.gapXS),
                 IconButton(
                   icon: Icon(Icons.check, color: theme.colorScheme.primary),
                   onPressed: _approve,

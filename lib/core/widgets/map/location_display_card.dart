@@ -54,11 +54,11 @@ class LocationDisplayCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSizes.paddingM),
         decoration: BoxDecoration(
-          color: hasLocation ? color.withOpacity(0.08) : context.inputBackground,
+          color: hasLocation ? color.withValues(alpha: 0.08) : context.inputBackground,
           border: Border.all(
-            color: hasLocation ? color.withOpacity(0.3) : Theme.of(context).colorScheme.outline,
+            color: hasLocation ? color.withValues(alpha: 0.3) : Theme.of(context).colorScheme.outline,
           ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -71,9 +71,9 @@ class LocationDisplayCard extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     color: hasLocation 
-                        ? color.withOpacity(0.15)
+                        ? color.withValues(alpha: 0.15)
                         : Theme.of(context).colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   ),
                   child: Icon(
                     hasLocation ? Icons.location_on : Icons.location_on_outlined,
@@ -81,7 +81,7 @@ class LocationDisplayCard extends StatelessWidget {
                     color: hasLocation ? color : Theme.of(context).colorScheme.outlineVariant,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSizes.gapM),
                 
                 // 주소 정보
                 Expanded(
@@ -98,7 +98,7 @@ class LocationDisplayCard extends StatelessWidget {
                           ),
                         ),
                         if (location!.fullAddress != null) ...[
-                          const SizedBox(height: 2),
+                          const SizedBox(height: AppSizes.gapXXS),
                           Text(
                             location!.fullAddress!,
                             style: TextStyle(
@@ -118,7 +118,7 @@ class LocationDisplayCard extends StatelessWidget {
                             color: Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: AppSizes.gapXXS),
                         Text(
                           '탭하여 지도에서 선택',
                           style: TextStyle(
@@ -134,10 +134,10 @@ class LocationDisplayCard extends StatelessWidget {
                 // 액션 버튼 (위치가 있을 때만 변경 버튼 표시)
                 if (editable && hasLocation)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
                     decoration: BoxDecoration(
                       color: accentColor,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusM),
                     ),
                     child: const Text(
                       '변경',
@@ -159,12 +159,12 @@ class LocationDisplayCard extends StatelessWidget {
             
             // 미니맵 (선택적)
             if (showMiniMap && hasLocation) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSizes.gapM),
               Container(
                 height: miniMapHeight,
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                 ),
                 child: Stack(
                   children: [
@@ -186,16 +186,16 @@ class LocationDisplayCard extends StatelessWidget {
                       right: 8,
                       bottom: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
-                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.white.withValues(alpha: 0.9),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.fullscreen, size: 14, color: accentColor),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: AppSizes.gapXS),
                             Text(
                               '지도 보기',
                               style: TextStyle(
@@ -226,7 +226,7 @@ class _MiniMapGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withOpacity(0.15)
+      ..color = color.withValues(alpha: 0.15)
       ..strokeWidth = 1;
 
     const spacing = 25.0;

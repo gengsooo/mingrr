@@ -39,7 +39,7 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.favorite_border, size: 64, color: Theme.of(context).colorScheme.outlineVariant),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSizes.gapL),
                   Text(
                     '아직 받은 신청이 없어요',
                     style: TextStyle(
@@ -47,7 +47,7 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSizes.gapS),
                   Text(
                     '데이팅에서 활동해보세요!',
                     style: TextStyle(
@@ -73,7 +73,9 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
           type: MingrrLoadingType.dating,
           message: '받은 신청을 불러오고 있어요',
         ),
-        error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+        error: (_, __) => MingrrErrorState(
+          onRetry: () => ref.invalidate(receivedDatingRequestsProvider),
+        ),
       ),
     );
   }
@@ -102,13 +104,13 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
             borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSizes.gapM),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(width: 100, height: 16, color: Theme.of(context).colorScheme.outline),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSizes.gapS),
               Container(width: 150, height: 12, color: Theme.of(context).colorScheme.outline),
             ],
           ),
@@ -136,7 +138,7 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
                 : _buildDefaultPetImage(),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSizes.gapM),
         // 정보
         Expanded(
           child: GestureDetector(
@@ -152,7 +154,7 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
                   ),
                 ),
                 if (pet != null) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSizes.gapXXS),
                   Text(
                     '${pet.breed ?? '믹스견'} · ${pet.ageString}',
                     style: TextStyle(
@@ -161,7 +163,7 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
                     ),
                   ),
                 ],
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSizes.gapXS),
                 Text(
                   request.message ?? '데이팅 신청을 보냈어요!',
                   style: TextStyle(
@@ -191,11 +193,11 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
           )
         else
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
             decoration: BoxDecoration(
               color: request.status == DatingRequestStatus.accepted 
-                  ? context.features.success.withOpacity(0.1)
-                  : Theme.of(context).colorScheme.outlineVariant.withOpacity(0.1),
+                  ? context.features.success.withValues(alpha: 0.1)
+                  : Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Text(

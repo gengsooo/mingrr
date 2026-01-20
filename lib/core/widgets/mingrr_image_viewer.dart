@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
+import '../constants/app_sizes.dart';
 import 'common_widgets.dart';
 import 'loading_widgets.dart';
 
@@ -95,7 +96,7 @@ class _MingrrImageViewerState extends State<MingrrImageViewer> {
           if (widget.showSaveButton)
             _isSaving
                 ? const Padding(
-                    padding: EdgeInsets.all(12),
+                    padding: EdgeInsets.all(AppSizes.paddingM),
                     child: SizedBox(
                       width: 24,
                       height: 24,

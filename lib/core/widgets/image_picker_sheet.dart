@@ -243,7 +243,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
           const BottomSheetHandle(),
           // 타이틀
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
             child: Text(
               widget.title,
               style: const TextStyle(
@@ -253,13 +253,13 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           
           // 미리보기
           Center(
             child: _buildPreview(),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSizes.gapXL),
           
           // 카메라/갤러리 버튼
           Row(
@@ -271,7 +271,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
                   onTap: _pickFromCamera,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSizes.gapM),
               Expanded(
                 child: _buildActionButton(
                   icon: Icons.photo_library,
@@ -281,7 +281,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSizes.gapLL),
           
           // 대표 아이콘 선택
           Text(
@@ -292,7 +292,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           
           // 아이콘 그리드
           Wrap(
@@ -300,7 +300,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
             runSpacing: 12,
             children: _avatars.map((avatar) => _buildAvatarOption(avatar)).toList(),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSizes.gapXL),
           
           // 하단 버튼
           Row(
@@ -314,16 +314,16 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.red,
                       side: const BorderSide(color: Colors.red),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
                       ),
                     ),
                     child: const Text('삭제'),
                   ),
                 ),
               if (widget.allowClear && (widget.currentImageUrl != null || widget.currentDefaultAvatar != null))
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSizes.gapM),
               Expanded(
                 flex: 2,
                 child: MingrrButton(
@@ -445,17 +445,17 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppSizes.radiusS),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingL),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
         ),
         child: Column(
           children: [
             Icon(icon, size: 28, color: Theme.of(context).colorScheme.primary),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             Text(
               label,
               style: TextStyle(

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../constants/app_sizes.dart';
+import '../theme/app_text_styles.dart';
 import '../theme/app_theme.dart';
 import '../utils/image_utils.dart';
 
@@ -116,7 +117,7 @@ class MingrrSwitchRow extends StatelessWidget {
       children: [
         if (icon != null) ...[
           Icon(icon, size: 20, color: colorScheme.onSurfaceVariant),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSizes.gapM),
         ],
         Expanded(
           child: Column(
@@ -203,10 +204,10 @@ class MingrrSwitchCard extends StatelessWidget {
       children: [
         if (title != null) MingrrSectionLabel(title!),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSizes.paddingL),
           decoration: BoxDecoration(
             color: context.inputBackground,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
           child: Column(
             children: [
@@ -290,10 +291,10 @@ class MingrrChipSelector<T> extends StatelessWidget {
           onTap: () => onSelected(item),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
             decoration: BoxDecoration(
               color: isSelected ? accentColor : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppSizes.radiusL),
               border: Border.all(
                 color: isSelected ? accentColor : colorScheme.outline,
               ),
@@ -307,17 +308,16 @@ class MingrrChipSelector<T> extends StatelessWidget {
                     size: 16,
                     color: isSelected ? Colors.white : colorScheme.onSurface,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: AppSizes.gapSM),
                 ],
                 if (emoji != null)
                   Text(
                     '$emoji ',
-                    style: const TextStyle(fontSize: 13),
+                    style: AppTextStyles.bodySmall(context),
                   ),
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 13,
+                  style: AppTextStyles.bodySmall(context).copyWith(
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                     color: isSelected ? Colors.white : colorScheme.onSurface,
                   ),
@@ -423,7 +423,7 @@ class MingrrImagePicker extends StatelessWidget {
         height: height,
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(color: colorScheme.outline),
           image: selectedFile != null
               ? DecorationImage(
@@ -451,7 +451,7 @@ class MingrrImagePicker extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.add_photo_alternate, size: 48, color: colorScheme.outlineVariant),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSizes.gapS),
                   Text('이미지 추가', style: TextStyle(color: colorScheme.outlineVariant)),
                 ],
               ),
@@ -490,7 +490,7 @@ class MingrrImagePicker extends StatelessWidget {
                         ? colorScheme.outline 
                         : colorScheme.outlineVariant,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSizes.gapXS),
                   Text(
                     '$totalImages/$maxImages',
                     style: TextStyle(
@@ -504,7 +504,7 @@ class MingrrImagePicker extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSizes.gapS),
           // 기존 이미지
           if (existingUrls != null)
             ...existingUrls!.asMap().entries.map((entry) {
@@ -544,7 +544,7 @@ class _ImageTile extends StatelessWidget {
     return Container(
       width: 80,
       height: 80,
-      margin: const EdgeInsets.only(right: 8),
+      margin: const EdgeInsets.only(right: AppSizes.paddingS),
       child: Stack(
         children: [
           ClipRRect(
@@ -576,7 +576,7 @@ class _RemoveButton extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        padding: const EdgeInsets.all(6),
+        padding: const EdgeInsets.all(AppSizes.paddingXS),
         decoration: const BoxDecoration(
           color: Colors.black54,
           shape: BoxShape.circle,
@@ -668,11 +668,11 @@ class MingrrSelectButton extends StatelessWidget {
         GestureDetector(
           onTap: onTap,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingM),
             decoration: BoxDecoration(
               color: context.inputBackground,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
+              border: Border.all(color: colorScheme.outline.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: [
@@ -682,7 +682,7 @@ class MingrrSelectButton extends StatelessWidget {
                     size: 20,
                     color: hasValue ? colorScheme.onSurface : colorScheme.outlineVariant,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSizes.gapM),
                 ],
                 Expanded(
                   child: Text(
@@ -751,7 +751,7 @@ class MingrrVideoPicker extends StatelessWidget {
         height: height,
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(color: colorScheme.outline),
         ),
         child: _hasVideo
@@ -768,12 +768,12 @@ class MingrrVideoPicker extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(Icons.videocam_outlined, size: 48, color: colorScheme.outlineVariant),
-        const SizedBox(height: 8),
-        Text('동영상 추가', style: TextStyle(color: colorScheme.outlineVariant)),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSizes.gapS),
+        Text('동영상 추가', style: AppTextStyles.secondary(context).copyWith(color: colorScheme.outlineVariant)),
+        const SizedBox(height: AppSizes.gapXS),
         Text(
           '최대 1분, 100MB',
-          style: TextStyle(fontSize: 12, color: colorScheme.outlineVariant),
+          style: AppTextStyles.secondarySmall(context).copyWith(color: colorScheme.outlineVariant),
         ),
       ],
     );
@@ -787,7 +787,7 @@ class MingrrVideoPicker extends StatelessWidget {
       children: [
         // 썸네일 또는 플레이스홀더
         ClipRRect(
-          borderRadius: BorderRadius.circular(11),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           child: existingThumbnailUrl != null
               ? Image.network(
                   existingThumbnailUrl!,
@@ -802,7 +802,7 @@ class MingrrVideoPicker extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.6),
+              color: Colors.black.withValues(alpha: 0.6),
               shape: BoxShape.circle,
             ),
             child: const Icon(
@@ -817,19 +817,19 @@ class MingrrVideoPicker extends StatelessWidget {
           left: 8,
           bottom: 8,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.7),
-              borderRadius: BorderRadius.circular(4),
+              color: Colors.black.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(Icons.videocam, color: Colors.white, size: 14),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSizes.gapXS),
                 Text(
                   selectedFile != null ? '새 동영상' : '동영상',
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                  style: AppTextStyles.secondarySmall(context).copyWith(color: Colors.white),
                 ),
               ],
             ),
@@ -843,7 +843,7 @@ class MingrrVideoPicker extends StatelessWidget {
             onTap: onRemove,
             behavior: HitTestBehavior.opaque,
             child: Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(AppSizes.paddingXS),
               decoration: const BoxDecoration(
                 color: Colors.black54,
                 shape: BoxShape.circle,
@@ -943,7 +943,7 @@ class MingrrMediaPicker extends StatelessWidget {
                 onTap: _totalImages < maxImages ? onPickImages : null,
                 isDisabled: _totalImages >= maxImages,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSizes.gapS),
               // 동영상 추가 버튼
               if (!_hasVideo)
                 _buildAddButton(
@@ -952,11 +952,11 @@ class MingrrMediaPicker extends StatelessWidget {
                   label: '동영상',
                   onTap: onPickVideo,
                 ),
-              if (!_hasVideo) const SizedBox(width: 8),
+              if (!_hasVideo) const SizedBox(width: AppSizes.gapS),
               // 동영상 썸네일
               if (_hasVideo)
                 _buildVideoThumbnail(context),
-              if (_hasVideo) const SizedBox(width: 8),
+              if (_hasVideo) const SizedBox(width: AppSizes.gapS),
               // 기존 이미지
               ...existingImageUrls.asMap().entries.map((entry) {
                 return _MediaTile(
@@ -1004,7 +1004,7 @@ class MingrrMediaPicker extends StatelessWidget {
               icon,
               color: isDisabled ? colorScheme.outline : colorScheme.outlineVariant,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSizes.gapXS),
             Text(
               label,
               style: TextStyle(
@@ -1048,7 +1048,7 @@ class MingrrMediaPicker extends StatelessWidget {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black.withValues(alpha: 0.6),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.play_arrow, color: Colors.white, size: 18),
@@ -1062,7 +1062,7 @@ class MingrrMediaPicker extends StatelessWidget {
               onTap: onRemoveVideo,
               behavior: HitTestBehavior.opaque,
               child: Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(AppSizes.paddingXS),
                 decoration: const BoxDecoration(
                   color: Colors.black54,
                   shape: BoxShape.circle,
@@ -1101,7 +1101,7 @@ class _MediaTile extends StatelessWidget {
     return Container(
       width: 80,
       height: 80,
-      margin: const EdgeInsets.only(right: 8),
+      margin: const EdgeInsets.only(right: AppSizes.paddingS),
       child: Stack(
         children: [
           ClipRRect(
@@ -1117,7 +1117,7 @@ class _MediaTile extends StatelessWidget {
               onTap: onRemove,
               behavior: HitTestBehavior.opaque,
               child: Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(AppSizes.paddingXS),
                 decoration: const BoxDecoration(
                   color: Colors.black54,
                   shape: BoxShape.circle,

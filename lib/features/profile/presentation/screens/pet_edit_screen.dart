@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
@@ -301,7 +302,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       width: 120,
       height: 120,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
         shape: BoxShape.circle,
         border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
       ),
@@ -369,7 +370,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           // 성별
           Row(
             children: [
-              const Text('성별', style: TextStyle(fontSize: 14)),
+              Text('성별', style: AppTextStyles.labelLarge(context)),
               const Spacer(),
               SegmentedButton<PetGender>(
                 segments: PetGender.values.map((gender) {
@@ -379,7 +380,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(gender.icon, size: 16),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppSizes.gapXS),
                         Text(gender.label),
                       ],
                     ),
@@ -397,8 +398,8 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           const SizedBox(height: AppSizes.gapM),
           
           // 생년월일
-          const Text('생년월일', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 8),
+          Text('생년월일', style: AppTextStyles.labelLarge(context)),
+          const SizedBox(height: AppSizes.gapS),
           MingrrDateSelector(
             date: _birthDate,
             onSelect: (d) => setState(() => _birthDate = d),
@@ -461,9 +462,9 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
               ),
               const Spacer(),
               if (_selectedTraits.length < 5)
-                const Text(
+                Text(
                   '최소 5개 선택 필요',
-                  style: TextStyle(fontSize: 12, color: Colors.orange),
+                  style: AppTextStyles.secondarySmall(context).copyWith(color: Colors.orange),
                 ),
             ],
           ),
@@ -515,7 +516,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
               showCheckmark: false,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               labelStyle: TextStyle(
                 fontSize: 12,
                 color: isSelected 
@@ -571,20 +572,20 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 '추가 사진',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: AppTextStyles.titleLarge(context),
               ),
               Text(
                 '${_getTotalPhotoCount()}/5장',
-                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: AppTextStyles.secondarySmall(context),
               ),
             ],
           ),
           const SizedBox(height: AppSizes.gapS),
           Text(
             '길게 누르고 드래그하여 순서를 변경하세요. 가장 왼쪽 사진이 대표사진으로 사용됩니다.',
-            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant),
+            style: AppTextStyles.caption(context),
           ),
           const SizedBox(height: AppSizes.gapM),
           
@@ -664,7 +665,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
                   key: ValueKey('photo_$index'),
                   index: index,
                   child: Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.only(right: AppSizes.paddingS),
                     child: _buildDraggablePhotoItem(
                       index: index,
                       isPrimary: isPrimary,
@@ -698,14 +699,14 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
             border: Border.all(
               color: isPrimary ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
               width: isPrimary ? 3 : 1,
             ),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
             child: isUrl
                 ? Image.network(
                     imageUrl!,
@@ -723,7 +724,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
             top: 4,
             left: 4,
             child: Container(
-              padding: const EdgeInsets.all(2),
+              padding: const EdgeInsets.all(AppSizes.paddingXXS),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.primary,
                 shape: BoxShape.circle,
@@ -739,11 +740,11 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
             behavior: HitTestBehavior.opaque,
             onTap: () => _deletePhotoAt(index),
             child: Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(AppSizes.paddingS),
               child: Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(AppSizes.paddingXS),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: 0.6),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.close, size: 12, color: Colors.white),
@@ -763,17 +764,17 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         height: 80,
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(color: Theme.of(context).colorScheme.outline),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.add_photo_alternate, color: Theme.of(context).colorScheme.primary, size: 28),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSizes.gapXS),
             Text(
               '추가',
-              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: AppTextStyles.caption(context),
             ),
           ],
         ),

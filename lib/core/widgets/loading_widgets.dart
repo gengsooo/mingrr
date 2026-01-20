@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../constants/app_sizes.dart';
 import '../theme/feature_colors.dart';
+import '../theme/app_text_styles.dart';
 
 /// ============================================================
 /// 공통 로딩 위젯 모음
@@ -46,8 +48,8 @@ class MingrrLoadingDialog extends StatelessWidget {
     final color = _getColor(context);
     
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      contentPadding: const EdgeInsets.all(24),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusM)),
+      contentPadding: const EdgeInsets.all(AppSizes.paddingXXL),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -55,7 +57,7 @@ class MingrrLoadingDialog extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -69,20 +71,17 @@ class MingrrLoadingDialog extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSizes.gapLL),
           Text(
             title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: AppTextStyles.titleLarge(context),
             textAlign: TextAlign.center,
           ),
           if (subtitle != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             Text(
               subtitle!,
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyles.secondary(context),
               textAlign: TextAlign.center,
             ),
           ],
@@ -168,7 +167,7 @@ class MingrrLoadingOverlay extends StatelessWidget {
       width: double.infinity,
       height: double.infinity,
       color: showBackground 
-          ? Theme.of(context).colorScheme.surface.withOpacity(0.9)
+          ? Theme.of(context).colorScheme.surface.withValues(alpha: 0.9)
           : Colors.transparent,
       child: Center(
         child: Column(
@@ -178,7 +177,7 @@ class MingrrLoadingOverlay extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -193,15 +192,15 @@ class MingrrLoadingOverlay extends StatelessWidget {
               ),
             ),
             if (message != null) ...[
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSizes.gapLL),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXL, vertical: AppSizes.paddingM),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXL),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withValues(alpha: 0.1),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),
@@ -218,7 +217,7 @@ class MingrrLoadingOverlay extends StatelessWidget {
                         color: color,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSizes.gapM),
                     Text(
                       message!,
                       style: TextStyle(
@@ -232,7 +231,7 @@ class MingrrLoadingOverlay extends StatelessWidget {
               ),
             ],
             if (subMessage != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSizes.gapM),
               Text(
                 subMessage!,
                 style: TextStyle(
@@ -410,7 +409,7 @@ class MingrrFullScreenLoading extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -425,7 +424,7 @@ class MingrrFullScreenLoading extends StatelessWidget {
               ),
             ),
             if (message != null) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSizes.gapXL),
               Text(
                 message!,
                 style: TextStyle(
@@ -437,7 +436,7 @@ class MingrrFullScreenLoading extends StatelessWidget {
               ),
             ],
             if (subMessage != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSizes.gapS),
               Text(
                 subMessage!,
                 style: TextStyle(

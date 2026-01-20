@@ -6,37 +6,49 @@ class AppSizes {
   AppSizes._();
 
   // ===== 패딩/마진 =====
+  static const double paddingXXS = 2.0;
   static const double paddingXS = 4.0;
+  static const double paddingSM = 6.0;   // XS와 S 사이
   static const double paddingS = 8.0;
+  static const double paddingMS = 10.0;  // S와 M 사이
   static const double paddingM = 16.0;
   static const double paddingL = 24.0;
   static const double paddingXL = 32.0;
   static const double paddingXXL = 48.0;
 
-  // ===== 간격 (Gap) =====
-  static const double gapXS = 4.0;
-  static const double gapS = 8.0;
-  static const double gapM = 12.0;
-  static const double gapL = 16.0;
-  static const double gapXL = 24.0;
-  static const double gapXXL = 32.0;
+  // ===== 간격 (Gap) - SizedBox용 =====
+  static const double gapXXS = 2.0;   // 최소 간격
+  static const double gapXS = 4.0;    // 아이콘-텍스트 간격
+  static const double gapSM = 6.0;    // XS와 S 사이
+  static const double gapS = 8.0;     // 기본 간격
+  static const double gapMS = 10.0;   // S와 M 사이
+  static const double gapM = 12.0;    // 중간 간격
+  static const double gapL = 16.0;    // 큰 간격
+  static const double gapLL = 20.0;   // L과 XL 사이
+  static const double gapXL = 24.0;   // 섹션 간격
+  static const double gapXXL = 32.0;  // 대형 간격
 
   // ===== 테두리 반경 (동글동글한 느낌) =====
-  static const double radiusXS = 8.0;
-  static const double radiusS = 12.0;
-  static const double radiusM = 16.0;
-  static const double radiusL = 20.0;
-  static const double radiusXL = 24.0;
-  static const double radiusXXL = 32.0;
+  static const double radiusXXS = 4.0;  // 태그, 작은 뱃지
+  static const double radiusXS = 8.0;   // 작은 카드, 칩
+  static const double radiusS = 12.0;   // 일반 카드, 버튼
+  static const double radiusM = 16.0;   // 중간 카드, 입력 필드
+  static const double radiusL = 20.0;   // 큰 카드, 바텀시트
+  static const double radiusXL = 24.0;  // 대형 컨테이너
+  static const double radiusXXL = 32.0; // 특수 용도
   static const double radiusFull = 999.0; // 완전 원형
 
   // ===== 아이콘 크기 =====
-  static const double iconXS = 16.0;
-  static const double iconS = 20.0;
-  static const double iconM = 24.0;
-  static const double iconL = 32.0;
-  static const double iconXL = 48.0;
-  static const double iconXXL = 64.0;
+  static const double iconXXS = 12.0;  // 배지 내 아이콘
+  static const double iconXS = 14.0;   // 필터 칩 아이콘
+  static const double iconS = 16.0;    // 작은 아이콘
+  static const double iconSM = 18.0;   // S와 M 사이
+  static const double iconM = 20.0;    // 기본 아이콘
+  static const double iconML = 22.0;   // M과 L 사이
+  static const double iconL = 24.0;    // 큰 아이콘
+  static const double iconXL = 32.0;   // 대형 아이콘
+  static const double iconXXL = 48.0;  // 특대 아이콘
+  static const double iconHuge = 64.0; // 초대형 아이콘
 
   // ===== 버튼 높이 =====
   static const double buttonHeightS = 36.0;

@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../constants/pet_constants.dart';
+import '../constants/location_constants.dart';
 
 /// ============================================================
 /// 위치 서비스

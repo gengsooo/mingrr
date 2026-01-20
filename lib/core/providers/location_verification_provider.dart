@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
-import '../constants/pet_constants.dart';
+import '../constants/location_constants.dart';
 import '../services/firebase_service.dart';
 import '../services/location_service.dart';
 import '../services/location_helper.dart';

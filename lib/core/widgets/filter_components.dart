@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_sizes.dart';
+import '../theme/app_text_styles.dart';
 
 /// ============================================================
 /// 공통 필터 컴포넌트
@@ -18,9 +19,7 @@ import '../constants/app_sizes.dart';
 /// 필터 타이틀 위젯 (공통)
 /// 
 /// 모든 필터 컴포넌트에서 동일한 타이틀 스타일 사용
-/// - 배경 없음
-/// - fontSize: 12, fontWeight: w700
-/// - color: onSurface
+/// - AppTextStyles.filterTitle 사용
 /// ------------------------------------------------------------
 class _FilterTitle extends StatelessWidget {
   final String title;
@@ -30,11 +29,7 @@ class _FilterTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w700,
-        color: Theme.of(context).colorScheme.onSurface,
-      ),
+      style: AppTextStyles.filterTitle(context),
     );
   }
 }
@@ -74,10 +69,10 @@ class MingrrFilterChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
         decoration: BoxDecoration(
           color: isSelected ? chipColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(
             color: isSelected ? chipColor : colorScheme.outline,
           ),
@@ -91,15 +86,13 @@ class MingrrFilterChip extends StatelessWidget {
                 size: iconSize,
                 color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSizes.gapXS),
             ],
             Text(
               label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
-              ),
+              style: isSelected 
+                  ? AppTextStyles.filterChipSelected(context)
+                  : AppTextStyles.filterChip(context),
             ),
           ],
         ),
@@ -141,10 +134,10 @@ class MingrrSortChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
         decoration: BoxDecoration(
           color: isSelected ? chipColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(
             color: isSelected ? chipColor : colorScheme.outline,
           ),
@@ -154,17 +147,15 @@ class MingrrSortChip extends StatelessWidget {
           children: [
             Text(
               label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
-              ),
+              style: isSelected 
+                  ? AppTextStyles.filterChipSelected(context)
+                  : AppTextStyles.filterChip(context),
             ),
             if (isSelected) ...[
-              const SizedBox(width: 2),
+              const SizedBox(width: AppSizes.gapXXS),
               Icon(
                 isAscending ? Icons.arrow_upward : Icons.arrow_downward,
-                size: 12,
+                size: AppSizes.iconXXS,
                 color: Colors.white,
               ),
             ],
@@ -184,11 +175,11 @@ class MingrrFilterDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
       child: Container(
         width: 1,
         height: 20,
-        color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
       ),
     );
   }
@@ -206,7 +197,7 @@ class MingrrFilterSectionDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 1,
-      color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
     );
   }
 }
@@ -240,7 +231,7 @@ class MingrrFilterRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSizes.paddingM,
-        vertical: AppSizes.paddingS,
+        vertical: AppSizes.paddingXS,
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -249,7 +240,7 @@ class MingrrFilterRow extends StatelessWidget {
             // 타이틀 (공통 위젯 사용)
             if (showTitle && title != null) ...[
               _FilterTitle(title!),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSizes.gapM),
             ],
             // 칩 목록
             ...children.map((child) {
@@ -258,7 +249,7 @@ class MingrrFilterRow extends StatelessWidget {
                 return child;
               }
               return Padding(
-                padding: const EdgeInsets.only(right: 6),
+                padding: const EdgeInsets.only(right: AppSizes.paddingXS),
                 child: child,
               );
             }),
@@ -335,11 +326,11 @@ class MingrrCategoryChips extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
+          bottom: BorderSide(color: colorScheme.outline.withValues(alpha: 0.3)),
         ),
       ),
       child: SingleChildScrollView(
@@ -349,32 +340,30 @@ class MingrrCategoryChips extends StatelessWidget {
             // 타이틀 (공통 위젯 사용)
             if (title != null) ...[
               _FilterTitle(title!),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSizes.gapM),
             ],
             // 카테고리 칩 목록
             ...List.generate(categories.length, (index) {
               final category = categories[index];
               final isSelected = index == selectedIndex;
               return Padding(
-                padding: const EdgeInsets.only(right: 6),
+                padding: const EdgeInsets.only(right: AppSizes.paddingXS),
                 child: GestureDetector(
                   onTap: () => onSelected(index),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                     decoration: BoxDecoration(
                       color: isSelected ? chipColor : Colors.transparent,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusS),
                       border: Border.all(
                         color: isSelected ? chipColor : colorScheme.outline,
                       ),
                     ),
                     child: Text(
                       category,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
-                      ),
+                      style: isSelected 
+                          ? AppTextStyles.filterChipSelected(context)
+                          : AppTextStyles.filterChip(context),
                     ),
                   ),
                 ),
@@ -419,11 +408,11 @@ class MingrrCategoryChipsWithIcon extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
+          bottom: BorderSide(color: colorScheme.outline.withValues(alpha: 0.3)),
         ),
       ),
       child: SingleChildScrollView(
@@ -433,32 +422,30 @@ class MingrrCategoryChipsWithIcon extends StatelessWidget {
             // 타이틀 (공통 위젯 사용)
             if (title != null) ...[
               _FilterTitle(title!),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSizes.gapM),
             ],
             // 카테고리 칩 목록
             ...List.generate(categories.length, (index) {
               final category = categories[index];
               final isSelected = index == selectedIndex;
               return Padding(
-                padding: const EdgeInsets.only(right: 6),
+                padding: const EdgeInsets.only(right: AppSizes.paddingXS),
                 child: GestureDetector(
                   onTap: () => onSelected(index),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                     decoration: BoxDecoration(
                       color: isSelected ? chipColor : Colors.transparent,
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusS),
                       border: Border.all(
                         color: isSelected ? chipColor : colorScheme.outline,
                       ),
                     ),
                     child: Text(
                       category.label,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
-                      ),
+                      style: isSelected 
+                          ? AppTextStyles.filterChipSelected(context)
+                          : AppTextStyles.filterChip(context),
                     ),
                   ),
                 ),
@@ -505,11 +492,11 @@ class MingrrSortChips extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: colorScheme.outline.withOpacity(0.3)),
+          bottom: BorderSide(color: colorScheme.outline.withValues(alpha: 0.3)),
         ),
       ),
       child: SingleChildScrollView(
@@ -519,14 +506,14 @@ class MingrrSortChips extends StatelessWidget {
             // 타이틀 (공통 위젯 사용)
             if (title != null) ...[
               _FilterTitle(title!),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSizes.gapM),
             ],
             // 정렬 칩 목록
             ...List.generate(options.length, (index) {
               final option = options[index];
               final isOptionSelected = index == selectedIndex;
               return Padding(
-                padding: const EdgeInsets.only(right: 6),
+                padding: const EdgeInsets.only(right: AppSizes.paddingXS),
                 child: MingrrSortChip(
                   label: option,
                   isSelected: isOptionSelected,

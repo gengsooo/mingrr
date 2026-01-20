@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/constants/app_sizes.dart';
@@ -52,7 +53,7 @@ Widget _buildMemoField(BuildContext context, TextEditingController controller, {
     maxLines: maxLines,
     decoration: InputDecoration(
       hintText: hint ?? '메모를 입력하세요',
-      hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
+      hintStyle: AppTextStyles.secondary(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
         borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
@@ -121,7 +122,7 @@ class _AddWeightRecordScreenState extends State<AddWeightRecordScreen> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
               hintText: '예: 5.2',
-              hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
+              hintStyle: AppTextStyles.secondary(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
               suffixText: 'kg',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
@@ -137,10 +138,10 @@ class _AddWeightRecordScreenState extends State<AddWeightRecordScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('날짜 *'),
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('메모'),
           _buildMemoField(context, _memoController),
         ],
@@ -219,10 +220,10 @@ class _AddGroomingRecordScreenState extends State<AddGroomingRecordScreen> {
             iconBuilder: (type) => type.icon,
             accentColor: context.features.health,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('날짜 *'),
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('메모'),
           _buildMemoField(context, _memoController),
         ],
@@ -284,7 +285,7 @@ class _AddVaccinationRecordScreenState extends State<AddVaccinationRecordScreen>
         children: [
           _buildLabel('접종일 *'),
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('메모'),
           _buildMemoField(context, _memoController, hint: '백신 종류, 병원, 다음 접종일, 비용 등'),
         ],
@@ -346,7 +347,7 @@ class _AddCheckupRecordScreenState extends State<AddCheckupRecordScreen> {
         children: [
           _buildLabel('검진일 *'),
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('메모'),
           _buildMemoField(context, _memoController, hint: '검진 종류, 결과, 병원, 비용, 다음 검진일 등'),
         ],
@@ -414,7 +415,7 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
             controller: _nameController,
             decoration: InputDecoration(
               hintText: '예: 심장사상충약, 관절영양제',
-              hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
+              hintStyle: AppTextStyles.secondary(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
@@ -429,9 +430,9 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('아이콘 색상'),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSizes.gapS),
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -444,7 +445,7 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isSelected ? color.withOpacity(0.15) : Theme.of(context).colorScheme.surface,
+                    color: isSelected ? color.withValues(alpha: 0.15) : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     border: Border.all(
                       color: isSelected ? color : Theme.of(context).colorScheme.outline,
@@ -460,10 +461,10 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
               );
             }).toList(),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('날짜 *'),
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('메모'),
           _buildMemoField(context, _memoController),
         ],
@@ -536,7 +537,7 @@ class _AddSpecialRecordScreenState extends State<AddSpecialRecordScreen> {
         children: [
           _buildLabel('날짜 *'),
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('메모 *'),
           _buildMemoField(context, _memoController, hint: '증상, 행동, 식이 변화 등 특이사항을 기록하세요', maxLines: 5),
         ],

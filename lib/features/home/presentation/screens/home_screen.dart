@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/pet_constants.dart';
+import '../../../../core/constants/location_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/appbar_actions.dart';
@@ -164,14 +166,14 @@ class HomeScreen extends ConsumerWidget {
         children: [
           Icon(Icons.pets, size: 48, color: colorScheme.outlineVariant),
           const SizedBox(height: AppSizes.gapM),
-          const Text(
+          Text(
             '등록된 반려동물이 없습니다',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: AppTextStyles.sectionTitle(context),
           ),
           const SizedBox(height: AppSizes.gapS),
           Text(
             '프로필에서 반려동물을 추가해보세요',
-            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+            style: AppTextStyles.secondary(context),
           ),
           const SizedBox(height: AppSizes.gapM),
           MingrrButton(
@@ -236,14 +238,14 @@ class HomeScreen extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               '내 반려동물',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: AppTextStyles.sectionTitle(context),
             ),
             Builder(
               builder: (context) => TextButton(
                 onPressed: () => context.push('/profile'),
-                child: Text('관리', style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                child: Text('관리', style: AppTextStyles.secondary(context)),
               ),
             ),
           ],
@@ -294,7 +296,7 @@ class HomeScreen extends ConsumerWidget {
                           );
                         },
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: AppSizes.gapXS),
                       // 이름만 표시
                       Builder(
                         builder: (ctx) {
@@ -340,12 +342,12 @@ class HomeScreen extends ConsumerWidget {
           children: [
             Text(
               '${selectedPet.name}의 건강 기록',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: AppTextStyles.sectionTitle(context),
             ),
             Builder(
               builder: (ctx) => TextButton(
                 onPressed: () => _showHealthCategorySettings(ctx, ref),
-                child: Text('설정', style: TextStyle(fontSize: 13, color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
+                child: Text('설정', style: AppTextStyles.secondary(ctx)),
               ),
             ),
           ],
@@ -395,7 +397,7 @@ class HomeScreen extends ConsumerWidget {
                           color: cs.onSurfaceVariant,
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSizes.gapXS),
                       Icon(Icons.chevron_right, size: 18, color: cs.onSurfaceVariant),
                     ],
                   );
@@ -431,9 +433,9 @@ class HomeScreen extends ConsumerWidget {
               // 헤더
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: 12),
-                child: const Text(
+                child: Text(
                   '메인화면 건강기록 설정',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  style: AppTextStyles.headlineSmall(sheetContext),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -442,10 +444,10 @@ class HomeScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
                 child: Text(
                   '메인화면에 표시할 건강기록을 선택하세요 (최소 1개, 최대 5개)',
-                  style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                  style: AppTextStyles.secondary(sheetContext),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSizes.gapL),
               // 카테고리 목록 (Consumer로 상태 변경 감지)
               Expanded(
                 child: Consumer(
@@ -483,13 +485,13 @@ class HomeScreen extends ConsumerWidget {
                           title: Row(
                             children: [
                               Icon(category.icon, size: 20, color: sheetContext.features.health),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: AppSizes.gapM),
                               Text(category.label),
                             ],
                           ),
                           subtitle: Text(
                             category.description,
-                            style: const TextStyle(fontSize: 12),
+                            style: AppTextStyles.secondarySmall(ctx),
                           ),
                           activeColor: sheetContext.features.health,
                         );
@@ -538,13 +540,13 @@ class HomeScreen extends ConsumerWidget {
                 end: Alignment.bottomRight,
                 colors: [
                   accentColor,
-                  accentColor.withOpacity(0.8),
+                  accentColor.withValues(alpha: 0.8),
                 ],
               ),
               borderRadius: BorderRadius.circular(AppSizes.radiusL),
               boxShadow: [
                 BoxShadow(
-                  color: accentColor.withOpacity(0.3),
+                  color: accentColor.withValues(alpha: 0.3),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
@@ -557,8 +559,8 @@ class HomeScreen extends ConsumerWidget {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusM),
                   ),
                   child: const Center(
                     child: Icon(Icons.directions_walk, size: 32, color: Colors.white),
@@ -594,7 +596,7 @@ class HomeScreen extends ConsumerWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
@@ -650,8 +652,8 @@ class HomeScreen extends ConsumerWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(12),
+            color: color.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
           child: Icon(icon, size: 22, color: color),
         ),
@@ -674,7 +676,7 @@ class HomeScreen extends ConsumerWidget {
             final cs = Theme.of(ctx).colorScheme;
             return Text(
               label,
-              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+              style: AppTextStyles.cardMeta(ctx),
             );
           },
         ),
@@ -750,24 +752,24 @@ class HomeScreen extends ConsumerWidget {
                           children: [
                             Text(
                               pet.name,
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                              style: AppTextStyles.titleMedium(context),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             Builder(
                               builder: (ctx) => Text(
                                 '${pet.breed ?? '품종 미상'} · ${_calculateAge(pet.birthDate)}',
-                                style: TextStyle(fontSize: 10, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                                style: AppTextStyles.caption(ctx),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: AppSizes.gapXS),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
                               decoration: BoxDecoration(
-                                color: _getScoreColor(context, score).withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(10),
+                                color: _getScoreColor(context, score).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                               ),
                               child: Text(
                                 '궁합 $score%',
@@ -838,7 +840,7 @@ class HomeScreen extends ConsumerWidget {
           width: size,
           height: size,
           decoration: BoxDecoration(
-            color: cs.primary.withOpacity(0.15),
+            color: cs.primary.withValues(alpha: 0.15),
             shape: BoxShape.circle,
           ),
           child: imageUrl != null
@@ -919,7 +921,9 @@ class HomeScreen extends ConsumerWidget {
               child: MingrrLoadingIndicator(),
             ),
           ),
-          error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+          error: (_, __) => MingrrErrorState(
+            onRetry: () => ref.invalidate(popularGroupsProvider),
+          ),
         );
       },
     );
@@ -939,7 +943,7 @@ class HomeScreen extends ConsumerWidget {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: features.social.withOpacity(0.15),
+              color: features.social.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(AppSizes.radiusM),
               image: group.imageUrl != null
                   ? DecorationImage(
@@ -960,10 +964,10 @@ class HomeScreen extends ConsumerWidget {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                       decoration: BoxDecoration(
-                        color: features.social.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
+                        color: features.social.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                       ),
                       child: Text(
                         group.category,
@@ -976,10 +980,10 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSizes.gapXS),
                 Text(
                   group.name,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  style: AppTextStyles.titleMedium(context),
                 ),
                 Row(
                   children: [
@@ -987,14 +991,14 @@ class HomeScreen extends ConsumerWidget {
                     const SizedBox(width: 2),
                     Text(
                       group.address ?? LocationConstants.noLocationText,
-                      style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                      style: AppTextStyles.cardMeta(context),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSizes.gapS),
                     Icon(Icons.people, size: 12, color: colorScheme.outlineVariant),
                     const SizedBox(width: 2),
                     Text(
                       '${group.memberCount}명',
-                      style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                      style: AppTextStyles.cardMeta(context),
                     ),
                   ],
                 ),

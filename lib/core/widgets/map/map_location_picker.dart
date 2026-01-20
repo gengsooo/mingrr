@@ -400,9 +400,9 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
             Icon(
               Icons.location_off_outlined,
               size: 64,
-              color: _accentColor.withOpacity(0.5),
+              color: _accentColor.withValues(alpha: 0.5),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             Text(
               '위치를 가져올 수 없습니다',
               style: TextStyle(
@@ -411,7 +411,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             TextButton.icon(
               onPressed: () {
                 setState(() => _isInitializing = true);
@@ -432,7 +432,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
   Widget _buildCenterPin() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 36),
+        padding: const EdgeInsets.only(bottom: AppSizes.paddingXL),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -481,8 +481,8 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            _accentColor.withOpacity(0.1),
-            _accentColor.withOpacity(0.2),
+            _accentColor.withValues(alpha: 0.1),
+            _accentColor.withValues(alpha: 0.2),
           ],
         ),
       ),
@@ -514,7 +514,7 @@ class _AddressPanel extends StatelessWidget {
           color: Theme.of(context).colorScheme.surface,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -547,10 +547,10 @@ class _AddressPanel extends StatelessWidget {
     
     return Container(
       height: fixedHeight,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Row(
         children: [
@@ -596,7 +596,7 @@ class _AddressPanel extends StatelessWidget {
                       if (state.location?.fullAddress != null &&
                           state.location!.fullAddress != state.address)
                         Padding(
-                          padding: const EdgeInsets.only(top: 2),
+                          padding: const EdgeInsets.only(top: AppSizes.paddingXXS),
                           child: Text(
                             state.location!.fullAddress!,
                             style: TextStyle(
@@ -649,7 +649,7 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withOpacity(0.15)
+      ..color = color.withValues(alpha: 0.15)
       ..strokeWidth = 1;
 
     const spacing = 40.0;

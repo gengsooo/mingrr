@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
-import '../constants/pet_constants.dart';
+import '../constants/location_constants.dart';
 
 /// ============================================================
 /// 위치 정보 통합 모델

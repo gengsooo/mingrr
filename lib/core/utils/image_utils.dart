@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'app_logger.dart';
 import '../constants/app_sizes.dart';
+import '../theme/app_text_styles.dart';
 import '../widgets/mingrr_bottom_sheet.dart';
 
 /// ============================================================
@@ -145,11 +146,11 @@ class ImageUtils {
           mainAxisSize: MainAxisSize.min,
           children: [
             const BottomSheetHandle(),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
               child: Text(
                 '이미지 선택',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                style: AppTextStyles.headlineSmall(ctx),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -192,13 +193,13 @@ class ImageUtils {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppSizes.radiusM),
             ),
             child: Icon(icon, size: 28, color: Theme.of(context).colorScheme.primary),
           ),
           const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontSize: 14)),
+          Text(label, style: AppTextStyles.bodyMedium(context)),
         ],
       ),
     );

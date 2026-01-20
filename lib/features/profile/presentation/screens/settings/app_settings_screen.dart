@@ -42,7 +42,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                   child: Text(
                     '화면 모드',
                     style: theme.textTheme.titleLarge,
@@ -67,7 +67,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                   child: Text(
                     '저장 공간',
                     style: theme.textTheme.titleLarge,

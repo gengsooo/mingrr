@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_sizes.dart';
 import '../common_widgets.dart';
 
 /// ============================================================
@@ -12,7 +13,7 @@ import '../common_widgets.dart';
 /// showActionPromptDialog(
 ///   context,
 ///   icon: Container(
-///     decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), shape: BoxShape.circle),
+///     decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), shape: BoxShape.circle),
 ///     child: Icon(Icons.check_circle, color: Colors.green),
 ///   ),
 ///   title: '🎉 활동이 완료되었어요!',
@@ -82,10 +83,10 @@ class MingrrActionPromptDialog extends StatelessWidget {
     
     return Dialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppSizes.radiusL),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSizes.paddingXXL),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -95,7 +96,7 @@ class MingrrActionPromptDialog extends StatelessWidget {
               height: 64,
               child: icon,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             
             // 제목
             Text(
@@ -109,7 +110,7 @@ class MingrrActionPromptDialog extends StatelessWidget {
             
             // 메시지
             if (message != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSizes.gapS),
               Text(
                 message!,
                 style: TextStyle(
@@ -120,7 +121,7 @@ class MingrrActionPromptDialog extends StatelessWidget {
               ),
             ],
             
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSizes.gapXL),
             
             // 주 버튼
             MingrrButton(
@@ -136,7 +137,7 @@ class MingrrActionPromptDialog extends StatelessWidget {
             
             // 보조 버튼
             if (secondaryButtonText != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSizes.gapS),
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
@@ -167,7 +168,7 @@ class MingrrActionPromptDialog extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, size: iconSize, color: color),

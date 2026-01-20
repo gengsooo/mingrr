@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_sizes.dart';
+import '../theme/app_text_styles.dart';
 import 'common_widgets.dart';
 
 /// ============================================================
@@ -118,11 +119,7 @@ class MingrrBottomSheet extends StatelessWidget {
           if (title != null) ...[
             Text(
               title!,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface,
-              ),
+              style: AppTextStyles.headlineSmall(context),
             ),
             const SizedBox(height: AppSizes.gapM),
           ],
@@ -215,10 +212,7 @@ class MingrrOptionsSheet extends StatelessWidget {
           if (title != null) ...[
             Text(
               title!,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTextStyles.headlineSmall(context),
             ),
             const SizedBox(height: AppSizes.gapM),
           ],
@@ -400,7 +394,7 @@ Future<void> showDetailOptionsSheet({
 ///     child: Row(
 ///       children: [
 ///         Expanded(child: ElevatedButton(...)),  // 채팅하기
-///         SizedBox(width: 12),
+///         const SizedBox(width: AppSizes.gapM),
 ///         ElevatedButton(...),  // 좋아요
 ///       ],
 ///     ),
@@ -438,7 +432,7 @@ class MingrrBottomButtonBar extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         boxShadow: showShadow ? [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -631,7 +625,7 @@ class MingrrInputBottomSheet extends StatelessWidget {
             child: SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 AppSizes.bottomSheetButtonPaddingH,
-                12,
+                AppSizes.paddingM,
                 AppSizes.bottomSheetButtonPaddingH,
                 AppSizes.bottomSheetButtonPaddingH,
               ),
@@ -649,9 +643,9 @@ class MingrrInputBottomSheet extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         AppSizes.bottomSheetButtonPaddingH,
-        8,
+        AppSizes.paddingS,
         AppSizes.bottomSheetButtonPaddingH,
-        subtitle != null ? 4 : 8,
+        subtitle != null ? AppSizes.paddingXS : AppSizes.paddingS,
       ),
       child: Column(
         children: [
@@ -663,7 +657,7 @@ class MingrrInputBottomSheet extends StatelessWidget {
           // 제목
           Text(
             title,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            style: AppTextStyles.headlineSmall(context),
             textAlign: TextAlign.center,
           ),
           // 부제목 (선택)
@@ -672,11 +666,7 @@ class MingrrInputBottomSheet extends StatelessWidget {
             Text(
               subtitle!,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.4,
-              ),
+              style: AppTextStyles.secondary(context).copyWith(height: 1.4),
             ),
           ],
         ],
@@ -698,7 +688,7 @@ class MingrrInputBottomSheet extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),

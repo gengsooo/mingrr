@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_sizes.dart';
+import '../theme/app_text_styles.dart';
 import 'mingrr_bottom_sheet.dart';
 
 /// ============================================================
@@ -66,18 +67,18 @@ class DistanceFilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
+          bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5)),
         ),
       ),
       child: Row(
         children: [
           // 위치 아이콘
           Icon(Icons.location_on, size: 18, color: accentColor),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSizes.gapSM),
           
           // 위치 라벨
           Text(
@@ -87,16 +88,16 @@ class DistanceFilterBar extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSizes.gapMS),
           
           // 거리 선택 버튼
           GestureDetector(
             onTap: () => _showDistanceBottomSheet(context),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
+                color: accentColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusM),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -109,7 +110,7 @@ class DistanceFilterBar extends StatelessWidget {
                       color: accentColor,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: AppSizes.gapXS),
                   Icon(
                     Icons.keyboard_arrow_down,
                     size: 18,
@@ -192,7 +193,7 @@ class DistanceBottomSheet extends StatelessWidget {
           const BottomSheetHandle(),
           // 헤더 (타이틀만)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
             child: const Text(
               '거리 설정',
               style: TextStyle(
@@ -204,7 +205,7 @@ class DistanceBottomSheet extends StatelessWidget {
           ),
           // 안내 문구 (중앙 정렬)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
             child: Text(
               '집 주소 기준으로 필터링합니다',
               style: TextStyle(
@@ -214,13 +215,13 @@ class DistanceBottomSheet extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           
           // 거리 옵션 목록 (스크롤 가능)
           Flexible(
             child: ListView.builder(
               shrinkWrap: true,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
               itemCount: distanceOptions.length,
               itemBuilder: (context, index) {
                 final option = distanceOptions[index];
@@ -229,7 +230,7 @@ class DistanceBottomSheet extends StatelessWidget {
                   dense: true,
                   visualDensity: VisualDensity.compact,
                   onTap: () => onDistanceSelected(option.km),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS),
                   leading: Icon(
                     isSelected ? Icons.check_circle : Icons.circle_outlined,
                     color: isSelected ? accentColor : Theme.of(context).colorScheme.outlineVariant,
@@ -237,15 +238,14 @@ class DistanceBottomSheet extends StatelessWidget {
                   ),
                   title: Text(
                     option.label,
-                    style: TextStyle(
-                      fontSize: 15,
+                    style: AppTextStyles.listTitle(context).copyWith(
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                       color: isSelected ? accentColor : Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   subtitle: Text(
                     option.description,
-                    style: const TextStyle(fontSize: 12),
+                    style: AppTextStyles.secondarySmall(context),
                   ),
                 );
               },
@@ -291,27 +291,27 @@ class LocationFilterBar extends StatelessWidget {
         : '전체 지역';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
+          bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5)),
         ),
       ),
       child: Row(
         children: [
           // 위치 아이콘
           Icon(Icons.location_on, size: 18, color: accentColor),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSizes.gapSM),
           
           // 위치 선택 버튼
           GestureDetector(
             onTap: () => _showLocationBottomSheet(context),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(16),
+                color: accentColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusM),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -324,7 +324,7 @@ class LocationFilterBar extends StatelessWidget {
                       color: accentColor,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: AppSizes.gapXS),
                   Icon(
                     Icons.keyboard_arrow_down,
                     size: 18,
@@ -342,10 +342,10 @@ class LocationFilterBar extends StatelessWidget {
             GestureDetector(
               onTap: () => onLocationChanged(null, null),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(12),
+                  color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -479,7 +479,7 @@ class _LocationBottomSheetState extends State<LocationBottomSheet> {
           const BottomSheetHandle(),
           // 헤더
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSizes.paddingL),
             child: Row(
               children: [
                 const Text(
@@ -617,7 +617,7 @@ class CategoryFilterChips extends StatelessWidget {
       height: 70,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
         itemCount: categories.length,
         itemBuilder: (context, index) {
           final category = categories[index];
@@ -627,7 +627,7 @@ class CategoryFilterChips extends StatelessWidget {
             onTap: () => onSelected(index),
             child: Container(
               width: 60,
-              margin: const EdgeInsets.only(right: 8),
+              margin: const EdgeInsets.only(right: AppSizes.paddingS),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -638,7 +638,7 @@ class CategoryFilterChips extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? accentColor
-                          : accentColor.withOpacity(0.1),
+                          : accentColor.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
@@ -655,7 +655,7 @@ class CategoryFilterChips extends StatelessWidget {
                             ),
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSizes.gapXS),
                   // 라벨
                   Text(
                     category.label,

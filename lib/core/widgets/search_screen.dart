@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/feature_colors.dart';
+import '../theme/app_text_styles.dart';
 import '../constants/app_sizes.dart';
 import '../services/firestore_service.dart';
 import 'common_widgets.dart';
@@ -76,7 +77,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   Widget _buildSearchField() {
     return Padding(
-      padding: const EdgeInsets.only(left: 16),
+      padding: const EdgeInsets.only(left: AppSizes.paddingL),
       child: MingrrSearchBar(
         controller: _searchController,
         hintText: _getHintText(),
@@ -153,7 +154,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           height: 60,
           decoration: BoxDecoration(
             color: context.features.marketContainer,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
             image: product.imageUrls.isNotEmpty
                 ? DecorationImage(
                     image: NetworkImage(product.imageUrls.first),
@@ -175,7 +176,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
         trailing: Text(
           formatRelativeTime(product.createdAt),
-          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+          style: AppTextStyles.cardMeta(context),
         ),
         onTap: () {
           Navigator.pop(context);
@@ -194,7 +195,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           height: 60,
           decoration: BoxDecoration(
             color: context.features.socialContainer,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
             image: group.imageUrl != null
                 ? DecorationImage(
                     image: NetworkImage(group.imageUrl!),
@@ -209,10 +210,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         title: Text(group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Row(
           children: [
-            Text(group.typeString, style: const TextStyle(fontSize: 12)),
-            const SizedBox(width: 8),
+            Text(group.typeString, style: AppTextStyles.secondarySmall(context)),
+            const SizedBox(width: AppSizes.gapS),
             Icon(Icons.person, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
-            Text(' ${group.memberCount}', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant)),
+            Text(' ${group.memberCount}', style: AppTextStyles.cardMeta(context)),
           ],
         ),
         trailing: LikeCountText(count: group.likeCount, size: InfoBadgeSize.small),
@@ -233,7 +234,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           height: 60,
           decoration: BoxDecoration(
             color: context.features.marketContainer,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
           ),
           child: Icon(_getJobIcon(job.type), color: context.features.market),
         ),
@@ -244,7 +245,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
         trailing: Text(
           formatRelativeTime(job.createdAt),
-          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+          style: AppTextStyles.cardMeta(context),
         ),
         onTap: () {
           Navigator.pop(context);
@@ -263,7 +264,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           height: 60,
           decoration: BoxDecoration(
             color: context.features.breedingContainer,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
             image: breeding.imageUrls != null && breeding.imageUrls.isNotEmpty
                 ? DecorationImage(
                     image: NetworkImage(breeding.imageUrls.first),
@@ -278,7 +279,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         title: Text(breeding.title ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(
           '${breeding.breed ?? '품종 미상'}',
-          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+          style: AppTextStyles.cardMeta(context),
         ),
         trailing: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
         onTap: () {
@@ -298,7 +299,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           height: 60,
           decoration: BoxDecoration(
             color: context.features.socialContainer,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
             image: post.imageUrls.isNotEmpty
                 ? DecorationImage(
                     image: NetworkImage(post.imageUrls.first),
@@ -318,26 +319,26 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         subtitle: Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
               decoration: BoxDecoration(
-                color: context.features.social.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(4),
+                color: context.features.social.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
               ),
               child: Text(
                 post.category.label,
-                style: TextStyle(fontSize: 10, color: context.features.social),
+                style: AppTextStyles.tagSmall(context).copyWith(color: context.features.social),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSizes.gapS),
             LikeCountText(count: post.likeCount, size: InfoBadgeSize.small),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSizes.gapS),
             Icon(Icons.chat_bubble_outline, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
-            Text(' ${post.commentCount}', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant)),
+            Text(' ${post.commentCount}', style: AppTextStyles.cardMeta(context)),
           ],
         ),
         trailing: Text(
           formatRelativeTime(post.createdAt),
-          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+          style: AppTextStyles.cardMeta(context),
         ),
         onTap: () {
           Navigator.pop(context);

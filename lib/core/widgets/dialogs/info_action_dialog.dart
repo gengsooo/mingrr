@@ -101,10 +101,10 @@ class MingrrInfoActionDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: colorScheme.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppSizes.radiusL),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSizes.paddingXXL),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -113,12 +113,12 @@ class MingrrInfoActionDialog extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
+                color: iconColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 28, color: iconColor),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             
             // 제목
             Text(
@@ -128,7 +128,7 @@ class MingrrInfoActionDialog extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             
             // 메시지
             Text(
@@ -142,14 +142,14 @@ class MingrrInfoActionDialog extends StatelessWidget {
             
             // 정보 박스들
             if (infoBoxes != null && infoBoxes!.isNotEmpty) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSizes.gapL),
               ...infoBoxes!.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: AppSizes.paddingS),
                 child: _buildInfoBox(context, item),
               )),
             ],
             
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSizes.gapLL),
             
             // 버튼
             Row(
@@ -158,10 +158,10 @@ class MingrrInfoActionDialog extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context, false),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
                       side: BorderSide(color: colorScheme.outline),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
                       ),
                     ),
                     child: Text(
@@ -173,7 +173,7 @@ class MingrrInfoActionDialog extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSizes.gapM),
                 Expanded(
                   child: MingrrButton(
                     text: confirmText,
@@ -197,9 +197,9 @@ class MingrrInfoActionDialog extends StatelessWidget {
     
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSizes.paddingM),
       decoration: BoxDecoration(
-        color: boxColor.withOpacity(0.08),
+        color: boxColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Row(

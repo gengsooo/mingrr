@@ -198,7 +198,7 @@ class ChatOptionsModal extends StatelessWidget {
                       ),
                     ),
                     if (subtitle != null) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: AppSizes.gapXXS),
                       Text(
                         subtitle,
                         style: TextStyle(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../constants/app_sizes.dart';
 
 /// ============================================================
 /// AppBar 공통 액션 버튼
@@ -64,7 +65,7 @@ class AppBarActionButton extends StatelessWidget {
     return AppBarActionButton._(
       key: key,
       type: _ActionType.profile,
-      padding: const EdgeInsets.only(right: 16),
+      padding: const EdgeInsets.only(right: AppSizes.paddingL),
       child: _ProfileIcon(
         imageUrl: imageUrl,
         backgroundColor: backgroundColor,
@@ -124,10 +125,10 @@ class _NotificationIcon extends StatelessWidget {
             top: -4,
             right: -4,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS, vertical: AppSizes.paddingXXS),
               decoration: BoxDecoration(
                 color: Colors.red,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
               child: Text(

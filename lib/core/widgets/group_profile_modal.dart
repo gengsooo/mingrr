@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/bottom_sheet_stack_manager.dart';
 import '../theme/feature_colors.dart';
+import '../theme/app_text_styles.dart';
 import '../constants/app_sizes.dart';
 import 'guardian_profile_modal.dart';
 import 'profile_modal_components.dart';
@@ -174,14 +175,14 @@ class GroupProfileModal extends StatelessWidget {
   /// 모임장 배지
   Widget _buildCreatorBadge(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS, vertical: AppSizes.paddingXXS),
       decoration: BoxDecoration(
         color: context.features.social,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
       ),
-      child: const Text(
+      child: Text(
         '모임장',
-        style: TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.w500),
+        style: AppTextStyles.caption(context).copyWith(color: Colors.white, fontSize: 8),
       ),
     );
   }
@@ -231,14 +232,14 @@ class GroupProfileModal extends StatelessWidget {
   /// 카테고리 배지
   Widget _buildCategoryBadge(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
       decoration: BoxDecoration(
         color: context.features.social.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppSizes.radiusXS),
       ),
       child: Text(
         category!,
-        style: TextStyle(fontSize: 11, color: context.features.social),
+        style: AppTextStyles.tagSmall(context).copyWith(color: context.features.social),
       ),
     );
   }
@@ -251,14 +252,14 @@ class GroupProfileModal extends StatelessWidget {
         spacing: 8,
         runSpacing: 8,
         children: tags.map((tag) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
           decoration: BoxDecoration(
             color: context.features.social.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppSizes.radiusM),
           ),
           child: Text(
             '#$tag',
-            style: TextStyle(fontSize: 13, color: context.features.social),
+            style: AppTextStyles.secondary(context).copyWith(color: context.features.social),
           ),
         )).toList(),
       ),

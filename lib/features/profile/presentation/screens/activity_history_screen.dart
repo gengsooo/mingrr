@@ -32,9 +32,9 @@ class ActivityHistoryScreen extends ConsumerWidget {
             Expanded(
               child: TabBarView(
                 children: [
-                  _buildMatchingHistory(matchesAsync),
-                  _buildTransactionHistory(transactionsAsync),
-                  _buildGroupHistory(groupsAsync),
+                  _buildMatchingHistory(ref, matchesAsync),
+                  _buildTransactionHistory(ref, transactionsAsync),
+                  _buildGroupHistory(ref, groupsAsync),
                 ],
               ),
             ),
@@ -44,7 +44,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
     );
   }
   
-  Widget _buildMatchingHistory(AsyncValue<dynamic> matchesAsync) {
+  Widget _buildMatchingHistory(WidgetRef ref, AsyncValue<dynamic> matchesAsync) {
     return matchesAsync.when(
       data: (matches) {
         if (matches.isEmpty) {
@@ -74,12 +74,14 @@ class ActivityHistoryScreen extends ConsumerWidget {
         type: MingrrLoadingType.dating,
         message: '매칭 내역을 불러오고 있어요',
       ),
-      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(userMatchesProvider),
+      ),
     );
   }
   
   
-  Widget _buildTransactionHistory(AsyncValue<dynamic> transactionsAsync) {
+  Widget _buildTransactionHistory(WidgetRef ref, AsyncValue<dynamic> transactionsAsync) {
     return transactionsAsync.when(
       data: (transactions) {
         if (transactions.isEmpty) {
@@ -109,11 +111,13 @@ class ActivityHistoryScreen extends ConsumerWidget {
         type: MingrrLoadingType.market,
         message: '거래 내역을 불러오고 있어요',
       ),
-      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(userTransactionsProvider),
+      ),
     );
   }
   
-  Widget _buildGroupHistory(AsyncValue<dynamic> groupsAsync) {
+  Widget _buildGroupHistory(WidgetRef ref, AsyncValue<dynamic> groupsAsync) {
     return groupsAsync.when(
       data: (groups) {
         if (groups.isEmpty) {
@@ -143,7 +147,9 @@ class ActivityHistoryScreen extends ConsumerWidget {
         type: MingrrLoadingType.community,
         message: '소모임 활동을 불러오고 있어요',
       ),
-      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(userGroupsProvider),
+      ),
     );
   }
   
@@ -164,12 +170,12 @@ class ActivityHistoryScreen extends ConsumerWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              color: iconColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Icon(icon, color: iconColor, size: 22),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSizes.gapM),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,7 +187,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: AppSizes.gapXXS),
                 Text(
                   subtitle,
                   style: TextStyle(

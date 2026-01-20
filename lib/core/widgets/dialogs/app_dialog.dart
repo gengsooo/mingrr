@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/feature_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../constants/app_sizes.dart';
 import '../common_widgets.dart';
 
@@ -158,7 +159,7 @@ class AppDialog extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(displayIcon, size: 28, color: color),
@@ -168,11 +169,7 @@ class AppDialog extends StatelessWidget {
             // 제목
             Text(
               title ?? type.defaultTitle,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
-              ),
+              style: AppTextStyles.headlineSmall(context),
             ),
             const SizedBox(height: AppSizes.gapS),
             
@@ -180,8 +177,7 @@ class AppDialog extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
+              style: AppTextStyles.bodyMedium(context).copyWith(
                 color: colorScheme.onSurfaceVariant,
                 height: 1.5,
               ),
@@ -277,7 +273,7 @@ Future<String?> showAppInputDialog(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: type.getColor(context).withOpacity(0.1),
+                    color: type.getColor(context).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(type.icon, size: 20, color: type.getColor(context)),
@@ -319,14 +315,14 @@ Future<String?> showAppInputDialog(
                 filled: true,
                 fillColor: colorScheme.surfaceContainerHighest,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   borderSide: BorderSide(color: type.getColor(context), width: 1.5),
                 ),
-                contentPadding: const EdgeInsets.all(16),
+                contentPadding: const EdgeInsets.all(AppSizes.paddingL),
               ),
               autofocus: true,
             ),

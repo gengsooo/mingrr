@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/bottom_sheet_stack_manager.dart';
 import '../services/rating_service.dart';
+import '../theme/app_text_styles.dart';
 import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import '../../models/rating_model.dart';
@@ -208,7 +209,7 @@ class _RatingModalState extends State<RatingModal> {
               backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
               backgroundImage: NetworkImage(widget.targetImageUrl!),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSizes.gapM),
           ],
           Text(
             '${widget.targetName}님에 대한 평가를 보내주세요! 🐾',
@@ -218,7 +219,7 @@ class _RatingModalState extends State<RatingModal> {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSizes.gapXS),
           Text(
             '솔직한 평가는 더 좋은 커뮤니티를 만들어요',
             style: TextStyle(
@@ -239,19 +240,19 @@ class _RatingModalState extends State<RatingModal> {
         children: [
           Text(
             '$_typeLabel 결과',
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            style: AppTextStyles.labelLarge(context).copyWith(fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSizes.gapS),
           Row(
             children: [
               _buildResultChip(ActivityResult.completed, '완료'),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSizes.gapS),
               _buildResultChip(ActivityResult.noShow, '노쇼'),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSizes.gapS),
               _buildResultChip(ActivityResult.cancelled, '취소'),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
         ],
       ),
     );
@@ -276,10 +277,10 @@ class _RatingModalState extends State<RatingModal> {
         }
       }),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
         decoration: BoxDecoration(
           color: isSelected ? chipColor : Theme.of(context).colorScheme.surfaceContainerLow,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
           border: Border.all(
             color: isSelected ? chipColor : Theme.of(context).colorScheme.outline,
           ),
@@ -298,7 +299,7 @@ class _RatingModalState extends State<RatingModal> {
 
   Widget _buildStarRating() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingL),
       child: Column(
         children: [
           Row(
@@ -310,7 +311,7 @@ class _RatingModalState extends State<RatingModal> {
               return GestureDetector(
                 onTap: () => setState(() => _selectedRating = starIndex),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS),
                   child: AnimatedScale(
                     scale: isSelected ? 1.1 : 1.0,
                     duration: const Duration(milliseconds: 150),
@@ -325,7 +326,7 @@ class _RatingModalState extends State<RatingModal> {
             }),
           ),
           if (_selectedRating > 0) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             Text(
               _getScoreLabel(_selectedRating),
               style: TextStyle(
@@ -350,9 +351,9 @@ class _RatingModalState extends State<RatingModal> {
       children: [
         Text(
           isPositive ? '어떤 점이 좋았나요?' : '어떤 점이 아쉬웠나요?',
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          style: AppTextStyles.labelLarge(context),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSizes.gapM),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -370,10 +371,10 @@ class _RatingModalState extends State<RatingModal> {
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
                 decoration: BoxDecoration(
-                  color: isSelected ? tagColor.withOpacity(0.1) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
+                  color: isSelected ? tagColor.withValues(alpha: 0.1) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusL),
                   border: Border.all(
                     color: isSelected ? tagColor : Theme.of(context).colorScheme.outline,
                     width: isSelected ? 1.5 : 1,
@@ -391,7 +392,7 @@ class _RatingModalState extends State<RatingModal> {
             );
           }).toList(),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSizes.gapL),
       ],
     );
   }
@@ -579,8 +580,8 @@ class RatingReminderBanner extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        margin: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingM),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -590,7 +591,7 @@ class RatingReminderBanner extends StatelessWidget {
             begin: Alignment.centerLeft,
             end: Alignment.centerRight,
           ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(
             color: Colors.amber.shade300,
             width: 1,
@@ -611,7 +612,7 @@ class RatingReminderBanner extends StatelessWidget {
                 color: Colors.white,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSizes.gapM),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -666,11 +667,11 @@ class RatingReceivedBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
+      padding: const EdgeInsets.all(AppSizes.paddingL),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -678,7 +679,7 @@ class RatingReceivedBanner extends StatelessWidget {
           Row(
             children: [
               const Icon(Icons.pets, size: 20),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSizes.gapS),
               Expanded(
                 child: Text(
                   '🐾 $raterName님이 평가를 남겼어요!',
@@ -698,7 +699,7 @@ class RatingReceivedBanner extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSizes.gapS),
           Text(
             '나도 평가해볼까요?',
             style: TextStyle(
@@ -706,7 +707,7 @@ class RatingReceivedBanner extends StatelessWidget {
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           MingrrButton(
             text: '평가하러 가기',
             onPressed: onRateBack,
@@ -765,10 +766,10 @@ class TransactionCompleteDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppSizes.radiusL),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSizes.paddingXXL),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -777,7 +778,7 @@ class TransactionCompleteDialog extends StatelessWidget {
               size: 48,
               color: context.features.success,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             Text(
               title,
               style: const TextStyle(
@@ -785,7 +786,7 @@ class TransactionCompleteDialog extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             Text(
               message,
               textAlign: TextAlign.center,
@@ -794,7 +795,7 @@ class TransactionCompleteDialog extends StatelessWidget {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSizes.gapXL),
             
             // 완료 버튼
             MingrrButton(
@@ -807,7 +808,7 @@ class TransactionCompleteDialog extends StatelessWidget {
               textColor: Colors.white,
               height: 48,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             
             // 노쇼 버튼
             MingrrButton(
@@ -821,7 +822,7 @@ class TransactionCompleteDialog extends StatelessWidget {
               textColor: Colors.red,
               height: 48,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             
             // 취소 버튼
             TextButton(

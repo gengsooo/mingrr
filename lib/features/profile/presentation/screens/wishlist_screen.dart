@@ -28,7 +28,7 @@ class WishlistScreen extends ConsumerWidget {
             Expanded(
               child: TabBarView(
                 children: [
-                  _buildProductWishlist(wishlistAsync),
+                  _buildProductWishlist(ref, wishlistAsync),
                   _buildPetWishlist(),
                 ],
               ),
@@ -39,7 +39,7 @@ class WishlistScreen extends ConsumerWidget {
     );
   }
   
-  Widget _buildProductWishlist(AsyncValue<dynamic> wishlistAsync) {
+  Widget _buildProductWishlist(WidgetRef ref, AsyncValue<dynamic> wishlistAsync) {
     return wishlistAsync.when(
       data: (products) {
         if (products.isEmpty) {
@@ -55,18 +55,18 @@ class WishlistScreen extends ConsumerWidget {
           itemBuilder: (context, index) {
             final product = products[index];
             return Card(
-              margin: const EdgeInsets.only(bottom: 12),
+              margin: const EdgeInsets.only(bottom: AppSizes.paddingM),
               child: ListTile(
                 leading: Container(
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.outline,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                   ),
                   child: product.imageUrls.isNotEmpty
                       ? ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                           child: Image.network(product.imageUrls.first, fit: BoxFit.cover),
                         )
                       : Icon(Icons.image, color: Theme.of(context).colorScheme.outlineVariant),
@@ -83,7 +83,9 @@ class WishlistScreen extends ConsumerWidget {
         type: MingrrLoadingType.market,
         message: '찜한 상품을 불러오고 있어요',
       ),
-      error: (_, __) => const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(wishlistProductsProvider),
+      ),
     );
   }
   

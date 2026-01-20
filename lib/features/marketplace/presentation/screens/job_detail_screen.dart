@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
@@ -68,7 +69,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       ),
       error: (_, __) => Scaffold(
         appBar: AppBar(title: const Text('알바')),
-        body: const MingrrErrorState(title: '일시적인 오류가 발생했어요', subtitle: '잠시 후 다시 시도해주세요'),
+        body: MingrrErrorState(
+          onRetry: () => ref.invalidate(jobDetailProvider(widget.jobId)),
+        ),
       ),
     );
   }
@@ -101,7 +104,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                   
                   // 이미지 (있는 경우)
                   if (job.imageUrls.isNotEmpty) ...[
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSizes.gapXL),
                     _buildImages(job),
                   ],
                   
@@ -162,58 +165,58 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
-                color: _getTypeColor(job.type).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
+                color: _getTypeColor(job.type).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
               child: Text(
                 job.typeString,
-                style: TextStyle(fontSize: 12, color: _getTypeColor(job.type)),
+                style: AppTextStyles.tag(context).copyWith(color: _getTypeColor(job.type)),
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSizes.gapSM),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
-                color: _getStatusColor(job.status).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
+                color: _getStatusColor(job.status).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
               child: Text(
                 _getStatusText(job.status),
-                style: TextStyle(fontSize: 12, color: _getStatusColor(job.status)),
+                style: AppTextStyles.tag(context).copyWith(color: _getStatusColor(job.status)),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSizes.gapM),
         // 제목
         Text(
           job.title,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+          style: AppTextStyles.headlineMedium(context),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.gapS),
         // 기간, 시간, 위치
         if (job.fullPeriodString.isNotEmpty) ...[
           Row(
             children: [
               Icon(Icons.calendar_today, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSizes.gapXS),
               Expanded(
                 child: Text(
                   job.fullPeriodString,
-                  style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: AppTextStyles.secondary(context),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSizes.gapXS),
         ],
         Text(
           '${_getDistanceString(job)} · ${formatRelativeTime(job.createdAt)}',
-          style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          style: AppTextStyles.secondary(context),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSizes.gapL),
         // 급여
         Text(
           '${formatPrice(job.price)}원 / ${job.priceUnit}',
@@ -267,21 +270,21 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           '상세 내용',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          style: AppTextStyles.sectionTitle(context),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSizes.gapM),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSizes.paddingL),
           decoration: BoxDecoration(
             color: context.sectionBackground,
             borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
           child: Text(
             job.description,
-            style: TextStyle(fontSize: 14, height: 1.6, color: Theme.of(context).colorScheme.onSurface),
+            style: AppTextStyles.bodyMedium(context).copyWith(height: 1.6),
           ),
         ),
       ],
@@ -299,7 +302,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             fontWeight: FontWeight.w600,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSizes.gapM),
         MingrrImageGallery(
           imageUrls: job.imageUrls,
           height: 120,

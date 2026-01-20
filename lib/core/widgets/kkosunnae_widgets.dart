@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/kkosunnae_service.dart';
 import '../constants/app_sizes.dart';
+import '../theme/app_text_styles.dart';
 import 'loading_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
 
@@ -37,17 +38,16 @@ class KkosunnaeScoreSmall extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _buildPawIcon(score, 16),
-        const SizedBox(width: 4),
+        const SizedBox(width: AppSizes.gapXS),
         Text(
           '${score.toInt()}점',
-          style: TextStyle(
-            fontSize: 12,
+          style: AppTextStyles.labelMedium(context).copyWith(
             fontWeight: FontWeight.w600,
             color: _getScoreColor(score),
           ),
         ),
         if (showBadge) ...[
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSizes.gapXS),
           _KkosunaeMasterBadgeSmall(size: 14),
         ],
       ],
@@ -75,7 +75,7 @@ class _KkosunaeMasterBadgeSmall extends StatelessWidget {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: const Color(KkosunnaeService.colorBigBang).withOpacity(0.4),
+            color: const Color(KkosunnaeService.colorBigBang).withValues(alpha: 0.4),
             blurRadius: 4,
             spreadRadius: 0.5,
           ),
@@ -113,17 +113,17 @@ class KkosunnaeScoreMedium extends StatelessWidget {
     return GestureDetector(
       onTap: onTap ?? () => showKkosunnaeDetailSheet(context),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
         decoration: BoxDecoration(
-          color: scoreColor.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(20),
+          color: scoreColor.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             // 발바닥 게이지 아이콘
             _buildPawIcon(score, 20),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSizes.gapSM),
             // 꼬순내지수 라벨
             Text(
               '꼬순내지수',
@@ -133,7 +133,7 @@ class KkosunnaeScoreMedium extends StatelessWidget {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSizes.gapXS),
             // 점수
             Text(
               '${score.toInt()}점',
@@ -144,10 +144,10 @@ class KkosunnaeScoreMedium extends StatelessWidget {
               ),
             ),
             if (showBadge) ...[
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSizes.gapXS),
               _KkosunaeMasterBadgeSmall(size: 14),
             ],
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSizes.gapXS),
             // 클릭 가능 표시 아이콘
             Icon(
               Icons.help_outline,
@@ -177,10 +177,10 @@ class KkosunnaeScoreLarge extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSizes.paddingL),
         decoration: BoxDecoration(
-          color: _getScoreColor(score).withOpacity(0.1),
-          borderRadius: BorderRadius.circular(16),
+          color: _getScoreColor(score).withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(AppSizes.radiusM),
         ),
         child: Column(
           children: [
@@ -188,7 +188,7 @@ class KkosunnaeScoreLarge extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildPawIcon(score, 32),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSizes.gapS),
                 Text(
                   '꼬순내지수',
                   style: TextStyle(
@@ -199,7 +199,7 @@ class KkosunnaeScoreLarge extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSizes.gapM),
             Text(
               '${score.toInt()}점',
               style: TextStyle(
@@ -208,12 +208,12 @@ class KkosunnaeScoreLarge extends StatelessWidget {
                 color: _getScoreColor(score),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             // 온도 바
             Container(
               height: 8,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                 gradient: const LinearGradient(
                   colors: [
                     Colors.blue,
@@ -232,10 +232,10 @@ class KkosunnaeScoreLarge extends StatelessWidget {
                       height: 8,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(2),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.3),
+                            color: Colors.black.withValues(alpha: 0.3),
                             blurRadius: 2,
                           ),
                         ],
@@ -245,7 +245,7 @@ class KkosunnaeScoreLarge extends StatelessWidget {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             Text(
               _getScoreDescription(score),
               style: TextStyle(
@@ -274,7 +274,7 @@ Widget _buildPawIcon(double score, double size) {
         Icon(
           Icons.pets,
           size: size,
-          color: Colors.grey.withOpacity(0.3),
+          color: Colors.grey.withValues(alpha: 0.3),
         ),
         // 채워지는 부분 (ClipRect로 퍼센트만큼만 표시)
         ClipRect(
@@ -440,29 +440,29 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
       children: [
         const BottomSheetHandle(),
         // 헤더
-        const Padding(
-          padding: EdgeInsets.fromLTRB(20, 4, 20, 12),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(AppSizes.paddingL, 4, 20, 12),
           child: Text(
             '꼬순내지수',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            style: AppTextStyles.headlineSmall(context),
             textAlign: TextAlign.center,
           ),
         ),
         // 본문
         Flexible(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(0, 0, 0, 20),
+            padding: const EdgeInsets.only(bottom: AppSizes.paddingL),
             child: Column(
               children: [
                 // 헤더: 총점 + 등급명
                 _buildScoreHeader(score, scoreColor),
                 
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSizes.gapL),
                 
                 // 점수 상세 섹션
                 _buildScoreDetailSection(breakdown),
                 
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSizes.gapLL),
                 
                 // 등급 안내 섹션
                 _buildGradeGuideSection(score),
@@ -481,18 +481,18 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(AppSizes.paddingXL),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            scoreColor.withOpacity(0.1),
-            scoreColor.withOpacity(0.05),
+            scoreColor.withValues(alpha: 0.1),
+            scoreColor.withValues(alpha: 0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: scoreColor.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(AppSizes.radiusL),
+        border: Border.all(color: scoreColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -501,7 +501,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildPawIcon(score.toDouble(), 36),
-              const SizedBox(width: 10),
+              const SizedBox(width: AppSizes.gapMS),
               Text(
                 '$score점',
                 style: TextStyle(
@@ -510,12 +510,12 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
                   color: scoreColor,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSizes.gapS),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                 decoration: BoxDecoration(
-                  color: scoreColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  color: scoreColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Text(
                   '$gradeEmoji $gradeName',
@@ -527,7 +527,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
                 ),
               ),
               if (showBadge) ...[
-                const SizedBox(width: 6),
+                const SizedBox(width: AppSizes.gapSM),
                 _KkosunaeMasterBadgeSmall(size: 18),
               ],
             ],
@@ -556,11 +556,11 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '등급 안내',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: AppTextStyles.titleLarge(context),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           _buildGradeRow(
             thresholds.getBigBangRange(),
             '빅뱅',
@@ -597,12 +597,12 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
             Color(KkosunnaeService.getGradeColor(0)),
             currentScore < thresholds.solsol,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSizes.gapS),
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(AppSizes.paddingS),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
             ),
             child: Row(
               children: [
@@ -611,7 +611,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
                   size: 14,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSizes.gapS),
                 Expanded(
                   child: Text(
                     '등급 구간은 전체 사용자 분포에 따라 주기적으로 조정돼요',
@@ -638,20 +638,20 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
     bool showBadge = false,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      margin: const EdgeInsets.only(bottom: AppSizes.paddingS),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
       decoration: BoxDecoration(
-        color: isCurrentGrade ? color.withOpacity(0.15) : color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
+        color: isCurrentGrade ? color.withValues(alpha: 0.15) : color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
         border: Border.all(
-          color: isCurrentGrade ? color : color.withOpacity(0.2),
+          color: isCurrentGrade ? color : color.withValues(alpha: 0.2),
           width: isCurrentGrade ? 1.5 : 1,
         ),
       ),
       child: Row(
         children: [
           Icon(Icons.pets, size: 16, color: color),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSizes.gapS),
           SizedBox(
             width: 65,
             child: Text(
@@ -677,12 +677,12 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
           ),
           if (showBadge) _KkosunaeMasterBadgeSmall(size: 14),
           if (isCurrentGrade) ...[
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSizes.gapXS),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
               decoration: BoxDecoration(
                 color: color,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
               child: const Text(
                 '현재',
@@ -705,11 +705,11 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '점수 상세',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: AppTextStyles.titleLarge(context),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           _buildScoreBar('평판 점수', breakdown.reputation, 'reputation'),
           _buildScoreBar('활동 점수', breakdown.activity, 'activity'),
           _buildScoreBar('신뢰도 점수', breakdown.trust, 'trust'),
@@ -735,10 +735,10 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
     // 다크모드 고려한 게이지 색상 (중립적 색상)
     final gaugeColor = isNegative 
         ? Colors.red 
-        : theme.colorScheme.onSurface.withOpacity(0.6);
+        : theme.colorScheme.onSurface.withValues(alpha: 0.6);
     
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: AppSizes.paddingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -747,23 +747,22 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
             children: [
               Text(
                 label,
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500),
+                style: AppTextStyles.titleSmall(context),
               ),
               Text(
                 isNegative 
                     ? '-${detail.score.toStringAsFixed(1)}점'
                     : '${detail.score.toStringAsFixed(1)}/${detail.maxScore.toInt()}점',
-                style: TextStyle(
-                  fontSize: 12,
+                style: AppTextStyles.labelMedium(context).copyWith(
                   fontWeight: FontWeight.w600,
                   color: isNegative ? Colors.red : theme.colorScheme.onSurface,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSizes.gapSM),
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
             child: LinearProgressIndicator(
               value: percentage.clamp(0.0, 1.0),
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
@@ -772,7 +771,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
             ),
           ),
           if (tipText != null && tipText.isNotEmpty) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSizes.gapXS),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -781,7 +780,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
                   size: 12,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSizes.gapXS),
                 Expanded(
                   child: Text(
                     tipText,

@@ -63,14 +63,14 @@ class LocationBubbleWidget extends StatelessWidget {
         
         // 말풍선 본체
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSizes.paddingM),
           decoration: BoxDecoration(
             color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: color.withOpacity(0.3)),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
+            border: Border.all(color: color.withValues(alpha: 0.3)),
             boxShadow: [
               BoxShadow(
-                color: colorScheme.shadow.withOpacity(0.1),
+                color: colorScheme.shadow.withValues(alpha: 0.1),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -84,7 +84,7 @@ class LocationBubbleWidget extends StatelessWidget {
               Row(
                 children: [
                   Icon(Icons.location_on, size: 16, color: color),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: AppSizes.gapXS),
                   Text(
                     '현재 위치가 맞나요?',
                     style: TextStyle(
@@ -98,7 +98,7 @@ class LocationBubbleWidget extends StatelessWidget {
               
               // 저장된 주소 표시
               if (savedAddress != null && savedAddress!.isNotEmpty) ...[
-                const SizedBox(height: 6),
+                const SizedBox(height: AppSizes.gapSM),
                 Text(
                   '저장된 위치: $savedAddress',
                   style: TextStyle(
@@ -123,7 +123,7 @@ class LocationBubbleWidget extends StatelessWidget {
                     isPrimary: true,
                     onTap: onUpdateLocation,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSizes.gapS),
                   // 맞아요 버튼
                   _buildActionButton(
                     context,
@@ -152,7 +152,7 @@ class LocationBubbleWidget extends StatelessWidget {
       size: const Size(16, 8),
       painter: _BubbleTailPainter(
         color: Theme.of(context).colorScheme.surface,
-        borderColor: color.withOpacity(0.3),
+        borderColor: color.withValues(alpha: 0.3),
         isUp: isUp,
       ),
     );
@@ -170,10 +170,10 @@ class LocationBubbleWidget extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
         decoration: BoxDecoration(
           color: isPrimary ? color : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppSizes.radiusM),
           border: isPrimary ? null : Border.all(color: color),
         ),
         child: Row(
@@ -184,7 +184,7 @@ class LocationBubbleWidget extends StatelessWidget {
               size: 12,
               color: isPrimary ? Colors.white : color,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSizes.gapXS),
             Text(
               label,
               style: TextStyle(
@@ -271,17 +271,17 @@ class LocationMismatchBanner extends StatelessWidget {
     final color = accentColor ?? context.features.walk;
     
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      margin: const EdgeInsets.only(bottom: AppSizes.paddingS),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
           Icon(Icons.location_on, size: 18, color: color),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSizes.gapS),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,15 +306,15 @@ class LocationMismatchBanner extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSizes.gapS),
           // 위치 업데이트 버튼
           GestureDetector(
             onTap: onUpdateLocation,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
                 color: color,
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: const Text(
                 '변경',
@@ -326,7 +326,7 @@ class LocationMismatchBanner extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSizes.gapSM),
           // 닫기 버튼
           GestureDetector(
             onTap: onDismiss,

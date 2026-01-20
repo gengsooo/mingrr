@@ -244,10 +244,10 @@ class ErrorDialog extends StatelessWidget {
       child: OutlinedButton(
         onPressed: () => Navigator.pop(context, ErrorResult.cancel),
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
           side: BorderSide(color: Theme.of(context).colorScheme.outline),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
         ),
         child: Text(
@@ -268,10 +268,10 @@ class ErrorDialog extends StatelessWidget {
           child: OutlinedButton(
             onPressed: () => Navigator.pop(context, ErrorResult.cancel),
             style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
               side: BorderSide(color: Theme.of(context).colorScheme.outline),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
             ),
             child: Text(

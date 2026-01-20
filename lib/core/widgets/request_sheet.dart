@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/feature_colors.dart';
+import '../theme/app_text_styles.dart';
 import '../constants/app_sizes.dart';
 import '../../models/pet_model.dart';
 import 'common_widgets.dart';
@@ -102,7 +103,7 @@ class _RequestSheetState extends State<RequestSheet> {
                   // 제목
                   Text(
                     config.title,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    style: AppTextStyles.headlineSmall(context),
                   ),
                   const SizedBox(height: AppSizes.gapXS),
                   
@@ -110,35 +111,35 @@ class _RequestSheetState extends State<RequestSheet> {
                   Text(
                     config.description,
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.4),
+                    style: AppTextStyles.secondary(context).copyWith(height: 1.4),
                   ),
                   
                   // 반려동물 선택 (데이트/교배 신청 시)
                   if (widget.type != RequestSheetType.groupJoin) ...[
                     const SizedBox(height: AppSizes.gapM),
-                    const Align(
+                    Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
                         '신청할 반려동물 선택',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                        style: AppTextStyles.titleMedium(context),
                       ),
                     ),
                     const SizedBox(height: AppSizes.gapS),
                     if (widget.myPets == null || widget.myPets!.isEmpty)
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(AppSizes.paddingL),
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.surface,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Row(
                           children: [
                             Icon(Icons.info_outline, color: Theme.of(context).colorScheme.outlineVariant, size: 20),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: AppSizes.gapS),
                             Expanded(
                               child: Text(
                                 '등록된 반려동물이 없습니다.\n프로필에서 반려동물을 먼저 등록해주세요.',
-                                style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                                style: AppTextStyles.secondary(context),
                               ),
                             ),
                           ],
@@ -151,7 +152,7 @@ class _RequestSheetState extends State<RequestSheet> {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: widget.myPets!.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 8),
+                          separatorBuilder: (_, __) => const SizedBox(height: AppSizes.gapS),
                           itemBuilder: (context, index) {
                             final pet = widget.myPets![index];
                             return PetSelectorCard(
@@ -173,17 +174,17 @@ class _RequestSheetState extends State<RequestSheet> {
                       maxLength: 20,
                       decoration: InputDecoration(
                         hintText: '한줄 메시지를 남겨보세요 (선택)',
-                        hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant, fontWeight: FontWeight.w400),
+                        hintStyle: AppTextStyles.secondary(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
                         filled: true,
                         fillColor: Theme.of(context).colorScheme.surface,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingM),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                           borderSide: BorderSide.none,
                         ),
                         counterText: '',
                       ),
-                      style: const TextStyle(fontSize: 14),
+                      style: AppTextStyles.bodyMedium(context),
                     ),
                   ],
                   const SizedBox(height: AppSizes.gapS),
@@ -220,13 +221,13 @@ class _RequestSheetState extends State<RequestSheet> {
                       widget.onCancel?.call();
                     },
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
                       side: BorderSide(color: Theme.of(context).colorScheme.outline),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
                       ),
                     ),
-                    child: const Text('취소', style: TextStyle(fontSize: 14)),
+                    child: Text('취소', style: AppTextStyles.labelLarge(context)),
                   ),
                 ),
                 const SizedBox(width: AppSizes.gapM),
