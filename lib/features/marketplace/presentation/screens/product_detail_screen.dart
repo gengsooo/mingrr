@@ -18,6 +18,7 @@ import '../../../../core/widgets/map/map_widgets.dart';
 import '../../../../core/models/location_model.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../../models/chat_model.dart';
+import '../../../../core/providers/refresh_notifier.dart';
 import '../../../chat/presentation/screens/chat_detail_screen.dart';
 import 'product_write_screen.dart';
 
@@ -617,6 +618,8 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       await _firestoreService.deleteProduct(_product!.id);
       
       if (mounted) {
+        // 리스트 새로고침 트리거
+        ref.read(marketRefreshProvider.notifier).state++;
         Navigator.pop(context, true); // 삭제 성공 알림
         MingrrSnackBar.success(context, '상품이 삭제되었습니다');
       }

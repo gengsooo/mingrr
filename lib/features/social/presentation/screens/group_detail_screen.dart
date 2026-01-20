@@ -20,6 +20,7 @@ import '../../../../models/group_model.dart';
 import '../../../../models/chat_model.dart';
 import '../../../../models/user_model.dart';
 import '../../../chat/presentation/screens/chat_detail_screen.dart';
+import '../../../../core/providers/refresh_notifier.dart';
 import '../providers/group_provider.dart';
 import 'group_write_screen.dart';
 
@@ -929,6 +930,8 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       try {
         await FirebaseService().groupsCollection.doc(group.id).delete();
         if (mounted) {
+          // 리스트 새로고침 트리거
+          ref.read(groupRefreshProvider.notifier).state++;
           Navigator.pop(context);
           MingrrSnackBar.success(context, '모임이 삭제되었습니다');
         }

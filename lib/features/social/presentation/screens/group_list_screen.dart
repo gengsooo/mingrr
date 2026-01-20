@@ -10,6 +10,7 @@ import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/location_selector.dart';
 import '../../../../core/widgets/info_badge.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
+import '../../../../core/providers/refresh_notifier.dart';
 import '../providers/group_provider.dart';
 import 'group_detail_screen.dart';
 import 'group_write_screen.dart';
@@ -62,6 +63,14 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
     final selectedLocations = ref.watch(_selectedLocationsProvider);
     final selectedCategory = ref.watch(_selectedCategoryProvider);
     final accentColor = context.features.social;
+
+    // 새로고침 트리거 감지 (등록/수정/삭제 후 자동 새로고침)
+    ref.listen(groupRefreshProvider, (prev, next) {
+      if (prev != next) {
+        ref.read(paginatedGroupsProvider.notifier).refresh();
+        ref.invalidate(userGroupsProvider);
+      }
+    });
 
     // 카테고리 목록 (아이콘 제거)
     final categories = [

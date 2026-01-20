@@ -13,6 +13,7 @@ import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/dating_card.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
+import '../../../../core/providers/refresh_notifier.dart';
 import '../providers/dating_provider.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import 'breeding_write_screen.dart';
@@ -113,6 +114,15 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
     final distanceFilter = ref.watch(_distanceFilterProvider);
     // 내 반려동물 목록 미리 로드 (교배 신청 시 사용)
     ref.watch(userPetsProvider);
+
+    // 새로고침 트리거 감지 (등록/수정/삭제 후 자동 새로고침)
+    ref.listen(datingRefreshProvider, (prev, next) {
+      if (prev != next) {
+        ref.read(paginatedBreedingPetsProvider(distanceFilter).notifier).refresh();
+        ref.read(paginatedNearbyPetsProvider(distanceFilter).notifier).refresh();
+        ref.read(paginatedRecommendedPetsProvider.notifier).refresh();
+      }
+    });
 
     final theme = Theme.of(context);
     final features = theme.extension<FeatureColors>()!;

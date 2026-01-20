@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import '../../../../core/theme/feature_colors.dart';
@@ -13,13 +14,14 @@ import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
 import '../../../../core/widgets/map/map_loading_widget.dart';
 import '../../../../models/health_model.dart';
+import '../providers/health_provider.dart';
 
 /// ============================================================
 /// 산책 기록 상세 화면
 /// 지도에 이동경로 표시 + 시간/거리 등 상세정보
 /// ============================================================
 
-class WalkRecordDetailScreen extends StatefulWidget {
+class WalkRecordDetailScreen extends ConsumerStatefulWidget {
   final WalkRecordModel record;
   final List<String> petNames;
 
@@ -30,12 +32,13 @@ class WalkRecordDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<WalkRecordDetailScreen> createState() => _WalkRecordDetailScreenState();
+  ConsumerState<WalkRecordDetailScreen> createState() => _WalkRecordDetailScreenState();
 }
 
-class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
+class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen> {
   KakaoMapController? _mapController;
   bool _isMapReady = false;
+  bool _isDeleting = false;
   
   /// LatLng 생성 헬퍼
   LatLng _createLatLng(double lat, double lng) => LatLng(lat, lng);
@@ -647,14 +650,38 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
   }
 
   void _confirmDelete(BuildContext context) {
+    if (_isDeleting) return;
+    
     showConfirmSheet(
       context,
       type: ConfirmSheetType.walkRecordDelete,
-      onConfirm: () {
-        Navigator.pop(context);
-        MingrrSnackBar.success(context, '기록이 삭제되었습니다');
-      },
+      onConfirm: () => _deleteWalkRecord(),
     );
+  }
+
+  /// 산책 기록 삭제 (DB 연동)
+  Future<void> _deleteWalkRecord() async {
+    if (_isDeleting) return;
+    
+    setState(() => _isDeleting = true);
+    
+    try {
+      final healthService = ref.read(healthServiceProvider);
+      await healthService.deleteWalkRecord(record.id);
+      
+      if (mounted) {
+        Navigator.pop(context, true);
+        MingrrSnackBar.success(context, '산책 기록이 삭제되었습니다');
+      }
+    } catch (e) {
+      if (mounted) {
+        MingrrSnackBar.error(context, '삭제 실패: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
+    }
   }
 
   String _formatDate(DateTime date) {

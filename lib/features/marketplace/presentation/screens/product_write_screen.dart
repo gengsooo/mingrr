@@ -21,6 +21,7 @@ import '../../../../core/widgets/form_components.dart';
 import '../../../../core/models/location_model.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../../models/pet_model.dart';
+import '../../../../core/providers/refresh_notifier.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import '../../../../core/widgets/pet_selector_card.dart';
 
@@ -731,6 +732,8 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
         await _firestoreService.createJob(job);
 
         if (mounted) {
+          // 리스트 새로고침 트리거
+          ref.read(marketRefreshProvider.notifier).state++;
           Navigator.pop(context, true);
           MingrrSnackBar.success(context, '알바가 등록되었습니다');
         }
@@ -774,6 +777,8 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
       }
 
       if (mounted) {
+        // 리스트 새로고침 트리거
+        ref.read(marketRefreshProvider.notifier).state++;
         Navigator.pop(context, true);
         MingrrSnackBar.success(context, _isEditMode ? '상품이 수정되었습니다' : '상품이 등록되었습니다');
       }

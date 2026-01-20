@@ -15,6 +15,7 @@ import '../../../../core/widgets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/form_components.dart';
 import '../../../../core/widgets/tag_input.dart';
 import '../../../../models/community_post_model.dart';
+import '../../../../core/providers/refresh_notifier.dart';
 import '../providers/community_provider.dart';
 
 /// ============================================================
@@ -311,6 +312,8 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
           tags: _tags,
         );
         if (mounted) {
+          // 리스트 새로고침 트리거
+          ref.read(communityRefreshProvider.notifier).state++;
           Navigator.pop(context, true);
           MingrrSnackBar.success(context, FormStrings.successUpdated);
         }
@@ -327,6 +330,8 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
         );
         
         if (mounted && postId != null) {
+          // 리스트 새로고침 트리거
+          ref.read(communityRefreshProvider.notifier).state++;
           Navigator.pop(context, true);
           MingrrSnackBar.success(context, FormStrings.successCreated);
         }

@@ -9,6 +9,7 @@ import '../../../../core/widgets/info_badge.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../models/community_post_model.dart';
+import '../../../../core/providers/refresh_notifier.dart';
 import '../providers/community_provider.dart';
 import 'community_write_screen.dart';
 import 'community_detail_screen.dart';
@@ -59,6 +60,13 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
     final selectedCategory = ref.watch(_selectedCommunityCategory);
     final paginatedState = ref.watch(paginatedCommunityPostsProvider(selectedCategory));
     final accentColor = context.features.social;
+
+    // 새로고침 트리거 감지 (등록/수정/삭제 후 자동 새로고침)
+    ref.listen(communityRefreshProvider, (prev, next) {
+      if (prev != next) {
+        ref.read(paginatedCommunityPostsProvider(selectedCategory).notifier).refresh();
+      }
+    });
 
     return Scaffold(
       backgroundColor: Colors.transparent,

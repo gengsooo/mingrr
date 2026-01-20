@@ -21,6 +21,7 @@ import '../../../../core/widgets/image_picker_sheet.dart';
 import '../../../../models/pet_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../pet/data/pet_repository.dart';
+import '../../../../core/providers/refresh_notifier.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 
 /// ============================================================
@@ -1034,6 +1035,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         
         // 상태 관리 새로고침
         ref.invalidate(userPetsProvider);
+        ref.read(petRefreshProvider.notifier).state++;
         
         if (mounted) {
           MingrrSnackBar.success(context, isEditMode ? '반려동물 정보가 수정되었습니다!' : '반려동물이 등록되었습니다!');
@@ -1074,6 +1076,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       
       // Provider 리프레시
       ref.invalidate(userPetsProvider);
+      ref.read(petRefreshProvider.notifier).state++;
       
       if (mounted) {
         MingrrSnackBar.success(context, '반려동물이 삭제되었습니다');

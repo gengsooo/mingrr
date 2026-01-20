@@ -15,6 +15,7 @@ import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../models/community_post_model.dart';
+import '../../../../core/providers/refresh_notifier.dart';
 import '../providers/community_provider.dart';
 import 'community_write_screen.dart';
 
@@ -834,6 +835,8 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
     if (confirmed == true) {
       final success = await ref.read(communityNotifierProvider.notifier).deletePost(post.id);
       if (success && mounted) {
+        // 리스트 새로고침 트리거
+        ref.read(communityRefreshProvider.notifier).state++;
         Navigator.pop(context);
         MingrrSnackBar.success(context, '게시글이 삭제되었습니다');
       }

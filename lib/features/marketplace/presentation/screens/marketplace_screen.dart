@@ -11,6 +11,7 @@ import '../../../../core/widgets/appbar_actions.dart';
 import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../models/marketplace_model.dart';
+import '../../../../core/providers/refresh_notifier.dart';
 import '../providers/marketplace_provider.dart';
 import 'product_detail_screen.dart';
 import 'product_write_screen.dart';
@@ -84,6 +85,15 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     final selectedTab = ref.watch(_selectedTabProvider);
     final selectedCategory = ref.watch(_selectedCategoryProvider);
     final distanceFilter = ref.watch(_distanceFilterProvider);
+
+    // 새로고침 트리거 감지 (등록/수정/삭제 후 자동 새로고침)
+    ref.listen(marketRefreshProvider, (prev, next) {
+      if (prev != next) {
+        final type = selectedTab == 0 ? ProductType.sell : ProductType.share;
+        ref.read(paginatedProductsProvider((type: type, radiusKm: distanceFilter)).notifier).refresh();
+        ref.read(paginatedJobsProvider.notifier).refresh();
+      }
+    });
 
     // 탭 정의 (판매 / 나눔 / 알바)
     final tabs = [

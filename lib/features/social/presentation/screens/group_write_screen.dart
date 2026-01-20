@@ -20,6 +20,7 @@ import '../../../../core/widgets/location_selector.dart';
 import '../../../../core/widgets/form_components.dart';
 import '../../../../core/widgets/tag_input.dart';
 import '../../../../models/group_model.dart';
+import '../../../../core/providers/refresh_notifier.dart';
 
 /// ============================================================
 /// 소모임(Group) 등록/수정 화면
@@ -327,6 +328,8 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
       }
 
       if (mounted) {
+        // 리스트 새로고침 트리거
+        ref.read(groupRefreshProvider.notifier).state++;
         Navigator.pop(context, true);
         MingrrSnackBar.success(context, _isEditMode ? FormStrings.successUpdated : FormStrings.successCreated);
       }

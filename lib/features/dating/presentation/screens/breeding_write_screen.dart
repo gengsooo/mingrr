@@ -13,6 +13,7 @@ import '../../../../core/widgets/form_components.dart';
 import '../../../../core/widgets/pet_selector_card.dart';
 import '../../../../models/breeding_model.dart';
 import '../../../../models/pet_model.dart';
+import '../../../../core/providers/refresh_notifier.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 
 /// ============================================================
@@ -386,6 +387,8 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
       }
 
       if (mounted) {
+        // 리스트 새로고침 트리거
+        ref.read(datingRefreshProvider.notifier).state++;
         Navigator.pop(context, true);
         MingrrSnackBar.success(context, _isEditMode ? FormStrings.successUpdated : FormStrings.successCreated);
       }
