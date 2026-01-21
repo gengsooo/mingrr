@@ -28,17 +28,7 @@ class AppSizes {
   static const double gapXL = 24.0;   // 섹션 간격
   static const double gapXXL = 32.0;  // 대형 간격
 
-  // ===== 테두리 반경 (동글동글한 느낌) =====
-  static const double radiusXXS = 4.0;  // 태그, 작은 뱃지
-  static const double radiusXS = 8.0;   // 작은 카드, 칩
-  static const double radiusS = 12.0;   // 일반 카드, 버튼
-  static const double radiusM = 16.0;   // 중간 카드, 입력 필드
-  static const double radiusL = 20.0;   // 큰 카드, 바텀시트
-  static const double radiusXL = 24.0;  // 대형 컨테이너
-  static const double radiusXXL = 32.0; // 특수 용도
-  static const double radiusFull = 999.0; // 완전 원형
-
-  // ===== 아이콘 크기 =====
+    // ===== 아이콘 크기 =====
   static const double iconXXS = 12.0;  // 배지 내 아이콘
   static const double iconXS = 14.0;   // 필터 칩 아이콘
   static const double iconS = 16.0;    // 작은 아이콘
@@ -50,17 +40,27 @@ class AppSizes {
   static const double iconXXL = 48.0;  // 특대 아이콘
   static const double iconHuge = 64.0; // 초대형 아이콘
 
-  // ===== 버튼 높이 =====
-  static const double buttonHeightS = 36.0;
-  static const double buttonHeightM = 48.0;
-  static const double buttonHeightL = 56.0;
-
-  // ===== 아바타/프로필 이미지 크기 =====
+    // ===== 아바타/프로필 이미지 크기 =====
   static const double avatarXS = 32.0;
   static const double avatarS = 40.0;
   static const double avatarM = 56.0;
   static const double avatarL = 80.0;
   static const double avatarXL = 120.0;
+
+  // ===== 테두리 반경 (동글동글한 느낌) =====
+  static const double radiusXXS = 4.0;  // 태그, 작은 뱃지
+  static const double radiusXS = 8.0;   // 작은 카드, 칩
+  static const double radiusS = 12.0;   // 일반 카드, 버튼
+  static const double radiusM = 16.0;   // 중간 카드, 입력 필드
+  static const double radiusL = 20.0;   // 큰 카드, 바텀시트
+  static const double radiusXL = 24.0;  // 대형 컨테이너
+  static const double radiusXXL = 32.0; // 특수 용도
+  static const double radiusFull = 999.0; // 완전 원형
+
+  // ===== 버튼 높이 =====
+  static const double buttonHeightS = 36.0;
+  static const double buttonHeightM = 48.0;
+  static const double buttonHeightL = 56.0;
 
   // ===== 카드 크기 =====
   static const double cardElevation = 2.0;
