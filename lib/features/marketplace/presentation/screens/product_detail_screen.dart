@@ -11,13 +11,14 @@ import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/utils/error_handler.dart';
-import '../../../../core/widgets/report_sheet.dart';
-import '../../../../core/widgets/profile_cards.dart';
-import '../../../../core/widgets/guardian_profile_modal.dart';
+import '../../../../core/widgets/sheets/report_sheet.dart';
+import '../../../../core/widgets/cards/profile_cards.dart';
+import '../../../../core/widgets/modals/guardian_profile_modal.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../../core/models/location_model.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../../models/chat_model.dart';
@@ -212,7 +213,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                 children: [
                   // 판매자 정보
                   _buildSellerInfo(context),
-                  const Divider(height: 32),
+                  const MingrrDivider.section(),
                   
                   // 상품 정보
                   _buildProductInfo(),
@@ -307,7 +308,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
           decoration: BoxDecoration(
-            color: context.features.market.withValues(alpha: 0.1),
+            color: context.features.market.withValues(alpha: AppOpacity.o10),
             borderRadius: BorderRadius.circular(AppSizes.radiusXS),
           ),
           child: Row(
@@ -317,7 +318,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
               const SizedBox(width: AppSizes.gapXS),
               Text(
                 _product?.category.label ?? '기타',
-                style: AppTextStyles.tag(context).copyWith(color: context.features.market),
+                style: AppTextStyles.labelLarge(context).copyWith(color: context.features.market),
               ),
             ],
           ),
@@ -332,16 +333,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
         // 시간, 조회수, 거리
         Text(
           '${_getDistanceString()} · ${formatRelativeTime(_product?.createdAt ?? DateTime.now())} · 조회 ${_product?.viewCount ?? 0}',
-          style: AppTextStyles.secondary(context),
+          style: AppTextStyles.bodySmall(context),
         ),
         const SizedBox(height: AppSizes.gapL),
         // 가격
         Text(
           _isShare ? '무료나눔' : '${formatPrice(_product?.price ?? 0)}원',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: _isShare ? context.features.walk : Theme.of(context).colorScheme.onSurface,
+          style: AppTextStyles.displayMedium(context).withWeight(FontWeight.w700).withColor(
+            _isShare ? context.features.walk : Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ],
@@ -355,7 +354,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
       children: [
         Text(
           '상품 설명',
-          style: AppTextStyles.sectionTitle(context),
+          style: AppTextStyles.headlineSmall(context),
         ),
         const SizedBox(height: AppSizes.gapM),
         Container(
@@ -400,7 +399,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
       children: [
         Text(
           '거래 희망 지역',
-          style: AppTextStyles.sectionTitle(context),
+          style: AppTextStyles.headlineSmall(context),
         ),
         const SizedBox(height: AppSizes.gapM),
         LocationDisplayCard(
@@ -422,10 +421,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
+        height: ResponsiveUtils.heightPercent(context, 0.7),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusL)),
         ),
         child: Column(
           children: [
@@ -468,7 +467,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                     Expanded(
                       child: Text(
                         location.displayAddress,
-                        style: AppTextStyles.listTitle(context),
+                        style: AppTextStyles.titleMedium(context),
                       ),
                     ),
                   ],
@@ -514,10 +513,8 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
           Expanded(
             child: Text(
               _isShare ? '무료나눔' : '${formatPrice(_product?.price ?? 0)}원',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: _isShare ? context.features.walk : Theme.of(context).colorScheme.onSurface,
+              style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w700).withColor(
+                _isShare ? context.features.walk : Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),

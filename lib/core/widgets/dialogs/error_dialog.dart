@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_sizes.dart';
-import '../svg_icons.dart';
+import '../../theme/app_text_styles.dart';
+import '../badges/svg_icons.dart';
 import '../common_widgets.dart';
 
 /// ============================================================
@@ -207,11 +208,7 @@ class ErrorDialog extends StatelessWidget {
             Text(
               title ?? type.title,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
+              style: AppTextStyles.headlineMedium(context).withColor(color),
             ),
             const SizedBox(height: AppSizes.gapS),
             
@@ -219,11 +216,7 @@ class ErrorDialog extends StatelessWidget {
             Text(
               message ?? type.message,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.5,
-              ),
+              style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant).withHeight(1.5),
             ),
             const SizedBox(height: AppSizes.gapXL),
             
@@ -252,10 +245,7 @@ class ErrorDialog extends StatelessWidget {
         ),
         child: Text(
           cancelText ?? '닫기',
-          style: TextStyle(
-            fontSize: 15,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          style: AppTextStyles.titleLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ),
     );
@@ -276,10 +266,7 @@ class ErrorDialog extends StatelessWidget {
             ),
             child: Text(
               cancelText ?? '취소',
-              style: TextStyle(
-                fontSize: 15,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyles.titleLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ),
         ),

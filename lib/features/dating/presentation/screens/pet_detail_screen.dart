@@ -10,19 +10,19 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/dating_service.dart';
-import '../../../../core/widgets/report_sheet.dart';
-import '../../../../core/widgets/request_sheet.dart';
+import '../../../../core/widgets/sheets/report_sheet.dart';
+import '../../../../core/widgets/sheets/request_sheet.dart';
 import '../../../../core/widgets/kkosunnae_widgets.dart';
-import '../../../../core/widgets/guardian_profile_modal.dart';
-import '../../../../core/widgets/pet_profile_modal.dart';
-import '../../../../core/widgets/trait_badge.dart';
+import '../../../../core/widgets/modals/guardian_profile_modal.dart';
+import '../../../../core/widgets/modals/pet_profile_modal.dart';
+import '../../../../core/widgets/badges/trait_badge.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/dialogs/confirm_sheet.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/sheets/confirm_sheet.dart';
 import '../../../../core/widgets/compatibility_widgets.dart';
-import '../../../../core/widgets/info_badge.dart' show LikeButton, InfoBadgeSize, EmptyInfoBadge, PedigreeBadge;
+import '../../../../core/widgets/badges/info_badge.dart' show LikeButton, InfoBadgeSize, EmptyInfoBadge, PedigreeBadge;
 import '../../../../core/widgets/mingrr_image_header.dart' show ImageHeaderDistanceBadge, LikeBadge;
-import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../models/user_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -310,10 +310,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
           const SizedBox(height: AppSizes.gapM),
           Text(
             '사진이 없어요',
-            style: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -336,9 +333,9 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
             height: 56,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: context.features.dating.withValues(alpha: 0.1),
+              color: context.features.dating.withValues(alpha: AppOpacity.o10),
               border: Border.all(
-                color: context.features.dating.withValues(alpha: 0.3),
+                color: context.features.dating.withValues(alpha: AppOpacity.o30),
                 width: 2,
               ),
             ),
@@ -460,7 +457,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       children: [
         Text(
           '소개',
-          style: AppTextStyles.sectionTitle(context),
+          style: AppTextStyles.headlineSmall(context),
         ),
         const SizedBox(height: AppSizes.gapM),
         Container(
@@ -506,7 +503,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
           children: [
             Text(
               '보호자 정보',
-              style: AppTextStyles.sectionTitle(context),
+              style: AppTextStyles.headlineSmall(context),
             ),
             const SizedBox(height: AppSizes.gapM),
             GestureDetector(
@@ -526,7 +523,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                            color: Theme.of(context).colorScheme.primary.withValues(alpha: AppOpacity.o10),
                             shape: BoxShape.circle,
                           ),
                           child: owner?.profileImageUrl != null
@@ -550,7 +547,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                             children: [
                               Text(
                                 nickname,
-                                style: AppTextStyles.cardTitle(context),
+                                style: AppTextStyles.titleMedium(context),
                               ),
                               const SizedBox(height: 4),
                               KkosunnaeScoreSmall(score: kkosunnaeScore),
@@ -563,7 +560,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                     ),
                     // 인증 배지 (소형)
                     const SizedBox(height: AppSizes.gapM),
-                    const Divider(height: 1),
+                    const MingrrDivider(),
                     const SizedBox(height: AppSizes.gapM),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -611,9 +608,8 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 11,
-            color: isVerified ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.outlineVariant,
+          style: AppTextStyles.caption(context).withColor(
+            isVerified ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.outlineVariant,
           ),
         ),
         if (!isVerified)

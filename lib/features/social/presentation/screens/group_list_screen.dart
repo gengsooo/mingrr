@@ -4,14 +4,14 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/filter_components.dart';
-import '../../../../core/widgets/location_selector.dart';
-import '../../../../core/widgets/info_badge.dart';
+import '../../../../core/widgets/forms/location_selector.dart';
+import '../../../../core/widgets/badges/info_badge.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
-import '../../../../core/widgets/top_navigation.dart';
+import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../core/constants/location_constants.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 import '../providers/group_provider.dart';
@@ -214,7 +214,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
           const SizedBox(height: AppSizes.gapXL),
 
           // 모임 목록 헤더
-          Text('모임 목록', style: AppTextStyles.sectionTitle(context)),
+          Text('모임 목록', style: AppTextStyles.headlineSmall(context)),
           const SizedBox(height: AppSizes.gapM),
 
           // 모임 카드들
@@ -266,7 +266,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('내 모임', style: AppTextStyles.sectionTitle(context)),
+        Text('내 모임', style: AppTextStyles.headlineSmall(context)),
         const SizedBox(height: AppSizes.gapL),
         Container(
           width: double.infinity,
@@ -289,7 +289,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
               const SizedBox(height: AppSizes.gapS),
               Text(
                 '관심 있는 모임에 가입해보세요',
-                style: AppTextStyles.secondarySmall(context),
+                style: AppTextStyles.caption(context),
               ),
             ],
           ),
@@ -305,10 +305,10 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('내 모임', style: AppTextStyles.sectionTitle(context)),
+            Text('내 모임', style: AppTextStyles.headlineSmall(context)),
             TextButton(
               onPressed: () {},
-              child: Text('전체보기', style: AppTextStyles.secondary(context)),
+              child: Text('전체보기', style: AppTextStyles.bodySmall(context)),
             ),
           ],
         ),
@@ -383,7 +383,7 @@ class _MyGroupCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusS),
-          border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+          border: Border.all(color: accentColor.withValues(alpha: AppOpacity.o30)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,7 +393,7 @@ class _MyGroupCard extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.1),
+                color: accentColor.withValues(alpha: AppOpacity.o10),
                 borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
               child: Icon(Icons.groups, size: 20, color: accentColor),
@@ -408,7 +408,7 @@ class _MyGroupCard extends StatelessWidget {
             const SizedBox(height: AppSizes.gapXXS),
             Text(
               '멤버 $memberCount명',
-              style: AppTextStyles.cardMeta(context),
+              style: AppTextStyles.captionSmall(context),
             ),
           ],
         ),
@@ -440,13 +440,7 @@ class _GroupCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusM),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -454,7 +448,7 @@ class _GroupCard extends StatelessWidget {
             // 이미지
             if (group.imageUrl != null)
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusL)),
                 child: Image.network(
                   group.imageUrl!,
                   height: 120,
@@ -462,7 +456,7 @@ class _GroupCard extends StatelessWidget {
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
                     height: 120,
-                    color: accentColor.withValues(alpha: 0.1),
+                    color: accentColor.withValues(alpha: AppOpacity.o10),
                     child: Center(child: Icon(Icons.groups, size: 40, color: accentColor)),
                   ),
                 ),
@@ -471,8 +465,8 @@ class _GroupCard extends StatelessWidget {
               Container(
                 height: 80,
                 decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.1),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  color: accentColor.withValues(alpha: AppOpacity.o10),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusL)),
                 ),
                 child: Center(child: Icon(Icons.groups, size: 40, color: accentColor)),
               ),
@@ -488,33 +482,33 @@ class _GroupCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 3),
                         decoration: BoxDecoration(
-                          color: accentColor.withValues(alpha: 0.1),
+                          color: accentColor.withValues(alpha: AppOpacity.o10),
                           borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                         ),
                         child: Text(
                           group.typeString,
-                          style: AppTextStyles.tagSmall(context).copyWith(color: accentColor),
+                          style: AppTextStyles.labelMedium(context).copyWith(color: accentColor),
                         ),
                       ),
                       const Spacer(),
                       if (groupWithDistance.distanceMeters.isFinite)
                         Text(
                           groupWithDistance.distanceString,
-                          style: AppTextStyles.secondarySmall(context),
+                          style: AppTextStyles.caption(context),
                         ),
                     ],
                   ),
                   const SizedBox(height: AppSizes.gapS),
                   Text(
                     group.name,
-                    style: AppTextStyles.sectionTitle(context),
+                    style: AppTextStyles.headlineSmall(context),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: AppSizes.gapXS),
                   Text(
                     group.description,
-                    style: AppTextStyles.secondary(context),
+                    style: AppTextStyles.bodySmall(context),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -526,7 +520,7 @@ class _GroupCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           group.address ?? LocationConstants.noLocationText,
-                          style: AppTextStyles.secondarySmall(context),
+                          style: AppTextStyles.caption(context),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -536,7 +530,7 @@ class _GroupCard extends StatelessWidget {
                       const SizedBox(width: AppSizes.gapXS),
                       Text(
                         '${group.memberCount}명',
-                        style: AppTextStyles.secondarySmall(context),
+                        style: AppTextStyles.caption(context),
                       ),
                       const SizedBox(width: AppSizes.gapM),
                       LikeCountText(count: group.likeCount, size: InfoBadgeSize.small),

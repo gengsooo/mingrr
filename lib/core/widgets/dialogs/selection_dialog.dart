@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_sizes.dart';
+import '../../theme/app_text_styles.dart';
 import '../common_widgets.dart';
 
 /// ============================================================
@@ -100,11 +101,7 @@ class _MingrrSelectionDialogState extends State<MingrrSelectionDialog> {
                 Expanded(
                   child: Text(
                     widget.title,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
+                    style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w600),
                   ),
                 ),
                 GestureDetector(
@@ -123,10 +120,7 @@ class _MingrrSelectionDialogState extends State<MingrrSelectionDialog> {
               const SizedBox(height: AppSizes.gapS),
               Text(
                 widget.subtitle!,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                style: AppTextStyles.bodyLarge(context).withColor(colorScheme.onSurfaceVariant),
               ),
             ],
             

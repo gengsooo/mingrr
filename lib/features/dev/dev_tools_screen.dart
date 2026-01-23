@@ -5,6 +5,7 @@ import '../../core/constants/app_sizes.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/services/firebase_service.dart';
 import '../../core/utils/seed_data.dart';
+import '../../core/widgets/dividers/app_dividers.dart';
 import '../auth/presentation/providers/auth_provider.dart';
 
 /// 데이터 항목 정의 (사용자 계정은 Firebase Auth에서 관리하므로 제외)
@@ -40,7 +41,7 @@ final collectionCountsProvider = StreamProvider.autoDispose<Map<DataCategory, in
     counts[DataCategory.jobs] = (await _firebaseService.jobsCollection.get()).docs.length;
     counts[DataCategory.breeding] = (await _firebaseService.breedingPostsCollection.get()).docs.length;
     
-    final likesCount = (await _firebaseService.likesCollection.get()).docs.length;
+    final likesCount = (await _firebaseService.datingRequestsCollection.get()).docs.length;
     final matchesCount = (await _firebaseService.matchesCollection.get()).docs.length;
     counts[DataCategory.likesMatches] = likesCount + matchesCount;
     
@@ -418,7 +419,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   '항목을 선택하고 생성 또는 삭제 버튼을 눌러주세요.',
-                  style: AppTextStyles.secondary(context),
+                  style: AppTextStyles.bodySmall(context),
                 ),
               ],
             ),
@@ -445,7 +446,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Divider(),
+                const MingrrDivider(),
                 const SizedBox(height: 8),
                 
                 // 항목별 체크박스
@@ -459,7 +460,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                       value: _selectedCategories[category],
                       onChanged: _isLoading ? null : (v) => _toggleCategory(category, v),
                       title: Text(category.label),
-                      subtitle: Text(description, style: AppTextStyles.secondarySmall(context)),
+                      subtitle: Text(description, style: AppTextStyles.caption(context)),
                       secondary: Icon(category.icon, color: Colors.orange),
                       activeColor: Colors.orange,
                     ),

@@ -13,12 +13,6 @@ enum NotificationType {
   datingAccepted('데이팅 수락', 'dating'),
   matchSuccess('매칭 성공', 'dating'),
   
-  /// 하위 호환성 (deprecated)
-  @Deprecated('Use datingRequest instead')
-  likeReceived('좋아요 받음', 'dating'),
-  @Deprecated('Use datingAccepted instead')
-  likeAccepted('좋아요 수락됨', 'dating'),
-  
   /// 반려동물 좋아요
   petLike('반려동물 좋아요', 'pet'),
   

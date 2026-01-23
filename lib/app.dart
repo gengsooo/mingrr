@@ -11,9 +11,10 @@ import 'core/theme/app_theme.dart';  // 앱 테마
 import 'core/constants/app_strings.dart';  // 텍스트 상수
 import 'core/theme/feature_colors.dart';  // 색상 상수
 import 'core/constants/app_sizes.dart';  // 크기/간격 상수
+import 'core/theme/app_text_styles.dart';  // 텍스트 스타일
 import 'core/providers/theme_provider.dart';  // 테마 Provider
 import 'core/providers/location_verification_provider.dart';  // 위치 인증 Provider
-import 'core/widgets/loading_widgets.dart';  // 공통 로딩 위젯
+import 'core/widgets/loading/loading_widgets.dart';  // 공통 로딩 위젯
 
 // 인증 관련
 import 'features/auth/presentation/providers/auth_provider.dart';  // 로그인 상태 관리 Provider
@@ -359,13 +360,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
       // decoration: 컨테이너 꾸미기
       decoration: BoxDecoration(
         color: isDark ? colorScheme.surface : Colors.white,  // 다크모드 대응
-        boxShadow: [  // 그림자 효과
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-            blurRadius: 20,  // 그림자 흐림 정도
-            offset: const Offset(0, -5),  // 그림자 위치 (위쪽으로 5픽셀)
-          ),
-        ],
+        boxShadow: AppShadows.shadowL(isDark),
       ),
       // SafeArea: 노치나 홈 버튼 영역을 피해서 내용 표시
       child: SafeArea(
@@ -501,12 +496,12 @@ class MingrrBottomNavBar extends ConsumerWidget {
               children: [
                 // AnimatedContainer: 속성이 변할 때 애니메이션 효과
                 AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),  // 애니메이션 시간
+                  duration: const Duration(milliseconds: 150),  // 애니메이션 시간
                   padding: const EdgeInsets.all(AppSizes.paddingS),
                   decoration: BoxDecoration(
                     // 활성 상태면 배경색 표시, 아니면 투명
                     color: isActive
-                        ? activeColor.withValues(alpha: 0.15)  // 15% 투명도
+                        ? activeColor.withValues(alpha: AppOpacity.o15)  // 15% 투명도
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(AppSizes.radiusM),  // 둥근 모서리
                   ),
@@ -539,11 +534,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
                       ),
                       child: Text(
                         badge > 99 ? '99+' : '$badge',  // 99 초과면 '99+' 표시
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: AppTextStyles.labelSmall(context).withWeight(FontWeight.w600).withColor(Colors.white),
                       ),
                     ),
                   ),
@@ -555,15 +546,13 @@ class MingrrBottomNavBar extends ConsumerWidget {
             // 버튼 아래 텍스트
             Text(
               label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,  // 활성 상태면 굵게
-                color: isActive 
-                    ? activeColor 
-                    : Theme.of(context).brightness == Brightness.dark
-                        ? Theme.of(context).colorScheme.onSurfaceVariant
-                        : Theme.of(context).colorScheme.outlineVariant,  // 다크모드 대응
-              ),
+              style: AppTextStyles.caption(context)
+                  .withWeight(isActive ? FontWeight.w600 : FontWeight.w400)
+                  .withColor(isActive 
+                      ? activeColor 
+                      : Theme.of(context).brightness == Brightness.dark
+                          ? Theme.of(context).colorScheme.onSurfaceVariant
+                          : Theme.of(context).colorScheme.outlineVariant),
             ),
           ],
         ),
@@ -618,7 +607,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   Future<void> _checkAndNavigate() async {
     // 인증 상태가 로딩 완료될 때까지 대기
     await Future.doWhile(() async {
-      await Future.delayed(const Duration(milliseconds: 100));
+      await Future.delayed(const Duration(milliseconds: 150));
       final authState = ref.read(authStateProvider);
       return authState.isLoading;
     });
@@ -658,7 +647,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: AppOpacity.o10),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -671,11 +660,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             // 앱 이름
             Text(
               AppStrings.appName,
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+              style: AppTextStyles.displayLarge(context).withWeight(FontWeight.bold).withColor(Theme.of(context).colorScheme.primary),
             ),
             const SizedBox(height: 32),
             // 로딩 인디케이터 (공통 컴포넌트)

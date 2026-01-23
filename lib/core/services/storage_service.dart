@@ -21,7 +21,7 @@ class StorageService {
   
   Future<String> uploadDogImage(String dogId, String fileName, File imageFile) async {
     try {
-      final ref = _firebase.dogImageRef(dogId, fileName);
+      final ref = _firebase.petImageRef(dogId, fileName);
       final uploadTask = ref.putFile(imageFile);
       final snapshot = await uploadTask;
       return await snapshot.ref.getDownloadURL();
@@ -49,7 +49,7 @@ class StorageService {
   /// 웹용 - bytes로 강아지 이미지 업로드
   Future<String> uploadDogImageBytes(String dogId, String fileName, Uint8List bytes) async {
     try {
-      final ref = _firebase.dogImageRef(dogId, fileName);
+      final ref = _firebase.petImageRef(dogId, fileName);
       final uploadTask = ref.putData(bytes, SettableMetadata(contentType: 'image/jpeg'));
       final snapshot = await uploadTask;
       return await snapshot.ref.getDownloadURL();

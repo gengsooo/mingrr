@@ -87,10 +87,6 @@ class FavoriteService {
     });
   }
   
-  /// 반려동물 좋아요 - 하위 호환성
-  @Deprecated('Use likePet instead')
-  Future<void> favoritePet(String petId) => likePet(petId);
-  
   /// 반려동물 좋아요 취소
   Future<void> unlikePet(String petId) async {
     final userId = _firebase.currentUserId;
@@ -105,10 +101,6 @@ class FavoriteService {
       'likeCount': FieldValue.increment(-1),
     });
   }
-  
-  /// 반려동물 좋아요 취소 - 하위 호환성
-  @Deprecated('Use unlikePet instead')
-  Future<void> unfavoritePet(String petId) => unlikePet(petId);
   
   /// 반려동물 좋아요 여부 확인
   Future<bool> isPetLiked(String petId) async {
@@ -348,14 +340,6 @@ class FavoriteService {
       return true;
     }
   }
-  
-  /// 반려동물 좋아요 토글 - 하위 호환성
-  @Deprecated('Use togglePetLike instead')
-  Future<bool> togglePetFavorite(String petId) => togglePetLike(petId);
-  
-  /// 반려동물 좋아요 여부 확인 - 하위 호환성
-  @Deprecated('Use isPetLiked instead')
-  Future<bool> isPetFavorited(String petId) => isPetLiked(petId);
   
   /// 상품 찜 토글
   Future<bool> toggleProductFavorite(String productId) async {

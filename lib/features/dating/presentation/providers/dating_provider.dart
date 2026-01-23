@@ -157,10 +157,6 @@ final receivedDatingRequestsProvider = StreamProvider.autoDispose<List<DatingReq
   );
 });
 
-// 받은 좋아요 목록 - 하위 호환성
-@Deprecated('Use receivedDatingRequestsProvider instead')
-final receivedLikesProvider = receivedDatingRequestsProvider;
-
 // 매칭 목록
 final userMatchesProvider = FutureProvider.autoDispose<List<MatchModel>>((ref) async {
   final authState = ref.watch(authStateProvider);
@@ -177,10 +173,6 @@ final receivedDatingRequestsCountProvider = Provider.autoDispose<int>((ref) {
   final requests = ref.watch(receivedDatingRequestsProvider).valueOrNull ?? [];
   return requests.where((r) => r.status == DatingRequestStatus.pending).length;
 });
-
-// 받은 좋아요 개수 - 하위 호환성
-@Deprecated('Use receivedDatingRequestsCountProvider instead')
-final receivedLikesCountProvider = receivedDatingRequestsCountProvider;
 
 // 교배 가능한 반려동물 목록 (isBreedingAvailable = true, 거리 정보 포함)
 final breedingPetsProvider = FutureProvider.autoDispose<List<PetWithDistance>>((ref) async {
@@ -360,10 +352,6 @@ class RecommendedPet {
   
   String get distanceString => LocationService.formatDistance(distanceMeters);
 }
-
-// 하위 호환성을 위한 alias (deprecated)
-@Deprecated('Use recommendedPetsProvider instead')
-final aiRecommendedPetsProvider = recommendedPetsProvider;
 
 /// ============================================================
 /// 페이지네이션 데이팅 Provider

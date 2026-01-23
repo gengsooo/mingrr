@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/svg_icons.dart';
-import '../../../../core/widgets/top_navigation.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
+import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../providers/profile_provider.dart';
 
 /// 찜한 목록 화면

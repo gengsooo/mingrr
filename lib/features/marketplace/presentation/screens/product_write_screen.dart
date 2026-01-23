@@ -14,17 +14,17 @@ import '../../../../core/services/firestore_service.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/utils/image_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
-import '../../../../core/widgets/form_components.dart';
+import '../../../../core/widgets/forms/form_components.dart';
 import '../../../../core/models/location_model.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
-import '../../../../core/widgets/pet_selector_card.dart';
+import '../../../../core/widgets/cards/pet_selector_card.dart';
 
 /// ============================================================
 /// 마켓 상품 등록/수정 화면
@@ -288,10 +288,8 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
               const SizedBox(width: AppSizes.gapSM),
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
+                style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600).withColor(
+                  isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -498,7 +496,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
               margin: EdgeInsets.only(right: unit != '일' ? 8 : 0),
               padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
               decoration: BoxDecoration(
-                color: isSelected ? context.features.market.withValues(alpha: 0.1) : Colors.transparent,
+                color: isSelected ? context.features.market.withValues(alpha: AppOpacity.o10) : Colors.transparent,
                 borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                 border: Border.all(
                   color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
@@ -507,11 +505,9 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
               child: Text(
                 unit,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected ? context.features.market : Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                style: AppTextStyles.bodyMedium(context)
+                    .withWeight(isSelected ? FontWeight.w600 : FontWeight.normal)
+                    .withColor(isSelected ? context.features.market : Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ),
           ),

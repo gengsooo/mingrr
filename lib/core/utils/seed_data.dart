@@ -248,7 +248,7 @@ class SeedData {
       await _clearCollection(_firebase.groupsCollection);
       await _clearCollection(_firebase.groupLikesCollection);
       await _clearCollection(_firebase.chatRoomsCollection);
-      await _clearCollection(_firebase.likesCollection);
+      await _clearCollection(_firebase.datingRequestsCollection);
       await _clearCollection(_firebase.matchesCollection);
       await _clearCollection(_firebase.jobsCollection);
       await _clearCollection(_firebase.breedingPostsCollection);
@@ -285,7 +285,7 @@ class SeedData {
       deletedCount += await _clearTestDataFromCollection(_firebase.breedingPostsCollection, TestDataPrefix.breeding);
       
       // 좋아요
-      deletedCount += await _clearTestDataFromCollection(_firebase.likesCollection, TestDataPrefix.like);
+      deletedCount += await _clearTestDataFromCollection(_firebase.datingRequestsCollection, TestDataPrefix.like);
       
       // 매칭
       deletedCount += await _clearTestDataFromCollection(_firebase.matchesCollection, TestDataPrefix.match);
@@ -809,7 +809,7 @@ class SeedData {
   }
   
   Future<void> clearLikesAndMatches() async {
-    await _clearCollection(_firebase.likesCollection);
+    await _clearCollection(_firebase.datingRequestsCollection);
     await _clearCollection(_firebase.matchesCollection);
   }
   
@@ -894,7 +894,7 @@ class SeedData {
       final likeId = 'like_${fromPet.id}_${toPet.id}';
       final status = i % 3 == 0 ? 'accepted' : (i % 3 == 1 ? 'rejected' : 'pending');
       
-      await _firebase.likesCollection.doc(likeId).set({
+      await _firebase.datingRequestsCollection.doc(likeId).set({
         'fromUserId': fromUserId,
         'fromPetId': fromPet.id,
         'toUserId': toUserId,

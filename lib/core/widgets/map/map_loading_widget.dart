@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../constants/app_sizes.dart';
+import '../../theme/app_text_styles.dart';
 import '../../theme/feature_colors.dart';
 import '../../services/location_helper.dart';
-import '../loading_widgets.dart';
+import '../loading/loading_widgets.dart';
 
 /// ============================================================
 /// 지도 로딩 위젯 (공통 컴포넌트)
@@ -133,7 +134,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
     
     // 다리 움직임 애니메이션 (걷는 모션)
     _legController = AnimationController(
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 150),
       vsync: this,
     )..repeat(reverse: true);
     
@@ -238,13 +239,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(AppSizes.radiusXL),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  boxShadow: AppShadows.shadowM(Theme.of(context).brightness == Brightness.dark),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -257,11 +252,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
                     const SizedBox(width: AppSizes.gapM),
                     Text(
                       _progressMessage,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: _accentColor,
-                      ),
+                      style: AppTextStyles.titleLarge(context).withWeight(FontWeight.w600).withColor(_accentColor),
                     ),
                   ],
                 ),
@@ -272,10 +263,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
               const SizedBox(height: AppSizes.gapM),
               Text(
                 widget.subMessage!,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ],
@@ -334,7 +322,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
                 child: Icon(
                   Icons.pets,
                   size: 16,
-                  color: _accentColor.withValues(alpha: 0.6),
+                  color: _accentColor.withValues(alpha: AppOpacity.o50),
                 ),
               ),
             );

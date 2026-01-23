@@ -19,7 +19,7 @@ import '../theme/app_text_styles.dart';
 /// 필터 타이틀 위젯 (공통)
 /// 
 /// 모든 필터 컴포넌트에서 동일한 타이틀 스타일 사용
-/// - AppTextStyles.filterTitle 사용
+/// - AppTextStyles.labelLarge 사용
 /// ------------------------------------------------------------
 class _FilterTitle extends StatelessWidget {
   final String title;
@@ -29,7 +29,7 @@ class _FilterTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       title,
-      style: AppTextStyles.filterTitle(context),
+      style: AppTextStyles.labelLarge(context),
     );
   }
 }
@@ -91,8 +91,8 @@ class MingrrFilterChip extends StatelessWidget {
             Text(
               label,
               style: isSelected 
-                  ? AppTextStyles.filterChipSelected(context)
-                  : AppTextStyles.filterChip(context),
+                  ? AppTextStyles.labelMedium(context)
+                  : AppTextStyles.labelMedium(context),
             ),
           ],
         ),
@@ -148,8 +148,8 @@ class MingrrSortChip extends StatelessWidget {
             Text(
               label,
               style: isSelected 
-                  ? AppTextStyles.filterChipSelected(context)
-                  : AppTextStyles.filterChip(context),
+                  ? AppTextStyles.labelMedium(context)
+                  : AppTextStyles.labelMedium(context),
             ),
             if (isSelected) ...[
               const SizedBox(width: AppSizes.gapXXS),
@@ -179,7 +179,7 @@ class MingrrFilterDivider extends StatelessWidget {
       child: Container(
         width: 1,
         height: 20,
-        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+        color: Theme.of(context).colorScheme.outline.withValues(alpha: AppOpacity.o30),
       ),
     );
   }
@@ -197,7 +197,7 @@ class MingrrFilterSectionDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 1,
-      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+      color: Theme.of(context).colorScheme.outline.withValues(alpha: AppOpacity.o30),
     );
   }
 }
@@ -330,7 +330,7 @@ class MingrrCategoryChips extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: colorScheme.outline.withValues(alpha: 0.3)),
+          bottom: BorderSide(color: colorScheme.outline.withValues(alpha: AppOpacity.o30)),
         ),
       ),
       child: SingleChildScrollView(
@@ -362,8 +362,8 @@ class MingrrCategoryChips extends StatelessWidget {
                     child: Text(
                       category,
                       style: isSelected 
-                          ? AppTextStyles.filterChipSelected(context)
-                          : AppTextStyles.filterChip(context),
+                          ? AppTextStyles.labelMedium(context)
+                          : AppTextStyles.labelMedium(context),
                     ),
                   ),
                 ),
@@ -412,7 +412,7 @@ class MingrrCategoryChipsWithIcon extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: colorScheme.outline.withValues(alpha: 0.3)),
+          bottom: BorderSide(color: colorScheme.outline.withValues(alpha: AppOpacity.o30)),
         ),
       ),
       child: SingleChildScrollView(
@@ -444,8 +444,8 @@ class MingrrCategoryChipsWithIcon extends StatelessWidget {
                     child: Text(
                       category.label,
                       style: isSelected 
-                          ? AppTextStyles.filterChipSelected(context)
-                          : AppTextStyles.filterChip(context),
+                          ? AppTextStyles.labelMedium(context)
+                          : AppTextStyles.labelMedium(context),
                     ),
                   ),
                 ),
@@ -496,7 +496,7 @@ class MingrrSortChips extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(
-          bottom: BorderSide(color: colorScheme.outline.withValues(alpha: 0.3)),
+          bottom: BorderSide(color: colorScheme.outline.withValues(alpha: AppOpacity.o30)),
         ),
       ),
       child: SingleChildScrollView(

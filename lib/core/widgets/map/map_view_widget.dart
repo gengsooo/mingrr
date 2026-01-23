@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../constants/app_sizes.dart';
+import '../../theme/app_text_styles.dart';
 import '../../models/location_model.dart';
 import 'map_loading_widget.dart';
 
@@ -115,12 +116,7 @@ class _MapViewWidgetState extends State<MapViewWidget> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(AppSizes.radiusM),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                      ),
-                    ],
+                    boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -129,11 +125,7 @@ class _MapViewWidgetState extends State<MapViewWidget> {
                       const SizedBox(width: AppSizes.gapXS),
                       Text(
                         '크게 보기',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: accentColor,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: AppTextStyles.bodySmall(context).withWeight(FontWeight.w500).withColor(accentColor),
                       ),
                     ],
                   ),
@@ -233,7 +225,7 @@ class _MapViewWidgetState extends State<MapViewWidget> {
     return Container(
       height: widget.height,
       decoration: BoxDecoration(
-        color: accentColor.withValues(alpha: 0.1),
+        color: accentColor.withValues(alpha: AppOpacity.o10),
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Stack(
@@ -266,15 +258,12 @@ class _MapViewWidgetState extends State<MapViewWidget> {
                 Icon(
                   Icons.map_outlined,
                   size: 40,
-                  color: accentColor.withValues(alpha: 0.5),
+                  color: accentColor.withValues(alpha: AppOpacity.o50),
                 ),
                 const SizedBox(height: AppSizes.gapS),
                 Text(
                   message,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: accentColor.withValues(alpha: 0.7),
-                  ),
+                  style: AppTextStyles.bodyLarge(context).withColor(accentColor.withValues(alpha: AppOpacity.o70)),
                 ),
               ],
             ),
@@ -330,7 +319,7 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withValues(alpha: 0.1)
+      ..color = color.withValues(alpha: AppOpacity.o10)
       ..strokeWidth = 1;
 
     const spacing = 30.0;

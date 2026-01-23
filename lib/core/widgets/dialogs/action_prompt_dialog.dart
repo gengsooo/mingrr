@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_sizes.dart';
+import '../../theme/app_text_styles.dart';
 import '../common_widgets.dart';
 
 /// ============================================================
@@ -13,7 +14,7 @@ import '../common_widgets.dart';
 /// showActionPromptDialog(
 ///   context,
 ///   icon: Container(
-///     decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), shape: BoxShape.circle),
+///     decoration: BoxDecoration(color: Colors.green.withValues(alpha: AppOpacity.o10), shape: BoxShape.circle),
 ///     child: Icon(Icons.check_circle, color: Colors.green),
 ///   ),
 ///   title: '🎉 활동이 완료되었어요!',
@@ -101,10 +102,7 @@ class MingrrActionPromptDialog extends StatelessWidget {
             // 제목
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             
@@ -113,10 +111,7 @@ class MingrrActionPromptDialog extends StatelessWidget {
               const SizedBox(height: AppSizes.gapS),
               Text(
                 message!,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                style: AppTextStyles.bodyLarge(context).withColor(colorScheme.onSurfaceVariant),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -168,7 +163,7 @@ class MingrrActionPromptDialog extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: AppOpacity.o10),
         shape: BoxShape.circle,
       ),
       child: Icon(icon, size: iconSize, color: color),

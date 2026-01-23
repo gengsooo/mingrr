@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_sizes.dart';
+import '../theme/app_text_styles.dart';
 
 /// ============================================================
 /// MINGRR 설정 메뉴 타일 컴포넌트
@@ -157,22 +158,7 @@ class MingrrSettingsTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (badgeText != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
-              decoration: BoxDecoration(
-                color: badgeColor ?? Colors.orange,
-                borderRadius: BorderRadius.circular(AppSizes.radiusS),
-              ),
-              child: Text(
-                badgeText,
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+          if (badgeText != null) _SettingsBadge(text: badgeText, color: badgeColor),
           const SizedBox(width: AppSizes.gapXS),
           const Icon(Icons.chevron_right, color: Colors.grey),
         ],
@@ -219,15 +205,15 @@ class MingrrSettingsTile extends StatelessWidget {
     
     if (isDestructive) {
       effectiveIconColor = Colors.red;
-      effectiveIconBgColor = Colors.red.withValues(alpha: 0.1);
+      effectiveIconBgColor = Colors.red.withValues(alpha: AppOpacity.o10);
       effectiveTitleColor = Colors.red;
     } else if (isDisabled) {
       effectiveIconColor = colorScheme.outlineVariant;
-      effectiveIconBgColor = colorScheme.outlineVariant.withValues(alpha: 0.1);
+      effectiveIconBgColor = colorScheme.outlineVariant.withValues(alpha: AppOpacity.o10);
       effectiveTitleColor = colorScheme.outlineVariant;
     } else {
       effectiveIconColor = iconColor ?? colorScheme.primary;
-      effectiveIconBgColor = iconBackgroundColor ?? effectiveIconColor.withValues(alpha: 0.1);
+      effectiveIconBgColor = iconBackgroundColor ?? effectiveIconColor.withValues(alpha: AppOpacity.o10);
       effectiveTitleColor = colorScheme.onSurface;
     }
     
@@ -248,11 +234,7 @@ class MingrrSettingsTile extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-          color: effectiveTitleColor,
-        ),
+        style: AppTextStyles.titleLarge(context).withWeight(FontWeight.w500).withColor(effectiveTitleColor),
       ),
       subtitle: subtitle != null
           ? Text(
@@ -305,6 +287,29 @@ class MingrrSettingsSection extends StatelessWidget {
         ),
         ...children,
       ],
+    );
+  }
+}
+
+/// 설정 타일용 배지 위젯 (내부용)
+class _SettingsBadge extends StatelessWidget {
+  final String text;
+  final Color? color;
+  
+  const _SettingsBadge({required this.text, this.color});
+  
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
+      decoration: BoxDecoration(
+        color: color ?? Colors.orange,
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
+      ),
+      child: Text(
+        text,
+        style: AppTextStyles.caption(context).withWeight(FontWeight.w600).withColor(Colors.white),
+      ),
     );
   }
 }

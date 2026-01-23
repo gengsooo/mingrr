@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/services/dating_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/dialogs/confirm_sheet.dart';
+import '../../../../core/widgets/sheets/confirm_sheet.dart';
 import '../../../../models/dating_model.dart';
 import '../../../../models/pet_model.dart';
 import '../../../dating/presentation/providers/dating_provider.dart';
@@ -42,18 +43,12 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
                   const SizedBox(height: AppSizes.gapL),
                   Text(
                     '아직 받은 신청이 없어요',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                    style: AppTextStyles.headlineSmall(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: AppSizes.gapS),
                   Text(
                     '데이팅에서 활동해보세요!',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
+                    style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.outlineVariant),
                   ),
                 ],
               ),
@@ -148,28 +143,19 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
               children: [
                 Text(
                   pet?.name ?? '반려동물',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.titleLarge(context).withWeight(FontWeight.w600),
                 ),
                 if (pet != null) ...[
                   const SizedBox(height: AppSizes.gapXXS),
                   Text(
                     '${pet.breed ?? '믹스견'} · ${pet.ageString}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
+                    style: AppTextStyles.bodySmall(context).withColor(Theme.of(context).colorScheme.outlineVariant),
                   ),
                 ],
                 const SizedBox(height: AppSizes.gapXS),
                 Text(
                   request.message ?? '데이팅 신청을 보냈어요!',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -196,15 +182,14 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
             decoration: BoxDecoration(
               color: request.status == DatingRequestStatus.accepted 
-                  ? context.features.success.withValues(alpha: 0.1)
-                  : Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.1),
+                  ? context.features.success.withValues(alpha: AppOpacity.o10)
+                  : Theme.of(context).colorScheme.outlineVariant.withValues(alpha: AppOpacity.o10),
               borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Text(
               request.status == DatingRequestStatus.accepted ? '수락됨' : '거절됨',
-              style: TextStyle(
-                fontSize: 12,
-                color: request.status == DatingRequestStatus.accepted 
+              style: AppTextStyles.labelLarge(context).withColor(
+                request.status == DatingRequestStatus.accepted 
                     ? context.features.success 
                     : Theme.of(context).colorScheme.outlineVariant,
               ),

@@ -49,25 +49,3 @@ class ProfileButton extends StatelessWidget {
     );
   }
 }
-
-/// @deprecated appbar_actions.dart의 AppBarActionButton.profile() 사용 권장
-@Deprecated('Use AppBarActionButton.profile() from appbar_actions.dart instead')
-Widget buildProfileAction({
-  String? imageUrl, 
-  Color? backgroundColor,
-  double rightPadding = AppSizes.paddingM,
-}) {
-  return Builder(
-    builder: (context) => Padding(
-      padding: EdgeInsets.only(right: rightPadding),
-      child: GestureDetector(
-        onTap: () => GoRouter.of(context).push('/profile'),
-        child: ProfileButton(
-          imageUrl: imageUrl,
-          size: 36,
-          backgroundColor: backgroundColor,
-        ),
-      ),
-    ),
-  );
-}

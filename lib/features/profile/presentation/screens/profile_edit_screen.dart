@@ -12,9 +12,9 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/form_components.dart';
-import '../../../../core/widgets/image_picker_sheet.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/forms/form_components.dart';
+import '../../../../core/widgets/sheets/image_picker_sheet.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
 import '../../../../core/models/location_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -251,7 +251,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       width: 120,
       height: 120,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: AppOpacity.o15),
         shape: BoxShape.circle,
         border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
       ),
@@ -360,7 +360,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         children: [
           Text(
             FormStrings.hintUserBio,
-            style: AppTextStyles.secondarySmall(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
+            style: AppTextStyles.caption(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
           ),
           const SizedBox(height: AppSizes.gapM),
           MingrrTextField(
@@ -392,7 +392,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             Expanded(
               child: Text(
                 '위치 정보는 근처 마켓 상품 추천에 사용됩니다',
-                style: AppTextStyles.secondarySmall(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
+                style: AppTextStyles.caption(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
               ),
             ),
           ],

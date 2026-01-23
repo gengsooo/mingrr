@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/common_widgets.dart';
 
 /// ============================================================
@@ -91,10 +92,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   onPressed: _skipOnboarding,
                   child: Text(
                     '건너뛰기',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                      fontSize: 14,
-                    ),
+                    style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.outlineVariant),
                   ),
                 ),
               ),
@@ -129,11 +127,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Text(
                           page.title,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                          style: AppTextStyles.displayMedium(context).withWeight(FontWeight.w700),
                         ),
                         const SizedBox(height: AppSizes.gapM),
                         
@@ -141,11 +135,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Text(
                           page.description,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            height: 1.5,
-                          ),
+                          style: AppTextStyles.headlineSmall(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant).withHeight(1.5),
                         ),
                       ],
                     ),
@@ -165,7 +155,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     children: List.generate(
                       _pages.length,
                       (index) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
+                        duration: const Duration(milliseconds: 150),
                         margin: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS),
                         width: _currentPage == index ? 24 : 8,
                         height: 8,

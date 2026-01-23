@@ -7,8 +7,9 @@ import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import '../../models/rating_model.dart';
 import 'common_widgets.dart';
-import 'mingrr_bottom_sheet.dart';
+import 'sheets/mingrr_bottom_sheet.dart';
 import 'dialogs/action_prompt_dialog.dart';
+import '../utils/responsive_utils.dart';
 
 /// ============================================================
 /// 꼬순내지수 평가 시스템 통합 위젯
@@ -155,11 +156,11 @@ class _RatingModalState extends State<RatingModal> {
   Widget build(BuildContext context) {
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
+        maxHeight: ResponsiveUtils.maxSheetHeight(context),
       ),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusL)),
       ),
       child: SafeArea(
         child: SingleChildScrollView(
@@ -189,7 +190,7 @@ class _RatingModalState extends State<RatingModal> {
               // 제출 버튼
               _buildSubmitButton(),
               
-              SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+              SizedBox(height: ResponsiveUtils.bottomPaddingWith(context, 8)),
             ],
           ),
         ),
@@ -213,19 +214,13 @@ class _RatingModalState extends State<RatingModal> {
           ],
           Text(
             '${widget.targetName}님에 대한 평가를 보내주세요! 🐾',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTextStyles.headlineMedium(context),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppSizes.gapXS),
           Text(
             '솔직한 평가는 더 좋은 커뮤니티를 만들어요',
-            style: TextStyle(
-              fontSize: 13,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -287,10 +282,8 @@ class _RatingModalState extends State<RatingModal> {
         ),
         child: Text(
           label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
+          style: AppTextStyles.titleMedium(context).withColor(
+            isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ),
@@ -329,11 +322,7 @@ class _RatingModalState extends State<RatingModal> {
             const SizedBox(height: AppSizes.gapS),
             Text(
               _getScoreLabel(_selectedRating),
-              style: TextStyle(
-                fontSize: 14,
-                color: _themeColor,
-                fontWeight: FontWeight.w500,
-              ),
+              style: AppTextStyles.titleMedium(context).withColor(_themeColor),
             ),
           ],
         ],
@@ -373,7 +362,7 @@ class _RatingModalState extends State<RatingModal> {
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
                 decoration: BoxDecoration(
-                  color: isSelected ? tagColor.withValues(alpha: 0.1) : Colors.transparent,
+                  color: isSelected ? tagColor.withValues(alpha: AppOpacity.o10) : Colors.transparent,
                   borderRadius: BorderRadius.circular(AppSizes.radiusL),
                   border: Border.all(
                     color: isSelected ? tagColor : Theme.of(context).colorScheme.outline,
@@ -382,11 +371,9 @@ class _RatingModalState extends State<RatingModal> {
                 ),
                 child: Text(
                   tag,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
-                    color: isSelected ? tagColor : Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: AppTextStyles.titleSmall(context)
+                      .withWeight(isSelected ? FontWeight.w500 : FontWeight.normal)
+                      .withColor(isSelected ? tagColor : Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ),
             );
@@ -617,20 +604,13 @@ class RatingReminderBanner extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     '📝 아직 평가하지 않은 활동이 있어요',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black87,
-                    ),
+                    style: AppTextStyles.titleSmall(context).withWeight(FontWeight.w600).withColor(Colors.black87),
                   ),
                   Text(
                     '$pendingCount건의 평가가 기다리고 있어요',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey.shade700,
-                    ),
+                    style: AppTextStyles.caption(context).withColor(Colors.grey.shade700),
                   ),
                 ],
               ),
@@ -683,10 +663,7 @@ class RatingReceivedBanner extends StatelessWidget {
               Expanded(
                 child: Text(
                   '🐾 $raterName님이 평가를 남겼어요!',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600),
                 ),
               ),
               GestureDetector(
@@ -702,10 +679,7 @@ class RatingReceivedBanner extends StatelessWidget {
           const SizedBox(height: AppSizes.gapS),
           Text(
             '나도 평가해볼까요?',
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: AppTextStyles.bodySmall(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: AppSizes.gapM),
           MingrrButton(
@@ -781,19 +755,13 @@ class TransactionCompleteDialog extends StatelessWidget {
             const SizedBox(height: AppSizes.gapL),
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.bold),
             ),
             const SizedBox(height: AppSizes.gapS),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSizes.gapXL),
             

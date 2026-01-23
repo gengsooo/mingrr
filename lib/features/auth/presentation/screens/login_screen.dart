@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
 import '../providers/auth_provider.dart';
 
 /// ============================================================
@@ -105,22 +106,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         // 앱 이름
         Text(
           AppStrings.appName,
-          style: TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.onSurface,
-            letterSpacing: 2,
-          ),
+          style: AppTextStyles.displayLarge(context).withWeight(FontWeight.w700),
         ),
         const SizedBox(height: AppSizes.gapS),
         
         // 슬로건
         Text(
           AppStrings.appSlogan,
-          style: TextStyle(
-            fontSize: 14,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ],
     );
@@ -149,11 +142,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Text(
                 '전화번호',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: _isPhoneLogin ? FontWeight.w600 : FontWeight.w400,
-                  color: _isPhoneLogin ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outlineVariant,
-                ),
+                style: AppTextStyles.headlineSmall(context)
+                    .withWeight(_isPhoneLogin ? FontWeight.w600 : FontWeight.w400)
+                    .withColor(_isPhoneLogin ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outlineVariant),
               ),
             ),
           ),
@@ -174,11 +165,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Text(
                 '이메일',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: !_isPhoneLogin ? FontWeight.w600 : FontWeight.w400,
-                  color: !_isPhoneLogin ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outlineVariant,
-                ),
+                style: AppTextStyles.headlineSmall(context)
+                    .withWeight(!_isPhoneLogin ? FontWeight.w600 : FontWeight.w400)
+                    .withColor(!_isPhoneLogin ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outlineVariant),
               ),
             ),
           ),
@@ -297,10 +286,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
           child: Text(
             '또는',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.outlineVariant,
-              fontSize: 13,
-            ),
+            style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.outlineVariant),
           ),
         ),
         Expanded(child: Divider(color: Theme.of(context).colorScheme.outline)),
@@ -347,10 +333,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       children: [
         Text(
           '로그인 시 이용약관 및 개인정보처리방침에 동의합니다.',
-          style: TextStyle(
-            fontSize: 12,
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
+          style: AppTextStyles.bodySmall(context).withColor(Theme.of(context).colorScheme.outlineVariant),
           textAlign: TextAlign.center,
         ),
       ],

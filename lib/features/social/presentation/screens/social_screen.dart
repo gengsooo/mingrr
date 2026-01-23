@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
-import '../../../../core/widgets/appbar_actions.dart';
+import '../../../../core/widgets/navigation/appbar_actions.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/top_navigation.dart';
+import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../core/widgets/search_screen.dart';
 import 'community_screen.dart';
 import 'group_list_screen.dart';

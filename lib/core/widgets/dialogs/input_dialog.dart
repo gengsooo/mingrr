@@ -137,11 +137,7 @@ class _MingrrInputDialogState extends State<MingrrInputDialog> {
               children: [
                 Text(
                   widget.title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                  ),
+                  style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600),
                 ),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
@@ -159,10 +155,7 @@ class _MingrrInputDialogState extends State<MingrrInputDialog> {
               const SizedBox(height: AppSizes.gapS),
               Text(
                 widget.subtitle!,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                style: AppTextStyles.bodyMedium(context).withColor(colorScheme.onSurfaceVariant),
               ),
             ],
             
@@ -177,13 +170,10 @@ class _MingrrInputDialogState extends State<MingrrInputDialog> {
               onSubmitted: (_) => _submit(),
               decoration: InputDecoration(
                 hintText: widget.hintText,
-                hintStyle: TextStyle(
-                  fontSize: 13,
-                  color: colorScheme.outlineVariant,
-                ),
+                hintStyle: AppTextStyles.bodyMedium(context).withColor(colorScheme.outlineVariant),
                 errorText: _errorText,
                 filled: true,
-                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: AppOpacity.o50),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppSizes.radiusM),
                   borderSide: BorderSide.none,

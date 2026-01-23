@@ -14,10 +14,10 @@ import '../../../../core/services/firestore_service.dart';
 import '../../../../core/utils/image_utils.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/location_selector.dart';
-import '../../../../core/widgets/form_components.dart';
-import '../../../../core/widgets/tag_input.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/forms/location_selector.dart';
+import '../../../../core/widgets/forms/form_components.dart';
+import '../../../../core/widgets/forms/tag_input.dart';
 import '../../../../models/group_model.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 

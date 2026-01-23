@@ -6,10 +6,10 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/profile_cards.dart';
-import '../../../../core/widgets/report_sheet.dart';
-import '../../../../core/widgets/guardian_profile_modal.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/cards/profile_cards.dart';
+import '../../../../core/widgets/sheets/report_sheet.dart';
+import '../../../../core/widgets/modals/guardian_profile_modal.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/mixins/distance_calculator_mixin.dart';
 import '../../../../models/marketplace_model.dart';
@@ -93,7 +93,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
                 children: [
                   // 등록자 정보
                   _buildUserInfo(context, job),
-                  const Divider(height: 32),
+                  const MingrrDivider.section(),
                   
                   // 알바 정보
                   _buildJobInfo(job),
@@ -167,24 +167,24 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
-                color: _getTypeColor(job.type).withValues(alpha: 0.1),
+                color: _getTypeColor(job.type).withValues(alpha: AppOpacity.o10),
                 borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
               child: Text(
                 job.typeString,
-                style: AppTextStyles.tag(context).copyWith(color: _getTypeColor(job.type)),
+                style: AppTextStyles.labelLarge(context).copyWith(color: _getTypeColor(job.type)),
               ),
             ),
             const SizedBox(width: AppSizes.gapSM),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
-                color: _getStatusColor(job.status).withValues(alpha: 0.1),
+                color: _getStatusColor(job.status).withValues(alpha: AppOpacity.o10),
                 borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
               child: Text(
                 _getStatusText(job.status),
-                style: AppTextStyles.tag(context).copyWith(color: _getStatusColor(job.status)),
+                style: AppTextStyles.labelLarge(context).copyWith(color: _getStatusColor(job.status)),
               ),
             ),
           ],
@@ -205,7 +205,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
               Expanded(
                 child: Text(
                   job.fullPeriodString,
-                  style: AppTextStyles.secondary(context),
+                  style: AppTextStyles.bodySmall(context),
                 ),
               ),
             ],
@@ -214,17 +214,13 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         ],
         Text(
           '${_getDistanceString(job)} · ${formatRelativeTime(job.createdAt)}',
-          style: AppTextStyles.secondary(context),
+          style: AppTextStyles.bodySmall(context),
         ),
         const SizedBox(height: AppSizes.gapL),
         // 급여
         Text(
           '${formatPrice(job.price)}원 / ${job.priceUnit}',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: context.features.market,
-          ),
+          style: AppTextStyles.displayMedium(context).withWeight(FontWeight.w700).withColor(context.features.market),
         ),
       ],
     );
@@ -272,7 +268,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       children: [
         Text(
           '상세 내용',
-          style: AppTextStyles.sectionTitle(context),
+          style: AppTextStyles.headlineSmall(context),
         ),
         const SizedBox(height: AppSizes.gapM),
         Container(
@@ -295,12 +291,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           '첨부 이미지',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600),
         ),
         const SizedBox(height: AppSizes.gapM),
         MingrrImageGallery(
@@ -322,11 +315,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
           Expanded(
             child: Text(
               '${formatPrice(job.price)}원/${job.priceUnit}',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+              style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w700),
             ),
           ),
           // 채팅하기 버튼

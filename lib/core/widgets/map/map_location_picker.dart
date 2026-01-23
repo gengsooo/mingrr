@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import '../../theme/feature_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../constants/app_sizes.dart';
 import '../../models/location_model.dart';
 import '../../services/geocoding_service.dart';
 import '../../services/location_helper.dart';
 import '../common_widgets.dart';
 import '../dialogs/dialogs.dart';
-import '../loading_widgets.dart';
+import '../loading/loading_widgets.dart';
 import '../../utils/app_logger.dart';
 import 'map_loading_widget.dart';
 
@@ -319,7 +320,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
       appBar: AppBar(
         title: Text(widget.title),
         backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 0,
+        elevation: AppSizes.elevationNone,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
@@ -400,16 +401,12 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
             Icon(
               Icons.location_off_outlined,
               size: 64,
-              color: _accentColor.withValues(alpha: 0.5),
+              color: _accentColor.withValues(alpha: AppOpacity.o50),
             ),
             const SizedBox(height: AppSizes.gapL),
             Text(
               '위치를 가져올 수 없습니다',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSizes.gapS),
             TextButton.icon(
@@ -462,7 +459,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
       child: FloatingActionButton.small(
         heroTag: 'myLocation_v2',
         backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 4,
+        elevation: AppSizes.elevationM,
         onPressed: _goToMyLocation,
         child: Icon(
           Icons.my_location,
@@ -481,8 +478,8 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            _accentColor.withValues(alpha: 0.1),
-            _accentColor.withValues(alpha: 0.2),
+            _accentColor.withValues(alpha: AppOpacity.o10),
+            _accentColor.withValues(alpha: AppOpacity.o20),
           ],
         ),
       ),
@@ -512,13 +509,7 @@ class _AddressPanel extends StatelessWidget {
         padding: const EdgeInsets.all(AppSizes.paddingL),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
+          boxShadow: AppShadows.shadowL(Theme.of(context).brightness == Brightness.dark),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -572,10 +563,7 @@ class _AddressPanel extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         '주소를 가져오는 중...',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                        style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     ],
                   )
@@ -585,11 +573,7 @@ class _AddressPanel extends StatelessWidget {
                     children: [
                       Text(
                         state.address ?? '주소 정보 없음',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
+                        style: AppTextStyles.titleLarge(context).withWeight(FontWeight.w600),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -599,10 +583,7 @@ class _AddressPanel extends StatelessWidget {
                           padding: const EdgeInsets.only(top: AppSizes.paddingXXS),
                           child: Text(
                             state.location!.fullAddress!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                            style: AppTextStyles.bodySmall(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -649,7 +630,7 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withValues(alpha: 0.15)
+      ..color = color.withValues(alpha: AppOpacity.o15)
       ..strokeWidth = 1;
 
     const spacing = 40.0;

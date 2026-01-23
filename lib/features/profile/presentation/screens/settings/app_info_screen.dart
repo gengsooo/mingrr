@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../../core/constants/app_sizes.dart';
+import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/widgets/common_widgets.dart';
-import '../../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 
 /// ============================================================
 /// 앱 정보 화면
@@ -105,7 +106,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: AppOpacity.o10),
                     borderRadius: BorderRadius.circular(AppSizes.radiusL),
                   ),
                   child: Icon(
@@ -210,11 +211,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS),
         child: Text(
           content,
-          style: TextStyle(
-            fontSize: 14,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            height: 1.6,
-          ),
+          style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant).withHeight(1.6),
         ),
       ),
     );
@@ -230,7 +227,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
         height: 60,
         margin: const EdgeInsets.only(top: AppSizes.paddingL),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: AppOpacity.o10),
           borderRadius: BorderRadius.circular(AppSizes.radiusM),
         ),
         child: Icon(

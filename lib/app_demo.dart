@@ -10,6 +10,7 @@ import 'core/theme/app_theme.dart';  // 앱의 전체적인 디자인 테마 (�
 import 'core/constants/app_strings.dart';  // 앱에서 사용하는 모든 텍스트 상수
 import 'core/theme/feature_colors.dart';  // 앱에서 사용하는 색상 상수
 import 'core/constants/app_sizes.dart';  // 앱에서 사용하는 크기/간격 상수
+import 'core/theme/app_text_styles.dart';  // 텍스트 스타일
 
 // 각 기능별 화면들을 불러옵니다
 import 'features/home/presentation/screens/home_screen.dart';  // 홈 화면
@@ -173,13 +174,7 @@ class DemoBottomNavBar extends StatelessWidget {
       // decoration: 컨테이너의 꾸미기 (배경색, 테두리, 그림자 등)
       decoration: BoxDecoration(
         color: Colors.white,  // 배경색: 흰색
-        boxShadow: [  // 그림자 효과
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),  // 검은색 5% 투명도
-            blurRadius: 20,  // 그림자 흐림 정도
-            offset: const Offset(0, -5),  // 그림자 위치 (위쪽으로 5픽셀)
-          ),
-        ],
+        boxShadow: AppShadows.shadowL(Theme.of(context).brightness == Brightness.dark),
       ),
       // SafeArea: 노치(카메라 구멍)나 홈 버튼 영역을 피해서 내용을 표시
       child: SafeArea(
@@ -313,12 +308,12 @@ class DemoBottomNavBar extends StatelessWidget {
               children: [
                 // AnimatedContainer: 속성이 변할 때 애니메이션 효과
                 AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),  // 애니메이션 시간
+                  duration: const Duration(milliseconds: 150),  // 애니메이션 시간
                   padding: const EdgeInsets.all(AppSizes.paddingS),
                   decoration: BoxDecoration(
                     // 활성 상태면 배경색 표시, 아니면 투명
                     color: isActive
-                        ? activeColor.withValues(alpha: 0.15)  // 15% 투명도
+                        ? activeColor.withValues(alpha: AppOpacity.o15)  // 15% 투명도
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(AppSizes.radiusM),  // 둥근 모서리
                   ),
@@ -347,11 +342,7 @@ class DemoBottomNavBar extends StatelessWidget {
                       ),
                       child: Text(
                         badge > 99 ? '99+' : '$badge',  // 99 초과면 '99+' 표시
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: AppTextStyles.labelSmall(context).withWeight(FontWeight.w600).withColor(Colors.white),
                       ),
                     ),
                   ),
@@ -363,11 +354,9 @@ class DemoBottomNavBar extends StatelessWidget {
             // 버튼 아래 텍스트
             Text(
               label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,  // 활성 상태면 굵게
-                color: isActive ? activeColor : Theme.of(context).colorScheme.outlineVariant,  // 색상 변경
-              ),
+              style: AppTextStyles.caption(context)
+                  .withWeight(isActive ? FontWeight.w600 : FontWeight.w400)
+                  .withColor(isActive ? activeColor : Theme.of(context).colorScheme.outlineVariant),
             ),
           ],
         ),

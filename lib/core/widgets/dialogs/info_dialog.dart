@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_sizes.dart';
+import '../../theme/app_text_styles.dart';
 import '../common_widgets.dart';
 
 /// ============================================================
@@ -111,7 +112,7 @@ class InfoDialog extends StatelessWidget {
     
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusXL)),
-      elevation: 8,
+      elevation: AppSizes.elevationM,
       backgroundColor: colorScheme.surface,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 340),
@@ -121,7 +122,7 @@ class InfoDialog extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              accentColor.withValues(alpha: isDark ? 0.15 : 0.08),
+              accentColor.withValues(alpha: isDark ? AppOpacity.o15 : AppOpacity.o10),
               isDark ? colorScheme.surface : Colors.white,
             ],
             stops: const [0.0, 0.3],
@@ -169,15 +170,9 @@ class InfoDialog extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.15),
+                color: accentColor.withValues(alpha: AppOpacity.o15),
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: accentColor.withValues(alpha: 0.2),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                boxShadow: AppShadows.shadowM(Theme.of(context).brightness == Brightness.dark),
               ),
               child: Icon(icon, color: accentColor, size: 28),
             ),
@@ -187,11 +182,7 @@ class InfoDialog extends StatelessWidget {
           // 제목
           Text(
             title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: accentColor,
-            ),
+            style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w700).withColor(accentColor),
             textAlign: TextAlign.center,
           ),
           
@@ -200,10 +191,7 @@ class InfoDialog extends StatelessWidget {
             const SizedBox(height: AppSizes.gapSM),
             Text(
               subtitle!,
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
           ],
@@ -239,16 +227,10 @@ class InfoDialog extends StatelessWidget {
         color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
         border: Border.all(
-          color: itemColor.withValues(alpha: isDark ? 0.3 : 0.15),
+          color: itemColor.withValues(alpha: isDark ? AppOpacity.o30 : AppOpacity.o15),
           width: 1,
         ),
-        boxShadow: isDark ? null : [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: isDark ? null : AppShadows.shadowS(false),
       ),
       child: Row(
         children: [
@@ -256,7 +238,7 @@ class InfoDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
             decoration: BoxDecoration(
-              color: itemColor.withValues(alpha: 0.12),
+              color: itemColor.withValues(alpha: AppOpacity.o10),
               borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Row(
@@ -268,11 +250,7 @@ class InfoDialog extends StatelessWidget {
                 ],
                 Text(
                   item.label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: itemColor,
-                  ),
+                  style: AppTextStyles.labelLarge(context).withWeight(FontWeight.w600).withColor(itemColor),
                 ),
               ],
             ),
@@ -288,20 +266,13 @@ class InfoDialog extends StatelessWidget {
                 if (item.value != null)
                   Text(
                     item.value!,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
+                    style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600),
                   ),
                 if (item.description != null) ...[
                   if (item.value != null) const SizedBox(height: AppSizes.gapXXS),
                   Text(
                     item.description!,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                    style: AppTextStyles.caption(context),
                   ),
                 ],
               ],
@@ -327,7 +298,7 @@ class InfoDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(AppSizes.paddingM),
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.06),
+                color: accentColor.withValues(alpha: AppOpacity.o05),
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Row(
@@ -337,10 +308,7 @@ class InfoDialog extends StatelessWidget {
                   Expanded(
                     child: Text(
                       footerText!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                      style: AppTextStyles.bodySmall(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ],

@@ -10,15 +10,15 @@ import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/loading_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/report_sheet.dart';
-import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/loading/loading_widgets.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/sheets/report_sheet.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
-import '../../../../core/widgets/info_badge.dart';
+import '../../../../core/widgets/badges/info_badge.dart';
 import '../../../../core/widgets/mingrr_image_header.dart';
-import '../../../../core/widgets/guardian_profile_modal.dart';
-import '../../../../core/widgets/top_navigation.dart';
+import '../../../../core/widgets/modals/guardian_profile_modal.dart';
+import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../models/group_model.dart';
 import '../../../../models/chat_model.dart';
 import '../../../../models/user_model.dart';
@@ -151,7 +151,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [accentColor.withValues(alpha: 0.8), accentColor],
+          colors: [accentColor.withValues(alpha: AppOpacity.o80), accentColor],
         ),
       ),
       child: const Center(
@@ -176,12 +176,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                 decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.1),
+                  color: accentColor.withValues(alpha: AppOpacity.o10),
                   borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                 ),
                 child: Text(
                   group.typeString,
-                  style: AppTextStyles.tag(context).copyWith(color: accentColor),
+                  style: AppTextStyles.labelLarge(context).copyWith(color: accentColor),
                 ),
               ),
               const SizedBox(width: AppSizes.gapS),
@@ -189,7 +189,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                   decoration: BoxDecoration(
-                    color: context.features.dating.withValues(alpha: 0.1),
+                    color: context.features.dating.withValues(alpha: AppOpacity.o10),
                     borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                   ),
                   child: Row(
@@ -199,7 +199,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                       const SizedBox(width: AppSizes.gapXS),
                       Text(
                         '반려동물 동반',
-                        style: AppTextStyles.tagSmall(context).copyWith(color: context.features.dating),
+                        style: AppTextStyles.labelMedium(context).copyWith(color: context.features.dating),
                       ),
                     ],
                   ),
@@ -214,7 +214,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                   ),
                   child: Text(
                     '가입됨',
-                    style: AppTextStyles.tagSmall(context).copyWith(color: Colors.white),
+                    style: AppTextStyles.labelMedium(context).copyWith(color: Colors.white),
                   ),
                 ),
               ],
@@ -225,7 +225,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           // 모임 이름
           Text(
             group.name,
-            style: AppTextStyles.headlineLarge(context).copyWith(fontSize: 22),
+            style: AppTextStyles.displayMedium(context),
           ),
           const SizedBox(height: AppSizes.gapM),
 
@@ -237,7 +237,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
               Expanded(
                 child: Text(
                   group.address ?? LocationConstants.noLocationText,
-                  style: AppTextStyles.secondary(context),
+                  style: AppTextStyles.bodySmall(context),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -268,7 +268,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                   color: colorScheme.surfaceContainerLow,
                   borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
-                child: Text('#$tag', style: AppTextStyles.tag(context).copyWith(color: accentColor)),
+                child: Text('#$tag', style: AppTextStyles.labelLarge(context).copyWith(color: accentColor)),
               )).toList(),
             ),
           ],
@@ -283,7 +283,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       children: [
         Icon(icon, size: 14, color: colorScheme.onSurfaceVariant),
         const SizedBox(width: AppSizes.gapXS),
-        Text(text, style: AppTextStyles.secondarySmall(context).copyWith(color: colorScheme.onSurfaceVariant)),
+        Text(text, style: AppTextStyles.caption(context).copyWith(color: colorScheme.onSurfaceVariant)),
       ],
     );
   }
@@ -312,9 +312,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             child: Column(
               children: [
                 _buildSettingRow('공개 모임', group.isPublic ? '예' : '아니오', Icons.visibility_outlined),
-                const Divider(height: 24),
+                const MingrrDivider.section(),
                 _buildSettingRow('가입 승인', group.requireApproval ? '필요' : '자유 가입', Icons.how_to_reg_outlined),
-                const Divider(height: 24),
+                const MingrrDivider.section(),
                 _buildSettingRow('반려동물 동반', group.isPetAccompanied ? '예' : '아니오', Icons.pets_outlined),
               ],
             ),
@@ -354,7 +354,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         const SizedBox(width: AppSizes.gapM),
         Text(label, style: AppTextStyles.bodyMedium(context)),
         const Spacer(),
-        Text(value, style: AppTextStyles.listSubtitle(context)),
+        Text(value, style: AppTextStyles.bodySmall(context)),
       ],
     );
   }
@@ -424,7 +424,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                           children: [
                             Text(
                               member.nickname,
-                              style: AppTextStyles.cardTitle(context),
+                              style: AppTextStyles.titleMedium(context),
                             ),
                             const SizedBox(width: AppSizes.gapS),
                             if (member.isCreator)
@@ -441,7 +441,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                               const SizedBox(width: AppSizes.gapXS),
                               Text(
                                 member.petNames.join(', '),
-                                style: AppTextStyles.secondarySmall(context).copyWith(color: context.features.dating),
+                                style: AppTextStyles.caption(context).copyWith(color: context.features.dating),
                               ),
                             ],
                           ),
@@ -546,12 +546,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: AppOpacity.o10),
         borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
       ),
       child: Text(
         label,
-        style: AppTextStyles.badgeSmall(context).copyWith(color: color),
+        style: AppTextStyles.captionSmall(context).copyWith(color: color),
       ),
     );
   }
@@ -667,7 +667,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
               decoration: BoxDecoration(
                 color: colorScheme.surface,
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                border: isPast ? null : Border.all(color: accentColor.withValues(alpha: 0.3)),
+                border: isPast ? null : Border.all(color: accentColor.withValues(alpha: AppOpacity.o30)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -679,12 +679,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                         decoration: BoxDecoration(
                           color: isPast
                               ? colorScheme.surfaceContainerLow
-                              : accentColor.withValues(alpha: 0.1),
+                              : accentColor.withValues(alpha: AppOpacity.o10),
                           borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                         ),
                         child: Text(
                           isPast ? '종료' : '예정',
-                          style: AppTextStyles.tagSmall(context).copyWith(
+                          style: AppTextStyles.labelMedium(context).copyWith(
                             color: isPast ? colorScheme.onSurfaceVariant : accentColor,
                           ),
                         ),
@@ -692,14 +692,14 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                       const Spacer(),
                       Text(
                         '${schedule.participantCount}명 참여',
-                        style: AppTextStyles.secondarySmall(context),
+                        style: AppTextStyles.caption(context),
                       ),
                     ],
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   Text(
                     schedule.title,
-                    style: AppTextStyles.sectionTitle(context).copyWith(
+                    style: AppTextStyles.headlineSmall(context).copyWith(
                       color: isPast ? colorScheme.onSurfaceVariant : null,
                     ),
                   ),
@@ -710,7 +710,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                       const SizedBox(width: AppSizes.gapSM),
                       Text(
                         _formatScheduleDate(schedule.startTime),
-                        style: AppTextStyles.secondary(context),
+                        style: AppTextStyles.bodySmall(context),
                       ),
                     ],
                   ),
@@ -723,7 +723,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                         Expanded(
                           child: Text(
                             schedule.place!,
-                            style: AppTextStyles.secondary(context),
+                            style: AppTextStyles.bodySmall(context),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -905,7 +905,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           return ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
             itemCount: requests.length,
-            separatorBuilder: (_, __) => const Divider(height: 1),
+            separatorBuilder: (_, __) => const MingrrDivider(),
             itemBuilder: (context, index) {
               final request = requests[index];
               return _JoinRequestTile(

@@ -329,7 +329,7 @@ class MingrrTapFeedback extends StatefulWidget {
     required this.child,
     this.onTap,
     this.scaleDown = 0.95,
-    this.duration = const Duration(milliseconds: 100),
+    this.duration = const Duration(milliseconds: 150),
   });
 
   @override

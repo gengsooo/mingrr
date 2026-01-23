@@ -14,11 +14,11 @@ import '../../../../core/services/image_crop_service.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/utils/image_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/form_components.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/forms/form_components.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/utils/error_handler.dart';
-import '../../../../core/widgets/image_picker_sheet.dart';
+import '../../../../core/widgets/sheets/image_picker_sheet.dart';
 import '../../../../models/pet_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../pet/data/pet_repository.dart';
@@ -302,7 +302,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       width: 120,
       height: 120,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: AppOpacity.o15),
         shape: BoxShape.circle,
         border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
       ),
@@ -454,17 +454,15 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
             children: [
               Text(
                 '선택됨: ${_selectedTraits.length}개',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: _selectedTraits.length >= 5 ? context.features.success : Colors.orange,
+                style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600).withColor(
+                  _selectedTraits.length >= 5 ? context.features.success : Colors.orange,
                 ),
               ),
               const Spacer(),
               if (_selectedTraits.length < 5)
                 Text(
                   '최소 5개 선택 필요',
-                  style: AppTextStyles.secondarySmall(context).copyWith(color: Colors.orange),
+                  style: AppTextStyles.caption(context).copyWith(color: Colors.orange),
                 ),
             ],
           ),
@@ -486,11 +484,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       children: [
         Text(
           category.label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          style: AppTextStyles.titleSmall(context).withWeight(FontWeight.w600).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: AppSizes.gapS),
         Wrap(
@@ -517,9 +511,8 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
               visualDensity: VisualDensity.compact,
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
-              labelStyle: TextStyle(
-                fontSize: 12,
-                color: isSelected 
+              labelStyle: AppTextStyles.bodySmall(context).withColor(
+                isSelected 
                     ? Theme.of(context).colorScheme.tertiary
                     : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
@@ -578,7 +571,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
               ),
               Text(
                 '${_getTotalPhotoCount()}/5장',
-                style: AppTextStyles.secondarySmall(context),
+                style: AppTextStyles.caption(context),
               ),
             ],
           ),
@@ -744,7 +737,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
               child: Container(
                 padding: const EdgeInsets.all(AppSizes.paddingXS),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
+                  color: Colors.black.withValues(alpha: AppOpacity.o50),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.close, size: 12, color: Colors.white),

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/constants/app_sizes.dart';
+import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/widgets/common_widgets.dart';
-import '../../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../../core/utils/responsive_utils.dart';
 
 /// ============================================================
 /// 고객센터 화면
@@ -48,7 +50,7 @@ class CustomerServiceScreen extends StatelessWidget {
                   title: '카카오톡 문의',
                   subtitle: '평일 10:00 ~ 18:00 (주말/공휴일 휴무)',
                   iconColor: const Color(0xFF3C1E1E),
-                  iconBackgroundColor: const Color(0xFFFEE500).withValues(alpha: 0.2),
+                  iconBackgroundColor: const Color(0xFFFEE500).withValues(alpha: AppOpacity.o20),
                   onTap: () => _openKakaoChannel(context),
                 ),
                 MingrrSettingsTile(
@@ -230,13 +232,9 @@ class CustomerServiceScreen extends StatelessWidget {
                 color: Colors.red,
                 borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
               ),
-              child: const Text(
+              child: Text(
                 'NEW',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTextStyles.labelSmall(context).withWeight(FontWeight.w600).withColor(Colors.white),
               ),
             ),
           ],
@@ -270,7 +268,7 @@ class CustomerServiceScreen extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
+        height: ResponsiveUtils.heightPercent(context, 0.7),
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
         decoration: BoxDecoration(
           color: colorScheme.surface,
@@ -294,7 +292,7 @@ class CustomerServiceScreen extends StatelessWidget {
               style: theme.textTheme.labelSmall,
             ),
             const SizedBox(height: 20),
-            const Divider(),
+            const MingrrDivider(),
             const SizedBox(height: 20),
             Expanded(
               child: SingleChildScrollView(

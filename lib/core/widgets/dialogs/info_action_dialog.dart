@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_sizes.dart';
+import '../../theme/app_text_styles.dart';
 import '../common_widgets.dart';
 
 /// ============================================================
@@ -113,7 +114,7 @@ class MingrrInfoActionDialog extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.1),
+                color: iconColor.withValues(alpha: AppOpacity.o10),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 28, color: iconColor),
@@ -123,10 +124,7 @@ class MingrrInfoActionDialog extends StatelessWidget {
             // 제목
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTextStyles.headlineMedium(context),
             ),
             const SizedBox(height: AppSizes.gapS),
             
@@ -134,10 +132,7 @@ class MingrrInfoActionDialog extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyles.bodyLarge(context).withColor(colorScheme.onSurfaceVariant),
             ),
             
             // 정보 박스들
@@ -166,10 +161,7 @@ class MingrrInfoActionDialog extends StatelessWidget {
                     ),
                     child: Text(
                       cancelText,
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                      style: AppTextStyles.titleLarge(context).withColor(colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ),
@@ -199,7 +191,7 @@ class MingrrInfoActionDialog extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(AppSizes.paddingM),
       decoration: BoxDecoration(
-        color: boxColor.withValues(alpha: 0.08),
+        color: boxColor.withValues(alpha: AppOpacity.o10),
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Row(
@@ -213,26 +205,19 @@ class MingrrInfoActionDialog extends StatelessWidget {
                 if (item.label != null)
                   Text(
                     item.label!,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: item.isPrimary ? boxColor : colorScheme.onSurfaceVariant,
+                    style: AppTextStyles.caption(context).withColor(
+                      item.isPrimary ? boxColor : colorScheme.onSurfaceVariant,
                     ),
                   ),
                 Text(
                   item.content,
-                  style: TextStyle(
-                    fontSize: item.label != null ? 13 : 14,
-                    fontWeight: item.label != null ? FontWeight.w500 : FontWeight.normal,
-                    color: colorScheme.onSurface,
-                  ),
+                  style: (item.label != null ? AppTextStyles.bodyMedium(context) : AppTextStyles.bodyLarge(context))
+                      .withWeight(item.label != null ? FontWeight.w500 : FontWeight.normal),
                 ),
                 if (item.subtitle != null)
                   Text(
                     item.subtitle!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: boxColor,
-                    ),
+                    style: AppTextStyles.bodySmall(context).withColor(boxColor),
                   ),
               ],
             ),

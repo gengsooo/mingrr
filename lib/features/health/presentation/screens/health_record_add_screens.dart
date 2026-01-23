@@ -5,8 +5,8 @@ import '../../../../core/utils/error_handler.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/form_components.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/forms/form_components.dart';
 import '../providers/health_provider.dart';
 
 /// ============================================================
@@ -53,7 +53,7 @@ Widget _buildMemoField(BuildContext context, TextEditingController controller, {
     maxLines: maxLines,
     decoration: InputDecoration(
       hintText: hint ?? '메모를 입력하세요',
-      hintStyle: AppTextStyles.secondary(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
+      hintStyle: AppTextStyles.bodySmall(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
         borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
@@ -122,7 +122,7 @@ class _AddWeightRecordScreenState extends State<AddWeightRecordScreen> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
               hintText: '예: 5.2',
-              hintStyle: AppTextStyles.secondary(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
+              hintStyle: AppTextStyles.bodySmall(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
               suffixText: 'kg',
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
@@ -415,7 +415,7 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
             controller: _nameController,
             decoration: InputDecoration(
               hintText: '예: 심장사상충약, 관절영양제',
-              hintStyle: AppTextStyles.secondary(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
+              hintStyle: AppTextStyles.bodySmall(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
@@ -445,7 +445,7 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isSelected ? color.withValues(alpha: 0.15) : Theme.of(context).colorScheme.surface,
+                    color: isSelected ? color.withValues(alpha: AppOpacity.o15) : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     border: Border.all(
                       color: isSelected ? color : Theme.of(context).colorScheme.outline,

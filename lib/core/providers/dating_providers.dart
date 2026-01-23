@@ -11,10 +11,6 @@ final receivedDatingRequestsProvider = StreamProvider<List<DatingRequestModel>>(
   return firestoreService.watchReceivedDatingRequests(userId);
 });
 
-/// 하위 호환성
-@Deprecated('Use receivedDatingRequestsProvider instead')
-final receivedLikesProvider = receivedDatingRequestsProvider;
-
 final userMatchesProvider = FutureProvider<List<MatchModel>>((ref) async {
   final userId = ref.watch(currentUserIdProvider);
   if (userId == null) return [];

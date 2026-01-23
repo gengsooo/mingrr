@@ -5,7 +5,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'app_logger.dart';
 import '../constants/app_sizes.dart';
 import '../theme/app_text_styles.dart';
-import '../widgets/mingrr_bottom_sheet.dart';
+import '../widgets/sheets/mingrr_bottom_sheet.dart';
 
 /// ============================================================
 /// 이미지 유틸리티
@@ -193,7 +193,7 @@ class ImageUtils {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: AppOpacity.o10),
               borderRadius: BorderRadius.circular(AppSizes.radiusM),
             ),
             child: Icon(icon, size: 28, color: Theme.of(context).colorScheme.primary),

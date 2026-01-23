@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/feature_colors.dart';
+import '../theme/app_text_styles.dart';
 import '../constants/app_sizes.dart';
 
 /// ============================================================
@@ -67,14 +68,8 @@ class LocationBubbleWidget extends StatelessWidget {
           decoration: BoxDecoration(
             color: colorScheme.surface,
             borderRadius: BorderRadius.circular(AppSizes.radiusS),
-            border: Border.all(color: color.withValues(alpha: 0.3)),
-            boxShadow: [
-              BoxShadow(
-                color: colorScheme.shadow.withValues(alpha: 0.1),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            border: Border.all(color: color.withValues(alpha: AppOpacity.o30)),
+            boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -87,11 +82,7 @@ class LocationBubbleWidget extends StatelessWidget {
                   const SizedBox(width: AppSizes.gapXS),
                   Text(
                     '현재 위치가 맞나요?',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
+                    style: AppTextStyles.titleSmall(context).withWeight(FontWeight.w600),
                   ),
                 ],
               ),
@@ -101,10 +92,7 @@ class LocationBubbleWidget extends StatelessWidget {
                 const SizedBox(height: AppSizes.gapSM),
                 Text(
                   '저장된 위치: $savedAddress',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  style: AppTextStyles.caption(context),
                 ),
               ],
               
@@ -152,7 +140,7 @@ class LocationBubbleWidget extends StatelessWidget {
       size: const Size(16, 8),
       painter: _BubbleTailPainter(
         color: Theme.of(context).colorScheme.surface,
-        borderColor: color.withValues(alpha: 0.3),
+        borderColor: color.withValues(alpha: AppOpacity.o30),
         isUp: isUp,
       ),
     );
@@ -187,10 +175,8 @@ class LocationBubbleWidget extends StatelessWidget {
             const SizedBox(width: AppSizes.gapXS),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: isPrimary ? Colors.white : color,
+              style: AppTextStyles.labelMedium(context).withWeight(FontWeight.w600).withColor(
+                isPrimary ? Colors.white : color,
               ),
             ),
           ],
@@ -274,9 +260,9 @@ class LocationMismatchBanner extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSizes.paddingS),
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: AppOpacity.o10),
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withValues(alpha: AppOpacity.o30)),
       ),
       child: Row(
         children: [
@@ -289,19 +275,12 @@ class LocationMismatchBanner extends StatelessWidget {
               children: [
                 Text(
                   '저장된 위치와 현재 위치가 달라요',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
-                  ),
+                  style: AppTextStyles.labelLarge(context).withWeight(FontWeight.w600),
                 ),
                 if (savedAddress != null && savedAddress!.isNotEmpty)
                   Text(
                     savedAddress!,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    style: AppTextStyles.captionSmall(context),
                   ),
               ],
             ),
@@ -316,13 +295,9 @@ class LocationMismatchBanner extends StatelessWidget {
                 color: color,
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
-              child: const Text(
+              child: Text(
                 '변경',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+                style: AppTextStyles.labelMedium(context).withWeight(FontWeight.w600).withColor(Colors.white),
               ),
             ),
           ),

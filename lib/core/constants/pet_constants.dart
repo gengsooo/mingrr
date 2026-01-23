@@ -295,10 +295,6 @@ enum GroupCategory {
   const GroupCategory(this.label, this.icon, this.description);
 }
 
-/// 하위 호환성을 위한 별칭
-@Deprecated('GroupCategory를 사용하세요')
-typedef CommunityCategory = GroupCategory;
-
 /// 소모임 제한 타입
 enum GroupRestriction {
   none('제한 없음'),
@@ -310,10 +306,6 @@ enum GroupRestriction {
 
   const GroupRestriction(this.label);
 }
-
-/// 하위 호환성을 위한 별칭
-@Deprecated('GroupRestriction을 사용하세요')
-typedef CommunityRestriction = GroupRestriction;
 
 /// ============================================================
 /// 채팅 타입

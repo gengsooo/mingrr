@@ -4,9 +4,11 @@ import '../../models/pet_model.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/group_model.dart';
 import '../constants/app_sizes.dart';
+import '../theme/app_text_styles.dart';
 import '../constants/app_strings.dart';
 import '../widgets/common_widgets.dart';
-import '../widgets/mingrr_bottom_sheet.dart';
+import '../widgets/sheets/mingrr_bottom_sheet.dart';
+import '../utils/responsive_utils.dart';
 
 /// ============================================================
 /// 공유 서비스
@@ -146,14 +148,11 @@ class _ShareBottomSheet extends StatelessWidget {
         children: [
           const BottomSheetHandle(),
           // 제목
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSizes.paddingS),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
             child: Text(
               '공유하기',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w600),
               textAlign: TextAlign.center,
             ),
           ),
@@ -217,16 +216,13 @@ class _ShareBottomSheet extends StatelessWidget {
             ),
             child: Text(
               text,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey[700],
-              ),
+              style: AppTextStyles.bodyMedium(context).withColor(Colors.grey[700]!),
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
           ),
           
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 10),
+          SizedBox(height: ResponsiveUtils.bottomPaddingWith(context, 10)),
         ],
       ),
     );
@@ -254,10 +250,7 @@ class _ShareBottomSheet extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[700],
-            ),
+            style: AppTextStyles.bodySmall(context).withColor(Colors.grey[700]!),
           ),
         ],
       ),

@@ -5,7 +5,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../models/pet_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import '../providers/health_provider.dart';
@@ -106,7 +106,7 @@ class HealthScreen extends ConsumerWidget {
           const SizedBox(height: AppSizes.gapL),
           Text(
             '등록된 반려동물이 없습니다',
-            style: AppTextStyles.sectionTitle(context),
+            style: AppTextStyles.headlineSmall(context),
           ),
           const SizedBox(height: AppSizes.gapS),
           Text(
@@ -151,18 +151,12 @@ class HealthScreen extends ConsumerWidget {
                       height: 56,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: context.features.health.withValues(alpha: 0.1),
+                        color: context.features.health.withValues(alpha: AppOpacity.o10),
                         border: Border.all(
                           color: isSelected ? context.features.health : Theme.of(context).colorScheme.outline,
                           width: isSelected ? 3 : 1,
                         ),
-                        boxShadow: isSelected ? [
-                          BoxShadow(
-                            color: context.features.health.withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ] : null,
+                        boxShadow: isSelected ? AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark) : null,
                         image: (pet.profileImageUrl != null && pet.profileImageUrl!.isNotEmpty)
                             ? DecorationImage(
                                 image: NetworkImage(pet.profileImageUrl!),
@@ -180,11 +174,9 @@ class HealthScreen extends ConsumerWidget {
                     // 이름
                     Text(
                       pet.name,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected ? context.features.health : Theme.of(context).colorScheme.onSurface,
-                      ),
+                      style: AppTextStyles.bodySmall(context)
+                          .withWeight(isSelected ? FontWeight.w600 : FontWeight.w400)
+                          .withColor(isSelected ? context.features.health : Theme.of(context).colorScheme.onSurface),
                     ),
                   ],
                 ),
@@ -226,11 +218,9 @@ class HealthScreen extends ConsumerWidget {
                     const SizedBox(width: AppSizes.gapSM),
                     Text(
                       category.label,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                      ),
+                      style: AppTextStyles.bodyMedium(context)
+                          .withWeight(isSelected ? FontWeight.w600 : FontWeight.w400)
+                          .withColor(isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface),
                     ),
                   ],
                 ),
@@ -255,7 +245,7 @@ class HealthScreen extends ConsumerWidget {
           // 최근 기록
           Text(
             '최근 기록',
-            style: AppTextStyles.sectionTitle(context),
+            style: AppTextStyles.headlineSmall(context),
           ),
           const SizedBox(height: AppSizes.gapM),
           _buildRecentRecords(context, ref, category, pet),
@@ -276,7 +266,7 @@ class HealthScreen extends ConsumerWidget {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: context.features.health.withValues(alpha: 0.15),
+                  color: context.features.health.withValues(alpha: AppOpacity.o15),
                   borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Icon(category.icon, size: 24, color: context.features.health),
@@ -288,11 +278,11 @@ class HealthScreen extends ConsumerWidget {
                   children: [
                     Text(
                       '${pet.name}의 ${category.label}',
-                      style: AppTextStyles.sectionTitle(context),
+                      style: AppTextStyles.headlineSmall(context),
                     ),
                     Text(
                       category.description,
-                      style: AppTextStyles.secondarySmall(context),
+                      style: AppTextStyles.caption(context),
                     ),
                   ],
                 ),
@@ -300,7 +290,7 @@ class HealthScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppSizes.gapL),
-          const Divider(),
+          const MingrrDivider(),
           const SizedBox(height: AppSizes.gapM),
           _buildCategorySummary(context, ref, category, pet),
         ],
@@ -411,7 +401,7 @@ class HealthScreen extends ConsumerWidget {
         const SizedBox(height: AppSizes.gapXS),
         Text(
           label,
-          style: AppTextStyles.secondarySmall(context).copyWith(color: labelColor ?? color.withValues(alpha: 0.7)),
+          style: AppTextStyles.caption(context).copyWith(color: labelColor ?? color.withValues(alpha: AppOpacity.o70)),
         ),
       ],
     );
@@ -651,7 +641,7 @@ class HealthScreen extends ConsumerWidget {
             const SizedBox(height: AppSizes.gapXS),
             Text(
               '+ 버튼을 눌러 첫 기록을 추가해보세요',
-              style: AppTextStyles.secondarySmall(context),
+              style: AppTextStyles.caption(context),
             ),
           ],
         ),

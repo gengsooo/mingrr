@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/svg_icons.dart';
-import '../../../../core/widgets/top_navigation.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
+import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../models/notification_model.dart';
 import '../providers/notification_provider.dart';
@@ -64,11 +65,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                 ),
                 child: Text(
                   unreadCount > 99 ? '99+' : '$unreadCount',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.labelLarge(context).withWeight(FontWeight.w600).withColor(Colors.white),
                 ),
               ),
             ],
@@ -184,11 +181,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                   ),
                   child: Text(
                     dateKey,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                    style: AppTextStyles.titleSmall(context).withWeight(FontWeight.w600).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ),
                 // 알림 아이템들
@@ -209,7 +202,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
         decoration: BoxDecoration(
           color: notification.isRead ? Colors.white : Theme.of(context).colorScheme.primaryContainer,
           border: Border(
-            bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5)),
+            bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: AppOpacity.o50)),
           ),
         ),
         child: Row(
@@ -240,13 +233,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                       Expanded(
                         child: Text(
                           notification.title,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: notification.isRead 
-                                ? FontWeight.w500 
-                                : FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                          style: AppTextStyles.titleLarge(context).withWeight(notification.isRead ? FontWeight.w500 : FontWeight.w600),
                         ),
                       ),
                       if (!notification.isRead)
@@ -263,20 +250,14 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                   const SizedBox(height: AppSizes.gapM),
                   Text(
                     notification.body,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                    style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   Text(
                     _formatTime(notification.createdAt),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
+                    style: AppTextStyles.caption(context).withColor(Theme.of(context).colorScheme.outlineVariant),
                   ),
                 ],
               ),
@@ -291,8 +272,6 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     switch (type) {
       case NotificationType.datingRequest:
       case NotificationType.datingAccepted:
-      case NotificationType.likeReceived:
-      case NotificationType.likeAccepted:
         return Icons.favorite;
       case NotificationType.matchSuccess:
         return Icons.celebration;
@@ -337,7 +316,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
       case 'breeding':
         return context.features.datingContainer;
       case 'chat':
-        return context.features.chat.withValues(alpha: 0.2);
+        return context.features.chat.withValues(alpha: AppOpacity.o20);
       case 'market':
         return context.features.marketContainer;
       case 'community':

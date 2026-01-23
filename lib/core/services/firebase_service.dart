@@ -35,22 +35,12 @@ class FirebaseService {
   CollectionReference<Map<String, dynamic>> get petsCollection =>
       firestore.collection('pets');
   
-  /// 반려동물 컬렉션 (하위 호환성)
-  @Deprecated('Use petsCollection instead')
-  CollectionReference<Map<String, dynamic>> get dogsCollection =>
-      firestore.collection('pets');
-  
   /// 채팅방 컬렉션
   CollectionReference<Map<String, dynamic>> get chatRoomsCollection =>
       firestore.collection('chatRooms');
   
   /// 데이팅 신청 컬렉션
   CollectionReference<Map<String, dynamic>> get datingRequestsCollection =>
-      firestore.collection('dating_requests');
-  
-  /// 좋아요(데이팅 신청) 컬렉션 - 하위 호환성
-  @Deprecated('Use datingRequestsCollection instead')
-  CollectionReference<Map<String, dynamic>> get likesCollection =>
       firestore.collection('dating_requests');
   
   /// 매칭 컬렉션
@@ -139,11 +129,6 @@ class FirebaseService {
   
   /// 반려동물 이미지 저장 경로
   Reference petImageRef(String petId, String fileName) =>
-      storage.ref().child('pets/$petId/$fileName');
-  
-  /// 반려동물 이미지 저장 경로 (하위 호환성)
-  @Deprecated('Use petImageRef instead')
-  Reference dogImageRef(String petId, String fileName) =>
       storage.ref().child('pets/$petId/$fileName');
   
   /// 상품 이미지 저장 경로

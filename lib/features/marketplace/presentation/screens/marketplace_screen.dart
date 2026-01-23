@@ -4,11 +4,11 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/product_card.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/cards/product_card.dart';
 import '../../../../core/widgets/search_screen.dart';
-import '../../../../core/widgets/top_navigation.dart';
-import '../../../../core/widgets/appbar_actions.dart';
+import '../../../../core/widgets/navigation/top_navigation.dart';
+import '../../../../core/widgets/navigation/appbar_actions.dart';
 import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../models/marketplace_model.dart';
@@ -17,6 +17,7 @@ import '../providers/marketplace_provider.dart';
 import 'product_detail_screen.dart';
 import 'product_write_screen.dart';
 import 'job_detail_screen.dart';
+import '../../../../core/utils/responsive_utils.dart';
 
 /// ============================================================
 /// 마켓플레이스 화면
@@ -501,7 +502,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.9,
+      height: ResponsiveUtils.heightPercent(context, 0.9),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXL)),
@@ -532,7 +533,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
               ],
             ),
           ),
-          const Divider(height: 1),
+          const MingrrDivider(),
           // 본문
           Expanded(
             child: SingleChildScrollView(
@@ -570,10 +571,8 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                                 const SizedBox(width: AppSizes.gapSM),
                                 Text(
                                   type.label,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
+                                  style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600).withColor(
+                                    isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -627,7 +626,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   children: [
                     Icon(Icons.camera_alt, color: Theme.of(context).colorScheme.outlineVariant),
                     const SizedBox(height: AppSizes.gapXS),
-                    Text('0/10', style: AppTextStyles.cardMeta(context)),
+                    Text('0/10', style: AppTextStyles.captionSmall(context)),
                   ],
                 ),
               ),
@@ -691,9 +690,8 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                 ),
                 child: Text(
                   type,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                  style: AppTextStyles.bodyMedium(context).withColor(
+                    isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -805,7 +803,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
               margin: const EdgeInsets.only(bottom: AppSizes.paddingS),
               padding: const EdgeInsets.all(AppSizes.paddingM),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: AppOpacity.o30),
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Row(
@@ -822,7 +820,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                         ),
                         Text(
                           '${pet['breed']} · ${pet['weight']}kg',
-                          style: AppTextStyles.secondarySmall(context),
+                          style: AppTextStyles.caption(context),
                         ),
                       ],
                     ),
@@ -874,7 +872,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   margin: EdgeInsets.only(right: type != JobPayType.daily ? 8 : 0),
                   padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
                   decoration: BoxDecoration(
-                    color: isSelected ? context.features.market.withValues(alpha: 0.1) : Colors.transparent,
+                    color: isSelected ? context.features.market.withValues(alpha: AppOpacity.o10) : Colors.transparent,
                     borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                     border: Border.all(
                       color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
@@ -883,11 +881,9 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   child: Text(
                     type.label,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                      color: isSelected ? context.features.market : Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                    style: AppTextStyles.bodyMedium(context)
+                        .withWeight(isSelected ? FontWeight.w600 : FontWeight.normal)
+                        .withColor(isSelected ? context.features.market : Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ),
               ),
@@ -952,7 +948,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
             const SizedBox(height: AppSizes.gapS),
             Text(
               '프로필에 등록된 반려동물 중 선택해주세요',
-              style: AppTextStyles.secondary(context),
+              style: AppTextStyles.bodySmall(context),
             ),
             const SizedBox(height: AppSizes.gapL),
             // 등록된 반려동물 목록
@@ -970,7 +966,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   padding: const EdgeInsets.all(AppSizes.paddingM),
                   decoration: BoxDecoration(
                     color: isAlreadySelected 
-                        ? Theme.of(context).colorScheme.outline.withValues(alpha: 0.5) 
+                        ? Theme.of(context).colorScheme.outline.withValues(alpha: AppOpacity.o50) 
                         : Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     border: Border.all(
@@ -1005,9 +1001,8 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                             const SizedBox(height: AppSizes.gapXXS),
                             Text(
                               '${pet['breed']} · ${pet['weight']}kg',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isAlreadySelected 
+                              style: AppTextStyles.bodySmall(context).withColor(
+                                isAlreadySelected 
                                     ? Theme.of(context).colorScheme.outlineVariant 
                                     : Theme.of(context).colorScheme.onSurfaceVariant,
                               ),

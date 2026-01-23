@@ -6,9 +6,9 @@ import '../theme/app_text_styles.dart';
 import '../constants/app_sizes.dart';
 import '../services/firestore_service.dart';
 import 'common_widgets.dart';
-import 'svg_icons.dart';
-import 'info_badge.dart';
-import 'search_bar.dart';
+import 'badges/svg_icons.dart';
+import 'badges/info_badge.dart';
+import 'forms/search_bar.dart';
 import '../utils/format_utils.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/group_model.dart';
@@ -61,7 +61,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 0,
+        elevation: AppSizes.elevationNone,
         titleSpacing: 0,
         title: _buildSearchField(),
         actions: [
@@ -176,7 +176,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
         trailing: Text(
           formatRelativeTime(product.createdAt),
-          style: AppTextStyles.cardMeta(context),
+          style: AppTextStyles.captionSmall(context),
         ),
         onTap: () {
           Navigator.pop(context);
@@ -210,10 +210,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         title: Text(group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Row(
           children: [
-            Text(group.typeString, style: AppTextStyles.secondarySmall(context)),
+            Text(group.typeString, style: AppTextStyles.caption(context)),
             const SizedBox(width: AppSizes.gapS),
             Icon(Icons.person, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
-            Text(' ${group.memberCount}', style: AppTextStyles.cardMeta(context)),
+            Text(' ${group.memberCount}', style: AppTextStyles.captionSmall(context)),
           ],
         ),
         trailing: LikeCountText(count: group.likeCount, size: InfoBadgeSize.small),
@@ -245,7 +245,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
         trailing: Text(
           formatRelativeTime(job.createdAt),
-          style: AppTextStyles.cardMeta(context),
+          style: AppTextStyles.captionSmall(context),
         ),
         onTap: () {
           Navigator.pop(context);
@@ -279,7 +279,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         title: Text(breeding.title ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(
           '${breeding.breed ?? '품종 미상'}',
-          style: AppTextStyles.cardMeta(context),
+          style: AppTextStyles.captionSmall(context),
         ),
         trailing: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
         onTap: () {
@@ -321,24 +321,24 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
               decoration: BoxDecoration(
-                color: context.features.social.withValues(alpha: 0.1),
+                color: context.features.social.withValues(alpha: AppOpacity.o10),
                 borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
               ),
               child: Text(
                 post.category.label,
-                style: AppTextStyles.tagSmall(context).copyWith(color: context.features.social),
+                style: AppTextStyles.labelMedium(context).copyWith(color: context.features.social),
               ),
             ),
             const SizedBox(width: AppSizes.gapS),
             LikeCountText(count: post.likeCount, size: InfoBadgeSize.small),
             const SizedBox(width: AppSizes.gapS),
             Icon(Icons.chat_bubble_outline, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
-            Text(' ${post.commentCount}', style: AppTextStyles.cardMeta(context)),
+            Text(' ${post.commentCount}', style: AppTextStyles.captionSmall(context)),
           ],
         ),
         trailing: Text(
           formatRelativeTime(post.createdAt),
-          style: AppTextStyles.cardMeta(context),
+          style: AppTextStyles.captionSmall(context),
         ),
         onTap: () {
           Navigator.pop(context);

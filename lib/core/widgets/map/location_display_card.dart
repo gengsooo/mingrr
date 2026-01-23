@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../constants/app_sizes.dart';
 import '../../models/location_model.dart';
 import '../../theme/app_theme.dart';
+import '../../theme/app_text_styles.dart';
 
 /// ============================================================
 /// 위치 정보 표시 카드
@@ -54,9 +55,9 @@ class LocationDisplayCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSizes.paddingM),
         decoration: BoxDecoration(
-          color: hasLocation ? color.withValues(alpha: 0.08) : context.inputBackground,
+          color: hasLocation ? color.withValues(alpha: AppOpacity.o10) : context.inputBackground,
           border: Border.all(
-            color: hasLocation ? color.withValues(alpha: 0.3) : Theme.of(context).colorScheme.outline,
+            color: hasLocation ? color.withValues(alpha: AppOpacity.o30) : Theme.of(context).colorScheme.outline,
           ),
           borderRadius: BorderRadius.circular(AppSizes.radiusS),
         ),
@@ -71,7 +72,7 @@ class LocationDisplayCard extends StatelessWidget {
                   height: 40,
                   decoration: BoxDecoration(
                     color: hasLocation 
-                        ? color.withValues(alpha: 0.15)
+                        ? color.withValues(alpha: AppOpacity.o15)
                         : Theme.of(context).colorScheme.surfaceContainerLow,
                     borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   ),
@@ -91,20 +92,13 @@ class LocationDisplayCard extends StatelessWidget {
                       if (hasLocation) ...[
                         Text(
                           location!.shortAddress ?? location!.displayAddress,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                          style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600),
                         ),
                         if (location!.fullAddress != null) ...[
                           const SizedBox(height: AppSizes.gapXXS),
                           Text(
                             location!.fullAddress!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                            style: AppTextStyles.bodySmall(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -112,19 +106,12 @@ class LocationDisplayCard extends StatelessWidget {
                       ] else ...[
                         Text(
                           '위치 선택',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                          style: AppTextStyles.titleMedium(context),
                         ),
                         const SizedBox(height: AppSizes.gapXXS),
                         Text(
                           '탭하여 지도에서 선택',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(context).colorScheme.outlineVariant,
-                          ),
+                          style: AppTextStyles.bodySmall(context).withColor(Theme.of(context).colorScheme.outlineVariant),
                         ),
                       ],
                     ],
@@ -139,13 +126,9 @@ class LocationDisplayCard extends StatelessWidget {
                       color: accentColor,
                       borderRadius: BorderRadius.circular(AppSizes.radiusM),
                     ),
-                    child: const Text(
+                    child: Text(
                       '변경',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
+                      style: AppTextStyles.labelLarge(context).withColor(Colors.white),
                     ),
                   )
                 else if (editable)
@@ -163,7 +146,7 @@ class LocationDisplayCard extends StatelessWidget {
               Container(
                 height: miniMapHeight,
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
+                  color: color.withValues(alpha: AppOpacity.o10),
                   borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                 ),
                 child: Stack(
@@ -188,7 +171,7 @@ class LocationDisplayCard extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: Colors.white.withValues(alpha: AppOpacity.o80),
                           borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Row(
@@ -198,11 +181,7 @@ class LocationDisplayCard extends StatelessWidget {
                             const SizedBox(width: AppSizes.gapXS),
                             Text(
                               '지도 보기',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: accentColor,
-                                fontWeight: FontWeight.w500,
-                              ),
+                              style: AppTextStyles.caption(context).withWeight(FontWeight.w500).withColor(color),
                             ),
                           ],
                         ),
@@ -226,7 +205,7 @@ class _MiniMapGridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withValues(alpha: 0.15)
+      ..color = color.withValues(alpha: AppOpacity.o15)
       ..strokeWidth = 1;
 
     const spacing = 25.0;

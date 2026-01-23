@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/svg_icons.dart';
-import '../../../../core/widgets/top_navigation.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
+import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -148,15 +149,14 @@ class TransactionHistoryScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
                 color: product.status == ProductStatus.completed 
-                    ? context.features.success.withValues(alpha: 0.1)
-                    : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                    ? context.features.success.withValues(alpha: AppOpacity.o10)
+                    : Theme.of(context).colorScheme.primary.withValues(alpha: AppOpacity.o10),
                 borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
               ),
               child: Text(
                 product.status == ProductStatus.completed ? '거래완료' : '판매중',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: product.status == ProductStatus.completed 
+                style: AppTextStyles.labelLarge(context).withColor(
+                  product.status == ProductStatus.completed 
                       ? context.features.success 
                       : Theme.of(context).colorScheme.primary,
                 ),

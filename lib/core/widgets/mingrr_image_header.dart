@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../constants/app_sizes.dart';
 import '../constants/location_constants.dart';
+import '../theme/app_text_styles.dart';
 import 'common_widgets.dart';
-import 'info_badge.dart';
+import 'badges/info_badge.dart';
+import '../utils/responsive_utils.dart';
 
 /// ============================================================
 /// 상세 화면 이미지 헤더 (SliverAppBar 통합)
@@ -105,7 +107,7 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
       icon: Container(
         padding: const EdgeInsets.all(AppSizes.paddingS),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.3),
+          color: Colors.black.withValues(alpha: AppOpacity.o30),
           shape: BoxShape.circle,
         ),
         child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
@@ -129,7 +131,7 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
           icon: Container(
             padding: const EdgeInsets.all(AppSizes.paddingS),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withValues(alpha: AppOpacity.o30),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.share, color: Colors.white, size: 20),
@@ -146,7 +148,7 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
           icon: Container(
             padding: const EdgeInsets.all(AppSizes.paddingS),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.3),
+              color: Colors.black.withValues(alpha: AppOpacity.o30),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.more_vert, color: Colors.white, size: 20),
@@ -203,7 +205,7 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
                     shape: BoxShape.circle,
                     color: _currentIndex == index
                         ? Colors.white
-                        : Colors.white.withValues(alpha: 0.5),
+                        : Colors.white.withValues(alpha: AppOpacity.o50),
                   ),
                 ),
               ),
@@ -213,7 +215,7 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
         // 좌상단 오버레이
         if (widget.topLeftOverlay != null)
           Positioned(
-            top: MediaQuery.of(context).padding.top + 60,
+            top: ResponsiveUtils.topSafeArea(context) + 60,
             left: 16,
             child: widget.topLeftOverlay!,
           ),
@@ -221,7 +223,7 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
         // 우상단 오버레이
         if (widget.topRightOverlay != null)
           Positioned(
-            top: MediaQuery.of(context).padding.top + 60,
+            top: ResponsiveUtils.topSafeArea(context) + 60,
             right: 16,
             child: widget.topRightOverlay!,
           ),
@@ -277,11 +279,7 @@ class GenderBadge extends StatelessWidget {
           const SizedBox(width: 2),
           Text(
             isMale ? '남아' : '여아',
-            style: const TextStyle(
-              fontSize: 12, 
-              color: Colors.white, 
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppTextStyles.bodySmall(context).withWeight(FontWeight.w500).withColor(Colors.white),
           ),
         ],
       ),
@@ -304,7 +302,7 @@ class ImageHeaderDistanceBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.5),
+        color: Colors.black.withValues(alpha: AppOpacity.o50),
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Row(
@@ -314,11 +312,7 @@ class ImageHeaderDistanceBadge extends StatelessWidget {
           const SizedBox(width: 2),
           Text(
             distanceText,
-            style: const TextStyle(
-              fontSize: 13, 
-              color: Colors.white, 
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppTextStyles.bodyMedium(context).withWeight(FontWeight.w500).withColor(Colors.white),
           ),
         ],
       ),
@@ -361,11 +355,7 @@ class ImageHeaderMatchBadge extends StatelessWidget {
             const SizedBox(width: AppSizes.gapXS),
             Text(
               '궁합 $score%',
-              style: const TextStyle(
-                fontSize: 13, 
-                color: Colors.white, 
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTextStyles.bodyMedium(context).withWeight(FontWeight.w600).withColor(Colors.white),
             ),
             const SizedBox(width: AppSizes.gapXS),
             const Icon(Icons.info_outline, size: 12, color: Colors.white70),

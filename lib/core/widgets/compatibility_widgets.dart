@@ -187,11 +187,7 @@ class _CompatibilityGuideContent extends StatelessWidget {
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Text(
       title,
-      style: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: Theme.of(context).colorScheme.onSurface,
-      ),
+      style: AppTextStyles.labelLarge(context).withWeight(FontWeight.w600),
     );
   }
 
@@ -202,12 +198,10 @@ class _CompatibilityGuideContent extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSizes.paddingXS),
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingS),
       decoration: BoxDecoration(
-        color: isTop ? Colors.white : grade.color.withValues(alpha: 0.08),
+        color: isTop ? Colors.white : grade.color.withValues(alpha: AppOpacity.o10),
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
-        border: Border.all(color: grade.color.withValues(alpha: isTop ? 0.5 : 0.2)),
-        boxShadow: isTop ? [
-          BoxShadow(color: grade.color.withValues(alpha: 0.2), blurRadius: 4, spreadRadius: 0.5),
-        ] : null,
+        border: Border.all(color: grade.color.withValues(alpha: isTop ? AppOpacity.o50 : AppOpacity.o20)),
+        boxShadow: isTop ? AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark) : null,
       ),
       child: Row(
         children: [
@@ -234,10 +228,7 @@ class _CompatibilityGuideContent extends StatelessWidget {
           Expanded(
             child: Text(
               grade.description,
-              style: TextStyle(
-                fontSize: 10,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyles.captionSmall(context),
             ),
           ),
         ],
@@ -252,7 +243,7 @@ class _CompatibilityGuideContent extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AppSizes.paddingXS),
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingS),
       decoration: BoxDecoration(
-        color: features.dating.withValues(alpha: 0.05),
+        color: features.dating.withValues(alpha: AppOpacity.o05),
         borderRadius: BorderRadius.circular(AppSizes.radiusXS),
       ),
       child: Row(
@@ -263,16 +254,12 @@ class _CompatibilityGuideContent extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
             decoration: BoxDecoration(
-              color: features.dating.withValues(alpha: 0.15),
+              color: features.dating.withValues(alpha: AppOpacity.o15),
               borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
             ),
             child: Text(
               '${factor.percentage}%',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: features.dating,
-              ),
+              style: AppTextStyles.labelMedium(context).withWeight(FontWeight.w700).withColor(features.dating),
             ),
           ),
           const SizedBox(width: AppSizes.gapMS),
@@ -282,19 +269,12 @@ class _CompatibilityGuideContent extends StatelessWidget {
               children: [
                 Text(
                   factor.name,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
+                  style: AppTextStyles.labelLarge(context).withWeight(FontWeight.w600),
                 ),
                 const SizedBox(height: AppSizes.gapXXS),
                 Text(
                   factor.description,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: AppTextStyles.captionSmall(context),
                 ),
               ],
             ),
@@ -340,11 +320,7 @@ class CompatibilityScoreBadge extends StatelessWidget {
             const SizedBox(width: AppSizes.gapXS),
             Text(
               '궁합 $score%',
-              style: TextStyle(
-                fontSize: badgeSize - 1,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
+              style: AppTextStyles.bodyMedium(context).withWeight(FontWeight.w600).withColor(Colors.white),
             ),
           ],
         ],
@@ -372,9 +348,9 @@ class CompatibilityScoreCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSizes.paddingM),
       decoration: BoxDecoration(
-        color: grade.color.withValues(alpha: 0.1),
+        color: grade.color.withValues(alpha: AppOpacity.o10),
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
-        border: Border.all(color: grade.color.withValues(alpha: 0.3)),
+        border: Border.all(color: grade.color.withValues(alpha: AppOpacity.o30)),
       ),
       child: Row(
         children: [
@@ -389,11 +365,7 @@ class CompatibilityScoreCard extends StatelessWidget {
             child: Center(
               child: Text(
                 '$score%',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
+                style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w700).withColor(Colors.white),
               ),
             ),
           ),
@@ -412,21 +384,14 @@ class CompatibilityScoreCard extends StatelessWidget {
                     const SizedBox(width: AppSizes.gapXS),
                     Text(
                       grade.grade,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: grade.color,
-                      ),
+                      style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600).withColor(grade.color),
                     ),
                   ],
                 ),
                 const SizedBox(height: AppSizes.gapXXS),
                 Text(
                   grade.description,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: AppTextStyles.bodySmall(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -438,7 +403,7 @@ class CompatibilityScoreCard extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(AppSizes.paddingXS),
                 decoration: BoxDecoration(
-                  color: features.dating.withValues(alpha: 0.1),
+                  color: features.dating.withValues(alpha: AppOpacity.o10),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(

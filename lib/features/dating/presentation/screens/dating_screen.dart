@@ -5,14 +5,14 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/pet_constants.dart';
-import '../../../../core/widgets/top_navigation.dart';
+import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../core/widgets/search_screen.dart';
-import '../../../../core/widgets/request_sheet.dart';
-import '../../../../core/widgets/appbar_actions.dart';
+import '../../../../core/widgets/sheets/request_sheet.dart';
+import '../../../../core/widgets/navigation/appbar_actions.dart';
 import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
-import '../../../../core/widgets/dating_card.dart';
+import '../../../../core/widgets/cards/dating_card.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 import '../providers/dating_provider.dart';
@@ -344,7 +344,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
           child: Container(
             padding: const EdgeInsets.all(AppSizes.paddingXS),
             decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.1),
+              color: accentColor.withValues(alpha: AppOpacity.o10),
               shape: BoxShape.circle,
             ),
             child: Icon(Icons.help_outline, size: 14, color: accentColor),
@@ -613,7 +613,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
               const SizedBox(height: 8),
               Text(
                 '반려동물을 등록하면 근처의\n친구들을 찾아드려요',
-                style: AppTextStyles.secondarySmall(context),
+                style: AppTextStyles.caption(context),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSizes.gapL),
@@ -734,7 +734,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
               const SizedBox(height: 8),
               Text(
                 '반려동물을 등록하면 궁합이 맞는\n친구들을 추천해드려요',
-                style: AppTextStyles.secondarySmall(context),
+                style: AppTextStyles.caption(context),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSizes.gapL),

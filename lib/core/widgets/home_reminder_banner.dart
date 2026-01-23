@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_sizes.dart';
+import '../theme/app_text_styles.dart';
 
 /// ============================================================
 /// 홈 화면 리마인더 배너
@@ -113,10 +114,10 @@ class HomeReminderBanner extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: AppSizes.gapM),
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingM),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: AppOpacity.o50),
           borderRadius: BorderRadius.circular(AppSizes.radiusM),
           border: Border.all(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+            color: colorScheme.outlineVariant.withValues(alpha: AppOpacity.o30),
             width: 1,
           ),
         ),
@@ -144,19 +145,12 @@ class HomeReminderBanner extends StatelessWidget {
                 children: [
                   Text(
                     config.title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
+                    style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600),
                   ),
                   const SizedBox(height: AppSizes.gapXXS),
                   Text(
                     config.subtitle(count),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    style: AppTextStyles.bodySmall(context).withColor(colorScheme.onSurfaceVariant),
                   ),
                 ],
               ),
@@ -281,7 +275,7 @@ class _HomeReminderBannerCarouselState extends State<HomeReminderBannerCarousel>
                 shape: BoxShape.circle,
                 color: index == _currentPage
                     ? colorScheme.primary
-                    : colorScheme.outlineVariant.withValues(alpha: 0.5),
+                    : colorScheme.outlineVariant.withValues(alpha: AppOpacity.o50),
               ),
             ),
           ),
@@ -314,10 +308,10 @@ class _BannerCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingM),
         decoration: BoxDecoration(
-          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: AppOpacity.o50),
           borderRadius: BorderRadius.circular(AppSizes.radiusM),
           border: Border.all(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+            color: colorScheme.outlineVariant.withValues(alpha: AppOpacity.o30),
             width: 1,
           ),
         ),
@@ -346,21 +340,14 @@ class _BannerCard extends StatelessWidget {
                 children: [
                   Text(
                     config.title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
+                    style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: AppSizes.gapXXS),
                   Text(
                     config.subtitle(count),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: colorScheme.onSurfaceVariant,
-                    ),
+                    style: AppTextStyles.bodySmall(context).withColor(colorScheme.onSurfaceVariant),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -376,39 +363,6 @@ class _BannerCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// 홈 화면 리마인더 배너 목록 (세로 나열 - 레거시)
-/// @deprecated Use HomeReminderBannerCarousel instead
-@Deprecated('Use HomeReminderBannerCarousel instead')
-class HomeReminderBannerList extends StatelessWidget {
-  final List<HomeReminderBannerData> banners;
-  final int maxVisible;
-
-  const HomeReminderBannerList({
-    super.key,
-    required this.banners,
-    this.maxVisible = 2,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final visibleBanners = banners
-        .where((b) => b.count > 0)
-        .take(maxVisible)
-        .toList();
-    
-    if (visibleBanners.isEmpty) return const SizedBox.shrink();
-    
-    return Column(
-      children: visibleBanners.map((banner) => HomeReminderBanner(
-        type: banner.type,
-        count: banner.count,
-        onTap: banner.onTap,
-        onDismiss: banner.onDismiss,
-      )).toList(),
     );
   }
 }

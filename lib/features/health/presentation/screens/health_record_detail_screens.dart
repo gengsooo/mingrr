@@ -48,7 +48,7 @@ class WeightRecordDetailScreen extends StatelessWidget {
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
-                      color: context.features.health.withValues(alpha: 0.1),
+                      color: context.features.health.withValues(alpha: AppOpacity.o10),
                       shape: BoxShape.circle,
                     ),
                     child: Column(
@@ -56,10 +56,7 @@ class WeightRecordDetailScreen extends StatelessWidget {
                       children: [
                         Text(
                           '${record.weight}',
-                          style: AppTextStyles.numberLarge(context).copyWith(
-                            fontSize: 36,
-                            color: context.features.health,
-                          ),
+                          style: AppTextStyles.displayLarge(context).withColor(context.features.health),
                         ),
                         Text(
                           'kg',
@@ -92,10 +89,8 @@ class WeightRecordDetailScreen extends StatelessWidget {
                       const SizedBox(width: AppSizes.gapXS),
                       Text(
                         '${record.change > 0 ? '+' : ''}${record.change}kg',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: record.change > 0
+                        style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600).withColor(
+                          record.change > 0
                               ? Colors.red
                               : record.change < 0
                                   ? context.features.success
@@ -112,7 +107,7 @@ class WeightRecordDetailScreen extends StatelessWidget {
                   ),
                   
                   const SizedBox(height: AppSizes.gapLL),
-                  const Divider(),
+                  const MingrrDivider(),
                   const SizedBox(height: AppSizes.gapM),
                   
                   // 날짜/시간
@@ -133,7 +128,7 @@ class WeightRecordDetailScreen extends StatelessWidget {
                 children: [
                   Text(
                     '목표 체중',
-                    style: AppTextStyles.sectionTitle(context),
+                    style: AppTextStyles.headlineSmall(context),
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   Row(
@@ -144,11 +139,11 @@ class WeightRecordDetailScreen extends StatelessWidget {
                           children: [
                             Text(
                               '${record.targetWeight}kg',
-                              style: AppTextStyles.numberLarge(context),
+                              style: AppTextStyles.displaySmall(context),
                             ),
                             Text(
                               '${(record.weight - record.targetWeight).abs().toStringAsFixed(1)}kg ${record.weight > record.targetWeight ? '감량' : '증량'} 필요',
-                              style: AppTextStyles.secondary(context),
+                              style: AppTextStyles.bodySmall(context),
                             ),
                           ],
                         ),
@@ -193,7 +188,7 @@ class WeightRecordDetailScreen extends StatelessWidget {
                       children: [
                         Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppSizes.gapS),
-                        Text('메모', style: AppTextStyles.sectionTitle(context)),
+                        Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
                     ),
                     const SizedBox(height: AppSizes.gapM),
@@ -217,7 +212,7 @@ class WeightRecordDetailScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTextStyles.listSubtitle(context)),
+          Text(label, style: AppTextStyles.bodySmall(context)),
           Text(value, style: AppTextStyles.labelLarge(context)),
         ],
       ),
@@ -309,7 +304,7 @@ class GroomingRecordDetailScreen extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: context.features.health.withValues(alpha: 0.1),
+                      color: context.features.health.withValues(alpha: AppOpacity.o10),
                       borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     ),
                     child: Icon(record.type.icon, size: 40, color: context.features.health),
@@ -320,7 +315,7 @@ class GroomingRecordDetailScreen extends StatelessWidget {
                     style: AppTextStyles.headlineMedium(context).copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: AppSizes.gapLL),
-                  const Divider(),
+                  const MingrrDivider(),
                   const SizedBox(height: AppSizes.gapM),
                   _buildInfoRow(context, '날짜', _formatDate(record.date)),
                   _buildInfoRow(context, '장소', record.location),
@@ -342,7 +337,7 @@ class GroomingRecordDetailScreen extends StatelessWidget {
                       children: [
                         Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppSizes.gapS),
-                        Text('메모', style: AppTextStyles.sectionTitle(context)),
+                        Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
                     ),
                     const SizedBox(height: AppSizes.gapM),
@@ -363,7 +358,7 @@ class GroomingRecordDetailScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTextStyles.listSubtitle(context)),
+          Text(label, style: AppTextStyles.bodySmall(context)),
           Text(value, style: AppTextStyles.labelLarge(context)),
         ],
       ),
@@ -455,7 +450,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: context.features.health.withValues(alpha: 0.1),
+                      color: context.features.health.withValues(alpha: AppOpacity.o10),
                       borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     ),
                     child: Icon(Icons.vaccines_outlined, size: 40, color: context.features.health),
@@ -470,21 +465,19 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: 4),
                     decoration: BoxDecoration(
                       color: record.isCompleted
-                          ? context.features.success.withValues(alpha: 0.1)
-                          : Colors.orange.withValues(alpha: 0.1),
+                          ? context.features.success.withValues(alpha: AppOpacity.o10)
+                          : Colors.orange.withValues(alpha: AppOpacity.o10),
                       borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     ),
                     child: Text(
                       record.isCompleted ? '접종 완료' : '접종 예정',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: record.isCompleted ? context.features.success : Colors.orange,
+                      style: AppTextStyles.labelLarge(context).withWeight(FontWeight.w600).withColor(
+                        record.isCompleted ? context.features.success : Colors.orange,
                       ),
                     ),
                   ),
                   const SizedBox(height: AppSizes.gapLL),
-                  const Divider(),
+                  const MingrrDivider(),
                   const SizedBox(height: AppSizes.gapM),
                   _buildInfoRow(context, '접종일', _formatDate(record.date)),
                   _buildInfoRow(context, '병원', record.hospital),
@@ -507,7 +500,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: Colors.orange.withValues(alpha: 0.1),
+                        color: Colors.orange.withValues(alpha: AppOpacity.o10),
                         borderRadius: BorderRadius.circular(AppSizes.radiusS),
                       ),
                       child: const Center(
@@ -525,7 +518,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                           ),
                           Text(
                             _getRemainingDays(record.nextDate!),
-                            style: AppTextStyles.secondary(context),
+                            style: AppTextStyles.bodySmall(context),
                           ),
                         ],
                       ),
@@ -555,7 +548,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                       children: [
                         Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppSizes.gapS),
-                        Text('메모', style: AppTextStyles.sectionTitle(context)),
+                        Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
                     ),
                     const SizedBox(height: AppSizes.gapM),
@@ -576,7 +569,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTextStyles.listSubtitle(context)),
+          Text(label, style: AppTextStyles.bodySmall(context)),
           Text(value, style: AppTextStyles.labelLarge(context)),
         ],
       ),
@@ -663,7 +656,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: context.features.health.withValues(alpha: 0.1),
+                      color: context.features.health.withValues(alpha: AppOpacity.o10),
                       borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     ),
                     child: Icon(Icons.local_hospital_outlined, size: 40, color: context.features.health),
@@ -674,7 +667,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                     style: AppTextStyles.headlineMedium(context).copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: AppSizes.gapLL),
-                  const Divider(),
+                  const MingrrDivider(),
                   const SizedBox(height: AppSizes.gapM),
                   _buildInfoRow(context, '검진일', _formatDate(record.date)),
                   _buildInfoRow(context, '병원', record.hospital),
@@ -695,14 +688,14 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                 children: [
                   Text(
                     '검진 결과',
-                    style: AppTextStyles.sectionTitle(context),
+                    style: AppTextStyles.headlineSmall(context),
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(AppSizes.paddingL),
                     decoration: BoxDecoration(
-                      color: _getResultColor(context, record.result).withValues(alpha: 0.1),
+                      color: _getResultColor(context, record.result).withValues(alpha: AppOpacity.o10),
                       borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     ),
                     child: Row(
@@ -715,11 +708,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                         const SizedBox(width: AppSizes.gapM),
                         Text(
                           record.result,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: _getResultColor(context, record.result),
-                          ),
+                          style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600).withColor(_getResultColor(context, record.result)),
                         ),
                       ],
                     ),
@@ -738,7 +727,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                   children: [
                     Text(
                       '검진 항목',
-                      style: AppTextStyles.sectionTitle(context),
+                      style: AppTextStyles.headlineSmall(context),
                     ),
                     const SizedBox(height: AppSizes.gapM),
                     ...record.items.map((item) => Padding(
@@ -767,7 +756,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                       children: [
                         Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppSizes.gapS),
-                        Text('메모', style: AppTextStyles.sectionTitle(context)),
+                        Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
                     ),
                     const SizedBox(height: AppSizes.gapM),
@@ -788,7 +777,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTextStyles.listSubtitle(context)),
+          Text(label, style: AppTextStyles.bodySmall(context)),
           Text(value, style: AppTextStyles.labelLarge(context)),
         ],
       ),
@@ -882,7 +871,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: context.features.health.withValues(alpha: 0.1),
+                      color: context.features.health.withValues(alpha: AppOpacity.o10),
                       borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     ),
                     child: Icon(Icons.clean_hands_outlined, size: 40, color: context.features.health),
@@ -893,7 +882,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
                     style: AppTextStyles.headlineMedium(context).copyWith(fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: AppSizes.gapLL),
-                  const Divider(),
+                  const MingrrDivider(),
                   const SizedBox(height: AppSizes.gapM),
                   _buildInfoRow(context, '날짜', _formatDate(record.date)),
                   _buildInfoRow(context, '장소', record.location),
@@ -913,7 +902,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
                 children: [
                   Text(
                     '치아 상태',
-                    style: AppTextStyles.sectionTitle(context),
+                    style: AppTextStyles.headlineSmall(context),
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   _buildConditionBar(context, '치석', record.tartarLevel),
@@ -936,7 +925,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
                       children: [
                         Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppSizes.gapS),
-                        Text('메모', style: AppTextStyles.sectionTitle(context)),
+                        Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
                     ),
                     const SizedBox(height: AppSizes.gapM),
@@ -957,7 +946,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTextStyles.listSubtitle(context)),
+          Text(label, style: AppTextStyles.bodySmall(context)),
           Text(value, style: AppTextStyles.labelLarge(context)),
         ],
       ),
@@ -972,7 +961,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
       children: [
         SizedBox(
           width: 50,
-          child: Text(label, style: AppTextStyles.secondary(context)),
+          child: Text(label, style: AppTextStyles.bodySmall(context)),
         ),
         Expanded(
           child: Row(
@@ -993,11 +982,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
         const SizedBox(width: AppSizes.gapS),
         Text(
           labels[level - 1],
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: colors[level - 1],
-          ),
+          style: AppTextStyles.labelLarge(context).withWeight(FontWeight.w500).withColor(colors[level - 1]),
         ),
       ],
     );
@@ -1081,7 +1066,7 @@ class SpecialRecordDetailScreen extends StatelessWidget {
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: _getCategoryColor(context, record.category).withValues(alpha: 0.1),
+                          color: _getCategoryColor(context, record.category).withValues(alpha: AppOpacity.o10),
                           borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Icon(
@@ -1103,7 +1088,7 @@ class SpecialRecordDetailScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
                               decoration: BoxDecoration(
-                                color: _getCategoryColor(context, record.category).withValues(alpha: 0.1),
+                                color: _getCategoryColor(context, record.category).withValues(alpha: AppOpacity.o10),
                                 borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                               ),
                               child: Text(
@@ -1119,7 +1104,7 @@ class SpecialRecordDetailScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: AppSizes.gapLL),
-                  const Divider(),
+                  const MingrrDivider(),
                   const SizedBox(height: AppSizes.gapM),
                   _buildInfoRow(context, '날짜', _formatDate(record.date)),
                   _buildInfoRow(context, '반려동물', record.petName),
@@ -1138,7 +1123,7 @@ class SpecialRecordDetailScreen extends StatelessWidget {
                 children: [
                   Text(
                     '상세 내용',
-                    style: AppTextStyles.sectionTitle(context),
+                    style: AppTextStyles.headlineSmall(context),
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   Text(
@@ -1161,7 +1146,7 @@ class SpecialRecordDetailScreen extends StatelessWidget {
                       children: [
                         Icon(Icons.medical_services_outlined, size: 20, color: context.features.health),
                         const SizedBox(width: AppSizes.gapS),
-                        Text('조치 사항', style: AppTextStyles.sectionTitle(context)),
+                        Text('조치 사항', style: AppTextStyles.headlineSmall(context)),
                       ],
                     ),
                     const SizedBox(height: AppSizes.gapM),
@@ -1185,7 +1170,7 @@ class SpecialRecordDetailScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: AppTextStyles.listSubtitle(context)),
+          Text(label, style: AppTextStyles.bodySmall(context)),
           Text(value, style: AppTextStyles.labelLarge(context)),
         ],
       ),

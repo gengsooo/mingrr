@@ -161,7 +161,7 @@ class MingrrFAB extends StatelessWidget {
       iconColor: iconColor,
       heroTag: heroTag,
       size: MingrrFABSize.small,
-      elevation: 4.0,
+      elevation: AppSizes.elevationM,
       tooltip: tooltip ?? '현재 위치',
       visible: visible,
     );

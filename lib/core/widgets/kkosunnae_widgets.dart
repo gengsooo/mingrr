@@ -3,8 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/kkosunnae_service.dart';
 import '../constants/app_sizes.dart';
 import '../theme/app_text_styles.dart';
-import 'loading_widgets.dart';
-import 'mingrr_bottom_sheet.dart';
+import 'loading/loading_widgets.dart';
+import 'sheets/mingrr_bottom_sheet.dart';
+import '../utils/responsive_utils.dart';
 
 /// ============================================================
 /// 꼬순내지수 (보호자 평점 시스템)
@@ -73,13 +74,7 @@ class _KkosunaeMasterBadgeSmall extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(KkosunnaeService.colorBigBang).withValues(alpha: 0.4),
-            blurRadius: 4,
-            spreadRadius: 0.5,
-          ),
-        ],
+        boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
       ),
       child: Center(
         child: Icon(
@@ -115,7 +110,7 @@ class KkosunnaeScoreMedium extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
         decoration: BoxDecoration(
-          color: scoreColor.withValues(alpha: 0.15),
+          color: scoreColor.withValues(alpha: AppOpacity.o15),
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
         ),
         child: Row(
@@ -127,21 +122,15 @@ class KkosunnaeScoreMedium extends StatelessWidget {
             // 꼬순내지수 라벨
             Text(
               '꼬순내지수',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              style: AppTextStyles.labelLarge(context).withColor(
+                Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(width: AppSizes.gapXS),
             // 점수
             Text(
               '${score.toInt()}점',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: scoreColor,
-              ),
+              style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w700).withColor(scoreColor),
             ),
             if (showBadge) ...[
               const SizedBox(width: AppSizes.gapXS),
@@ -179,7 +168,7 @@ class KkosunnaeScoreLarge extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSizes.paddingL),
         decoration: BoxDecoration(
-          color: _getScoreColor(score).withValues(alpha: 0.1),
+          color: _getScoreColor(score).withValues(alpha: AppOpacity.o10),
           borderRadius: BorderRadius.circular(AppSizes.radiusM),
         ),
         child: Column(
@@ -191,22 +180,14 @@ class KkosunnaeScoreLarge extends StatelessWidget {
                 const SizedBox(width: AppSizes.gapS),
                 Text(
                   '꼬순내지수',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: _getScoreColor(score),
-                  ),
+                  style: AppTextStyles.titleMedium(context).withColor(_getScoreColor(score)),
                 ),
               ],
             ),
             const SizedBox(height: AppSizes.gapM),
             Text(
               '${score.toInt()}점',
-              style: TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.w700,
-                color: _getScoreColor(score),
-              ),
+              style: AppTextStyles.displayLarge(context).withColor(_getScoreColor(score)),
             ),
             const SizedBox(height: AppSizes.gapS),
             // 온도 바
@@ -226,19 +207,14 @@ class KkosunnaeScoreLarge extends StatelessWidget {
               child: Stack(
                 children: [
                   Positioned(
-                    left: (score / 100) * (MediaQuery.of(context).size.width - 100),
+                    left: (score / 100) * (ResponsiveUtils.screenWidth(context) - 100),
                     child: Container(
                       width: 4,
                       height: 8,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            blurRadius: 2,
-                          ),
-                        ],
+                        boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
                       ),
                     ),
                   ),
@@ -248,10 +224,7 @@ class KkosunnaeScoreLarge extends StatelessWidget {
             const SizedBox(height: AppSizes.gapS),
             Text(
               _getScoreDescription(score),
-              style: TextStyle(
-                fontSize: 12,
-                color: _getScoreColor(score),
-              ),
+              style: AppTextStyles.bodySmall(context).withColor(_getScoreColor(score)),
             ),
           ],
         ),
@@ -274,7 +247,7 @@ Widget _buildPawIcon(double score, double size) {
         Icon(
           Icons.pets,
           size: size,
-          color: Colors.grey.withValues(alpha: 0.3),
+          color: Colors.grey.withValues(alpha: AppOpacity.o30),
         ),
         // 채워지는 부분 (ClipRect로 퍼센트만큼만 표시)
         ClipRect(
@@ -412,11 +385,11 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
   Widget build(BuildContext context) {
     return Container(
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
+        maxHeight: ResponsiveUtils.maxSheetHeight(context),
       ),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusL)),
       ),
       child: SafeArea(
         child: _isLoading
@@ -485,14 +458,14 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            scoreColor.withValues(alpha: 0.1),
-            scoreColor.withValues(alpha: 0.05),
+            scoreColor.withValues(alpha: AppOpacity.o10),
+            scoreColor.withValues(alpha: AppOpacity.o05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(AppSizes.radiusL),
-        border: Border.all(color: scoreColor.withValues(alpha: 0.3)),
+        border: Border.all(color: scoreColor.withValues(alpha: AppOpacity.o30)),
       ),
       child: Column(
         children: [
@@ -503,27 +476,19 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
               _buildPawIcon(score.toDouble(), 36),
               const SizedBox(width: AppSizes.gapMS),
               Text(
-                '$score점',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: scoreColor,
-                ),
+                '${score.toInt()}점',
+                style: AppTextStyles.displayMedium(context).withColor(scoreColor),
               ),
               const SizedBox(width: AppSizes.gapS),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                 decoration: BoxDecoration(
-                  color: scoreColor.withValues(alpha: 0.2),
+                  color: scoreColor.withValues(alpha: AppOpacity.o20),
                   borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Text(
                   '$gradeEmoji $gradeName',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: scoreColor,
-                  ),
+                  style: AppTextStyles.titleSmall(context).withWeight(FontWeight.w600).withColor(scoreColor),
                 ),
               ),
               if (showBadge) ...[
@@ -536,11 +501,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
           // 등급 설명
           Text(
             KkosunnaeService.getGradeDescription(score),
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: scoreColor,
-            ),
+            style: AppTextStyles.titleSmall(context).withColor(scoreColor),
             textAlign: TextAlign.center,
           ),
         ],
@@ -615,10 +576,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
                 Expanded(
                   child: Text(
                     '등급 구간은 전체 사용자 분포에 따라 주기적으로 조정돼요',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                    style: AppTextStyles.caption(context),
                   ),
                 ),
               ],
@@ -641,10 +599,10 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
       margin: const EdgeInsets.only(bottom: AppSizes.paddingS),
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
       decoration: BoxDecoration(
-        color: isCurrentGrade ? color.withValues(alpha: 0.15) : color.withValues(alpha: 0.05),
+        color: isCurrentGrade ? color.withValues(alpha: AppOpacity.o15) : color.withValues(alpha: AppOpacity.o05),
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
         border: Border.all(
-          color: isCurrentGrade ? color : color.withValues(alpha: 0.2),
+          color: isCurrentGrade ? color : color.withValues(alpha: AppOpacity.o20),
           width: isCurrentGrade ? 1.5 : 1,
         ),
       ),
@@ -656,23 +614,15 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
             width: 65,
             child: Text(
               range,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
+              style: AppTextStyles.labelMedium(context).withWeight(FontWeight.w600).withColor(color),
             ),
           ),
           Expanded(
             child: Text(
               '$gradeName - $description',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isCurrentGrade ? FontWeight.w500 : FontWeight.normal,
-                color: isCurrentGrade 
-                    ? Theme.of(context).colorScheme.onSurface
-                    : Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: isCurrentGrade 
+                  ? AppTextStyles.labelMedium(context)
+                  : AppTextStyles.caption(context),
             ),
           ),
           if (showBadge) _KkosunaeMasterBadgeSmall(size: 14),
@@ -684,13 +634,9 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
                 color: color,
                 borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
-              child: const Text(
+              child: Text(
                 '현재',
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+                style: AppTextStyles.captionSmall(context).withWeight(FontWeight.w600).withColor(Colors.white),
               ),
             ),
           ],
@@ -735,7 +681,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
     // 다크모드 고려한 게이지 색상 (중립적 색상)
     final gaugeColor = isNegative 
         ? Colors.red 
-        : theme.colorScheme.onSurface.withValues(alpha: 0.6);
+        : theme.colorScheme.onSurface.withValues(alpha: AppOpacity.o50);
     
     return Container(
       margin: const EdgeInsets.only(bottom: AppSizes.paddingL),
@@ -784,10 +730,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
                 Expanded(
                   child: Text(
                     tipText,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                    style: AppTextStyles.caption(context),
                   ),
                 ),
               ],

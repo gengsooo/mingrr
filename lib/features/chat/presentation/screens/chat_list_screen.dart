@@ -5,11 +5,11 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/svg_icons.dart';
-import '../../../../core/widgets/top_navigation.dart';
-import '../../../../core/widgets/appbar_actions.dart';
-import '../../../../core/widgets/guardian_profile_modal.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
+import '../../../../core/widgets/navigation/top_navigation.dart';
+import '../../../../core/widgets/navigation/appbar_actions.dart';
+import '../../../../core/widgets/modals/guardian_profile_modal.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../models/chat_model.dart';
@@ -18,6 +18,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../dating/presentation/providers/dating_request_provider.dart';
 import '../providers/chat_provider.dart';
 import 'chat_detail_screen.dart';
+import '../../../../core/utils/responsive_utils.dart';
 
 /// ============================================================
 /// 채팅 목록 화면 (V4 - 반려동물 전용 + 교배 배지)
@@ -264,7 +265,7 @@ class ChatListScreen extends ConsumerWidget {
               ),
               child: Text(
                 '${requests.length}',
-                style: AppTextStyles.tag(context).copyWith(color: Colors.white),
+                style: AppTextStyles.labelLarge(context).copyWith(color: Colors.white),
               ),
             ),
           ],
@@ -297,7 +298,7 @@ class ChatListScreen extends ConsumerWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.1),
+                      color: accentColor.withValues(alpha: AppOpacity.o10),
                       shape: BoxShape.circle,
                       image: request.senderPetImageUrl != null
                           ? DecorationImage(
@@ -326,12 +327,12 @@ class ChatListScreen extends ConsumerWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                             decoration: BoxDecoration(
-                              color: accentColor.withValues(alpha: 0.1),
+                              color: accentColor.withValues(alpha: AppOpacity.o10),
                               borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                             ),
                             child: Text(
                               isBreeding ? '교배' : '데이트',
-                              style: AppTextStyles.badgeSmall(context).copyWith(color: accentColor),
+                              style: AppTextStyles.captionSmall(context).copyWith(color: accentColor),
                             ),
                           ),
                           const SizedBox(width: AppSizes.gapS),
@@ -345,7 +346,7 @@ class ChatListScreen extends ConsumerWidget {
                           const SizedBox(width: AppSizes.gapS),
                           Text(
                             _formatRequestTime(request.createdAt),
-                            style: AppTextStyles.cardMeta(context),
+                            style: AppTextStyles.captionSmall(context),
                           ),
                         ],
                       ),
@@ -357,12 +358,12 @@ class ChatListScreen extends ConsumerWidget {
                           decoration: BoxDecoration(
                             color: Theme.of(context).brightness == Brightness.dark
                                 ? Theme.of(context).colorScheme.surfaceContainerHighest
-                                : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+                                : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: AppOpacity.o30),
                             borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                           ),
                           child: Text(
                             request.message!,
-                            style: AppTextStyles.secondary(context),
+                            style: AppTextStyles.bodySmall(context),
                           ),
                         ),
                       ],
@@ -480,7 +481,7 @@ class ChatListScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            SizedBox(height: MediaQuery.of(ctx).padding.bottom),
+            SizedBox(height: ResponsiveUtils.bottomSafeArea(ctx)),
           ],
         ),
       ),
@@ -545,7 +546,7 @@ class ChatListScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            SizedBox(height: MediaQuery.of(ctx).padding.bottom),
+            SizedBox(height: ResponsiveUtils.bottomSafeArea(ctx)),
           ],
         ),
       ),
@@ -674,10 +675,7 @@ class ChatListScreen extends ConsumerWidget {
                           Flexible(
                             child: Text(
                               displayName,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w500,
-                              ),
+                              style: AppTextStyles.titleLarge(context).withWeight(hasUnread ? FontWeight.w700 : FontWeight.w500),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -693,7 +691,7 @@ class ChatListScreen extends ConsumerWidget {
                               ),
                               child: Text(
                                 '교배',
-                                style: AppTextStyles.badgeSmall(context),
+                                style: AppTextStyles.captionSmall(context),
                               ),
                             ),
                           ],
@@ -702,10 +700,7 @@ class ChatListScreen extends ConsumerWidget {
                     ),
                     Text(
                       timeString,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: hasUnread ? context.features.chat : Theme.of(context).colorScheme.outlineVariant,
-                      ),
+                      style: AppTextStyles.caption(context).withColor(hasUnread ? context.features.chat : Theme.of(context).colorScheme.outlineVariant),
                     ),
                   ],
                 ),
@@ -714,7 +709,7 @@ class ChatListScreen extends ConsumerWidget {
                   const SizedBox(height: AppSizes.gapXXS),
                   Text(
                     subtitle,
-                    style: AppTextStyles.cardMeta(context),
+                    style: AppTextStyles.captionSmall(context),
                   ),
                 ],
                 const SizedBox(height: AppSizes.gapXS),
@@ -723,11 +718,9 @@ class ChatListScreen extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         room.lastMessage ?? '',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: hasUnread ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontWeight: hasUnread ? FontWeight.w500 : FontWeight.w400,
-                        ),
+                        style: AppTextStyles.bodyMedium(context)
+                            .withWeight(hasUnread ? FontWeight.w500 : FontWeight.w400)
+                            .withColor(hasUnread ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurfaceVariant),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -741,11 +734,7 @@ class ChatListScreen extends ConsumerWidget {
                         ),
                         child: Text(
                           '$unreadCount',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTextStyles.labelMedium(context).withWeight(FontWeight.w600).withColor(Colors.white),
                         ),
                       ),
                   ],
@@ -881,10 +870,7 @@ class ChatListScreen extends ConsumerWidget {
                           Flexible(
                             child: Text(
                               chat['name'] as String,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w500,
-                              ),
+                              style: AppTextStyles.titleLarge(context).withWeight(hasUnread ? FontWeight.w700 : FontWeight.w500),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -900,7 +886,7 @@ class ChatListScreen extends ConsumerWidget {
                               ),
                               child: Text(
                                 '교배',
-                                style: AppTextStyles.badgeSmall(context),
+                                style: AppTextStyles.captionSmall(context),
                               ),
                             ),
                           ],
@@ -909,10 +895,7 @@ class ChatListScreen extends ConsumerWidget {
                     ),
                     Text(
                       chat['time'] as String,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: hasUnread ? context.features.chat : Theme.of(context).colorScheme.outlineVariant,
-                      ),
+                      style: AppTextStyles.caption(context).withColor(hasUnread ? context.features.chat : Theme.of(context).colorScheme.outlineVariant),
                     ),
                   ],
                 ),
@@ -921,7 +904,7 @@ class ChatListScreen extends ConsumerWidget {
                   const SizedBox(height: AppSizes.gapXXS),
                   Text(
                     _getSubtitle(chat, type),
-                    style: AppTextStyles.cardMeta(context),
+                    style: AppTextStyles.captionSmall(context),
                   ),
                 ],
                 const SizedBox(height: AppSizes.gapXS),
@@ -930,11 +913,9 @@ class ChatListScreen extends ConsumerWidget {
                     Expanded(
                       child: Text(
                         chat['lastMessage'] as String,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: hasUnread ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontWeight: hasUnread ? FontWeight.w500 : FontWeight.w400,
-                        ),
+                        style: AppTextStyles.bodyMedium(context)
+                            .withWeight(hasUnread ? FontWeight.w500 : FontWeight.w400)
+                            .withColor(hasUnread ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurfaceVariant),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -948,11 +929,7 @@ class ChatListScreen extends ConsumerWidget {
                         ),
                         child: Text(
                           '${chat['unread']}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTextStyles.labelMedium(context).withWeight(FontWeight.w600).withColor(Colors.white),
                         ),
                       ),
                   ],

@@ -159,7 +159,7 @@ class AppDialog extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
+                color: color.withValues(alpha: AppOpacity.o10),
                 shape: BoxShape.circle,
               ),
               child: Icon(displayIcon, size: 28, color: color),
@@ -273,7 +273,7 @@ Future<String?> showAppInputDialog(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: type.getColor(context).withValues(alpha: 0.1),
+                    color: type.getColor(context).withValues(alpha: AppOpacity.o10),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(type.icon, size: 20, color: type.getColor(context)),
@@ -282,11 +282,7 @@ Future<String?> showAppInputDialog(
                 Expanded(
                   child: Text(
                     title,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
+                    style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w600),
                   ),
                 ),
               ],
@@ -296,10 +292,7 @@ Future<String?> showAppInputDialog(
               const SizedBox(height: AppSizes.gapS),
               Text(
                 message,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                style: AppTextStyles.bodyMedium(context).withColor(colorScheme.onSurfaceVariant),
               ),
             ],
             

@@ -5,8 +5,8 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/svg_icons.dart';
-import '../../../../core/widgets/info_badge.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
+import '../../../../core/widgets/badges/info_badge.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../models/community_post_model.dart';
@@ -248,13 +248,7 @@ class _CommunityPostCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusS),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 6,
-              offset: const Offset(0, 1),
-            ),
-          ],
+          boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
         ),
         child: IntrinsicHeight(
           child: Row(
@@ -276,16 +270,12 @@ class _CommunityPostCard extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                               decoration: BoxDecoration(
-                                color: accentColor.withValues(alpha: 0.1),
+                                color: accentColor.withValues(alpha: AppOpacity.o10),
                                 borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                               ),
                               child: Text(
                                 post.category.label,
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: accentColor,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: AppTextStyles.labelSmall(context).withWeight(FontWeight.w600).withColor(accentColor),
                               ),
                             ),
                             if (post.isAnonymous) ...[
@@ -300,11 +290,7 @@ class _CommunityPostCard extends StatelessWidget {
                         if (post.title.isNotEmpty)
                           Text(
                             post.title,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              height: 1.2,
-                            ),
+                            style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600).withHeight(1.2),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -313,11 +299,7 @@ class _CommunityPostCard extends StatelessWidget {
                         // 본문 내용
                         Text(
                           post.content,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colorScheme.onSurfaceVariant,
-                            height: 1.3,
-                          ),
+                          style: AppTextStyles.bodySmall(context).withColor(colorScheme.onSurfaceVariant).withHeight(1.3),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -329,7 +311,7 @@ class _CommunityPostCard extends StatelessWidget {
                     // 작성자 · 시간
                     Text(
                       '${post.displayAuthorName} · ${formatRelativeTime(post.createdAt)}',
-                      style: AppTextStyles.chatTime(context).copyWith(color: colorScheme.outlineVariant),
+                      style: AppTextStyles.captionSmall(context).copyWith(color: colorScheme.outlineVariant),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -379,15 +361,15 @@ class _CommunityPostCard extends StatelessWidget {
                     children: [
                       Icon(Icons.chat_bubble_outline, size: 10, color: colorScheme.outlineVariant),
                       const SizedBox(width: 2),
-                      Text('${post.commentCount}', style: AppTextStyles.chatTime(context).copyWith(color: colorScheme.outlineVariant)),
+                      Text('${post.commentCount}', style: AppTextStyles.captionSmall(context).copyWith(color: colorScheme.outlineVariant)),
                       _dot(context, colorScheme),
                       Icon(Icons.favorite_border, size: 10, color: colorScheme.outlineVariant),
                       const SizedBox(width: 2),
-                      Text('${post.likeCount}', style: AppTextStyles.chatTime(context).copyWith(color: colorScheme.outlineVariant)),
+                      Text('${post.likeCount}', style: AppTextStyles.captionSmall(context).copyWith(color: colorScheme.outlineVariant)),
                       _dot(context, colorScheme),
                       Icon(Icons.visibility_outlined, size: 10, color: colorScheme.outlineVariant),
                       const SizedBox(width: 2),
-                      Text('${post.viewCount}', style: AppTextStyles.chatTime(context).copyWith(color: colorScheme.outlineVariant)),
+                      Text('${post.viewCount}', style: AppTextStyles.captionSmall(context).copyWith(color: colorScheme.outlineVariant)),
                     ],
                   ),
                 ],
@@ -402,7 +384,7 @@ class _CommunityPostCard extends StatelessWidget {
   Widget _dot(BuildContext context, ColorScheme colorScheme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXXS),
-      child: Text('·', style: AppTextStyles.chatTime(context).copyWith(color: colorScheme.outlineVariant)),
+      child: Text('·', style: AppTextStyles.captionSmall(context).copyWith(color: colorScheme.outlineVariant)),
     );
   }
 

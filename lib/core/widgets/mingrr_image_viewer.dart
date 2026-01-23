@@ -6,7 +6,7 @@ import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
 import '../constants/app_sizes.dart';
 import 'common_widgets.dart';
-import 'loading_widgets.dart';
+import 'loading/loading_widgets.dart';
 
 /// ============================================================
 /// 통합 이미지 뷰어 (MingrrImageViewer)

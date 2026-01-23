@@ -3,14 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/form_strings.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/form_components.dart';
-import '../../../../core/widgets/pet_selector_card.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/forms/form_components.dart';
+import '../../../../core/widgets/cards/pet_selector_card.dart';
 import '../../../../models/breeding_model.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../core/providers/refresh_notifier.dart';
@@ -293,13 +294,13 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
           padding: const EdgeInsets.all(AppSizes.paddingM),
           decoration: BoxDecoration(
             color: hasPedigree 
-                ? context.features.dating.withValues(alpha: 0.1)
+                ? context.features.dating.withValues(alpha: AppOpacity.o10)
                 : colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(AppSizes.radiusS),
             border: Border.all(
               color: hasPedigree 
-                  ? context.features.dating.withValues(alpha: 0.3)
-                  : colorScheme.outline.withValues(alpha: 0.3),
+                  ? context.features.dating.withValues(alpha: AppOpacity.o30)
+                  : colorScheme.outline.withValues(alpha: AppOpacity.o30),
             ),
           ),
           child: Row(
@@ -316,10 +317,8 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
                   children: [
                     Text(
                       hasPedigree ? '혈통서 보유' : '혈통서 미보유',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: hasPedigree ? context.features.dating : colorScheme.onSurface,
+                      style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600).withColor(
+                        hasPedigree ? context.features.dating : colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: AppSizes.gapXXS),
@@ -327,10 +326,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
                       hasPedigree 
                           ? '${_selectedPet!.name}의 혈통서가 등록되어 있어요'
                           : '반려동물 정보에서 혈통서를 등록할 수 있어요',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
+                      style: AppTextStyles.bodySmall(context).withColor(colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),

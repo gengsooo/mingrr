@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/svg_icons.dart';
-import '../../../../core/widgets/top_navigation.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
+import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../dating/presentation/providers/dating_provider.dart';
 import '../providers/profile_provider.dart';
 
@@ -170,7 +171,7 @@ class ActivityHistoryScreen extends ConsumerWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.1),
+              color: iconColor.withValues(alpha: AppOpacity.o10),
               borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Icon(icon, color: iconColor, size: 22),
@@ -182,28 +183,19 @@ class ActivityHistoryScreen extends ConsumerWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600),
                 ),
                 const SizedBox(height: AppSizes.gapXXS),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  style: AppTextStyles.bodySmall(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
           ),
           Text(
             time,
-            style: TextStyle(
-              fontSize: 11,
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
+            style: AppTextStyles.caption(context).withColor(Theme.of(context).colorScheme.outlineVariant),
           ),
         ],
       ),

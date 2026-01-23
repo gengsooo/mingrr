@@ -6,18 +6,19 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/loading_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/report_sheet.dart';
+import '../../../../core/widgets/loading/loading_widgets.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/sheets/report_sheet.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
-import '../../../../core/widgets/info_badge.dart';
-import '../../../../core/widgets/guardian_profile_modal.dart';
+import '../../../../core/widgets/badges/info_badge.dart';
+import '../../../../core/widgets/modals/guardian_profile_modal.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../models/community_post_model.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 import '../providers/community_provider.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import 'community_write_screen.dart';
 
 /// ============================================================
@@ -166,18 +167,18 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                       children: [
                         Text(
                           post.displayAuthorName,
-                          style: AppTextStyles.cardTitle(context),
+                          style: AppTextStyles.titleMedium(context),
                         ),
                         const SizedBox(width: AppSizes.gapS),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 3),
                           decoration: BoxDecoration(
-                            color: accentColor.withValues(alpha: 0.1),
+                            color: accentColor.withValues(alpha: AppOpacity.o10),
                             borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                           ),
                           child: Text(
                             post.category.label,
-                            style: AppTextStyles.tagSmall(context).copyWith(color: accentColor),
+                            style: AppTextStyles.labelMedium(context).copyWith(color: accentColor),
                           ),
                         ),
                       ],
@@ -185,7 +186,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                     const SizedBox(height: AppSizes.gapXS),
                     Text(
                       formatDateTime(post.createdAt),
-                      style: AppTextStyles.secondarySmall(context),
+                      style: AppTextStyles.caption(context),
                     ),
                   ],
                 ),
@@ -240,7 +241,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
           ],
 
           const SizedBox(height: AppSizes.gapLL),
-          const Divider(),
+          const MingrrDivider(),
           const SizedBox(height: AppSizes.gapM),
 
           // 액션 바
@@ -317,7 +318,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
+                  color: Colors.black.withValues(alpha: AppOpacity.o50),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -334,7 +335,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.7),
+                  color: Colors.black.withValues(alpha: AppOpacity.o70),
                   borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                 ),
                 child: Row(
@@ -344,7 +345,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                     const SizedBox(width: AppSizes.gapXS),
                     Text(
                       '동영상',
-                      style: AppTextStyles.secondarySmall(context).copyWith(color: Colors.white),
+                      style: AppTextStyles.caption(context).copyWith(color: Colors.white),
                     ),
                   ],
                 ),
@@ -416,7 +417,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
         children: [
           Text(
             '댓글 ${post.commentCount}',
-            style: AppTextStyles.sectionTitle(context),
+            style: AppTextStyles.headlineSmall(context),
           ),
           const SizedBox(height: AppSizes.gapL),
           
@@ -505,19 +506,19 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                             decoration: BoxDecoration(
-                              color: accentColor.withValues(alpha: 0.1),
+                              color: accentColor.withValues(alpha: AppOpacity.o10),
                               borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                             ),
                             child: Text(
                               '작성자',
-                              style: AppTextStyles.badgeSmall(context).copyWith(color: accentColor),
+                              style: AppTextStyles.captionSmall(context).copyWith(color: accentColor),
                             ),
                           ),
                         ],
                         const Spacer(),
                         Text(
                           formatRelativeTime(comment.createdAt),
-                          style: AppTextStyles.cardMeta(context),
+                          style: AppTextStyles.captionSmall(context),
                         ),
                       ],
                     ),
@@ -533,7 +534,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                           onTap: () => _setReplyTo(comment),
                           child: Text(
                             '답글',
-                            style: AppTextStyles.secondarySmall(context),
+                            style: AppTextStyles.caption(context),
                           ),
                         ),
                         if (isMyComment) ...[
@@ -542,7 +543,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                             onTap: () => _deleteComment(comment, post.id),
                             child: Text(
                               '삭제',
-                              style: AppTextStyles.secondarySmall(context).copyWith(color: colorScheme.error),
+                              style: AppTextStyles.caption(context).copyWith(color: colorScheme.error),
                             ),
                           ),
                         ],
@@ -564,7 +565,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
             ),
           ),
         
-        Divider(color: colorScheme.outline.withValues(alpha: 0.2)),
+        Divider(color: colorScheme.outline.withValues(alpha: AppOpacity.o20)),
       ],
     );
   }
@@ -603,12 +604,12 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS, vertical: AppSizes.paddingXXS),
                         decoration: BoxDecoration(
-                          color: accentColor.withValues(alpha: 0.1),
+                          color: accentColor.withValues(alpha: AppOpacity.o10),
                           borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                         ),
                         child: Text(
                           '작성자',
-                          style: AppTextStyles.badgeSmall(context).copyWith(color: accentColor),
+                          style: AppTextStyles.captionSmall(context).copyWith(color: accentColor),
                         ),
                       ),
                     ],
@@ -630,7 +631,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                     onTap: () => _deleteComment(reply, post.id),
                     child: Text(
                       '삭제',
-                      style: AppTextStyles.cardMeta(context).copyWith(color: colorScheme.error),
+                      style: AppTextStyles.captionSmall(context).copyWith(color: colorScheme.error),
                     ),
                   ),
                 ],
@@ -646,10 +647,10 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(AppSizes.paddingL, AppSizes.paddingM, AppSizes.paddingL, MediaQuery.of(context).padding.bottom + AppSizes.paddingM),
+      padding: EdgeInsets.fromLTRB(AppSizes.paddingL, AppSizes.paddingM, AppSizes.paddingL, ResponsiveUtils.bottomPaddingWith(context, AppSizes.paddingM)),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        border: Border(top: BorderSide(color: colorScheme.outline.withValues(alpha: 0.2))),
+        border: Border(top: BorderSide(color: colorScheme.outline.withValues(alpha: AppOpacity.o20))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -659,14 +660,14 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.1),
+                color: accentColor.withValues(alpha: AppOpacity.o10),
                 borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
               child: Row(
                 children: [
                   Text(
                     '$_replyToAuthorName님에게 답글',
-                    style: AppTextStyles.secondarySmall(context).copyWith(color: accentColor),
+                    style: AppTextStyles.caption(context).copyWith(color: accentColor),
                   ),
                   const Spacer(),
                   GestureDetector(
@@ -687,10 +688,10 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(AppSizes.paddingS),
                   decoration: BoxDecoration(
-                    color: _isAnonymousComment ? accentColor.withValues(alpha: 0.1) : Colors.transparent,
+                    color: _isAnonymousComment ? accentColor.withValues(alpha: AppOpacity.o10) : Colors.transparent,
                     borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                     border: Border.all(
-                      color: _isAnonymousComment ? accentColor : colorScheme.outline.withValues(alpha: 0.3),
+                      color: _isAnonymousComment ? accentColor : colorScheme.outline.withValues(alpha: AppOpacity.o30),
                     ),
                   ),
                   child: Icon(
@@ -1057,7 +1058,7 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
+                  color: Colors.black.withValues(alpha: AppOpacity.o50),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -1078,7 +1079,7 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black.withValues(alpha: 0.7)],
+                    colors: [Colors.transparent, Colors.black.withValues(alpha: AppOpacity.o70)],
                   ),
                 ),
                 child: Column(
@@ -1100,11 +1101,11 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
                       children: [
                         Text(
                           _formatDuration(_controller.value.position),
-                          style: AppTextStyles.secondarySmall(context).copyWith(color: Colors.white),
+                          style: AppTextStyles.caption(context).copyWith(color: Colors.white),
                         ),
                         Text(
                           _formatDuration(_controller.value.duration),
-                          style: AppTextStyles.secondarySmall(context).copyWith(color: Colors.white),
+                          style: AppTextStyles.caption(context).copyWith(color: Colors.white),
                         ),
                       ],
                     ),

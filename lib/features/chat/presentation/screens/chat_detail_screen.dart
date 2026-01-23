@@ -9,20 +9,21 @@ import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/rating_service.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
-import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/loading_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/loading/loading_widgets.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/mingrr_image_viewer.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/utils/image_utils.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/rating_widgets.dart';
-import '../../../../core/widgets/guardian_profile_modal.dart';
-import '../../../../core/widgets/pet_profile_modal.dart';
-import '../../../../core/widgets/group_profile_modal.dart';
+import '../../../../core/widgets/modals/guardian_profile_modal.dart';
+import '../../../../core/widgets/modals/pet_profile_modal.dart';
+import '../../../../core/widgets/modals/group_profile_modal.dart';
 import '../../../../models/chat_model.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../../models/group_model.dart';
 import '../../../../models/rating_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -175,18 +176,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        elevation: isDark ? 0 : 0,
+        elevation: AppSizes.elevationNone,
         scrolledUnderElevation: 0,
         flexibleSpace: Container(
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            boxShadow: isDark ? null : [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            boxShadow: isDark ? null : AppShadows.shadowS(false),
           ),
         ),
         leading: IconButton(
@@ -232,7 +227,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                       Flexible(
                         child: Text(
                           otherName,
-                          style: AppTextStyles.sectionTitle(context),
+                          style: AppTextStyles.headlineSmall(context),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -280,7 +275,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 autofocus: true,
                 decoration: InputDecoration(
                   hintText: '메시지 검색...',
-                  hintStyle: AppTextStyles.secondary(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
+                  hintStyle: AppTextStyles.bodySmall(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
                   prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.outlineVariant),
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -678,9 +673,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: themeColor.withValues(alpha: 0.1),
+        color: themeColor.withValues(alpha: AppOpacity.o10),
         shape: BoxShape.circle,
-        border: Border.all(color: themeColor.withValues(alpha: 0.3), width: 1),
+        border: Border.all(color: themeColor.withValues(alpha: AppOpacity.o30), width: 1),
       ),
       child: hasValidImage
           ? ClipOval(
@@ -734,7 +729,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
             child: Text(
               _formatDate(date),
-              style: AppTextStyles.secondarySmall(context),
+              style: AppTextStyles.caption(context),
             ),
           ),
           Expanded(child: Divider(color: Theme.of(context).colorScheme.outline)),
@@ -755,7 +750,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               color: Theme.of(context).colorScheme.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(AppSizes.radiusM),
             ),
-            child: Text(message.content, style: AppTextStyles.secondarySmall(context)),
+            child: Text(message.content, style: AppTextStyles.caption(context)),
           ),
         ),
       );
@@ -805,25 +800,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 // 메시지 버블
                 Flexible(
                   child: Container(
-                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
+                    constraints: BoxConstraints(maxWidth: ResponsiveUtils.widthPercent(context, 0.7)),
                     padding: message.type == MessageType.image 
                         ? const EdgeInsets.all(AppSizes.paddingXS) 
                         : const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
                     decoration: BoxDecoration(
                       color: bubbleColor,
                       borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(18),
-                        topRight: const Radius.circular(18),
-                        bottomLeft: Radius.circular(isMe ? 18 : 4),
-                        bottomRight: Radius.circular(isMe ? 4 : 18),
+                        topLeft: const Radius.circular(AppSizes.radiusL),
+                        topRight: const Radius.circular(AppSizes.radiusL),
+                        bottomLeft: Radius.circular(isMe ? AppSizes.radiusL : AppSizes.radiusS),
+                        bottomRight: Radius.circular(isMe ? AppSizes.radiusS : AppSizes.radiusL),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
                     ),
                     child: _buildMessageContent(message, isMe, themeColor),
                   ),
@@ -880,7 +869,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           const SizedBox(height: AppSizes.gapS),
                           Text(
                             '${((progress.cumulativeBytesLoaded / progress.expectedTotalBytes!) * 100).toInt()}%',
-                            style: AppTextStyles.secondarySmall(context),
+                            style: AppTextStyles.caption(context),
                           ),
                         ],
                       ],
@@ -908,9 +897,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       default:
         return Text(
           message.content,
-          style: TextStyle(
-            color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface,
-            fontSize: 15,
+          style: AppTextStyles.titleLarge(context).withColor(
+            isMe ? Colors.white : Theme.of(context).colorScheme.onSurface,
           ),
         );
     }
@@ -924,7 +912,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   Widget _buildTimeText(DateTime time) {
     return Text(
       '${time.hour}:${time.minute.toString().padLeft(2, '0')}',
-      style: AppTextStyles.cardMeta(context),
+      style: AppTextStyles.captionSmall(context),
     );
   }
 
@@ -932,13 +920,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        boxShadow: AppShadows.shadowL(Theme.of(context).brightness == Brightness.dark),
       ),
       child: SafeArea(
         top: false,
@@ -953,7 +935,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 height: 40,
                 margin: const EdgeInsets.only(bottom: AppSizes.paddingXXS),
                 decoration: BoxDecoration(
-                  color: themeColor.withValues(alpha: 0.1),
+                  color: themeColor.withValues(alpha: AppOpacity.o10),
                   shape: BoxShape.circle,
                 ),
                 child: _isUploadingImage
@@ -984,7 +966,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     controller: _messageController,
                     decoration: InputDecoration(
                       hintText: '메시지를 입력하세요',
-                      hintStyle: AppTextStyles.secondary(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
+                      hintStyle: AppTextStyles.bodySmall(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
                       border: InputBorder.none,
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),

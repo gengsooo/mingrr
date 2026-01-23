@@ -252,19 +252,6 @@ class FirestoreService {
             .toList());
   }
   
-  // 하위 호환성
-  @Deprecated('Use createDatingRequest instead')
-  Future<void> createLike(DatingRequestModel like) => createDatingRequest(like);
-  
-  @Deprecated('Use updateDatingRequest instead')
-  Future<void> updateLike(DatingRequestModel like) => updateDatingRequest(like);
-  
-  @Deprecated('Use getReceivedDatingRequests instead')
-  Future<List<DatingRequestModel>> getReceivedLikes(String userId) => getReceivedDatingRequests(userId);
-  
-  @Deprecated('Use watchReceivedDatingRequests instead')
-  Stream<List<DatingRequestModel>> watchReceivedLikes(String userId) => watchReceivedDatingRequests(userId);
-  
   Future<void> createMatch(MatchModel match) async {
     try {
       await _firebase.matchesCollection.doc(match.id).set(match.toFirestore());
@@ -862,33 +849,6 @@ class FirestoreService {
   /// 본인 인증 처리
   Future<void> verifyIdentity(String userId) async {
     await updateUserVerification(userId, 'identity', true);
-  }
-
-  /// 위치 인증 처리 (GPS 기반)
-  /// 
-  /// @deprecated LocationVerificationService.verifyLocation() 사용을 권장합니다.
-  /// 이 메서드는 하위 호환성을 위해 유지됩니다.
-  @Deprecated('LocationVerificationService.verifyLocation() 사용을 권장합니다')
-  Future<void> verifyLocation(String userId, String location, {GeoPoint? geoPoint}) async {
-    try {
-      final updateData = <String, dynamic>{
-        'verifications.location': true,
-        'verifications.locationAt': FieldValue.serverTimestamp(),
-        'verifications.locationAddress': location,
-        'isLocationVerified': true,
-        'locationVerifiedAt': FieldValue.serverTimestamp(),
-      };
-      
-      if (geoPoint != null) {
-        updateData['verifications.locationGeoPoint'] = geoPoint;
-        updateData['homeLocation'] = geoPoint;
-        updateData['homeAddress'] = location;
-      }
-      
-      await _firebase.usersCollection.doc(userId).update(updateData);
-    } catch (e) {
-      rethrow;
-    }
   }
 
   /// 동물등록 인증 처리 (API 검증 결과 저장)
