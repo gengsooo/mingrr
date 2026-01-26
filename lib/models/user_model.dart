@@ -141,6 +141,20 @@ class UserModel extends Equatable {
   
   /// 응답한 채팅 수
   final int respondedChats;
+  
+  // ===== 약관 동의 정보 (법적 요구사항) =====
+  
+  /// 이용약관 동의 시간
+  final DateTime? termsAgreedAt;
+  
+  /// 개인정보처리방침 동의 시간
+  final DateTime? privacyAgreedAt;
+  
+  /// 위치정보 이용 동의 시간 (선택)
+  final DateTime? locationConsentAt;
+  
+  /// 마케팅 수신 동의 시간 (선택)
+  final DateTime? marketingConsentAt;
 
   const UserModel({
     required this.id,
@@ -186,6 +200,10 @@ class UserModel extends Equatable {
     this.chatResponseRate,
     this.totalReceivedChats = 0,
     this.respondedChats = 0,
+    this.termsAgreedAt,
+    this.privacyAgreedAt,
+    this.locationConsentAt,
+    this.marketingConsentAt,
   });
 
   /// 나이 계산 (생년월일 기준)
@@ -269,6 +287,18 @@ class UserModel extends Equatable {
       chatResponseRate: data['chatResponseRate']?.toDouble(),
       totalReceivedChats: data['totalReceivedChats'] ?? 0,
       respondedChats: data['respondedChats'] ?? 0,
+      termsAgreedAt: data['termsAgreedAt'] != null
+          ? (data['termsAgreedAt'] as Timestamp).toDate()
+          : null,
+      privacyAgreedAt: data['privacyAgreedAt'] != null
+          ? (data['privacyAgreedAt'] as Timestamp).toDate()
+          : null,
+      locationConsentAt: data['locationConsentAt'] != null
+          ? (data['locationConsentAt'] as Timestamp).toDate()
+          : null,
+      marketingConsentAt: data['marketingConsentAt'] != null
+          ? (data['marketingConsentAt'] as Timestamp).toDate()
+          : null,
     );
   }
 
@@ -327,6 +357,18 @@ class UserModel extends Equatable {
       'chatResponseRate': chatResponseRate,
       'totalReceivedChats': totalReceivedChats,
       'respondedChats': respondedChats,
+      'termsAgreedAt': termsAgreedAt != null
+          ? Timestamp.fromDate(termsAgreedAt!)
+          : null,
+      'privacyAgreedAt': privacyAgreedAt != null
+          ? Timestamp.fromDate(privacyAgreedAt!)
+          : null,
+      'locationConsentAt': locationConsentAt != null
+          ? Timestamp.fromDate(locationConsentAt!)
+          : null,
+      'marketingConsentAt': marketingConsentAt != null
+          ? Timestamp.fromDate(marketingConsentAt!)
+          : null,
     };
   }
 
@@ -375,6 +417,10 @@ class UserModel extends Equatable {
     double? chatResponseRate,
     int? totalReceivedChats,
     int? respondedChats,
+    DateTime? termsAgreedAt,
+    DateTime? privacyAgreedAt,
+    DateTime? locationConsentAt,
+    DateTime? marketingConsentAt,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -420,6 +466,10 @@ class UserModel extends Equatable {
       chatResponseRate: chatResponseRate ?? this.chatResponseRate,
       totalReceivedChats: totalReceivedChats ?? this.totalReceivedChats,
       respondedChats: respondedChats ?? this.respondedChats,
+      termsAgreedAt: termsAgreedAt ?? this.termsAgreedAt,
+      privacyAgreedAt: privacyAgreedAt ?? this.privacyAgreedAt,
+      locationConsentAt: locationConsentAt ?? this.locationConsentAt,
+      marketingConsentAt: marketingConsentAt ?? this.marketingConsentAt,
     );
   }
 

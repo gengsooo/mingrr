@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../models/user_model.dart';
 import '../../data/auth_repository.dart';
+import '../screens/consent_screen.dart';
 
 /// ============================================================
 /// 인증 상태 관리 Provider
@@ -135,7 +136,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   // ===== 구글 로그인 =====
   
-  Future<bool> signInWithGoogle() async {
+  Future<bool> signInWithGoogle({ConsentData? consentData}) async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -146,7 +147,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return false;
       }
 
-      await _handleSignIn(userCredential, 'google');
+      await _handleSignIn(userCredential, 'google', consentData: consentData);
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -195,7 +196,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<bool> signUpWithEmail(String email, String password) async {
+  Future<bool> signUpWithEmail(String email, String password, {ConsentData? consentData}) async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -211,7 +212,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         // 인증 메일 발송 실패해도 회원가입은 성공 처리
       }
       
-      await _handleSignIn(userCredential, 'email');
+      await _handleSignIn(userCredential, 'email', consentData: consentData);
       return true;
     } on FirebaseAuthException catch (e) {
       state = state.copyWith(
@@ -230,7 +231,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   // ===== 카카오 로그인 (추후 구현) =====
   
-  Future<bool> signInWithKakao() async {
+  Future<bool> signInWithKakao({ConsentData? consentData}) async {
     state = state.copyWith(
       error: '카카오 로그인은 준비 중입니다.',
     );
@@ -239,7 +240,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   // ===== 네이버 로그인 (추후 구현) =====
   
-  Future<bool> signInWithNaver() async {
+  Future<bool> signInWithNaver({ConsentData? consentData}) async {
     state = state.copyWith(
       error: '네이버 로그인은 준비 중입니다.',
     );
@@ -250,8 +251,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   
   Future<void> _handleSignIn(
     UserCredential userCredential,
-    String provider,
-  ) async {
+    String provider, {
+    ConsentData? consentData,
+  }) async {
     final user = userCredential.user;
     if (user == null) {
       state = state.copyWith(
@@ -271,6 +273,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
         phoneNumber: user.phoneNumber,
         profileImageUrl: user.photoURL,
         nickname: user.displayName ?? '새로운 친구',
+        // 동의 정보 저장
+        termsAgreedAt: consentData?.agreedAt,
+        privacyAgreedAt: consentData?.agreedAt,
+        locationConsentAt: consentData?.locationAgreed == true ? consentData?.agreedAt : null,
+        marketingConsentAt: consentData?.marketingAgreed == true ? consentData?.agreedAt : null,
       );
       await _authRepository.createUser(newUser);
       state = state.copyWith(

@@ -7,6 +7,7 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/badges/svg_icons.dart';
 import '../providers/auth_provider.dart';
+import 'consent_screen.dart';
 
 /// ============================================================
 /// 로그인 화면
@@ -309,7 +310,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         SocialLoginButton.kakao(
           onPressed: authState.isLoading
               ? null
-              : () => authNotifier.signInWithKakao(),
+              : () => _navigateToConsentForSocial('kakao'),
         ),
         const SizedBox(height: AppSizes.gapM),
         
@@ -317,7 +318,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         SocialLoginButton.naver(
           onPressed: authState.isLoading
               ? null
-              : () => authNotifier.signInWithNaver(),
+              : () => _navigateToConsentForSocial('naver'),
         ),
         const SizedBox(height: AppSizes.gapM),
         
@@ -325,7 +326,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         SocialLoginButton.google(
           onPressed: authState.isLoading
               ? null
-              : () => authNotifier.signInWithGoogle(),
+              : () => _navigateToConsentForSocial('google'),
         ),
       ],
     );
@@ -395,7 +396,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     authNotifier.signInWithEmail(email, password);
   }
 
-  /// 이메일 회원가입
+  /// 이메일 회원가입 - 동의 화면으로 이동
   void _signUpWithEmail(AuthNotifier authNotifier) async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
@@ -412,6 +413,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
     
-    authNotifier.signUpWithEmail(email, password);
+    // 동의 화면으로 이동
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ConsentScreen(
+            email: email,
+            password: password,
+          ),
+        ),
+      );
+    }
+  }
+  
+  /// 소셜 로그인 - 동의 화면으로 이동
+  void _navigateToConsentForSocial(String provider) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ConsentScreen(
+          socialProvider: provider,
+        ),
+      ),
+    );
   }
 }
