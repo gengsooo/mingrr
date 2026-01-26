@@ -61,10 +61,6 @@ class DatingRecommendCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final features = context.features;
-    final isHighMatch = matchScore >= 90;
-    final matchColor = isHighMatch ? features.success : features.dating;
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -101,23 +97,10 @@ class DatingRecommendCard extends StatelessWidget {
               Positioned(
                 top: 12,
                 right: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
-                  decoration: BoxDecoration(
-                    color: matchColor,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.auto_awesome, size: 14, color: Colors.white),
-                      const SizedBox(width: AppSizes.gapXS),
-                      Text(
-                        '궁합 $matchScore%',
-                        style: AppTextStyles.labelMedium(context).copyWith(color: Colors.white),
-                      ),
-                    ],
-                  ),
+                child: MatchScoreBadge(
+                  score: matchScore,
+                  style: MatchBadgeStyle.filled,
+                  size: InfoBadgeSize.medium,
                 ),
               ),
               
@@ -145,7 +128,7 @@ class DatingRecommendCard extends StatelessWidget {
                           const SizedBox(width: AppSizes.gapS),
                           Text(
                             ageString,
-                            style: AppTextStyles.headlineSmall(context),
+                            style: AppTextStyles.headlineSmall(context).copyWith(color: Colors.white),
                           ),
                         ],
                       ),
@@ -157,7 +140,7 @@ class DatingRecommendCard extends StatelessWidget {
                           Flexible(
                             child: Text(
                               breed ?? '품종 미상',
-                              style: AppTextStyles.bodyMedium(context),
+                              style: AppTextStyles.bodyMedium(context).copyWith(color: Colors.white70),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -167,7 +150,7 @@ class DatingRecommendCard extends StatelessWidget {
                           const SizedBox(width: 2),
                           Text(
                             distanceString,
-                            style: AppTextStyles.bodySmall(context),
+                            style: AppTextStyles.bodySmall(context).copyWith(color: Colors.white70),
                           ),
                         ],
                       ),
@@ -340,7 +323,7 @@ class DatingNearbyCard extends StatelessWidget {
               ),
               child: Text(
                 distanceString,
-                style: AppTextStyles.captionSmall(context),
+                style: AppTextStyles.captionSmall(context).copyWith(color: Colors.white),
               ),
             ),
           ),
@@ -394,8 +377,8 @@ class DatingNearbyCard extends StatelessWidget {
 /// [ageString]: 나이 문자열
 /// [isMale]: 성별
 /// [distanceString]: 거리 문자열
+/// [description]: 교배 글 상세 내용
 /// [hasPedigree]: 혈통서 보유 여부
-/// [isVaccinationVerified]: 예방접종 인증 여부
 /// [imageUrl]: 대표 이미지 URL
 /// [onTap]: 탭 콜백
 /// [onBreedingRequest]: 교배 신청 버튼 콜백
@@ -406,8 +389,8 @@ class DatingBreedingCard extends StatelessWidget {
   final String ageString;
   final bool isMale;
   final String distanceString;
+  final String? description;
   final bool hasPedigree;
-  final bool isVaccinationVerified;
   final String? imageUrl;
   final VoidCallback? onTap;
   final VoidCallback? onBreedingRequest;
@@ -419,8 +402,8 @@ class DatingBreedingCard extends StatelessWidget {
     required this.ageString,
     required this.isMale,
     required this.distanceString,
+    this.description,
     this.hasPedigree = false,
-    this.isVaccinationVerified = false,
     this.imageUrl,
     this.onTap,
     this.onBreedingRequest,
@@ -435,17 +418,17 @@ class DatingBreedingCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: AppSizes.gapM),
+        height: 130, // 고정 높이 (버튼 제거 후 조정)
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
           boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
         ),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 이미지 영역
-              _buildImageSection(context),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 이미지 영역
+            _buildImageSection(context),
               // 정보 영역
               Expanded(
                 child: Padding(
@@ -485,36 +468,27 @@ class DatingBreedingCard extends StatelessWidget {
                             '${breed ?? '품종 미상'} · $ageString',
                             style: AppTextStyles.bodySmall(context),
                           ),
+                          // 상세 내용 (최대 2줄)
+                          if (description != null && description!.isNotEmpty) ...[
+                            const SizedBox(height: AppSizes.gapS),
+                            Text(
+                              description!,
+                              style: AppTextStyles.bodySmall(context).copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ],
                       ),
-                      // 중간: 교배 조건 태그 (혈통서는 항상 표시)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: AppSizes.gapS),
-                        child: Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
-                          children: [
-                            PedigreeBadge(hasPedigree: hasPedigree, size: InfoBadgeSize.small),
-                            if (isVaccinationVerified)
-                              _buildConditionTag(context, '예방접종', Icons.health_and_safety),
-                          ],
-                        ),
-                      ),
-                      // 하단: 교배 신청 버튼
-                      const SizedBox(height: AppSizes.gapS),
-                      MingrrButton(
-                        text: '교배 신청',
-                        onPressed: onBreedingRequest,
-                        backgroundColor: features.dating,
-                        textColor: Colors.white,
-                        height: 34,
-                      ),
+                      // 하단: 교배 조건 태그 (혈통서만 표시)
+                      PedigreeBadge(hasPedigree: hasPedigree, size: InfoBadgeSize.small),
                     ],
                   ),
                 ),
               ),
             ],
-          ),
         ),
       ),
     );
@@ -550,28 +524,6 @@ class DatingBreedingCard extends StatelessWidget {
               showLabel: true,
               size: InfoBadgeSize.small,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildConditionTag(BuildContext context, String text, IconData icon) {
-    final color = context.features.dating;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: AppOpacity.o10),
-        borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 10, color: color),
-          const SizedBox(width: AppSizes.gapXS),
-          Text(
-            text,
-            style: AppTextStyles.captionSmall(context).copyWith(color: color),
           ),
         ],
       ),

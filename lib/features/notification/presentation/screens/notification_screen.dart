@@ -276,10 +276,10 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
       case NotificationType.matchSuccess:
         return Icons.celebration;
       case NotificationType.petLike:
-        return Icons.pets;
+        return Icons.favorite;
       case NotificationType.breedingRequest:
       case NotificationType.breedingAccepted:
-        return Icons.pets;
+        return Icons.family_restroom;
       case NotificationType.newMessage:
         return Icons.chat_bubble;
       case NotificationType.productInquiry:

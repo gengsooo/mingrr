@@ -41,7 +41,7 @@ enum ConfirmSheetType {
   
   // 데이팅 관련
   dateCancel(Icons.favorite_border, '데이트 신청 취소', '정말 데이트 신청을 취소하시겠습니까?', '취소하기'),
-  breedingCancel(Icons.pets, '교배 신청 취소', '정말 교배 신청을 취소하시겠습니까?', '취소하기'),
+  breedingCancel(Icons.family_restroom, '교배 신청 취소', '정말 교배 신청을 취소하시겠습니까?', '취소하기'),
   
   // 알바 관련
   jobDelete(Icons.delete_outline, '알바 삭제', '정말 이 알바 글을 삭제하시겠습니까?\n삭제된 글은 복구할 수 없습니다.', '삭제하기'),

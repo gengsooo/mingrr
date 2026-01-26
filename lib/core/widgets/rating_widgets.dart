@@ -7,6 +7,7 @@ import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import '../../models/rating_model.dart';
 import 'common_widgets.dart';
+import 'mingrr_image.dart';
 import 'sheets/mingrr_bottom_sheet.dart';
 import 'dialogs/action_prompt_dialog.dart';
 import '../utils/responsive_utils.dart';
@@ -134,8 +135,6 @@ class _RatingModalState extends State<RatingModal> {
         return '거래';
       case RatingType.breeding:
         return '교배';
-      case RatingType.community:
-        return '소모임';
     }
   }
 
@@ -147,8 +146,6 @@ class _RatingModalState extends State<RatingModal> {
         return context.features.market;
       case RatingType.breeding:
         return context.features.dating;
-      case RatingType.community:
-        return context.features.social;
     }
   }
 
@@ -205,10 +202,10 @@ class _RatingModalState extends State<RatingModal> {
         children: [
           // 프로필 이미지
           if (widget.targetImageUrl != null) ...[
-            CircleAvatar(
-              radius: 32,
-              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
-              backgroundImage: NetworkImage(widget.targetImageUrl!),
+            MingrrAvatar(
+              imageUrl: widget.targetImageUrl,
+              size: 64,
+              placeholderIcon: Icons.person,
             ),
             const SizedBox(height: AppSizes.gapM),
           ],
@@ -519,8 +516,7 @@ RatingType _getRatingType(String type) {
       return RatingType.marketplace;
     case 'breeding':
       return RatingType.breeding;
-    case 'community':
-      return RatingType.community;
+    // 소모임(community/group)은 평가 기능 없음
     default:
       return RatingType.dating;
   }

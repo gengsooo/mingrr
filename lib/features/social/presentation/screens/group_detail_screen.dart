@@ -10,6 +10,7 @@ import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/loading/loading_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/sheets/report_sheet.dart';
@@ -24,6 +25,7 @@ import '../../../../models/chat_model.dart';
 import '../../../../models/user_model.dart';
 import '../../../chat/presentation/screens/chat_detail_screen.dart';
 import '../../../../core/providers/refresh_notifier.dart';
+import '../../../../core/services/share_service.dart';
 import '../providers/group_provider.dart';
 import 'group_write_screen.dart';
 
@@ -1010,9 +1012,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     showDetailOptionsSheet(
       context: context,
       isOwner: isCreator,
-      onShare: () {
-        // TODO: 공유 기능 구현
-      },
+      onShare: () => ShareService.shareGroup(context, group),
       onReport: () {
         showReportSheet(
           context,
@@ -1147,14 +1147,10 @@ class _JoinRequestTileState extends State<_JoinRequestTile> {
         horizontal: AppSizes.paddingM,
         vertical: AppSizes.paddingS,
       ),
-      leading: CircleAvatar(
-        radius: 24,
-        backgroundImage: _user?.profileImageUrl != null
-            ? NetworkImage(_user!.profileImageUrl!)
-            : null,
-        child: _user?.profileImageUrl == null
-            ? const Icon(Icons.person)
-            : null,
+      leading: MingrrAvatar(
+        imageUrl: _user?.profileImageUrl,
+        size: 48,
+        placeholderIcon: Icons.person,
       ),
       title: Row(
         children: [

@@ -344,6 +344,30 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
     }
   }
 
+  Future<void> _seedUserLocations() async {
+    setState(() {
+      _isLoading = true;
+      _message = '사용자 위치 정보 생성 중...';
+    });
+
+    try {
+      await _seedData.seedUserLocations();
+      ref.invalidate(collectionCountsProvider);
+      
+      setState(() {
+        _message = '✅ 사용자 위치 정보 생성 완료!';
+      });
+    } catch (e) {
+      setState(() {
+        _message = '❌ 오류: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // admin 계정 접근 제한 확인
@@ -511,6 +535,23 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                     label: const Text('테스트 데이터만 삭제 (test_ 접두사)'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.all(AppSizes.paddingL),
+                    ),
+                  ),
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // 사용자 위치 정보 생성 버튼
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _isLoading ? null : _seedUserLocations,
+                    icon: const Icon(Icons.location_on),
+                    label: const Text('사용자 위치 정보 생성 (대한민국 전역)'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.all(AppSizes.paddingL),
                     ),

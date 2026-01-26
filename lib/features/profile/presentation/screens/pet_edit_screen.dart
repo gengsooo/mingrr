@@ -10,9 +10,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/form_strings.dart';
 import '../../../../core/constants/pet_constants.dart';
-import '../../../../core/services/image_crop_service.dart';
+import '../../../../core/services/image_service.dart';
 import '../../../../core/services/storage_service.dart';
-import '../../../../core/utils/image_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/forms/form_components.dart';
@@ -812,18 +811,15 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
 
         // 웹에서는 크롭 미지원, 모바일에서만 크롭 적용
         if (!kIsWeb && mounted) {
-          final croppedPath = await ImageCropService().cropImage(
+          final result = await ImageService.instance.crop(
+            context: context,
             imagePath: image.path,
             style: ImageCropStyle.circle,
-            context: context,
-            maxWidth: ImageLimits.maxResolution,
-            maxHeight: ImageLimits.maxResolution,
-            compressQuality: ImageLimits.imageQuality,
           );
           
-          if (croppedPath != null && mounted) {
+          if (result != null && mounted) {
             setState(() {
-              _selectedProfileImage = XFile(croppedPath);
+              _selectedProfileImage = XFile(result.path);
             });
             return;
           }
@@ -877,17 +873,14 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           final List<XFile> croppedImages = [];
           for (final image in validImages) {
             if (!mounted) break;
-            final croppedPath = await ImageCropService().cropImage(
+            final result = await ImageService.instance.crop(
+              context: context,
               imagePath: image.path,
               style: ImageCropStyle.square,
-              context: context,
-              maxWidth: ImageLimits.maxResolution,
-              maxHeight: ImageLimits.maxResolution,
-              compressQuality: ImageLimits.imageQuality,
             );
             
-            if (croppedPath != null) {
-              croppedImages.add(XFile(croppedPath));
+            if (result != null) {
+              croppedImages.add(XFile(result.path));
             }
           }
           

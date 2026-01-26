@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
-import '../../services/image_crop_service.dart';
-import '../../utils/image_utils.dart';
+import '../../services/image_service.dart';
 import '../common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
 import '../../utils/responsive_utils.dart';
@@ -548,18 +547,15 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
 
     // 크롭 기능 활성화 & 모바일인 경우만 크롭 적용
     if (widget.enableCrop && !kIsWeb) {
-      final croppedPath = await ImageCropService().cropImage(
+      final result = await ImageService.instance.crop(
+        context: context,
         imagePath: image.path,
         style: widget.cropStyle,
-        context: context,
-        maxWidth: ImageLimits.maxResolution,
-        maxHeight: ImageLimits.maxResolution,
-        compressQuality: ImageLimits.imageQuality,
       );
       
-      if (croppedPath != null) {
+      if (result != null) {
         setState(() {
-          _selectedImage = XFile(croppedPath);
+          _selectedImage = XFile(result.path);
           _selectedDefaultAvatar = null;
         });
         return;

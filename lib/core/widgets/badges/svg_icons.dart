@@ -17,9 +17,14 @@ class SvgAssets {
   // 아이콘
   static const String logo = 'assets/icons/logo.svg';
   static const String logoText = 'assets/icons/logo_text.svg';
+  static const String mingrrLogo = 'assets/icons/mingrr_logo.svg';
+  static const String appIcon = 'assets/icons/app_icon.svg';
   static const String defaultPet = 'assets/icons/default_pet.svg';
   static const String pawPrint = 'assets/icons/paw_print.svg';
   static const String walkingDog = 'assets/icons/walking_dog.svg';
+  
+  // 스플래시
+  static const String splashLogo = 'assets/images/splash_logo.svg';
   
   // 빈 상태 이미지
   static const String emptyPet = 'assets/images/empty_pet.svg';

@@ -117,50 +117,135 @@ class InfoBadge extends StatelessWidget {
   }
 }
 
+/// 궁합 배지 스타일
+enum MatchBadgeStyle {
+  /// 투명 배경 + 색상 텍스트 (홈 추천친구)
+  transparent,
+  /// 불투명 배경 + 흰색 텍스트 (데이팅 리스트 카드, 상세화면)
+  filled,
+  /// 이미지 오버레이용 (반투명 검정 배경)
+  overlay,
+}
+
 /// 궁합 점수 배지
+/// 
+/// 사용처:
+/// - 홈 추천친구 카드: style=transparent
+/// - 데이팅 추천친구 리스트 카드: style=filled
+/// - 데이팅 상세화면 이미지 헤더: style=filled, showInfoIcon=true
+/// - 근처검색 카드: style=transparent
 class MatchScoreBadge extends StatelessWidget {
   final int score;
   final InfoBadgeSize size;
+  final MatchBadgeStyle style;
   final bool showIcon;
-  final bool showLabel; // "궁합" 텍스트 표시 여부
+  final bool showLabel;
+  final bool showInfoIcon; // 정보 아이콘 (상세화면용)
+  final VoidCallback? onTap;
 
   const MatchScoreBadge({
     super.key,
     required this.score,
     this.size = InfoBadgeSize.medium,
+    this.style = MatchBadgeStyle.transparent,
     this.showIcon = true,
     this.showLabel = true,
+    this.showInfoIcon = false,
+    this.onTap,
   });
 
-  /// 점수에 따른 배경색
-  Color _getBackgroundColor(BuildContext context) {
-    final features = context.features;
-    if (score >= 90) return features.success.withValues(alpha: AppOpacity.o15);
-    if (score >= 70) return features.dating.withValues(alpha: AppOpacity.o15);
-    return Theme.of(context).colorScheme.surface;
-  }
-
-  /// 점수에 따른 텍스트색
-  Color _getTextColor(BuildContext context) {
+  /// 점수에 따른 기본 색상 (공통 로직)
+  static Color getScoreColor(BuildContext context, int score) {
     final features = context.features;
     if (score >= 90) return features.success;
     if (score >= 70) return features.dating;
     return Theme.of(context).colorScheme.onSurfaceVariant;
   }
 
+  /// 스타일에 따른 배경색
+  Color _getBackgroundColor(BuildContext context) {
+    final baseColor = getScoreColor(context, score);
+    switch (style) {
+      case MatchBadgeStyle.transparent:
+        return baseColor.withValues(alpha: AppOpacity.o15);
+      case MatchBadgeStyle.filled:
+        return baseColor;
+      case MatchBadgeStyle.overlay:
+        return Colors.black.withValues(alpha: AppOpacity.o50);
+    }
+  }
+
+  /// 스타일에 따른 텍스트색
+  Color _getTextColor(BuildContext context) {
+    switch (style) {
+      case MatchBadgeStyle.transparent:
+        return getScoreColor(context, score);
+      case MatchBadgeStyle.filled:
+      case MatchBadgeStyle.overlay:
+        return Colors.white;
+    }
+  }
+
   String get _displayText {
     return showLabel ? '궁합 $score%' : '$score%';
   }
 
+  double get _iconSize {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return 12;
+      case InfoBadgeSize.medium:
+        return 14;
+      case InfoBadgeSize.large:
+        return 16;
+    }
+  }
+
+  EdgeInsets get _padding {
+    switch (size) {
+      case InfoBadgeSize.small:
+        return const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS);
+      case InfoBadgeSize.medium:
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS);
+      case InfoBadgeSize.large:
+        return const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return InfoBadge(
-      text: _displayText,
-      icon: showIcon ? Icons.favorite : null,
-      backgroundColor: _getBackgroundColor(context),
-      textColor: _getTextColor(context),
-      size: size,
+    final bgColor = _getBackgroundColor(context);
+    final textColor = _getTextColor(context);
+    
+    final badge = Container(
+      padding: _padding,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(size.borderRadius),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (showIcon) ...[
+            Icon(Icons.auto_awesome, size: _iconSize, color: textColor),
+            SizedBox(width: size == InfoBadgeSize.small ? 2 : 4),
+          ],
+          Text(
+            _displayText,
+            style: size.getTextStyle(context).withWeight(FontWeight.w600).withColor(textColor),
+          ),
+          if (showInfoIcon) ...[
+            const SizedBox(width: AppSizes.gapXS),
+            Icon(Icons.info_outline, size: _iconSize - 2, color: textColor.withValues(alpha: AppOpacity.o70)),
+          ],
+        ],
+      ),
     );
+    
+    if (onTap != null) {
+      return GestureDetector(onTap: onTap, child: badge);
+    }
+    return badge;
   }
 }
 

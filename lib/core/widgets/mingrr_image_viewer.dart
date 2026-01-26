@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart' as http;
 import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
@@ -123,16 +123,13 @@ class _MingrrImageViewerState extends State<MingrrImageViewer> {
         itemCount: widget.imageUrls.length,
         onPageChanged: (index) => setState(() => _currentIndex = index),
         itemBuilder: (context, index) {
-          final imageWidget = Image.network(
-            widget.imageUrls[index],
+          final imageWidget = CachedNetworkImage(
+            imageUrl: widget.imageUrls[index],
             fit: BoxFit.contain,
-            loadingBuilder: (context, child, progress) {
-              if (progress == null) return child;
-              return const Center(
-                child: MingrrLoadingIndicator(customColor: Colors.white),
-              );
-            },
-            errorBuilder: (_, __, ___) => const Icon(
+            placeholder: (context, url) => const Center(
+              child: MingrrLoadingIndicator(customColor: Colors.white),
+            ),
+            errorWidget: (context, url, error) => const Icon(
               Icons.image_not_supported,
               color: Colors.white54,
               size: 64,

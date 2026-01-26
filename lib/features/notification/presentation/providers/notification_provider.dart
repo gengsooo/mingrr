@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/firebase_service.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../models/notification_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
@@ -32,10 +33,17 @@ final userNotificationsProvider = StreamProvider.autoDispose<List<NotificationMo
           .snapshots()
           .map((snapshot) => snapshot.docs
               .map((doc) => NotificationModel.fromFirestore(doc.data(), id: doc.id))
-              .toList());
+              .toList())
+          .handleError((error, stackTrace) {
+            AppLogger.error('NotificationProvider', '알림 스트림 오류 (userId: ${user.uid})', error, stackTrace);
+            return <NotificationModel>[];
+          });
     },
     loading: () => const Stream.empty(),
-    error: (_, __) => Stream.value(<NotificationModel>[]),
+    error: (error, stackTrace) {
+      AppLogger.error('NotificationProvider', '인증 상태 오류로 알림 로드 실패', error, stackTrace);
+      return Stream.value(<NotificationModel>[]);
+    },
   );
 });
 

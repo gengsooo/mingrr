@@ -4,6 +4,7 @@ import '../../theme/feature_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../../models/pet_model.dart';
 import '../common_widgets.dart';
+import '../mingrr_image.dart';
 import '../sheets/mingrr_bottom_sheet.dart';
 import '../badges/info_badge.dart' show LikeCountText, InfoBadgeSize, PedigreeBadge;
 import '../../utils/responsive_utils.dart';
@@ -48,17 +49,9 @@ class PetSelectorCard extends StatelessWidget {
         child: Row(
           children: [
             // 프로필 이미지 (동그라미) - 프로필 이미지만 사용
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: color.withValues(alpha: AppOpacity.o20),
-                image: _getProfileImage(),
-              ),
-              child: _getProfileImage() == null
-                  ? Icon(Icons.pets, size: 22, color: accentColor ?? context.features.dating)
-                  : null,
+            MingrrPetAvatar(
+              imageUrl: pet.profileImageUrl,
+              size: 48,
             ),
             const SizedBox(width: AppSizes.gapM),
             
@@ -90,18 +83,6 @@ class PetSelectorCard extends StatelessWidget {
         ),
       ),
     );
-  }
-  
-  /// 프로필 이미지만 가져오기 (대표사진 제외)
-  DecorationImage? _getProfileImage() {
-    final url = pet.profileImageUrl;
-    if (url != null && url.isNotEmpty && !url.startsWith('default_avatar:')) {
-      return DecorationImage(
-        image: NetworkImage(url),
-        fit: BoxFit.cover,
-      );
-    }
-    return null;
   }
 }
 

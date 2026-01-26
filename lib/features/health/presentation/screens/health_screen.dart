@@ -5,6 +5,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../models/pet_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
@@ -16,11 +17,34 @@ import 'health_record_add_screens.dart';
 /// 건강수첩 화면 (Firebase 연동 버전)
 /// ============================================================
 
-class HealthScreen extends ConsumerWidget {
-  const HealthScreen({super.key});
+class HealthScreen extends ConsumerStatefulWidget {
+  final String? initialPetId; // 초기 선택할 반려동물 ID
+
+  const HealthScreen({super.key, this.initialPetId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HealthScreen> createState() => _HealthScreenState();
+}
+
+class _HealthScreenState extends ConsumerState<HealthScreen> {
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 초기 petId가 있으면 provider 업데이트
+    if (widget.initialPetId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(selectedPetIdProvider.notifier).state = widget.initialPetId;
+        _initialized = true;
+      });
+    } else {
+      _initialized = true;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final petsAsync = ref.watch(userPetsProvider);
     final selectedPetId = ref.watch(selectedPetIdProvider);
     final selectedTab = ref.watch(selectedHealthTabProvider);
@@ -146,29 +170,11 @@ class HealthScreen extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // 동그란 프로필 이미지
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: context.features.health.withValues(alpha: AppOpacity.o10),
-                        border: Border.all(
-                          color: isSelected ? context.features.health : Theme.of(context).colorScheme.outline,
-                          width: isSelected ? 3 : 1,
-                        ),
-                        boxShadow: isSelected ? AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark) : null,
-                        image: (pet.profileImageUrl != null && pet.profileImageUrl!.isNotEmpty)
-                            ? DecorationImage(
-                                image: NetworkImage(pet.profileImageUrl!),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                      ),
-                      child: (pet.profileImageUrl == null || pet.profileImageUrl!.isEmpty)
-                          ? const Center(
-                              child: DefaultPetIcon(size: 24),
-                            )
-                          : null,
+                    MingrrPetAvatar(
+                      imageUrl: pet.profileImageUrl,
+                      size: 56,
+                      borderColor: isSelected ? context.features.health : Theme.of(context).colorScheme.outline,
+                      borderWidth: isSelected ? 3 : 1,
                     ),
                     const SizedBox(height: AppSizes.gapSM),
                     // 이름

@@ -12,6 +12,8 @@ import '../../../../core/widgets/sheets/report_sheet.dart';
 import '../../../../core/widgets/modals/guardian_profile_modal.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/mixins/distance_calculator_mixin.dart';
+import '../../../../core/services/firebase_service.dart';
+import '../../../../core/services/share_service.dart';
 import '../../../../models/marketplace_model.dart';
 import '../providers/marketplace_provider.dart';
 
@@ -377,13 +379,19 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
 
 
   void _shareJob(JobModel job) {
-    MingrrSnackBar.info(context, '공유 기능 준비 중입니다');
+    ShareService.shareJob(context, job);
+  }
+
+  /// 본인 글 여부 확인
+  bool _isOwner(JobModel job) {
+    final myUserId = FirebaseService().currentUserId;
+    return myUserId != null && job.userId == myUserId;
   }
 
   void _showMoreOptions(BuildContext context, JobModel job) {
     showDetailOptionsSheet(
       context: context,
-      isOwner: false, // TODO: 본인 글 여부 확인 로직 추가
+      isOwner: _isOwner(job),
       onShare: () => _shareJob(job),
       onReport: () {
         showReportSheet(

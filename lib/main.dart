@@ -6,7 +6,9 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import 'firebase_options.dart';
 import 'app.dart';
+import 'core/config/api_config.dart';
 import 'core/services/kkosunnae_service.dart';
+import 'core/services/network_service.dart';
 import 'core/utils/app_logger.dart';
 // import 'core/services/notification_service.dart';
 
@@ -47,13 +49,25 @@ void main() async {
   // 푸시 알림 서비스 초기화
   // await NotificationService().initialize();
   
-  // 카카오 지도 SDK 초기화 (오류 발생 시 무시)
+  // Firebase Remote Config 초기화 (API 키 로드)
   try {
-    AppLogger.debug('Main', '카카오맵 SDK 초기화 시작...');
-    await KakaoMapSdk.instance.initialize('e80e09aa4db6c1f3d1eedb1be73ee8c6');
-    AppLogger.info('Main', '카카오맵 SDK 초기화 성공');
+    await ApiConfig.initialize();
+    AppLogger.info('Main', 'API Config 초기화 완료');
   } catch (e) {
-    AppLogger.error('Main', '카카오맵 초기화 실패', e);
+    AppLogger.error('Main', 'API Config 초기화 실패', e);
+  }
+  
+  // 카카오 지도 SDK 초기화 (API 키가 설정된 경우에만)
+  if (ApiConfig.hasKakaoMapKey) {
+    try {
+      AppLogger.debug('Main', '카카오맵 SDK 초기화 시작...');
+      await KakaoMapSdk.instance.initialize(ApiConfig.kakaoMapKey);
+      AppLogger.info('Main', '카카오맵 SDK 초기화 성공');
+    } catch (e) {
+      AppLogger.error('Main', '카카오맵 초기화 실패', e);
+    }
+  } else {
+    AppLogger.warning('Main', '카카오맵 API 키가 설정되지 않음 (Firebase Remote Config에서 kakao_map_key 설정 필요)');
   }
   
   // 꼬순내지수 등급 구간 로드 (하이브리드 방식)
@@ -62,6 +76,14 @@ void main() async {
     AppLogger.info('Main', '꼬순내지수 등급 구간 로드 완료');
   } catch (e) {
     AppLogger.error('Main', '꼬순내지수 등급 구간 로드 실패', e);
+  }
+  
+  // 네트워크 서비스 초기화
+  try {
+    await NetworkService().initialize();
+    AppLogger.info('Main', '네트워크 서비스 초기화 완료');
+  } catch (e) {
+    AppLogger.error('Main', '네트워크 서비스 초기화 실패', e);
   }
   
   // 앱 실행

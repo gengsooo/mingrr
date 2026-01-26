@@ -265,6 +265,13 @@ class DatingService {
     
     await _firebase.matchesCollection.doc(matchId).set(match.toFirestore());
     
+    // 양쪽 사용자 매칭 카운터 증가
+    for (final userId in userIds) {
+      await _firebase.usersCollection.doc(userId).update({
+        'matchCount': FieldValue.increment(1),
+      });
+    }
+    
     return match;
   }
   

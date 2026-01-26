@@ -6,6 +6,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/loading/loading_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/sheets/report_sheet.dart';
@@ -14,6 +15,7 @@ import '../../../../core/widgets/badges/info_badge.dart';
 import '../../../../core/widgets/modals/guardian_profile_modal.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/services/firebase_service.dart';
+import '../../../../core/services/share_service.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../models/community_post_model.dart';
 import '../../../../core/providers/refresh_notifier.dart';
@@ -276,7 +278,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               // 공유
               IconButton(
                 icon: Icon(Icons.share_outlined, color: colorScheme.onSurfaceVariant),
-                onPressed: () {},
+                onPressed: () => ShareService.sharePost(context, post),
               ),
             ],
           ),
@@ -301,17 +303,11 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
           fit: StackFit.expand,
           children: [
             // 썸네일
-            if (thumbnailUrl != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                child: Image.network(
-                  thumbnailUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _buildVideoPlaceholder(colorScheme),
-                ),
-              )
-            else
-              _buildVideoPlaceholder(colorScheme),
+            MingrrBackgroundImage(
+              imageUrl: thumbnailUrl,
+              borderRadius: AppSizes.radiusS,
+              placeholder: _buildVideoPlaceholder(colorScheme),
+            ),
             // 재생 버튼 오버레이
             Center(
               child: Container(

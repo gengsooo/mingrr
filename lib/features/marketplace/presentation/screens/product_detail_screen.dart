@@ -24,6 +24,7 @@ import '../../../../models/marketplace_model.dart';
 import '../../../../models/chat_model.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 import '../../../../core/mixins/distance_calculator_mixin.dart';
+import '../../../../core/services/share_service.dart';
 import '../../../chat/presentation/screens/chat_detail_screen.dart';
 import 'product_write_screen.dart';
 
@@ -249,7 +250,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
       imageUrls: _product?.imageUrls ?? [],
       expandedHeight: 300,
       onShare: () {
-        // TODO: 상품 공유 기능 구현 예정
+        if (_product != null) {
+          ShareService.shareProduct(context, _product!);
+        }
       },
       onMore: () => _showMoreOptions(context),
       placeholder: Container(

@@ -15,6 +15,8 @@ import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/cards/dating_card.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/providers/refresh_notifier.dart';
+import '../../../../core/services/dating_service.dart';
+import '../../../../core/services/firebase_service.dart';
 import '../providers/dating_provider.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import 'breeding_write_screen.dart';
@@ -131,8 +133,8 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
     // 탭 정의 (추천친구 / 근처 검색 / 교배찾기)
     final tabs = [
       MingrrTabItem(label: '추천친구', icon: Icons.auto_awesome, color: features.dating),
-      MingrrTabItem(label: '근처 검색', icon: Icons.location_on, color: features.dating),
-      MingrrTabItem(label: '교배찾기', icon: Icons.pets, color: features.dating),
+      MingrrTabItem(label: '근처 검색', icon: Icons.radar, color: features.dating),
+      MingrrTabItem(label: '교배찾기', icon: Icons.family_restroom, color: features.dating),
     ];
     
     return Scaffold(
@@ -216,13 +218,21 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
   }
 
   /// 상세화면으로 이동
-  void _navigateToDetail(BuildContext context, String petId, {bool isBreeding = false}) {
+  void _navigateToDetail(
+    BuildContext context, 
+    String petId, {
+    bool isBreeding = false,
+    double? distanceMeters,
+    int? matchScore,
+  }) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => PetDetailScreen(
           petId: petId,
           isBreeding: isBreeding,
+          cachedDistanceMeters: distanceMeters,
+          cachedMatchScore: matchScore,
         ),
       ),
     );
@@ -487,7 +497,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
     // 빈 상태
     if (filteredPets.isEmpty) {
       return MingrrEmptyState(
-        icon: Icons.pets,
+        icon: Icons.family_restroom,
         title: '아직 데이터가 없어요',
         subtitle: '거리를 늘리거나 필터를 조정해보세요',
         accentColor: context.features.dating,
@@ -536,25 +546,75 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
       ageString: pet.ageString,
       isMale: pet.gender == PetGender.male,
       distanceString: petWithDistance.distanceString,
+      description: petWithDistance.breedingDescription,
       hasPedigree: pet.hasPedigree,
-      isVaccinationVerified: pet.isVaccinationVerified,
       imageUrl: pet.displayImageUrl,
-      onTap: () => _navigateToDetail(context, pet.id, isBreeding: true),
+      onTap: () => _navigateToDetail(
+        context, 
+        pet.id, 
+        isBreeding: true,
+        distanceMeters: petWithDistance.distanceMeters,
+      ),
       onBreedingRequest: () => _showBreedingRequestSheet(context, ref, pet.id),
     );
   }
 
   /// 교배 신청 바톰시트
-  void _showBreedingRequestSheet(BuildContext context, WidgetRef ref, String petId) {
+  void _showBreedingRequestSheet(BuildContext context, WidgetRef ref, String targetPetId) async {
     final myPets = ref.read(userPetsProvider).valueOrNull ?? [];
+    final myUserId = FirebaseService().currentUserId;
+    
+    if (myUserId == null) {
+      MingrrSnackBar.error(context, '로그인이 필요합니다');
+      return;
+    }
+    
+    if (myPets.isEmpty) {
+      MingrrSnackBar.warning(context, '먼저 반려동물을 등록해주세요');
+      return;
+    }
+    
     showBreedingRequestSheet(
       context,
       myPets: myPets,
-      onConfirm: (message, {selectedPet}) {
-        // TODO: message, selectedPet을 DB에 저장
-        MingrrSnackBar.success(context, selectedPet != null 
-            ? '${selectedPet.name}(으)로 교배 신청을 보냈어요! 🐶' 
-            : '교배 신청을 보냈어요! 🐶');
+      onConfirm: (message, {selectedPet}) async {
+        try {
+          // 대상 반려동물 정보 가져오기
+          final targetPetDoc = await FirebaseService().petsCollection.doc(targetPetId).get();
+          if (!targetPetDoc.exists) {
+            if (context.mounted) {
+              MingrrSnackBar.error(context, '반려동물 정보를 찾을 수 없습니다');
+            }
+            return;
+          }
+          
+          final targetPetData = targetPetDoc.data()!;
+          final targetOwnerId = targetPetData['ownerId'] as String;
+          
+          // 내 대표 반려동물 또는 선택한 반려동물
+          final myPet = selectedPet ?? myPets.firstWhere(
+            (p) => p.isPrimary,
+            orElse: () => myPets.first,
+          );
+          
+          // 교배 신청 보내기
+          final datingService = DatingService();
+          await datingService.sendBreedingRequest(
+            fromUserId: myUserId,
+            fromPetId: myPet.id,
+            toUserId: targetOwnerId,
+            toPetId: targetPetId,
+            message: message,
+          );
+          
+          if (context.mounted) {
+            MingrrSnackBar.success(context, '${myPet.name}(으)로 교배 신청을 보냈어요! 🐶');
+          }
+        } catch (e) {
+          if (context.mounted) {
+            MingrrSnackBar.error(context, e.toString().replaceAll('Exception: ', ''));
+          }
+        }
       },
     );
   }
@@ -629,7 +689,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
         );
       }
       return MingrrEmptyState(
-        icon: Icons.location_off,
+        icon: Icons.radar,
         title: '아직 데이터가 없어요',
         subtitle: '거리를 늘려보세요',
         accentColor: context.features.dating,
@@ -689,7 +749,12 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
       distanceString: petWithDistance.distanceString,
       traits: pet.traits.map((t) => t.label).toList(),
       imageUrl: pet.displayImageUrl,
-      onTap: () => _navigateToDetail(context, pet.id),
+      onTap: () => _navigateToDetail(
+        context, 
+        pet.id,
+        distanceMeters: petWithDistance.distanceMeters,
+        matchScore: petWithDistance.matchScore,
+      ),
     );
   }
 
@@ -802,7 +867,12 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
       distanceString: recommended.distanceString,
       traits: pet.traits.map((t) => t.label).toList(),
       imageUrl: pet.displayImageUrl,
-      onTap: () => _navigateToDetail(context, pet.id),
+      onTap: () => _navigateToDetail(
+        context, 
+        pet.id,
+        distanceMeters: recommended.distanceMeters,
+        matchScore: recommended.matchScore,
+      ),
     );
   }
 

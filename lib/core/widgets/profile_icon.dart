@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../constants/app_sizes.dart';
+import 'mingrr_image.dart';
 
 /// ============================================================
 /// 공통 프로필 버튼 위젯
@@ -29,23 +30,11 @@ class ProfileButton extends StatelessWidget {
         shape: BoxShape.circle,
         border: Border.all(color: Theme.of(context).colorScheme.outline, width: 1),
       ),
-      child: imageUrl != null && imageUrl!.isNotEmpty
-          ? ClipOval(
-              child: Image.network(
-                imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildPlaceholder(context),
-              ),
-            )
-          : _buildPlaceholder(context),
-    );
-  }
-
-  Widget _buildPlaceholder(BuildContext context) {
-    return Icon(
-      Icons.person,
-      size: size * 0.55,
-      color: Theme.of(context).colorScheme.outlineVariant,
+      child: MingrrAvatar(
+        imageUrl: imageUrl,
+        size: size,
+        placeholderIcon: Icons.person,
+      ),
     );
   }
 }

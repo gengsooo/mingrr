@@ -6,6 +6,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/forms/location_selector.dart';
@@ -446,30 +447,18 @@ class _GroupCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 이미지
-            if (group.imageUrl != null)
-              ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusL)),
-                child: Image.network(
-                  group.imageUrl!,
-                  height: 120,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    height: 120,
-                    color: accentColor.withValues(alpha: AppOpacity.o10),
-                    child: Center(child: Icon(Icons.groups, size: 40, color: accentColor)),
-                  ),
-                ),
-              )
-            else
-              Container(
-                height: 80,
-                decoration: BoxDecoration(
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusL)),
+              child: MingrrBackgroundImage(
+                imageUrl: group.imageUrl,
+                height: group.imageUrl != null ? 120 : 80,
+                placeholder: Container(
+                  height: group.imageUrl != null ? 120 : 80,
                   color: accentColor.withValues(alpha: AppOpacity.o10),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusL)),
+                  child: Center(child: Icon(Icons.groups, size: 40, color: accentColor)),
                 ),
-                child: Center(child: Icon(Icons.groups, size: 40, color: accentColor)),
               ),
+            ),
 
             // 정보
             Padding(

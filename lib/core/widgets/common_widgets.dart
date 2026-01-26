@@ -30,6 +30,7 @@ export 'mingrr_settings_tile.dart';
 export 'cards/mingrr_record_tile.dart';
 
 // 공통 이미지 컴포넌트 export
+export 'mingrr_image.dart';
 export 'mingrr_image_viewer.dart';
 export 'mingrr_image_gallery.dart';
 export 'mingrr_image_header.dart';
@@ -279,101 +280,8 @@ class MingrrCard extends StatelessWidget {
 }
 
 // ===== 프로필 아바타 =====
-/// 사용자/반려동물 프로필 이미지 표시
-class MingrrAvatar extends StatelessWidget {
-  final String? imageUrl;
-  final double size;
-  final IconData placeholderIcon;
-  final VoidCallback? onTap;
-  final bool showBorder;
-  final Color? borderColor;
-  final bool isOnline;
-
-  const MingrrAvatar({
-    super.key,
-    this.imageUrl,
-    this.size = AppSizes.avatarM,
-    this.placeholderIcon = Icons.pets,
-    this.onTap,
-    this.showBorder = false,
-    this.borderColor,
-    this.isOnline = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Stack(
-        children: [
-          Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: showBorder
-                  ? Border.all(
-                      color: borderColor ?? Theme.of(context).colorScheme.primary,
-                      width: 3,
-                    )
-                  : null,
-              boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
-            ),
-            child: ClipOval(
-              child: _buildAvatarContent(context),
-            ),
-          ),
-          // 온라인 상태 표시
-          if (isOnline)
-            Positioned(
-              right: 0,
-              bottom: 0,
-              child: Container(
-                width: size * 0.25,
-                height: size * 0.25,
-                decoration: BoxDecoration(
-                  color: context.features.success,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildAvatarContent(BuildContext context) {
-    // URL이 없거나 빈 문자열인 경우 기본 아이콘
-    if (imageUrl == null || imageUrl!.isEmpty) {
-      return _buildPlaceholder(context);
-    }
-    
-    // default_avatar: 형식인 경우 기본 아바타 아이콘 표시
-    if (imageUrl!.startsWith('default_avatar:')) {
-      return _buildPlaceholder(context);
-    }
-    
-    // 일반 URL인 경우 네트워크 이미지
-    return CachedNetworkImage(
-      imageUrl: imageUrl!,
-      fit: BoxFit.cover,
-      placeholder: (ctx, url) => _buildPlaceholder(ctx),
-      errorWidget: (ctx, url, error) => _buildPlaceholder(ctx),
-    );
-  }
-  
-  Widget _buildPlaceholder(BuildContext context) {
-    return Container(
-      color: Theme.of(context).colorScheme.primaryContainer,
-      child: Icon(
-        placeholderIcon,
-        size: size * 0.5,
-        color: Theme.of(context).colorScheme.primary,
-      ),
-    );
-  }
-}
+// MingrrAvatar, MingrrPetAvatar, MingrrThumbnail, MingrrNetworkImage, MingrrBackgroundImage는
+// mingrr_image.dart에서 export됩니다.
 
 // ===== 입력 필드 =====
 /// 동글동글한 스타일의 텍스트 입력 필드

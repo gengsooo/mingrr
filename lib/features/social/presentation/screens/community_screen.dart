@@ -5,6 +5,7 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/badges/info_badge.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
@@ -326,31 +327,25 @@ class _CommunityPostCard extends StatelessWidget {
                 children: [
                   // 썸네일 이미지 (미디어가 있을 때만)
                   if (hasMedia)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-                      child: Stack(
-                        children: [
-                          Image.network(
-                            post.hasVideo ? (post.videoThumbnailUrl ?? '') : post.firstImage!,
-                            width: _thumbnailSize,
-                            height: _thumbnailSize,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              width: _thumbnailSize,
-                              height: _thumbnailSize,
-                              color: colorScheme.surfaceContainerLow,
-                              child: Icon(Icons.image, size: 20, color: colorScheme.outlineVariant),
+                    Stack(
+                      children: [
+                        MingrrThumbnail(
+                          imageUrl: post.hasVideo ? post.videoThumbnailUrl : post.firstImage,
+                          width: _thumbnailSize,
+                          height: _thumbnailSize,
+                          borderRadius: AppSizes.radiusXS,
+                        ),
+                        if (post.hasVideo)
+                          Positioned.fill(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black26,
+                                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                              ),
+                              child: const Icon(Icons.play_circle_outline, color: Colors.white, size: 24),
                             ),
                           ),
-                          if (post.hasVideo)
-                            Positioned.fill(
-                              child: Container(
-                                color: Colors.black26,
-                                child: const Icon(Icons.play_circle_outline, color: Colors.white, size: 24),
-                              ),
-                            ),
-                        ],
-                      ),
+                      ],
                     )
                   else
                     const SizedBox.shrink(),

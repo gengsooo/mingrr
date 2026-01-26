@@ -9,6 +9,7 @@ import '../../models/breeding_model.dart';
 import '../../models/community_post_model.dart';
 import 'firebase_service.dart';
 import 'geohash_service.dart';
+import '../utils/app_logger.dart';
 
 class FirestoreService {
   final FirebaseService _firebase = FirebaseService();
@@ -19,6 +20,7 @@ class FirestoreService {
     try {
       await _firebase.usersCollection.doc(user.id).set(user.toFirestore());
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'createUser (userId: ${user.id})', e);
       rethrow;
     }
   }
@@ -29,6 +31,7 @@ class FirestoreService {
       if (!doc.exists) return null;
       return UserModel.fromFirestore(doc.data()!, id: doc.id);
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getUser (userId: $userId)', e);
       rethrow;
     }
   }
@@ -37,6 +40,7 @@ class FirestoreService {
     try {
       await _firebase.usersCollection.doc(user.id).update(user.toFirestore());
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'updateUser (userId: ${user.id})', e);
       rethrow;
     }
   }
@@ -45,6 +49,7 @@ class FirestoreService {
     try {
       await _firebase.usersCollection.doc(userId).delete();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'deleteUser (userId: $userId)', e);
       rethrow;
     }
   }
@@ -69,6 +74,7 @@ class FirestoreService {
       
       return false;
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'isNicknameAvailable (nickname: $nickname)', e);
       rethrow;
     }
   }
@@ -87,6 +93,7 @@ class FirestoreService {
     try {
       await _firebase.petsCollection.doc(pet.id).set(pet.toFirestore());
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'createPet (petId: ${pet.id})', e);
       rethrow;
     }
   }
@@ -97,6 +104,7 @@ class FirestoreService {
       if (!doc.exists) return null;
       return PetModel.fromFirestore(doc);
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getPet (petId: $petId)', e);
       rethrow;
     }
   }
@@ -105,6 +113,7 @@ class FirestoreService {
     try {
       await _firebase.petsCollection.doc(pet.id).update(pet.toFirestore());
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'updatePet (petId: ${pet.id})', e);
       rethrow;
     }
   }
@@ -113,6 +122,7 @@ class FirestoreService {
     try {
       await _firebase.petsCollection.doc(petId).delete();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'deletePet (petId: $petId)', e);
       rethrow;
     }
   }
@@ -127,6 +137,7 @@ class FirestoreService {
           .map((doc) => PetModel.fromFirestore(doc))
           .toList();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getUserPets (userId: $userId)', e);
       rethrow;
     }
   }
@@ -144,6 +155,7 @@ class FirestoreService {
     try {
       await _firebase.chatRoomsCollection.doc(chatRoom.id).set(chatRoom.toFirestore());
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'createChatRoom (chatRoomId: ${chatRoom.id})', e);
       rethrow;
     }
   }
@@ -154,6 +166,7 @@ class FirestoreService {
       if (!doc.exists) return null;
       return ChatRoomModel.fromFirestore(doc.data()!, id: doc.id);
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getChatRoom (chatRoomId: $chatRoomId)', e);
       rethrow;
     }
   }
@@ -162,6 +175,7 @@ class FirestoreService {
     try {
       await _firebase.chatRoomsCollection.doc(chatRoom.id).update(chatRoom.toFirestore());
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'updateChatRoom (chatRoomId: ${chatRoom.id})', e);
       rethrow;
     }
   }
@@ -196,6 +210,7 @@ class FirestoreService {
       
       await batch.commit();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'sendMessage (chatRoomId: $chatRoomId)', e);
       rethrow;
     }
   }
@@ -215,6 +230,7 @@ class FirestoreService {
     try {
       await _firebase.datingRequestsCollection.doc(request.id).set(request.toFirestore());
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'createDatingRequest (requestId: ${request.id})', e);
       rethrow;
     }
   }
@@ -223,6 +239,7 @@ class FirestoreService {
     try {
       await _firebase.datingRequestsCollection.doc(request.id).update(request.toFirestore());
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'updateDatingRequest (requestId: ${request.id})', e);
       rethrow;
     }
   }
@@ -238,6 +255,7 @@ class FirestoreService {
           .map((doc) => DatingRequestModel.fromFirestore(doc.data(), id: doc.id))
           .toList();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getReceivedDatingRequests (userId: $userId)', e);
       rethrow;
     }
   }
@@ -256,6 +274,7 @@ class FirestoreService {
     try {
       await _firebase.matchesCollection.doc(match.id).set(match.toFirestore());
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'createMatch (matchId: ${match.id})', e);
       rethrow;
     }
   }
@@ -272,6 +291,7 @@ class FirestoreService {
           .map((doc) => MatchModel.fromFirestore(doc.data(), id: doc.id))
           .toList();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getUserMatches (userId: $userId)', e);
       rethrow;
     }
   }
@@ -280,6 +300,7 @@ class FirestoreService {
     try {
       await _firebase.productsCollection.doc(product.id).set(product.toFirestore());
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'createProduct (productId: ${product.id})', e);
       rethrow;
     }
   }
@@ -290,6 +311,7 @@ class FirestoreService {
       if (!doc.exists) return null;
       return ProductModel.fromFirestore(doc.data()!, id: doc.id);
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getProduct (productId: $productId)', e);
       rethrow;
     }
   }
@@ -298,6 +320,7 @@ class FirestoreService {
     try {
       await _firebase.productsCollection.doc(product.id).update(product.toFirestore());
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'updateProduct (productId: ${product.id})', e);
       rethrow;
     }
   }
@@ -306,6 +329,7 @@ class FirestoreService {
     try {
       await _firebase.productsCollection.doc(productId).delete();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'deleteProduct (productId: $productId)', e);
       rethrow;
     }
   }
@@ -340,6 +364,7 @@ class FirestoreService {
           .map((doc) => ProductModel.fromFirestore(doc.data(), id: doc.id))
           .toList();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getProducts', e);
       rethrow;
     }
   }
@@ -347,7 +372,15 @@ class FirestoreService {
   Future<void> createGroup(GroupModel group) async {
     try {
       await _firebase.groupsCollection.doc(group.id).set(group.toFirestore());
+      
+      // 생성자의 소모임 카운터 증가 (생성자도 멤버에 포함됨)
+      if (group.creatorId.isNotEmpty) {
+        await _firebase.usersCollection.doc(group.creatorId).update({
+          'groupCount': FieldValue.increment(1),
+        });
+      }
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'createGroup (groupId: ${group.id})', e);
       rethrow;
     }
   }
@@ -358,6 +391,7 @@ class FirestoreService {
       if (!doc.exists) return null;
       return GroupModel.fromFirestore(doc.data()!, id: doc.id);
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getGroup (groupId: $groupId)', e);
       rethrow;
     }
   }
@@ -366,6 +400,7 @@ class FirestoreService {
     try {
       await _firebase.groupsCollection.doc(group.id).update(group.toFirestore());
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'updateGroup (groupId: ${group.id})', e);
       rethrow;
     }
   }
@@ -382,6 +417,7 @@ class FirestoreService {
           .map((doc) => GroupModel.fromFirestore(doc.data(), id: doc.id))
           .toList();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getPublicGroups', e);
       rethrow;
     }
   }
@@ -390,6 +426,7 @@ class FirestoreService {
     try {
       await _firebase.schedulesCollection.doc(schedule.id).set(schedule.toFirestore());
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'createSchedule (scheduleId: ${schedule.id})', e);
       rethrow;
     }
   }
@@ -405,6 +442,7 @@ class FirestoreService {
           .map((doc) => GroupScheduleModel.fromFirestore(doc.data(), id: doc.id))
           .toList();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getGroupSchedules (groupId: $groupId)', e);
       rethrow;
     }
   }
@@ -415,6 +453,7 @@ class FirestoreService {
         'viewCount': FieldValue.increment(1),
       });
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'incrementProductViewCount (productId: $productId)', e);
       rethrow;
     }
   }
@@ -425,6 +464,7 @@ class FirestoreService {
         'likeCount': FieldValue.increment(1),
       });
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'incrementProductLikeCount (productId: $productId)', e);
       rethrow;
     }
   }
@@ -435,6 +475,7 @@ class FirestoreService {
         'likeCount': FieldValue.increment(-1),
       });
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'decrementProductLikeCount (productId: $productId)', e);
       rethrow;
     }
   }
@@ -445,6 +486,7 @@ class FirestoreService {
     try {
       await _firebase.jobsCollection.doc(job.id).set(job.toFirestore());
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'createJob (jobId: ${job.id})', e);
       rethrow;
     }
   }
@@ -455,6 +497,7 @@ class FirestoreService {
       if (!doc.exists) return null;
       return JobModel.fromFirestore(doc.data()!, id: doc.id);
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getJob (jobId: $jobId)', e);
       rethrow;
     }
   }
@@ -477,6 +520,7 @@ class FirestoreService {
           .map((doc) => JobModel.fromFirestore(doc.data(), id: doc.id))
           .toList();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getJobs', e);
       rethrow;
     }
   }
@@ -501,68 +545,115 @@ class FirestoreService {
     try {
       await _firebase.jobsCollection.doc(jobId).delete();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'deleteJob (jobId: $jobId)', e);
       rethrow;
     }
   }
   
   // ===== 활동 기록 관련 =====
   
-  /// 사용자의 매칭 수 조회
-  Future<int> getUserMatchCount(String userId) async {
-    final snapshot = await _firebase.matchesCollection
-        .where('user1Id', isEqualTo: userId)
-        .get();
-    final snapshot2 = await _firebase.matchesCollection
-        .where('user2Id', isEqualTo: userId)
-        .get();
-    return snapshot.docs.length + snapshot2.docs.length;
+  /// 사용자의 전체 활동 기록 조회 (카운터 필드 활용 - 최적화)
+  /// 
+  /// UserModel에 저장된 카운터 필드를 직접 읽어 추가 쿼리 없이 통계 반환
+  /// - 이벤트 발생 시 카운터가 자동 증가/감소되므로 항상 최신 상태 유지
+  Future<Map<String, int>> getUserActivityStats(String userId) async {
+    try {
+      final userDoc = await _firebase.usersCollection.doc(userId).get();
+      if (!userDoc.exists) {
+        return {
+          'walks': 0,
+          'matches': 0,
+          'transactions': 0,
+          'posts': 0,
+          'groups': 0,
+        };
+      }
+      
+      final data = userDoc.data()!;
+      return {
+        'walks': data['walkCount'] ?? 0,
+        'matches': data['matchCount'] ?? 0,
+        'transactions': data['transactionCount'] ?? 0,
+        'posts': data['postCount'] ?? 0,
+        'groups': data['groupCount'] ?? 0,
+      };
+    } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getUserActivityStats (userId: $userId)', e);
+      rethrow;
+    }
   }
   
-  /// 사용자의 산책 횟수 조회
+  /// 사용자의 매칭 수 조회 (userIds 배열 활용 - 최적화)
+  /// 
+  /// MatchModel의 userIds 배열 필드를 활용하여 단일 쿼리로 조회
+  Future<int> getUserMatchCount(String userId) async {
+    try {
+      final snapshot = await _firebase.matchesCollection
+          .where('userIds', arrayContains: userId)
+          .get();
+      return snapshot.docs.length;
+    } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getUserMatchCount (userId: $userId)', e);
+      rethrow;
+    }
+  }
+  
+  /// 사용자의 산책 횟수 조회 (실제 기록 기반)
   Future<int> getUserWalkCount(String userId) async {
-    final snapshot = await _firebase.walksCollection
-        .where('userId', isEqualTo: userId)
-        .get();
-    return snapshot.docs.length;
+    try {
+      final snapshot = await _firebase.walksCollection
+          .where('userId', isEqualTo: userId)
+          .get();
+      return snapshot.docs.length;
+    } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getUserWalkCount (userId: $userId)', e);
+      rethrow;
+    }
   }
   
   /// 사용자의 거래 수 조회 (판매 완료 + 구매)
   Future<int> getUserTransactionCount(String userId) async {
-    // 판매 완료
-    final soldSnapshot = await _firebase.productsCollection
-        .where('sellerId', isEqualTo: userId)
-        .where('status', isEqualTo: 'sold')
-        .get();
-    // 구매
-    final boughtSnapshot = await _firebase.productsCollection
-        .where('buyerId', isEqualTo: userId)
-        .get();
-    return soldSnapshot.docs.length + boughtSnapshot.docs.length;
+    try {
+      // 판매 완료
+      final soldSnapshot = await _firebase.productsCollection
+          .where('sellerId', isEqualTo: userId)
+          .where('status', isEqualTo: 'sold')
+          .get();
+      // 구매
+      final boughtSnapshot = await _firebase.productsCollection
+          .where('buyerId', isEqualTo: userId)
+          .get();
+      return soldSnapshot.docs.length + boughtSnapshot.docs.length;
+    } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getUserTransactionCount (userId: $userId)', e);
+      rethrow;
+    }
   }
   
   /// 사용자가 참여한 모임 수 조회
   Future<int> getUserGroupCount(String userId) async {
-    final snapshot = await _firebase.groupsCollection
-        .where('memberIds', arrayContains: userId)
-        .get();
-    return snapshot.docs.length;
+    try {
+      final snapshot = await _firebase.groupsCollection
+          .where('memberIds', arrayContains: userId)
+          .get();
+      return snapshot.docs.length;
+    } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getUserGroupCount (userId: $userId)', e);
+      rethrow;
+    }
   }
   
-  /// 사용자의 전체 활동 기록 조회
-  Future<Map<String, int>> getUserActivityStats(String userId) async {
-    final results = await Future.wait([
-      getUserMatchCount(userId),
-      getUserWalkCount(userId),
-      getUserTransactionCount(userId),
-      getUserGroupCount(userId),
-    ]);
-    
-    return {
-      'matches': results[0],
-      'walks': results[1],
-      'transactions': results[2],
-      'groups': results[3],
-    };
+  /// 사용자의 커뮤니티 게시글 수 조회
+  Future<int> getUserPostCount(String userId) async {
+    try {
+      final snapshot = await _firebase.feedPostsCollection
+          .where('authorId', isEqualTo: userId)
+          .get();
+      return snapshot.docs.length;
+    } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getUserPostCount (userId: $userId)', e);
+      rethrow;
+    }
   }
   
   // ===== 소모임 좋아요 관련 =====
@@ -593,6 +684,7 @@ class FirestoreService {
         return true;
       }
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'toggleGroupLike (groupId: $groupId)', e);
       rethrow;
     }
   }
@@ -632,6 +724,7 @@ class FirestoreService {
         await doc.reference.delete();
       }
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'deleteGroup (groupId: $groupId)', e);
       rethrow;
     }
   }
@@ -656,6 +749,7 @@ class FirestoreService {
               p.description.toLowerCase().contains(lowerQuery))
           .toList();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'searchProducts (query: $query)', e);
       rethrow;
     }
   }
@@ -678,6 +772,7 @@ class FirestoreService {
               g.tags.any((t) => t.toLowerCase().contains(lowerQuery)))
           .toList();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'searchGroups (query: $query)', e);
       rethrow;
     }
   }
@@ -699,6 +794,7 @@ class FirestoreService {
               j.description.toLowerCase().contains(lowerQuery))
           .toList();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'searchJobs (query: $query)', e);
       rethrow;
     }
   }
@@ -710,6 +806,7 @@ class FirestoreService {
     try {
       await _firebase.breedingPostsCollection.doc(post.id).set(post.toFirestore());
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'createBreedingPost (postId: ${post.id})', e);
       rethrow;
     }
   }
@@ -721,6 +818,7 @@ class FirestoreService {
       if (!doc.exists) return null;
       return BreedingPostModel.fromFirestore(doc.data()!, id: doc.id);
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getBreedingPost (postId: $postId)', e);
       rethrow;
     }
   }
@@ -730,6 +828,7 @@ class FirestoreService {
     try {
       await _firebase.breedingPostsCollection.doc(post.id).update(post.toFirestore());
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'updateBreedingPost (postId: ${post.id})', e);
       rethrow;
     }
   }
@@ -739,6 +838,7 @@ class FirestoreService {
     try {
       await _firebase.breedingPostsCollection.doc(postId).delete();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'deleteBreedingPost (postId: $postId)', e);
       rethrow;
     }
   }
@@ -756,6 +856,7 @@ class FirestoreService {
           .map((doc) => BreedingPostModel.fromFirestore(doc.data(), id: doc.id))
           .toList();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'getActiveBreedingPosts', e);
       rethrow;
     }
   }
@@ -777,6 +878,7 @@ class FirestoreService {
               p.description.toLowerCase().contains(lowerQuery))
           .toList();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'searchBreedingPosts (query: $query)', e);
       rethrow;
     }
   }
@@ -797,6 +899,7 @@ class FirestoreService {
               p.tags.any((t) => t.toLowerCase().contains(lowerQuery)))
           .toList();
     } catch (e) {
+      AppLogger.dbError('FirestoreService', 'searchCommunityPosts (query: $query)', e);
       rethrow;
     }
   }

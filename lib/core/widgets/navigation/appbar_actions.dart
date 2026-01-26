@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
+import '../mingrr_image.dart';
 
 /// ============================================================
 /// AppBar 공통 액션 버튼
@@ -167,23 +168,11 @@ class _ProfileIcon extends StatelessWidget {
           width: 1,
         ),
       ),
-      child: imageUrl != null && imageUrl!.isNotEmpty
-          ? ClipOval(
-              child: Image.network(
-                imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildPlaceholder(context),
-              ),
-            )
-          : _buildPlaceholder(context),
-    );
-  }
-
-  Widget _buildPlaceholder(BuildContext context) {
-    return Icon(
-      Icons.person,
-      size: 18,
-      color: Theme.of(context).colorScheme.outlineVariant,
+      child: MingrrAvatar(
+        imageUrl: imageUrl,
+        size: 32,
+        placeholderIcon: Icons.person,
+      ),
     );
   }
 }

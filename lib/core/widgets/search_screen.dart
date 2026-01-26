@@ -6,6 +6,7 @@ import '../theme/app_text_styles.dart';
 import '../constants/app_sizes.dart';
 import '../services/firestore_service.dart';
 import 'common_widgets.dart';
+import 'mingrr_image.dart';
 import 'badges/svg_icons.dart';
 import 'badges/info_badge.dart';
 import 'forms/search_bar.dart';
@@ -149,22 +150,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       child: ListTile(
-        leading: Container(
+        leading: MingrrThumbnail(
+          imageUrl: product.imageUrls.isNotEmpty ? product.imageUrls.first : null,
           width: 60,
           height: 60,
-          decoration: BoxDecoration(
-            color: context.features.marketContainer,
-            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-            image: product.imageUrls.isNotEmpty
-                ? DecorationImage(
-                    image: NetworkImage(product.imageUrls.first),
-                    fit: BoxFit.cover,
-                  )
-                : null,
+          borderRadius: AppSizes.radiusXS,
+          errorWidget: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: context.features.marketContainer,
+              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+            ),
+            child: Icon(Icons.image, color: context.features.market),
           ),
-          child: product.imageUrls.isEmpty
-              ? Icon(Icons.image, color: context.features.market)
-              : null,
         ),
         title: Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(
@@ -190,22 +189,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       child: ListTile(
-        leading: Container(
+        leading: MingrrThumbnail(
+          imageUrl: group.imageUrl,
           width: 60,
           height: 60,
-          decoration: BoxDecoration(
-            color: context.features.socialContainer,
-            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-            image: group.imageUrl != null
-                ? DecorationImage(
-                    image: NetworkImage(group.imageUrl!),
-                    fit: BoxFit.cover,
-                  )
-                : null,
+          borderRadius: AppSizes.radiusXS,
+          errorWidget: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: context.features.socialContainer,
+              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+            ),
+            child: Icon(Icons.groups, color: context.features.social),
           ),
-          child: group.imageUrl == null
-              ? Icon(Icons.groups, color: context.features.social)
-              : null,
         ),
         title: Text(group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Row(
@@ -259,22 +256,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       child: ListTile(
-        leading: Container(
+        leading: MingrrThumbnail(
+          imageUrl: breeding.imageUrls != null && breeding.imageUrls.isNotEmpty ? breeding.imageUrls.first : null,
           width: 60,
           height: 60,
-          decoration: BoxDecoration(
-            color: context.features.breedingContainer,
-            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-            image: breeding.imageUrls != null && breeding.imageUrls.isNotEmpty
-                ? DecorationImage(
-                    image: NetworkImage(breeding.imageUrls.first),
-                    fit: BoxFit.cover,
-                  )
-                : null,
+          borderRadius: AppSizes.radiusXS,
+          errorWidget: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: context.features.breedingContainer,
+              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+            ),
+            child: Icon(Icons.family_restroom, color: context.features.breeding),
           ),
-          child: (breeding.imageUrls == null || breeding.imageUrls.isEmpty)
-              ? Icon(Icons.pets, color: context.features.breeding)
-              : null,
         ),
         title: Text(breeding.title ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(
@@ -294,22 +289,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       child: ListTile(
-        leading: Container(
+        leading: MingrrThumbnail(
+          imageUrl: post.imageUrls.isNotEmpty ? post.imageUrls.first : null,
           width: 60,
           height: 60,
-          decoration: BoxDecoration(
-            color: context.features.socialContainer,
-            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-            image: post.imageUrls.isNotEmpty
-                ? DecorationImage(
-                    image: NetworkImage(post.imageUrls.first),
-                    fit: BoxFit.cover,
-                  )
-                : null,
+          borderRadius: AppSizes.radiusXS,
+          errorWidget: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: context.features.socialContainer,
+              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+            ),
+            child: Icon(Icons.article, color: context.features.social),
           ),
-          child: post.imageUrls.isEmpty
-              ? Icon(Icons.article, color: context.features.social)
-              : null,
         ),
         title: Text(
           post.content.length > 30 ? '${post.content.substring(0, 30)}...' : post.content,

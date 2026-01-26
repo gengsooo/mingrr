@@ -14,6 +14,7 @@ import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
 import '../../../../core/widgets/map/map_loading_widget.dart';
+import '../../../../core/services/share_service.dart';
 import '../../../../models/health_model.dart';
 import '../providers/health_provider.dart';
 
@@ -566,7 +567,7 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
   }
 
   void _shareRecord(BuildContext context) {
-    MingrrSnackBar.info(context, '공유 기능은 준비 중입니다');
+    ShareService.shareWalkRecord(context, record, petNames: petNames);
   }
 
   void _showMoreOptions(BuildContext context) {

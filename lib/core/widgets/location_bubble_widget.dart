@@ -233,41 +233,58 @@ class _BubbleTailPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// 위치 불일치 알림 배너 (홈 화면용)
+/// 위치 불일치 알림 배너
 /// 
-/// 산책하러가기 카드 위에 표시되는 간단한 배너 형태
+/// 사용처:
+/// - 홈 화면 상단 (배너 아래)
+/// - 프로필 화면
+/// 
+/// 색상: 노란색 계통 (홈 배너와 통일)
 class LocationMismatchBanner extends StatelessWidget {
   final String? savedAddress;
   final VoidCallback? onUpdateLocation;
   final VoidCallback? onDismiss;
-  final Color? accentColor;
 
   const LocationMismatchBanner({
     super.key,
     this.savedAddress,
     this.onUpdateLocation,
     this.onDismiss,
-    this.accentColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final color = accentColor ?? context.features.walk;
+    final colorScheme = Theme.of(context).colorScheme;
     
     return Container(
       margin: const EdgeInsets.only(bottom: AppSizes.paddingS),
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: AppOpacity.o10),
-        borderRadius: BorderRadius.circular(AppSizes.radiusS),
-        border: Border.all(color: color.withValues(alpha: AppOpacity.o30)),
+        // 홈 배너와 동일한 스타일
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: AppOpacity.o50),
+        borderRadius: BorderRadius.circular(AppSizes.radiusM),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: AppOpacity.o30),
+          width: 1,
+        ),
       ),
       child: Row(
         children: [
-          Icon(Icons.location_on, size: 18, color: color),
-          const SizedBox(width: AppSizes.gapS),
+          // 아이콘 (홈 배너 스타일)
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.location_on,
+              size: 18,
+              color: colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: AppSizes.gapM),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -275,12 +292,12 @@ class LocationMismatchBanner extends StatelessWidget {
               children: [
                 Text(
                   '저장된 위치와 현재 위치가 달라요',
-                  style: AppTextStyles.labelLarge(context).withWeight(FontWeight.w600),
+                  style: AppTextStyles.titleSmall(context).withWeight(FontWeight.w600),
                 ),
                 if (savedAddress != null && savedAddress!.isNotEmpty)
                   Text(
                     savedAddress!,
-                    style: AppTextStyles.captionSmall(context),
+                    style: AppTextStyles.bodySmall(context).withColor(colorScheme.onSurfaceVariant),
                   ),
               ],
             ),
@@ -292,7 +309,7 @@ class LocationMismatchBanner extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
-                color: color,
+                color: colorScheme.primary,
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(

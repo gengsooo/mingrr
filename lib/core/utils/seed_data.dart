@@ -73,23 +73,38 @@ class SeedData {
   Future<void> _seedPets(List<String> userIds) async {
     final now = DateTime.now();
     
-    // 다양한 견종, 성별, 나이, 성격 조합의 테스트 데이터
+    // 다양한 견종, 성별, 나이, 성격 조합의 테스트 데이터 (25마리)
     final petDataList = [
+      // 소형견 (10마리)
       {'name': '초코', 'breed': '포메라니안', 'gender': 'female', 'weight': 3.5, 'ageDays': 365 * 2, 'neutered': true, 'traits': [PetTrait.active, PetTrait.friendly, PetTrait.affectionate], 'bio': '사람 좋아하는 초코에요! 산책을 좋아해요', 'hasProfile': true, 'photoCount': 3},
-      {'name': '골디', 'breed': '골든리트리버', 'gender': 'male', 'weight': 28.0, 'ageDays': 365 * 3, 'neutered': false, 'traits': [PetTrait.gentle, PetTrait.loyal, PetTrait.lovesPeople], 'bio': '착한 골디입니다. 아이들과 잘 놀아요', 'hasProfile': false, 'photoCount': 2},
-      {'name': '쿠키', 'breed': '토이푸들', 'gender': 'female', 'weight': 2.8, 'ageDays': 365, 'neutered': false, 'traits': [PetTrait.affectionate, PetTrait.playful, PetTrait.smart], 'bio': '귀여운 쿠키, 재롱 부리는 걸 좋아해요', 'hasProfile': true, 'photoCount': 0},
-      {'name': '코코', 'breed': '웰시코기', 'gender': 'male', 'weight': 12.5, 'ageDays': 365 * 4, 'neutered': true, 'traits': [PetTrait.brave, PetTrait.protective, PetTrait.loyal, PetTrait.active], 'bio': '에너지 넘치는 코코, 산책 많이 해야해요', 'hasProfile': true, 'photoCount': 4},
-      {'name': '시바', 'breed': '시바견', 'gender': 'female', 'weight': 9.0, 'ageDays': 365 * 2 + 180, 'neutered': false, 'traits': [PetTrait.independent, PetTrait.calm, PetTrait.smart], 'bio': '도도한 시바, 자기만의 시간이 필요해요', 'hasProfile': false, 'photoCount': 0},
+      {'name': '쿠키', 'breed': '토이푸들', 'gender': 'female', 'weight': 2.8, 'ageDays': 365, 'neutered': false, 'traits': [PetTrait.affectionate, PetTrait.playful, PetTrait.smart], 'bio': '귀여운 쿠키, 재롱 부리는 걸 좋아해요. 혈통서 있어요!', 'hasProfile': true, 'photoCount': 4},
       {'name': '뭉치', 'breed': '비숑프리제', 'gender': 'male', 'weight': 5.5, 'ageDays': 365 * 5, 'neutered': true, 'traits': [PetTrait.friendly, PetTrait.playful, PetTrait.lovesPeople], 'bio': '모든 강아지와 친하게 지내요', 'hasProfile': false, 'photoCount': 1},
       {'name': '하양이', 'breed': '말티즈', 'gender': 'female', 'weight': 2.5, 'ageDays': 365 * 7, 'neutered': true, 'traits': [PetTrait.shy, PetTrait.calm, PetTrait.affectionate], 'bio': '조용한 산책을 좋아하는 하양이', 'hasProfile': true, 'photoCount': 2},
       {'name': '뽀미', 'breed': '포메라니안', 'gender': 'male', 'weight': 4.0, 'ageDays': 365, 'neutered': false, 'traits': [PetTrait.active, PetTrait.playful, PetTrait.brave], 'bio': '활발한 뽀미, 같이 뛰어놀 친구 찾아요', 'hasProfile': false, 'photoCount': 0},
-      {'name': '백구', 'breed': '진돗개', 'gender': 'male', 'weight': 22.0, 'ageDays': 365 * 3, 'neutered': false, 'traits': [PetTrait.loyal, PetTrait.protective, PetTrait.brave, PetTrait.independent], 'bio': '충성스러운 백구, 등산 좋아해요', 'hasProfile': false, 'photoCount': 2},
-      {'name': '슈슈', 'breed': '미니어처 슈나우저', 'gender': 'female', 'weight': 7.0, 'ageDays': 365 * 2, 'neutered': true, 'traits': [PetTrait.smart, PetTrait.active, PetTrait.friendly], 'bio': '똑똒한 슈슈, 훈련을 잘 받아요', 'hasProfile': true, 'photoCount': 3},
-      {'name': '래브', 'breed': '래브라도 리트리버', 'gender': 'female', 'weight': 25.0, 'ageDays': 365 * 6, 'neutered': true, 'traits': [PetTrait.gentle, PetTrait.calm, PetTrait.lovesPeople], 'bio': '온순한 래브, 물놀이를 좋아해요', 'hasProfile': false, 'photoCount': 0},
       {'name': '치치', 'breed': '치와와', 'gender': 'male', 'weight': 1.8, 'ageDays': 365 * 4, 'neutered': true, 'traits': [PetTrait.shy, PetTrait.affectionate, PetTrait.protective], 'bio': '작지만 용감한 치치', 'hasProfile': true, 'photoCount': 0},
+      {'name': '크림', 'breed': '토이푸들', 'gender': 'male', 'weight': 3.2, 'ageDays': 180, 'neutered': false, 'traits': [PetTrait.gentle, PetTrait.calm, PetTrait.shy], 'bio': '쿠키의 동생 크림이, 낯가림이 있어요', 'hasProfile': false, 'photoCount': 0},
+      {'name': '몽이', 'breed': '말티푸', 'gender': 'female', 'weight': 3.8, 'ageDays': 365 * 2, 'neutered': false, 'traits': [PetTrait.smart, PetTrait.playful, PetTrait.affectionate], 'bio': '똑똒하고 애교 많은 몽이입니다', 'hasProfile': true, 'photoCount': 3},
+      {'name': '콩이', 'breed': '요크셔테리어', 'gender': 'male', 'weight': 2.2, 'ageDays': 365 * 3, 'neutered': true, 'traits': [PetTrait.brave, PetTrait.active, PetTrait.loyal], 'bio': '작은 거인 콩이! 산책을 좋아해요', 'hasProfile': false, 'photoCount': 2},
+      {'name': '두부', 'breed': '시츄', 'gender': 'female', 'weight': 4.5, 'ageDays': 365 * 4, 'neutered': true, 'traits': [PetTrait.calm, PetTrait.gentle, PetTrait.lovesPeople], 'bio': '순둥순둥 두부, 무릎 위가 제일 좋아요', 'hasProfile': true, 'photoCount': 1},
+      
+      // 중형견 (8마리)
+      {'name': '코코', 'breed': '웰시코기', 'gender': 'male', 'weight': 12.5, 'ageDays': 365 * 4, 'neutered': true, 'traits': [PetTrait.brave, PetTrait.protective, PetTrait.loyal, PetTrait.active], 'bio': '에너지 넘치는 코코, 산책 많이 해야해요', 'hasProfile': true, 'photoCount': 4},
+      {'name': '시바', 'breed': '시바견', 'gender': 'female', 'weight': 9.0, 'ageDays': 365 * 2 + 180, 'neutered': false, 'traits': [PetTrait.independent, PetTrait.calm, PetTrait.smart], 'bio': '도도한 시바, 자기만의 시간이 필요해요', 'hasProfile': false, 'photoCount': 0},
+      {'name': '슈슈', 'breed': '미니어처 슈나우저', 'gender': 'female', 'weight': 7.0, 'ageDays': 365 * 2, 'neutered': true, 'traits': [PetTrait.smart, PetTrait.active, PetTrait.friendly], 'bio': '똑똑한 슈슈, 훈련을 잘 받아요', 'hasProfile': true, 'photoCount': 3},
       {'name': '비비', 'breed': '비글', 'gender': 'female', 'weight': 10.0, 'ageDays': 365 + 180, 'neutered': false, 'traits': [PetTrait.friendly, PetTrait.active, PetTrait.playful], 'bio': '호기심 많은 비비, 냄새 맡는 걸 좋아해요', 'hasProfile': true, 'photoCount': 3},
+      {'name': '보리', 'breed': '코카스파니엘', 'gender': 'male', 'weight': 11.0, 'ageDays': 365 * 3, 'neutered': false, 'traits': [PetTrait.gentle, PetTrait.friendly, PetTrait.playful], 'bio': '사람을 너무 좋아하는 보리입니다', 'hasProfile': false, 'photoCount': 2},
+      {'name': '단비', 'breed': '스피츠', 'gender': 'female', 'weight': 8.5, 'ageDays': 365 * 2, 'neutered': true, 'traits': [PetTrait.active, PetTrait.smart, PetTrait.loyal], 'bio': '하얀 솜사탕 같은 단비에요', 'hasProfile': true, 'photoCount': 4},
+      {'name': '까미', 'breed': '보더콜리', 'gender': 'male', 'weight': 15.0, 'ageDays': 365 * 1 + 180, 'neutered': false, 'traits': [PetTrait.smart, PetTrait.active, PetTrait.loyal, PetTrait.playful], 'bio': '원반 던지기 좋아하는 까미! 에너지가 넘쳐요', 'hasProfile': true, 'photoCount': 5},
+      {'name': '호두', 'breed': '푸들 (미디엄)', 'gender': 'female', 'weight': 9.5, 'ageDays': 365 * 4, 'neutered': true, 'traits': [PetTrait.smart, PetTrait.gentle, PetTrait.affectionate], 'bio': '영리하고 우아한 호두입니다', 'hasProfile': false, 'photoCount': 1},
+      
+      // 대형견 (7마리)
+      {'name': '골디', 'breed': '골든리트리버', 'gender': 'male', 'weight': 28.0, 'ageDays': 365 * 3, 'neutered': false, 'traits': [PetTrait.gentle, PetTrait.loyal, PetTrait.lovesPeople], 'bio': '착한 골디입니다. 아이들과 잘 놀아요. 혈통서 보유!', 'hasProfile': true, 'photoCount': 5},
+      {'name': '백구', 'breed': '진돗개', 'gender': 'male', 'weight': 22.0, 'ageDays': 365 * 3, 'neutered': false, 'traits': [PetTrait.loyal, PetTrait.protective, PetTrait.brave, PetTrait.independent], 'bio': '충성스러운 백구, 등산 좋아해요', 'hasProfile': false, 'photoCount': 2},
+      {'name': '래브', 'breed': '래브라도 리트리버', 'gender': 'female', 'weight': 25.0, 'ageDays': 365 * 6, 'neutered': true, 'traits': [PetTrait.gentle, PetTrait.calm, PetTrait.lovesPeople], 'bio': '온순한 래브, 물놀이를 좋아해요', 'hasProfile': false, 'photoCount': 0},
       {'name': '하늘이', 'breed': '시베리안 허스키', 'gender': 'male', 'weight': 23.0, 'ageDays': 365 * 2, 'neutered': false, 'traits': [PetTrait.independent, PetTrait.active, PetTrait.playful], 'bio': '달리기를 좋아하는 하늘이', 'hasProfile': false, 'photoCount': 2},
-      {'name': '크림', 'breed': '토이푸들', 'gender': 'male', 'weight': 3.2, 'ageDays': 180, 'neutered': true, 'traits': [PetTrait.gentle, PetTrait.calm, PetTrait.shy], 'bio': '쿠키의 동생 크림이, 낯가림이 있어요', 'hasProfile': false, 'photoCount': 0},
+      {'name': '맥스', 'breed': '저먼셰퍼드', 'gender': 'male', 'weight': 32.0, 'ageDays': 365 * 4, 'neutered': true, 'traits': [PetTrait.loyal, PetTrait.protective, PetTrait.smart, PetTrait.brave], 'bio': '훈련받은 맥스, 가족을 지켜줘요', 'hasProfile': true, 'photoCount': 3},
+      {'name': '루나', 'breed': '사모예드', 'gender': 'female', 'weight': 20.0, 'ageDays': 365 * 2, 'neutered': false, 'traits': [PetTrait.friendly, PetTrait.playful, PetTrait.gentle, PetTrait.lovesPeople], 'bio': '웃는 천사 루나! 모든 사람을 좋아해요', 'hasProfile': true, 'photoCount': 4},
+      {'name': '제우스', 'breed': '그레이트데인', 'gender': 'male', 'weight': 55.0, 'ageDays': 365 * 3, 'neutered': true, 'traits': [PetTrait.gentle, PetTrait.calm, PetTrait.loyal], 'bio': '거대하지만 순한 제우스입니다', 'hasProfile': false, 'photoCount': 2},
     ];
     
     for (int i = 0; i < petDataList.length; i++) {
@@ -190,23 +205,28 @@ class SeedData {
   Future<void> _seedGroups(List<String> userIds) async {
     final now = DateTime.now();
     
-    // 다양한 소모임 데이터 (다양한 타입, 지역, 멤버 수)
+    // 다양한 소모임 데이터 (다양한 타입, 지역, 멤버 수) - 20개
     final groupDataList = [
-      {'name': '한강 산책 모임', 'desc': '매주 주말 한강에서 산책해요! 소형견 환영', 'type': 'walking', 'lat': 37.5219, 'lng': 126.9245, 'address': '서울시 마포구', 'maxMembers': 20, 'likeCount': 45},
-      {'name': '대형견 놀이터', 'desc': '대형견들끼리 모여서 놀아요', 'type': 'social', 'lat': 37.5172, 'lng': 127.0473, 'address': '서울시 강남구', 'maxMembers': 15, 'likeCount': 32},
-      {'name': '강아지 훈련 스터디', 'desc': '같이 훈련 방법 공유하고 연습해요', 'type': 'training', 'lat': 37.5145, 'lng': 127.1066, 'address': '서울시 송파구', 'maxMembers': 10, 'likeCount': 18},
-      {'name': '분당 댕댕이 모임', 'desc': '분당 지역 반려견 친목 모임입니다', 'type': 'social', 'lat': 37.3825, 'lng': 127.1188, 'address': '경기도 성남시 분당구', 'maxMembers': 25, 'likeCount': 28},
-      {'name': '용인 산책 친구들', 'desc': '용인 지역에서 함께 산책해요', 'type': 'walking', 'lat': 37.2346, 'lng': 127.2090, 'address': '경기도 용인시 처인구', 'maxMembers': 15, 'likeCount': 12},
-      {'name': '수제 간식 만들기', 'desc': '건강한 수제 간식 함께 만들어요', 'type': 'craft', 'lat': 37.4837, 'lng': 127.0324, 'address': '서울시 서초구', 'maxMembers': 8, 'likeCount': 55},
-      {'name': '시니어 반려견 케어', 'desc': '노령견 케어 정보 공유 모임', 'type': 'health', 'lat': 37.5663, 'lng': 126.9014, 'address': '서울시 마포구', 'maxMembers': 20, 'likeCount': 38},
-      {'name': '포메라니안 모임', 'desc': '포메 보호자들의 정보 공유 모임', 'type': 'social', 'lat': 37.5665, 'lng': 126.9780, 'address': '서울시 중구', 'maxMembers': 30, 'likeCount': 62},
-      {'name': '반려견 수영 클럽', 'desc': '물놀이 좋아하는 강아지들 모여라!', 'type': 'sports', 'lat': 37.4979, 'lng': 127.0276, 'address': '서울시 강남구', 'maxMembers': 12, 'likeCount': 41},
-      {'name': '애견카페 투어', 'desc': '매주 다른 애견카페 탐방해요', 'type': 'social', 'lat': 37.5326, 'lng': 126.9910, 'address': '서울시 용산구', 'maxMembers': 10, 'likeCount': 29},
-      {'name': '반려견 사진 동호회', 'desc': '예쁜 사진 찍고 공유해요', 'type': 'hobby', 'lat': 37.5045, 'lng': 127.0498, 'address': '서울시 강남구', 'maxMembers': 15, 'likeCount': 35},
-      {'name': '새벽 산책 모임', 'desc': '아침 6시 새벽 산책 함께해요', 'type': 'walking', 'lat': 37.5662, 'lng': 126.9784, 'address': '서울시 종로구', 'maxMembers': 8, 'likeCount': 15},
-      {'name': '반려견 요가', 'desc': '강아지와 함께하는 도가 요가', 'type': 'sports', 'lat': 37.5133, 'lng': 127.1001, 'address': '서울시 강동구', 'maxMembers': 10, 'likeCount': 22},
-      {'name': '퍼피 플레이데이트', 'desc': '1살 미만 퍼피들의 사회화 모임', 'type': 'social', 'lat': 37.5172, 'lng': 127.0473, 'address': '서울시 송파구', 'maxMembers': 15, 'likeCount': 48},
-      {'name': '반려견 미용 스터디', 'desc': '셀프 미용 배우고 연습해요', 'type': 'craft', 'lat': 37.5219, 'lng': 126.9245, 'address': '서울시 마포구', 'maxMembers': 8, 'likeCount': 19},
+      {'name': '한강 산책 모임', 'desc': '매주 주말 한강에서 산책해요! 소형견 환영\n\n🕐 매주 토요일 오전 10시\n📍 여의도 한강공원\n\n함께 산책하며 친목 다져요!', 'type': 'walking', 'lat': 37.5219, 'lng': 126.9245, 'address': '서울시 마포구', 'maxMembers': 20, 'likeCount': 45, 'isPetAccompanied': true, 'tags': ['산책', '한강', '소형견']},
+      {'name': '대형견 놀이터', 'desc': '대형견들끼리 모여서 놀아요!\n\n골든, 래브라도, 허스키 등 대형견 보호자 모임입니다.\n넓은 공간에서 마음껏 뛰어놀 수 있어요.', 'type': 'social', 'lat': 37.5172, 'lng': 127.0473, 'address': '서울시 강남구', 'maxMembers': 15, 'likeCount': 32, 'isPetAccompanied': true, 'tags': ['대형견', '놀이터', '친목']},
+      {'name': '강아지 훈련 스터디', 'desc': '같이 훈련 방법 공유하고 연습해요\n\n기본 훈련부터 고급 훈련까지!\n전문 트레이너 초청 강의도 있어요.', 'type': 'training', 'lat': 37.5145, 'lng': 127.1066, 'address': '서울시 송파구', 'maxMembers': 10, 'likeCount': 18, 'isPetAccompanied': true, 'tags': ['훈련', '교육', '스터디']},
+      {'name': '분당 댕댕이 모임', 'desc': '분당 지역 반려견 친목 모임입니다\n\n매월 정기 모임 진행\n다양한 이벤트와 정보 공유!', 'type': 'social', 'lat': 37.3825, 'lng': 127.1188, 'address': '경기도 성남시 분당구', 'maxMembers': 25, 'likeCount': 28, 'isPetAccompanied': true, 'tags': ['분당', '친목', '정기모임']},
+      {'name': '용인 산책 친구들', 'desc': '용인 지역에서 함께 산책해요\n\n에버랜드 근처 산책로 탐방\n주말 오전 정기 산책', 'type': 'walking', 'lat': 37.2346, 'lng': 127.2090, 'address': '경기도 용인시 처인구', 'maxMembers': 15, 'likeCount': 12, 'isPetAccompanied': true, 'tags': ['용인', '산책', '주말']},
+      {'name': '수제 간식 만들기', 'desc': '건강한 수제 간식 함께 만들어요\n\n🍪 매월 2회 간식 만들기 모임\n📚 레시피 공유\n\n반려동물 동반 없이 보호자만 참여해요!', 'type': 'craft', 'lat': 37.4837, 'lng': 127.0324, 'address': '서울시 서초구', 'maxMembers': 8, 'likeCount': 55, 'isPetAccompanied': false, 'tags': ['수제간식', '요리', '레시피']},
+      {'name': '시니어 반려견 케어', 'desc': '노령견 케어 정보 공유 모임\n\n10살 이상 노령견 보호자 모임\n건강관리, 영양, 케어 팁 공유', 'type': 'health', 'lat': 37.5663, 'lng': 126.9014, 'address': '서울시 마포구', 'maxMembers': 20, 'likeCount': 38, 'isPetAccompanied': false, 'tags': ['노령견', '건강', '케어']},
+      {'name': '포메라니안 모임', 'desc': '포메 보호자들의 정보 공유 모임\n\n🐕 포메라니안 전용 모임\n털 관리, 건강 정보 공유\n정기 오프라인 모임', 'type': 'social', 'lat': 37.5665, 'lng': 126.9780, 'address': '서울시 중구', 'maxMembers': 30, 'likeCount': 62, 'isPetAccompanied': true, 'tags': ['포메라니안', '품종모임', '정보공유']},
+      {'name': '반려견 수영 클럽', 'desc': '물놀이 좋아하는 강아지들 모여라!\n\n🏊 수영장 대관 모임\n여름철 물놀이 이벤트', 'type': 'social', 'lat': 37.4979, 'lng': 127.0276, 'address': '서울시 강남구', 'maxMembers': 12, 'likeCount': 41, 'isPetAccompanied': true, 'tags': ['수영', '물놀이', '여름']},
+      {'name': '애견카페 투어', 'desc': '매주 다른 애견카페 탐방해요\n\n☕ 서울 애견카페 투어\n📸 인증샷 이벤트\n리뷰 공유', 'type': 'social', 'lat': 37.5326, 'lng': 126.9910, 'address': '서울시 용산구', 'maxMembers': 10, 'likeCount': 29, 'isPetAccompanied': true, 'tags': ['애견카페', '투어', '맛집']},
+      {'name': '반려견 사진 동호회', 'desc': '예쁜 사진 찍고 공유해요\n\n📷 사진 촬영 팁 공유\n월 1회 출사 모임\n사진 콘테스트 진행', 'type': 'social', 'lat': 37.5045, 'lng': 127.0498, 'address': '서울시 강남구', 'maxMembers': 15, 'likeCount': 35, 'isPetAccompanied': true, 'tags': ['사진', '출사', '동호회']},
+      {'name': '새벽 산책 모임', 'desc': '아침 6시 새벽 산책 함께해요\n\n🌅 매일 아침 6시\n조용한 새벽 산책\n건강한 하루 시작!', 'type': 'walking', 'lat': 37.5662, 'lng': 126.9784, 'address': '서울시 종로구', 'maxMembers': 8, 'likeCount': 15, 'isPetAccompanied': true, 'tags': ['새벽', '산책', '아침']},
+      {'name': '반려견 요가', 'desc': '강아지와 함께하는 도가 요가\n\n🧘 도가(Doga) 요가 클래스\n반려견과 함께 힐링\n초보자 환영!', 'type': 'social', 'lat': 37.5133, 'lng': 127.1001, 'address': '서울시 강동구', 'maxMembers': 10, 'likeCount': 22, 'isPetAccompanied': true, 'tags': ['요가', '힐링', '운동']},
+      {'name': '퍼피 플레이데이트', 'desc': '1살 미만 퍼피들의 사회화 모임\n\n🐶 퍼피 전용 모임\n사회화 훈련\n또래 친구 만들기', 'type': 'social', 'lat': 37.5172, 'lng': 127.0473, 'address': '서울시 송파구', 'maxMembers': 15, 'likeCount': 48, 'isPetAccompanied': true, 'tags': ['퍼피', '사회화', '플레이']},
+      {'name': '반려견 미용 스터디', 'desc': '셀프 미용 배우고 연습해요\n\n✂️ 셀프 미용 강좌\n발톱 깎기, 귀 청소 등\n전문가 초청 강의', 'type': 'craft', 'lat': 37.5219, 'lng': 126.9245, 'address': '서울시 마포구', 'maxMembers': 8, 'likeCount': 19, 'isPetAccompanied': false, 'tags': ['미용', '셀프', '스터디']},
+      {'name': '코기 러버스', 'desc': '웰시코기 보호자 모임\n\n🐕 코기 전용 모임\n엉덩이 자랑 대회(?)\n정보 공유 및 친목', 'type': 'social', 'lat': 37.5500, 'lng': 126.9500, 'address': '서울시 서대문구', 'maxMembers': 20, 'likeCount': 55, 'isPetAccompanied': true, 'tags': ['웰시코기', '품종모임', '친목']},
+      {'name': '반려견 영양학 스터디', 'desc': '반려견 영양에 대해 공부해요\n\n📚 영양학 기초부터\n사료 분석, 영양제 정보\n수의사 초청 강의', 'type': 'health', 'lat': 37.4800, 'lng': 127.0400, 'address': '서울시 서초구', 'maxMembers': 12, 'likeCount': 28, 'isPetAccompanied': false, 'tags': ['영양', '건강', '스터디']},
+      {'name': '야간 산책 모임', 'desc': '퇴근 후 함께 산책해요\n\n🌙 평일 저녁 8시\n야경 보며 산책\n직장인 환영!', 'type': 'walking', 'lat': 37.5100, 'lng': 127.0600, 'address': '서울시 강남구', 'maxMembers': 15, 'likeCount': 33, 'isPetAccompanied': true, 'tags': ['야간', '산책', '직장인']},
+      {'name': '푸들 동호회', 'desc': '푸들 보호자 모임\n\n토이, 미니, 스탠다드 모두 환영!\n미용 정보, 건강 정보 공유\n정기 오프라인 모임', 'type': 'social', 'lat': 37.5300, 'lng': 127.0000, 'address': '서울시 성동구', 'maxMembers': 25, 'likeCount': 42, 'isPetAccompanied': true, 'tags': ['푸들', '품종모임', '정보공유']},
+      {'name': '반려견 응급처치 교육', 'desc': '응급상황 대처법을 배워요\n\n🏥 응급처치 기초\n심폐소생술, 지혈법 등\n수의사 직강!', 'type': 'health', 'lat': 37.5400, 'lng': 126.9700, 'address': '서울시 용산구', 'maxMembers': 15, 'likeCount': 36, 'isPetAccompanied': false, 'tags': ['응급처치', '교육', '건강']},
     ];
     
     for (int i = 0; i < groupDataList.length; i++) {
@@ -228,7 +248,8 @@ class SeedData {
         imageUrl: sampleImages[i % sampleImages.length],
         isPublic: i % 4 != 0, // 4개 중 1개는 비공개
         requireApproval: i % 3 == 0, // 3개 중 1개는 승인 필요
-        tags: ['반려견', '모임'],
+        isPetAccompanied: data['isPetAccompanied'] as bool,
+        tags: List<String>.from(data['tags'] as List),
         likeCount: data['likeCount'] as int,
         createdAt: now.subtract(Duration(days: i * 3)),
         updatedAt: now,
@@ -290,11 +311,8 @@ class SeedData {
       // 매칭
       deletedCount += await _clearTestDataFromCollection(_firebase.matchesCollection, TestDataPrefix.match);
       
-      // 채팅방
-      deletedCount += await _clearTestDataFromCollection(_firebase.chatRoomsCollection, TestDataPrefix.chat);
-      
-      // 메시지
-      deletedCount += await _clearTestDataFromCollection(_firebase.firestore.collection('messages'), TestDataPrefix.message);
+      // 채팅방 (메시지 서브컬렉션 포함)
+      deletedCount += await _clearChatRoomsWithMessages(TestDataPrefix.chat);
       
       // 평가
       deletedCount += await _clearTestDataFromCollection(_firebase.ratingsCollection, TestDataPrefix.rating);
@@ -362,7 +380,117 @@ class SeedData {
     }
   }
   
+  /// 채팅방과 메시지 서브컬렉션 함께 삭제 (테스트 데이터만)
+  Future<int> _clearChatRoomsWithMessages(String prefix) async {
+    int deletedCount = 0;
+    
+    // 테스트 채팅방 조회
+    final chatRoomsSnapshot = await _firebase.chatRoomsCollection.get();
+    
+    for (final chatDoc in chatRoomsSnapshot.docs) {
+      if (chatDoc.id.startsWith(prefix)) {
+        // 서브컬렉션 메시지 먼저 삭제
+        final messagesSnapshot = await _firebase.messagesCollection(chatDoc.id).get();
+        for (final msgDoc in messagesSnapshot.docs) {
+          await msgDoc.reference.delete();
+          deletedCount++;
+        }
+        // 채팅방 삭제
+        await chatDoc.reference.delete();
+        deletedCount++;
+      }
+    }
+    
+    return deletedCount;
+  }
+  
   // ===== 항목별 생성 메서드 =====
+  
+  /// 기존 사용자들에게 다양한 위치 정보 부여
+  Future<void> seedUserLocations() async {
+    print('📍 사용자 위치 정보 생성 시작...');
+    
+    final userIds = await _getExistingUserIds();
+    if (userIds.isEmpty) {
+      print('❌ 사용자 데이터가 없습니다.');
+      return;
+    }
+    
+    // 대한민국 주요 도시 위치 (서울, 경기, 부산, 대구, 인천, 광주, 대전, 울산, 제주 등)
+    final locations = [
+      // 서울
+      {'lat': 37.5172, 'lng': 127.0473, 'address': '서울시 강남구'},
+      {'lat': 37.5665, 'lng': 126.9780, 'address': '서울시 중구'},
+      {'lat': 37.5219, 'lng': 126.9245, 'address': '서울시 마포구'},
+      {'lat': 37.4979, 'lng': 127.0276, 'address': '서울시 서초구'},
+      {'lat': 37.5326, 'lng': 126.9910, 'address': '서울시 용산구'},
+      {'lat': 37.5662, 'lng': 126.9784, 'address': '서울시 종로구'},
+      {'lat': 37.5133, 'lng': 127.1001, 'address': '서울시 강동구'},
+      {'lat': 37.5045, 'lng': 127.0498, 'address': '서울시 송파구'},
+      {'lat': 37.5500, 'lng': 126.9500, 'address': '서울시 서대문구'},
+      {'lat': 37.5300, 'lng': 127.0000, 'address': '서울시 성동구'},
+      // 경기도
+      {'lat': 37.3825, 'lng': 127.1188, 'address': '경기도 성남시 분당구'},
+      {'lat': 37.2346, 'lng': 127.2090, 'address': '경기도 용인시'},
+      {'lat': 37.4138, 'lng': 127.5183, 'address': '경기도 이천시'},
+      {'lat': 37.6584, 'lng': 126.8320, 'address': '경기도 고양시'},
+      {'lat': 37.3219, 'lng': 127.0956, 'address': '경기도 수원시'},
+      // 부산
+      {'lat': 35.1796, 'lng': 129.0756, 'address': '부산시 해운대구'},
+      {'lat': 35.1547, 'lng': 129.0598, 'address': '부산시 수영구'},
+      // 대구
+      {'lat': 35.8714, 'lng': 128.6014, 'address': '대구시 중구'},
+      {'lat': 35.8683, 'lng': 128.5986, 'address': '대구시 수성구'},
+      // 인천
+      {'lat': 37.4563, 'lng': 126.7052, 'address': '인천시 연수구'},
+      {'lat': 37.4750, 'lng': 126.6178, 'address': '인천시 남동구'},
+      // 광주
+      {'lat': 35.1595, 'lng': 126.8526, 'address': '광주시 서구'},
+      // 대전
+      {'lat': 36.3504, 'lng': 127.3845, 'address': '대전시 서구'},
+      // 제주
+      {'lat': 33.4996, 'lng': 126.5312, 'address': '제주시'},
+      {'lat': 33.2541, 'lng': 126.5600, 'address': '서귀포시'},
+    ];
+    
+    // 특정 계정별 위치 지정
+    final specificLocations = <String, Map<String, dynamic>>{
+      'admin@mingrr.com': {'lat': 37.2346, 'lng': 127.2090, 'address': '경기도 용인시'},
+      'test1@mingrr.com': {'lat': 37.2346, 'lng': 127.2090, 'address': '경기도 용인시'},
+      'test2@mingrr.com': {'lat': 37.3825, 'lng': 127.1188, 'address': '경기도 성남시 분당구'},
+      'test3@mingrr.com': {'lat': 37.3219, 'lng': 127.0956, 'address': '경기도 수원시'},
+    };
+    
+    int otherLocationIndex = 0;
+    for (final userId in userIds) {
+      final userDoc = await _firebase.usersCollection.doc(userId).get();
+      Map<String, dynamic> location;
+      
+      if (userDoc.exists) {
+        final email = userDoc.data()!['email'] as String? ?? '';
+        
+        if (specificLocations.containsKey(email)) {
+          // 특정 계정은 지정된 위치
+          location = specificLocations[email]!;
+        } else {
+          // 나머지는 순환 방식으로 다양한 위치 부여
+          location = locations[otherLocationIndex % locations.length];
+          otherLocationIndex++;
+        }
+      } else {
+        location = locations[otherLocationIndex % locations.length];
+        otherLocationIndex++;
+      }
+      
+      await _firebase.usersCollection.doc(userId).set({
+        'homeLocation': GeoPoint(location['lat'] as double, location['lng'] as double),
+        'homeAddress': location['address'],
+        'isLocationVerified': true,
+      }, SetOptions(merge: true));
+    }
+    
+    print('✅ ${userIds.length}명의 사용자에게 위치 정보 부여 완료');
+  }
   
   /// 반려동물 데이터만 생성
   Future<void> seedPets() async {
@@ -441,12 +569,12 @@ class SeedData {
     
     final now = DateTime.now();
     
-    // 테스트용 상대방 사용자 생성
+    // 테스트용 상대방 사용자 생성 (다양한 위치 포함)
     final testUsers = [
-      {'id': '${TestDataPrefix.user}dating_001', 'nickname': '김민수', 'petName': '초코', 'petBreed': '포메라니안'},
-      {'id': '${TestDataPrefix.user}dating_002', 'nickname': '시바견집사', 'petName': '시바', 'petBreed': '시바견'},
-      {'id': '${TestDataPrefix.user}market_001', 'nickname': '이영희', 'petName': null, 'petBreed': null},
-      {'id': '${TestDataPrefix.user}community_001', 'nickname': '박철수', 'petName': '뭉치', 'petBreed': '말티즈'},
+      {'id': '${TestDataPrefix.user}dating_001', 'nickname': '김민수', 'petName': '초코', 'petBreed': '포메라니안', 'lat': 37.5172, 'lng': 127.0473, 'address': '서울시 강남구'},
+      {'id': '${TestDataPrefix.user}dating_002', 'nickname': '시바견집사', 'petName': '시바', 'petBreed': '시바견', 'lat': 37.5665, 'lng': 126.9780, 'address': '서울시 중구'},
+      {'id': '${TestDataPrefix.user}market_001', 'nickname': '이영희', 'petName': null, 'petBreed': null, 'lat': 37.5219, 'lng': 126.9245, 'address': '서울시 마포구'},
+      {'id': '${TestDataPrefix.user}community_001', 'nickname': '박철수', 'petName': '뭉치', 'petBreed': '말티즈', 'lat': 37.4979, 'lng': 127.0276, 'address': '서울시 서초구'},
     ];
     
     for (final user in testUsers) {
@@ -457,7 +585,9 @@ class SeedData {
         'kkosunnaeScore': 75.0,
         'isIdentityVerified': true,
         'isPetVerified': true,
-        'isLocationVerified': false,
+        'isLocationVerified': true,
+        'homeLocation': GeoPoint(user['lat'] as double, user['lng'] as double),
+        'homeAddress': user['address'],
         'matchCount': 5,
         'walkCount': 10,
         'transactionCount': 3,
@@ -674,12 +804,6 @@ class SeedData {
       await _firebase.chatRoomsCollection.doc(chatId).delete();
     }
     
-    // 기존 형식 메시지도 삭제 (별도 컬렉션에 저장된 경우)
-    final testMessageIds = ['msg_dating_1', 'msg_dating_shiba_1', 'msg_market_1', 'msg_community_1'];
-    for (final msgId in testMessageIds) {
-      await _firebase.firestore.collection('messages').doc(msgId).delete();
-    }
-    
     // 테스트 사용자 삭제
     final testUserIds = [
       '${TestDataPrefix.user}dating_001',
@@ -717,8 +841,11 @@ class SeedData {
   Future<void> _seedBreedingPosts(List<String> userIds) async {
     final now = DateTime.now();
     
-    // 기존 펫 ID 가져오기
-    final petsSnapshot = await _firebase.petsCollection.limit(5).get();
+    // 교배 가능한 펫 ID만 가져오기 (isBreedingAvailable: true)
+    final petsSnapshot = await _firebase.petsCollection
+        .where('isBreedingAvailable', isEqualTo: true)
+        .limit(15)
+        .get();
     final petIds = petsSnapshot.docs.map((doc) => doc.id).toList();
     
     if (petIds.isEmpty) {
@@ -726,36 +853,119 @@ class SeedData {
       return;
     }
     
+    print('  📋 교배 가능한 펫 ${petIds.length}마리 발견: ${petIds.take(5).join(', ')}...');
+    
+    // 다양한 교배 글 데이터 (10개)
     final posts = [
       {
-        'userId': userIds[0],
-        'petId': petIds.isNotEmpty ? petIds[0] : 'pet_001',
+        'userId': userIds[0 % userIds.length],
+        'petId': petIds[0 % petIds.length],
         'title': '건강한 골든 리트리버 교배 원해요',
-        'description': '3살 남아 골든 리트리버입니다. 건강검진 완료했고, 성격이 온순해요. 같은 품종 또는 대형견 여아 찾습니다.',
+        'description': '3살 남아 골든 리트리버입니다.\n\n✅ 건강검진 완료 (2024년 12월)\n✅ 예방접종 완료\n✅ 혈통서 보유\n\n성격이 온순하고 사람을 좋아해요. 같은 품종 또는 대형견 여아 찾습니다. 첫 교배라 경험 있는 보호자분이면 좋겠어요.',
         'preferredGender': 'female',
         'preferredSizes': ['large', 'giant'],
         'sameBreedOnly': false,
         'maxAge': 5,
+        'minAge': 2,
       },
       {
-        'userId': userIds.length > 1 ? userIds[1] : userIds[0],
-        'petId': petIds.length > 1 ? petIds[1] : petIds[0],
-        'title': '말티즈 교배 상대 구합니다',
-        'description': '2살 여아 말티즈예요. 혈통서 있고 건강해요. 같은 품종 남아 원합니다.',
+        'userId': userIds[1 % userIds.length],
+        'petId': petIds[1 % petIds.length],
+        'title': '토이푸들 여아 교배 상대 구해요',
+        'description': '1살 토이푸들 쿠키입니다 🐩\n\n혈통서 있고, 건강검진 완료했어요!\n성격이 활발하고 애교가 많아요.\n\n같은 품종 남아 원합니다.\n서울/경기 지역 선호해요.',
         'preferredGender': 'male',
         'preferredSizes': ['tiny', 'small'],
         'sameBreedOnly': true,
-        'maxAge': 3,
+        'maxAge': 4,
+        'minAge': 1,
       },
       {
-        'userId': userIds.length > 2 ? userIds[2] : userIds[0],
-        'petId': petIds.length > 2 ? petIds[2] : petIds[0],
-        'title': '푸들 교배 파트너 찾아요',
-        'description': '토이푸들 남아 4살입니다. 성격 좋고 건강해요. 소형견 여아 구합니다.',
+        'userId': userIds[2 % userIds.length],
+        'petId': petIds[2 % petIds.length],
+        'title': '포메라니안 남아 교배 파트너 찾아요',
+        'description': '활발한 뽀미입니다! 1살이에요.\n\n건강하고 털 상태도 좋아요.\n소형견 여아 구합니다.\n\n📍 강남구 거주\n📞 채팅으로 연락주세요!',
         'preferredGender': 'female',
         'preferredSizes': ['tiny', 'small'],
         'sameBreedOnly': false,
+        'maxAge': 3,
+        'minAge': 1,
+      },
+      {
+        'userId': userIds[3 % userIds.length],
+        'petId': petIds[3 % petIds.length],
+        'title': '시바견 여아 교배 원해요',
+        'description': '2살 반 시바견 시바입니다.\n\n도도하지만 다른 강아지와는 잘 지내요.\n건강검진 완료, 예방접종 완료!\n\n같은 품종 남아 찾습니다.\n성격 좋은 아이면 좋겠어요.',
+        'preferredGender': 'male',
+        'preferredSizes': ['medium'],
+        'sameBreedOnly': true,
+        'maxAge': 4,
+        'minAge': 2,
+      },
+      {
+        'userId': userIds[4 % userIds.length],
+        'petId': petIds[4 % petIds.length],
+        'title': '보더콜리 교배 상대 구합니다',
+        'description': '1살 반 보더콜리 까미예요!\n\n✅ 건강검진 완료\n✅ 유전병 검사 완료\n✅ 혈통서 보유\n\n똑똑하고 에너지가 넘쳐요.\n같은 품종 또는 중형견 여아 찾습니다.',
+        'preferredGender': 'female',
+        'preferredSizes': ['medium', 'large'],
+        'sameBreedOnly': false,
         'maxAge': 5,
+        'minAge': 1,
+      },
+      {
+        'userId': userIds[5 % userIds.length],
+        'petId': petIds[5 % petIds.length],
+        'title': '사모예드 여아 교배 파트너 찾아요',
+        'description': '웃는 천사 루나입니다 😊\n\n2살 사모예드 여아예요.\n성격이 정말 좋고 사람을 좋아해요.\n\n건강하고 털 관리 잘 되어있어요.\n대형견 남아 찾습니다!',
+        'preferredGender': 'male',
+        'preferredSizes': ['large', 'giant'],
+        'sameBreedOnly': false,
+        'maxAge': 5,
+        'minAge': 2,
+      },
+      {
+        'userId': userIds[6 % userIds.length],
+        'petId': petIds[6 % petIds.length],
+        'title': '말티즈 남아 교배 원해요',
+        'description': '5살 비숑프리제 뭉치입니다.\n\n모든 강아지와 친하게 지내요!\n건강검진 완료했고 성격 좋아요.\n\n소형견 여아 구합니다.\n나이는 상관없어요~',
+        'preferredGender': 'female',
+        'preferredSizes': ['tiny', 'small'],
+        'sameBreedOnly': false,
+        'maxAge': 7,
+        'minAge': 1,
+      },
+      {
+        'userId': userIds[7 % userIds.length],
+        'petId': petIds[7 % petIds.length],
+        'title': '진돗개 교배 상대 구해요',
+        'description': '3살 진돗개 백구입니다.\n\n충성스럽고 건강해요!\n등산도 좋아하고 체력이 좋아요.\n\n같은 품종 여아 찾습니다.\n혈통서 있으면 좋겠어요.',
+        'preferredGender': 'female',
+        'preferredSizes': ['large'],
+        'sameBreedOnly': true,
+        'maxAge': 5,
+        'minAge': 2,
+      },
+      {
+        'userId': userIds[8 % userIds.length],
+        'petId': petIds[8 % petIds.length],
+        'title': '웰시코기 교배 파트너 찾아요',
+        'description': '4살 웰시코기 코코예요!\n\n에너지 넘치고 건강해요.\n산책을 정말 좋아합니다.\n\n같은 품종 여아 원해요.\n서울 지역 선호합니다.',
+        'preferredGender': 'female',
+        'preferredSizes': ['medium'],
+        'sameBreedOnly': true,
+        'maxAge': 5,
+        'minAge': 2,
+      },
+      {
+        'userId': userIds[9 % userIds.length],
+        'petId': petIds[9 % petIds.length],
+        'title': '비글 여아 교배 원해요',
+        'description': '1살 반 비글 비비입니다 🐕\n\n호기심 많고 활발해요!\n건강검진 완료, 예방접종 완료.\n\n같은 품종 또는 중형견 남아 찾습니다.\n성격 좋은 아이면 좋겠어요~',
+        'preferredGender': 'male',
+        'preferredSizes': ['medium'],
+        'sameBreedOnly': false,
+        'maxAge': 4,
+        'minAge': 1,
       },
     ];
     
@@ -763,20 +973,21 @@ class SeedData {
       final postData = posts[i];
       
       final post = BreedingPostModel(
-        id: 'breeding_${(i + 1).toString().padLeft(3, '0')}',
+        id: '${TestDataPrefix.breeding}${(i + 1).toString().padLeft(3, '0')}',
         userId: postData['userId'] as String,
         petId: postData['petId'] as String,
         title: postData['title'] as String,
         description: postData['description'] as String,
-        status: BreedingStatus.active,
+        status: BreedingStatus.active, // 모든 교배 글을 active로 설정
         preferredGender: postData['preferredGender'] as String?,
         preferredSizes: List<String>.from(postData['preferredSizes'] as List),
         sameBreedOnly: postData['sameBreedOnly'] as bool,
+        minAge: postData['minAge'] as int?,
         maxAge: postData['maxAge'] as int?,
-        viewCount: (i + 1) * 10,
-        likeCount: (i + 1) * 3,
-        chatCount: i,
-        createdAt: now.subtract(Duration(days: i)),
+        viewCount: (i + 1) * 15 + (i * 7),
+        likeCount: (i + 1) * 4,
+        chatCount: i % 5,
+        createdAt: now.subtract(Duration(days: i * 2)),
         updatedAt: now.subtract(Duration(days: i)),
       );
       
@@ -1157,7 +1368,7 @@ class SeedData {
     
     final positiveTags = ['친절해요', '시간 약속을 잘 지켜요', '반려동물을 잘 돌봐요', '매너가 좋아요', '응답이 빨라요', '다시 만나고 싶어요'];
     final negativeTags = ['불친절해요', '시간 약속을 안 지켜요', '연락이 안 돼요', '매너가 아쉬워요'];
-    final ratingTypes = [RatingType.dating, RatingType.marketplace, RatingType.community];
+    final ratingTypes = [RatingType.dating, RatingType.marketplace, RatingType.breeding];
     
     int ratingIndex = 0;
     

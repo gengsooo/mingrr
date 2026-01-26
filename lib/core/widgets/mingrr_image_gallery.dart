@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../constants/app_sizes.dart';
 import 'mingrr_image_viewer.dart';
 
@@ -60,12 +61,14 @@ class MingrrImageGallery extends StatelessWidget {
       onTap: enableViewer ? () => _openViewer(context, 0) : null,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
-        child: Image.network(
-          imageUrls.first,
+        child: CachedNetworkImage(
+          imageUrl: imageUrls.first,
           width: double.infinity,
           height: height,
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _buildErrorPlaceholder(context),
+          memCacheHeight: (height * 2).toInt(),
+          placeholder: (context, url) => _buildLoadingPlaceholder(context),
+          errorWidget: (context, url, error) => _buildErrorPlaceholder(context),
         ),
       ),
     );
@@ -88,12 +91,18 @@ class MingrrImageGallery extends StatelessWidget {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(borderRadius),
-                child: Image.network(
-                  imageUrls[index],
+                child: CachedNetworkImage(
+                  imageUrl: imageUrls[index],
                   width: width,
                   height: height,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _buildErrorPlaceholder(
+                  memCacheWidth: (width * 2).toInt(),
+                  memCacheHeight: (height * 2).toInt(),
+                  placeholder: (context, url) => _buildLoadingPlaceholder(
+                    context,
+                    width: width,
+                  ),
+                  errorWidget: (context, url, error) => _buildErrorPlaceholder(
                     context,
                     width: width,
                   ),
@@ -102,6 +111,24 @@ class MingrrImageGallery extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildLoadingPlaceholder(BuildContext context, {double? width}) {
+    return Container(
+      width: width ?? double.infinity,
+      height: height,
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      child: Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+        ),
       ),
     );
   }

@@ -121,6 +121,9 @@ class UserModel extends Equatable {
   /// 활동 통계 - 소모임 활동 횟수
   final int groupCount;
   
+  /// 활동 통계 - 커뮤니티 게시글 수
+  final int postCount;
+  
   /// 신고 받은 횟수
   final int reportCount;
   
@@ -129,6 +132,15 @@ class UserModel extends Equatable {
   
   /// 평균 평점 (1~5)
   final double averageRating;
+  
+  /// 채팅 응답률 (0.0 ~ 1.0)
+  final double? chatResponseRate;
+  
+  /// 총 받은 채팅 수
+  final int totalReceivedChats;
+  
+  /// 응답한 채팅 수
+  final int respondedChats;
 
   const UserModel({
     required this.id,
@@ -167,9 +179,13 @@ class UserModel extends Equatable {
     this.walkCount = 0,
     this.transactionCount = 0,
     this.groupCount = 0,
+    this.postCount = 0,
     this.reportCount = 0,
     this.noShowCount = 0,
     this.averageRating = 0.0,
+    this.chatResponseRate,
+    this.totalReceivedChats = 0,
+    this.respondedChats = 0,
   });
 
   /// 나이 계산 (생년월일 기준)
@@ -246,9 +262,13 @@ class UserModel extends Equatable {
       walkCount: data['walkCount'] ?? 0,
       transactionCount: data['transactionCount'] ?? 0,
       groupCount: data['groupCount'] ?? 0,
+      postCount: data['postCount'] ?? 0,
       reportCount: data['reportCount'] ?? 0,
       noShowCount: data['noShowCount'] ?? 0,
       averageRating: (data['averageRating'] ?? 0.0).toDouble(),
+      chatResponseRate: data['chatResponseRate']?.toDouble(),
+      totalReceivedChats: data['totalReceivedChats'] ?? 0,
+      respondedChats: data['respondedChats'] ?? 0,
     );
   }
 
@@ -300,9 +320,13 @@ class UserModel extends Equatable {
       'walkCount': walkCount,
       'transactionCount': transactionCount,
       'groupCount': groupCount,
+      'postCount': postCount,
       'reportCount': reportCount,
       'noShowCount': noShowCount,
       'averageRating': averageRating,
+      'chatResponseRate': chatResponseRate,
+      'totalReceivedChats': totalReceivedChats,
+      'respondedChats': respondedChats,
     };
   }
 
@@ -344,9 +368,13 @@ class UserModel extends Equatable {
     int? walkCount,
     int? transactionCount,
     int? groupCount,
+    int? postCount,
     int? reportCount,
     int? noShowCount,
     double? averageRating,
+    double? chatResponseRate,
+    int? totalReceivedChats,
+    int? respondedChats,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -385,9 +413,13 @@ class UserModel extends Equatable {
       walkCount: walkCount ?? this.walkCount,
       transactionCount: transactionCount ?? this.transactionCount,
       groupCount: groupCount ?? this.groupCount,
+      postCount: postCount ?? this.postCount,
       reportCount: reportCount ?? this.reportCount,
       noShowCount: noShowCount ?? this.noShowCount,
       averageRating: averageRating ?? this.averageRating,
+      chatResponseRate: chatResponseRate ?? this.chatResponseRate,
+      totalReceivedChats: totalReceivedChats ?? this.totalReceivedChats,
+      respondedChats: respondedChats ?? this.respondedChats,
     );
   }
 

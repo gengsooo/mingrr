@@ -15,6 +15,9 @@ import 'core/theme/app_text_styles.dart';  // 텍스트 스타일
 import 'core/providers/theme_provider.dart';  // 테마 Provider
 import 'core/providers/location_verification_provider.dart';  // 위치 인증 Provider
 import 'core/widgets/loading/loading_widgets.dart';  // 공통 로딩 위젯
+import 'core/widgets/badges/svg_icons.dart';  // SVG 아이콘 경로
+import 'core/widgets/network_status_banner.dart';  // 네트워크 상태 배너
+import 'package:flutter_svg/flutter_svg.dart';  // SVG 렌더링
 
 // 인증 관련
 import 'features/auth/presentation/providers/auth_provider.dart';  // 로그인 상태 관리 Provider
@@ -33,6 +36,8 @@ import 'features/social/presentation/screens/community_detail_screen.dart';  // 
 import 'features/chat/presentation/screens/chat_list_screen.dart';  // 채팅 목록 화면
 import 'features/chat/presentation/providers/chat_provider.dart';  // 채팅 Provider
 import 'features/profile/presentation/screens/profile_screen.dart';  // 프로필 화면
+import 'features/profile/presentation/screens/pending_ratings_screen.dart';  // 평가 대기 목록 화면
+import 'features/auth/presentation/screens/email_verification_screen.dart';  // 이메일 인증 화면
 import 'features/dev/dev_tools_screen.dart';  // 개발자 도구 화면
 import 'features/notification/presentation/screens/notification_screen.dart';  // 알림 화면
 import 'features/marketplace/presentation/screens/job_detail_screen.dart';  // 알바 상세 화면
@@ -90,12 +95,14 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);
       final isLoading = authState.isLoading;
-      final isLoggedIn = authState.valueOrNull != null;
+      final user = authState.valueOrNull;
+      final isLoggedIn = user != null;
       final path = state.uri.path;
       final isSplashRoute = path == '/splash';
       final isLoginRoute = path == '/login';
       final isDevToolsRoute = path == '/dev-tools';
       final isOnboardingRoute = path == '/onboarding';
+      final isEmailVerificationRoute = path == '/email-verification';
 
       // 로딩 중이면 스플래시 화면으로 (깜빡임 방지)
       if (isLoading) {
@@ -113,9 +120,37 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/login';
       }
 
-      // 케이스 2: 로그인 된 상태에서 로그인 페이지면 홈으로 리다이렉트
-      if (isLoggedIn && isLoginRoute) {
-        return '/';
+      // 케이스 2: 로그인 된 상태
+      if (isLoggedIn) {
+        // 이메일 로그인 사용자이고 이메일 미인증인 경우
+        final isEmailUser = user.providerData.any((p) => p.providerId == 'password');
+        final isEmailVerified = user.emailVerified;
+        
+        // ============================================================
+        // [DEV] 개발용 테스트 계정 이메일 인증 우회
+        // TODO: 운영 배포 전 아래 코드 블록 제거 필요
+        // 대상: admin@mingrr.com, test1@mingrr.com ~ test10@mingrr.com
+        // ============================================================
+        final devBypassEmails = [
+          'admin@mingrr.com',
+          ...List.generate(10, (i) => 'test${i + 1}@mingrr.com'),
+        ];
+        final shouldBypassVerification = devBypassEmails.contains(user.email);
+        // ============================================================
+        // [DEV] 여기까지 제거
+        // ============================================================
+        
+        if (isEmailUser && !isEmailVerified && !shouldBypassVerification) {
+          // 이메일 인증 화면이 아니면 인증 화면으로 리다이렉트
+          if (!isEmailVerificationRoute) {
+            return '/email-verification';
+          }
+        } else {
+          // 인증 완료된 사용자가 로그인/인증 화면에 있으면 홈으로
+          if (isLoginRoute || isEmailVerificationRoute) {
+            return '/';
+          }
+        }
       }
 
       return null;
@@ -149,6 +184,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      
+      // ========================================
+      // 이메일 인증 대기 화면
+      // ========================================
+      GoRoute(
+        path: '/email-verification',
+        builder: (context, state) => const EmailVerificationScreen(),
       ),
       
       // ========================================
@@ -203,16 +246,25 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const WalkScreen(),
       ),
       
-      // 건강수첩 화면 (경로: '/health')
+      // 건강수첩 화면 (경로: '/health', 쿼리: petId)
       GoRoute(
         path: '/health',
-        builder: (context, state) => const HealthScreen(),
+        builder: (context, state) {
+          final petId = state.uri.queryParameters['petId'];
+          return HealthScreen(initialPetId: petId);
+        },
       ),
       
       // 프로필 화면 (경로: '/profile') - 독립 화면
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
+      ),
+      
+      // 평가 대기 목록 화면 (경로: '/profile/pending-ratings')
+      GoRoute(
+        path: '/profile/pending-ratings',
+        builder: (context, state) => const PendingRatingsScreen(),
       ),
       
       // 반려동물 상세 화면 (경로: '/dating/detail/:id')
@@ -326,9 +378,19 @@ class MainShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Scaffold: Flutter의 기본 화면 구조
-    return Scaffold(
-      body: child,  // 본문: 현재 선택된 화면
-      bottomNavigationBar: const MingrrBottomNavBar(),  // 하단 네비게이션 바
+    // NetworkAwareWidget: 네트워크 상태 변경 시 스낵바 표시
+    return NetworkAwareWidget(
+      child: Scaffold(
+        body: Column(
+          children: [
+            // 네트워크 오프라인 시 상단 배너 표시
+            const NetworkStatusBanner(),
+            // 본문: 현재 선택된 화면
+            Expanded(child: child),
+          ],
+        ),
+        bottomNavigationBar: const MingrrBottomNavBar(),  // 하단 네비게이션 바
+      ),
     );
   }
 }
@@ -642,18 +704,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 앱 로고 또는 아이콘
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: AppOpacity.o10),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.pets,
-                size: 50,
-                color: Theme.of(context).colorScheme.primary,
+            // 앱 로고 (PNG - Native Splash와 동일)
+            ClipOval(
+              child: Image.asset(
+                'assets/images/app_icon.png',
+                width: 120,
+                height: 120,
               ),
             ),
             const SizedBox(height: 24),

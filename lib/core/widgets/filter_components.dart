@@ -91,7 +91,7 @@ class MingrrFilterChip extends StatelessWidget {
             Text(
               label,
               style: isSelected 
-                  ? AppTextStyles.labelMedium(context)
+                  ? AppTextStyles.labelMedium(context).copyWith(color: Colors.white)
                   : AppTextStyles.labelMedium(context),
             ),
           ],
@@ -148,7 +148,7 @@ class MingrrSortChip extends StatelessWidget {
             Text(
               label,
               style: isSelected 
-                  ? AppTextStyles.labelMedium(context)
+                  ? AppTextStyles.labelMedium(context).copyWith(color: Colors.white)
                   : AppTextStyles.labelMedium(context),
             ),
             if (isSelected) ...[
@@ -362,7 +362,7 @@ class MingrrCategoryChips extends StatelessWidget {
                     child: Text(
                       category,
                       style: isSelected 
-                          ? AppTextStyles.labelMedium(context)
+                          ? AppTextStyles.labelMedium(context).copyWith(color: Colors.white)
                           : AppTextStyles.labelMedium(context),
                     ),
                   ),
@@ -444,7 +444,7 @@ class MingrrCategoryChipsWithIcon extends StatelessWidget {
                     child: Text(
                       category.label,
                       style: isSelected 
-                          ? AppTextStyles.labelMedium(context)
+                          ? AppTextStyles.labelMedium(context).copyWith(color: Colors.white)
                           : AppTextStyles.labelMedium(context),
                     ),
                   ),

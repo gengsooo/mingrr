@@ -185,6 +185,8 @@ class MingrrSubTabBar extends StatelessWidget implements PreferredSizeWidget {
         unselectedLabelColor: colorScheme.onSurfaceVariant,
         indicatorColor: effectiveColor,
         isScrollable: isScrollable,
+        tabAlignment: isScrollable ? TabAlignment.start : null,
+        labelPadding: const EdgeInsets.symmetric(horizontal: 8),
         tabs: tabs.map((label) => Tab(text: label)).toList(),
       ),
     );

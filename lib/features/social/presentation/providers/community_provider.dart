@@ -138,6 +138,11 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
       
       await docRef.set(post.toFirestore());
       
+      // 게시글 수 카운터 증가
+      await _firebase.usersCollection.doc(userId).update({
+        'postCount': FieldValue.increment(1),
+      });
+      
       // 꼬순내 점수 업데이트 (커뮤니티 활동 반영)
       KkosunnaeService.updateScore(userId);
       
@@ -188,8 +193,17 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     
     try {
+      final userId = _firebase.currentUserId;
+      
       // 게시글 삭제
       await _firebase.feedPostsCollection.doc(postId).delete();
+      
+      // 게시글 수 카운터 감소
+      if (userId != null) {
+        await _firebase.usersCollection.doc(userId).update({
+          'postCount': FieldValue.increment(-1),
+        });
+      }
       
       // 관련 댓글 삭제
       final comments = await _firebase.feedCommentsCollection

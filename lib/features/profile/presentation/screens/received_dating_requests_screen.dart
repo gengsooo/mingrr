@@ -6,6 +6,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/services/dating_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/sheets/confirm_sheet.dart';
 import '../../../../models/dating_model.dart';
 import '../../../../models/pet_model.dart';
@@ -120,17 +121,12 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
         // 프로필 이미지
         GestureDetector(
           onTap: () => context.push('/dating/detail/${request.fromPetId}'),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppSizes.radiusS),
-            child: pet?.displayImageUrl != null
-                ? Image.network(
-                    pet!.displayImageUrl!,
-                    width: 60,
-                    height: 60,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildDefaultPetImage(),
-                  )
-                : _buildDefaultPetImage(),
+          child: MingrrThumbnail(
+            imageUrl: pet?.displayImageUrl,
+            width: 60,
+            height: 60,
+            borderRadius: AppSizes.radiusS,
+            errorWidget: _buildDefaultPetImage(),
           ),
         ),
         const SizedBox(width: AppSizes.gapM),

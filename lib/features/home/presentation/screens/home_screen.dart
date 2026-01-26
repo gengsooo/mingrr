@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
@@ -8,14 +9,19 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/constants/location_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/navigation/appbar_actions.dart';
 import '../../../../core/widgets/home_reminder_banner.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
+import '../../../../core/widgets/badges/info_badge.dart';
 import '../../../../core/providers/home_reminder_provider.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../models/group_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import '../../../social/presentation/providers/group_provider.dart';
+import '../../../dating/presentation/providers/dating_provider.dart';
+import '../../../dating/presentation/screens/pet_detail_screen.dart';
 import '../../../../core/widgets/location_bubble_widget.dart';
 import '../../../../core/providers/location_verification_provider.dart';
 import '../../../../core/utils/responsive_utils.dart';
@@ -46,7 +52,7 @@ class HomeScreen extends ConsumerWidget {
     final petsAsync = ref.watch(userPetsProvider);
     final selectedIndex = ref.watch(selectedPetIndexProvider);
     final healthCategories = ref.watch(_homeHealthCategoriesProvider);
-    final otherPetsAsync = ref.watch(otherPetsProvider);
+    final recommendedPetsAsync = ref.watch(recommendedPetsProvider);
 
     // 로딩 중에도 기본 레이아웃 유지 (깜빡임 방지)
     final pets = petsAsync.valueOrNull ?? [];
@@ -70,6 +76,9 @@ class HomeScreen extends ConsumerWidget {
                   // 홈 리마인더 배너
                   _buildReminderBanners(context, ref),
                   
+                  // 위치 불일치 알림 (배너 아래)
+                  _buildLocationMismatchBanner(context, ref),
+                  
                   // 반려동물 선택기 (여러 마리 지원)
                   if (pets.isNotEmpty)
                     _buildPetSelector(context, ref, pets, selectedIndex),
@@ -91,8 +100,8 @@ class HomeScreen extends ConsumerWidget {
                     onActionTap: () => context.go('/dating'),
                   ),
                   const SizedBox(height: AppSizes.gapM),
-                  otherPetsAsync.when(
-                    data: (otherPets) => _buildAiRecommendSection(context, otherPets),
+                  recommendedPetsAsync.when(
+                    data: (recommendedPets) => _buildAiRecommendSection(context, recommendedPets),
                     loading: () => _buildLoadingAiSection(),
                     error: (_, __) => const SizedBox(),
                   ),
@@ -130,19 +139,17 @@ class HomeScreen extends ConsumerWidget {
       backgroundColor: theme.scaffoldBackgroundColor,
       title: Row(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              gradient: features.warmGradient,
-              shape: BoxShape.circle,
+          ClipOval(
+            child: SvgPicture.asset(
+              SvgAssets.mingrrLogo,
+              width: 36,
+              height: 36,
             ),
-            child: Icon(Icons.pets, size: 20, color: colorScheme.onSurface),
           ),
           const SizedBox(width: AppSizes.gapS),
           Text(
             AppStrings.appName,
-            style: AppTextStyles.displayMedium(context).withWeight(FontWeight.w700),
+            style: AppTextStyles.displaySmall(context),
           ),
         ],
       ),
@@ -179,7 +186,7 @@ class HomeScreen extends ConsumerWidget {
             backgroundColor: Theme.of(context).colorScheme.primary,
             textColor: Colors.white,
             height: 44,
-            width: 160,
+            width: 180,
           ),
         ],
       ),
@@ -269,24 +276,11 @@ class HomeScreen extends ConsumerWidget {
                       Builder(
                         builder: (ctx) {
                           final cs = Theme.of(ctx).colorScheme;
-                          return Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              color: cs.primaryContainer,
-                              shape: BoxShape.circle,
-                              border: isSelected 
-                                  ? Border.all(color: cs.primary, width: 3)
-                                  : null,
-                              image: _getPetProfileImageOnly(pet),
-                            ),
-                            child: _getPetProfileImageOnly(pet) == null
-                                ? Icon(
-                                    Icons.pets,
-                                    size: 28,
-                                    color: cs.primary,
-                                  )
-                                : null,
+                          return MingrrPetAvatar(
+                            imageUrl: pet.profileImageUrl,
+                            size: 60,
+                            borderColor: isSelected ? cs.primary : null,
+                            borderWidth: 3,
                           );
                         },
                       ),
@@ -493,30 +487,13 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  /// 산책 시작하기 카드 (위치 불일치 배너 포함)
+  /// 산책 시작하기 카드
   Widget _buildWalkStartCardWithLocationBanner(BuildContext context, WidgetRef ref) {
     final features = Theme.of(context).extension<FeatureColors>()!;
     final accentColor = features.health; // 건강수첩 색상으로 통일
     
-    // 위치 불일치 상태 감지
-    final mismatchAsync = ref.watch(locationMismatchProvider);
-    final shouldShowBubble = mismatchAsync.valueOrNull?.shouldShowBubble ?? false;
-    final userAsync = ref.watch(currentUserStreamProvider);
-    final user = userAsync.valueOrNull;
-    
-    return Column(
-      children: [
-        // 위치 불일치 배너 (산책 카드 위에 표시)
-        if (shouldShowBubble)
-          LocationMismatchBanner(
-            savedAddress: user?.homeAddress,
-            accentColor: accentColor,
-            onUpdateLocation: () => _handleLocationUpdateFromHome(context, ref),
-            onDismiss: () => _handleLocationDismissFromHome(ref),
-          ),
-        
-        // 산책 카드
-        GestureDetector(
+    // 산책 카드
+    return GestureDetector(
           onTap: () => context.push('/walk'),
           child: Container(
             padding: const EdgeInsets.all(AppSizes.paddingM),
@@ -581,9 +558,7 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
           ),
-        ),
-      ],
-    );
+        );
   }
   
   /// 홈 화면에서 위치 업데이트 처리 - 공통 함수 사용
@@ -674,10 +649,10 @@ class HomeScreen extends ConsumerWidget {
     return context.features.health;
   }
 
-  /// 추천친구 섹션 (사각형 카드)
-  Widget _buildAiRecommendSection(BuildContext context, List<PetModel> otherPets) {
+  /// 추천친구 섹션 (사각형 카드) - 실제 궁합 점수 사용
+  Widget _buildAiRecommendSection(BuildContext context, List<RecommendedPet> recommendedPets) {
     // 최대 4마리만 표시
-    final displayPets = otherPets.take(4).toList();
+    final displayPets = recommendedPets.take(4).toList();
     
     if (displayPets.isEmpty) {
       return Builder(
@@ -696,11 +671,21 @@ class HomeScreen extends ConsumerWidget {
         scrollDirection: Axis.horizontal,
         itemCount: displayPets.length,
         itemBuilder: (context, index) {
-          final pet = displayPets[index];
-          final score = 95 - (index * 5); // 임시 궁합 점수
+          final recommended = displayPets[index];
+          final pet = recommended.pet;
+          final score = recommended.matchScore; // 실제 궁합 점수 사용
           
           return GestureDetector(
-            onTap: () => context.push('/dating/detail/${pet.id}'),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PetDetailScreen(
+                  petId: pet.id,
+                  cachedDistanceMeters: recommended.distanceMeters,
+                  cachedMatchScore: recommended.matchScore,
+                ),
+              ),
+            ),
             child: Container(
               width: 140,
               margin: const EdgeInsets.only(right: AppSizes.gapM),
@@ -734,16 +719,11 @@ class HomeScreen extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: AppSizes.gapXS),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
-                              decoration: BoxDecoration(
-                                color: _getScoreColor(context, score).withValues(alpha: AppOpacity.o15),
-                                borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                              ),
-                              child: Text(
-                                '궁합 $score%',
-                                style: AppTextStyles.labelSmall(context).withWeight(FontWeight.w600).withColor(_getScoreColor(context, score)),
-                              ),
+                            MatchScoreBadge(
+                              score: score,
+                              style: MatchBadgeStyle.transparent,
+                              size: InfoBadgeSize.small,
+                              showIcon: false,
                             ),
                           ],
                         ),
@@ -761,28 +741,13 @@ class HomeScreen extends ConsumerWidget {
 
   /// 반려동물 사각형 이미지 (추가사진 > 기본 아이콘)
   Widget _buildPetSquareImage(PetModel pet, double height) {
-    final imageUrl = pet.displayImageUrl;
-    
-    return Builder(
-      builder: (ctx) {
-        final features = Theme.of(ctx).extension<FeatureColors>()!;
-        return ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusM)),
-          child: Container(
-            height: height,
-            color: features.datingContainer,
-            child: imageUrl != null
-                ? Image.network(
-                    imageUrl,
-                    width: double.infinity,
-                    height: height,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildDefaultPetIcon(height),
-                  )
-                : _buildDefaultPetIcon(height),
-          ),
-        );
-      },
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusM)),
+      child: MingrrBackgroundImage(
+        imageUrl: pet.displayImageUrl,
+        height: height,
+        placeholder: _buildDefaultPetIcon(height),
+      ),
     );
   }
 
@@ -796,48 +761,10 @@ class HomeScreen extends ConsumerWidget {
 
   /// 반려동물 프로필 이미지 (원형, 내 반려동물 선택기용)
   Widget _buildPetProfileImage(PetModel pet, double size) {
-    final imageUrl = pet.profileImageUrl ?? pet.displayImageUrl;
-    
-    return Builder(
-      builder: (ctx) {
-        final cs = Theme.of(ctx).colorScheme;
-        return Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: cs.primary.withValues(alpha: AppOpacity.o15),
-            shape: BoxShape.circle,
-          ),
-          child: imageUrl != null
-              ? ClipOval(
-                  child: Image.network(
-                    imageUrl,
-                    width: size,
-                    height: size,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Icon(
-                      Icons.pets,
-                      size: size * 0.5,
-                      color: cs.primary,
-                    ),
-                  ),
-                )
-              : Icon(
-                  Icons.pets,
-                  size: size * 0.5,
-                  color: cs.primary,
-                ),
-        );
-      },
+    return MingrrPetAvatar(
+      imageUrl: pet.profileImageUrl ?? pet.displayImageUrl,
+      size: size,
     );
-  }
-
-  Color _getScoreColor(BuildContext context, int score) {
-    final features = context.features;
-    if (score >= 90) return features.success;
-    if (score >= 75) return features.dating;
-    if (score >= 60) return features.warning;
-    return Theme.of(context).colorScheme.outlineVariant;
   }
 
   String _calculateAge(DateTime? birthDate) {
@@ -904,22 +831,20 @@ class HomeScreen extends ConsumerWidget {
       onTap: () => context.push('/social/group/${group.id}'),
       child: Row(
         children: [
-          Container(
+          MingrrThumbnail(
+            imageUrl: group.imageUrl,
             width: 50,
             height: 50,
-            decoration: BoxDecoration(
-              color: features.social.withValues(alpha: AppOpacity.o15),
-              borderRadius: BorderRadius.circular(AppSizes.radiusM),
-              image: group.imageUrl != null
-                  ? DecorationImage(
-                      image: NetworkImage(group.imageUrl!),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
+            borderRadius: AppSizes.radiusM,
+            errorWidget: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: features.social.withValues(alpha: AppOpacity.o15),
+                borderRadius: BorderRadius.circular(AppSizes.radiusM),
+              ),
+              child: Icon(Icons.groups, color: features.social, size: 26),
             ),
-            child: group.imageUrl == null
-                ? Icon(Icons.groups, color: features.social, size: 26)
-                : null,
           ),
           const SizedBox(width: AppSizes.gapM),
           Expanded(
@@ -972,20 +897,24 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  /// 반려동물 프로필 이미지만 가져오기 (대표사진 제외)
-  DecorationImage? _getPetProfileImageOnly(PetModel pet) {
-    // 프로필 이미지만 사용 (대표사진 제외)
-    if (pet.profileImageUrl != null && pet.profileImageUrl!.isNotEmpty) {
-      // 기본 아바타인 경우 null 반환
-      if (pet.profileImageUrl!.startsWith('default_avatar:')) {
-        return null;
-      }
-      return DecorationImage(
-        image: NetworkImage(pet.profileImageUrl!),
-        fit: BoxFit.cover,
-      );
-    }
-    return null;
+
+  /// 위치 불일치 알림 배너 (홈 배너 아래)
+  Widget _buildLocationMismatchBanner(BuildContext context, WidgetRef ref) {
+    final mismatchAsync = ref.watch(locationMismatchProvider);
+    final shouldShowBubble = mismatchAsync.valueOrNull?.shouldShowBubble ?? false;
+    final userAsync = ref.watch(currentUserStreamProvider);
+    final user = userAsync.valueOrNull;
+    
+    if (!shouldShowBubble) return const SizedBox.shrink();
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.gapM),
+      child: LocationMismatchBanner(
+        savedAddress: user?.homeAddress,
+        onUpdateLocation: () => _handleLocationUpdateFromHome(context, ref),
+        onDismiss: () => _handleLocationDismissFromHome(ref),
+      ),
+    );
   }
 
   /// 홈 리마인더 배너 빌더 (스와이프 캐러셀)
@@ -1011,10 +940,7 @@ class HomeScreen extends ConsumerWidget {
   void _handleBannerTap(BuildContext context, ReminderBannerType type) {
     switch (type) {
       case ReminderBannerType.rating:
-        // TODO: 평가 대기 목록 화면으로 이동
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('평가 대기 목록 (구현 예정)')),
-        );
+        context.push('/profile/pending-ratings');
         break;
       case ReminderBannerType.groupSchedule:
         context.push('/social');

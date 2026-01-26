@@ -14,7 +14,9 @@ import '../../../../core/constants/location_constants.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/animal_registration_service.dart';
+import '../../../../core/services/share_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/loading/loading_widgets.dart';
 import '../../../../core/utils/app_logger.dart';
@@ -30,13 +32,11 @@ import '../../../../core/services/location_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import '../../../../models/pet_model.dart';
-import 'activity_history_screen.dart';
+import 'my_activity_screen.dart';
+import 'liked_list_screen.dart';
 import 'pet_edit_screen.dart';
 import 'profile_edit_screen.dart';
-import 'received_dating_requests_screen.dart';
-import 'transaction_history_screen.dart';
-import 'wishlist_screen.dart';
-import '../../../dating/presentation/providers/dating_provider.dart';
+import 'settings/notification_settings_screen.dart';
 import '../providers/profile_provider.dart';
 import 'settings/app_settings_screen.dart';
 import 'settings/account_settings_screen.dart';
@@ -285,7 +285,6 @@ class ProfileScreen extends ConsumerWidget {
             padding: const EdgeInsets.only(bottom: AppSizes.paddingS),
             child: LocationMismatchBanner(
               savedAddress: user?.homeAddress,
-              accentColor: context.features.success,
               onUpdateLocation: () => _handleLocationUpdate(context, ref),
               onDismiss: () => _handleLocationDismiss(ref),
             ),
@@ -455,8 +454,8 @@ class ProfileScreen extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 프로필 이미지 (프로필 이미지만 사용, 없으면 기본 아이콘)
-            MingrrAvatar(
+            // 프로필 이미지 (프로필 이미지만 사용, 없으면 발바닥 아이콘)
+            MingrrPetAvatar(
               size: 55,
               imageUrl: pet.profileImageUrl,
             ),
@@ -468,7 +467,7 @@ class ProfileScreen extends ConsumerWidget {
             const SizedBox(height: AppSizes.gapS),
             // 건강수첩 버튼 (확대)
             GestureDetector(
-              onTap: () => context.push('/health'),
+              onTap: () => context.push('/health?petId=${pet.id}'),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
                 decoration: BoxDecoration(
@@ -501,72 +500,82 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   /// 활동 통계 (Firebase 연동)
+  /// 순서: 산책 → 매칭 → 거래 → 커뮤니티 → 모임
   Widget _buildActivityStats(BuildContext context, WidgetRef ref) {
     final statsAsync = ref.watch(userActivityStatsProvider);
     
     return statsAsync.when(
-      data: (stats) => MingrrCard(
-        margin: EdgeInsets.zero,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildStatItem(context, '매칭', '${stats['matches'] ?? 0}'),
-            _buildStatDivider(context),
-            _buildStatItem(context, '산책', '${stats['walks'] ?? 0}회'),
-            _buildStatDivider(context),
-            _buildStatItem(context, '거래', '${stats['transactions'] ?? 0}'),
-            _buildStatDivider(context),
-            _buildStatItem(context, '모임', '${stats['groups'] ?? 0}'),
-          ],
-        ),
+      data: (stats) => _buildActivityStatsCard(
+        context,
+        walks: '${stats['walks'] ?? 0}회',
+        matches: '${stats['matches'] ?? 0}',
+        transactions: '${stats['transactions'] ?? 0}',
+        posts: '${stats['posts'] ?? 0}',
+        groups: '${stats['groups'] ?? 0}',
       ),
-      loading: () => MingrrCard(
-        margin: EdgeInsets.zero,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildStatItem(context, '매칭', '-'),
-            _buildStatDivider(context),
-            _buildStatItem(context, '산책', '-'),
-            _buildStatDivider(context),
-            _buildStatItem(context, '거래', '-'),
-            _buildStatDivider(context),
-            _buildStatItem(context, '모임', '-'),
-          ],
-        ),
+      loading: () => _buildActivityStatsCard(
+        context,
+        walks: '-',
+        matches: '-',
+        transactions: '-',
+        posts: '-',
+        groups: '-',
       ),
-      error: (_, __) => MingrrCard(
-        margin: EdgeInsets.zero,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildStatItem(context, '매칭', '0'),
-            _buildStatDivider(context),
-            _buildStatItem(context, '산책', '0회'),
-            _buildStatDivider(context),
-            _buildStatItem(context, '거래', '0'),
-            _buildStatDivider(context),
-            _buildStatItem(context, '모임', '0'),
-          ],
-        ),
+      error: (_, __) => _buildActivityStatsCard(
+        context,
+        walks: '0회',
+        matches: '0',
+        transactions: '0',
+        posts: '0',
+        groups: '0',
+      ),
+    );
+  }
+  
+  /// 활동 통계 카드 빌더
+  Widget _buildActivityStatsCard(
+    BuildContext context, {
+    required String walks,
+    required String matches,
+    required String transactions,
+    required String posts,
+    required String groups,
+  }) {
+    return MingrrCard(
+      margin: EdgeInsets.zero,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStatItem(context, '산책', walks),
+          _buildStatDivider(context),
+          _buildStatItem(context, '매칭', matches),
+          _buildStatDivider(context),
+          _buildStatItem(context, '거래', transactions),
+          _buildStatDivider(context),
+          _buildStatItem(context, '커뮤니티', posts),
+          _buildStatDivider(context),
+          _buildStatItem(context, '모임', groups),
+        ],
       ),
     );
   }
 
   /// 통계 아이템
   Widget _buildStatItem(BuildContext context, String label, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: AppTextStyles.displaySmall(context).withWeight(FontWeight.w700),
-        ),
-        const SizedBox(height: AppSizes.gapXXS),
-        Text(
-          label,
-          style: AppTextStyles.bodySmall(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
-        ),
-      ],
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: AppTextStyles.titleLarge(context).withWeight(FontWeight.w700),
+          ),
+          const SizedBox(height: AppSizes.gapXXS),
+          Text(
+            label,
+            style: AppTextStyles.caption(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
+          ),
+        ],
+      ),
     );
   }
 
@@ -574,57 +583,27 @@ class ProfileScreen extends ConsumerWidget {
   Widget _buildStatDivider(BuildContext context) {
     return Container(
       width: 1,
-      height: 30,
-      color: Theme.of(context).colorScheme.outline,
+      height: 28,
+      color: Theme.of(context).colorScheme.outlineVariant,
     );
   }
 
-  /// 메뉴 목록
+  /// 메뉴 목록 (활동/콘텐츠 관련만)
   Widget _buildMenuList(BuildContext context, WidgetRef ref) {
-    final likesCount = ref.watch(receivedDatingRequestsCountProvider);
-    
+    // 하단 메뉴: 활동/콘텐츠 관련 (자주 접근)
+    // 받은 데이팅 신청은 채팅 > 데이팅 탭에서 관리하므로 제거
     final menus = [
       {
-        'icon': Icons.favorite,
-        'label': '받은 데이팅 신청',
-        'badge': likesCount > 0 ? '$likesCount' : null,
-        'screen': const ReceivedDatingRequestsScreen(),
-      },
-      {
         'icon': Icons.history,
-        'label': '활동 내역',
+        'label': '내 활동',
         'badge': null,
-        'screen': const ActivityHistoryScreen(),
+        'screen': const MyActivityScreen(),
       },
       {
-        'icon': Icons.bookmark,
-        'label': '찜한 목록',
+        'icon': Icons.favorite_border,
+        'label': '좋아요 목록',
         'badge': null,
-        'screen': const WishlistScreen(),
-      },
-      {
-        'icon': Icons.receipt_long,
-        'label': '거래 내역',
-        'badge': null,
-        'screen': const TransactionHistoryScreen(),
-      },
-      {
-        'icon': Icons.notifications,
-        'label': '알림 설정',
-        'badge': null,
-        'screen': null,
-      },
-      {
-        'icon': Icons.help_outline,
-        'label': '고객센터',
-        'badge': null,
-        'screen': null,
-      },
-      {
-        'icon': Icons.info_outline,
-        'label': '앱 정보',
-        'badge': null,
-        'screen': null,
+        'screen': const LikedListScreen(),
       },
     ];
 
@@ -1067,7 +1046,10 @@ class ProfileScreen extends ConsumerWidget {
         MingrrOptionItem(
           icon: Icons.notifications_outlined,
           label: '알림 설정',
-          onTap: () => MingrrSnackBar.info(context, '알림 설정 준비 중입니다'),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const NotificationSettingsScreen()),
+          ),
         ),
         MingrrOptionItem(
           icon: Icons.settings_outlined,
@@ -1104,6 +1086,12 @@ class ProfileScreen extends ConsumerWidget {
             context,
             MaterialPageRoute(builder: (context) => const AppInfoScreen()),
           ),
+        ),
+        MingrrOptionItem(
+          icon: Icons.share_outlined,
+          label: '앱 공유하기',
+          subtitle: '친구에게 밍그르르 추천하기',
+          onTap: () => ShareService.shareApp(context),
         ),
         MingrrOptionItem(
           icon: Icons.logout,
@@ -1171,22 +1159,12 @@ class ProfileScreen extends ConsumerWidget {
     
     // 실제 이미지 URL인 경우
     if (imageUrl != null && imageUrl.isNotEmpty) {
-      return Container(
-        width: 100,
-        height: 100,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 3),
-        ),
-        child: ClipOval(
-          child: Image.network(
-            imageUrl,
-            width: 100,
-            height: 100,
-            fit: BoxFit.cover,
-            errorBuilder: (ctx, __, ___) => _buildDefaultProfileImage(ctx),
-          ),
-        ),
+      return MingrrAvatar(
+        imageUrl: imageUrl,
+        size: 100,
+        borderColor: Colors.white,
+        borderWidth: 3,
+        placeholderIcon: Icons.person,
       );
     }
     
@@ -2376,23 +2354,24 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
         child: Row(
           children: [
             // 프로필 이미지 또는 아이콘
-            Container(
+            MingrrThumbnail(
+              imageUrl: pet?.displayImageUrl,
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
-                color: colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+              borderRadius: AppSizes.radiusXS,
+              errorWidget: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                ),
+                child: Icon(
+                  pet == null ? Icons.link_off : Icons.pets,
+                  color: colorScheme.onSurfaceVariant,
+                  size: 20,
+                ),
               ),
-              child: pet?.displayImageUrl != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-                      child: Image.network(pet!.displayImageUrl!, fit: BoxFit.cover),
-                    )
-                  : Icon(
-                      pet == null ? Icons.link_off : Icons.pets,
-                      color: colorScheme.onSurfaceVariant,
-                      size: 20,
-                    ),
             ),
             const SizedBox(width: AppSizes.gapM),
             

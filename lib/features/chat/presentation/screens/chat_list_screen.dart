@@ -5,6 +5,7 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/navigation/top_navigation.dart';
@@ -294,26 +295,11 @@ class ChatListScreen extends ConsumerWidget {
                 // 프로필 이미지 (클릭 시 보호자 정보 바텀시트)
                 GestureDetector(
                   onTap: () => _showSenderGuardianProfile(context, request),
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: AppOpacity.o10),
-                      shape: BoxShape.circle,
-                      image: request.senderPetImageUrl != null
-                          ? DecorationImage(
-                              image: NetworkImage(request.senderPetImageUrl!),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: request.senderPetImageUrl == null
-                        ? Icon(
-                            isBreeding ? Icons.pets : Icons.favorite,
-                            color: accentColor,
-                            size: 22,
-                          )
-                        : null,
+                  child: MingrrPetAvatar(
+                    imageUrl: request.senderPetImageUrl,
+                    size: 44,
+                    borderColor: accentColor.withValues(alpha: AppOpacity.o30),
+                    borderWidth: 1,
                   ),
                 ),
                 const SizedBox(width: AppSizes.gapM),
@@ -436,7 +422,7 @@ class ChatListScreen extends ConsumerWidget {
             const BottomSheetHandle(),
             const SizedBox(height: AppSizes.gapL),
             Icon(
-              isBreeding ? Icons.pets : Icons.favorite,
+              isBreeding ? Icons.family_restroom : Icons.favorite,
               size: 48,
               color: context.features.dating,
             ),
@@ -561,12 +547,12 @@ class ChatListScreen extends ConsumerWidget {
     final isBreeding = room.type == 'breeding';
     final isDating = room.type == 'dating' || room.type == 'breeding';
     final isMarket = room.type == 'marketplace' || room.type == 'market';
-    final isCommunity = room.type == 'community';
+    final isGroup = room.type == 'community' || room.type == 'group';
     
     // 소모임인 경우 소모임 이름 조회
-    String? communityName;
-    if (isCommunity && room.relatedId != null) {
-      communityName = ref.watch(communityNameProvider(room.relatedId!)).valueOrNull;
+    String? groupName;
+    if (isGroup && room.relatedId != null) {
+      groupName = ref.watch(groupNameProvider(room.relatedId!)).valueOrNull;
     }
     
     // 타입별 표시 정보 결정
@@ -592,7 +578,7 @@ class ChatListScreen extends ConsumerWidget {
       placeholderIcon = Icons.person;
     } else {
       // 소모임: 모임명 표시 (소모임 이름 우선)
-      displayName = communityName ?? '소모임';
+      displayName = groupName ?? '소모임';
       displayImage = null; // 소모임은 아이콘 사용
       subtitle = null;
       placeholderIcon = Icons.groups;
@@ -805,7 +791,7 @@ class ChatListScreen extends ConsumerWidget {
             builder: (context) => ChatDetailScreen(
               chatRoomId: chat['id'] as String,
               otherUserName: chat['name'] as String,
-              chatType: type == ChatType.dating ? 'dating' : type == ChatType.group ? 'community' : 'marketplace',
+              chatType: type == ChatType.dating ? 'dating' : type == ChatType.group ? 'group' : 'marketplace',
             ),
           ),
         );

@@ -15,6 +15,22 @@ enum ProductStatus {
   hidden,     // 숨김
 }
 
+/// ProductStatus 확장
+extension ProductStatusExtension on ProductStatus {
+  String get label {
+    switch (this) {
+      case ProductStatus.available:
+        return '판매중';
+      case ProductStatus.reserved:
+        return '예약중';
+      case ProductStatus.completed:
+        return '거래완료';
+      case ProductStatus.hidden:
+        return '숨김';
+    }
+  }
+}
+
 /// 상품 타입
 enum ProductType {
   sell,   // 판매

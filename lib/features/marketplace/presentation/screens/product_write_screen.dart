@@ -12,7 +12,7 @@ import '../../../../core/constants/form_strings.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/utils/format_utils.dart';
-import '../../../../core/utils/image_utils.dart';
+import '../../../../core/services/image_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';

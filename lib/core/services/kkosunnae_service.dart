@@ -408,10 +408,23 @@ class KkosunnaeService {
       details.add('2주 내 활동 (+1점)');
     }
 
-    // B. 응답률 (3점) - 추후 구현
-    // 현재는 기본 점수 부여
-    score += 2;
-    details.add('기본 응답 점수 (+2점)');
+    // B. 응답률 (3점) - 채팅 응답률 기반
+    final responseRate = user.chatResponseRate ?? 0.0;
+    if (responseRate >= 0.9) {
+      score += 3;
+      details.add('응답률 90%+ (+3점)');
+    } else if (responseRate >= 0.7) {
+      score += 2;
+      details.add('응답률 70%+ (+2점)');
+    } else if (responseRate >= 0.5) {
+      score += 1;
+      details.add('응답률 50%+ (+1점)');
+    } else if (responseRate > 0) {
+      score += 0.5;
+      details.add('응답률 50% 미만 (+0.5점)');
+    } else {
+      details.add('응답 기록 없음');
+    }
 
     return ScoreDetail(
       score: score,

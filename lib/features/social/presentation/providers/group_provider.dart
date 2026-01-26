@@ -252,6 +252,11 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
           'memberIds': FieldValue.arrayUnion([userId]),
           'updatedAt': FieldValue.serverTimestamp(),
         });
+        
+        // 사용자 소모임 카운터 증가
+        await _firebase.usersCollection.doc(userId).update({
+          'groupCount': FieldValue.increment(1),
+        });
       }
 
       state = const AsyncValue.data(null);
@@ -274,6 +279,11 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
         'memberIds': FieldValue.arrayRemove([userId]),
         'adminIds': FieldValue.arrayRemove([userId]),
         'updatedAt': FieldValue.serverTimestamp(),
+      });
+      
+      // 사용자 소모임 카운터 감소
+      await _firebase.usersCollection.doc(userId).update({
+        'groupCount': FieldValue.increment(-1),
       });
 
       state = const AsyncValue.data(null);
@@ -384,6 +394,11 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
       await _firebase.groupsCollection.doc(groupId).update({
         'memberIds': FieldValue.arrayUnion([userId]),
         'updatedAt': FieldValue.serverTimestamp(),
+      });
+      
+      // 사용자 소모임 카운터 증가
+      await _firebase.usersCollection.doc(userId).update({
+        'groupCount': FieldValue.increment(1),
       });
 
       return true;

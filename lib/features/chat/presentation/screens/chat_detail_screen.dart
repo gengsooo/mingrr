@@ -11,11 +11,12 @@ import '../../../../core/services/rating_service.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/loading/loading_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/mingrr_image_viewer.dart';
 import '../../../../core/utils/error_handler.dart';
-import '../../../../core/utils/image_utils.dart';
+import '../../../../core/services/image_service.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/rating_widgets.dart';
@@ -69,7 +70,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   String _searchQuery = '';
   ChatRoomModel? _chatRoom;
   TransactionStatusModel? _transaction;
-  String? _communityName; // 소모임 이름 (소모임 채팅용)
+  String? _groupName; // 소모임 이름 (소모임 채팅용)
 
   @override
   void initState() {
@@ -97,23 +98,23 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     if (mounted) {
       setState(() => _chatRoom = room);
       // 소모임 채팅인 경우 소모임 이름 로드
-      if (room?.type == 'community' && room?.relatedId != null) {
-        _loadCommunityName(room!.relatedId!);
+      if ((room?.type == 'community' || room?.type == 'group') && room?.relatedId != null) {
+        _loadGroupName(room!.relatedId!);
       }
     }
   }
   
-  Future<void> _loadCommunityName(String groupId) async {
+  Future<void> _loadGroupName(String groupId) async {
     try {
       final groupDoc = await _firebaseService.firestore
           .collection('groups')
           .doc(groupId)
           .get();
       if (mounted && groupDoc.exists) {
-        setState(() => _communityName = groupDoc.data()?['name']);
+        setState(() => _groupName = groupDoc.data()?['name']);
       }
     } catch (e) {
-      AppLogger.error('ChatDetail', 'Failed to load community name', e);
+      AppLogger.error('ChatDetail', 'Failed to load group name', e);
     }
   }
 
@@ -134,7 +135,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final chatType = widget.chatType ?? _chatRoom?.type ?? 'dating';
     final isDating = chatType == 'dating' || chatType == 'breeding';
     final isMarket = chatType == 'marketplace' || chatType == 'market';
-    final isCommunity = chatType == 'community';
+    final isGroup = chatType == 'community' || chatType == 'group';
     
     // 상대방 정보
     String otherName = widget.otherUserName ?? '채팅';
@@ -160,9 +161,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         } else if (isMarket) {
           otherName = otherParticipant.nickname;
           otherImage = otherParticipant.profileImageUrl;
-        } else if (isCommunity) {
+        } else if (isGroup) {
           // 소모임: 소모임명 표시 (로드된 경우), 아니면 위젯 파라미터 사용
-          otherName = _communityName ?? widget.otherUserName ?? '소모임';
+          otherName = _groupName ?? widget.otherUserName ?? '소모임';
           otherImage = null; // 소모임은 아이콘 사용
         } else {
           otherName = otherParticipant.nickname;
@@ -380,10 +381,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         AppLogger.debug('ChatDetail', '-> _showGuardianProfile 호출 (마켓)');
         // 마켓: 보호자 프로필 모달
         await _showGuardianProfile(context, participant);
-      } else if (normalizedType == 'community') {
-        AppLogger.debug('ChatDetail', '-> _showCommunityProfile 호출');
+      } else if (normalizedType == 'community' || normalizedType == 'group') {
+        AppLogger.debug('ChatDetail', '-> _showGroupProfile 호출');
         // 소모임: 소모임 정보 모달
-        await _showCommunityProfile(context);
+        await _showGroupProfile(context);
       } else {
         AppLogger.debug('ChatDetail', '-> _showGuardianProfile 호출 (기본)');
         // 기본: 보호자 프로필 모달
@@ -495,8 +496,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   }
 
   /// 소모임 프로필 모달 표시
-  Future<void> _showCommunityProfile(BuildContext context) async {
-    AppLogger.debug('ChatDetail', '_showCommunityProfile 시작');
+  Future<void> _showGroupProfile(BuildContext context) async {
+    AppLogger.debug('ChatDetail', '_showGroupProfile 시작');
     AppLogger.debug('ChatDetail', '_chatRoom: ${_chatRoom != null ? "있음" : "null"}');
     AppLogger.debug('ChatDetail', '_chatRoom?.relatedId: ${_chatRoom?.relatedId}');
     
@@ -669,25 +670,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           imageUrl.isNotEmpty && 
                           !imageUrl.startsWith('default_avatar:');
     
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: themeColor.withValues(alpha: AppOpacity.o10),
-        shape: BoxShape.circle,
-        border: Border.all(color: themeColor.withValues(alpha: AppOpacity.o30), width: 1),
-      ),
-      child: hasValidImage
-          ? ClipOval(
-              child: Image.network(
-                imageUrl,
-                width: size,
-                height: size,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildAvatarPlaceholder(name, size, themeColor),
-              ),
-            )
-          : _buildAvatarPlaceholder(name, size, themeColor),
+    return MingrrPetAvatar(
+      imageUrl: hasValidImage ? imageUrl : null,
+      size: size,
+      borderColor: themeColor.withValues(alpha: AppOpacity.o30),
+      borderWidth: 1,
     );
   }
 
@@ -713,6 +700,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       case 'market':
         return Icons.store;
       case 'community':
+      case 'group':
         return Icons.groups;
       default:
         return Icons.chat;
@@ -842,42 +830,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       case MessageType.image:
         return GestureDetector(
           onTap: () => _showFullScreenImage(context, message.imageUrl!),
-          child: ClipRRect(
+          child: MingrrNetworkImage(
+            imageUrl: message.imageUrl,
+            width: 200,
+            height: 150,
+            fit: BoxFit.cover,
             borderRadius: BorderRadius.circular(AppSizes.radiusS),
-            child: Image.network(
-              message.imageUrl!,
-              width: 200,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, progress) {
-                if (progress == null) return child;
-                return Container(
-                  width: 200,
-                  height: 150,
-                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        MingrrLoadingIndicator.progress(
-                          value: progress.expectedTotalBytes != null
-                              ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
-                              : null,
-                          strokeWidth: 2,
-                          customColor: themeColor,
-                        ),
-                        if (progress.expectedTotalBytes != null) ...[
-                          const SizedBox(height: AppSizes.gapS),
-                          Text(
-                            '${((progress.cumulativeBytesLoaded / progress.expectedTotalBytes!) * 100).toInt()}%',
-                            style: AppTextStyles.caption(context),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
           ),
         );
       case MessageType.location:
@@ -1104,8 +1062,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     final options = <MingrrOptionItem>[];
     
-    // 거래/만남 완료 버튼
-    if (_transaction == null || _transaction!.status == 'pending') {
+    // 거래/만남 완료 버튼 (소모임은 완료 개념 없음)
+    final hasCompleteAction = chatType == 'marketplace' || 
+                               chatType == 'dating' || 
+                               chatType == 'breeding';
+    if (hasCompleteAction && (_transaction == null || _transaction!.status == 'pending')) {
       options.add(MingrrOptionItem(
         icon: Icons.check_circle_outline,
         label: chatType == 'marketplace' ? '거래 완료하기' : '만남 완료하기',
@@ -1281,8 +1242,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         return RatingType.marketplace;
       case 'breeding':
         return RatingType.breeding;
-      case 'community':
-        return RatingType.community;
+      // 소모임(group/community)은 평가 기능 없음 - hasCompleteAction에서 제외됨
       default:
         return RatingType.dating;
     }
@@ -1367,6 +1327,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       case 'market':
         return context.features.market;
       case 'community':
+      case 'group':
         return context.features.social;
       default:
         return Theme.of(context).colorScheme.primary;

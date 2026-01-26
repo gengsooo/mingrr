@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/services/firebase_service.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../models/health_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 
@@ -21,108 +22,122 @@ final selectedPetIdProvider = StateProvider<String?>((ref) {
 /// 선택된 탭 인덱스
 final selectedHealthTabProvider = StateProvider<int>((ref) => 0);
 
-/// 체중 기록 Provider (인덱스 없이 클라이언트에서 정렬)
+/// 체중 기록 Provider (서버 정렬 + 제한)
 final weightRecordsProvider = StreamProvider.family<List<WeightRecordModel>, String>((ref, petId) {
   return _firebaseService.firestore
       .collection('weightRecords')
       .where('petId', isEqualTo: petId)
+      .orderBy('recordDate', descending: true)
+      .limit(20)
       .snapshots()
-      .map((snapshot) {
-        final records = snapshot.docs
-            .map((doc) => WeightRecordModel.fromFirestore(doc))
-            .toList();
-        records.sort((a, b) => b.recordDate.compareTo(a.recordDate));
-        return records.take(20).toList();
+      .map((snapshot) => snapshot.docs
+          .map((doc) => WeightRecordModel.fromFirestore(doc))
+          .toList())
+      .handleError((error, stackTrace) {
+        AppLogger.error('HealthProvider', '체중 기록 스트림 오류 (petId: $petId)', error, stackTrace);
+        return <WeightRecordModel>[];
       });
 });
 
-/// 산책 기록 Provider (인덱스 없이 클라이언트에서 정렬)
+/// 산책 기록 Provider (서버 정렬 + 제한)
 final walkRecordsProvider = StreamProvider.family<List<WalkRecordModel>, String>((ref, petId) {
   return _firebaseService.firestore
       .collection('walkRecords')
       .where('petId', isEqualTo: petId)
+      .orderBy('startTime', descending: true)
+      .limit(20)
       .snapshots()
-      .map((snapshot) {
-        final records = snapshot.docs
-            .map((doc) => WalkRecordModel.fromFirestore(doc))
-            .toList();
-        records.sort((a, b) => b.startTime.compareTo(a.startTime));
-        return records.take(20).toList();
+      .map((snapshot) => snapshot.docs
+          .map((doc) => WalkRecordModel.fromFirestore(doc))
+          .toList())
+      .handleError((error, stackTrace) {
+        AppLogger.error('HealthProvider', '산책 기록 스트림 오류 (petId: $petId)', error, stackTrace);
+        return <WalkRecordModel>[];
       });
 });
 
-/// 그루밍 기록 Provider (인덱스 없이 클라이언트에서 정렬)
+/// 그루밍 기록 Provider (서버 정렬 + 제한)
 final groomingRecordsProvider = StreamProvider.family<List<GroomingRecordModel>, String>((ref, petId) {
   return _firebaseService.firestore
       .collection('groomingRecords')
       .where('petId', isEqualTo: petId)
+      .orderBy('recordDate', descending: true)
+      .limit(20)
       .snapshots()
-      .map((snapshot) {
-        final records = snapshot.docs
-            .map((doc) => GroomingRecordModel.fromFirestore(doc))
-            .toList();
-        records.sort((a, b) => b.recordDate.compareTo(a.recordDate));
-        return records.take(20).toList();
+      .map((snapshot) => snapshot.docs
+          .map((doc) => GroomingRecordModel.fromFirestore(doc))
+          .toList())
+      .handleError((error, stackTrace) {
+        AppLogger.error('HealthProvider', '그루밍 기록 스트림 오류 (petId: $petId)', error, stackTrace);
+        return <GroomingRecordModel>[];
       });
 });
 
-/// 예방접종 기록 Provider (인덱스 없이 클라이언트에서 정렬)
+/// 예방접종 기록 Provider (서버 정렬 + 제한)
 final vaccinationRecordsProvider = StreamProvider.family<List<VaccinationModel>, String>((ref, petId) {
   return _firebaseService.firestore
       .collection('vaccinationRecords')
       .where('petId', isEqualTo: petId)
+      .orderBy('vaccinationDate', descending: true)
+      .limit(20)
       .snapshots()
-      .map((snapshot) {
-        final records = snapshot.docs
-            .map((doc) => VaccinationModel.fromFirestore(doc))
-            .toList();
-        records.sort((a, b) => b.vaccinationDate.compareTo(a.vaccinationDate));
-        return records.take(20).toList();
+      .map((snapshot) => snapshot.docs
+          .map((doc) => VaccinationModel.fromFirestore(doc))
+          .toList())
+      .handleError((error, stackTrace) {
+        AppLogger.error('HealthProvider', '예방접종 기록 스트림 오류 (petId: $petId)', error, stackTrace);
+        return <VaccinationModel>[];
       });
 });
 
-/// 검진 기록 Provider (인덱스 없이 클라이언트에서 정렬)
+/// 검진 기록 Provider (서버 정렬 + 제한)
 final checkupRecordsProvider = StreamProvider.family<List<CheckupRecordModel>, String>((ref, petId) {
   return _firebaseService.firestore
       .collection('checkupRecords')
       .where('petId', isEqualTo: petId)
+      .orderBy('checkupDate', descending: true)
+      .limit(20)
       .snapshots()
-      .map((snapshot) {
-        final records = snapshot.docs
-            .map((doc) => CheckupRecordModel.fromFirestore(doc))
-            .toList();
-        records.sort((a, b) => b.checkupDate.compareTo(a.checkupDate));
-        return records.take(20).toList();
+      .map((snapshot) => snapshot.docs
+          .map((doc) => CheckupRecordModel.fromFirestore(doc))
+          .toList())
+      .handleError((error, stackTrace) {
+        AppLogger.error('HealthProvider', '검진 기록 스트림 오류 (petId: $petId)', error, stackTrace);
+        return <CheckupRecordModel>[];
       });
 });
 
-/// 약 복용 기록 Provider (인덱스 없이 클라이언트에서 정렬)
+/// 약 복용 기록 Provider (서버 정렬 + 제한)
 final medicationRecordsProvider = StreamProvider.family<List<MedicationRecordModel>, String>((ref, petId) {
   return _firebaseService.firestore
       .collection('medicationRecords')
       .where('petId', isEqualTo: petId)
+      .orderBy('startDate', descending: true)
+      .limit(20)
       .snapshots()
-      .map((snapshot) {
-        final records = snapshot.docs
-            .map((doc) => MedicationRecordModel.fromFirestore(doc))
-            .toList();
-        records.sort((a, b) => b.startDate.compareTo(a.startDate));
-        return records.take(20).toList();
+      .map((snapshot) => snapshot.docs
+          .map((doc) => MedicationRecordModel.fromFirestore(doc))
+          .toList())
+      .handleError((error, stackTrace) {
+        AppLogger.error('HealthProvider', '약 복용 기록 스트림 오류 (petId: $petId)', error, stackTrace);
+        return <MedicationRecordModel>[];
       });
 });
 
-/// 특이사항 기록 Provider (인덱스 없이 클라이언트에서 정렬)
+/// 특이사항 기록 Provider (서버 정렬 + 제한)
 final specialNotesProvider = StreamProvider.family<List<SpecialNoteModel>, String>((ref, petId) {
   return _firebaseService.firestore
       .collection('special_notes')
       .where('petId', isEqualTo: petId)
+      .orderBy('recordDate', descending: true)
+      .limit(20)
       .snapshots()
-      .map((snapshot) {
-        final records = snapshot.docs
-            .map((doc) => SpecialNoteModel.fromFirestore(doc))
-            .toList();
-        records.sort((a, b) => b.recordDate.compareTo(a.recordDate));
-        return records.take(20).toList();
+      .map((snapshot) => snapshot.docs
+          .map((doc) => SpecialNoteModel.fromFirestore(doc))
+          .toList())
+      .handleError((error, stackTrace) {
+        AppLogger.error('HealthProvider', '특이사항 기록 스트림 오류 (petId: $petId)', error, stackTrace);
+        return <SpecialNoteModel>[];
       });
 });
 
@@ -354,17 +369,34 @@ class HealthService {
     double? calories,
     String? notes,
   }) async {
+    // 산책 기록 업데이트
     await _firebase.firestore.collection('walkRecords').doc(recordId).update({
       'endTime': Timestamp.fromDate(DateTime.now()),
       'distance': totalDistance,
       'calories': calories,
       'notes': notes,
     });
+    
+    // 사용자 산책 횟수 카운터 증가
+    final userId = _firebase.currentUserId;
+    if (userId != null) {
+      await _firebase.usersCollection.doc(userId).update({
+        'walkCount': FieldValue.increment(1),
+      });
+    }
   }
 
   /// 산책 기록 삭제
   Future<void> deleteWalkRecord(String recordId) async {
     await _firebase.firestore.collection('walkRecords').doc(recordId).delete();
+    
+    // 사용자 산책 횟수 카운터 감소
+    final userId = _firebase.currentUserId;
+    if (userId != null) {
+      await _firebase.usersCollection.doc(userId).update({
+        'walkCount': FieldValue.increment(-1),
+      });
+    }
   }
 }
 

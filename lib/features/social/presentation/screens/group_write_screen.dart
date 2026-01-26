@@ -11,7 +11,7 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/constants/form_strings.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
-import '../../../../core/utils/image_utils.dart';
+import '../../../../core/services/image_service.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';

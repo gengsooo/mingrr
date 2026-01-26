@@ -5,6 +5,7 @@ import '../../constants/app_sizes.dart';
 import '../../constants/location_constants.dart';
 import '../../../models/marketplace_model.dart';
 import '../common_widgets.dart';
+import '../mingrr_image.dart';
 import '../badges/distance_badge.dart';
 
 /// ============================================================
@@ -74,25 +75,22 @@ class ProductCard extends StatelessWidget {
   }
 
   Widget _buildImage(BuildContext context) {
-    return Container(
+    return MingrrBackgroundImage(
+      imageUrl: product.imageUrls.isNotEmpty ? product.imageUrls.first : null,
       width: 100,
       height: 100,
-      decoration: BoxDecoration(
-        color: context.features.marketContainer,
-        borderRadius: BorderRadius.circular(AppSizes.radiusM),
-        image: product.imageUrls.isNotEmpty
-            ? DecorationImage(
-                image: NetworkImage(product.imageUrls.first),
-                fit: BoxFit.cover,
-              )
-            : null,
+      borderRadius: AppSizes.radiusM,
+      placeholder: Container(
+        decoration: BoxDecoration(
+          color: context.features.marketContainer,
+          borderRadius: BorderRadius.circular(AppSizes.radiusM),
+        ),
+        child: Center(
+          child: Icon(Icons.image, size: 40, color: context.features.market),
+        ),
       ),
       child: Stack(
         children: [
-          if (product.imageUrls.isEmpty)
-            Center(
-              child: Icon(Icons.image, size: 40, color: context.features.market),
-            ),
           if (product.status == ProductStatus.reserved)
             Positioned(
               top: 4,
@@ -180,6 +178,7 @@ class ProductCard extends StatelessWidget {
 }
 
 /// 알바 카드 컴포넌트
+/// ProductCard와 동일한 가로형 레이아웃
 class JobCard extends StatelessWidget {
   final JobModel job;
   final String? distanceString;
@@ -197,98 +196,180 @@ class JobCard extends StatelessWidget {
     return MingrrCard(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       onTap: onTap,
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 상단: 타입 뱃지 + 상태
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
-                decoration: BoxDecoration(
-                  color: context.features.market.withValues(alpha: AppOpacity.o10),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
-                ),
-                child: Text(
-                  job.typeString,
-                  style: AppTextStyles.labelMedium(context).copyWith(color: context.features.market),
-                ),
-              ),
-              const SizedBox(width: AppSizes.gapS),
-              if (job.status == JobStatus.recruiting)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
-                  decoration: BoxDecoration(
-                    color: context.features.success.withValues(alpha: AppOpacity.o10),
-                    borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
-                  ),
-                  child: Text(
-                    '모집중',
-                    style: AppTextStyles.captionSmall(context).copyWith(color: context.features.success),
-                  ),
-                ),
-              const Spacer(),
-              Text(
-                _formatTime(job.createdAt),
-                style: AppTextStyles.captionSmall(context),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSizes.gapM),
+          // 좌측: 이미지 영역 (100x100)
+          _buildImage(context),
+          const SizedBox(width: AppSizes.gapM),
 
-          // 제목
-          Text(
-            job.title,
-            style: AppTextStyles.titleMedium(context),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: AppSizes.gapS),
-
-          // 기간 + 시간
-          if (job.startDate != null || job.endDate != null)
-            Row(
+          // 우측: 정보 영역
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.calendar_today, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                const SizedBox(width: AppSizes.gapXS),
-                Expanded(
-                  child: Text(
-                    job.fullPeriodString,
-                    style: AppTextStyles.bodySmall(context),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                // 1줄: 제목
+                Text(
+                  job.title,
+                  style: AppTextStyles.titleMedium(context),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: AppSizes.gapXS),
+
+                // 2줄: 거리 · 시간
+                Text(
+                  distanceString != null
+                      ? '$distanceString · ${_formatTime(job.createdAt)}'
+                      : '${job.address ?? '위치 미설정'} · ${_formatTime(job.createdAt)}',
+                  style: AppTextStyles.captionSmall(context),
+                ),
+                const SizedBox(height: AppSizes.gapSM),
+
+                // 3줄: 기간 (없으면 '기간 정보 없음')
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    const SizedBox(width: AppSizes.gapXS),
+                    Expanded(
+                      child: Text(
+                        (job.startDate != null || job.endDate != null)
+                            ? job.periodString
+                            : '기간 정보 없음',
+                        style: AppTextStyles.bodyLarge(context),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSizes.gapSM),
+
+                // 4줄: 가격 + 카테고리 + 채팅
+                _buildFooter(context),
               ],
             ),
-          const SizedBox(height: AppSizes.gapM),
-
-          // 하단: 급여 + 거리
-          Row(
-            children: [
-              Text(
-                job.priceString,
-                style: AppTextStyles.titleLarge(context).copyWith(color: context.features.market),
-              ),
-              const Spacer(),
-              if (distanceString != null) ...[
-                DistanceBadge.small(
-                  distanceString: distanceString!,
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-                const SizedBox(width: AppSizes.gapS),
-              ],
-              Row(
-                children: [
-                  Icon(Icons.chat_bubble_outline, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
-                  const SizedBox(width: 2),
-                  Text('${job.chatCount}',
-                      style: AppTextStyles.captionSmall(context)),
-                ],
-              ),
-            ],
           ),
         ],
       ),
+    );
+  }
+
+  /// 좌측 이미지 영역 (썸네일 이미지 + 상태 배지)
+  Widget _buildImage(BuildContext context) {
+    return MingrrBackgroundImage(
+      imageUrl: job.imageUrls.isNotEmpty ? job.imageUrls.first : null,
+      width: 100,
+      height: 100,
+      borderRadius: AppSizes.radiusM,
+      placeholder: Container(
+        decoration: BoxDecoration(
+          color: context.features.marketContainer,
+          borderRadius: BorderRadius.circular(AppSizes.radiusM),
+        ),
+        child: Center(
+          child: Icon(Icons.image, size: 40, color: context.features.market),
+        ),
+      ),
+      child: Stack(
+        children: [
+          // 좌상단: 모집중 배지
+          if (job.status == JobStatus.recruiting)
+            Positioned(
+              top: 4,
+              left: 4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
+                decoration: BoxDecoration(
+                  color: context.features.success,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                ),
+                child: Text(
+                  '모집중',
+                  style: AppTextStyles.captionSmall(context).copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          // 예약됨 상태
+          if (job.status == JobStatus.reserved)
+            Positioned(
+              top: 4,
+              left: 4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                ),
+                child: Text(
+                  '예약중',
+                  style: AppTextStyles.captionSmall(context).copyWith(color: Colors.white),
+                ),
+              ),
+            ),
+          // 완료 상태
+          if (job.status == JobStatus.completed)
+            Positioned(
+              top: 4,
+              left: 4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                ),
+                child: Text(
+                  '완료',
+                  style: AppTextStyles.captionSmall(context).copyWith(color: Colors.white),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// 하단: 카테고리 배지 + 가격 + 채팅수
+  Widget _buildFooter(BuildContext context) {
+    return Row(
+      children: [
+        // 카테고리 배지 (아이콘 포함)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
+          decoration: BoxDecoration(
+            color: context.features.market.withValues(alpha: AppOpacity.o10),
+            borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(job.type.icon, size: 10, color: context.features.market),
+              const SizedBox(width: 3),
+              Text(
+                job.typeString,
+                style: AppTextStyles.captionSmall(context).copyWith(color: context.features.market),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: AppSizes.gapS),
+        // 가격
+        Text(
+          job.priceString,
+          style: AppTextStyles.titleLarge(context).copyWith(color: context.features.market),
+        ),
+        const Spacer(),
+        // 채팅수
+        Row(
+          children: [
+            Icon(Icons.chat_bubble_outline, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
+            const SizedBox(width: 2),
+            Text('${job.chatCount}', style: AppTextStyles.captionSmall(context)),
+          ],
+        ),
+      ],
     );
   }
 
@@ -300,5 +381,19 @@ class JobCard extends StatelessWidget {
     if (diff.inDays < 1) return '${diff.inHours}시간 전';
     return '${diff.inDays}일 전';
   }
+}
 
+/// 알바 카드 가격 표시 위젯 (별도 줄)
+class _JobPriceRow extends StatelessWidget {
+  final JobModel job;
+  
+  const _JobPriceRow({required this.job});
+  
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      job.priceString,
+      style: AppTextStyles.titleLarge(context).copyWith(color: context.features.market),
+    );
+  }
 }

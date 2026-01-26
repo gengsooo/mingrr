@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../constants/app_sizes.dart';
 import '../constants/location_constants.dart';
 import '../theme/app_text_styles.dart';
@@ -178,10 +179,16 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
             widget.onPageChanged?.call(index);
           },
           itemBuilder: (context, index) {
-            return Image.network(
-              widget.imageUrls[index],
+            return CachedNetworkImage(
+              imageUrl: widget.imageUrls[index],
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => 
+              placeholder: (context, url) => Container(
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
+                child: const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+              errorWidget: (context, url, error) => 
                   widget.placeholder ?? const DefaultPetImage(height: double.infinity),
             );
           },
@@ -326,6 +333,10 @@ class ImageHeaderDistanceBadge extends StatelessWidget {
 typedef LikeBadge = LikeOverlayBadge;
 
 /// 이미지 헤더용 궁합점수 배지
+/// 
+/// @deprecated info_badge.dart의 MatchScoreBadge 사용 권장
+/// MatchScoreBadge(score: score, style: MatchBadgeStyle.filled, showInfoIcon: true, onTap: onTap)
+@Deprecated('Use MatchScoreBadge from info_badge.dart instead')
 class ImageHeaderMatchBadge extends StatelessWidget {
   final int score;
   final VoidCallback? onTap;

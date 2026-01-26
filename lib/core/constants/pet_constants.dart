@@ -315,7 +315,7 @@ enum GroupRestriction {
 /// ============================================================
 enum ChatType {
   dating('데이팅', Icons.favorite, '친구 만들기 채팅'),
-  breeding('교배', Icons.pets, '교배 상대 채팅'),
+  breeding('교배', Icons.family_restroom, '교배 상대 채팅'),
   group('소모임', Icons.groups, '소모임 채팅'),
   market('마켓', Icons.storefront, '중고거래 채팅');
 

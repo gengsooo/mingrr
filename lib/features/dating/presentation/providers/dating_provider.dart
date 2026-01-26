@@ -8,6 +8,7 @@ import '../../../../core/providers/paginated_provider.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../../core/services/matching_service.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../models/user_model.dart';
 import '../../../../models/dating_model.dart';
@@ -26,6 +27,7 @@ class PetWithDistance extends ItemWithDistance<PetModel> {
   final String ownerAddress;
   final int matchScore;
   final String matchGrade;
+  final String? breedingDescription; // 교배찾기 글 상세 내용
   
   PetWithDistance({
     required PetModel pet,
@@ -33,6 +35,7 @@ class PetWithDistance extends ItemWithDistance<PetModel> {
     this.ownerAddress = '',
     this.matchScore = 0,
     this.matchGrade = '',
+    this.breedingDescription,
   }) : super(item: pet, distanceMeters: distanceMeters);
   
   /// 기존 코드 호환성을 위한 접근자
@@ -150,10 +153,16 @@ final receivedDatingRequestsProvider = StreamProvider.autoDispose<List<DatingReq
         return Stream.value(<DatingRequestModel>[]);
       }
       final firestoreService = ref.watch(firestoreServiceProvider);
-      return firestoreService.watchReceivedDatingRequests(user.uid);
+      return firestoreService.watchReceivedDatingRequests(user.uid).handleError((error, stackTrace) {
+        AppLogger.error('DatingProvider', '데이팅 신청 스트림 오류 (userId: ${user.uid})', error, stackTrace);
+        return <DatingRequestModel>[];
+      });
     },
     loading: () => const Stream.empty(),
-    error: (_, __) => Stream.value(<DatingRequestModel>[]),
+    error: (error, stackTrace) {
+      AppLogger.error('DatingProvider', '인증 상태 오류로 데이팅 신청 로드 실패', error, stackTrace);
+      return Stream.value(<DatingRequestModel>[]);
+    },
   );
 });
 
@@ -404,6 +413,22 @@ final paginatedBreedingPetsProvider = StateNotifierProvider
         }
       }
       
+      // 교배찾기 글에서 description 가져오기
+      final petIds = otherPets.map((p) => p.id).toSet();
+      final breedingDescriptions = <String, String>{};
+      
+      for (final petId in petIds) {
+        final breedingQuery = await _firebase.breedingPostsCollection
+            .where('petId', isEqualTo: petId)
+            .where('status', isEqualTo: 'active')
+            .limit(1)
+            .get();
+        if (breedingQuery.docs.isNotEmpty) {
+          final data = breedingQuery.docs.first.data();
+          breedingDescriptions[petId] = data['description'] as String? ?? '';
+        }
+      }
+      
       final result = <PetWithDistance>[];
       for (final pet in otherPets) {
         final ownerLocation = ownerLocations[pet.ownerId];
@@ -421,6 +446,7 @@ final paginatedBreedingPetsProvider = StateNotifierProvider
           result.add(PetWithDistance(
             pet: pet,
             distanceMeters: distance,
+            breedingDescription: breedingDescriptions[pet.id],
           ));
         }
       }
