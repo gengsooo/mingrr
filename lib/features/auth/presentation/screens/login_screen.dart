@@ -26,7 +26,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isCodeSent = false;
-  bool _isPhoneLogin = true; // true: 전화번호, false: 이메일
+  bool _isPhoneLogin = false; // true: 전화번호, false: 이메일 (기본: 이메일)
 
   @override
   void dispose() {
@@ -119,10 +119,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  /// 로그인 방법 선택 탭
+  /// 로그인 방법 선택 탭 (이메일 왼쪽, 전화번호 오른쪽)
   Widget _buildLoginTabs() {
     return Row(
       children: [
+        // 이메일 탭 (왼쪽)
+        Expanded(
+          child: GestureDetector(
+            onTap: () => setState(() => _isPhoneLogin = false),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: !_isPhoneLogin ? Theme.of(context).colorScheme.primary : Colors.transparent,
+                    width: 2,
+                  ),
+                ),
+              ),
+              child: Text(
+                '이메일',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.headlineSmall(context)
+                    .withWeight(!_isPhoneLogin ? FontWeight.w600 : FontWeight.w400)
+                    .withColor(!_isPhoneLogin ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outlineVariant),
+              ),
+            ),
+          ),
+        ),
+        // 전화번호 탭 (오른쪽)
         Expanded(
           child: GestureDetector(
             onTap: () => setState(() {
@@ -145,29 +170,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 style: AppTextStyles.headlineSmall(context)
                     .withWeight(_isPhoneLogin ? FontWeight.w600 : FontWeight.w400)
                     .withColor(_isPhoneLogin ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outlineVariant),
-              ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _isPhoneLogin = false),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: !_isPhoneLogin ? Theme.of(context).colorScheme.primary : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-              ),
-              child: Text(
-                '이메일',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.headlineSmall(context)
-                    .withWeight(!_isPhoneLogin ? FontWeight.w600 : FontWeight.w400)
-                    .withColor(!_isPhoneLogin ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outlineVariant),
               ),
             ),
           ),
@@ -244,6 +246,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       children: [
         // 이메일 입력
         MingrrTextField(
+          key: const ValueKey('email_field'),
           controller: _emailController,
           hintText: 'test@mingrr.com',
           prefixIcon: Icons.email_outlined,
@@ -253,6 +256,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         
         // 비밀번호 입력
         MingrrTextField(
+          key: const ValueKey('password_field'),
           controller: _passwordController,
           hintText: '비밀번호',
           prefixIcon: Icons.lock_outline,

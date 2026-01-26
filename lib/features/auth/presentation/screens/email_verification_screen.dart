@@ -181,7 +181,11 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
       
       if (verified && mounted) {
         MingrrSnackBar.success(context, '이메일 인증이 완료되었습니다! 🎉');
-        context.go('/');
+        // authStateProvider를 무효화하여 라우터가 새로운 인증 상태를 감지하도록 함
+        ref.invalidate(authStateProvider);
+        // 약간의 딜레이 후 홈으로 이동 (상태 업데이트 대기)
+        await Future.delayed(const Duration(milliseconds: 300));
+        if (mounted) context.go('/');
       } else if (!silent && mounted) {
         MingrrSnackBar.warning(context, '아직 인증이 완료되지 않았어요');
       }

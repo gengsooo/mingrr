@@ -360,6 +360,17 @@ class _MingrrTextFieldState extends State<MingrrTextField> {
   }
 
   @override
+  void didUpdateWidget(covariant MingrrTextField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 외부 컨트롤러가 변경된 경우 업데이트
+    if (widget.controller != oldWidget.controller) {
+      if (widget.controller != null) {
+        _controller = widget.controller!;
+      }
+    }
+  }
+
+  @override
   void dispose() {
     _debounceTimer?.cancel();
     if (widget.controller == null) {
