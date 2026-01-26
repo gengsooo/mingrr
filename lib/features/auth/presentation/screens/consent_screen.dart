@@ -77,7 +77,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                   children: [
                     // 안내 문구
                     Text(
-                      '밍그르 서비스 이용을 위해\n약관에 동의해주세요.',
+                      '밍그르르 서비스 이용을 위해\n약관에 동의해주세요.',
                       style: AppTextStyles.headlineMedium(context),
                     ),
                     const SizedBox(height: AppSizes.gapXXL),

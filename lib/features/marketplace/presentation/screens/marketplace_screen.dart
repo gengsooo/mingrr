@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/location_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/cards/product_card.dart';
@@ -11,8 +12,10 @@ import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../core/widgets/navigation/appbar_actions.dart';
 import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
+import '../../../../core/widgets/empty_states/location_required_empty_state.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../../core/providers/refresh_notifier.dart';
+import '../../../../core/providers/location_verification_provider.dart';
 import '../providers/marketplace_provider.dart';
 import 'product_detail_screen.dart';
 import 'product_write_screen.dart';
@@ -35,8 +38,8 @@ final _selectedTabProvider = StateProvider<int>((ref) => 0);
 /// 선택된 카테고리 인덱스
 final _selectedCategoryProvider = StateProvider<int>((ref) => 0);
 
-/// 거리 필터
-final _distanceFilterProvider = StateProvider<double>((ref) => 3.0);
+/// 거리 필터 - 기본값 5km
+final _distanceFilterProvider = StateProvider<double>((ref) => LocationConstants.defaultRadiusKm);
 
 class MarketplaceScreen extends ConsumerStatefulWidget {
   const MarketplaceScreen({super.key});
@@ -169,6 +172,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
           LocationDistanceBar(
             accentColor: context.features.market,
             currentDistance: distanceFilter,
+            distanceOptions: LocationConstants.marketDistanceOptions,
             onDistanceChanged: (distance) {
               ref.read(_distanceFilterProvider.notifier).state = distance;
             },
@@ -187,9 +191,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
           
           // 상품/알바 목록
           Expanded(
-            child: selectedTab == 2
-                ? _buildJobList(context)
-                : _buildProductList(context, selectedTab == 0 ? ProductType.sell : ProductType.share),
+            child: _buildContent(context, selectedTab, distanceFilter),
           ),
         ],
       ),
@@ -199,6 +201,29 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
         tooltip: '상품/알바 등록',
       ),
     );
+  }
+
+  /// 탭별 컨텐츠 (위치 인증 상태 확인)
+  Widget _buildContent(BuildContext context, int selectedTab, double distanceFilter) {
+    // 위치 인증 상태 확인
+    final userAsync = ref.watch(currentUserStreamProvider);
+    final user = userAsync.valueOrNull;
+    final isLocationVerified = user?.isLocationVerified ?? false;
+    
+    // 위치 미인증 시 빈 화면 표시
+    if (!isLocationVerified) {
+      return LocationRequiredEmptyState(
+        type: LocationRequiredType.market,
+        accentColor: context.features.market,
+      );
+    }
+    
+    // 탭별 컨텐츠
+    if (selectedTab == 2) {
+      return _buildJobList(context);
+    } else {
+      return _buildProductList(context, selectedTab == 0 ? ProductType.sell : ProductType.share);
+    }
   }
 
   /// 상품 목록 (Firebase 연동 + 거리 필터링 + 페이지네이션)

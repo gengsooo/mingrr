@@ -17,7 +17,7 @@ import '../../../../core/services/firebase_service.dart';
 import '../../../../models/chat_model.dart';
 import '../../../../models/dating_request_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../dating/presentation/providers/dating_request_provider.dart';
+import '../../../dating/presentation/providers/dating_request_provider.dart' show receivedRequestsProvider, receivedDatingRequestsProvider, receivedBreedingRequestsProvider, DatingRequestActionService;
 import '../providers/chat_provider.dart';
 import 'chat_detail_screen.dart';
 import '../../../../core/utils/responsive_utils.dart';
@@ -188,60 +188,68 @@ class ChatListScreen extends ConsumerWidget {
         final chatRoomsAsync = ref.watch(userChatRoomsProvider);
         final currentUserId = ref.watch(authStateProvider).valueOrNull?.uid;
 
-        return ListView(
-            padding: const EdgeInsets.all(AppSizes.paddingM),
-            children: [
-              // 대기 중인 신청이 있으면 표시
-              if (pendingRequests.isNotEmpty) ...[
-                _buildRequestsSection(context, ref, pendingRequests),
-                const SizedBox(height: AppSizes.gapL),
+        return chatRoomsAsync.when(
+          data: (allChatRooms) {
+            final filteredRooms = allChatRooms.where((room) {
+              return room.type == 'dating' || room.type == 'breeding';
+            }).toList();
+            
+            // 신청도 없고 채팅도 없으면 빈 화면 표시
+            if (filteredRooms.isEmpty && pendingRequests.isEmpty) {
+              return MingrrEmptyState(
+                icon: Icons.chat_bubble_outline,
+                title: '아직 데이터가 없어요',
+                subtitle: _getEmptyStateMessage(ChatType.dating),
+                accentColor: context.features.dating,
+                onRefresh: () async {
+                  ref.invalidate(userChatRoomsProvider);
+                  ref.invalidate(receivedDatingRequestsProvider);
+                  ref.invalidate(receivedBreedingRequestsProvider);
+                },
+              );
+            }
+            
+            // 데이터가 있으면 리스트 표시
+            return ListView(
+              padding: const EdgeInsets.all(AppSizes.paddingM),
+              children: [
+                // 대기 중인 신청이 있으면 표시
+                if (pendingRequests.isNotEmpty) ...[
+                  _buildRequestsSection(context, ref, pendingRequests),
+                  const SizedBox(height: AppSizes.gapL),
+                ],
+                
+                // 채팅 목록
+                if (filteredRooms.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSizes.gapS),
+                    child: Text(
+                      '채팅',
+                      style: AppTextStyles.titleMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+                  ...filteredRooms.map((room) => _buildChatRoomItem(context, ref, room, ChatType.dating, currentUserId ?? '')),
+                ],
               ],
-              
-              // 채팅 목록
-              chatRoomsAsync.when(
-              data: (allChatRooms) {
-                final filteredRooms = allChatRooms.where((room) {
-                  return room.type == 'dating' || room.type == 'breeding';
-                }).toList();
-                
-                if (filteredRooms.isEmpty && pendingRequests.isEmpty) {
-                  return MingrrEmptyState(
-                    icon: Icons.chat_bubble_outline,
-                    title: '아직 데이터가 없어요',
-                    subtitle: _getEmptyStateMessage(ChatType.dating),
-                    accentColor: context.features.dating,
-                    onRefresh: () async {
-                      ref.invalidate(userChatRoomsProvider);
-                      ref.invalidate(receivedRequestsProvider);
-                    },
-                  );
-                }
-                
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (filteredRooms.isNotEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSizes.gapS),
-                        child: Text(
-                          '채팅',
-                          style: AppTextStyles.titleMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        ),
-                      ),
-                      ...filteredRooms.map((room) => _buildChatRoomItem(context, ref, room, ChatType.dating, currentUserId ?? '')),
-                    ],
-                  ],
-                );
-              },
-              loading: () => const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(AppSizes.paddingXL),
-                  child: MingrrLoadingIndicator.medium(type: MingrrLoadingType.chat),
-                ),
-              ),
-              error: (_, __) => const SizedBox.shrink(),
+            );
+          },
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(AppSizes.paddingXL),
+              child: MingrrLoadingIndicator.medium(type: MingrrLoadingType.chat),
             ),
-            ],
+          ),
+          error: (_, __) => Center(
+            child: MingrrEmptyState(
+              icon: Icons.error_outline,
+              title: '데이터를 불러올 수 없어요',
+              subtitle: '잠시 후 다시 시도해주세요',
+              accentColor: context.features.dating,
+              onRefresh: () async {
+                ref.invalidate(userChatRoomsProvider);
+              },
+            ),
+          ),
         );
       },
     );
@@ -423,10 +431,16 @@ class ChatListScreen extends ConsumerWidget {
               cancelText: '취소',
               confirmText: '수락하기',
               onCancel: () => Navigator.pop(ctx),
-              onConfirm: () {
-                ref.read(receivedRequestsProvider.notifier).acceptRequest(request.id);
+              onConfirm: () async {
                 Navigator.pop(ctx);
-                MingrrSnackBar.success(context, '${request.senderPetName}의 ${request.typeLabel}을 수락했어요! 💕');
+                final chatRoomId = await DatingRequestActionService.acceptRequest(request);
+                if (context.mounted) {
+                  if (chatRoomId != null) {
+                    MingrrSnackBar.success(context, '${request.senderPetName}의 ${request.typeLabel}을 수락했어요! 💕');
+                  } else {
+                    MingrrSnackBar.error(context, '수락 처리 중 오류가 발생했어요');
+                  }
+                }
               },
               confirmColor: context.features.dating,
             ),
@@ -470,10 +484,12 @@ class ChatListScreen extends ConsumerWidget {
               cancelText: '취소',
               confirmText: '거절하기',
               onCancel: () => Navigator.pop(ctx),
-              onConfirm: () {
-                ref.read(receivedRequestsProvider.notifier).rejectRequest(request.id);
+              onConfirm: () async {
                 Navigator.pop(ctx);
-                MingrrSnackBar.info(context, '신청을 거절했어요');
+                await DatingRequestActionService.rejectRequest(request);
+                if (context.mounted) {
+                  MingrrSnackBar.info(context, '신청을 거절했어요');
+                }
               },
               confirmColor: Theme.of(context).colorScheme.onSurfaceVariant,
             ),

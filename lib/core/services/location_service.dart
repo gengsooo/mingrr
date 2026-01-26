@@ -99,7 +99,7 @@ class LocationService {
   static bool isWithinMarketRadius(
     GeoPoint itemLocation,
     GeoPoint userHomeLocation, {
-    double radiusKm = LocationConstants.marketDefaultRadiusKm,
+    double radiusKm = LocationConstants.defaultRadiusKm,
   }) {
     final distance = calculateDistanceFromGeoPoints(itemLocation, userHomeLocation);
     return distance <= radiusKm * 1000; // km를 m로 변환
@@ -114,7 +114,7 @@ class LocationService {
   static bool isWithinCommunityRadius(
     GeoPoint communityLocation,
     GeoPoint userHomeLocation, {
-    double radiusKm = LocationConstants.communityDefaultRadiusKm,
+    double radiusKm = LocationConstants.defaultRadiusKm,
   }) {
     final distance = calculateDistanceFromGeoPoints(communityLocation, userHomeLocation);
     return distance <= radiusKm * 1000;

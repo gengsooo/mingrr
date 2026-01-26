@@ -141,7 +141,7 @@ class CustomerServiceScreen extends StatelessWidget {
     final uri = Uri(
       scheme: 'mailto',
       path: email,
-      query: 'subject=[밍그르] 문의드립니다',
+      query: 'subject=[밍그르르] 문의드립니다',
     );
     
     try {
@@ -204,7 +204,7 @@ class CustomerServiceScreen extends StatelessWidget {
     
     final notices = [
       {
-        'title': '[안내] 밍그르 서비스 오픈!',
+        'title': '[안내] 밍그르르 서비스 오픈!',
         'date': '2025.01.10',
         'isNew': true,
       },
@@ -298,7 +298,7 @@ class CustomerServiceScreen extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Text(
                   '공지사항 내용이 여기에 표시됩니다.\n\n'
-                  '밍그르를 이용해 주셔서 감사합니다.\n\n'
+                  '밍그르르를 이용해 주셔서 감사합니다.\n\n'
                   '더 좋은 서비스로 보답하겠습니다.',
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
                 ),

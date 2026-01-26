@@ -177,6 +177,8 @@ final paginatedProductsProvider = StateNotifierProvider
       final filteredProducts = products.where((p) => !blockedUserIds.contains(p.sellerId)).toList();
       
       final result = <ProductWithDistance>[];
+      final isAllDistance = params.radiusKm == 0; // 0 = 전체 (거리 제한 없음)
+      
       for (final product in filteredProducts) {
         double distance = 0; // 위치 정보 없으면 0으로 처리 (리스트에 표시)
         if (product.location != null && userLocation != null) {
@@ -184,8 +186,8 @@ final paginatedProductsProvider = StateNotifierProvider
             userLocation,
             product.location!,
           );
-          // 거리 필터 적용 (위치 정보가 있는 경우에만)
-          if (distance > params.radiusKm * 1000) {
+          // 거리 필터 적용 (전체가 아닌 경우에만)
+          if (!isAllDistance && distance > params.radiusKm * 1000) {
             continue; // 거리 초과 시 제외
           }
         }

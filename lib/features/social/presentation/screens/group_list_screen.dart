@@ -13,8 +13,10 @@ import '../../../../core/widgets/forms/location_selector.dart';
 import '../../../../core/widgets/badges/info_badge.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/widgets/navigation/top_navigation.dart';
+import '../../../../core/widgets/empty_states/location_required_empty_state.dart';
 import '../../../../core/constants/location_constants.dart';
 import '../../../../core/providers/refresh_notifier.dart';
+import '../../../../core/providers/location_verification_provider.dart';
 import '../providers/group_provider.dart';
 import 'group_detail_screen.dart';
 import 'group_write_screen.dart';
@@ -97,7 +99,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
 
           // 모임 목록
           Expanded(
-            child: _buildGroupList(context, ref, selectedLocations),
+            child: _buildContent(context, ref, selectedLocations),
           ),
         ],
       ),
@@ -166,6 +168,24 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
       },
       accentColor: accentColor,
     );
+  }
+
+  /// 컨텐츠 (위치 인증 상태 확인)
+  Widget _buildContent(BuildContext context, WidgetRef ref, List<String> locationFilter) {
+    // 위치 인증 상태 확인
+    final userAsync = ref.watch(currentUserStreamProvider);
+    final user = userAsync.valueOrNull;
+    final isLocationVerified = user?.isLocationVerified ?? false;
+    
+    // 위치 미인증 시 빈 화면 표시
+    if (!isLocationVerified) {
+      return LocationRequiredEmptyState(
+        type: LocationRequiredType.group,
+        accentColor: context.features.social,
+      );
+    }
+    
+    return _buildGroupList(context, ref, locationFilter);
   }
 
   Widget _buildGroupList(BuildContext context, WidgetRef ref, List<String> locationFilter) {

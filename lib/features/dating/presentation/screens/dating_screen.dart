@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/location_constants.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/pet_constants.dart';
@@ -14,7 +15,9 @@ import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/cards/dating_card.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
+import '../../../../core/widgets/empty_states/location_required_empty_state.dart';
 import '../../../../core/providers/refresh_notifier.dart';
+import '../../../../core/providers/location_verification_provider.dart';
 import '../../../../core/services/dating_service.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../providers/dating_provider.dart';
@@ -35,8 +38,8 @@ import 'pet_detail_screen.dart';
 /// 선택된 탭 (0: 추천, 1: 근처 검색, 2: 교배찾기)
 final _selectedTabProvider = StateProvider<int>((ref) => 0);
 
-/// 거리 필터 (근처 검색/교배찾기 공통)
-final _distanceFilterProvider = StateProvider<double>((ref) => 3.0);
+/// 거리 필터 (근처 검색/교배찾기 공통) - 기본값 5km
+final _distanceFilterProvider = StateProvider<double>((ref) => LocationConstants.defaultRadiusKm);
 
 /// ============================================================
 /// 교배찾기 필터 Provider
@@ -177,6 +180,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
             LocationDistanceBar(
               accentColor: features.dating,
               currentDistance: distanceFilter,
+              distanceOptions: LocationConstants.datingDistanceOptions,
               onDistanceChanged: (distance) {
                 ref.read(_distanceFilterProvider.notifier).state = distance;
               },
@@ -205,6 +209,19 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
 
   /// 탭별 컨텐츠
   Widget _buildTabContent(BuildContext context, WidgetRef ref, int selectedTab, double distanceFilter) {
+    // 위치 인증 상태 확인
+    final userAsync = ref.watch(currentUserStreamProvider);
+    final user = userAsync.valueOrNull;
+    final isLocationVerified = user?.isLocationVerified ?? false;
+    
+    // 위치 미인증 시 빈 화면 표시
+    if (!isLocationVerified) {
+      return LocationRequiredEmptyState(
+        type: LocationRequiredType.dating,
+        accentColor: context.features.dating,
+      );
+    }
+    
     switch (selectedTab) {
       case 0:
         return _buildRecommendList(context);  // 추천: 스크롤 리스트

@@ -77,7 +77,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
                 ),
                 const SizedBox(height: AppSizes.gapL),
                 Text(
-                  '밍그르',
+                  '밍그르르',
                   style: theme.textTheme.headlineMedium,
                 ),
                 const SizedBox(height: AppSizes.gapXS),
@@ -180,7 +180,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
   void _showLicenses(BuildContext context) {
     showLicensePage(
       context: context,
-      applicationName: '밍그르',
+      applicationName: '밍그르르',
       applicationVersion: 'v$_version',
       applicationIcon: Container(
         width: 60,
