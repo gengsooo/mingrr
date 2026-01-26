@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/svg_icons.dart';
-import '../../../../core/widgets/top_navigation.dart';
-import '../../../../core/widgets/profile_icon.dart';
-import '../../../../core/widgets/guardian_profile_modal.dart';
+import '../../../../core/widgets/mingrr_image.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
+import '../../../../core/widgets/navigation/top_navigation.dart';
+import '../../../../core/widgets/navigation/appbar_actions.dart';
+import '../../../../core/widgets/modals/guardian_profile_modal.dart';
+import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../models/chat_model.dart';
 import '../../../../models/dating_request_model.dart';
@@ -16,9 +19,10 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../dating/presentation/providers/dating_request_provider.dart';
 import '../providers/chat_provider.dart';
 import 'chat_detail_screen.dart';
+import '../../../../core/utils/responsive_utils.dart';
 
 /// ============================================================
-/// 채팅 목록 화면 (V4 - 강아지 전용 + 교배 배지)
+/// 채팅 목록 화면 (V4 - 반려동물 전용 + 교배 배지)
 /// 
 /// 변경사항:
 /// - 3개 탭 (데이팅/소모임/마켓) - pill 형태
@@ -44,15 +48,15 @@ class ChatListScreen extends ConsumerWidget {
     // 탭 정의 (아이콘 사용 - 선택 시 흰색으로 변경됨)
     // 순서: 데이팅 → 마켓 → 소모임
     final tabs = [
-      TopNavTab(label: '데이팅', icon: Icons.favorite, color: features.dating),
-      TopNavTab(label: '마켓', icon: Icons.store, color: features.market),
-      TopNavTab(label: '소모임', icon: Icons.groups, color: features.community),
+      MingrrTabItem(label: '데이팅', icon: Icons.favorite, color: features.dating),
+      MingrrTabItem(label: '마켓', icon: Icons.store, color: features.market),
+      MingrrTabItem(label: '소모임', icon: Icons.groups, color: features.social),
     ];
 
     // 탭별 배경색 (채팅 목록은 각 탭의 테마색 유지)
     final backgroundColor = switch (selectedTab) {
       ChatType.dating || ChatType.breeding => features.datingContainer,
-      ChatType.community => features.communityContainer,
+      ChatType.group => features.socialContainer,
       ChatType.market => features.marketContainer,
     };
     
@@ -61,14 +65,14 @@ class ChatListScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('채팅'),
         actions: [
-          const NotificationIconButton(),
-          buildProfileAction(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
+          AppBarActionButton.notification(),
+          AppBarActionButton.profile(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
         ],
       ),
       body: Column(
         children: [
           // 3개 탭 (pill 형태)
-          PillTabBar(
+          MingrrMainTabBar(
             tabs: tabs,
             selectedIndex: _getTabIndex(selectedTab),
             onTabSelected: (index) {
@@ -76,7 +80,7 @@ class ChatListScreen extends ConsumerWidget {
               final chatType = switch (index) {
                 0 => ChatType.dating,
                 1 => ChatType.market,
-                2 => ChatType.community,
+                2 => ChatType.group,
                 _ => ChatType.dating,
               };
               ref.read(_selectedChatTabProvider.notifier).state = chatType;
@@ -100,7 +104,7 @@ class ChatListScreen extends ConsumerWidget {
         return 0;
       case ChatType.market:
         return 1;
-      case ChatType.community:
+      case ChatType.group:
         return 2;
     }
   }
@@ -113,8 +117,8 @@ class ChatListScreen extends ConsumerWidget {
         return features.dating;
       case ChatType.breeding:
         return features.breeding;
-      case ChatType.community:
-        return features.community;
+      case ChatType.group:
+        return features.social;
       case ChatType.market:
         return features.market;
     }
@@ -141,9 +145,13 @@ class ChatListScreen extends ConsumerWidget {
             
             if (filteredRooms.isEmpty) {
               return MingrrEmptyState(
-                svgAsset: SvgAssets.emptyChat,
-                title: '${type.label} 채팅이 없어요',
+                icon: Icons.chat_bubble_outline,
+                title: '아직 데이터가 없어요',
                 subtitle: _getEmptyStateMessage(type),
+                accentColor: _getTabColor(context, type),
+                onRefresh: () async {
+                  ref.invalidate(userChatRoomsProvider);
+                },
               );
             }
             
@@ -151,15 +159,19 @@ class ChatListScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(AppSizes.paddingM),
               itemCount: filteredRooms.length,
               itemBuilder: (context, index) {
-                return _buildChatRoomItem(context, ref, filteredRooms[index], type, currentUserId ?? '');
+                return MingrrAnimatedListItem(
+                  index: index,
+                  child: _buildChatRoomItem(context, ref, filteredRooms[index], type, currentUserId ?? ''),
+                );
               },
             );
           },
-          loading: () => const MingrrLoadingState(),
-          error: (_, __) => MingrrEmptyState(
-            svgAsset: SvgAssets.emptyChat,
-            title: '${type.label} 채팅을 불러올 수 없어요',
-            subtitle: '네트워크 연결을 확인해주세요',
+          loading: () => MingrrLoadingState(
+            type: MingrrLoadingType.chat,
+            message: '채팅 목록을 불러오고 있어요',
+          ),
+          error: (_, __) => MingrrErrorState(
+            onRetry: () => ref.invalidate(userChatRoomsProvider),
           ),
         );
       },
@@ -176,16 +188,16 @@ class ChatListScreen extends ConsumerWidget {
         final currentUserId = ref.watch(authStateProvider).valueOrNull?.uid;
 
         return ListView(
-          padding: const EdgeInsets.all(AppSizes.paddingM),
-          children: [
-            // 대기 중인 신청이 있으면 표시
-            if (pendingRequests.isNotEmpty) ...[
-              _buildRequestsSection(context, ref, pendingRequests),
-              const SizedBox(height: AppSizes.gapL),
-            ],
-            
-            // 채팅 목록
-            chatRoomsAsync.when(
+            padding: const EdgeInsets.all(AppSizes.paddingM),
+            children: [
+              // 대기 중인 신청이 있으면 표시
+              if (pendingRequests.isNotEmpty) ...[
+                _buildRequestsSection(context, ref, pendingRequests),
+                const SizedBox(height: AppSizes.gapL),
+              ],
+              
+              // 채팅 목록
+              chatRoomsAsync.when(
               data: (allChatRooms) {
                 final filteredRooms = allChatRooms.where((room) {
                   return room.type == 'dating' || room.type == 'breeding';
@@ -193,9 +205,14 @@ class ChatListScreen extends ConsumerWidget {
                 
                 if (filteredRooms.isEmpty && pendingRequests.isEmpty) {
                   return MingrrEmptyState(
-                    svgAsset: SvgAssets.emptyChat,
-                    title: '데이팅 채팅이 없어요',
+                    icon: Icons.chat_bubble_outline,
+                    title: '아직 데이터가 없어요',
                     subtitle: _getEmptyStateMessage(ChatType.dating),
+                    accentColor: context.features.dating,
+                    onRefresh: () async {
+                      ref.invalidate(userChatRoomsProvider);
+                      ref.invalidate(receivedRequestsProvider);
+                    },
                   );
                 }
                 
@@ -207,7 +224,7 @@ class ChatListScreen extends ConsumerWidget {
                         padding: const EdgeInsets.only(bottom: AppSizes.gapS),
                         child: Text(
                           '채팅',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          style: AppTextStyles.titleMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                       ),
                       ...filteredRooms.map((room) => _buildChatRoomItem(context, ref, room, ChatType.dating, currentUserId ?? '')),
@@ -215,10 +232,15 @@ class ChatListScreen extends ConsumerWidget {
                   ],
                 );
               },
-              loading: () => const MingrrLoadingState(),
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(AppSizes.paddingXL),
+                  child: MingrrLoadingIndicator.medium(type: MingrrLoadingType.chat),
+                ),
+              ),
               error: (_, __) => const SizedBox.shrink(),
             ),
-          ],
+            ],
         );
       },
     );
@@ -233,18 +255,18 @@ class ChatListScreen extends ConsumerWidget {
           children: [
             Text(
               '받은 신청',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: AppTextStyles.titleMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSizes.gapS),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
               decoration: BoxDecoration(
                 color: context.features.dating,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
                 '${requests.length}',
-                style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600),
+                style: AppTextStyles.labelLarge(context).copyWith(color: Colors.white),
               ),
             ),
           ],
@@ -264,7 +286,7 @@ class ChatListScreen extends ConsumerWidget {
     return MingrrCard(
       margin: const EdgeInsets.only(bottom: AppSizes.gapS),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(AppSizes.paddingM),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -273,29 +295,14 @@ class ChatListScreen extends ConsumerWidget {
                 // 프로필 이미지 (클릭 시 보호자 정보 바텀시트)
                 GestureDetector(
                   onTap: () => _showSenderGuardianProfile(context, request),
-                  child: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                      image: request.senderPetImageUrl != null
-                          ? DecorationImage(
-                              image: NetworkImage(request.senderPetImageUrl!),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: request.senderPetImageUrl == null
-                        ? Icon(
-                            isBreeding ? Icons.pets : Icons.favorite,
-                            color: accentColor,
-                            size: 22,
-                          )
-                        : null,
+                  child: MingrrPetAvatar(
+                    imageUrl: request.senderPetImageUrl,
+                    size: 44,
+                    borderColor: accentColor.withValues(alpha: AppOpacity.o30),
+                    borderWidth: 1,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSizes.gapM),
                 // 정보
                 Expanded(
                   child: Column(
@@ -304,45 +311,45 @@ class ChatListScreen extends ConsumerWidget {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                             decoration: BoxDecoration(
-                              color: accentColor.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(4),
+                              color: accentColor.withValues(alpha: AppOpacity.o10),
+                              borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                             ),
                             child: Text(
                               isBreeding ? '교배' : '데이트',
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: accentColor),
+                              style: AppTextStyles.captionSmall(context).copyWith(color: accentColor),
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSizes.gapS),
                           Expanded(
                             child: Text(
                               '${request.senderPetName} · ${request.senderName}',
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                              style: AppTextStyles.titleMedium(context),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSizes.gapS),
                           Text(
                             _formatRequestTime(request.createdAt),
-                            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant),
+                            style: AppTextStyles.captionSmall(context),
                           ),
                         ],
                       ),
                       if (request.message != null && request.message!.isNotEmpty) ...[
-                        const SizedBox(height: 6),
+                        const SizedBox(height: AppSizes.gapSM),
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                           decoration: BoxDecoration(
                             color: Theme.of(context).brightness == Brightness.dark
                                 ? Theme.of(context).colorScheme.surfaceContainerHighest
-                                : Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(8),
+                                : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: AppOpacity.o30),
+                            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                           ),
                           child: Text(
                             request.message!,
-                            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            style: AppTextStyles.bodySmall(context),
                           ),
                         ),
                       ],
@@ -351,7 +358,7 @@ class ChatListScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSizes.gapM),
             // 수락/거절 버튼
             Row(
               children: [
@@ -363,25 +370,20 @@ class ChatListScreen extends ConsumerWidget {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
                         side: BorderSide(color: Theme.of(context).colorScheme.outline),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusXS)),
                       ),
-                      child: const Text('거절', style: TextStyle(fontSize: 14)),
+                      child: Text('거절', style: AppTextStyles.bodyMedium(context)),
                     ),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: SizedBox(
+                  child: MingrrButton(
+                    text: '수락',
+                    onPressed: () => _showAcceptConfirmation(context, ref, request),
+                    backgroundColor: accentColor,
+                    textColor: Colors.white,
                     height: 36,
-                    child: ElevatedButton(
-                      onPressed: () => _showAcceptConfirmation(context, ref, request),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: accentColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                      child: const Text('수락', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    ),
                   ),
                 ),
               ],
@@ -418,56 +420,54 @@ class ChatListScreen extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const BottomSheetHandle(),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             Icon(
-              isBreeding ? Icons.pets : Icons.favorite,
+              isBreeding ? Icons.family_restroom : Icons.favorite,
               size: 48,
               color: context.features.dating,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             Text(
               '${request.typeLabel} 수락',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              style: AppTextStyles.headlineMedium(context),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             Text(
               '${request.senderName}님의 ${request.senderPetName}와\n${isBreeding ? '교배' : '데이트'}를 시작할까요?',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: AppTextStyles.bodyMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSizes.gapXL),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(ctx),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
                       side: BorderSide(color: Theme.of(context).colorScheme.outline),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusS)),
                     ),
                     child: const Text('취소'),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSizes.gapM),
                 Expanded(
-                  child: ElevatedButton(
+                  child: MingrrButton(
+                    text: '수락하기',
                     onPressed: () {
                       ref.read(receivedRequestsProvider.notifier).acceptRequest(request.id);
                       Navigator.pop(ctx);
                       MingrrSnackBar.success(context, '${request.senderPetName}의 ${request.typeLabel}을 수락했어요! 💕');
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: context.features.dating,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('수락하기', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                    backgroundColor: context.features.dating,
+                    textColor: Colors.white,
+                    height: 48,
                   ),
                 ),
               ],
             ),
-            SizedBox(height: MediaQuery.of(ctx).padding.bottom),
+            SizedBox(height: ResponsiveUtils.bottomSafeArea(ctx)),
           ],
         ),
       ),
@@ -489,52 +489,50 @@ class ChatListScreen extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const BottomSheetHandle(),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             Icon(Icons.close, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             Text(
               '${request.typeLabel} 거절',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              style: AppTextStyles.headlineMedium(context),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             Text(
               '${request.senderName}님의 신청을 거절할까요?',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: AppTextStyles.bodyMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSizes.gapXL),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(ctx),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
                       side: BorderSide(color: Theme.of(context).colorScheme.outline),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusS)),
                     ),
                     child: const Text('취소'),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSizes.gapM),
                 Expanded(
-                  child: ElevatedButton(
+                  child: MingrrButton(
+                    text: '거절하기',
                     onPressed: () {
                       ref.read(receivedRequestsProvider.notifier).rejectRequest(request.id);
                       Navigator.pop(ctx);
                       MingrrSnackBar.info(context, '신청을 거절했어요');
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('거절하기', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.white)),
+                    backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                    textColor: Colors.white,
+                    height: 48,
                   ),
                 ),
               ],
             ),
-            SizedBox(height: MediaQuery.of(ctx).padding.bottom),
+            SizedBox(height: ResponsiveUtils.bottomSafeArea(ctx)),
           ],
         ),
       ),
@@ -549,12 +547,12 @@ class ChatListScreen extends ConsumerWidget {
     final isBreeding = room.type == 'breeding';
     final isDating = room.type == 'dating' || room.type == 'breeding';
     final isMarket = room.type == 'marketplace' || room.type == 'market';
-    final isCommunity = room.type == 'community';
+    final isGroup = room.type == 'community' || room.type == 'group';
     
     // 소모임인 경우 소모임 이름 조회
-    String? communityName;
-    if (isCommunity && room.relatedId != null) {
-      communityName = ref.watch(communityNameProvider(room.relatedId!)).valueOrNull;
+    String? groupName;
+    if (isGroup && room.relatedId != null) {
+      groupName = ref.watch(groupNameProvider(room.relatedId!)).valueOrNull;
     }
     
     // 타입별 표시 정보 결정
@@ -580,7 +578,7 @@ class ChatListScreen extends ConsumerWidget {
       placeholderIcon = Icons.person;
     } else {
       // 소모임: 모임명 표시 (소모임 이름 우선)
-      displayName = communityName ?? '소모임';
+      displayName = groupName ?? '소모임';
       displayImage = null; // 소모임은 아이콘 사용
       subtitle = null;
       placeholderIcon = Icons.groups;
@@ -663,26 +661,23 @@ class ChatListScreen extends ConsumerWidget {
                           Flexible(
                             child: Text(
                               displayName,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w500,
-                              ),
+                              style: AppTextStyles.titleLarge(context).withWeight(hasUnread ? FontWeight.w700 : FontWeight.w500),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           // 교배 배지
                           if (isBreeding) ...[
-                            const SizedBox(width: 6),
+                            const SizedBox(width: AppSizes.gapSM),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                               decoration: BoxDecoration(
                                 color: context.features.breeding,
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                               ),
-                              child: const Text(
+                              child: Text(
                                 '교배',
-                                style: TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.w600),
+                                style: AppTextStyles.captionSmall(context),
                               ),
                             ),
                           ],
@@ -691,50 +686,41 @@ class ChatListScreen extends ConsumerWidget {
                     ),
                     Text(
                       timeString,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: hasUnread ? context.features.chat : Theme.of(context).colorScheme.outlineVariant,
-                      ),
+                      style: AppTextStyles.caption(context).withColor(hasUnread ? context.features.chat : Theme.of(context).colorScheme.outlineVariant),
                     ),
                   ],
                 ),
                 // 부가 정보 (데이팅/교배: 보호자명, 마켓/소모임: 없음)
                 if (subtitle != null) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSizes.gapXXS),
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant),
+                    style: AppTextStyles.captionSmall(context),
                   ),
                 ],
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSizes.gapXS),
                 Row(
                   children: [
                     Expanded(
                       child: Text(
                         room.lastMessage ?? '',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: hasUnread ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontWeight: hasUnread ? FontWeight.w500 : FontWeight.w400,
-                        ),
+                        style: AppTextStyles.bodyMedium(context)
+                            .withWeight(hasUnread ? FontWeight.w500 : FontWeight.w400)
+                            .withColor(hasUnread ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurfaceVariant),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (hasUnread)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
                         decoration: BoxDecoration(
                           color: _getTabColor(context, type),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Text(
                           '$unreadCount',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTextStyles.labelMedium(context).withWeight(FontWeight.w600).withColor(Colors.white),
                         ),
                       ),
                   ],
@@ -754,7 +740,7 @@ class ChatListScreen extends ConsumerWidget {
         return '새로운 친구를 찾아보세요!';
       case ChatType.breeding:
         return '교배 신청이 수락되면\n채팅이 시작됩니다';
-      case ChatType.community:
+      case ChatType.group:
         return '소모임에 가입하면\n채팅이 시작됩니다';
       case ChatType.market:
         return '마켓에서 거래를 시작하면\n채팅이 생성됩니다';
@@ -776,7 +762,7 @@ class ChatListScreen extends ConsumerWidget {
         return [
           {'id': '3', 'name': '몽이', 'owner': '최지현', 'lastMessage': '교배 관련해서 문의드려요', 'time': '2시간 전', 'unread': 0, 'isOnline': false, 'isBreeding': true},
         ];
-      case ChatType.community:
+      case ChatType.group:
         return [
           {'id': '5', 'name': '한강 산책 모임', 'owner': '', 'lastMessage': '이번 주 토요일 모임 확정입니다!', 'time': '3시간 전', 'unread': 5, 'memberCount': 28},
           {'id': '6', 'name': '강남 댕댕이 모임', 'owner': '', 'lastMessage': '다음 모임 장소 투표해주세요~', 'time': '5시간 전', 'unread': 12, 'memberCount': 45},
@@ -785,7 +771,7 @@ class ChatListScreen extends ConsumerWidget {
       case ChatType.market:
         return [
           {'id': '8', 'name': '콩이', 'owner': '박민수', 'lastMessage': '간식 아직 있나요?', 'time': '1시간 전', 'unread': 1, 'productName': '수제 간식 세트'},
-          {'id': '9', 'name': '두부', 'owner': '정수진', 'lastMessage': '네, 직거래 가능해요', 'time': '3시간 전', 'unread': 0, 'productName': '강아지 옷 (M사이즈)'},
+          {'id': '9', 'name': '두부', 'owner': '정수진', 'lastMessage': '네, 직거래 가능해요', 'time': '3시간 전', 'unread': 0, 'productName': '반려동물 옷 (M사이즈)'},
         ];
     }
   }
@@ -794,7 +780,7 @@ class ChatListScreen extends ConsumerWidget {
   /// 채팅 아이템
   Widget _buildChatItem(BuildContext context, Map<String, dynamic> chat, ChatType type) {
     final hasUnread = (chat['unread'] as int) > 0;
-    final isGroup = type == ChatType.community;
+    final isGroup = type == ChatType.group;
 
     return MingrrCard(
       margin: const EdgeInsets.only(bottom: AppSizes.gapS),
@@ -805,7 +791,7 @@ class ChatListScreen extends ConsumerWidget {
             builder: (context) => ChatDetailScreen(
               chatRoomId: chat['id'] as String,
               otherUserName: chat['name'] as String,
-              chatType: type == ChatType.dating ? 'dating' : type == ChatType.community ? 'community' : 'marketplace',
+              chatType: type == ChatType.dating ? 'dating' : type == ChatType.group ? 'group' : 'marketplace',
             ),
           ),
         );
@@ -870,26 +856,23 @@ class ChatListScreen extends ConsumerWidget {
                           Flexible(
                             child: Text(
                               chat['name'] as String,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: hasUnread ? FontWeight.w700 : FontWeight.w500,
-                              ),
+                              style: AppTextStyles.titleLarge(context).withWeight(hasUnread ? FontWeight.w700 : FontWeight.w500),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           // 교배 배지
                           if (chat['isBreeding'] == true) ...[
-                            const SizedBox(width: 6),
+                            const SizedBox(width: AppSizes.gapSM),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                               decoration: BoxDecoration(
                                 color: context.features.breeding,
-                                borderRadius: BorderRadius.circular(4),
+                                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                               ),
-                              child: const Text(
+                              child: Text(
                                 '교배',
-                                style: TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.w600),
+                                style: AppTextStyles.captionSmall(context),
                               ),
                             ),
                           ],
@@ -898,50 +881,41 @@ class ChatListScreen extends ConsumerWidget {
                     ),
                     Text(
                       chat['time'] as String,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: hasUnread ? context.features.chat : Theme.of(context).colorScheme.outlineVariant,
-                      ),
+                      style: AppTextStyles.caption(context).withColor(hasUnread ? context.features.chat : Theme.of(context).colorScheme.outlineVariant),
                     ),
                   ],
                 ),
                 // 부가 정보
                 if (_getSubtitle(chat, type).isNotEmpty) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSizes.gapXXS),
                   Text(
                     _getSubtitle(chat, type),
-                    style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant),
+                    style: AppTextStyles.captionSmall(context),
                   ),
                 ],
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSizes.gapXS),
                 Row(
                   children: [
                     Expanded(
                       child: Text(
                         chat['lastMessage'] as String,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: hasUnread ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurfaceVariant,
-                          fontWeight: hasUnread ? FontWeight.w500 : FontWeight.w400,
-                        ),
+                        style: AppTextStyles.bodyMedium(context)
+                            .withWeight(hasUnread ? FontWeight.w500 : FontWeight.w400)
+                            .withColor(hasUnread ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurfaceVariant),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (hasUnread)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
                         decoration: BoxDecoration(
                           color: _getTabColor(context, type),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Text(
                           '${chat['unread']}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTextStyles.labelMedium(context).withWeight(FontWeight.w600).withColor(Colors.white),
                         ),
                       ),
                   ],
@@ -960,7 +934,7 @@ class ChatListScreen extends ConsumerWidget {
       case ChatType.dating:
       case ChatType.breeding:
         return chat['owner'] as String? ?? '';
-      case ChatType.community:
+      case ChatType.group:
         final memberCount = chat['memberCount'] as int?;
         return memberCount != null ? '멤버 $memberCount명' : '';
       case ChatType.market:
@@ -975,7 +949,7 @@ class ChatListScreen extends ConsumerWidget {
         return Icons.favorite;
       case ChatType.breeding:
         return Icons.pets;
-      case ChatType.community:
+      case ChatType.group:
         return Icons.groups;
       case ChatType.market:
         return Icons.store;

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../theme/feature_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../constants/app_sizes.dart';
+import '../common_widgets.dart';
 
 /// ============================================================
 /// AppDialog - 통합 알림/확인 다이얼로그
@@ -37,6 +39,7 @@ enum DialogType {
   success(Icons.check_circle_outline, '완료'),
   warning(Icons.warning_amber_outlined, '경고'),
   error(Icons.error_outline, '오류'),
+  location(Icons.location_on, '위치 인증'),
   
   // 기능별 타입
   walk(Icons.directions_walk, '산책'),
@@ -63,12 +66,14 @@ enum DialogType {
         return Colors.orange;
       case DialogType.error:
         return Colors.red;
+      case DialogType.location:
+        return Theme.of(context).colorScheme.primary;
       case DialogType.walk:
         return features.walk;
       case DialogType.health:
         return features.health;
       case DialogType.community:
-        return features.community;
+        return features.social;
       case DialogType.market:
         return features.market;
       case DialogType.dating:
@@ -154,7 +159,7 @@ class AppDialog extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: AppOpacity.o10),
                 shape: BoxShape.circle,
               ),
               child: Icon(displayIcon, size: 28, color: color),
@@ -164,11 +169,7 @@ class AppDialog extends StatelessWidget {
             // 제목
             Text(
               title ?? type.defaultTitle,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: colorScheme.onSurface,
-              ),
+              style: AppTextStyles.headlineSmall(context),
             ),
             const SizedBox(height: AppSizes.gapS),
             
@@ -176,8 +177,7 @@ class AppDialog extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
+              style: AppTextStyles.bodyMedium(context).copyWith(
                 color: colorScheme.onSurfaceVariant,
                 height: 1.5,
               ),
@@ -196,23 +196,12 @@ class AppDialog extends StatelessWidget {
   }
 
   Widget _buildSingleButton(BuildContext context, Color color) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: () => Navigator.pop(context, true),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-        child: Text(
-          confirmText ?? '확인',
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        ),
-      ),
+    return MingrrButton(
+      text: confirmText ?? '확인',
+      onPressed: () => Navigator.pop(context, true),
+      backgroundColor: color,
+      textColor: Colors.white,
+      height: 48,
     );
   }
 
@@ -222,40 +211,23 @@ class AppDialog extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: OutlinedButton(
+          child: MingrrButton(
+            text: cancelText ?? '취소',
             onPressed: () => Navigator.pop(context, false),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              side: BorderSide(color: colorScheme.outline),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            child: Text(
-              cancelText ?? '취소',
-              style: TextStyle(
-                fontSize: 15,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
+            isOutlined: true,
+            backgroundColor: colorScheme.outline,
+            textColor: colorScheme.onSurfaceVariant,
+            height: 48,
           ),
         ),
         const SizedBox(width: AppSizes.gapM),
         Expanded(
-          child: ElevatedButton(
+          child: MingrrButton(
+            text: confirmText ?? '확인',
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: color,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            child: Text(
-              confirmText ?? '확인',
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-            ),
+            backgroundColor: color,
+            textColor: Colors.white,
+            height: 48,
           ),
         ),
       ],
@@ -263,8 +235,9 @@ class AppDialog extends StatelessWidget {
   }
 }
 
-/// 입력 다이얼로그 (텍스트 입력 받기)
-Future<String?> showInputDialog(
+/// 입력 다이얼로그 (텍스트 입력 받기) - DialogType 기반
+/// Note: 단순 입력은 input_dialog.dart의 showInputDialog 사용
+Future<String?> showAppInputDialog(
   BuildContext context, {
   required DialogType type,
   required String title,
@@ -300,7 +273,7 @@ Future<String?> showInputDialog(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: type.getColor(context).withOpacity(0.1),
+                    color: type.getColor(context).withValues(alpha: AppOpacity.o10),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(type.icon, size: 20, color: type.getColor(context)),
@@ -309,11 +282,7 @@ Future<String?> showInputDialog(
                 Expanded(
                   child: Text(
                     title,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface,
-                    ),
+                    style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w600),
                   ),
                 ),
               ],
@@ -323,10 +292,7 @@ Future<String?> showInputDialog(
               const SizedBox(height: AppSizes.gapS),
               Text(
                 message,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                style: AppTextStyles.bodyMedium(context).withColor(colorScheme.onSurfaceVariant),
               ),
             ],
             
@@ -342,14 +308,14 @@ Future<String?> showInputDialog(
                 filled: true,
                 fillColor: colorScheme.surfaceContainerHighest,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   borderSide: BorderSide(color: type.getColor(context), width: 1.5),
                 ),
-                contentPadding: const EdgeInsets.all(16),
+                contentPadding: const EdgeInsets.all(AppSizes.paddingL),
               ),
               autofocus: true,
             ),
@@ -360,45 +326,28 @@ Future<String?> showInputDialog(
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: MingrrButton(
+                    text: cancelText ?? '취소',
                     onPressed: () => Navigator.pop(ctx),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: BorderSide(color: colorScheme.outline),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      cancelText ?? '취소',
-                      style: TextStyle(
-                        fontSize: 15,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
+                    isOutlined: true,
+                    backgroundColor: colorScheme.outline,
+                    textColor: colorScheme.onSurfaceVariant,
+                    height: 48,
                   ),
                 ),
                 const SizedBox(width: AppSizes.gapM),
                 Expanded(
-                  child: ElevatedButton(
+                  child: MingrrButton(
+                    text: confirmText ?? '확인',
                     onPressed: () {
                       final value = controller.text.trim();
                       if (value.isNotEmpty) {
                         Navigator.pop(ctx, value);
                       }
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: type.getColor(context),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      confirmText ?? '확인',
-                      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                    ),
+                    backgroundColor: type.getColor(context),
+                    textColor: Colors.white,
+                    height: 48,
                   ),
                 ),
               ],

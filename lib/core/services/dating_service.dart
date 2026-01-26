@@ -9,7 +9,7 @@ import 'firebase_service.dart';
 /// 데이팅 서비스
 /// 
 /// 기능:
-/// - 좋아요 보내기/수락/거절
+/// - 데이팅 신청 보내기/수락/거절
 /// - 매칭 생성
 /// - 채팅방 생성
 /// - 알림 전송
@@ -20,89 +20,89 @@ class DatingService {
   
   FirebaseFirestore get _firestore => _firebase.firestore;
   
-  // ===== 좋아요 관련 =====
+  // ===== 데이팅 신청 관련 =====
   
-  /// 좋아요 보내기 (데이팅 신청)
-  Future<LikeModel> sendLike({
+  /// 데이팅 신청 보내기
+  Future<DatingRequestModel> sendDatingRequest({
     required String fromUserId,
     required String fromPetId,
     required String toUserId,
     required String toPetId,
     String? message,
-    bool isSuperLike = false,
+    bool isSuperRequest = false,
   }) async {
-    // 이미 좋아요를 보냈는지 확인
-    final existingLike = await _checkExistingLike(fromPetId, toPetId);
-    if (existingLike != null) {
-      throw Exception('이미 좋아요를 보냈습니다');
+    // 이미 신청을 보냈는지 확인
+    final existingRequest = await _checkExistingRequest(fromPetId, toPetId);
+    if (existingRequest != null) {
+      throw Exception('이미 데이팅 신청을 보냈습니다');
     }
     
-    final likeId = _uuid.v4();
-    final like = LikeModel(
-      id: likeId,
+    final requestId = _uuid.v4();
+    final request = DatingRequestModel(
+      id: requestId,
       fromUserId: fromUserId,
       fromPetId: fromPetId,
       toUserId: toUserId,
       toPetId: toPetId,
-      status: LikeStatus.pending,
-      isSuperLike: isSuperLike,
+      status: DatingRequestStatus.pending,
+      isSuperRequest: isSuperRequest,
       message: message,
       createdAt: DateTime.now(),
     );
     
-    await _firebase.likesCollection.doc(likeId).set(like.toFirestore());
+    await _firebase.datingRequestsCollection.doc(requestId).set(request.toFirestore());
     
     // 상대방에게 알림 전송
     await _sendNotification(
       userId: toUserId,
-      type: NotificationType.likeReceived,
-      title: '새로운 좋아요가 도착했어요! 💕',
+      type: NotificationType.datingRequest,
+      title: '새로운 데이팅 신청이 도착했어요! 💕',
       body: message ?? '누군가 관심을 보내왔어요',
       data: {
-        'targetId': likeId,
-        'targetType': 'like',
+        'targetId': requestId,
+        'targetType': 'dating_request',
         'fromPetId': fromPetId,
       },
     );
     
-    // 상대방도 좋아요를 보냈는지 확인 (상호 좋아요 = 매칭)
-    final reverseLike = await _checkExistingLike(toPetId, fromPetId);
-    if (reverseLike != null && reverseLike.status == LikeStatus.pending) {
-      // 상호 좋아요! 자동 매칭
-      await acceptLike(reverseLike.id);
+    // 상대방도 신청을 보냈는지 확인 (상호 신청 = 매칭)
+    final reverseRequest = await _checkExistingRequest(toPetId, fromPetId);
+    if (reverseRequest != null && reverseRequest.status == DatingRequestStatus.pending) {
+      // 상호 신청! 자동 매칭
+      await acceptDatingRequest(reverseRequest.id);
     }
     
-    return like;
+    return request;
   }
   
-  /// 좋아요 수락
-  Future<MatchModel?> acceptLike(String likeId) async {
-    final likeDoc = await _firebase.likesCollection.doc(likeId).get();
-    if (!likeDoc.exists) {
-      throw Exception('좋아요를 찾을 수 없습니다');
+  /// 데이팅 신청 수락
+  Future<MatchModel?> acceptDatingRequest(String requestId) async {
+    final requestDoc = await _firebase.datingRequestsCollection.doc(requestId).get();
+    if (!requestDoc.exists) {
+      throw Exception('데이팅 신청을 찾을 수 없습니다');
     }
     
-    final like = LikeModel.fromFirestore(likeDoc.data()!, id: likeDoc.id);
+    final request = DatingRequestModel.fromFirestore(requestDoc.data()!, id: requestDoc.id);
     
-    // 좋아요 상태 업데이트
-    await _firebase.likesCollection.doc(likeId).update({
-      'status': LikeStatus.accepted.name,
+    // 신청 상태 업데이트
+    await _firebase.datingRequestsCollection.doc(requestId).update({
+      'status': DatingRequestStatus.accepted.name,
       'respondedAt': Timestamp.fromDate(DateTime.now()),
     });
     
     // 매칭 생성
     final match = await _createMatch(
-      userIds: [like.fromUserId, like.toUserId],
-      petIds: [like.fromPetId, like.toPetId],
+      userIds: [request.fromUserId, request.toUserId],
+      petIds: [request.fromPetId, request.toPetId],
       type: 'dating',
     );
     
     // 상대방에게 알림 전송
     await _sendNotification(
-      userId: like.fromUserId,
-      type: NotificationType.matchSuccess,
+      userId: request.fromUserId,
+      type: NotificationType.datingAccepted,
       title: '매칭 성공! 🎉',
-      body: '상대방이 좋아요를 수락했어요! 채팅을 시작해보세요',
+      body: '상대방이 데이팅 신청을 수락했어요! 채팅을 시작해보세요',
       data: {
         'targetId': match.chatRoomId,
         'targetType': 'chat',
@@ -113,57 +113,57 @@ class DatingService {
     return match;
   }
   
-  /// 좋아요 거절
-  Future<void> rejectLike(String likeId) async {
-    final likeDoc = await _firebase.likesCollection.doc(likeId).get();
-    if (!likeDoc.exists) {
-      throw Exception('좋아요를 찾을 수 없습니다');
+  /// 데이팅 신청 거절
+  Future<void> rejectDatingRequest(String requestId) async {
+    final requestDoc = await _firebase.datingRequestsCollection.doc(requestId).get();
+    if (!requestDoc.exists) {
+      throw Exception('데이팅 신청을 찾을 수 없습니다');
     }
     
-    await _firebase.likesCollection.doc(likeId).update({
-      'status': LikeStatus.rejected.name,
+    await _firebase.datingRequestsCollection.doc(requestId).update({
+      'status': DatingRequestStatus.rejected.name,
       'respondedAt': Timestamp.fromDate(DateTime.now()),
     });
   }
   
-  /// 기존 좋아요 확인
-  Future<LikeModel?> _checkExistingLike(String fromPetId, String toPetId) async {
-    final snapshot = await _firebase.likesCollection
+  /// 기존 데이팅 신청 확인
+  Future<DatingRequestModel?> _checkExistingRequest(String fromPetId, String toPetId) async {
+    final snapshot = await _firebase.datingRequestsCollection
         .where('fromPetId', isEqualTo: fromPetId)
         .where('toPetId', isEqualTo: toPetId)
         .limit(1)
         .get();
     
     if (snapshot.docs.isEmpty) return null;
-    return LikeModel.fromFirestore(snapshot.docs.first.data(), id: snapshot.docs.first.id);
+    return DatingRequestModel.fromFirestore(snapshot.docs.first.data(), id: snapshot.docs.first.id);
   }
   
   // ===== 교배 신청 관련 =====
   
   /// 교배 신청 보내기
-  Future<LikeModel> sendBreedingRequest({
+  Future<DatingRequestModel> sendBreedingRequest({
     required String fromUserId,
     required String fromPetId,
     required String toUserId,
     required String toPetId,
     String? message,
   }) async {
-    final likeId = _uuid.v4();
-    final like = LikeModel(
-      id: likeId,
+    final requestId = _uuid.v4();
+    final request = DatingRequestModel(
+      id: requestId,
       fromUserId: fromUserId,
       fromPetId: fromPetId,
       toUserId: toUserId,
       toPetId: toPetId,
-      status: LikeStatus.pending,
-      isSuperLike: false,
+      status: DatingRequestStatus.pending,
+      isSuperRequest: false,
       message: message,
       createdAt: DateTime.now(),
     );
     
     // breeding_requests 컬렉션에 저장
-    await _firestore.collection('breeding_requests').doc(likeId).set({
-      ...like.toFirestore(),
+    await _firestore.collection('breeding_requests').doc(requestId).set({
+      ...request.toFirestore(),
       'type': 'breeding',
     });
     
@@ -174,13 +174,13 @@ class DatingService {
       title: '교배 신청이 도착했어요! 🐕',
       body: message ?? '교배 신청을 확인해보세요',
       data: {
-        'targetId': likeId,
+        'targetId': requestId,
         'targetType': 'breeding_request',
         'fromPetId': fromPetId,
       },
     );
     
-    return like;
+    return request;
   }
   
   /// 교배 신청 수락
@@ -194,7 +194,7 @@ class DatingService {
     
     // 신청 상태 업데이트
     await _firestore.collection('breeding_requests').doc(requestId).update({
-      'status': LikeStatus.accepted.name,
+      'status': DatingRequestStatus.accepted.name,
       'respondedAt': Timestamp.fromDate(DateTime.now()),
     });
     
@@ -224,7 +224,7 @@ class DatingService {
   /// 교배 신청 거절
   Future<void> rejectBreedingRequest(String requestId) async {
     await _firestore.collection('breeding_requests').doc(requestId).update({
-      'status': LikeStatus.rejected.name,
+      'status': DatingRequestStatus.rejected.name,
       'respondedAt': Timestamp.fromDate(DateTime.now()),
     });
   }
@@ -264,6 +264,13 @@ class DatingService {
     );
     
     await _firebase.matchesCollection.doc(matchId).set(match.toFirestore());
+    
+    // 양쪽 사용자 매칭 카운터 증가
+    for (final userId in userIds) {
+      await _firebase.usersCollection.doc(userId).update({
+        'matchCount': FieldValue.increment(1),
+      });
+    }
     
     return match;
   }

@@ -1,23 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
 import '../../../../core/widgets/map/map_loading_widget.dart';
+import '../../../../core/services/share_service.dart';
 import '../../../../models/health_model.dart';
+import '../providers/health_provider.dart';
 
 /// ============================================================
 /// 산책 기록 상세 화면
 /// 지도에 이동경로 표시 + 시간/거리 등 상세정보
 /// ============================================================
 
-class WalkRecordDetailScreen extends StatefulWidget {
+class WalkRecordDetailScreen extends ConsumerStatefulWidget {
   final WalkRecordModel record;
   final List<String> petNames;
 
@@ -28,12 +34,13 @@ class WalkRecordDetailScreen extends StatefulWidget {
   });
 
   @override
-  State<WalkRecordDetailScreen> createState() => _WalkRecordDetailScreenState();
+  ConsumerState<WalkRecordDetailScreen> createState() => _WalkRecordDetailScreenState();
 }
 
-class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
+class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen> {
   KakaoMapController? _mapController;
   bool _isMapReady = false;
+  bool _isDeleting = false;
   
   /// LatLng 생성 헬퍼
   LatLng _createLatLng(double lat, double lng) => LatLng(lat, lng);
@@ -162,7 +169,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
       // 경로 전체가 보이도록 카메라 조정
       _fitBoundsToRoute();
     } catch (e) {
-      debugPrint('경로 그리기 실패: $e');
+      AppLogger.error('WalkRecordDetail', '경로 그리기 실패', e);
     }
   }
   
@@ -196,17 +203,17 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
     return Stack(
       children: [
         Container(
-          color: context.features.walk.withOpacity(0.2),
+          color: context.features.walk.withValues(alpha: AppOpacity.o20),
           child: record.routePoints.isEmpty
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.map_outlined, size: 60, color: context.features.walk.withOpacity(0.5)),
-                      const SizedBox(height: 8),
+                      Icon(Icons.map_outlined, size: 60, color: context.features.walk.withValues(alpha: AppOpacity.o50)),
+                      const SizedBox(height: AppSizes.gapS),
                       Text(
                         '경로 정보가 없습니다',
-                        style: TextStyle(fontSize: 14, color: context.features.walk.withOpacity(0.7)),
+                        style: AppTextStyles.bodyMedium(context).copyWith(color: context.features.walk.withValues(alpha: AppOpacity.o70)),
                       ),
                     ],
                   ),
@@ -231,14 +238,14 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
       children: [
         // 시작점
         Positioned(
-          left: 20,
+          left: AppSizes.paddingL,
           bottom: 80,
           child: _buildMarker('출발', context.features.success),
         ),
         // 종료점
         if (record.routePoints.length > 1)
           Positioned(
-            right: 20,
+            right: AppSizes.paddingL,
             bottom: 80,
             child: _buildMarker('도착', Colors.red),
           ),
@@ -251,27 +258,18 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 4,
-              ),
-            ],
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
+            boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
           ),
           child: Text(
             label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: color,
-            ),
+            style: AppTextStyles.labelSmall(context).withWeight(FontWeight.w600).withColor(color),
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSizes.gapXS),
         Icon(Icons.location_on, color: color, size: 24),
       ],
     );
@@ -280,18 +278,12 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
   /// 요약 카드
   Widget _buildSummaryCard() {
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.all(AppSizes.paddingL),
+      padding: const EdgeInsets.all(AppSizes.paddingXL),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppSizes.radiusM),
+        boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
       ),
       child: Column(
         children: [
@@ -299,33 +291,27 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(AppSizes.paddingS),
                 decoration: BoxDecoration(
-                  color: context.features.walk.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  color: context.features.walk.withValues(alpha: AppOpacity.o10),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Icon(Icons.pets, color: context.features.walk, size: 24),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSizes.gapM),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       _formatDate(record.startTime),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600),
                     ),
                     Text(
                       record.endTime != null
                           ? '${_formatTime(record.startTime)} ~ ${_formatTime(record.endTime!)}'
                           : '${_formatTime(record.startTime)} (진행 중)',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                      style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -333,9 +319,9 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
             ],
           ),
           
-          const SizedBox(height: 20),
-          const Divider(),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapLL),
+          const MingrrDivider(),
+          const SizedBox(height: AppSizes.gapL),
           
           // 주요 통계
           Row(
@@ -375,27 +361,21 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSizes.paddingM),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: AppOpacity.o10),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: color, size: 24),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.gapS),
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
+          style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w700),
         ),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          style: AppTextStyles.bodySmall(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ],
     );
@@ -404,18 +384,15 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
   /// 상세 통계
   Widget _buildDetailStats() {
     return MingrrCard(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '상세 정보',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+            style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildDetailRow('경로 포인트', '${record.routePoints.length}개'),
           _buildDetailRow('발자국', '${record.footprints.length}개'),
           if (record.durationMinutes > 0)
@@ -433,23 +410,17 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             label,
-            style: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
+            style: AppTextStyles.titleMedium(context),
           ),
         ],
       ),
@@ -461,7 +432,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
     final pets = petNames.isNotEmpty ? petNames : ['반려동물'];
     
     return MingrrCard(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(AppSizes.paddingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -470,24 +441,16 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
             children: [
               Text(
                 '함께한 친구들',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurface,
-                ),
+                style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSizes.gapS),
               Text(
                 '${pets.length}마리',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: context.features.walk,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: AppTextStyles.titleMedium(context).withColor(context.features.walk),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           
           // 반려동물 목록 (Wrap으로 가로 전체 사용, 많으면 아래로)
           Wrap(
@@ -502,24 +465,18 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
                 context.features.walk,
                 Theme.of(context).colorScheme.primary,
                 context.features.dating,
-                context.features.community,
+                context.features.social,
                 context.features.market,
               ];
               final color = colors[index % colors.length];
               
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withOpacity(0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                  border: Border.all(color: color.withOpacity(0.3)),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                  boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
+                  border: Border.all(color: color.withValues(alpha: AppOpacity.o30)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -528,7 +485,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: color.withOpacity(0.15),
+                        color: color.withValues(alpha: AppOpacity.o15),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -538,11 +495,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
                     const SizedBox(width: 10),
                     Text(
                       name,
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: color,
-                      ),
+                      style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600).withColor(color),
                     ),
                   ],
                 ),
@@ -557,31 +510,24 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
   /// 메모 섹션
   Widget _buildMemoSection() {
     return MingrrCard(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
-              const SizedBox(width: 8),
-              const Text(
+              const SizedBox(width: AppSizes.gapS),
+              Text(
                 '메모',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           Text(
             record.notes!,
-            style: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).colorScheme.onSurface,
-              height: 1.5,
-            ),
+            style: AppTextStyles.bodyLarge(context).withHeight(1.5),
           ),
         ],
       ),
@@ -591,52 +537,29 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
   /// 사진 섹션
   Widget _buildPhotosSection() {
     return MingrrCard(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(AppSizes.paddingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 '사진',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600),
               ),
               Text(
                 '${record.photoUrls.length}장',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          SizedBox(
+          const SizedBox(height: AppSizes.gapM),
+          MingrrImageGallery(
+            imageUrls: record.photoUrls,
             height: 100,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: record.photoUrls.length,
-              itemBuilder: (context, index) {
-                return Container(
-                  width: 100,
-                  height: 100,
-                  margin: const EdgeInsets.only(right: 8),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.outline,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    Icons.image,
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                    size: 32,
-                  ),
-                );
-              },
-            ),
+            itemWidth: 100,
+            enableViewer: true,
           ),
         ],
       ),
@@ -644,7 +567,7 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
   }
 
   void _shareRecord(BuildContext context) {
-    MingrrSnackBar.info(context, '공유 기능은 준비 중입니다');
+    ShareService.shareWalkRecord(context, record, petNames: petNames);
   }
 
   void _showMoreOptions(BuildContext context) {
@@ -662,14 +585,38 @@ class _WalkRecordDetailScreenState extends State<WalkRecordDetailScreen> {
   }
 
   void _confirmDelete(BuildContext context) {
+    if (_isDeleting) return;
+    
     showConfirmSheet(
       context,
       type: ConfirmSheetType.walkRecordDelete,
-      onConfirm: () {
-        Navigator.pop(context);
-        MingrrSnackBar.success(context, '기록이 삭제되었습니다');
-      },
+      onConfirm: () => _deleteWalkRecord(),
     );
+  }
+
+  /// 산책 기록 삭제 (DB 연동)
+  Future<void> _deleteWalkRecord() async {
+    if (_isDeleting) return;
+    
+    setState(() => _isDeleting = true);
+    
+    try {
+      final healthService = ref.read(healthServiceProvider);
+      await healthService.deleteWalkRecord(record.id);
+      
+      if (mounted) {
+        Navigator.pop(context, true);
+        MingrrSnackBar.success(context, '산책 기록이 삭제되었습니다');
+      }
+    } catch (e) {
+      if (mounted) {
+        MingrrSnackBar.error(context, '삭제 실패: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isDeleting = false);
+      }
+    }
   }
 
   String _formatDate(DateTime date) {
@@ -761,7 +708,7 @@ class _RoutePreviewPainter extends CustomPainter {
 
     // 그림자
     final shadowPaint = Paint()
-      ..color = Colors.black.withOpacity(0.2)
+      ..color = Colors.black.withValues(alpha: AppOpacity.o20)
       ..strokeWidth = 6
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.stroke;

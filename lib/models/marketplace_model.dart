@@ -15,6 +15,22 @@ enum ProductStatus {
   hidden,     // 숨김
 }
 
+/// ProductStatus 확장
+extension ProductStatusExtension on ProductStatus {
+  String get label {
+    switch (this) {
+      case ProductStatus.available:
+        return '판매중';
+      case ProductStatus.reserved:
+        return '예약중';
+      case ProductStatus.completed:
+        return '거래완료';
+      case ProductStatus.hidden:
+        return '숨김';
+    }
+  }
+}
+
 /// 상품 타입
 enum ProductType {
   sell,   // 판매
@@ -438,7 +454,15 @@ class JobModel extends Equatable {
     }
   }
 
-  String get priceString => '$price원/$priceUnit';
+  String get priceString => '${_formatPrice(price)}원/$priceUnit';
+  
+  /// 가격 포맷팅 (천 단위 콤마)
+  String _formatPrice(int price) {
+    return price.toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (Match m) => '${m[1]},',
+    );
+  }
 
   String get periodString {
     if (startDate != null && endDate != null) {

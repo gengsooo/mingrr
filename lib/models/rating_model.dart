@@ -7,11 +7,11 @@ import 'package:equatable/equatable.dart';
 /// ============================================================
 
 /// 평가 타입
+/// 소모임/커뮤니티는 평가 기능 없음
 enum RatingType {
   dating('데이팅'),      // 데이팅/산책 후 평가
   breeding('교배'),      // 교배 완료 후 평가
-  marketplace('거래'),   // 마켓 거래 후 평가
-  community('소모임');   // 소모임 활동 후 평가
+  marketplace('거래');   // 마켓 거래 후 평가
 
   final String label;
   const RatingType(this.label);

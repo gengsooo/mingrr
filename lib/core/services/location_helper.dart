@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/location_model.dart';
+import '../utils/app_logger.dart';
 
 /// 진행 상태 콜백 타입
 typedef LocationProgressCallback = void Function(LocationProgress progress);
@@ -51,12 +52,11 @@ class LocationHelper {
     final startTime = DateTime.now();
     final cacheMinutes = purpose == LocationPurpose.walk ? _walkCacheMinutes : _mapCacheMinutes;
     
-    debugPrint('');
-    debugPrint('📍 ========================================');
-    debugPrint('📍 [LocationHelper] getCurrentLocation 시작 (호출 #$callId)');
-    debugPrint('📍 [LocationHelper] 용도: $purpose, 캐시 유효시간: ${cacheMinutes}분');
-    debugPrint('📍 [LocationHelper] 시작 시간: $startTime');
-    debugPrint('📍 ========================================');
+    AppLogger.debug('Location', '========================================');
+    AppLogger.debug('Location', 'getCurrentLocation 시작 (호출 #$callId)');
+    AppLogger.debug('Location', '용도: $purpose, 캐시 유효시간: ${cacheMinutes}분');
+    AppLogger.debug('Location', '시작 시간: $startTime');
+    AppLogger.debug('Location', '========================================');
     
     // ============================================================
     // 🧪 [테스트용] 로딩 화면 테스트 - 주석 해제하여 사용
@@ -85,10 +85,10 @@ class LocationHelper {
     try {
       // 1. 위치 서비스 활성화 확인
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      debugPrint('📍 [#$callId] 위치 서비스 활성화: $serviceEnabled');
+      AppLogger.debug('Location', ' [#$callId] 위치 서비스 활성화: $serviceEnabled');
       
       if (!serviceEnabled) {
-        debugPrint('📍 [#$callId] ❌ 위치 서비스 비활성화 - 종료');
+        AppLogger.debug('Location', ' [#$callId] ❌ 위치 서비스 비활성화 - 종료');
         return LocationResult.failure(
           errorType: LocationErrorType.serviceDisabled,
           message: '위치 서비스가 비활성화되어 있습니다',
@@ -97,15 +97,15 @@ class LocationHelper {
       
       // 2. 위치 권한 확인
       var permission = await Geolocator.checkPermission();
-      debugPrint('📍 [#$callId] 현재 권한 상태: $permission');
+      AppLogger.debug('Location', ' [#$callId] 현재 권한 상태: $permission');
       
       if (permission == LocationPermission.denied) {
-        debugPrint('📍 [#$callId] 권한 요청 중...');
+        AppLogger.debug('Location', ' [#$callId] 권한 요청 중...');
         permission = await Geolocator.requestPermission();
-        debugPrint('📍 [#$callId] 권한 요청 결과: $permission');
+        AppLogger.debug('Location', ' [#$callId] 권한 요청 결과: $permission');
         
         if (permission == LocationPermission.denied) {
-          debugPrint('📍 [#$callId] ❌ 위치 권한 거부 - 종료');
+          AppLogger.debug('Location', ' [#$callId] ❌ 위치 권한 거부 - 종료');
           return LocationResult.failure(
             errorType: LocationErrorType.permissionDenied,
             message: '위치 권한이 거부되었습니다',
@@ -114,7 +114,7 @@ class LocationHelper {
       }
       
       if (permission == LocationPermission.deniedForever) {
-        debugPrint('📍 [#$callId] ❌ 위치 권한 영구 거부 - 종료');
+        AppLogger.debug('Location', ' [#$callId] ❌ 위치 권한 영구 거부 - 종료');
         return LocationResult.failure(
           errorType: LocationErrorType.permissionDeniedForever,
           message: '위치 권한이 영구적으로 거부되었습니다',
@@ -123,37 +123,37 @@ class LocationHelper {
       
       // 3. [1단계] 캐시된 위치 확인
       onProgress?.call(LocationProgress.checkingCache);
-      debugPrint('📍 [#$callId] [1단계] 캐시된 위치 확인 중...');
+      AppLogger.debug('Location', ' [#$callId] [1단계] 캐시된 위치 확인 중...');
       
       try {
         final lastKnown = await Geolocator.getLastKnownPosition();
         if (lastKnown != null) {
           final age = DateTime.now().difference(lastKnown.timestamp);
-          debugPrint('📍 [#$callId] 캐시 위치: ${lastKnown.latitude}, ${lastKnown.longitude}');
-          debugPrint('📍 [#$callId] 캐시 시간: ${lastKnown.timestamp} (${age.inSeconds}초 전)');
+          AppLogger.debug('Location', ' [#$callId] 캐시 위치: ${lastKnown.latitude}, ${lastKnown.longitude}');
+          AppLogger.debug('Location', ' [#$callId] 캐시 시간: ${lastKnown.timestamp} (${age.inSeconds}초 전)');
           
           if (age.inMinutes <= cacheMinutes) {
             final totalElapsed = DateTime.now().difference(startTime);
-            debugPrint('📍 [#$callId] ✅ 캐시 위치 사용! (${age.inSeconds}초 전, 유효)');
-            debugPrint('📍 [#$callId] 전체 소요시간: ${totalElapsed.inMilliseconds}ms');
-            debugPrint('📍 ========================================');
+            AppLogger.debug('Location', ' [#$callId] ✅ 캐시 위치 사용! (${age.inSeconds}초 전, 유효)');
+            AppLogger.debug('Location', ' [#$callId] 전체 소요시간: ${totalElapsed.inMilliseconds}ms');
+            AppLogger.debug('Location', ' ========================================');
             return LocationResult.success(
               position: lastKnown,
               source: LocationSource.cache,
             );
           } else {
-            debugPrint('📍 [#$callId] 캐시 만료 (${age.inMinutes}분 전) - GPS 요청 진행');
+            AppLogger.debug('Location', ' [#$callId] 캐시 만료 (${age.inMinutes}분 전) - GPS 요청 진행');
           }
         } else {
-          debugPrint('📍 [#$callId] 캐시된 위치 없음');
+          AppLogger.debug('Location', ' [#$callId] 캐시된 위치 없음');
         }
       } catch (e) {
-        debugPrint('📍 [#$callId] 캐시 조회 실패: $e');
+        AppLogger.debug('Location', ' [#$callId] 캐시 조회 실패: $e');
       }
       
       // 4. [2단계] medium 정확도로 GPS 요청
       onProgress?.call(LocationProgress.gettingGpsMedium);
-      debugPrint('📍 [#$callId] [2단계] medium 정확도 GPS 요청 (타임아웃: ${_mediumTimeoutSeconds}초)...');
+      AppLogger.debug('Location', ' [#$callId] [2단계] medium 정확도 GPS 요청 (타임아웃: ${_mediumTimeoutSeconds}초)...');
       
       final mediumResult = await _requestPosition(
         callId: callId,
@@ -170,7 +170,7 @@ class LocationHelper {
       
       // 5. [3단계] low 정확도로 GPS 요청 (네트워크 기반)
       onProgress?.call(LocationProgress.gettingGpsLow);
-      debugPrint('📍 [#$callId] [3단계] low 정확도 GPS 요청 (타임아웃: ${_lowTimeoutSeconds}초)...');
+      AppLogger.debug('Location', ' [#$callId] [3단계] low 정확도 GPS 요청 (타임아웃: ${_lowTimeoutSeconds}초)...');
       
       final lowResult = await _requestPosition(
         callId: callId,
@@ -187,17 +187,17 @@ class LocationHelper {
       
       // 6. 모든 단계 실패
       final totalElapsed = DateTime.now().difference(startTime);
-      debugPrint('📍 [#$callId] ❌ 모든 단계 실패!');
-      debugPrint('📍 [#$callId] 전체 소요시간: ${totalElapsed.inMilliseconds}ms');
-      debugPrint('📍 ========================================');
+      AppLogger.debug('Location', ' [#$callId] ❌ 모든 단계 실패!');
+      AppLogger.debug('Location', ' [#$callId] 전체 소요시간: ${totalElapsed.inMilliseconds}ms');
+      AppLogger.debug('Location', ' ========================================');
       
       return LocationResult.failure(
         errorType: LocationErrorType.timeout,
         message: 'GPS 신호를 받을 수 없습니다',
       );
     } catch (e) {
-      debugPrint('📍 [#$callId] ❌ 예외 발생: $e');
-      debugPrint('📍 ========================================');
+      AppLogger.debug('Location', ' [#$callId] ❌ 예외 발생: $e');
+      AppLogger.debug('Location', ' ========================================');
       return LocationResult.failure(
         errorType: LocationErrorType.unknown,
         message: '위치 서비스 오류가 발생했습니다',
@@ -218,24 +218,26 @@ class LocationHelper {
     
     try {
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: accuracy,
-        timeLimit: Duration(seconds: timeoutSeconds),
+        locationSettings: LocationSettings(
+          accuracy: accuracy,
+          timeLimit: Duration(seconds: timeoutSeconds),
+        ),
       );
       
       final positionElapsed = DateTime.now().difference(positionStartTime);
       final totalElapsed = DateTime.now().difference(startTime);
       
-      debugPrint('📍 [#$callId] ✅ $accuracy 위치 획득 성공!');
-      debugPrint('📍 [#$callId] 위치: ${position.latitude}, ${position.longitude}');
-      debugPrint('📍 [#$callId] 정확도: ${position.accuracy}m');
-      debugPrint('📍 [#$callId] 소요시간: ${positionElapsed.inMilliseconds}ms');
-      debugPrint('📍 [#$callId] 전체 소요시간: ${totalElapsed.inMilliseconds}ms');
-      debugPrint('📍 ========================================');
+      AppLogger.debug('Location', ' [#$callId] ✅ $accuracy 위치 획득 성공!');
+      AppLogger.debug('Location', ' [#$callId] 위치: ${position.latitude}, ${position.longitude}');
+      AppLogger.debug('Location', ' [#$callId] 정확도: ${position.accuracy}m');
+      AppLogger.debug('Location', ' [#$callId] 소요시간: ${positionElapsed.inMilliseconds}ms');
+      AppLogger.debug('Location', ' [#$callId] 전체 소요시간: ${totalElapsed.inMilliseconds}ms');
+      AppLogger.debug('Location', ' ========================================');
       
       return position;
     } catch (e) {
       final positionElapsed = DateTime.now().difference(positionStartTime);
-      debugPrint('📍 [#$callId] ❌ $accuracy 실패: $e (${positionElapsed.inMilliseconds}ms)');
+      AppLogger.debug('Location', ' [#$callId] ❌ $accuracy 실패: $e (${positionElapsed.inMilliseconds}ms)');
       return null;
     }
   }
@@ -243,18 +245,20 @@ class LocationHelper {
   /// 백그라운드에서 high 정확도 위치 가져오기
   /// 지도 표시 후 더 정확한 위치로 업데이트할 때 사용
   static Future<Position?> getHighAccuracyPosition() async {
-    debugPrint('📍 [LocationHelper] 백그라운드 high 정확도 위치 요청...');
+    AppLogger.debug('Location', ' [LocationHelper] 백그라운드 high 정확도 위치 요청...');
     
     try {
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 10),
+        ),
       );
       
-      debugPrint('📍 [LocationHelper] ✅ high 정확도 위치: ${position.latitude}, ${position.longitude} (정확도: ${position.accuracy}m)');
+      AppLogger.debug('Location', ' [LocationHelper] ✅ high 정확도 위치: ${position.latitude}, ${position.longitude} (정확도: ${position.accuracy}m)');
       return position;
     } catch (e) {
-      debugPrint('📍 [LocationHelper] ❌ high 정확도 실패: $e');
+      AppLogger.debug('Location', ' [LocationHelper] ❌ high 정확도 실패: $e');
       return null;
     }
   }

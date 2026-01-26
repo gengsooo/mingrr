@@ -1,6 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/models/paginated_state.dart';
 import '../../../../core/providers/firebase_providers.dart';
 import '../../../../core/providers/location_provider.dart';
+import '../../../../core/providers/block_provider.dart';
+import '../../../../core/providers/paginated_provider.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../../models/marketplace_model.dart';
 
@@ -9,37 +12,50 @@ import '../../../../models/marketplace_model.dart';
 /// Firebase Firestore와 연동하여 상품 데이터 관리
 /// ============================================================
 
-/// 상품 + 거리 정보
-class ProductWithDistance {
-  final ProductModel product;
-  final double distanceMeters;
-  
+/// 상품 + 거리 정보 (ItemWithDistance<ProductModel> 확장)
+class ProductWithDistance extends ItemWithDistance<ProductModel> {
   ProductWithDistance({
-    required this.product,
-    required this.distanceMeters,
-  });
+    required ProductModel product,
+    required double distanceMeters,
+  }) : super(item: product, distanceMeters: distanceMeters);
   
-  String get distanceString => LocationService.formatDistance(distanceMeters);
+  /// 기존 코드 호환성을 위한 접근자
+  ProductModel get product => item;
 }
 
-// 모든 상품 목록 (거리 정보 포함)
+/// 알바 + 거리 정보 (ItemWithDistance<JobModel> 확장)
+class JobWithDistance extends ItemWithDistance<JobModel> {
+  JobWithDistance({
+    required JobModel job,
+    required double distanceMeters,
+  }) : super(item: job, distanceMeters: distanceMeters);
+  
+  /// 기존 코드 호환성을 위한 접근자
+  JobModel get job => item;
+}
+
+// 모든 상품 목록 (거리 정보 포함, 차단된 사용자 제외)
 final _allProductsWithDistanceProvider = FutureProvider.autoDispose<List<ProductWithDistance>>((ref) async {
   final firestoreService = ref.watch(firestoreServiceProvider);
   final userLocation = ref.watch(currentUserLocationProvider);
+  final blockedUserIds = ref.watch(blockedUserIdsProvider).valueOrNull ?? [];
   
   final products = await firestoreService.getProducts(
     status: ProductStatus.available,
   );
   
+  // 차단된 사용자 상품 제외
+  final filteredProducts = products.where((p) => !blockedUserIds.contains(p.sellerId)).toList();
+  
   if (userLocation == null) {
-    return products.map((p) => ProductWithDistance(
+    return filteredProducts.map((p) => ProductWithDistance(
       product: p,
       distanceMeters: 0,
     )).toList();
   }
   
   final result = <ProductWithDistance>[];
-  for (final product in products) {
+  for (final product in filteredProducts) {
     if (product.location != null) {
       final distance = LocationService.calculateDistanceFromGeoPoints(
         userLocation,
@@ -92,15 +108,16 @@ final productDetailProvider = FutureProvider.autoDispose.family<ProductModel?, S
   return firestoreService.getProduct(productId);
 });
 
-// 상품 타입별 필터링 (판매/나눔) - 거리 필터 적용
-final filteredProductsProvider = Provider.autoDispose.family<List<ProductWithDistance>, ({ProductType type, double radiusKm})>((ref, params) {
+// 상품 타입별 필터링 (판매/나눔) - 거리 필터 적용 (AsyncValue 유지)
+final filteredProductsProvider = Provider.autoDispose.family<AsyncValue<List<ProductWithDistance>>, ({ProductType type, double radiusKm})>((ref, params) {
   final productsAsync = ref.watch(_allProductsWithDistanceProvider);
-  final products = productsAsync.valueOrNull ?? [];
   
-  return products
-      .where((p) => p.product.type == params.type)
-      .where((p) => p.distanceMeters <= params.radiusKm * 1000)
-      .toList();
+  return productsAsync.whenData((products) {
+    return products
+        .where((p) => p.product.type == params.type)
+        .where((p) => p.distanceMeters <= params.radiusKm * 1000)
+        .toList();
+  });
 });
 
 // ===== 알바(Job) 관련 Provider =====
@@ -125,3 +142,98 @@ final jobDetailProvider = FutureProvider.autoDispose.family<JobModel?, String>((
 
 // 알바 상세 (alias)
 final jobByIdProvider = jobDetailProvider;
+
+/// ============================================================
+/// 페이지네이션 마켓플레이스 Provider
+/// 
+/// 서버 사이드 필터링 + 클라이언트 거리 계산 + 캐싱
+/// - 타입별 서버 필터링 (판매/나눔)
+/// - 거리 필터링 (클라이언트)
+/// - 20개씩 로드
+/// - keepAlive로 화면 전환 시 상태 유지
+/// ============================================================
+
+/// 페이지네이션 상품 목록 Provider (타입 + 거리 필터)
+final paginatedProductsProvider = StateNotifierProvider
+    .family<ClientPaginatedNotifier<ProductWithDistance>, PaginatedState<ProductWithDistance>, ({ProductType type, double radiusKm})>((ref, params) {
+  // 캐싱: 화면 전환 시 상태 유지 (5분 후 자동 해제)
+  final link = ref.keepAlive();
+  Future.delayed(const Duration(minutes: 5), () => link.close());
+  
+  final userLocation = ref.watch(currentUserLocationProvider);
+  final blockedUserIds = ref.watch(blockedUserIdsProvider).valueOrNull ?? [];
+  
+  return ClientPaginatedNotifier<ProductWithDistance>(
+    pageSize: 20,
+    fetchAll: () async {
+      final firestoreService = ref.read(firestoreServiceProvider);
+      // 서버 사이드 필터링: 타입 + 상태
+      final products = await firestoreService.getProducts(
+        status: ProductStatus.available,
+        type: params.type,
+      );
+      
+      // 차단된 사용자 상품 제외
+      final filteredProducts = products.where((p) => !blockedUserIds.contains(p.sellerId)).toList();
+      
+      final result = <ProductWithDistance>[];
+      for (final product in filteredProducts) {
+        double distance = 0; // 위치 정보 없으면 0으로 처리 (리스트에 표시)
+        if (product.location != null && userLocation != null) {
+          distance = LocationService.calculateDistanceFromGeoPoints(
+            userLocation,
+            product.location!,
+          );
+          // 거리 필터 적용 (위치 정보가 있는 경우에만)
+          if (distance > params.radiusKm * 1000) {
+            continue; // 거리 초과 시 제외
+          }
+        }
+        result.add(ProductWithDistance(product: product, distanceMeters: distance));
+      }
+      
+      // 거리순 정렬 (위치 없는 상품은 맨 앞에 표시)
+      result.sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
+      return result;
+    },
+  );
+});
+
+/// 페이지네이션 알바 목록 Provider (거리 정보 포함)
+final paginatedJobsProvider = StateNotifierProvider<
+    ClientPaginatedNotifier<JobWithDistance>,
+    PaginatedState<JobWithDistance>>((ref) {
+  // 캐싱: 화면 전환 시 상태 유지 (5분 후 자동 해제)
+  final link = ref.keepAlive();
+  Future.delayed(const Duration(minutes: 5), () => link.close());
+  
+  final userLocation = ref.watch(currentUserLocationProvider);
+  final blockedUserIds = ref.watch(blockedUserIdsProvider).valueOrNull ?? [];
+  
+  return ClientPaginatedNotifier<JobWithDistance>(
+    pageSize: 20,
+    fetchAll: () async {
+      final firestoreService = ref.read(firestoreServiceProvider);
+      final jobs = await firestoreService.getJobs();
+      
+      // 차단된 사용자 알바 제외
+      final filteredJobs = jobs.where((j) => !blockedUserIds.contains(j.userId)).toList();
+      
+      final result = <JobWithDistance>[];
+      for (final job in filteredJobs) {
+        double distance = 0; // 위치 정보 없으면 0으로 처리
+        if (job.location != null && userLocation != null) {
+          distance = LocationService.calculateDistanceFromGeoPoints(
+            userLocation,
+            job.location!,
+          );
+        }
+        result.add(JobWithDistance(job: job, distanceMeters: distance));
+      }
+      
+      // 거리순 정렬
+      result.sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
+      return result;
+    },
+  );
+});

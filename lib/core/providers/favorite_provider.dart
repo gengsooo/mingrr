@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/favorite_service.dart';
 import '../../models/pet_model.dart';
 import '../../models/marketplace_model.dart';
-import '../../models/community_model.dart';
+import '../../models/group_model.dart';
 import '../../features/auth/presentation/providers/auth_provider.dart';
 
 /// ============================================================

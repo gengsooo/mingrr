@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../models/pet_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/pet_repository.dart';
@@ -17,10 +18,16 @@ final userPetsProvider = StreamProvider.autoDispose<List<PetModel>>((ref) {
         return Stream.value(<PetModel>[]);
       }
       final repository = ref.watch(petRepositoryProvider);
-      return repository.getUserPets(user.uid);
+      return repository.getUserPets(user.uid).handleError((error, stackTrace) {
+        AppLogger.error('PetProvider', '반려동물 목록 스트림 오류 (userId: ${user.uid})', error, stackTrace);
+        return <PetModel>[];
+      });
     },
     loading: () => const Stream<List<PetModel>>.empty(),
-    error: (_, __) => Stream.value(<PetModel>[]),
+    error: (error, stackTrace) {
+      AppLogger.error('PetProvider', '인증 상태 오류로 반려동물 로드 실패', error, stackTrace);
+      return Stream.value(<PetModel>[]);
+    },
   );
 });
 

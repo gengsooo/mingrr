@@ -1,18 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/product_card.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/cards/product_card.dart';
 import '../../../../core/widgets/search_screen.dart';
-import '../../../../core/widgets/top_navigation.dart';
-import '../../../../core/widgets/profile_icon.dart';
+import '../../../../core/widgets/navigation/top_navigation.dart';
+import '../../../../core/widgets/navigation/appbar_actions.dart';
+import '../../../../core/widgets/filter_components.dart';
+import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../models/marketplace_model.dart';
+import '../../../../core/providers/refresh_notifier.dart';
 import '../providers/marketplace_provider.dart';
 import 'product_detail_screen.dart';
 import 'product_write_screen.dart';
 import 'job_detail_screen.dart';
+import '../../../../core/utils/responsive_utils.dart';
 
 /// ============================================================
 /// 마켓플레이스 화면
@@ -33,20 +38,70 @@ final _selectedCategoryProvider = StateProvider<int>((ref) => 0);
 /// 거리 필터
 final _distanceFilterProvider = StateProvider<double>((ref) => 3.0);
 
-class MarketplaceScreen extends ConsumerWidget {
+class MarketplaceScreen extends ConsumerStatefulWidget {
   const MarketplaceScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MarketplaceScreen> createState() => _MarketplaceScreenState();
+}
+
+class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
+  final ScrollController _productScrollController = ScrollController();
+  final ScrollController _jobScrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _productScrollController.addListener(_onProductScroll);
+    _jobScrollController.addListener(_onJobScroll);
+  }
+
+  @override
+  void dispose() {
+    _productScrollController.removeListener(_onProductScroll);
+    _jobScrollController.removeListener(_onJobScroll);
+    _productScrollController.dispose();
+    _jobScrollController.dispose();
+    super.dispose();
+  }
+
+  void _onProductScroll() {
+    if (_productScrollController.position.pixels >=
+        _productScrollController.position.maxScrollExtent - 200) {
+      final selectedTab = ref.read(_selectedTabProvider);
+      final distanceFilter = ref.read(_distanceFilterProvider);
+      final type = selectedTab == 0 ? ProductType.sell : ProductType.share;
+      ref.read(paginatedProductsProvider((type: type, radiusKm: distanceFilter)).notifier).loadMore();
+    }
+  }
+
+  void _onJobScroll() {
+    if (_jobScrollController.position.pixels >=
+        _jobScrollController.position.maxScrollExtent - 200) {
+      ref.read(paginatedJobsProvider.notifier).loadMore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final selectedTab = ref.watch(_selectedTabProvider);
     final selectedCategory = ref.watch(_selectedCategoryProvider);
     final distanceFilter = ref.watch(_distanceFilterProvider);
 
+    // 새로고침 트리거 감지 (등록/수정/삭제 후 자동 새로고침)
+    ref.listen(marketRefreshProvider, (prev, next) {
+      if (prev != next) {
+        final type = selectedTab == 0 ? ProductType.sell : ProductType.share;
+        ref.read(paginatedProductsProvider((type: type, radiusKm: distanceFilter)).notifier).refresh();
+        ref.read(paginatedJobsProvider.notifier).refresh();
+      }
+    });
+
     // 탭 정의 (판매 / 나눔 / 알바)
     final tabs = [
-      TopNavTab(label: '판매', icon: Icons.sell, color: context.features.market),
-      TopNavTab(label: '나눔', icon: Icons.volunteer_activism, color: context.features.market),
-      TopNavTab(label: '알바', icon: Icons.work_outline, color: context.features.market),
+      MingrrTabItem(label: '판매', icon: Icons.sell, color: context.features.market),
+      MingrrTabItem(label: '나눔', icon: Icons.volunteer_activism, color: context.features.market),
+      MingrrTabItem(label: '알바', icon: Icons.work_outline, color: context.features.market),
     ];
 
     // 카테고리 정의 (탭에 따라 다름)
@@ -79,10 +134,8 @@ class MarketplaceScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('마켓'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            visualDensity: VisualDensity.compact,
-            onPressed: () {
+          AppBarActionButton.search(
+            onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -94,8 +147,8 @@ class MarketplaceScreen extends ConsumerWidget {
               );
             },
           ),
-          const NotificationIconButton(),
-          buildProfileAction(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
+          AppBarActionButton.notification(),
+          AppBarActionButton.profile(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
         ],
       ),
       body: Column(
@@ -103,7 +156,7 @@ class MarketplaceScreen extends ConsumerWidget {
           // 2개 탭 (판매 / 나눠)
           Container(
             color: isDark ? colorScheme.surface : context.features.marketContainer,
-            child: PillTabBar(
+            child: MingrrMainTabBar(
               tabs: tabs,
               selectedIndex: selectedTab,
               onTabSelected: (index) {
@@ -122,8 +175,9 @@ class MarketplaceScreen extends ConsumerWidget {
           ),
           
           // 카테고리 필터
-          CategoryFilterChips(
-            categories: categories,
+          MingrrCategoryChips(
+            title: '카테고리',
+            categories: categories.map((c) => c.label).toList(),
             selectedIndex: selectedCategory,
             onSelected: (index) {
               ref.read(_selectedCategoryProvider.notifier).state = index;
@@ -139,57 +193,85 @@ class MarketplaceScreen extends ConsumerWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: MingrrFAB.write(
         onPressed: () => _showAddSheet(context, selectedTab),
         backgroundColor: context.features.market,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.edit, color: Colors.white),
+        tooltip: '상품/알바 등록',
       ),
     );
   }
 
-  /// 상품 목록 (Firebase 연동 + 거리 필터링)
+  /// 상품 목록 (Firebase 연동 + 거리 필터링 + 페이지네이션)
   Widget _buildProductList(BuildContext context, ProductType type) {
-    return Consumer(
-      builder: (context, ref, child) {
-        final distanceFilter = ref.watch(_distanceFilterProvider);
-        final products = ref.watch(filteredProductsProvider((type: type, radiusKm: distanceFilter)));
-        
-        if (products.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  type == ProductType.sell ? Icons.sell : Icons.volunteer_activism,
-                  size: 48,
-                  color: Theme.of(context).colorScheme.outlineVariant,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  '${distanceFilter.toInt()}km 내에 ${type == ProductType.sell ? '판매' : '나눔'} 상품이 없습니다',
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '거리를 늘려보세요',
-                  style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
-                ),
-              ],
-            ),
-          );
-        }
-        return ListView.builder(
-          padding: const EdgeInsets.all(AppSizes.paddingM),
-          itemCount: products.length,
-          itemBuilder: (ctx, index) {
-            return _buildProductModelItem(context, products[index]);
-          },
-        );
+    final distanceFilter = ref.watch(_distanceFilterProvider);
+    final paginatedState = ref.watch(paginatedProductsProvider((type: type, radiusKm: distanceFilter)));
+    
+    // 초기 로딩 상태
+    if (paginatedState.isInitialLoading) {
+      return MingrrLoadingState(
+        type: MingrrLoadingType.market,
+        message: '상품을 불러오고 있어요',
+        timeout: AppSizes.loadingTimeout,
+        onRetry: () => ref.read(paginatedProductsProvider((type: type, radiusKm: distanceFilter)).notifier).loadInitial(),
+      );
+    }
+    
+    // 에러 상태
+    if (paginatedState.hasError && paginatedState.items.isEmpty) {
+      return MingrrErrorState(
+        title: '데이터를 불러올 수 없어요',
+        subtitle: '잠시 후 다시 시도해주세요',
+        onRetry: () => ref.read(paginatedProductsProvider((type: type, radiusKm: distanceFilter)).notifier).loadInitial(),
+      );
+    }
+    
+    // 빈 상태
+    if (paginatedState.isEmpty) {
+      return MingrrEmptyState(
+        icon: type == ProductType.sell ? Icons.sell : Icons.volunteer_activism,
+        title: '아직 데이터가 없어요',
+        subtitle: '거리를 늘리거나 다른 카테고리를 확인해보세요',
+        accentColor: context.features.market,
+        onRefresh: () async {
+          await ref.read(paginatedProductsProvider((type: type, radiusKm: distanceFilter)).notifier).refresh();
+        },
+      );
+    }
+    
+    // 데이터 있음
+    return MingrrRefreshWrapper(
+      color: context.features.market,
+      onRefresh: () async {
+        await ref.read(paginatedProductsProvider((type: type, radiusKm: distanceFilter)).notifier).refresh();
       },
+      child: ListView.builder(
+        controller: _productScrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSizes.paddingM),
+        itemCount: paginatedState.items.length + (paginatedState.hasMore ? 1 : 0),
+        itemBuilder: (ctx, index) {
+          // 로딩 인디케이터
+          if (index >= paginatedState.items.length) {
+            return const Padding(
+              padding: EdgeInsets.all(AppSizes.paddingL),
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            );
+          }
+          return MingrrAnimatedListItem(
+            index: index,
+            child: _buildProductModelItem(context, paginatedState.items[index]),
+          );
+        },
+      ),
     );
   }
-  
+
   /// Firebase ProductWithDistance를 사용한 상품 아이템
   Widget _buildProductModelItem(BuildContext context, ProductWithDistance productWithDistance) {
     return ProductCard(
@@ -240,53 +322,86 @@ class MarketplaceScreen extends ConsumerWidget {
     }
   }
 
-  /// 알바 목록 (Firebase 연동)
+  /// 알바 목록 (Firebase 연동 + 페이지네이션)
   Widget _buildJobList(BuildContext context) {
-    return Consumer(
-      builder: (context, ref, child) {
-        final jobsAsync = ref.watch(jobsProvider);
-        
-        return jobsAsync.when(
-          data: (jobs) {
-            if (jobs.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.work_outline, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
-                    const SizedBox(height: 16),
-                    Text(
-                      '등록된 알바가 없습니다',
-                      style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                    ),
-                  ],
-                ),
-              );
-            }
-            return ListView.builder(
-              padding: const EdgeInsets.all(AppSizes.paddingM),
-              itemCount: jobs.length,
-              itemBuilder: (ctx, index) {
-                return _buildJobModelItem(context, jobs[index]);
-              },
-            );
-          },
-          loading: () => const MingrrLoadingState(),
-          error: (_, __) => const MingrrErrorState(title: '데이터를 불러올 수 없습니다'),
-        );
+    final paginatedState = ref.watch(paginatedJobsProvider);
+    
+    // 초기 로딩 상태
+    if (paginatedState.isInitialLoading) {
+      return MingrrLoadingState(
+        type: MingrrLoadingType.market,
+        message: '알바를 불러오고 있어요',
+        timeout: AppSizes.loadingTimeout,
+        onRetry: () => ref.read(paginatedJobsProvider.notifier).loadInitial(),
+      );
+    }
+    
+    // 에러 상태
+    if (paginatedState.hasError && paginatedState.items.isEmpty) {
+      return MingrrErrorState(
+        title: '일시적인 오류가 발생했어요',
+        subtitle: '잠시 후 다시 시도해주세요',
+        onRetry: () => ref.read(paginatedJobsProvider.notifier).loadInitial(),
+      );
+    }
+    
+    // 빈 상태
+    if (paginatedState.isEmpty) {
+      return MingrrEmptyState(
+        icon: Icons.work_outline,
+        title: '아직 데이터가 없어요',
+        subtitle: '새로운 알바를 등록해보세요',
+        accentColor: context.features.market,
+        onRefresh: () async {
+          await ref.read(paginatedJobsProvider.notifier).refresh();
+        },
+      );
+    }
+    
+    // 데이터 있음
+    return MingrrRefreshWrapper(
+      color: context.features.market,
+      onRefresh: () async {
+        await ref.read(paginatedJobsProvider.notifier).refresh();
       },
+      child: ListView.builder(
+        controller: _jobScrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSizes.paddingM),
+        itemCount: paginatedState.items.length + (paginatedState.hasMore ? 1 : 0),
+        itemBuilder: (ctx, index) {
+          // 로딩 인디케이터
+          if (index >= paginatedState.items.length) {
+            return const Padding(
+              padding: EdgeInsets.all(AppSizes.paddingL),
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            );
+          }
+          return MingrrAnimatedListItem(
+            index: index,
+            child: _buildJobModelItem(context, paginatedState.items[index]),
+          );
+        },
+      ),
     );
   }
 
-  /// Firebase JobModel을 사용한 알바 아이템
-  Widget _buildJobModelItem(BuildContext context, JobModel job) {
+  /// Firebase JobWithDistance를 사용한 알바 아이템
+  Widget _buildJobModelItem(BuildContext context, JobWithDistance jobWithDistance) {
     return JobCard(
-      job: job,
+      job: jobWithDistance.job,
+      distanceString: jobWithDistance.distanceString,
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => JobDetailScreen(jobId: job.id),
+            builder: (context) => JobDetailScreen(jobId: jobWithDistance.job.id),
           ),
         );
       },
@@ -330,6 +445,8 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
   String? _selectedJobCategory;
   JobPayType _payType = JobPayType.total;
   final List<Map<String, String>> _selectedPets = [];
+  DateTime? _startDate;
+  DateTime? _endDate;
 
   @override
   void initState() {
@@ -337,10 +454,55 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
     _selectedType = MarketWriteType.values[widget.initialType.clamp(0, 2)];
   }
 
+  String _formatDate(DateTime date) {
+    return '${date.month}/${date.day}';
+  }
+
+  Future<void> _selectDate(bool isStart) async {
+    final now = DateTime.now();
+    final initialDate = isStart 
+        ? (_startDate ?? now) 
+        : (_endDate ?? _startDate ?? now);
+    
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: isStart ? now : (_startDate ?? now),
+      lastDate: now.add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme.copyWith(
+              primary: context.features.market,
+              surface: Colors.white,
+              onSurface: Colors.black87,
+              surfaceContainerHighest: Colors.white,
+            ),
+            dialogBackgroundColor: Colors.white,
+          ),
+          child: child!,
+        );
+      },
+    );
+    
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          _startDate = picked;
+          if (_endDate != null && _endDate!.isBefore(picked)) {
+            _endDate = null;
+          }
+        } else {
+          _endDate = picked;
+        }
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.9,
+      height: ResponsiveUtils.heightPercent(context, 0.9),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXL)),
@@ -357,10 +519,10 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   icon: const Icon(Icons.close),
                   onPressed: () => Navigator.pop(context),
                 ),
-                const Expanded(
+                Expanded(
                   child: Text(
                     '글쓰기',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    style: AppTextStyles.headlineSmall(context),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -371,7 +533,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
               ],
             ),
           ),
-          const Divider(height: 1),
+          const MingrrDivider(),
           // 본문
           Expanded(
             child: SingleChildScrollView(
@@ -380,7 +542,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 종류 선택 (판매/나눔/알바)
-                  const Text('종류', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  Text('종류', style: AppTextStyles.titleMedium(context)),
                   const SizedBox(height: AppSizes.gapS),
                   Row(
                     children: MarketWriteType.values.map((type) {
@@ -390,10 +552,10 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                           onTap: () => setState(() => _selectedType = type),
                           child: Container(
                             margin: EdgeInsets.only(right: type != MarketWriteType.job ? 8 : 0),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
                             decoration: BoxDecoration(
                               color: isSelected ? context.features.market : Colors.transparent,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppSizes.radiusS),
                               border: Border.all(
                                 color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
                               ),
@@ -406,13 +568,11 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                                   size: 18,
                                   color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
-                                const SizedBox(width: 6),
+                                const SizedBox(width: AppSizes.gapSM),
                                 Text(
                                   type.label,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
+                                  style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600).withColor(
+                                    isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -447,7 +607,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 사진
-        const Text('사진', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        Text('사진', style: AppTextStyles.titleMedium(context)),
         const SizedBox(height: AppSizes.gapS),
         SizedBox(
           height: 80,
@@ -465,8 +625,8 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.camera_alt, color: Theme.of(context).colorScheme.outlineVariant),
-                    const SizedBox(height: 4),
-                    Text('0/10', style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant)),
+                    const SizedBox(height: AppSizes.gapXS),
+                    Text('0/10', style: AppTextStyles.captionSmall(context)),
                   ],
                 ),
               ),
@@ -510,7 +670,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 알바 유형
-        const Text('알바 유형', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        Text('알바 유형', style: AppTextStyles.titleMedium(context)),
         const SizedBox(height: AppSizes.gapS),
         Wrap(
           spacing: 8,
@@ -520,19 +680,18 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
             return GestureDetector(
               onTap: () => setState(() => _selectedJobCategory = type),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
                 decoration: BoxDecoration(
                   color: isSelected ? context.features.market : Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusL),
                   border: Border.all(
                     color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
                   ),
                 ),
                 child: Text(
                   type,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                  style: AppTextStyles.bodyMedium(context).withColor(
+                    isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -549,51 +708,81 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
         const SizedBox(height: AppSizes.gapL),
 
         // 기간
-        const Text('기간', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        Text('기간', style: AppTextStyles.titleMedium(context)),
         const SizedBox(height: AppSizes.gapS),
         Row(
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: () {
-                  // TODO: 시작 날짜 선택 구현 예정
-                },
+                onTap: () => _selectDate(true),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingM),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).colorScheme.outline),
-                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _startDate != null 
+                          ? context.features.market 
+                          : Theme.of(context).colorScheme.outline,
+                    ),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_today, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 8),
-                      Text('시작일', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
+                      Icon(
+                        Icons.calendar_today, 
+                        size: 18, 
+                        color: _startDate != null 
+                            ? context.features.market 
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: AppSizes.gapS),
+                      Text(
+                        _startDate != null ? _formatDate(_startDate!) : '시작일',
+                        style: TextStyle(
+                          color: _startDate != null 
+                              ? Theme.of(context).colorScheme.onSurface 
+                              : Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
             ),
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8),
+              padding: EdgeInsets.symmetric(horizontal: AppSizes.paddingS),
               child: Text('~'),
             ),
             Expanded(
               child: GestureDetector(
-                onTap: () {
-                  // TODO: 종료 날짜 선택 구현 예정
-                },
+                onTap: () => _selectDate(false),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingM),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Theme.of(context).colorScheme.outline),
-                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _endDate != null 
+                          ? context.features.market 
+                          : Theme.of(context).colorScheme.outline,
+                    ),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_today, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 8),
-                      Text('종료일', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
+                      Icon(
+                        Icons.calendar_today, 
+                        size: 18, 
+                        color: _endDate != null 
+                            ? context.features.market 
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: AppSizes.gapS),
+                      Text(
+                        _endDate != null ? _formatDate(_endDate!) : '종료일',
+                        style: TextStyle(
+                          color: _endDate != null 
+                              ? Theme.of(context).colorScheme.onSurface 
+                              : Theme.of(context).colorScheme.outlineVariant,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -604,23 +793,23 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
         const SizedBox(height: AppSizes.gapL),
 
         // 반려동물 추가
-        const Text('돌봄 대상 반려동물', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        Text('돌봄 대상 반려동물', style: AppTextStyles.titleMedium(context)),
         const SizedBox(height: AppSizes.gapS),
         // 추가된 반려동물 목록
         if (_selectedPets.isNotEmpty) ...[
           ...List.generate(_selectedPets.length, (index) {
             final pet = _selectedPets[index];
             return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: AppSizes.paddingS),
+              padding: const EdgeInsets.all(AppSizes.paddingM),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(12),
+                color: Theme.of(context).colorScheme.outline.withValues(alpha: AppOpacity.o30),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Row(
                 children: [
                   Icon(Icons.pets, size: 20, color: context.features.market),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSizes.gapS),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -631,7 +820,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                         ),
                         Text(
                           '${pet['breed']} · ${pet['weight']}kg',
-                          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                          style: AppTextStyles.caption(context),
                         ),
                       ],
                     ),
@@ -649,16 +838,16 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
         GestureDetector(
           onTap: _showAddPetDialog,
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSizes.paddingM),
             decoration: BoxDecoration(
               border: Border.all(color: Theme.of(context).colorScheme.outline, style: BorderStyle.solid),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.add, size: 20, color: context.features.market),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSizes.gapS),
                 Text(
                   '반려동물 추가',
                   style: TextStyle(color: context.features.market, fontWeight: FontWeight.w500),
@@ -670,7 +859,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
         const SizedBox(height: AppSizes.gapL),
 
         // 급여
-        const Text('급여', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+        Text('급여', style: AppTextStyles.titleMedium(context)),
         const SizedBox(height: AppSizes.gapS),
         // 급여 단위 선택
         Row(
@@ -681,10 +870,10 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                 onTap: () => setState(() => _payType = type),
                 child: Container(
                   margin: EdgeInsets.only(right: type != JobPayType.daily ? 8 : 0),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
                   decoration: BoxDecoration(
-                    color: isSelected ? context.features.market.withOpacity(0.1) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(8),
+                    color: isSelected ? context.features.market.withValues(alpha: AppOpacity.o10) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                     border: Border.all(
                       color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
                     ),
@@ -692,11 +881,9 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   child: Text(
                     type.label,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                      color: isSelected ? context.features.market : Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                    style: AppTextStyles.bodyMedium(context)
+                        .withWeight(isSelected ? FontWeight.w600 : FontWeight.normal)
+                        .withColor(isSelected ? context.features.market : Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ),
               ),
@@ -750,20 +937,20 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Center(child: BottomSheetHandle()),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
               child: Text(
                 '반려동물 선택',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                style: AppTextStyles.headlineSmall(context),
                 textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             Text(
               '프로필에 등록된 반려동물 중 선택해주세요',
-              style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: AppTextStyles.bodySmall(context),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             // 등록된 반려동물 목록
             ...myPets.map((pet) {
               final isAlreadySelected = _selectedPets.any((d) => d['id'] == pet['id']);
@@ -775,13 +962,13 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   Navigator.pop(ctx);
                 },
                 child: Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: AppSizes.paddingS),
+                  padding: const EdgeInsets.all(AppSizes.paddingM),
                   decoration: BoxDecoration(
                     color: isAlreadySelected 
-                        ? Theme.of(context).colorScheme.outline.withOpacity(0.5) 
+                        ? Theme.of(context).colorScheme.outline.withValues(alpha: AppOpacity.o50) 
                         : Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     border: Border.all(
                       color: isAlreadySelected ? Theme.of(context).colorScheme.outline : Colors.transparent,
                     ),
@@ -793,11 +980,11 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                         height: 50,
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.outline,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Icon(Icons.pets, color: Theme.of(context).colorScheme.outlineVariant),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSizes.gapM),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -811,12 +998,11 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                                     : Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: AppSizes.gapXXS),
                             Text(
                               '${pet['breed']} · ${pet['weight']}kg',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isAlreadySelected 
+                              style: AppTextStyles.bodySmall(context).withColor(
+                                isAlreadySelected 
                                     ? Theme.of(context).colorScheme.outlineVariant 
                                     : Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
@@ -831,7 +1017,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                 ),
               );
             }),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
           ],
         ),
       ),

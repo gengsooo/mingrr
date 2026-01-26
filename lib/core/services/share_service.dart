@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/pet_model.dart';
 import '../../models/marketplace_model.dart';
-import '../../models/community_model.dart';
+import '../../models/group_model.dart';
+import '../../models/community_post_model.dart';
+import '../../models/health_model.dart';
+import '../constants/pet_constants.dart';
 import '../constants/app_sizes.dart';
+import '../theme/app_text_styles.dart';
 import '../constants/app_strings.dart';
 import '../widgets/common_widgets.dart';
-import '../widgets/mingrr_bottom_sheet.dart';
+import '../widgets/sheets/mingrr_bottom_sheet.dart';
+import '../utils/responsive_utils.dart';
 
 /// ============================================================
 /// 공유 서비스
@@ -25,17 +30,18 @@ class ShareService {
   
   // ===== 반려동물 공유 =====
   
-  /// 반려동물 프로필 공유
+  /// 반려동물 상세 공유
   static Future<void> sharePet(BuildContext context, PetModel pet) async {
     final url = '$_baseUrl/pet/${pet.id}';
-    final text = '${pet.name}을(를) 만나보세요! 🐕\n'
+    final genderEmoji = pet.gender == PetGender.male ? '♂️' : '♀️';
+    final text = '${pet.name} $genderEmoji\n'
         '${pet.breed ?? "믹스견"} · ${pet.ageString}\n\n'
         '${AppStrings.appName}에서 확인하기:\n$url';
     
     await _share(context, text);
   }
   
-  /// 반려동물 프로필 링크 복사
+  /// 반려동물 링크 복사
   static Future<void> copyPetLink(BuildContext context, String petId) async {
     final url = '$_baseUrl/pet/$petId';
     await _copyToClipboard(context, url);
@@ -81,6 +87,72 @@ class ShareService {
     await _copyToClipboard(context, url);
   }
   
+  // ===== 알바 공유 =====
+  
+  /// 알바 공유
+  static Future<void> shareJob(BuildContext context, JobModel job) async {
+    final url = '$_baseUrl/job/${job.id}';
+    final text = '${job.title}\n'
+        '${job.typeString} · ${job.priceString}\n\n'
+        '${AppStrings.appName}에서 확인하기:\n$url';
+    
+    await _share(context, text);
+  }
+  
+  /// 알바 링크 복사
+  static Future<void> copyJobLink(BuildContext context, String jobId) async {
+    final url = '$_baseUrl/job/$jobId';
+    await _copyToClipboard(context, url);
+  }
+  
+  // ===== 커뮤니티 게시글 공유 =====
+  
+  /// 커뮤니티 게시글 공유
+  static Future<void> sharePost(BuildContext context, CommunityPostModel post) async {
+    final url = '$_baseUrl/post/${post.id}';
+    final categoryEmoji = post.category.emoji;
+    final titleText = post.title.isNotEmpty ? post.title : post.content;
+    final previewText = titleText.length > 50 
+        ? '${titleText.substring(0, 50)}...' 
+        : titleText;
+    final text = '$categoryEmoji ${post.category.label}\n'
+        '$previewText\n\n'
+        '${AppStrings.appName}에서 확인하기:\n$url';
+    
+    await _share(context, text);
+  }
+  
+  /// 커뮤니티 게시글 링크 복사
+  static Future<void> copyPostLink(BuildContext context, String postId) async {
+    final url = '$_baseUrl/post/$postId';
+    await _copyToClipboard(context, url);
+  }
+  
+  // ===== 산책 기록 공유 =====
+  
+  /// 산책 기록 공유
+  static Future<void> shareWalkRecord(
+    BuildContext context, 
+    WalkRecordModel record, {
+    List<String> petNames = const [],
+  }) async {
+    final url = '$_baseUrl/walk/${record.id}';
+    final durationText = _formatDuration(record.durationMinutes);
+    final distanceText = record.distanceString;
+    final petText = petNames.isNotEmpty ? petNames.join(', ') : '반려동물';
+    final text = '🐕 $petText와 함께한 산책\n'
+        '⏱️ $durationText · 📍 $distanceText\n\n'
+        '${AppStrings.appName}에서 확인하기:\n$url';
+    
+    await _share(context, text);
+  }
+  
+  /// 산책 기록 링크 복사
+  static Future<void> copyWalkRecordLink(BuildContext context, String recordId) async {
+    final url = '$_baseUrl/walk/$recordId';
+    await _copyToClipboard(context, url);
+  }
+  
   // ===== 앱 공유 =====
   
   /// 앱 공유
@@ -121,6 +193,22 @@ class ShareService {
       (Match m) => '${m[1]},',
     );
   }
+  
+  /// 시간 포맷팅 (분 → 시간/분)
+  static String _formatDuration(int minutes) {
+    if (minutes < 60) return '$minutes분';
+    final hours = minutes ~/ 60;
+    final mins = minutes % 60;
+    return mins > 0 ? '$hours시간 $mins분' : '$hours시간';
+  }
+  
+  /// 거리 포맷팅 (m → km)
+  static String _formatDistance(double meters) {
+    if (meters >= 1000) {
+      return '${(meters / 1000).toStringAsFixed(1)}km';
+    }
+    return '${meters.toInt()}m';
+  }
 }
 
 /// 공유 바텀시트
@@ -146,14 +234,11 @@ class _ShareBottomSheet extends StatelessWidget {
         children: [
           const BottomSheetHandle(),
           // 제목
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
             child: Text(
               '공유하기',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w600),
               textAlign: TextAlign.center,
             ),
           ),
@@ -210,23 +295,20 @@ class _ShareBottomSheet extends StatelessWidget {
           // 공유 내용 미리보기
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSizes.paddingM),
             decoration: BoxDecoration(
               color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Text(
               text,
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey[700],
-              ),
+              style: AppTextStyles.bodyMedium(context).withColor(Colors.grey[700]!),
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
           ),
           
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 10),
+          SizedBox(height: ResponsiveUtils.bottomPaddingWith(context, 10)),
         ],
       ),
     );
@@ -254,10 +336,7 @@ class _ShareBottomSheet extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[700],
-            ),
+            style: AppTextStyles.bodySmall(context).withColor(Colors.grey[700]!),
           ),
         ],
       ),

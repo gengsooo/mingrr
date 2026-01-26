@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../constants/app_sizes.dart';
+import '../../theme/app_text_styles.dart';
 import '../../theme/feature_colors.dart';
 import '../../services/location_helper.dart';
+import '../loading/loading_widgets.dart';
 
 /// ============================================================
 /// 지도 로딩 위젯 (공통 컴포넌트)
 /// 
 /// 지도가 로딩되는 동안 표시되는 플레이스홀더
-/// 걸어가는 귀여운 강아지 애니메이션 + 진행 상태 표시
+/// 걸어가는 귀여운 반려동물 애니메이션 + 진행 상태 표시
 /// ============================================================
 
 /// 로딩 위젯 타입 (색상 결정용)
@@ -131,7 +134,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
     
     // 다리 움직임 애니메이션 (걷는 모션)
     _legController = AnimationController(
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 150),
       vsync: this,
     )..repeat(reverse: true);
     
@@ -207,7 +210,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // 걸어가는 귀여운 강아지 애니메이션
+            // 걸어가는 귀여운 반려동물 애니메이션
             AnimatedBuilder(
               animation: Listenable.merge([_walkAnimation, _legAnimation]),
               builder: (context, child) {
@@ -218,51 +221,38 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
                     alignment: Alignment.center,
                     transform: Matrix4.identity()
                       ..scale(isMovingRight ? 1.0 : -1.0, 1.0),
-                    child: _buildWalkingDog(),
+                    child: _buildWalkingPet(),
                   ),
                 );
               },
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSizes.gapXL),
             // 발자국 트레일
             _buildPawPrints(),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSizes.gapXL),
             // 메시지
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: Container(
                 key: ValueKey(_progressMessage),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXL, vertical: AppSizes.paddingM),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+                  boxShadow: AppShadows.shadowM(Theme.of(context).brightness == Brightness.dark),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: _accentColor,
-                      ),
+                    MingrrLoadingIndicator(
+                      size: 18,
+                      strokeWidth: 2.5,
+                      customColor: _accentColor,
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSizes.gapM),
                     Text(
                       _progressMessage,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: _accentColor,
-                      ),
+                      style: AppTextStyles.titleLarge(context).withWeight(FontWeight.w600).withColor(_accentColor),
                     ),
                   ],
                 ),
@@ -270,13 +260,10 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
             ),
             // 서브 메시지
             if (widget.subMessage != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSizes.gapM),
               Text(
                 widget.subMessage!,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
           ],
@@ -285,17 +272,17 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
     );
   }
   
-  /// 걷는 강아지 위젯 (SVG 파일 로드 + 동적 색상 적용)
-  Widget _buildWalkingDog() {
+  /// 걷는 반려동물 위젯 (SVG 파일 로드 + 동적 색상 적용)
+  Widget _buildWalkingPet() {
     // SVG 로드 전에는 로딩 표시
     if (_svgString == null) {
       return SizedBox(
         width: 100,
         height: 80,
         child: Center(
-          child: CircularProgressIndicator(
+          child: MingrrLoadingIndicator(
             strokeWidth: 2,
-            color: _accentColor,
+            customColor: _accentColor,
           ),
         ),
       );
@@ -329,13 +316,13 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
           children: List.generate(5, (index) {
             final opacity = _calculatePawOpacity(index, progress);
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS),
               child: Opacity(
                 opacity: opacity,
                 child: Icon(
                   Icons.pets,
                   size: 16,
-                  color: _accentColor.withValues(alpha: 0.6),
+                  color: _accentColor.withValues(alpha: AppOpacity.o50),
                 ),
               ),
             );

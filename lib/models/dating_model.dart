@@ -3,19 +3,19 @@ import 'package:equatable/equatable.dart';
 
 /// ============================================================
 /// 데이팅 관련 모델
-/// 좋아요, 매칭, AI 추천 등 데이팅 기능 데이터 구조
+/// 데이팅 신청, 매칭, AI 추천 등 데이팅 기능 데이터 구조
 /// ============================================================
 
-/// 좋아요 상태
-enum LikeStatus {
+/// 데이팅 신청 상태
+enum DatingRequestStatus {
   pending,  // 대기 중
   accepted, // 수락됨
   rejected, // 거절됨
 }
 
-/// 좋아요 모델 (데이팅 신청)
-class LikeModel extends Equatable {
-  /// 좋아요 ID
+/// 데이팅 신청 모델
+class DatingRequestModel extends Equatable {
+  /// 신청 ID
   final String id;
   
   /// 보낸 사용자 ID
@@ -31,10 +31,10 @@ class LikeModel extends Equatable {
   final String toPetId;
   
   /// 상태
-  final LikeStatus status;
+  final DatingRequestStatus status;
   
-  /// 슈퍼 라이크 여부 (수익화 - 현재 숨김)
-  final bool isSuperLike;
+  /// 슈퍼 신청 여부 (수익화 - 현재 숨김)
+  final bool isSuperRequest;
   
   /// 메시지 (선택사항)
   final String? message;
@@ -45,31 +45,31 @@ class LikeModel extends Equatable {
   /// 응답일
   final DateTime? respondedAt;
 
-  const LikeModel({
+  const DatingRequestModel({
     required this.id,
     required this.fromUserId,
     required this.fromPetId,
     required this.toUserId,
     required this.toPetId,
-    this.status = LikeStatus.pending,
-    this.isSuperLike = false,
+    this.status = DatingRequestStatus.pending,
+    this.isSuperRequest = false,
     this.message,
     required this.createdAt,
     this.respondedAt,
   });
 
-  factory LikeModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
-    return LikeModel(
+  factory DatingRequestModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
+    return DatingRequestModel(
       id: id ?? data['id'] ?? '',
       fromUserId: data['fromUserId'] ?? '',
       fromPetId: data['fromPetId'] ?? '',
       toUserId: data['toUserId'] ?? '',
       toPetId: data['toPetId'] ?? '',
-      status: LikeStatus.values.firstWhere(
+      status: DatingRequestStatus.values.firstWhere(
         (e) => e.name == data['status'],
-        orElse: () => LikeStatus.pending,
+        orElse: () => DatingRequestStatus.pending,
       ),
-      isSuperLike: data['isSuperLike'] ?? false,
+      isSuperRequest: data['isSuperRequest'] ?? data['isSuperLike'] ?? false,
       message: data['message'],
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
@@ -87,7 +87,7 @@ class LikeModel extends Equatable {
       'toUserId': toUserId,
       'toPetId': toPetId,
       'status': status.name,
-      'isSuperLike': isSuperLike,
+      'isSuperRequest': isSuperRequest,
       'message': message,
       'createdAt': Timestamp.fromDate(createdAt),
       'respondedAt': respondedAt != null
@@ -104,7 +104,7 @@ class LikeModel extends Equatable {
         toUserId,
         toPetId,
         status,
-        isSuperLike,
+        isSuperRequest,
         message,
         createdAt,
         respondedAt,

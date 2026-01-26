@@ -1,7 +1,9 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../config/api_config.dart';
+import '../constants/location_constants.dart';
+import '../utils/app_logger.dart';
 
 /// ============================================================
 /// 지오코딩 서비스
@@ -14,8 +16,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class GeocodingService {
   GeocodingService._();
   
-  /// 카카오 REST API 키 (JavaScript 키가 아닌 REST API 키 사용)
-  static const String _kakaoRestApiKey = '185d8f5a9d617aa3506964ffd352c8b4';
+  /// 카카오 REST API 키 (ApiConfig에서 관리)
+  static String get _kakaoRestApiKey => ApiConfig.kakaoRestApiKey;
   
   /// 역지오코딩: 좌표 → 주소 변환
   /// 
@@ -59,7 +61,7 @@ class GeocodingService {
       
       return null;
     } catch (e) {
-      if (kDebugMode) debugPrint('역지오코딩 오류: $e');
+      AppLogger.error('GeocodingService', '역지오코딩 오류', e);
       return null;
     }
   }
@@ -109,7 +111,7 @@ class GeocodingService {
       
       return null;
     } catch (e) {
-      if (kDebugMode) debugPrint('지오코딩 오류: $e');
+      AppLogger.error('GeocodingService', '지오코딩 오류', e);
       return null;
     }
   }
@@ -160,7 +162,7 @@ class GeocodingService {
       
       return [];
     } catch (e) {
-      if (kDebugMode) debugPrint('장소 검색 오류: $e');
+      AppLogger.error('GeocodingService', '장소 검색 오류', e);
       return [];
     }
   }
@@ -176,7 +178,7 @@ class GeocodingService {
     if (result != null) {
       return result.shortAddress;
     }
-    return '위치 정보 없음';
+    return LocationConstants.noLocationText;
   }
 }
 

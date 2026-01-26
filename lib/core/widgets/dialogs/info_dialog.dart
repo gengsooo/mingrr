@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_sizes.dart';
+import '../../theme/app_text_styles.dart';
+import '../common_widgets.dart';
 
 /// ============================================================
 /// InfoDialog - 정보성 안내 팝업
 /// 
 /// 귀엽고 예쁜 디자인의 정보 안내용 다이얼로그
-/// 강아지 크기 안내, 꼬순내지수 안내 등 정보성 데이터 표시에 사용
+/// 반려동물 크기 안내, 꼬순내지수 안내 등 정보성 데이터 표시에 사용
 /// 
 /// 사용법:
 /// ```dart
 /// // 1. 기본 사용 (리스트 아이템)
 /// showInfoDialog(
 ///   context,
-///   title: '강아지 크기 안내',
+///   title: '반려동물 크기 안내',
 ///   icon: Icons.pets,
 ///   accentColor: context.features.dating,
 ///   items: [
@@ -108,18 +111,18 @@ class InfoDialog extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusXL)),
+      elevation: AppSizes.elevationM,
       backgroundColor: colorScheme.surface,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 340),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppSizes.radiusXL),
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              accentColor.withOpacity(isDark ? 0.15 : 0.08),
+              accentColor.withValues(alpha: isDark ? AppOpacity.o15 : AppOpacity.o10),
               isDark ? colorScheme.surface : Colors.white,
             ],
             stops: const [0.0, 0.3],
@@ -134,7 +137,7 @@ class InfoDialog extends StatelessWidget {
             // 콘텐츠 영역
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXL),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -158,7 +161,7 @@ class InfoDialog extends StatelessWidget {
   /// 헤더 영역 (아이콘 + 제목)
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+      padding: const EdgeInsets.fromLTRB(AppSizes.paddingL, 24, 20, 16),
       child: Column(
         children: [
           // 아이콘 (귀여운 원형 배경)
@@ -167,41 +170,28 @@ class InfoDialog extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.15),
+                color: accentColor.withValues(alpha: AppOpacity.o15),
                 shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: accentColor.withOpacity(0.2),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                boxShadow: AppShadows.shadowM(Theme.of(context).brightness == Brightness.dark),
               ),
               child: Icon(icon, color: accentColor, size: 28),
             ),
           
-          if (icon != null) const SizedBox(height: 16),
+          if (icon != null) const SizedBox(height: AppSizes.gapL),
           
           // 제목
           Text(
             title,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: accentColor,
-            ),
+            style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w700).withColor(accentColor),
             textAlign: TextAlign.center,
           ),
           
           // 부제목
           if (subtitle != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: AppSizes.gapSM),
             Text(
               subtitle!,
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
           ],
@@ -232,51 +222,41 @@ class InfoDialog extends StatelessWidget {
     
     return Container(
       margin: EdgeInsets.only(bottom: isLast ? 0 : 10),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSizes.paddingM),
       decoration: BoxDecoration(
         color: isDark ? colorScheme.surfaceContainerHighest : Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
         border: Border.all(
-          color: itemColor.withOpacity(isDark ? 0.3 : 0.15),
+          color: itemColor.withValues(alpha: isDark ? AppOpacity.o30 : AppOpacity.o15),
           width: 1,
         ),
-        boxShadow: isDark ? null : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: isDark ? null : AppShadows.shadowS(false),
       ),
       child: Row(
         children: [
           // 라벨 뱃지
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
             decoration: BoxDecoration(
-              color: itemColor.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(10),
+              color: itemColor.withValues(alpha: AppOpacity.o10),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (item.icon != null) ...[
                   Icon(item.icon, size: 14, color: itemColor),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: AppSizes.gapXS),
                 ],
                 Text(
                   item.label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: itemColor,
-                  ),
+                  style: AppTextStyles.labelLarge(context).withWeight(FontWeight.w600).withColor(itemColor),
                 ),
               ],
             ),
           ),
           
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSizes.gapM),
           
           // 값 + 설명
           Expanded(
@@ -286,20 +266,13 @@ class InfoDialog extends StatelessWidget {
                 if (item.value != null)
                   Text(
                     item.value!,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
+                    style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600),
                   ),
                 if (item.description != null) ...[
-                  if (item.value != null) const SizedBox(height: 2),
+                  if (item.value != null) const SizedBox(height: AppSizes.gapXXS),
                   Text(
                     item.description!,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                    style: AppTextStyles.caption(context),
                   ),
                 ],
               ],
@@ -316,59 +289,41 @@ class InfoDialog extends StatelessWidget {
   /// 푸터 영역 (확인 버튼)
   Widget _buildFooter(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+      padding: const EdgeInsets.fromLTRB(AppSizes.paddingL, 16, 20, 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // 푸터 텍스트
           if (footerText != null) ...[
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppSizes.paddingM),
               decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(12),
+                color: accentColor.withValues(alpha: AppOpacity.o05),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Row(
                 children: [
                   Icon(Icons.lightbulb_outline, size: 16, color: accentColor),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSizes.gapS),
                   Expanded(
                     child: Text(
                       footerText!,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                      style: AppTextStyles.bodySmall(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
           ],
           
           // 확인 버튼
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accentColor,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-              child: Text(
-                confirmText,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+          MingrrButton(
+            text: confirmText,
+            onPressed: () => Navigator.pop(context),
+            backgroundColor: accentColor,
+            textColor: Colors.white,
+            height: 48,
           ),
         ],
       ),

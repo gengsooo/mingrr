@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/app_logger.dart';
 
 /// ============================================================
 /// 바텀시트 스택 매니저
@@ -30,13 +31,13 @@ class BottomSheetStackManager {
   /// 바텀시트 열림 등록
   void push(String sheetId) {
     _stack.add(sheetId);
-    debugPrint('📚 BottomSheetStack push: $sheetId, stack: $_stack');
+    AppLogger.debug('BottomSheetStack', 'push: $sheetId, stack: $_stack');
   }
 
   /// 바텀시트 닫힘 등록
   void pop(String sheetId) {
     _stack.remove(sheetId);
-    debugPrint('📚 BottomSheetStack pop: $sheetId, stack: $_stack');
+    AppLogger.debug('BottomSheetStack', 'pop: $sheetId, stack: $_stack');
   }
 
   /// 특정 바텀시트까지 모두 닫기 (순환 감지 시 사용)
@@ -52,14 +53,14 @@ class BottomSheetStackManager {
       _stack.remove(id);
     }
     
-    debugPrint('📚 BottomSheetStack popUntil: $sheetId, closeCount: $closeCount, remaining: $_stack');
+    AppLogger.debug('BottomSheetStack', 'popUntil: $sheetId, closeCount: $closeCount, remaining: $_stack');
     return closeCount;
   }
 
   /// 스택 초기화 (앱 상태 리셋 시 사용)
   void clear() {
     _stack.clear();
-    debugPrint('📚 BottomSheetStack cleared');
+    AppLogger.debug('BottomSheetStack', 'cleared');
   }
 
   /// 바텀시트 ID 생성 헬퍼
@@ -72,7 +73,7 @@ class BottomSheetStackManager {
 class BottomSheetType {
   static const String guardian = 'guardian';
   static const String pet = 'pet';
-  static const String community = 'community';
+  static const String group = 'group';
   static const String chatOptions = 'chat_options';
   static const String rating = 'rating';
 }

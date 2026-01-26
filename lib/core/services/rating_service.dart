@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/rating_model.dart';
 import 'firebase_service.dart';
 import 'kkosunnae_service.dart';
+import 'notification_service.dart';
 
 /// ============================================================
 /// 평가 서비스
@@ -10,6 +11,7 @@ import 'kkosunnae_service.dart';
 
 class RatingService {
   final FirebaseService _firebase = FirebaseService();
+  final NotificationService _notificationService = NotificationService();
 
   /// 평가 컬렉션 참조
   CollectionReference<Map<String, dynamic>> get _ratingsCollection =>
@@ -22,6 +24,11 @@ class RatingService {
   // ===== 평가 CRUD =====
 
   /// 평가 생성
+  /// 
+  /// 평가 저장 후:
+  /// 1. 대상자 통계 업데이트 (ratingCount, averageRating, noShowCount)
+  /// 2. 꼬순내 지수 재계산
+  /// 3. 상대방에게 알림 발송 (평가 내용은 비공개)
   Future<String> createRating({
     required String raterId,
     required String targetId,
@@ -52,7 +59,37 @@ class RatingService {
     // 대상자의 꼬순내 지수 업데이트
     await _updateTargetUserStats(targetId, result, score);
 
+    // 상대방에게 평가 알림 발송
+    await _sendRatingNotification(raterId, targetId, type, relatedId);
+
     return docRef.id;
+  }
+
+  /// 평가 완료 알림 발송
+  Future<void> _sendRatingNotification(
+    String raterId,
+    String targetId,
+    RatingType type,
+    String? relatedId,
+  ) async {
+    try {
+      // 평가자 정보 조회
+      final raterDoc = await _firebase.usersCollection.doc(raterId).get();
+      if (!raterDoc.exists) return;
+      
+      final raterName = raterDoc.data()?['nickname'] ?? '사용자';
+      
+      // 알림 발송 (평가 내용은 비공개)
+      await _notificationService.sendRatingNotification(
+        recipientId: targetId,
+        raterName: raterName,
+        ratingType: type.name,
+        relatedId: relatedId,
+      );
+    } catch (e) {
+      // 알림 실패는 무시 (평가 자체는 성공)
+      print('평가 알림 발송 실패: $e');
+    }
   }
 
   /// 대상자 통계 업데이트
@@ -236,8 +273,6 @@ class RatingService {
         return 'transactionCount';
       case RatingType.breeding:
         return 'matchCount';
-      case RatingType.community:
-        return 'groupCount';
     }
   }
 
@@ -259,5 +294,66 @@ class RatingService {
 
     // 꼬순내 지수 재계산
     await KkosunnaeService.updateScore(targetId);
+  }
+
+  /// 평가 대기 목록 조회 (내가 평가해야 할 거래들)
+  Future<List<TransactionStatusModel>> getPendingRatings(String userId) async {
+    // 내가 판매자이고 아직 평가 안 한 거래
+    final sellerSnapshot = await _transactionsCollection
+        .where('sellerId', isEqualTo: userId)
+        .where('status', isEqualTo: 'completed')
+        .where('sellerRated', isEqualTo: false)
+        .get();
+    
+    // 내가 구매자이고 아직 평가 안 한 거래
+    final buyerSnapshot = await _transactionsCollection
+        .where('buyerId', isEqualTo: userId)
+        .where('status', isEqualTo: 'completed')
+        .where('buyerRated', isEqualTo: false)
+        .get();
+    
+    final transactions = <TransactionStatusModel>[];
+    
+    for (final doc in sellerSnapshot.docs) {
+      transactions.add(TransactionStatusModel.fromFirestore(doc.data(), id: doc.id));
+    }
+    for (final doc in buyerSnapshot.docs) {
+      transactions.add(TransactionStatusModel.fromFirestore(doc.data(), id: doc.id));
+    }
+    
+    // 최신순 정렬
+    transactions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return transactions;
+  }
+
+  /// 평가 대기 목록 스트림
+  Stream<List<TransactionStatusModel>> watchPendingRatings(String userId) {
+    // 판매자로서 평가 대기 스트림을 기준으로 구매자 데이터도 함께 조회
+    final sellerStream = _transactionsCollection
+        .where('sellerId', isEqualTo: userId)
+        .where('status', isEqualTo: 'completed')
+        .where('sellerRated', isEqualTo: false)
+        .snapshots();
+    
+    // 두 스트림 합치기 (sellerStream 변경 시 buyerSnapshot도 함께 조회)
+    return sellerStream.asyncMap((sellerSnapshot) async {
+      final buyerSnapshot = await _transactionsCollection
+          .where('buyerId', isEqualTo: userId)
+          .where('status', isEqualTo: 'completed')
+          .where('buyerRated', isEqualTo: false)
+          .get();
+      
+      final transactions = <TransactionStatusModel>[];
+      
+      for (final doc in sellerSnapshot.docs) {
+        transactions.add(TransactionStatusModel.fromFirestore(doc.data(), id: doc.id));
+      }
+      for (final doc in buyerSnapshot.docs) {
+        transactions.add(TransactionStatusModel.fromFirestore(doc.data(), id: doc.id));
+      }
+      
+      transactions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return transactions;
+    });
   }
 }

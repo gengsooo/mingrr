@@ -177,10 +177,6 @@ class PetModel extends Equatable {
     return null;
   }
   
-  /// 하위 호환성을 위한 alias
-  @Deprecated('Use displayImageUrl instead')
-  String? get primaryPhotoUrl => displayImageUrl;
-
   /// Firestore 문서에서 PetModel 생성
   factory PetModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;

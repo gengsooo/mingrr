@@ -169,6 +169,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       
       await _handleSignIn(userCredential, 'email');
+      
+      // 이메일 미인증 사용자인 경우 인증 메일 재발송
+      if (!_authRepository.isEmailVerified) {
+        try {
+          await _authRepository.sendEmailVerification();
+        } catch (_) {
+          // 인증 메일 발송 실패해도 로그인은 성공 처리
+        }
+      }
+      
       return true;
     } on FirebaseAuthException catch (e) {
       state = state.copyWith(
@@ -193,6 +203,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
         email: email,
         password: password,
       );
+      
+      // 회원가입 성공 시 이메일 인증 메일 자동 발송
+      try {
+        await _authRepository.sendEmailVerification();
+      } catch (_) {
+        // 인증 메일 발송 실패해도 회원가입은 성공 처리
+      }
       
       await _handleSignIn(userCredential, 'email');
       return true;
@@ -306,6 +323,45 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  // ===== 이메일 인증 =====
+  
+  /// 이메일 인증 메일 발송
+  Future<void> sendEmailVerification() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _authRepository.sendEmailVerification();
+      state = state.copyWith(isLoading: false);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: e.toString().replaceAll('Exception: ', ''),
+      );
+      rethrow;
+    }
+  }
+
+  /// 이메일 인증 여부 확인
+  bool get isEmailVerified => _authRepository.isEmailVerified;
+
+  /// 이메일 로그인 사용자인지 확인
+  bool get isEmailLoginUser => _authRepository.isEmailLoginUser;
+
+  /// 이메일 인증 상태 새로고침 (인증 완료 여부 확인)
+  Future<bool> checkEmailVerified() async {
+    state = state.copyWith(isLoading: true);
+    try {
+      final verified = await _authRepository.reloadAndCheckEmailVerified();
+      state = state.copyWith(isLoading: false, isEmailVerified: verified);
+      if (verified) {
+        _ref.invalidate(currentUserProvider);
+      }
+      return verified;
+    } catch (e) {
+      state = state.copyWith(isLoading: false);
+      return false;
+    }
+  }
+
   // ===== 회원 탈퇴 (논리 삭제) =====
   /// 회원 탈퇴 시 물리 삭제가 아닌 논리 삭제를 수행합니다.
   /// - isDeleted: true로 설정
@@ -380,6 +436,7 @@ class AuthState {
   final int? resendToken;
   final String? phoneNumber;
   final bool isNewUser;
+  final bool isEmailVerified;
 
   AuthState({
     this.isLoading = false,
@@ -388,6 +445,7 @@ class AuthState {
     this.resendToken,
     this.phoneNumber,
     this.isNewUser = false,
+    this.isEmailVerified = false,
   });
 
   factory AuthState.initial() => AuthState();
@@ -399,6 +457,7 @@ class AuthState {
     int? resendToken,
     String? phoneNumber,
     bool? isNewUser,
+    bool? isEmailVerified,
   }) {
     return AuthState(
       isLoading: isLoading ?? this.isLoading,
@@ -407,6 +466,7 @@ class AuthState {
       resendToken: resendToken ?? this.resendToken,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       isNewUser: isNewUser ?? this.isNewUser,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
     );
   }
 }

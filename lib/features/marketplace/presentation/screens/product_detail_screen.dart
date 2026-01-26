@@ -2,22 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/pet_constants.dart';
+import '../../../../core/constants/location_constants.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/utils/error_handler.dart';
-import '../../../../core/widgets/report_sheet.dart';
-import '../../../../core/widgets/profile_cards.dart';
-import '../../../../core/widgets/guardian_profile_modal.dart';
+import '../../../../core/widgets/sheets/report_sheet.dart';
+import '../../../../core/widgets/cards/profile_cards.dart';
+import '../../../../core/widgets/modals/guardian_profile_modal.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import '../../../../core/models/location_model.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../../models/chat_model.dart';
+import '../../../../core/providers/refresh_notifier.dart';
+import '../../../../core/mixins/distance_calculator_mixin.dart';
+import '../../../../core/services/share_service.dart';
 import '../../../chat/presentation/screens/chat_detail_screen.dart';
 import 'product_write_screen.dart';
 
@@ -47,7 +54,8 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<ProductDetailScreen> createState() => _ProductDetailScreenState();
 }
 
-class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
+class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
+    with DistanceCalculatorMixin {
   final FirestoreService _firestoreService = FirestoreService();
   final FirebaseService _firebaseService = FirebaseService();
   
@@ -55,7 +63,13 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   bool _isLoading = true;
   bool _isDeleting = false;
   bool _isWishlisted = false;
+  bool _isWishlistLoading = false;
   String? _sellerNickname;
+
+  /// 거리 문자열 계산 (Mixin 활용)
+  String _getDistanceString() {
+    return getDistanceFromLocation(_product?.location, _product?.address);
+  }
 
   @override
   void initState() {
@@ -64,6 +78,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       _product = widget.product;
       _isLoading = false;
       _loadSellerNickname();
+      _loadWishlistStatus();
     } else {
       _loadProduct();
     }
@@ -106,17 +121,61 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     }
   }
 
+  /// 찜 상태 로드
+  Future<void> _loadWishlistStatus() async {
+    final userId = _firebaseService.currentUserId;
+    if (userId == null || _product == null) return;
+    
+    try {
+      final isLiked = await _firestoreService.isProductLiked(_product!.id, userId);
+      if (mounted) {
+        setState(() => _isWishlisted = isLiked);
+      }
+    } catch (e) {
+      // 찜 상태 로드 실패 시 무시
+    }
+  }
+
   bool get _isOwner {
     final currentUserId = _firebaseService.currentUserId;
     return currentUserId != null && _product?.sellerId == currentUserId;
   }
 
-  /// 찜하기 토글
-  void _toggleWishlist() {
-    setState(() => _isWishlisted = !_isWishlisted);
-    
-    // TODO: 백엔드 연동 - 찜 목록에 추가/제거
-    MingrrSnackBar.success(context, _isWishlisted ? '찜 목록에 추가했어요' : '찜 목록에서 제거했어요');
+  /// 찜하기 토글 (백엔드 연동)
+  Future<void> _toggleWishlist() async {
+    final userId = _firebaseService.currentUserId;
+    if (userId == null) {
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
+      return;
+    }
+    if (_product == null || _isWishlistLoading) return;
+
+    // 낙관적 업데이트
+    final wasWishlisted = _isWishlisted;
+    setState(() {
+      _isWishlisted = !_isWishlisted;
+      _isWishlistLoading = true;
+    });
+
+    try {
+      final isNowLiked = await _firestoreService.toggleProductLike(_product!.id, userId);
+      if (mounted) {
+        setState(() {
+          _isWishlisted = isNowLiked;
+          _isWishlistLoading = false;
+        });
+        MingrrSnackBar.success(context, isNowLiked ? '찜 목록에 추가했어요' : '찜 목록에서 제거했어요');
+      }
+    } catch (e) {
+      // 실패 시 롤백
+      if (mounted) {
+        setState(() {
+          _isWishlisted = wasWishlisted;
+          _isWishlistLoading = false;
+        });
+        MingrrSnackBar.error(context, '찜하기 실패: $e');
+      }
+    }
   }
 
   @override
@@ -124,14 +183,18 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(),
-        body: const MingrrLoadingState(),
+        body: const MingrrLoadingState(type: MingrrLoadingType.market, message: '상품 정보를 불러오고 있어요'),
       );
     }
 
     if (_product == null) {
       return Scaffold(
         appBar: AppBar(),
-        body: const Center(child: Text('상품을 찾을 수 없습니다')),
+        body: const MingrrEmptyState(
+          icon: Icons.shopping_bag_outlined,
+          title: '아직 데이터가 없어요',
+          subtitle: '상품을 찾을 수 없습니다',
+        ),
       );
     }
 
@@ -151,7 +214,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                 children: [
                   // 판매자 정보
                   _buildSellerInfo(context),
-                  const Divider(height: 32),
+                  const MingrrDivider.section(),
                   
                   // 상품 정보
                   _buildProductInfo(),
@@ -183,53 +246,19 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
   /// 이미지 헤더
   Widget _buildImageHeader(BuildContext context) {
-    return SliverAppBar(
+    return MingrrImageHeader(
+      imageUrls: _product?.imageUrls ?? [],
       expandedHeight: 300,
-      pinned: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      leading: IconButton(
-        icon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.3),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
-        ),
-        onPressed: () => Navigator.pop(context),
-      ),
-      actions: [
-        IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.share, color: Colors.white, size: 20),
-          ),
-          onPressed: () {
-            // TODO: 상품 공유 기능 구현 예정
-          },
-        ),
-        IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.more_vert, color: Colors.white, size: 20),
-          ),
-          onPressed: () => _showMoreOptions(context),
-        ),
-      ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          color: context.features.marketContainer,
-          child: Center(
-            child: Icon(Icons.image, size: 80, color: context.features.market),
-          ),
+      onShare: () {
+        if (_product != null) {
+          ShareService.shareProduct(context, _product!);
+        }
+      },
+      onMore: () => _showMoreOptions(context),
+      placeholder: Container(
+        color: context.features.marketContainer,
+        child: Center(
+          child: Icon(Icons.image, size: 80, color: context.features.market),
         ),
       ),
     );
@@ -268,7 +297,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         walkCount: 65,
         datingCount: 8,
         marketCount: 12,
-        communityCount: 5,
+        groupCount: 5,
       ),
     );
   }
@@ -280,43 +309,41 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       children: [
         // 카테고리
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
           decoration: BoxDecoration(
-            color: context.features.market.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(6),
+            color: context.features.market.withValues(alpha: AppOpacity.o10),
+            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(_product?.category.icon ?? Icons.more_horiz, size: 12, color: context.features.market),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSizes.gapXS),
               Text(
                 _product?.category.label ?? '기타',
-                style: TextStyle(fontSize: 12, color: context.features.market),
+                style: AppTextStyles.labelLarge(context).copyWith(color: context.features.market),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSizes.gapM),
         // 제목
         Text(
           _product?.title ?? '',
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+          style: AppTextStyles.headlineMedium(context),
         ),
-        const SizedBox(height: 8),
-        // 시간, 조회수
+        const SizedBox(height: AppSizes.gapS),
+        // 시간, 조회수, 거리
         Text(
-          '${_product?.address ?? ''} · ${formatRelativeTime(_product?.createdAt ?? DateTime.now())} · 조회 ${_product?.viewCount ?? 0}',
-          style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          '${_getDistanceString()} · ${formatRelativeTime(_product?.createdAt ?? DateTime.now())} · 조회 ${_product?.viewCount ?? 0}',
+          style: AppTextStyles.bodySmall(context),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSizes.gapL),
         // 가격
         Text(
           _isShare ? '무료나눔' : '${formatPrice(_product?.price ?? 0)}원',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: _isShare ? context.features.walk : Theme.of(context).colorScheme.onSurface,
+          style: AppTextStyles.displayMedium(context).withWeight(FontWeight.w700).withColor(
+            _isShare ? context.features.walk : Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ],
@@ -328,21 +355,21 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           '상품 설명',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          style: AppTextStyles.headlineSmall(context),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSizes.gapM),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSizes.paddingL),
           decoration: BoxDecoration(
             color: context.sectionBackground,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
           child: Text(
             _product?.description ?? '',
-            style: TextStyle(fontSize: 14, height: 1.6, color: Theme.of(context).colorScheme.onSurface),
+            style: AppTextStyles.bodyMedium(context).copyWith(height: 1.6),
           ),
         ),
       ],
@@ -360,7 +387,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         displayAddress.isEmpty || 
         displayAddress.contains('Instance of') ||
         displayAddress.contains('GeoPoint')) {
-      displayAddress = '위치 정보 없음';
+      displayAddress = LocationConstants.noLocationText;
     }
     
     final locationData = LocationData(
@@ -373,11 +400,11 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           '거래 희망 지역',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          style: AppTextStyles.headlineSmall(context),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSizes.gapM),
         LocationDisplayCard(
           location: locationData,
           accentColor: context.features.market,
@@ -397,23 +424,23 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
+        height: ResponsiveUtils.heightPercent(context, 0.7),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusL)),
         ),
         child: Column(
           children: [
             // 헤더
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSizes.paddingL),
               child: Row(
                 children: [
                   const SizedBox(width: 40),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       '거래 희망 지역',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      style: AppTextStyles.headlineSmall(context),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -435,15 +462,15 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
             // 주소 정보
             SafeArea(
               child: Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSizes.paddingL),
                 child: Row(
                   children: [
                     Icon(Icons.location_on, color: context.features.market),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSizes.gapS),
                     Expanded(
                       child: Text(
                         location.displayAddress,
-                        style: const TextStyle(fontSize: 15),
+                        style: AppTextStyles.titleMedium(context),
                       ),
                     ),
                   ],
@@ -466,7 +493,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           GestureDetector(
             onTap: _toggleWishlist,
             child: Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(AppSizes.paddingS),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -475,48 +502,33 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
                     color: _isWishlisted ? context.features.market : Theme.of(context).colorScheme.onSurfaceVariant,
                     size: 24,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: AppSizes.gapXXS),
                   Text(
                     '${_product?.likeCount ?? 0}',
-                    style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    style: AppTextStyles.caption(context),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSizes.gapM),
           // 가격 표시
           Expanded(
             child: Text(
               _isShare ? '무료나눔' : '${formatPrice(_product?.price ?? 0)}원',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: _isShare ? context.features.walk : Theme.of(context).colorScheme.onSurface,
+              style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w700).withColor(
+                _isShare ? context.features.walk : Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ),
           // 채팅하기 버튼
-          SizedBox(
+          MingrrButton(
+            text: '채팅하기',
+            onPressed: _isOwner ? null : () => _startChat(),
+            backgroundColor: context.features.market,
+            textColor: Colors.white,
             width: 100,
-            child: ElevatedButton(
-              onPressed: _isOwner ? null : () => _startChat(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.features.market,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              child: const Text(
-                '채팅하기',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+            height: 48,
           ),
         ],
       ),
@@ -525,44 +537,54 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
   /// 더보기 옵션 메뉴
   void _showMoreOptions(BuildContext context) {
-    final options = <MingrrOptionItem>[];
-    
-    if (_isOwner) {
-      options.addAll([
-        MingrrOptionItem(
-          icon: Icons.edit_outlined,
-          label: '수정하기',
-          onTap: _editProduct,
-        ),
-        MingrrOptionItem(
-          icon: Icons.delete_outline,
-          label: '삭제하기',
-          isDestructive: true,
-          onTap: _confirmDelete,
-        ),
-      ]);
-    } else {
-      options.addAll([
-        MingrrOptionItem(
-          icon: Icons.block_outlined,
-          label: '이 판매자 차단하기',
-          onTap: () {},
-        ),
-        MingrrOptionItem(
-          icon: Icons.report_outlined,
-          label: '신고하기',
-          isDestructive: true,
-          onTap: () => showReportSheet(
-            context,
-            targetId: widget.productId,
-            targetName: '이 상품',
-            targetType: ReportTargetType.product,
-          ),
-        ),
-      ]);
+    showDetailOptionsSheet(
+      context: context,
+      isOwner: _isOwner,
+      onEdit: _editProduct,
+      onDelete: _confirmDelete,
+      onBlock: () => _blockSeller(context),
+      blockLabel: '이 판매자 차단하기',
+      onReport: () => showReportSheet(
+        context,
+        targetId: widget.productId,
+        targetName: '이 상품',
+        targetType: ReportTargetType.product,
+      ),
+    );
+  }
+
+  /// 판매자 차단
+  Future<void> _blockSeller(BuildContext context) async {
+    final currentUserId = _firebaseService.currentUserId;
+    if (currentUserId == null) {
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
+      return;
     }
-    
-    showMingrrOptionsSheet(context: context, options: options);
+
+    final sellerId = _product?.sellerId;
+    if (sellerId == null || sellerId == currentUserId) {
+      MingrrSnackBar.warning(context, '본인은 차단할 수 없습니다');
+      return;
+    }
+
+    // 차단 확인 시트
+    showConfirmSheet(
+      context,
+      type: ConfirmSheetType.sellerBlock,
+      onConfirm: () async {
+        try {
+          await _firestoreService.blockUser(currentUserId, sellerId);
+          if (mounted) {
+            MingrrSnackBar.success(context, '판매자를 차단했습니다');
+            Navigator.pop(context); // 상세 화면 닫기
+          }
+        } catch (e) {
+          if (mounted) {
+            MingrrSnackBar.error(context, '차단 실패: $e');
+          }
+        }
+      },
+    );
   }
 
   /// 상품 수정
@@ -606,6 +628,8 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       await _firestoreService.deleteProduct(_product!.id);
       
       if (mounted) {
+        // 리스트 새로고침 트리거
+        ref.read(marketRefreshProvider.notifier).state++;
         Navigator.pop(context, true); // 삭제 성공 알림
         MingrrSnackBar.success(context, '상품이 삭제되었습니다');
       }

@@ -75,7 +75,7 @@ class AppTheme {
       
       // ===== 앱바 테마 =====
       appBarTheme: const AppBarTheme(
-        elevation: 0,
+        elevation: AppSizes.elevationNone,
         scrolledUnderElevation: 0,
         centerTitle: true,
         backgroundColor: Colors.white,
@@ -111,7 +111,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: _primary,
           foregroundColor: _textPrimary,
-          elevation: 0,
+          elevation: AppSizes.elevationNone,
           minimumSize: const Size(double.infinity, AppSizes.buttonHeightL),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusL),
@@ -193,7 +193,7 @@ class AppTheme {
         selectedItemColor: _primary,
         unselectedItemColor: _textHint,
         type: BottomNavigationBarType.fixed,
-        elevation: 8,
+        elevation: AppSizes.elevationM,
         selectedLabelStyle: TextStyle(
           fontFamily: 'Pretendard',
           fontSize: 12,
@@ -210,7 +210,7 @@ class AppTheme {
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: _primary,
         foregroundColor: _textPrimary,
-        elevation: 4,
+        elevation: AppSizes.elevationM,
         shape: CircleBorder(),
       ),
       
@@ -236,7 +236,7 @@ class AppTheme {
       // ===== 다이얼로그 테마 =====
       dialogTheme: DialogThemeData(
         backgroundColor: Colors.white,
-        elevation: 8,
+        elevation: AppSizes.elevationM,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusXL),
         ),
@@ -256,7 +256,7 @@ class AppTheme {
       // ===== 바텀시트 테마 =====
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: Colors.white,
-        elevation: 8,
+        elevation: AppSizes.elevationM,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(AppSizes.radiusXL),
@@ -436,7 +436,7 @@ class AppTheme {
       
       // ===== 앱바 테마 =====
       appBarTheme: const AppBarTheme(
-        elevation: 0,
+        elevation: AppSizes.elevationNone,
         scrolledUnderElevation: 0,
         centerTitle: true,
         backgroundColor: _darkSurface,
@@ -456,7 +456,7 @@ class AppTheme {
       
       // ===== 카드 테마 =====
       cardTheme: CardThemeData(
-        elevation: 2,
+        elevation: AppSizes.elevationS,
         color: _darkSurface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
@@ -473,7 +473,7 @@ class AppTheme {
         style: ElevatedButton.styleFrom(
           backgroundColor: _primary,
           foregroundColor: _textPrimary,
-          elevation: 0,
+          elevation: AppSizes.elevationNone,
           minimumSize: const Size(double.infinity, AppSizes.buttonHeightL),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusL),
@@ -554,14 +554,14 @@ class AppTheme {
         selectedItemColor: _primary,
         unselectedItemColor: _darkTextHint,
         type: BottomNavigationBarType.fixed,
-        elevation: 8,
+        elevation: AppSizes.elevationM,
       ),
       
       // ===== 바텀시트 테마 =====
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: _darkSurface,
         modalBackgroundColor: _darkSurface,
-        elevation: 8,
+        elevation: AppSizes.elevationM,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(AppSizes.radiusXL),
@@ -573,7 +573,7 @@ class AppTheme {
       dialogTheme: DialogThemeData(
         backgroundColor: _darkSurface,
         surfaceTintColor: Colors.transparent,
-        elevation: 8,
+        elevation: AppSizes.elevationM,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusXL),
         ),
@@ -606,7 +606,7 @@ class AppTheme {
       // ===== 칩 테마 =====
       chipTheme: ChipThemeData(
         backgroundColor: _darkSurfaceLight,
-        selectedColor: _primary.withValues(alpha: 0.3),
+        selectedColor: _primary.withValues(alpha: AppOpacity.o30),
         disabledColor: _darkDivider,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusL),

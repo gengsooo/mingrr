@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
+import '../../../../core/widgets/common_widgets.dart';
 
 /// ============================================================
 /// 온보딩 화면
@@ -90,10 +92,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   onPressed: _skipOnboarding,
                   child: Text(
                     '건너뛰기',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                      fontSize: 14,
-                    ),
+                    style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.outlineVariant),
                   ),
                 ),
               ),
@@ -128,11 +127,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Text(
                           page.title,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                          style: AppTextStyles.displayMedium(context).withWeight(FontWeight.w700),
                         ),
                         const SizedBox(height: AppSizes.gapM),
                         
@@ -140,11 +135,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Text(
                           page.description,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            height: 1.5,
-                          ),
+                          style: AppTextStyles.headlineSmall(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant).withHeight(1.5),
                         ),
                       ],
                     ),
@@ -164,15 +155,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     children: List.generate(
                       _pages.length,
                       (index) => AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        duration: const Duration(milliseconds: 150),
+                        margin: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS),
                         width: _currentPage == index ? 24 : 8,
                         height: 8,
                         decoration: BoxDecoration(
                           color: _currentPage == index
                               ? Theme.of(context).colorScheme.primary
                               : Theme.of(context).colorScheme.outline,
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                         ),
                       ),
                     ),
@@ -180,26 +171,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   const SizedBox(height: AppSizes.gapXL),
                   
                   // 다음/시작 버튼
-                  SizedBox(
-                    width: double.infinity,
-                    height: AppSizes.buttonHeightL,
-                    child: ElevatedButton(
-                      onPressed: _nextPage,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(context).colorScheme.onSurface,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppSizes.radiusL),
-                        ),
-                      ),
-                      child: Text(
-                        _currentPage == _pages.length - 1 ? '시작하기' : '다음',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                  MingrrButton(
+                    text: _currentPage == _pages.length - 1 ? '시작하기' : '다음',
+                    onPressed: _nextPage,
                   ),
                 ],
               ),

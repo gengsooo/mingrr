@@ -1,20 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../theme/feature_colors.dart';
+import '../theme/app_text_styles.dart';
 import '../constants/app_sizes.dart';
 import '../services/firestore_service.dart';
 import 'common_widgets.dart';
-import 'svg_icons.dart';
+import 'mingrr_image.dart';
+import 'badges/svg_icons.dart';
+import 'badges/info_badge.dart';
+import 'forms/search_bar.dart';
 import '../utils/format_utils.dart';
 import '../../models/marketplace_model.dart';
-import '../../models/community_model.dart';
+import '../../models/group_model.dart';
+import '../../models/community_post_model.dart';
 
 /// ============================================================
 /// 통합 검색 화면
-/// 마켓, 소모임, 알바 검색 지원
+/// 마켓, 소모임(group), 커뮤니티(게시판), 알바 검색 지원
 /// ============================================================
 
-enum SearchType { market, community, job, breeding }
+enum SearchType {
+  market,      // 마켓플레이스 상품
+  group,       // 소모임
+  community,   // 커뮤니티 게시판
+  job,         // 알바
+  breeding,    // 교배
+}
 
 class SearchScreen extends ConsumerStatefulWidget {
   final SearchType searchType;
@@ -50,7 +62,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 0,
+        elevation: AppSizes.elevationNone,
         titleSpacing: 0,
         title: _buildSearchField(),
         actions: [
@@ -65,25 +77,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildSearchField() {
-    return Container(
-      height: 40,
-      margin: const EdgeInsets.only(left: 16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: TextField(
+    return Padding(
+      padding: const EdgeInsets.only(left: AppSizes.paddingL),
+      child: MingrrSearchBar(
         controller: _searchController,
+        hintText: _getHintText(),
+        accentColor: widget.accentColor,
         autofocus: true,
-        decoration: InputDecoration(
-          hintText: _getHintText(),
-          hintStyle: TextStyle(color: Theme.of(context).colorScheme.outlineVariant, fontSize: 13),
-          prefixIcon: Icon(Icons.search, color: widget.accentColor, size: 20),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        ),
-        onSubmitted: _onSearch,
-        textInputAction: TextInputAction.search,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        onSearch: _onSearch,
       ),
     );
   }
@@ -92,8 +94,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     switch (widget.searchType) {
       case SearchType.breeding:
         return '교배 글 제목, 상세 내용으로 검색';
-      case SearchType.community:
+      case SearchType.group:
         return '모임명, 태그로 검색';
+      case SearchType.community:
+        return '게시글 내용, 태그로 검색';
       case SearchType.job:
         return '알바 제목, 설명으로 검색';
       case SearchType.market:
@@ -103,19 +107,19 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const MingrrLoadingState();
+      return const MingrrLoadingState(type: MingrrLoadingType.primary, message: '검색 중이에요');
     }
 
     if (_lastQuery.isEmpty) {
       return const MingrrEmptyState(
-        svgAsset: SvgAssets.emptySearch,
+        icon: Icons.search,
         title: '검색어를 입력해주세요',
       );
     }
 
     if (_results.isEmpty) {
       return const MingrrEmptyState(
-        svgAsset: SvgAssets.emptySearch,
+        icon: Icons.search_off,
         title: '검색 결과가 없습니다',
       );
     }
@@ -128,8 +132,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         switch (widget.searchType) {
           case SearchType.market:
             return _buildProductItem(item as ProductModel);
-          case SearchType.community:
+          case SearchType.group:
             return _buildGroupItem(item as GroupModel);
+          case SearchType.community:
+            return _buildCommunityPostItem(item as CommunityPostModel);
           case SearchType.breeding:
             return _buildBreedingItem(item);
           case SearchType.job:
@@ -144,22 +150,20 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       child: ListTile(
-        leading: Container(
+        leading: MingrrThumbnail(
+          imageUrl: product.imageUrls.isNotEmpty ? product.imageUrls.first : null,
           width: 60,
           height: 60,
-          decoration: BoxDecoration(
-            color: context.features.marketContainer,
-            borderRadius: BorderRadius.circular(8),
-            image: product.imageUrls.isNotEmpty
-                ? DecorationImage(
-                    image: NetworkImage(product.imageUrls.first),
-                    fit: BoxFit.cover,
-                  )
-                : null,
+          borderRadius: AppSizes.radiusXS,
+          errorWidget: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: context.features.marketContainer,
+              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+            ),
+            child: Icon(Icons.image, color: context.features.market),
           ),
-          child: product.imageUrls.isEmpty
-              ? Icon(Icons.image, color: context.features.market)
-              : null,
         ),
         title: Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(
@@ -171,11 +175,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
         trailing: Text(
           formatRelativeTime(product.createdAt),
-          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+          style: AppTextStyles.captionSmall(context),
         ),
         onTap: () {
-          // TODO: 상품 상세 화면으로 이동
-          Navigator.pop(context, product);
+          Navigator.pop(context);
+          context.push('/market/product/${product.id}');
         },
       ),
     );
@@ -185,42 +189,34 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       child: ListTile(
-        leading: Container(
+        leading: MingrrThumbnail(
+          imageUrl: group.imageUrl,
           width: 60,
           height: 60,
-          decoration: BoxDecoration(
-            color: context.features.communityContainer,
-            borderRadius: BorderRadius.circular(8),
-            image: group.imageUrl != null
-                ? DecorationImage(
-                    image: NetworkImage(group.imageUrl!),
-                    fit: BoxFit.cover,
-                  )
-                : null,
+          borderRadius: AppSizes.radiusXS,
+          errorWidget: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: context.features.socialContainer,
+              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+            ),
+            child: Icon(Icons.groups, color: context.features.social),
           ),
-          child: group.imageUrl == null
-              ? Icon(Icons.groups, color: context.features.community)
-              : null,
         ),
         title: Text(group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Row(
           children: [
-            Text(group.typeString, style: const TextStyle(fontSize: 12)),
-            const SizedBox(width: 8),
+            Text(group.typeString, style: AppTextStyles.caption(context)),
+            const SizedBox(width: AppSizes.gapS),
             Icon(Icons.person, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
-            Text(' ${group.memberCount}', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant)),
+            Text(' ${group.memberCount}', style: AppTextStyles.captionSmall(context)),
           ],
         ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.favorite, size: 14, color: context.features.breeding),
-            const SizedBox(width: 2),
-            Text('${group.likeCount}', style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant)),
-          ],
-        ),
+        trailing: LikeCountText(count: group.likeCount, size: InfoBadgeSize.small),
         onTap: () {
-          Navigator.pop(context, group);
+          Navigator.pop(context);
+          context.push('/social/group/${group.id}');
         },
       ),
     );
@@ -235,7 +231,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           height: 60,
           decoration: BoxDecoration(
             color: context.features.marketContainer,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
           ),
           child: Icon(_getJobIcon(job.type), color: context.features.market),
         ),
@@ -246,10 +242,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ),
         trailing: Text(
           formatRelativeTime(job.createdAt),
-          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+          style: AppTextStyles.captionSmall(context),
         ),
         onTap: () {
-          Navigator.pop(context, job);
+          Navigator.pop(context);
+          context.push('/market/job/${job.id}');
         },
       ),
     );
@@ -259,31 +256,86 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       child: ListTile(
-        leading: Container(
+        leading: MingrrThumbnail(
+          imageUrl: breeding.imageUrls != null && breeding.imageUrls.isNotEmpty ? breeding.imageUrls.first : null,
           width: 60,
           height: 60,
-          decoration: BoxDecoration(
-            color: context.features.breedingContainer,
-            borderRadius: BorderRadius.circular(8),
-            image: breeding.imageUrls != null && breeding.imageUrls.isNotEmpty
-                ? DecorationImage(
-                    image: NetworkImage(breeding.imageUrls.first),
-                    fit: BoxFit.cover,
-                  )
-                : null,
+          borderRadius: AppSizes.radiusXS,
+          errorWidget: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: context.features.breedingContainer,
+              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+            ),
+            child: Icon(Icons.family_restroom, color: context.features.breeding),
           ),
-          child: (breeding.imageUrls == null || breeding.imageUrls.isEmpty)
-              ? Icon(Icons.pets, color: context.features.breeding)
-              : null,
         ),
         title: Text(breeding.title ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(
           '${breeding.breed ?? '품종 미상'}',
-          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+          style: AppTextStyles.captionSmall(context),
         ),
         trailing: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
         onTap: () {
-          Navigator.pop(context, breeding);
+          Navigator.pop(context);
+          context.push('/dating/detail/${breeding.petId}');
+        },
+      ),
+    );
+  }
+
+  Widget _buildCommunityPostItem(CommunityPostModel post) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
+      child: ListTile(
+        leading: MingrrThumbnail(
+          imageUrl: post.imageUrls.isNotEmpty ? post.imageUrls.first : null,
+          width: 60,
+          height: 60,
+          borderRadius: AppSizes.radiusXS,
+          errorWidget: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: context.features.socialContainer,
+              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+            ),
+            child: Icon(Icons.article, color: context.features.social),
+          ),
+        ),
+        title: Text(
+          post.content.length > 30 ? '${post.content.substring(0, 30)}...' : post.content,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
+              decoration: BoxDecoration(
+                color: context.features.social.withValues(alpha: AppOpacity.o10),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+              ),
+              child: Text(
+                post.category.label,
+                style: AppTextStyles.labelMedium(context).copyWith(color: context.features.social),
+              ),
+            ),
+            const SizedBox(width: AppSizes.gapS),
+            LikeCountText(count: post.likeCount, size: InfoBadgeSize.small),
+            const SizedBox(width: AppSizes.gapS),
+            Icon(Icons.chat_bubble_outline, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
+            Text(' ${post.commentCount}', style: AppTextStyles.captionSmall(context)),
+          ],
+        ),
+        trailing: Text(
+          formatRelativeTime(post.createdAt),
+          style: AppTextStyles.captionSmall(context),
+        ),
+        onTap: () {
+          Navigator.pop(context);
+          context.push('/social/community/${post.id}');
         },
       ),
     );
@@ -319,8 +371,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         case SearchType.market:
           results = await _firestoreService.searchProducts(trimmedQuery);
           break;
-        case SearchType.community:
+        case SearchType.group:
           results = await _firestoreService.searchGroups(trimmedQuery);
+          break;
+        case SearchType.community:
+          results = await _firestoreService.searchCommunityPosts(trimmedQuery);
           break;
         case SearchType.breeding:
           results = await _firestoreService.searchBreedingPosts(trimmedQuery);

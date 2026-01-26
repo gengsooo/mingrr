@@ -10,13 +10,14 @@ import 'core/theme/app_theme.dart';  // 앱의 전체적인 디자인 테마 (�
 import 'core/constants/app_strings.dart';  // 앱에서 사용하는 모든 텍스트 상수
 import 'core/theme/feature_colors.dart';  // 앱에서 사용하는 색상 상수
 import 'core/constants/app_sizes.dart';  // 앱에서 사용하는 크기/간격 상수
+import 'core/theme/app_text_styles.dart';  // 텍스트 스타일
 
 // 각 기능별 화면들을 불러옵니다
 import 'features/home/presentation/screens/home_screen.dart';  // 홈 화면
 import 'features/dating/presentation/screens/dating_screen.dart';  // 데이팅 화면
 import 'features/marketplace/presentation/screens/marketplace_screen.dart';  // 마켓 화면
 import 'features/health/presentation/screens/health_screen.dart';  // 건강수첩 화면
-import 'features/community/presentation/screens/community_screen.dart';  // 소모임 화면
+import 'features/social/presentation/screens/social_screen.dart';  // 소셜 화면
 import 'features/chat/presentation/screens/chat_list_screen.dart';  // 채팅 목록 화면
 import 'features/profile/presentation/screens/profile_screen.dart';  // 프로필 화면
 
@@ -72,10 +73,10 @@ final demoRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const MarketplaceScreen(),
           ),
           
-          // 5️⃣ 소모임 화면 (경로: '/community')
+          // 5️⃣ 소셜 화면 (경로: '/social')
           GoRoute(
-            path: '/community',
-            builder: (context, state) => const CommunityScreen(),
+            path: '/social',
+            builder: (context, state) => const SocialScreen(),
           ),
         ],
       ),
@@ -173,13 +174,7 @@ class DemoBottomNavBar extends StatelessWidget {
       // decoration: 컨테이너의 꾸미기 (배경색, 테두리, 그림자 등)
       decoration: BoxDecoration(
         color: Colors.white,  // 배경색: 흰색
-        boxShadow: [  // 그림자 효과
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),  // 검은색 5% 투명도
-            blurRadius: 20,  // 그림자 흐림 정도
-            offset: const Offset(0, -5),  // 그림자 위치 (위쪽으로 5픽셀)
-          ),
-        ],
+        boxShadow: AppShadows.shadowL(Theme.of(context).brightness == Brightness.dark),
       ),
       // SafeArea: 노치(카메라 구멍)나 홈 버튼 영역을 피해서 내용을 표시
       child: SafeArea(
@@ -239,16 +234,16 @@ class DemoBottomNavBar extends StatelessWidget {
                 color: context.features.market,  // 커스텀 색상 (주황)
               ),
               
-              // 5️⃣ 소모임 버튼
+              // 5️⃣ 소셜 버튼
               _buildNavItem(
                 context: context,
-                icon: Icons.groups_outlined,
-                activeIcon: Icons.groups,
-                label: '소모임',
+                icon: Icons.forum_outlined,
+                activeIcon: Icons.forum,
+                label: '소셜',
                 index: 4,
                 currentIndex: currentIndex,
-                route: '/community',
-                color: context.features.community,  // 커스텀 색상 (보라)
+                route: '/social',
+                color: context.features.social,  // 커스텀 색상 (보라)
               ),
             ],
           ),
@@ -313,12 +308,12 @@ class DemoBottomNavBar extends StatelessWidget {
               children: [
                 // AnimatedContainer: 속성이 변할 때 애니메이션 효과
                 AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),  // 애니메이션 시간
-                  padding: const EdgeInsets.all(8),
+                  duration: const Duration(milliseconds: 150),  // 애니메이션 시간
+                  padding: const EdgeInsets.all(AppSizes.paddingS),
                   decoration: BoxDecoration(
                     // 활성 상태면 배경색 표시, 아니면 투명
                     color: isActive
-                        ? activeColor.withOpacity(0.15)  // 15% 투명도
+                        ? activeColor.withValues(alpha: AppOpacity.o15)  // 15% 투명도
                         : Colors.transparent,
                     borderRadius: BorderRadius.circular(AppSizes.radiusM),  // 둥근 모서리
                   ),
@@ -343,15 +338,11 @@ class DemoBottomNavBar extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: Colors.red,  // 빨간색 배경
-                        borderRadius: BorderRadius.circular(10),  // 둥근 모양
+                        borderRadius: BorderRadius.circular(AppSizes.radiusS),  // 둥근 모양
                       ),
                       child: Text(
                         badge > 99 ? '99+' : '$badge',  // 99 초과면 '99+' 표시
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: AppTextStyles.labelSmall(context).withWeight(FontWeight.w600).withColor(Colors.white),
                       ),
                     ),
                   ),
@@ -363,11 +354,9 @@ class DemoBottomNavBar extends StatelessWidget {
             // 버튼 아래 텍스트
             Text(
               label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,  // 활성 상태면 굵게
-                color: isActive ? activeColor : Theme.of(context).colorScheme.outlineVariant,  // 색상 변경
-              ),
+              style: AppTextStyles.caption(context)
+                  .withWeight(isActive ? FontWeight.w600 : FontWeight.w400)
+                  .withColor(isActive ? activeColor : Theme.of(context).colorScheme.outlineVariant),
             ),
           ],
         ),
@@ -391,7 +380,7 @@ class DemoBottomNavBar extends StatelessWidget {
         return 2;
       case '/market':  // 마켓 화면
         return 3;
-      case '/community':  // 소모임 화면
+      case '/social':  // 소셜 화면
         return 4;
       default:  // 그 외의 경우 (프로필, 건강수첩 등)
         return 0;  // 기본값으로 홈(0) 반환

@@ -2,13 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/profile_cards.dart';
-import '../../../../core/widgets/report_sheet.dart';
-import '../../../../core/widgets/guardian_profile_modal.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/cards/profile_cards.dart';
+import '../../../../core/widgets/sheets/report_sheet.dart';
+import '../../../../core/widgets/modals/guardian_profile_modal.dart';
+import '../../../../core/constants/pet_constants.dart';
+import '../../../../core/mixins/distance_calculator_mixin.dart';
+import '../../../../core/services/firebase_service.dart';
+import '../../../../core/services/share_service.dart';
 import '../../../../models/marketplace_model.dart';
 import '../providers/marketplace_provider.dart';
 
@@ -33,7 +38,13 @@ class JobDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<JobDetailScreen> createState() => _JobDetailScreenState();
 }
 
-class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
+class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
+    with DistanceCalculatorMixin {
+  /// 거리 문자열 계산 (Mixin 활용)
+  String _getDistanceString(JobModel job) {
+    return getDistanceFromLocation(job.location, job.address);
+  }
+
   @override
   Widget build(BuildContext context) {
     final jobAsync = ref.watch(jobByIdProvider(widget.jobId));
@@ -43,17 +54,26 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         if (job == null) {
           return Scaffold(
             appBar: AppBar(title: const Text('알바')),
-            body: const Center(child: Text('알바 정보를 찾을 수 없습니다')),
+            body: const MingrrEmptyState(
+              icon: Icons.work_outline,
+              title: '아직 데이터가 없어요',
+              subtitle: '알바 정보를 찾을 수 없습니다',
+            ),
           );
         }
         return _buildContent(context, job);
       },
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      loading: () => Scaffold(
+        body: MingrrFullScreenLoading(
+          message: '알바 정보 불러오는 중',
+          type: MingrrLoadingType.market,
+        ),
       ),
       error: (_, __) => Scaffold(
         appBar: AppBar(title: const Text('알바')),
-        body: const Center(child: Text('데이터를 불러올 수 없습니다')),
+        body: MingrrErrorState(
+          onRetry: () => ref.invalidate(jobDetailProvider(widget.jobId)),
+        ),
       ),
     );
   }
@@ -75,7 +95,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                 children: [
                   // 등록자 정보
                   _buildUserInfo(context, job),
-                  const Divider(height: 32),
+                  const MingrrDivider.section(),
                   
                   // 알바 정보
                   _buildJobInfo(job),
@@ -86,7 +106,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
                   
                   // 이미지 (있는 경우)
                   if (job.imageUrls.isNotEmpty) ...[
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSizes.gapXL),
                     _buildImages(job),
                   ],
                   
@@ -105,54 +125,18 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
 
   /// 이미지 헤더 (상품 상세와 동일한 스타일)
   Widget _buildImageHeader(BuildContext context, JobModel job) {
-    return SliverAppBar(
+    return MingrrImageHeader(
+      imageUrls: job.imageUrls,
       expandedHeight: 200,
-      pinned: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      leading: IconButton(
-        icon: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.3),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
-        ),
-        onPressed: () => Navigator.pop(context),
-      ),
-      actions: [
-        IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.share, color: Colors.white, size: 20),
-          ),
-          onPressed: () => _shareJob(job),
-        ),
-        IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.3),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.more_vert, color: Colors.white, size: 20),
-          ),
-          onPressed: () => _showMoreOptions(context, job),
-        ),
-      ],
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          color: context.features.marketContainer,
-          child: Center(
-            child: Icon(
-              _getJobIcon(job.type),
-              size: 80,
-              color: context.features.market,
-            ),
+      onShare: () => _shareJob(job),
+      onMore: () => _showMoreOptions(context, job),
+      placeholder: Container(
+        color: context.features.marketContainer,
+        child: Center(
+          child: Icon(
+            _getJobIcon(job.type),
+            size: 80,
+            color: context.features.market,
           ),
         ),
       ),
@@ -183,66 +167,62 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
-                color: _getTypeColor(job.type).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
+                color: _getTypeColor(job.type).withValues(alpha: AppOpacity.o10),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
               child: Text(
                 job.typeString,
-                style: TextStyle(fontSize: 12, color: _getTypeColor(job.type)),
+                style: AppTextStyles.labelLarge(context).copyWith(color: _getTypeColor(job.type)),
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSizes.gapSM),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
-                color: _getStatusColor(job.status).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(6),
+                color: _getStatusColor(job.status).withValues(alpha: AppOpacity.o10),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
               child: Text(
                 _getStatusText(job.status),
-                style: TextStyle(fontSize: 12, color: _getStatusColor(job.status)),
+                style: AppTextStyles.labelLarge(context).copyWith(color: _getStatusColor(job.status)),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSizes.gapM),
         // 제목
         Text(
           job.title,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+          style: AppTextStyles.headlineMedium(context),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.gapS),
         // 기간, 시간, 위치
         if (job.fullPeriodString.isNotEmpty) ...[
           Row(
             children: [
               Icon(Icons.calendar_today, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSizes.gapXS),
               Expanded(
                 child: Text(
                   job.fullPeriodString,
-                  style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  style: AppTextStyles.bodySmall(context),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSizes.gapXS),
         ],
         Text(
-          '${job.address ?? ''} · ${formatRelativeTime(job.createdAt)}',
-          style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+          '${_getDistanceString(job)} · ${formatRelativeTime(job.createdAt)}',
+          style: AppTextStyles.bodySmall(context),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSizes.gapL),
         // 급여
         Text(
           '${formatPrice(job.price)}원 / ${job.priceUnit}',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.w700,
-            color: context.features.market,
-          ),
+          style: AppTextStyles.displayMedium(context).withWeight(FontWeight.w700).withColor(context.features.market),
         ),
       ],
     );
@@ -279,7 +259,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
         walkCount: 65,
         datingCount: 8,
         marketCount: 12,
-        communityCount: 5,
+        groupCount: 5,
       ),
     );
   }
@@ -288,21 +268,21 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           '상세 내용',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          style: AppTextStyles.headlineSmall(context),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSizes.gapM),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSizes.paddingL),
           decoration: BoxDecoration(
             color: context.sectionBackground,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
           child: Text(
             job.description,
-            style: TextStyle(fontSize: 14, height: 1.6, color: Theme.of(context).colorScheme.onSurface),
+            style: AppTextStyles.bodyMedium(context).copyWith(height: 1.6),
           ),
         ),
       ],
@@ -313,42 +293,16 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           '첨부 이미지',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600),
         ),
-        const SizedBox(height: 12),
-        SizedBox(
+        const SizedBox(height: AppSizes.gapM),
+        MingrrImageGallery(
+          imageUrls: job.imageUrls,
           height: 120,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: job.imageUrls.length,
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: EdgeInsets.only(
-                  right: index < job.imageUrls.length - 1 ? 8 : 0,
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    job.imageUrls[index],
-                    width: 120,
-                    height: 120,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 120,
-                      height: 120,
-                      color: Theme.of(context).colorScheme.outline,
-                      child: Icon(Icons.image, color: Theme.of(context).colorScheme.outlineVariant),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
+          itemWidth: 120,
+          enableViewer: true,
         ),
       ],
     );
@@ -363,37 +317,19 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
           Expanded(
             child: Text(
               '${formatPrice(job.price)}원/${job.priceUnit}',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Theme.of(context).colorScheme.onSurface,
-              ),
+              style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w700),
             ),
           ),
           // 채팅하기 버튼
-          SizedBox(
+          MingrrButton(
+            text: '채팅하기',
+            onPressed: job.status == JobStatus.recruiting
+                ? () => _startChat(job)
+                : null,
+            backgroundColor: context.features.market,
+            textColor: Colors.white,
+            height: 48,
             width: 100,
-            child: ElevatedButton(
-              onPressed: job.status == JobStatus.recruiting
-                  ? () => _startChat(job)
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.features.market,
-                disabledBackgroundColor: Theme.of(context).colorScheme.outline,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-              child: const Text(
-                '채팅하기',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-            ),
           ),
         ],
       ),
@@ -409,7 +345,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
       case JobType.bath:
         return context.features.health;
       case JobType.training:
-        return context.features.community;
+        return context.features.social;
       case JobType.other:
         return Theme.of(context).colorScheme.onSurfaceVariant;
     }
@@ -443,27 +379,28 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen> {
 
 
   void _shareJob(JobModel job) {
-    MingrrSnackBar.info(context, '공유 기능 준비 중입니다');
+    ShareService.shareJob(context, job);
+  }
+
+  /// 본인 글 여부 확인
+  bool _isOwner(JobModel job) {
+    final myUserId = FirebaseService().currentUserId;
+    return myUserId != null && job.userId == myUserId;
   }
 
   void _showMoreOptions(BuildContext context, JobModel job) {
-    showMingrrOptionsSheet(
+    showDetailOptionsSheet(
       context: context,
-      options: [
-        MingrrOptionItem(
-          icon: Icons.report_outlined,
-          label: '신고하기',
-          isDestructive: true,
-          onTap: () {
-            showReportSheet(
-              context,
-              targetId: job.id,
-              targetName: '이 알바 글',
-              targetType: ReportTargetType.product,
-            );
-          },
-        ),
-      ],
+      isOwner: _isOwner(job),
+      onShare: () => _shareJob(job),
+      onReport: () {
+        showReportSheet(
+          context,
+          targetId: job.id,
+          targetName: '이 알바 글',
+          targetType: ReportTargetType.product,
+        );
+      },
     );
   }
 

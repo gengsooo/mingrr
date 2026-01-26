@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../constants/pet_constants.dart';
+import '../constants/location_constants.dart';
 
 /// ============================================================
 /// 위치 서비스
@@ -127,7 +127,7 @@ class LocationService {
   static String formatDistance(double distanceMeters) {
     // 거리 정보가 없거나 무한대인 경우
     if (distanceMeters == 0 || distanceMeters.isInfinite || distanceMeters.isNaN) {
-      return '거리 정보 없음';
+      return LocationConstants.noLocationText;
     }
     if (distanceMeters < 1000) {
       return '${distanceMeters.round()}m';

@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/forms/form_components.dart';
 import '../providers/health_provider.dart';
 
 /// ============================================================
@@ -18,79 +21,21 @@ import '../providers/health_provider.dart';
 
 final _healthService = HealthService();
 
-// ===== 공통 바텀시트 래퍼 =====
-class _RecordBottomSheet extends StatelessWidget {
-  final String title;
-  final VoidCallback onSave;
-  final Widget child;
-
-  const _RecordBottomSheet({required this.title, required this.onSave, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const BottomSheetHandle(),
-          // 헤더
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          // 컨텐츠
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-              child: child,
-            ),
-          ),
-          // 하단 저장 버튼
-          Container(
-            padding: EdgeInsets.only(
-              left: 20,
-              right: 20,
-              top: 16,
-              bottom: MediaQuery.of(context).padding.bottom + 16,
-            ),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
-              ],
-            ),
-            child: ElevatedButton(
-              onPressed: onSave,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: context.features.health,
-                foregroundColor: Colors.white,
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text(
-                '저장',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+// ===== 공통 바텀시트 래퍼 (MingrrInputBottomSheet 사용) =====
+// 키보드가 올라와도 저장 버튼이 키보드 위에 표시됨
+Widget _buildRecordBottomSheet({
+  required BuildContext context,
+  required String title,
+  required VoidCallback onSave,
+  required Widget child,
+}) {
+  return MingrrInputBottomSheet(
+    title: title,
+    buttonLabel: '저장',
+    buttonColor: context.features.health,
+    onSave: onSave,
+    child: child,
+  );
 }
 
 // ===== 공통 위젯 (MingrrDateSelector 사용) =====
@@ -108,28 +53,26 @@ Widget _buildMemoField(BuildContext context, TextEditingController controller, {
     maxLines: maxLines,
     decoration: InputDecoration(
       hintText: hint ?? '메모를 입력하세요',
-      hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
+      hintStyle: AppTextStyles.bodySmall(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
         borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
         borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
         borderSide: BorderSide(color: context.features.health, width: 1.5),
       ),
     ),
   );
 }
 
-Widget _buildLabel(String text) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Text(text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-  );
+Widget _buildLabel(String text, {bool isRequired = false}) {
+  final label = text.replaceAll(' *', '');
+  return MingrrSectionLabel(label, isRequired: isRequired || text.contains('*'));
 }
 
 // ===== 체중 기록 바텀시트 =====
@@ -166,7 +109,8 @@ class _AddWeightRecordScreenState extends State<AddWeightRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return _RecordBottomSheet(
+    return _buildRecordBottomSheet(
+      context: context,
       title: '체중 기록',
       onSave: _saveRecord,
       child: Column(
@@ -178,26 +122,26 @@ class _AddWeightRecordScreenState extends State<AddWeightRecordScreen> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
               hintText: '예: 5.2',
-              hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
+              hintStyle: AppTextStyles.bodySmall(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
               suffixText: 'kg',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 borderSide: BorderSide(color: context.features.health, width: 1.5),
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('날짜 *'),
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('메모'),
           _buildMemoField(context, _memoController),
         ],
@@ -260,43 +204,26 @@ class _AddGroomingRecordScreenState extends State<AddGroomingRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return _RecordBottomSheet(
+    return _buildRecordBottomSheet(
+      context: context,
       title: '그루밍 기록',
       onSave: _saveRecord,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildLabel('종류 *'),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: GroomingType.values.map((type) {
-              final isSelected = _selectedType == type;
-              return GestureDetector(
-                onTap: () => setState(() => _selectedType = type),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: isSelected ? context.features.health.withOpacity(0.15) : Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: isSelected ? context.features.health : Theme.of(context).colorScheme.outline, width: isSelected ? 2 : 1),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(type.icon, size: 14, color: isSelected ? context.features.health : Theme.of(context).colorScheme.onSurfaceVariant),
-                      const SizedBox(width: 4),
-                      Text(type.label, style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400, color: isSelected ? context.features.health : Theme.of(context).colorScheme.onSurface)),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
+          MingrrChipSelector<GroomingType>(
+            items: GroomingType.values,
+            selectedItem: _selectedType,
+            onSelected: (type) => setState(() => _selectedType = type),
+            labelBuilder: (type) => type.label,
+            iconBuilder: (type) => type.icon,
+            accentColor: context.features.health,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('날짜 *'),
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('메모'),
           _buildMemoField(context, _memoController),
         ],
@@ -349,7 +276,8 @@ class _AddVaccinationRecordScreenState extends State<AddVaccinationRecordScreen>
 
   @override
   Widget build(BuildContext context) {
-    return _RecordBottomSheet(
+    return _buildRecordBottomSheet(
+      context: context,
       title: '예방접종 기록',
       onSave: _saveRecord,
       child: Column(
@@ -357,7 +285,7 @@ class _AddVaccinationRecordScreenState extends State<AddVaccinationRecordScreen>
         children: [
           _buildLabel('접종일 *'),
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('메모'),
           _buildMemoField(context, _memoController, hint: '백신 종류, 병원, 다음 접종일, 비용 등'),
         ],
@@ -410,7 +338,8 @@ class _AddCheckupRecordScreenState extends State<AddCheckupRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return _RecordBottomSheet(
+    return _buildRecordBottomSheet(
+      context: context,
       title: '검진 기록',
       onSave: _saveRecord,
       child: Column(
@@ -418,7 +347,7 @@ class _AddCheckupRecordScreenState extends State<AddCheckupRecordScreen> {
         children: [
           _buildLabel('검진일 *'),
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('메모'),
           _buildMemoField(context, _memoController, hint: '검진 종류, 결과, 병원, 비용, 다음 검진일 등'),
         ],
@@ -474,7 +403,8 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return _RecordBottomSheet(
+    return _buildRecordBottomSheet(
+      context: context,
       title: '약 기록',
       onSave: _saveRecord,
       child: Column(
@@ -485,24 +415,24 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
             controller: _nameController,
             decoration: InputDecoration(
               hintText: '예: 심장사상충약, 관절영양제',
-              hintStyle: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.outlineVariant),
+              hintStyle: AppTextStyles.bodySmall(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 borderSide: BorderSide(color: context.features.health, width: 1.5),
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('아이콘 색상'),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSizes.gapS),
           Wrap(
             spacing: 12,
             runSpacing: 12,
@@ -515,8 +445,8 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: isSelected ? color.withOpacity(0.15) : Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(12),
+                    color: isSelected ? color.withValues(alpha: AppOpacity.o15) : Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     border: Border.all(
                       color: isSelected ? color : Theme.of(context).colorScheme.outline,
                       width: isSelected ? 2 : 1,
@@ -531,10 +461,10 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
               );
             }).toList(),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('날짜 *'),
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('메모'),
           _buildMemoField(context, _memoController),
         ],
@@ -598,7 +528,8 @@ class _AddSpecialRecordScreenState extends State<AddSpecialRecordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return _RecordBottomSheet(
+    return _buildRecordBottomSheet(
+      context: context,
       title: '특이사항 기록',
       onSave: _saveRecord,
       child: Column(
@@ -606,7 +537,7 @@ class _AddSpecialRecordScreenState extends State<AddSpecialRecordScreen> {
         children: [
           _buildLabel('날짜 *'),
           _buildDateSelector(context, _selectedDate, (d) => setState(() => _selectedDate = d)),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSizes.gapL),
           _buildLabel('메모 *'),
           _buildMemoField(context, _memoController, hint: '증상, 행동, 식이 변화 등 특이사항을 기록하세요', maxLines: 5),
         ],

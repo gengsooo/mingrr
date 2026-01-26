@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 import '../core/constants/pet_constants.dart';
 
 /// ============================================================
-/// 사용자(보호자) 모델 (V2 리팩토링 - 강아지 전용)
+/// 사용자(보호자) 모델 (V2 리팩토링 - 반려동물 전용)
 /// 
 /// 변경사항:
 /// - gender 필드를 UserGender enum으로 변경
@@ -67,6 +67,18 @@ class UserModel extends Equatable {
   /// 위치 인증 여부 (당근마켓 스타일)
   final bool isLocationVerified;
   
+  /// 위치 인증 시간
+  final DateTime? locationVerifiedAt;
+  
+  /// 마지막 위치 체크 시간 (불일치 감지용)
+  final DateTime? lastLocationCheckAt;
+  
+  /// 위치 불일치 횟수 (3회 이상 시 재인증 요청)
+  final int locationMismatchCount;
+  
+  /// 위치 알림 무시 시간 (24시간 재알림 방지)
+  final DateTime? locationReminderDismissedAt;
+  
   /// 산책 중 상태
   final bool isWalking;
   
@@ -109,6 +121,9 @@ class UserModel extends Equatable {
   /// 활동 통계 - 소모임 활동 횟수
   final int groupCount;
   
+  /// 활동 통계 - 커뮤니티 게시글 수
+  final int postCount;
+  
   /// 신고 받은 횟수
   final int reportCount;
   
@@ -117,6 +132,15 @@ class UserModel extends Equatable {
   
   /// 평균 평점 (1~5)
   final double averageRating;
+  
+  /// 채팅 응답률 (0.0 ~ 1.0)
+  final double? chatResponseRate;
+  
+  /// 총 받은 채팅 수
+  final int totalReceivedChats;
+  
+  /// 응답한 채팅 수
+  final int respondedChats;
 
   const UserModel({
     required this.id,
@@ -137,6 +161,10 @@ class UserModel extends Equatable {
     this.isVerified = false,
     this.isIdentityVerified = false,
     this.isLocationVerified = false,
+    this.locationVerifiedAt,
+    this.lastLocationCheckAt,
+    this.locationMismatchCount = 0,
+    this.locationReminderDismissedAt,
     this.isWalking = false,
     this.walkStartedAt,
     this.petIds = const [],
@@ -151,9 +179,13 @@ class UserModel extends Equatable {
     this.walkCount = 0,
     this.transactionCount = 0,
     this.groupCount = 0,
+    this.postCount = 0,
     this.reportCount = 0,
     this.noShowCount = 0,
     this.averageRating = 0.0,
+    this.chatResponseRate,
+    this.totalReceivedChats = 0,
+    this.respondedChats = 0,
   });
 
   /// 나이 계산 (생년월일 기준)
@@ -198,6 +230,16 @@ class UserModel extends Equatable {
       isVerified: data['isVerified'] ?? false,
       isIdentityVerified: data['isIdentityVerified'] ?? false,
       isLocationVerified: data['isLocationVerified'] ?? false,
+      locationVerifiedAt: data['locationVerifiedAt'] != null
+          ? (data['locationVerifiedAt'] as Timestamp).toDate()
+          : null,
+      lastLocationCheckAt: data['lastLocationCheckAt'] != null
+          ? (data['lastLocationCheckAt'] as Timestamp).toDate()
+          : null,
+      locationMismatchCount: data['locationMismatchCount'] ?? 0,
+      locationReminderDismissedAt: data['locationReminderDismissedAt'] != null
+          ? (data['locationReminderDismissedAt'] as Timestamp).toDate()
+          : null,
       isWalking: data['isWalking'] ?? false,
       walkStartedAt: data['walkStartedAt'] != null
           ? (data['walkStartedAt'] as Timestamp).toDate()
@@ -220,9 +262,13 @@ class UserModel extends Equatable {
       walkCount: data['walkCount'] ?? 0,
       transactionCount: data['transactionCount'] ?? 0,
       groupCount: data['groupCount'] ?? 0,
+      postCount: data['postCount'] ?? 0,
       reportCount: data['reportCount'] ?? 0,
       noShowCount: data['noShowCount'] ?? 0,
       averageRating: (data['averageRating'] ?? 0.0).toDouble(),
+      chatResponseRate: data['chatResponseRate']?.toDouble(),
+      totalReceivedChats: data['totalReceivedChats'] ?? 0,
+      respondedChats: data['respondedChats'] ?? 0,
     );
   }
 
@@ -246,6 +292,16 @@ class UserModel extends Equatable {
       'isVerified': isVerified,
       'isIdentityVerified': isIdentityVerified,
       'isLocationVerified': isLocationVerified,
+      'locationVerifiedAt': locationVerifiedAt != null
+          ? Timestamp.fromDate(locationVerifiedAt!)
+          : null,
+      'lastLocationCheckAt': lastLocationCheckAt != null
+          ? Timestamp.fromDate(lastLocationCheckAt!)
+          : null,
+      'locationMismatchCount': locationMismatchCount,
+      'locationReminderDismissedAt': locationReminderDismissedAt != null
+          ? Timestamp.fromDate(locationReminderDismissedAt!)
+          : null,
       'isWalking': isWalking,
       'walkStartedAt': walkStartedAt != null
           ? Timestamp.fromDate(walkStartedAt!)
@@ -264,9 +320,13 @@ class UserModel extends Equatable {
       'walkCount': walkCount,
       'transactionCount': transactionCount,
       'groupCount': groupCount,
+      'postCount': postCount,
       'reportCount': reportCount,
       'noShowCount': noShowCount,
       'averageRating': averageRating,
+      'chatResponseRate': chatResponseRate,
+      'totalReceivedChats': totalReceivedChats,
+      'respondedChats': respondedChats,
     };
   }
 
@@ -290,6 +350,10 @@ class UserModel extends Equatable {
     bool? isVerified,
     bool? isIdentityVerified,
     bool? isLocationVerified,
+    DateTime? locationVerifiedAt,
+    DateTime? lastLocationCheckAt,
+    int? locationMismatchCount,
+    DateTime? locationReminderDismissedAt,
     bool? isWalking,
     DateTime? walkStartedAt,
     List<String>? petIds,
@@ -304,9 +368,13 @@ class UserModel extends Equatable {
     int? walkCount,
     int? transactionCount,
     int? groupCount,
+    int? postCount,
     int? reportCount,
     int? noShowCount,
     double? averageRating,
+    double? chatResponseRate,
+    int? totalReceivedChats,
+    int? respondedChats,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -327,6 +395,10 @@ class UserModel extends Equatable {
       isVerified: isVerified ?? this.isVerified,
       isIdentityVerified: isIdentityVerified ?? this.isIdentityVerified,
       isLocationVerified: isLocationVerified ?? this.isLocationVerified,
+      locationVerifiedAt: locationVerifiedAt ?? this.locationVerifiedAt,
+      lastLocationCheckAt: lastLocationCheckAt ?? this.lastLocationCheckAt,
+      locationMismatchCount: locationMismatchCount ?? this.locationMismatchCount,
+      locationReminderDismissedAt: locationReminderDismissedAt ?? this.locationReminderDismissedAt,
       isWalking: isWalking ?? this.isWalking,
       walkStartedAt: walkStartedAt ?? this.walkStartedAt,
       petIds: petIds ?? this.petIds,
@@ -341,9 +413,13 @@ class UserModel extends Equatable {
       walkCount: walkCount ?? this.walkCount,
       transactionCount: transactionCount ?? this.transactionCount,
       groupCount: groupCount ?? this.groupCount,
+      postCount: postCount ?? this.postCount,
       reportCount: reportCount ?? this.reportCount,
       noShowCount: noShowCount ?? this.noShowCount,
       averageRating: averageRating ?? this.averageRating,
+      chatResponseRate: chatResponseRate ?? this.chatResponseRate,
+      totalReceivedChats: totalReceivedChats ?? this.totalReceivedChats,
+      respondedChats: respondedChats ?? this.respondedChats,
     );
   }
 
@@ -379,6 +455,10 @@ class UserModel extends Equatable {
         isVerified,
         isIdentityVerified,
         isLocationVerified,
+        locationVerifiedAt,
+        lastLocationCheckAt,
+        locationMismatchCount,
+        locationReminderDismissedAt,
         isWalking,
         walkStartedAt,
         petIds,

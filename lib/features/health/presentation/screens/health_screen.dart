@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/mingrr_image.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../models/pet_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import '../providers/health_provider.dart';
@@ -14,11 +17,34 @@ import 'health_record_add_screens.dart';
 /// 건강수첩 화면 (Firebase 연동 버전)
 /// ============================================================
 
-class HealthScreen extends ConsumerWidget {
-  const HealthScreen({super.key});
+class HealthScreen extends ConsumerStatefulWidget {
+  final String? initialPetId; // 초기 선택할 반려동물 ID
+
+  const HealthScreen({super.key, this.initialPetId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HealthScreen> createState() => _HealthScreenState();
+}
+
+class _HealthScreenState extends ConsumerState<HealthScreen> {
+  bool _initialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 초기 petId가 있으면 provider 업데이트
+    if (widget.initialPetId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(selectedPetIdProvider.notifier).state = widget.initialPetId;
+        _initialized = true;
+      });
+    } else {
+      _initialized = true;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final petsAsync = ref.watch(userPetsProvider);
     final selectedPetId = ref.watch(selectedPetIdProvider);
     final selectedTab = ref.watch(selectedHealthTabProvider);
@@ -34,8 +60,10 @@ class HealthScreen extends ConsumerWidget {
         ),
       ),
       body: petsAsync.when(
-        loading: () => const MingrrLoadingState(),
-        error: (e, _) => MingrrErrorState(title: '오류가 발생했습니다', subtitle: '$e'),
+        loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
+        error: (_, __) => MingrrErrorState(
+          onRetry: () => ref.invalidate(userPetsProvider),
+        ),
         data: (pets) {
           if (pets.isEmpty) {
             return _buildNoPetsView(context);
@@ -64,7 +92,7 @@ class HealthScreen extends ConsumerWidget {
       ),
       floatingActionButton: petsAsync.maybeWhen(
         data: (pets) => pets.isNotEmpty
-            ? FloatingActionButton(
+            ? MingrrFAB.add(
                 onPressed: () {
                   final selectedPet = pets.firstWhere(
                     (p) => p.id == selectedPetId,
@@ -73,7 +101,7 @@ class HealthScreen extends ConsumerWidget {
                   _showAddRecordSheet(context, ref, categories[selectedTab], selectedPet);
                 },
                 backgroundColor: context.features.health,
-                child: const Icon(Icons.add, color: Colors.white),
+                tooltip: '건강 기록 추가',
               )
             : null,
         orElse: () => null,
@@ -99,24 +127,24 @@ class HealthScreen extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const DefaultPetIcon(size: 60),
-          const SizedBox(height: 16),
-          const Text(
+          const SizedBox(height: AppSizes.gapL),
+          Text(
             '등록된 반려동물이 없습니다',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            style: AppTextStyles.headlineSmall(context),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSizes.gapS),
           Text(
             '반려동물을 먼저 등록해주세요',
             style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
-          const SizedBox(height: 24),
-          ElevatedButton(
+          const SizedBox(height: AppSizes.gapXL),
+          MingrrButton(
+            text: '돌아가기',
             onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: context.features.health,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('돌아가기'),
+            backgroundColor: context.features.health,
+            textColor: Colors.white,
+            height: 44,
+            width: 120,
           ),
         ],
       ),
@@ -126,7 +154,7 @@ class HealthScreen extends ConsumerWidget {
   /// 반려동물 선택기 (동그란 프로필 + 이름만)
   Widget _buildPetSelector(BuildContext context, WidgetRef ref, List<PetModel> pets, PetModel selectedPet) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM, horizontal: 16),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -137,50 +165,24 @@ class HealthScreen extends ConsumerWidget {
             return GestureDetector(
               onTap: () => ref.read(selectedPetIdProvider.notifier).state = pet.id,
               child: Container(
-                margin: const EdgeInsets.only(right: 16),
+                margin: const EdgeInsets.only(right: AppSizes.paddingL),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // 동그란 프로필 이미지
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: context.features.health.withOpacity(0.1),
-                        border: Border.all(
-                          color: isSelected ? context.features.health : Theme.of(context).colorScheme.outline,
-                          width: isSelected ? 3 : 1,
-                        ),
-                        boxShadow: isSelected ? [
-                          BoxShadow(
-                            color: context.features.health.withOpacity(0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ] : null,
-                        image: (pet.profileImageUrl != null && pet.profileImageUrl!.isNotEmpty)
-                            ? DecorationImage(
-                                image: NetworkImage(pet.profileImageUrl!),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                      ),
-                      child: (pet.profileImageUrl == null || pet.profileImageUrl!.isEmpty)
-                          ? const Center(
-                              child: DefaultPetIcon(size: 24),
-                            )
-                          : null,
+                    MingrrPetAvatar(
+                      imageUrl: pet.profileImageUrl,
+                      size: 56,
+                      borderColor: isSelected ? context.features.health : Theme.of(context).colorScheme.outline,
+                      borderWidth: isSelected ? 3 : 1,
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSizes.gapSM),
                     // 이름
                     Text(
                       pet.name,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected ? context.features.health : Theme.of(context).colorScheme.onSurface,
-                      ),
+                      style: AppTextStyles.bodySmall(context)
+                          .withWeight(isSelected ? FontWeight.w600 : FontWeight.w400)
+                          .withColor(isSelected ? context.features.health : Theme.of(context).colorScheme.onSurface),
                     ),
                   ],
                 ),
@@ -194,66 +196,64 @@ class HealthScreen extends ConsumerWidget {
 
   Widget _buildCategoryTabs(BuildContext context, WidgetRef ref, List<HealthCategory> categories, int selectedTab) {
     return Container(
-      height: 50,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: ListView.builder(
+      margin: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
+      child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: categories.length,
-        itemBuilder: (context, index) {
-          final category = categories[index];
-          final isSelected = index == selectedTab;
-          
-          return GestureDetector(
-            onTap: () => ref.read(selectedHealthTabProvider.notifier).state = index,
-            child: Container(
-              margin: const EdgeInsets.only(right: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: isSelected ? context.features.health : Colors.transparent,
-                borderRadius: BorderRadius.circular(25),
-                border: Border.all(
-                  color: isSelected ? context.features.health : Theme.of(context).colorScheme.outline,
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
+        child: Row(
+          children: List.generate(categories.length, (index) {
+            final category = categories[index];
+            final isSelected = index == selectedTab;
+            
+            return GestureDetector(
+              onTap: () => ref.read(selectedHealthTabProvider.notifier).state = index,
+              child: Container(
+                margin: const EdgeInsets.only(right: AppSizes.paddingS),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
+                decoration: BoxDecoration(
+                  color: isSelected ? context.features.health : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+                  border: Border.all(
+                    color: isSelected ? context.features.health : Theme.of(context).colorScheme.outline,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(category.icon, size: 18, color: isSelected ? Colors.white : context.features.health),
+                    const SizedBox(width: AppSizes.gapSM),
+                    Text(
+                      category.label,
+                      style: AppTextStyles.bodyMedium(context)
+                          .withWeight(isSelected ? FontWeight.w600 : FontWeight.w400)
+                          .withColor(isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface),
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(category.icon, size: 16, color: isSelected ? Colors.white : context.features.health),
-                  const SizedBox(width: 6),
-                  Text(
-                    category.label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                      color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
+            );
+          }),
+        ),
       ),
     );
   }
 
   Widget _buildTabContent(BuildContext context, WidgetRef ref, HealthCategory category, PetModel pet) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSizes.paddingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 요약 카드
           _buildSummaryCard(context, ref, category, pet),
-          const SizedBox(height: 20),
+          const SizedBox(height: AppSizes.gapLL),
           
           // 최근 기록
-          const Text(
+          Text(
             '최근 기록',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: AppTextStyles.headlineSmall(context),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapM),
           _buildRecentRecords(context, ref, category, pet),
         ],
       ),
@@ -272,8 +272,8 @@ class HealthScreen extends ConsumerWidget {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: context.features.health.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  color: context.features.health.withValues(alpha: AppOpacity.o15),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Icon(category.icon, size: 24, color: context.features.health),
               ),
@@ -284,20 +284,20 @@ class HealthScreen extends ConsumerWidget {
                   children: [
                     Text(
                       '${pet.name}의 ${category.label}',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      style: AppTextStyles.headlineSmall(context),
                     ),
                     Text(
                       category.description,
-                      style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      style: AppTextStyles.caption(context),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          const Divider(),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSizes.gapL),
+          const MingrrDivider(),
+          const SizedBox(height: AppSizes.gapM),
           _buildCategorySummary(context, ref, category, pet),
         ],
       ),
@@ -319,8 +319,10 @@ class HealthScreen extends ConsumerWidget {
     final recordsAsync = ref.watch(weightRecordsProvider(pet.id));
     
     return recordsAsync.when(
-      loading: () => const MingrrLoadingState(),
-      error: (e, _) => MingrrErrorState(subtitle: '$e'),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(weightRecordsProvider(pet.id)),
+      ),
       data: (records) {
         if (records.isEmpty) {
           return Center(
@@ -335,13 +337,14 @@ class HealthScreen extends ConsumerWidget {
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildSummaryItem('현재', '${latest.weight.toStringAsFixed(1)}kg', context.features.health),
+            _buildSummaryItem(context, '현재', '${latest.weight.toStringAsFixed(1)}kg', context.features.health),
             _buildSummaryItem(
+              context,
               '변화',
               '${change >= 0 ? '+' : ''}${change.toStringAsFixed(1)}kg',
               change > 0 ? Colors.orange : context.features.success,
             ),
-            _buildSummaryItem('기록 수', '${records.length}회', Theme.of(context).colorScheme.onSurfaceVariant),
+            _buildSummaryItem(context, '기록 수', '${records.length}회', Theme.of(context).colorScheme.onSurfaceVariant),
           ],
         );
       },
@@ -352,8 +355,10 @@ class HealthScreen extends ConsumerWidget {
     final recordsAsync = ref.watch(walkRecordsProvider(pet.id));
     
     return recordsAsync.when(
-      loading: () => const MingrrLoadingState(),
-      error: (e, _) => MingrrErrorState(subtitle: '$e'),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(walkRecordsProvider(pet.id)),
+      ),
       data: (records) {
         if (records.isEmpty) {
           return Center(
@@ -372,9 +377,9 @@ class HealthScreen extends ConsumerWidget {
         return Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildSummaryItem('이번 주', '${thisWeekRecords.length}회', context.features.health),
-            _buildSummaryItem('총 거리', '${(totalDistance / 1000).toStringAsFixed(1)}km', context.features.walk),
-            _buildSummaryItem('총 시간', '${totalMinutes}분', context.features.success),
+            _buildSummaryItem(context, '이번 주', '${thisWeekRecords.length}회', context.features.health),
+            _buildSummaryItem(context, '총 거리', '${(totalDistance / 1000).toStringAsFixed(1)}km', context.features.walk),
+            _buildSummaryItem(context, '총 시간', '${totalMinutes}분', context.features.success),
           ],
         );
       },
@@ -385,24 +390,24 @@ class HealthScreen extends ConsumerWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        _buildSummaryItem('총 기록', '-', context.features.health),
-        _buildSummaryItem('최근', '-', Theme.of(context).colorScheme.onSurfaceVariant),
-        _buildSummaryItem('다음', '-', context.features.success),
+        _buildSummaryItem(context, '총 기록', '-', context.features.health),
+        _buildSummaryItem(context, '최근', '-', Theme.of(context).colorScheme.onSurfaceVariant),
+        _buildSummaryItem(context, '다음', '-', context.features.success),
       ],
     );
   }
 
-  Widget _buildSummaryItem(String label, String value, Color color, {Color? labelColor}) {
+  Widget _buildSummaryItem(BuildContext context, String label, String value, Color color, {Color? labelColor}) {
     return Column(
       children: [
         Text(
           value,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color),
+          style: AppTextStyles.headlineSmall(context).copyWith(color: color),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSizes.gapXS),
         Text(
           label,
-          style: TextStyle(fontSize: 12, color: labelColor ?? color.withOpacity(0.7)),
+          style: AppTextStyles.caption(context).copyWith(color: labelColor ?? color.withValues(alpha: AppOpacity.o70)),
         ),
       ],
     );
@@ -431,16 +436,18 @@ class HealthScreen extends ConsumerWidget {
     final recordsAsync = ref.watch(weightRecordsProvider(pet.id));
     
     return recordsAsync.when(
-      loading: () => const MingrrLoadingState(),
-      error: (e, _) => MingrrErrorState(subtitle: '$e'),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(weightRecordsProvider(pet.id)),
+      ),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
         return Column(
           children: records.take(5).map((record) {
-            return _buildRecordItem(
-              context,
+            return MingrrRecordTile(
               icon: Icons.monitor_weight_outlined,
+              iconColor: context.features.health,
               title: '${record.weight.toStringAsFixed(1)}kg',
               subtitle: _formatDate(record.recordDate),
               onTap: () {
@@ -457,16 +464,18 @@ class HealthScreen extends ConsumerWidget {
     final recordsAsync = ref.watch(walkRecordsProvider(pet.id));
     
     return recordsAsync.when(
-      loading: () => const MingrrLoadingState(),
-      error: (e, _) => MingrrErrorState(subtitle: '$e'),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(walkRecordsProvider(pet.id)),
+      ),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
         return Column(
           children: records.take(5).map((record) {
-            return _buildRecordItem(
-              context,
+            return MingrrRecordTile(
               icon: Icons.directions_walk,
+              iconColor: context.features.walk,
               title: '${record.durationMinutes}분, ${record.distanceString}',
               subtitle: _formatDateTime(record.startTime),
               onTap: () {
@@ -491,16 +500,18 @@ class HealthScreen extends ConsumerWidget {
     final recordsAsync = ref.watch(groomingRecordsProvider(pet.id));
     
     return recordsAsync.when(
-      loading: () => const MingrrLoadingState(),
-      error: (e, _) => MingrrErrorState(subtitle: '$e'),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(groomingRecordsProvider(pet.id)),
+      ),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
         return Column(
           children: records.take(5).map((record) {
-            return _buildRecordItem(
-              context,
+            return MingrrRecordTile(
               icon: Icons.content_cut,
+              iconColor: context.features.health,
               title: record.groomingType.label,
               subtitle: '${_formatDate(record.recordDate)} • ${record.location ?? ""}',
               onTap: () {},
@@ -515,16 +526,18 @@ class HealthScreen extends ConsumerWidget {
     final recordsAsync = ref.watch(vaccinationRecordsProvider(pet.id));
     
     return recordsAsync.when(
-      loading: () => const MingrrLoadingState(),
-      error: (e, _) => MingrrErrorState(subtitle: '$e'),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(vaccinationRecordsProvider(pet.id)),
+      ),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
         return Column(
           children: records.take(5).map((record) {
-            return _buildRecordItem(
-              context,
+            return MingrrRecordTile(
               icon: Icons.vaccines_outlined,
+              iconColor: context.features.health,
               title: record.vaccineName,
               subtitle: '${_formatDate(record.vaccinationDate)} • ${record.hospitalName ?? ""}',
               onTap: () {},
@@ -539,16 +552,18 @@ class HealthScreen extends ConsumerWidget {
     final recordsAsync = ref.watch(checkupRecordsProvider(pet.id));
     
     return recordsAsync.when(
-      loading: () => const MingrrLoadingState(),
-      error: (e, _) => MingrrErrorState(subtitle: '$e'),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(checkupRecordsProvider(pet.id)),
+      ),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
         return Column(
           children: records.take(5).map((record) {
-            return _buildRecordItem(
-              context,
+            return MingrrRecordTile(
               icon: Icons.local_hospital_outlined,
+              iconColor: context.features.health,
               title: record.diagnosis ?? '정기 검진',
               subtitle: '${_formatDate(record.checkupDate)} • ${record.hospitalName ?? ""}',
               onTap: () {},
@@ -563,8 +578,10 @@ class HealthScreen extends ConsumerWidget {
     final recordsAsync = ref.watch(medicationRecordsProvider(pet.id));
     
     return recordsAsync.when(
-      loading: () => const MingrrLoadingState(),
-      error: (e, _) => MingrrErrorState(subtitle: '$e'),
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
+      error: (_, __) => MingrrErrorState(
+        onRetry: () => ref.invalidate(medicationRecordsProvider(pet.id)),
+      ),
       data: (records) {
         if (records.isEmpty) return _buildEmptyRecords(context);
         
@@ -578,25 +595,11 @@ class HealthScreen extends ConsumerWidget {
             final displayName = parsed.name;
             final iconColor = Color(iconType.colorValue);
             
-            return _buildMedicationRecordItem(
-              context,
+            return MingrrRecordTile.medication(
               iconColor: iconColor,
               title: displayName,
               subtitle: '${record.dosage ?? ""} • ${record.intervalString}',
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isActive ? context.features.success.withOpacity(0.1) : Theme.of(context).colorScheme.outlineVariant.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  isActive ? '복용 중' : '완료',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: isActive ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
-                  ),
-                ),
-              ),
+              isActive: isActive,
               onTap: () {
                 // TODO: 약 상세 화면 구현 시 연결
                 MingrrSnackBar.info(context, '약 상세 화면은 준비 중입니다');
@@ -629,131 +632,23 @@ class HealthScreen extends ConsumerWidget {
     return (iconType: MedicationIconType.blue, name: name.isEmpty ? medicationName : name);
   }
   
-  /// 약 기록 아이템 (Material Icon 사용)
-  Widget _buildMedicationRecordItem(
-    BuildContext context, {
-    required Color iconColor,
-    required String title,
-    required String subtitle,
-    Widget? trailing,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).colorScheme.outline),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(Icons.medication, size: 22, color: iconColor),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ),
-            if (trailing != null) trailing,
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildEmptyRecords(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(AppSizes.paddingXL),
       child: Center(
         child: Column(
           children: [
             Icon(Icons.note_alt_outlined, size: 40, color: Theme.of(context).colorScheme.outlineVariant),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSizes.gapM),
             Text(
               '아직 기록이 없습니다',
               style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSizes.gapXS),
             Text(
               '+ 버튼을 눌러 첫 기록을 추가해보세요',
-              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.outlineVariant),
+              style: AppTextStyles.caption(context),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRecordItem(
-    BuildContext context, {
-    required IconData icon,
-    Color? iconColor,
-    required String title,
-    required String subtitle,
-    Widget? trailing,
-    required VoidCallback onTap,
-  }) {
-    final color = iconColor ?? context.features.health;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Theme.of(context).colorScheme.outline),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, size: 22, color: color),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ),
-            if (trailing != null) trailing,
-            Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
           ],
         ),
       ),

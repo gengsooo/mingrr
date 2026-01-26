@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
+import '../../../../core/widgets/navigation/top_navigation.dart';
+import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../models/notification_model.dart';
 import '../providers/notification_provider.dart';
 
@@ -28,18 +31,12 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   
-  final _tabs = const [
-    Tab(text: '전체'),
-    Tab(text: '데이팅'),
-    Tab(text: '채팅'),
-    Tab(text: '마켓'),
-    Tab(text: '소모임'),
-  ];
+  static const _tabLabels = ['전체', '데이팅', '채팅', '마켓', '소모임'];
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _tabs.length, vsync: this);
+    _tabController = TabController(length: _tabLabels.length, vsync: this);
   }
 
   @override
@@ -59,20 +56,16 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
           children: [
             const Text('알림'),
             if (unreadCount > 0) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSizes.gapS),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
                 decoration: BoxDecoration(
                   color: Colors.red,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Text(
                   unreadCount > 99 ? '99+' : '$unreadCount',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: AppTextStyles.labelLarge(context).withWeight(FontWeight.w600).withColor(Colors.white),
                 ),
               ),
             ],
@@ -85,22 +78,19 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
               child: const Text('전체 읽음'),
             ),
         ],
-        bottom: TabBar(
+        bottom: MingrrSubTabBar(
+          tabs: _tabLabels,
           controller: _tabController,
-          labelColor: Theme.of(context).colorScheme.primary,
-          unselectedLabelColor: Theme.of(context).colorScheme.outlineVariant,
-          indicatorColor: Theme.of(context).colorScheme.primary,
           isScrollable: true,
-          tabs: _tabs,
         ),
       ),
       body: notificationsAsync.when(
         data: (notifications) {
           if (notifications.isEmpty) {
             return const MingrrEmptyState(
-              svgAsset: SvgAssets.emptyNotification,
-              title: '알림이 없습니다',
-              subtitle: '새로운 소식이 있으면 알려드릴게요!',
+              icon: Icons.notifications_none,
+              title: '알림이 없어요',
+              subtitle: '새로운 소식이 있으면 알려드릴게요',
             );
           }
           
@@ -108,31 +98,39 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
             controller: _tabController,
             children: [
               // 전체
-              _buildNotificationList(notifications),
+              _buildNotificationList(ref, notifications),
               // 데이팅
               _buildNotificationList(
+                ref,
                 notifications.where((n) => 
                   n.type.category == 'dating' || n.type.category == 'breeding'
                 ).toList(),
               ),
               // 채팅
               _buildNotificationList(
+                ref,
                 notifications.where((n) => n.type.category == 'chat').toList(),
               ),
               // 마켓
               _buildNotificationList(
+                ref,
                 notifications.where((n) => n.type.category == 'market').toList(),
               ),
               // 소모임
               _buildNotificationList(
+                ref,
                 notifications.where((n) => n.type.category == 'community').toList(),
               ),
             ],
           );
         },
-        loading: () => const MingrrLoadingState(),
+        loading: () => const MingrrLoadingState(
+          type: MingrrLoadingType.primary,
+          message: '알림을 불러오고 있어요',
+        ),
         error: (_, __) => MingrrErrorState(
-          title: '알림을 불러올 수 없습니다',
+          title: '일시적인 오류가 발생했어요',
+          subtitle: '잠시 후 다시 시도해주세요',
           buttonText: '다시 시도',
           onRetry: () => ref.invalidate(userNotificationsProvider),
         ),
@@ -141,12 +139,12 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
   }
 
 
-  Widget _buildNotificationList(List<NotificationModel> notifications) {
+  Widget _buildNotificationList(WidgetRef ref, List<NotificationModel> notifications) {
     if (notifications.isEmpty) {
       return const MingrrEmptyState(
-        svgAsset: SvgAssets.emptyNotification,
-        title: '알림이 없습니다',
-        subtitle: '새로운 소식이 있으면 알려드릴게요!',
+        icon: Icons.notifications_none,
+        title: '알림이 없어요',
+        subtitle: '새로운 소식이 있으면 알려드릴게요',
       );
     }
 
@@ -157,36 +155,42 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
       grouped.putIfAbsent(dateKey, () => []).add(notification);
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
-      itemCount: grouped.length,
-      itemBuilder: (context, index) {
-        final dateKey = grouped.keys.elementAt(index);
-        final items = grouped[dateKey]!;
-        
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 날짜 헤더
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.paddingM,
-                vertical: AppSizes.paddingS,
-              ),
-              child: Text(
-                dateKey,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-            // 알림 아이템들
-            ...items.map((n) => _buildNotificationItem(n)),
-          ],
-        );
+    return MingrrRefreshWrapper(
+      color: Theme.of(context).colorScheme.primary,
+      onRefresh: () async {
+        ref.invalidate(userNotificationsProvider);
       },
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
+        itemCount: grouped.length,
+        itemBuilder: (context, index) {
+          final dateKey = grouped.keys.elementAt(index);
+          final items = grouped[dateKey]!;
+          
+          return MingrrAnimatedListItem(
+            index: index,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 날짜 헤더
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.paddingM,
+                    vertical: AppSizes.paddingS,
+                  ),
+                  child: Text(
+                    dateKey,
+                    style: AppTextStyles.titleSmall(context).withWeight(FontWeight.w600).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
+                  ),
+                ),
+                // 알림 아이템들
+                ...items.map((n) => _buildNotificationItem(n)),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -198,7 +202,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
         decoration: BoxDecoration(
           color: notification.isRead ? Colors.white : Theme.of(context).colorScheme.primaryContainer,
           border: Border(
-            bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.5)),
+            bottom: BorderSide(color: Theme.of(context).colorScheme.outline.withValues(alpha: AppOpacity.o50)),
           ),
         ),
         child: Row(
@@ -210,7 +214,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
               height: 44,
               decoration: BoxDecoration(
                 color: _getIconBackgroundColor(notification.type),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Icon(
                 _getNotificationIcon(notification.type),
@@ -218,7 +222,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                 size: 22,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSizes.gapM),
             // 내용
             Expanded(
               child: Column(
@@ -229,13 +233,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                       Expanded(
                         child: Text(
                           notification.title,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: notification.isRead 
-                                ? FontWeight.w500 
-                                : FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
+                          style: AppTextStyles.titleLarge(context).withWeight(notification.isRead ? FontWeight.w500 : FontWeight.w600),
                         ),
                       ),
                       if (!notification.isRead)
@@ -249,23 +247,17 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                         ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSizes.gapM),
                   Text(
                     notification.body,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                    style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSizes.gapM),
                   Text(
                     _formatTime(notification.createdAt),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Theme.of(context).colorScheme.outlineVariant,
-                    ),
+                    style: AppTextStyles.caption(context).withColor(Theme.of(context).colorScheme.outlineVariant),
                   ),
                 ],
               ),
@@ -278,14 +270,16 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
 
   IconData _getNotificationIcon(NotificationType type) {
     switch (type) {
-      case NotificationType.likeReceived:
-      case NotificationType.likeAccepted:
+      case NotificationType.datingRequest:
+      case NotificationType.datingAccepted:
         return Icons.favorite;
       case NotificationType.matchSuccess:
         return Icons.celebration;
+      case NotificationType.petLike:
+        return Icons.favorite;
       case NotificationType.breedingRequest:
       case NotificationType.breedingAccepted:
-        return Icons.pets;
+        return Icons.family_restroom;
       case NotificationType.newMessage:
         return Icons.chat_bubble;
       case NotificationType.productInquiry:
@@ -310,7 +304,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
       case 'market':
         return context.features.market;
       case 'community':
-        return context.features.community;
+        return context.features.social;
       default:
         return Theme.of(context).colorScheme.onSurfaceVariant;
     }
@@ -322,11 +316,11 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
       case 'breeding':
         return context.features.datingContainer;
       case 'chat':
-        return context.features.chat.withOpacity(0.2);
+        return context.features.chat.withValues(alpha: AppOpacity.o20);
       case 'market':
         return context.features.marketContainer;
       case 'community':
-        return context.features.communityContainer;
+        return context.features.socialContainer;
       default:
         return Theme.of(context).colorScheme.outline;
     }

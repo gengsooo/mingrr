@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/foundation.dart';
+import '../utils/app_logger.dart';
 
 /// ============================================================
 /// Firebase 서비스
@@ -35,18 +35,13 @@ class FirebaseService {
   CollectionReference<Map<String, dynamic>> get petsCollection =>
       firestore.collection('pets');
   
-  /// 반려동물 컬렉션 (하위 호환성)
-  @Deprecated('Use petsCollection instead')
-  CollectionReference<Map<String, dynamic>> get dogsCollection =>
-      firestore.collection('pets');
-  
   /// 채팅방 컬렉션
   CollectionReference<Map<String, dynamic>> get chatRoomsCollection =>
       firestore.collection('chatRooms');
   
-  /// 좋아요(데이팅 신청) 컬렉션
-  CollectionReference<Map<String, dynamic>> get likesCollection =>
-      firestore.collection('likes');
+  /// 데이팅 신청 컬렉션
+  CollectionReference<Map<String, dynamic>> get datingRequestsCollection =>
+      firestore.collection('dating_requests');
   
   /// 매칭 컬렉션
   CollectionReference<Map<String, dynamic>> get matchesCollection =>
@@ -88,13 +83,33 @@ class FirebaseService {
   CollectionReference<Map<String, dynamic>> get groupLikesCollection =>
       firestore.collection('groupLikes');
   
+  /// 소모임 가입 신청 컬렉션
+  CollectionReference<Map<String, dynamic>> get groupJoinRequestsCollection =>
+      firestore.collection('groupJoinRequests');
+  
   /// 신고 컬렉션
   CollectionReference<Map<String, dynamic>> get reportsCollection =>
       firestore.collection('reports');
   
+  /// 차단 컬렉션
+  CollectionReference<Map<String, dynamic>> get blocksCollection =>
+      firestore.collection('blocks');
+  
   /// 평가(꼬순내지수) 컬렉션
   CollectionReference<Map<String, dynamic>> get ratingsCollection =>
       firestore.collection('ratings');
+  
+  /// 커뮤니티 게시판 게시글 컨렉션 (Firestore: feedPosts)
+  CollectionReference<Map<String, dynamic>> get feedPostsCollection =>
+      firestore.collection('feedPosts');
+  
+  /// 커뮤니티 게시판 댓글 컨렉션 (Firestore: feedComments)
+  CollectionReference<Map<String, dynamic>> get feedCommentsCollection =>
+      firestore.collection('feedComments');
+  
+  /// 커뮤니티 게시판 좋아요 컨렉션 (Firestore: feedLikes)
+  CollectionReference<Map<String, dynamic>> get feedLikesCollection =>
+      firestore.collection('feedLikes');
 
   // ===== 메시지 서브컬렉션 접근 =====
   
@@ -114,11 +129,6 @@ class FirebaseService {
   
   /// 반려동물 이미지 저장 경로
   Reference petImageRef(String petId, String fileName) =>
-      storage.ref().child('pets/$petId/$fileName');
-  
-  /// 반려동물 이미지 저장 경로 (하위 호환성)
-  @Deprecated('Use petImageRef instead')
-  Reference dogImageRef(String petId, String fileName) =>
       storage.ref().child('pets/$petId/$fileName');
   
   /// 상품 이미지 저장 경로
@@ -159,7 +169,50 @@ class FirebaseService {
       
       throw Exception('Invalid file type: ${file.runtimeType}');
     } catch (e) {
-      debugPrint('이미지 업로드 오류: $e');
+      AppLogger.error('FirebaseService', '이미지 업로드 오류', e);
+      rethrow;
+    }
+  }
+
+  // ===== 비디오 업로드 =====
+  
+  /// 비디오 파일 업로드 및 URL 반환
+  Future<String> uploadVideo(File file, String path) async {
+    try {
+      final ref = storage.ref().child(path);
+      final metadata = SettableMetadata(contentType: 'video/mp4');
+      final snapshot = await ref.putFile(file, metadata);
+      return await snapshot.ref.getDownloadURL();
+    } catch (e) {
+      AppLogger.error('FirebaseService', '비디오 업로드 오류', e);
+      rethrow;
+    }
+  }
+
+  /// 비디오와 썸네일을 함께 업로드하고 URL 반환
+  /// Returns: {'videoUrl': String, 'thumbnailUrl': String?}
+  Future<Map<String, String?>> uploadVideoWithThumbnail(
+    File videoFile,
+    String videoPath, {
+    File? thumbnailFile,
+    String? thumbnailPath,
+  }) async {
+    try {
+      // 비디오 업로드
+      final videoUrl = await uploadVideo(videoFile, videoPath);
+      
+      // 썸네일 업로드 (제공된 경우)
+      String? thumbnailUrl;
+      if (thumbnailFile != null && thumbnailPath != null) {
+        thumbnailUrl = await uploadImage(thumbnailFile, thumbnailPath);
+      }
+      
+      return {
+        'videoUrl': videoUrl,
+        'thumbnailUrl': thumbnailUrl,
+      };
+    } catch (e) {
+      AppLogger.error('FirebaseService', '비디오/썸네일 업로드 오류', e);
       rethrow;
     }
   }

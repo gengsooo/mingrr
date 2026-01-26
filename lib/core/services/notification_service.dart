@@ -1,7 +1,11 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import 'firebase_service.dart';
+import '../widgets/common_widgets.dart';
+import '../../../app.dart' show rootNavigatorKey;
 
 /// ============================================================
 /// 푸시 알림 서비스
@@ -133,22 +137,121 @@ class NotificationService {
   /// 알림 탭 처리
   void _handleNotificationTap(RemoteMessage message) {
     final data = message.data;
-    final type = data['type'];
-    final targetId = data['targetId'];
+    final type = data['type'] as String?;
 
     if (kDebugMode) {
-      print('알림 탭 처리: type=$type, targetId=$targetId');
+      print('알림 탭 처리: type=$type, data=$data');
     }
 
-    // TODO: 네비게이션 처리
-    // 예: GoRouter를 사용하여 해당 화면으로 이동
-    // context.go('/chat/$targetId');
+    // 네비게이션 처리
+    _navigateToScreen(type, data);
+  }
+
+  /// 알림 타입에 따른 화면 이동
+  void _navigateToScreen(String? type, Map<String, dynamic> data) {
+    final context = rootNavigatorKey.currentContext;
+    if (context == null) return;
+
+    switch (type) {
+      // 채팅 관련
+      case 'chat':
+      case 'marketInquiry':
+        final chatRoomId = data['chatRoomId'] as String?;
+        if (chatRoomId != null) {
+          context.push('/chat/detail/$chatRoomId');
+        } else {
+          context.go('/chat');
+        }
+        break;
+
+      // 데이팅 관련
+      case 'datingRequest':
+      case 'breedingRequest':
+      case 'datingAccepted':
+      case 'breedingAccepted':
+      case 'datingRejected':
+      case 'breedingRejected':
+        context.go('/chat'); // 채팅 목록으로 이동 (신청 탭)
+        break;
+
+      // 마켓 관련
+      case 'marketSold':
+      case 'productLike':
+        final productId = data['productId'] as String?;
+        if (productId != null) {
+          context.push('/market/product/$productId');
+        } else {
+          context.go('/market');
+        }
+        break;
+
+      // 소모임 관련
+      case 'groupJoinRequest':
+      case 'groupJoinApproved':
+      case 'groupJoinRejected':
+      case 'groupSchedule':
+        final groupId = data['groupId'] as String?;
+        if (groupId != null) {
+          context.push('/social/group/$groupId');
+        } else {
+          context.go('/social');
+        }
+        break;
+
+      // 산책 관련
+      case 'walkInvite':
+      case 'walkReminder':
+        context.go('/walk');
+        break;
+
+      // 반려동물 좋아요
+      case 'petLike':
+        final petId = data['petId'] as String?;
+        if (petId != null) {
+          context.push('/dating/detail/$petId');
+        } else {
+          context.go('/dating');
+        }
+        break;
+
+      // 평가/꼬순내지수 관련
+      case 'rating':
+      case 'ratingReminder':
+      case 'gradeChange':
+      case 'scoreChange':
+        context.go('/profile');
+        break;
+
+      // 기본: 알림 화면으로 이동
+      default:
+        context.go('/notifications');
+        break;
+    }
   }
 
   /// 인앱 알림 표시
   void _showInAppNotification(RemoteMessage message) {
-    // TODO: 인앱 알림 UI 구현
-    // 예: OverlayEntry, SnackBar 등
+    final context = rootNavigatorKey.currentContext;
+    if (context == null) return;
+
+    final notification = message.notification;
+    if (notification == null) return;
+
+    // SnackBar로 인앱 알림 표시
+    MingrrSnackBar.withAction(
+      context,
+      message: '${notification.title}: ${notification.body}',
+      actionLabel: '보기',
+      onAction: () => _navigateToScreen(
+        message.data['type'] as String?,
+        message.data,
+      ),
+    );
+  }
+
+  /// 알림 모델에서 화면 이동 (알림 화면에서 클릭 시)
+  void navigateFromNotification(BuildContext context, NotificationModel notification) {
+    _navigateToScreen(notification.data['type'] as String?, notification.data);
   }
 
   /// 특정 토픽 구독
@@ -446,6 +549,116 @@ class NotificationService {
     );
   }
 
+  /// 평가 완료 알림 (상대방에게)
+  /// 
+  /// 평가 내용(별점, 태그)은 비공개로 처리
+  /// 꼬순내지수 변동만 알림
+  Future<void> sendRatingNotification({
+    required String recipientId,
+    required String raterName,
+    required String ratingType,
+    String? relatedId,
+  }) async {
+    await _saveNotification(
+      recipientId: recipientId,
+      type: NotificationType.rating,
+      title: '🐾 평가가 도착했어요!',
+      body: '$raterName님이 평가를 남겼어요. 내 꼬순내지수에 반영됐어요.',
+      data: {
+        'type': 'rating',
+        'ratingType': ratingType,
+        'relatedId': relatedId ?? '',
+      },
+    );
+  }
+
+  /// 평가 요청 리마인더 알림
+  Future<void> sendRatingReminderNotification({
+    required String recipientId,
+    required String partnerName,
+    required String activityType,
+    required String relatedId,
+  }) async {
+    final typeLabel = _getActivityTypeLabel(activityType);
+    await _saveNotification(
+      recipientId: recipientId,
+      type: NotificationType.ratingReminder,
+      title: '📝 평가를 남겨주세요',
+      body: '$partnerName님과의 $typeLabel은 어떠셨나요? 평가를 남겨주세요 🐾',
+      data: {
+        'type': 'ratingReminder',
+        'activityType': activityType,
+        'relatedId': relatedId,
+      },
+    );
+  }
+
+  String _getActivityTypeLabel(String type) {
+    switch (type) {
+      case 'dating':
+        return '만남';
+      case 'marketplace':
+      case 'market':
+        return '거래';
+      case 'breeding':
+        return '교배';
+      case 'community':
+        return '소모임';
+      default:
+        return '활동';
+    }
+  }
+
+  /// 꼬순내지수 등급 변동 알림
+  Future<void> sendGradeChangeNotification({
+    required String recipientId,
+    required String oldGrade,
+    required String newGrade,
+    required int oldScore,
+    required int newScore,
+  }) async {
+    final isUpgrade = newScore > oldScore;
+    final diff = newScore - oldScore;
+    final diffText = isUpgrade ? '+$diff' : '$diff';
+    
+    await _saveNotification(
+      recipientId: recipientId,
+      type: NotificationType.gradeChange,
+      title: isUpgrade ? '🎉 등급이 올랐어요!' : '📉 등급이 변경되었어요',
+      body: '$oldGrade → $newGrade ($diffText점)',
+      data: {
+        'type': 'gradeChange',
+        'oldGrade': oldGrade,
+        'newGrade': newGrade,
+        'oldScore': oldScore.toString(),
+        'newScore': newScore.toString(),
+      },
+    );
+  }
+
+  /// 꼬순내지수 점수 변동 알림 (등급 변동 없이 점수만 변동)
+  Future<void> sendScoreChangeNotification({
+    required String recipientId,
+    required int oldScore,
+    required int newScore,
+  }) async {
+    final isUp = newScore > oldScore;
+    final diff = newScore - oldScore;
+    final diffText = isUp ? '+$diff' : '$diff';
+    
+    await _saveNotification(
+      recipientId: recipientId,
+      type: NotificationType.scoreChange,
+      title: isUp ? '🐾 꼬순내지수가 올랐어요!' : '꼬순내지수가 변동되었어요',
+      body: '$oldScore점 → $newScore점 ($diffText점)',
+      data: {
+        'type': 'scoreChange',
+        'oldScore': oldScore.toString(),
+        'newScore': newScore.toString(),
+      },
+    );
+  }
+
   /// 알림 저장 (Cloud Functions에서 FCM 전송)
   Future<void> _saveNotification({
     required String recipientId,
@@ -524,6 +737,10 @@ enum NotificationType {
   breedingAccepted,
   productLike,
   petLike,
+  rating,           // 평가 완료 알림
+  ratingReminder,   // 평가 리마인더 알림
+  gradeChange,      // 꼬순내지수 등급 변동 알림
+  scoreChange,      // 꼬순내지수 점수 변동 알림
   system,
 }
 

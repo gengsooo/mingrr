@@ -3,20 +3,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/services/firebase_service.dart';
+import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/rating_service.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
-import '../../../../core/widgets/svg_icons.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/mingrr_image.dart';
+import '../../../../core/widgets/loading/loading_widgets.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/mingrr_image_viewer.dart';
 import '../../../../core/utils/error_handler.dart';
-import '../../../../core/widgets/rating_sheet.dart';
-import '../../../../core/widgets/guardian_profile_modal.dart';
-import '../../../../core/widgets/pet_profile_modal.dart';
-import '../../../../core/widgets/community_profile_modal.dart';
+import '../../../../core/services/image_service.dart';
+import '../../../../core/utils/app_logger.dart';
+import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/widgets/rating_widgets.dart';
+import '../../../../core/widgets/modals/guardian_profile_modal.dart';
+import '../../../../core/widgets/modals/pet_profile_modal.dart';
+import '../../../../core/widgets/modals/group_profile_modal.dart';
 import '../../../../models/chat_model.dart';
-import '../../../../models/community_model.dart';
+import '../../../../core/utils/responsive_utils.dart';
+import '../../../../models/group_model.dart';
 import '../../../../models/rating_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../providers/chat_provider.dart';
@@ -50,6 +59,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   final _scrollController = ScrollController();
   final _chatService = ChatService();
   final _firebaseService = FirebaseService();
+  final _firestoreService = FirestoreService();
   final _ratingService = RatingService();
   final _imagePicker = ImagePicker();
   
@@ -60,7 +70,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   String _searchQuery = '';
   ChatRoomModel? _chatRoom;
   TransactionStatusModel? _transaction;
-  String? _communityName; // 소모임 이름 (소모임 채팅용)
+  String? _groupName; // 소모임 이름 (소모임 채팅용)
 
   @override
   void initState() {
@@ -88,23 +98,23 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     if (mounted) {
       setState(() => _chatRoom = room);
       // 소모임 채팅인 경우 소모임 이름 로드
-      if (room?.type == 'community' && room?.relatedId != null) {
-        _loadCommunityName(room!.relatedId!);
+      if ((room?.type == 'community' || room?.type == 'group') && room?.relatedId != null) {
+        _loadGroupName(room!.relatedId!);
       }
     }
   }
   
-  Future<void> _loadCommunityName(String groupId) async {
+  Future<void> _loadGroupName(String groupId) async {
     try {
       final groupDoc = await _firebaseService.firestore
           .collection('groups')
           .doc(groupId)
           .get();
       if (mounted && groupDoc.exists) {
-        setState(() => _communityName = groupDoc.data()?['name']);
+        setState(() => _groupName = groupDoc.data()?['name']);
       }
     } catch (e) {
-      debugPrint('Failed to load community name: $e');
+      AppLogger.error('ChatDetail', 'Failed to load group name', e);
     }
   }
 
@@ -125,7 +135,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final chatType = widget.chatType ?? _chatRoom?.type ?? 'dating';
     final isDating = chatType == 'dating' || chatType == 'breeding';
     final isMarket = chatType == 'marketplace' || chatType == 'market';
-    final isCommunity = chatType == 'community';
+    final isGroup = chatType == 'community' || chatType == 'group';
     
     // 상대방 정보
     String otherName = widget.otherUserName ?? '채팅';
@@ -151,9 +161,9 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         } else if (isMarket) {
           otherName = otherParticipant.nickname;
           otherImage = otherParticipant.profileImageUrl;
-        } else if (isCommunity) {
+        } else if (isGroup) {
           // 소모임: 소모임명 표시 (로드된 경우), 아니면 위젯 파라미터 사용
-          otherName = _communityName ?? widget.otherUserName ?? '소모임';
+          otherName = _groupName ?? widget.otherUserName ?? '소모임';
           otherImage = null; // 소모임은 아이콘 사용
         } else {
           otherName = otherParticipant.nickname;
@@ -167,18 +177,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        elevation: isDark ? 0 : 0,
+        elevation: AppSizes.elevationNone,
         scrolledUnderElevation: 0,
         flexibleSpace: Container(
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            boxShadow: isDark ? null : [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.08),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            boxShadow: isDark ? null : AppShadows.shadowS(false),
           ),
         ),
         leading: IconButton(
@@ -190,7 +194,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           behavior: HitTestBehavior.opaque,
           onTap: () => _showProfileByType(context, chatType, otherParticipant),
           child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS, horizontal: 4),
             child: Row(
               children: [
                 // 프로필 아바타 + 채팅 타입 배지
@@ -217,18 +221,18 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSizes.gapM),
                 Expanded(
                   child: Row(
                     children: [
                       Flexible(
                         child: Text(
                           otherName,
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface),
+                          style: AppTextStyles.headlineSmall(context),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSizes.gapXS),
                       Icon(Icons.chevron_right, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
                     ],
                   ),
@@ -266,21 +270,21 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           if (_isSearching)
             Container(
               color: Theme.of(context).colorScheme.surface,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
               child: TextField(
                 controller: _searchController,
                 autofocus: true,
                 decoration: InputDecoration(
                   hintText: '메시지 검색...',
-                  hintStyle: TextStyle(color: Theme.of(context).colorScheme.outlineVariant, fontSize: 13),
+                  hintStyle: AppTextStyles.bodySmall(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
                   prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.outlineVariant),
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusXL),
                     borderSide: BorderSide.none,
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
                 ),
                 onChanged: (value) => setState(() => _searchQuery = value.toLowerCase()),
               ),
@@ -290,8 +294,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             child: Container(
               color: Theme.of(context).colorScheme.surface,
               child: messagesAsync.when(
-                loading: () => const MingrrLoadingState(),
-                error: (e, _) => MingrrErrorState(subtitle: '$e'),
+                loading: () => MingrrLoadingState(
+                  type: MingrrLoadingType.chat,
+                  message: '메시지를 불러오고 있어요',
+                  timeout: AppSizes.loadingTimeout,
+                  onRetry: () => ref.invalidate(chatMessagesProvider(widget.chatRoomId)),
+                ),
+                error: (_, __) => MingrrErrorState(
+                  onRetry: () => ref.invalidate(chatMessagesProvider(widget.chatRoomId)),
+                ),
                 data: (messages) {
                   // 검색 필터링
                   final filteredMessages = _searchQuery.isEmpty
@@ -302,7 +313,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   
                   if (messages.isEmpty) {
                     return MingrrEmptyState(
-                      svgAsset: SvgAssets.emptyMessage,
+                      icon: Icons.chat_outlined,
                       title: '대화를 시작해보세요!',
                       subtitle: '반려동물 친구를 만들어보세요',
                     );
@@ -319,7 +330,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   return ListView.builder(
                     controller: _scrollController,
                     reverse: true,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingM),
                     itemCount: filteredMessages.length,
                     itemBuilder: (context, index) {
                       final message = filteredMessages[index];
@@ -355,27 +366,27 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     _isShowingProfile = true;
     
     // 디버깅: chatType 확인
-    debugPrint('🔍 _showProfileByType - chatType: "$chatType", participant.id: ${participant.id}');
+    AppLogger.debug('ChatDetail', '_showProfileByType - chatType: "$chatType", participant.id: ${participant.id}');
     
     try {
       // chatType을 소문자로 정규화
       final normalizedType = chatType.toLowerCase().trim();
-      debugPrint('🔍 normalizedType: "$normalizedType"');
+      AppLogger.debug('ChatDetail', 'normalizedType: "$normalizedType"');
       
       if (normalizedType == 'dating' || normalizedType == 'breeding') {
-        debugPrint('🔍 -> _showPetProfile 호출');
+        AppLogger.debug('ChatDetail', '-> _showPetProfile 호출');
         // 데이팅/교배: 반려동물 프로필 모달
         await _showPetProfile(context, participant);
       } else if (normalizedType == 'marketplace' || normalizedType == 'market') {
-        debugPrint('🔍 -> _showGuardianProfile 호출 (마켓)');
+        AppLogger.debug('ChatDetail', '-> _showGuardianProfile 호출 (마켓)');
         // 마켓: 보호자 프로필 모달
         await _showGuardianProfile(context, participant);
-      } else if (normalizedType == 'community') {
-        debugPrint('🔍 -> _showCommunityProfile 호출');
+      } else if (normalizedType == 'community' || normalizedType == 'group') {
+        AppLogger.debug('ChatDetail', '-> _showGroupProfile 호출');
         // 소모임: 소모임 정보 모달
-        await _showCommunityProfile(context);
+        await _showGroupProfile(context);
       } else {
-        debugPrint('🔍 -> _showGuardianProfile 호출 (기본, normalizedType이 매칭 안됨)');
+        AppLogger.debug('ChatDetail', '-> _showGuardianProfile 호출 (기본)');
         // 기본: 보호자 프로필 모달
         await _showGuardianProfile(context, participant);
       }
@@ -388,7 +399,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   /// 추천친구-상세와 동일한 내용을 표시하기 위해 보호자 정보도 함께 조회
   Future<void> _showPetProfile(BuildContext context, ChatParticipant participant) async {
     try {
-      debugPrint('🐕 _showPetProfile 시작 - participant.id: ${participant.id}');
+      AppLogger.debug('ChatDetail', '_showPetProfile 시작 - participant.id: ${participant.id}');
       
       // 반려동물 정보 조회
       final petsSnapshot = await _firebaseService.firestore
@@ -396,10 +407,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           .where('ownerId', isEqualTo: participant.id)
           .get();
       
-      debugPrint('🐕 반려동물 조회 결과: ${petsSnapshot.docs.length}개');
+      AppLogger.debug('ChatDetail', '반려동물 조회 결과: ${petsSnapshot.docs.length}개');
       
       if (petsSnapshot.docs.isEmpty) {
-        debugPrint('🐕 반려동물 없음 - 스낵바 표시');
+        AppLogger.debug('ChatDetail', '반려동물 없음 - 스낵바 표시');
         if (!mounted) return;
         MingrrSnackBar.info(context, '반려동물 정보가 없어요!');
         return;
@@ -478,27 +489,27 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         ),
       );
     } catch (e) {
-      debugPrint('🐕 _showPetProfile 에러: $e');
+      AppLogger.error('ChatDetail', '_showPetProfile 에러', e);
       if (!mounted) return;
       MingrrSnackBar.error(context, '반려동물 정보를 불러오는데 실패했습니다');
     }
   }
 
   /// 소모임 프로필 모달 표시
-  Future<void> _showCommunityProfile(BuildContext context) async {
-    debugPrint('🏠 _showCommunityProfile 시작');
-    debugPrint('🏠 _chatRoom: ${_chatRoom != null ? "있음" : "null"}');
-    debugPrint('🏠 _chatRoom?.relatedId: ${_chatRoom?.relatedId}');
+  Future<void> _showGroupProfile(BuildContext context) async {
+    AppLogger.debug('ChatDetail', '_showGroupProfile 시작');
+    AppLogger.debug('ChatDetail', '_chatRoom: ${_chatRoom != null ? "있음" : "null"}');
+    AppLogger.debug('ChatDetail', '_chatRoom?.relatedId: ${_chatRoom?.relatedId}');
     
     if (_chatRoom == null) {
-      debugPrint('🏠 _chatRoom이 null - 스낵바 표시');
+      AppLogger.debug('ChatDetail', '_chatRoom이 null - 스낵바 표시');
       if (!mounted) return;
       MingrrSnackBar.info(context, '채팅방 정보를 불러오는 중입니다');
       return;
     }
     
     if (_chatRoom!.relatedId == null) {
-      debugPrint('🏠 relatedId가 null - 스낵바 표시');
+      AppLogger.debug('ChatDetail', 'relatedId가 null - 스낵바 표시');
       if (!mounted) return;
       MingrrSnackBar.info(context, '소모임 정보가 연결되지 않았습니다');
       return;
@@ -512,7 +523,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           .get();
       
       if (!groupDoc.exists) {
-        debugPrint('🏠 소모임 문서가 존재하지 않음');
+        AppLogger.warning('ChatDetail', '소모임 문서가 존재하지 않음');
         if (!mounted) return;
         MingrrSnackBar.info(context, '소모임 정보를 불러오는데 실패했습니다!');
         return;
@@ -523,7 +534,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       final creatorId = groupData['creatorId'] as String?;
       
       // 멤버 정보 조회 (최대 10명)
-      List<CommunityMember> members = [];
+      List<GroupMember> members = [];
       for (final memberId in memberIds.take(10)) {
         final memberDoc = await _firebaseService.firestore
             .collection('users')
@@ -531,7 +542,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             .get();
         if (memberDoc.exists) {
           final memberData = memberDoc.data()!;
-          members.add(CommunityMember(
+          members.add(GroupMember(
             id: memberId,
             nickname: memberData['nickname'] ?? '사용자',
             kkosunnaeScore: (memberData['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0,
@@ -549,10 +560,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       
       if (!mounted) return;
       
-      showCommunityProfileModal(
+      showGroupProfileModal(
         context,
-        communityId: groupDoc.id,
-        communityName: groupData['name'] ?? '소모임',
+        groupId: groupDoc.id,
+        groupName: groupData['name'] ?? '소모임',
         description: groupData['description'],
         memberCount: memberIds.length,
         category: GroupTypeLabel.labelFromString(groupData['type']),
@@ -659,25 +670,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           imageUrl.isNotEmpty && 
                           !imageUrl.startsWith('default_avatar:');
     
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: themeColor.withOpacity(0.1),
-        shape: BoxShape.circle,
-        border: Border.all(color: themeColor.withOpacity(0.3), width: 1),
-      ),
-      child: hasValidImage
-          ? ClipOval(
-              child: Image.network(
-                imageUrl,
-                width: size,
-                height: size,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildAvatarPlaceholder(name, size, themeColor),
-              ),
-            )
-          : _buildAvatarPlaceholder(name, size, themeColor),
+    return MingrrPetAvatar(
+      imageUrl: hasValidImage ? imageUrl : null,
+      size: size,
+      borderColor: themeColor.withValues(alpha: AppOpacity.o30),
+      borderWidth: 1,
     );
   }
 
@@ -703,6 +700,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       case 'market':
         return Icons.store;
       case 'community':
+      case 'group':
         return Icons.groups;
       default:
         return Icons.chat;
@@ -711,15 +709,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   Widget _buildDateDivider(DateTime date) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingL),
       child: Row(
         children: [
           Expanded(child: Divider(color: Theme.of(context).colorScheme.outline)),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
             child: Text(
               _formatDate(date),
-              style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: AppTextStyles.caption(context),
             ),
           ),
           Expanded(child: Divider(color: Theme.of(context).colorScheme.outline)),
@@ -732,15 +730,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     // 시스템 메시지
     if (message.type == MessageType.system) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
         child: Center(
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppSizes.radiusM),
             ),
-            child: Text(message.content, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            child: Text(message.content, style: AppTextStyles.caption(context)),
           ),
         ),
       );
@@ -749,7 +747,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final bubbleColor = isMe ? themeColor : Theme.of(context).colorScheme.surfaceContainerHighest;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: AppSizes.paddingXS),
       child: Row(
         mainAxisAlignment: isMe ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
@@ -764,12 +762,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 if (message.isRead)
                   Text(
                     '읽음',
-                    style: TextStyle(fontSize: 10, color: Theme.of(context).colorScheme.outlineVariant),
+                    style: AppTextStyles.caption(context),
                   ),
                 _buildTimeText(message.sentAt),
               ],
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSizes.gapSM),
           ],
           
           // 메시지 버블 + 꼬리
@@ -790,25 +788,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 // 메시지 버블
                 Flexible(
                   child: Container(
-                    constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
+                    constraints: BoxConstraints(maxWidth: ResponsiveUtils.widthPercent(context, 0.7)),
                     padding: message.type == MessageType.image 
-                        ? const EdgeInsets.all(4) 
-                        : const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        ? const EdgeInsets.all(AppSizes.paddingXS) 
+                        : const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
                     decoration: BoxDecoration(
                       color: bubbleColor,
                       borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(18),
-                        topRight: const Radius.circular(18),
-                        bottomLeft: Radius.circular(isMe ? 18 : 4),
-                        bottomRight: Radius.circular(isMe ? 4 : 18),
+                        topLeft: const Radius.circular(AppSizes.radiusL),
+                        topRight: const Radius.circular(AppSizes.radiusL),
+                        bottomLeft: Radius.circular(isMe ? AppSizes.radiusL : AppSizes.radiusS),
+                        bottomRight: Radius.circular(isMe ? AppSizes.radiusS : AppSizes.radiusL),
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
+                      boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
                     ),
                     child: _buildMessageContent(message, isMe, themeColor),
                   ),
@@ -826,7 +818,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             ),
           ),
           
-          if (!isMe && showTime) const SizedBox(width: 6),
+          if (!isMe && showTime) const SizedBox(width: AppSizes.gapSM),
           if (!isMe && showTime) _buildTimeText(message.sentAt),
         ],
       ),
@@ -838,42 +830,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       case MessageType.image:
         return GestureDetector(
           onTap: () => _showFullScreenImage(context, message.imageUrl!),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: Image.network(
-              message.imageUrl!,
-              width: 200,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, progress) {
-                if (progress == null) return child;
-                return Container(
-                  width: 200,
-                  height: 150,
-                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(
-                          strokeWidth: 2,
-                          value: progress.expectedTotalBytes != null
-                              ? progress.cumulativeBytesLoaded / progress.expectedTotalBytes!
-                              : null,
-                          color: themeColor,
-                        ),
-                        if (progress.expectedTotalBytes != null) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            '${((progress.cumulativeBytesLoaded / progress.expectedTotalBytes!) * 100).toInt()}%',
-                            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+          child: MingrrNetworkImage(
+            imageUrl: message.imageUrl,
+            width: 200,
+            height: 150,
+            fit: BoxFit.cover,
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
         );
       case MessageType.location:
@@ -881,7 +843,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.location_on, color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface, size: 18),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSizes.gapSM),
             Flexible(
               child: Text(
                 message.content,
@@ -893,9 +855,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       default:
         return Text(
           message.content,
-          style: TextStyle(
-            color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface,
-            fontSize: 15,
+          style: AppTextStyles.titleLarge(context).withColor(
+            isMe ? Colors.white : Theme.of(context).colorScheme.onSurface,
           ),
         );
     }
@@ -903,83 +864,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   /// 전체 화면 이미지 보기 (핀치 줌, 저장 기능)
   void _showFullScreenImage(BuildContext context, String imageUrl) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.black,
-        insetPadding: EdgeInsets.zero,
-        child: Stack(
-          children: [
-            // 이미지 (핀치 줌 가능)
-            Center(
-              child: InteractiveViewer(
-                minScale: 0.5,
-                maxScale: 4.0,
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    return const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    );
-                  },
-                  errorBuilder: (_, __, ___) => const Icon(
-                    Icons.image_not_supported,
-                    color: Colors.white54,
-                    size: 60,
-                  ),
-                ),
-              ),
-            ),
-            // 상단 버튼들
-            Positioned(
-              top: MediaQuery.of(context).padding.top + 8,
-              left: 8,
-              right: 8,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // 닫기 버튼
-                  IconButton(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.close, color: Colors.white, size: 24),
-                    ),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  // 저장 버튼
-                  IconButton(
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.5),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.download, color: Colors.white, size: 24),
-                    ),
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      MingrrSnackBar.info(context, '이미지 저장 기능은 추후 업데이트 예정입니다');
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    showImageViewer(context, imageUrl: imageUrl, showSaveButton: true);
   }
 
   Widget _buildTimeText(DateTime time) {
     return Text(
       '${time.hour}:${time.minute.toString().padLeft(2, '0')}',
-      style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+      style: AppTextStyles.captionSmall(context),
     );
   }
 
@@ -987,18 +878,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        boxShadow: AppShadows.shadowL(Theme.of(context).brightness == Brightness.dark),
       ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -1006,22 +891,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
               Container(
                 width: 40,
                 height: 40,
-                margin: const EdgeInsets.only(bottom: 2),
+                margin: const EdgeInsets.only(bottom: AppSizes.paddingXXS),
                 decoration: BoxDecoration(
-                  color: themeColor.withOpacity(0.1),
+                  color: themeColor.withValues(alpha: AppOpacity.o10),
                   shape: BoxShape.circle,
                 ),
                 child: _isUploadingImage
                     ? Stack(
                         alignment: Alignment.center,
                         children: [
-                          SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: themeColor,
-                            ),
+                          MingrrLoadingIndicator(
+                            size: 24,
+                            strokeWidth: 2,
+                            customColor: themeColor,
                           ),
                           Icon(Icons.image, color: themeColor, size: 12),
                         ],
@@ -1032,22 +914,22 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                         padding: EdgeInsets.zero,
                       ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSizes.gapS),
               // 텍스트 입력
               Expanded(
                 child: Container(
                   constraints: const BoxConstraints(minHeight: 44),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: 4),
                   child: TextField(
                     controller: _messageController,
                     decoration: InputDecoration(
                       hintText: '메시지를 입력하세요',
-                      hintStyle: TextStyle(color: Theme.of(context).colorScheme.outlineVariant, fontSize: 13),
+                      hintStyle: AppTextStyles.bodySmall(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
                       border: InputBorder.none,
                       isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
                     ),
-                    style: const TextStyle(fontSize: 14),
+                    style: AppTextStyles.bodyMedium(context),
                     maxLines: 4,
                     minLines: 1,
                     textInputAction: TextInputAction.send,
@@ -1055,12 +937,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSizes.gapS),
               // 전송 버튼
               Container(
                 width: 44,
                 height: 44,
-                margin: const EdgeInsets.only(bottom: 2),
+                margin: const EdgeInsets.only(bottom: AppSizes.paddingXXS),
                 child: Material(
                   color: themeColor,
                   shape: const CircleBorder(),
@@ -1069,10 +951,10 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     customBorder: const CircleBorder(),
                     child: Center(
                       child: _isSending
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          ? const MingrrLoadingIndicator(
+                              size: 20,
+                              strokeWidth: 2,
+                              customColor: Colors.white,
                             )
                           : const Icon(Icons.send, color: Colors.white, size: 20),
                     ),
@@ -1116,8 +998,27 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final userId = ref.read(authStateProvider).valueOrNull?.uid;
     if (userId == null) return;
 
-    final picked = await _imagePicker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final picked = await _imagePicker.pickImage(
+      source: ImageSource.gallery, 
+      imageQuality: ImageLimits.imageQuality,
+      maxWidth: ImageLimits.maxResolution.toDouble(),
+      maxHeight: ImageLimits.maxResolution.toDouble(),
+    );
     if (picked == null) return;
+
+    // 파일 크기 검사
+    final file = File(picked.path);
+    final fileSize = await file.length();
+    if (fileSize > ImageLimits.maxFileSizeBytes) {
+      if (mounted) {
+        final sizeMB = (fileSize / (1024 * 1024)).toStringAsFixed(1);
+        MingrrSnackBar.warning(
+          context, 
+          '이미지 크기가 너무 큽니다 (${sizeMB}MB). 최대 ${ImageLimits.maxFileSizeMB}MB까지 전송 가능합니다',
+        );
+      }
+      return;
+    }
 
     setState(() {
       _isSending = true;
@@ -1127,7 +1028,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     try {
       // 이미지 업로드
       final imageUrl = await _firebaseService.uploadImage(
-        File(picked.path),
+        file,
         'chats/${widget.chatRoomId}/${DateTime.now().millisecondsSinceEpoch}.jpg',
       );
 
@@ -1161,8 +1062,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     final options = <MingrrOptionItem>[];
     
-    // 거래/만남 완료 버튼
-    if (_transaction == null || _transaction!.status == 'pending') {
+    // 거래/만남 완료 버튼 (소모임은 완료 개념 없음)
+    final hasCompleteAction = chatType == 'marketplace' || 
+                               chatType == 'dating' || 
+                               chatType == 'breeding';
+    if (hasCompleteAction && (_transaction == null || _transaction!.status == 'pending')) {
       options.add(MingrrOptionItem(
         icon: Icons.check_circle_outline,
         label: chatType == 'marketplace' ? '거래 완료하기' : '만남 완료하기',
@@ -1188,6 +1092,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         onTap: () => MingrrSnackBar.success(context, '알림이 꺼졌습니다'),
       ),
       MingrrOptionItem(
+        icon: Icons.block_outlined,
+        label: '차단하기',
+        color: Colors.orange,
+        onTap: () => _blockUser(context),
+      ),
+      MingrrOptionItem(
         icon: Icons.report_outlined,
         label: '신고하기',
         color: Colors.orange,
@@ -1202,6 +1112,36 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     ]);
     
     showMingrrOptionsSheet(context: context, options: options);
+  }
+
+  /// 상대방 차단
+  Future<void> _blockUser(BuildContext context) async {
+    final myUserId = ref.read(authStateProvider).valueOrNull?.uid;
+    if (myUserId == null) {
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
+      return;
+    }
+
+    final otherParticipant = _chatRoom?.getOtherParticipant(myUserId);
+    if (otherParticipant == null) return;
+
+    showConfirmSheet(
+      context,
+      type: ConfirmSheetType.userBlock,
+      onConfirm: () async {
+        try {
+          await _firestoreService.blockUser(myUserId, otherParticipant.id);
+          if (mounted) {
+            MingrrSnackBar.success(context, '${otherParticipant.nickname}님을 차단했습니다');
+            Navigator.pop(context); // 채팅 상세 화면 닫기
+          }
+        } catch (e) {
+          if (mounted) {
+            MingrrSnackBar.error(context, '차단 실패: $e');
+          }
+        }
+      },
+    );
   }
 
   void _showCompleteDialog() {
@@ -1278,25 +1218,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
     if (otherParticipant == null) return;
 
-    RatingSheet.show(
+    showRatingModal(
       context,
       targetUserId: otherParticipant.id,
-      targetUserName: otherParticipant.petName ?? otherParticipant.nickname,
-      targetUserImageUrl: otherParticipant.petImageUrl ?? otherParticipant.profileImageUrl,
+      targetName: otherParticipant.petName ?? otherParticipant.nickname,
+      targetImageUrl: otherParticipant.petImageUrl ?? otherParticipant.profileImageUrl,
       ratingType: _getRatingType(chatType),
       relatedId: widget.chatRoomId,
-      onSubmit: (score, tags, comment, result) async {
-        await _ratingService.createRating(
-          raterId: myUserId,
-          targetId: otherParticipant.id,
-          type: _getRatingType(chatType),
-          relatedId: widget.chatRoomId,
-          result: result,
-          score: score,
-          tags: tags,
-          comment: comment,
-        );
-
+      onComplete: () async {
         // 평가 완료 표시
         if (_transaction != null) {
           final isSeller = myUserId == _transaction!.sellerId;
@@ -1313,65 +1242,38 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         return RatingType.marketplace;
       case 'breeding':
         return RatingType.breeding;
-      case 'community':
-        return RatingType.community;
+      // 소모임(group/community)은 평가 기능 없음 - hasCompleteAction에서 제외됨
       default:
         return RatingType.dating;
     }
   }
 
-  void _showReportDialog() {
+  void _showReportDialog() async {
     final myUserId = ref.read(authStateProvider).valueOrNull?.uid ?? '';
     final otherParticipant = _chatRoom?.getOtherParticipant(myUserId);
 
     if (otherParticipant == null) return;
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        String? selectedReason;
-        return StatefulBuilder(
-          builder: (context, setState) => AlertDialog(
-            title: const Text('신고하기'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('신고 사유를 선택해주세요'),
-                const SizedBox(height: 16),
-                ...['욕설/비방', '사기/허위정보', '노쇼', '부적절한 행동', '기타'].map((reason) => 
-                  RadioListTile<String>(
-                    title: Text(reason),
-                    value: reason,
-                    groupValue: selectedReason,
-                    onChanged: (value) => setState(() => selectedReason = value),
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('취소'),
-              ),
-              TextButton(
-                onPressed: selectedReason == null ? null : () async {
-                  Navigator.pop(context);
-                  await _ratingService.reportUser(
-                    myUserId,
-                    otherParticipant.id,
-                    selectedReason!,
-                  );
-                  if (mounted) {
-                    MingrrSnackBar.success(context, '신고가 접수되었습니다');
-                  }
-                },
-                child: const Text('신고', style: TextStyle(color: Colors.red)),
-              ),
-            ],
-          ),
-        );
-      },
+    final reason = await showSelectionDialog(
+      context,
+      title: '신고하기',
+      subtitle: '신고 사유를 선택해주세요',
+      options: ['욕설/비방', '사기/허위정보', '노쇼', '부적절한 행동', '기타'],
+      confirmText: '신고',
+      confirmColor: Colors.red,
+      icon: Icons.report_outlined,
     );
+
+    if (reason != null && mounted) {
+      await _ratingService.reportUser(
+        myUserId,
+        otherParticipant.id,
+        reason,
+      );
+      if (mounted) {
+        MingrrSnackBar.success(context, '신고가 접수되었습니다');
+      }
+    }
   }
 
   Future<void> _leaveChatRoom(BuildContext context) async {
@@ -1425,7 +1327,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       case 'market':
         return context.features.market;
       case 'community':
-        return context.features.community;
+      case 'group':
+        return context.features.social;
       default:
         return Theme.of(context).colorScheme.primary;
     }

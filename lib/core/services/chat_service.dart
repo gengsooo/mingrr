@@ -365,6 +365,7 @@ class ChatService {
       case 'market':
         return '마켓';
       case 'community':
+      case 'group':
         return '소모임';
       default:
         return '채팅';

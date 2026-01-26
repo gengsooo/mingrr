@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/constants/app_sizes.dart';
+import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/widgets/common_widgets.dart';
-import '../../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../../core/utils/responsive_utils.dart';
 
 /// ============================================================
 /// 고객센터 화면
@@ -22,7 +24,6 @@ class CustomerServiceScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
     
     return Scaffold(
       appBar: AppBar(
@@ -38,48 +39,24 @@ class CustomerServiceScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                   child: Text(
                     '문의하기',
                     style: theme.textTheme.titleLarge,
                   ),
                 ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEE500).withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.chat_bubble_outline, color: Color(0xFF3C1E1E)),
-                  ),
-                  title: const Text('카카오톡 문의'),
-                  subtitle: Text(
-                    '평일 10:00 ~ 18:00 (주말/공휴일 휴무)',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+                MingrrSettingsTile(
+                  icon: Icons.chat_bubble_outline,
+                  title: '카카오톡 문의',
+                  subtitle: '평일 10:00 ~ 18:00 (주말/공휴일 휴무)',
+                  iconColor: const Color(0xFF3C1E1E),
+                  iconBackgroundColor: const Color(0xFFFEE500).withValues(alpha: AppOpacity.o20),
                   onTap: () => _openKakaoChannel(context),
                 ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(Icons.email_outlined, color: Theme.of(context).colorScheme.primary),
-                  ),
-                  title: const Text('이메일 문의'),
-                  subtitle: Text(
-                    'support@mingrr.com',
-                    style: theme.textTheme.bodySmall,
-                  ),
-                  trailing: Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant),
+                MingrrSettingsTile(
+                  icon: Icons.email_outlined,
+                  title: '이메일 문의',
+                  subtitle: 'support@mingrr.com',
                   onTap: () => _sendEmail(context),
                 ),
               ],
@@ -95,7 +72,7 @@ class CustomerServiceScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                   child: Text(
                     '자주 묻는 질문',
                     style: theme.textTheme.titleLarge,
@@ -136,9 +113,10 @@ class CustomerServiceScreen extends StatelessWidget {
     );
   }
 
-  // TODO: 실제 카카오톡 채널 URL로 변경
+  /// 카카오톡 채널 열기
   Future<void> _openKakaoChannel(BuildContext context) async {
-    const kakaoChannelUrl = 'https://pf.kakao.com/_xxxxx'; // TODO: 실제 URL로 변경
+    // TODO: 실제 카카오톡 채널 URL로 변경 필요
+    const kakaoChannelUrl = 'https://pf.kakao.com/_mingrr';
     
     try {
       final uri = Uri.parse(kakaoChannelUrl);
@@ -156,9 +134,10 @@ class CustomerServiceScreen extends StatelessWidget {
     }
   }
 
-  // TODO: 실제 이메일 주소로 변경
+  /// 이메일 문의 열기
   Future<void> _sendEmail(BuildContext context) async {
-    const email = 'support@mingrr.com'; // TODO: 실제 이메일로 변경
+    // TODO: 실제 이메일 주소로 변경 필요
+    const email = 'support@mingrr.com';
     final uri = Uri(
       scheme: 'mailto',
       path: email,
@@ -210,7 +189,7 @@ class CustomerServiceScreen extends StatelessWidget {
       ),
       children: [
         Padding(
-          padding: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.only(bottom: AppSizes.paddingL),
           child: Text(
             faq['answer']!,
             style: theme.textTheme.bodySmall?.copyWith(height: 1.5),
@@ -247,19 +226,15 @@ class CustomerServiceScreen extends StatelessWidget {
         children: [
           if (notice['isNew'] == true) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              margin: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
+              margin: const EdgeInsets.only(right: AppSizes.paddingS),
               decoration: BoxDecoration(
                 color: Colors.red,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
               ),
-              child: const Text(
+              child: Text(
                 'NEW',
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: AppTextStyles.labelSmall(context).withWeight(FontWeight.w600).withColor(Colors.white),
               ),
             ),
           ],
@@ -293,7 +268,7 @@ class CustomerServiceScreen extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.7,
+        height: ResponsiveUtils.heightPercent(context, 0.7),
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
         decoration: BoxDecoration(
           color: colorScheme.surface,
@@ -304,20 +279,20 @@ class CustomerServiceScreen extends StatelessWidget {
           children: [
             const Center(child: BottomSheetHandle()),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
               child: Text(
                 notice['title'] as String,
                 style: theme.textTheme.headlineSmall,
                 textAlign: TextAlign.center,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             Text(
               notice['date'] as String,
               style: theme.textTheme.labelSmall,
             ),
             const SizedBox(height: 20),
-            const Divider(),
+            const MingrrDivider(),
             const SizedBox(height: 20),
             Expanded(
               child: SingleChildScrollView(

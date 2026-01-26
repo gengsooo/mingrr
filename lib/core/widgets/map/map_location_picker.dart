@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import '../../theme/feature_colors.dart';
+import '../../theme/app_text_styles.dart';
 import '../../constants/app_sizes.dart';
 import '../../models/location_model.dart';
 import '../../services/geocoding_service.dart';
 import '../../services/location_helper.dart';
 import '../common_widgets.dart';
 import '../dialogs/dialogs.dart';
+import '../loading/loading_widgets.dart';
+import '../../utils/app_logger.dart';
 import 'map_loading_widget.dart';
 
 /// ============================================================
@@ -93,8 +96,8 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
 
   /// 초기 위치 설정 (3단계 전략)
   Future<void> _initializePosition() async {
-    debugPrint('\n📍 [MapLocationPicker] === 초기 위치 설정 시작 ===');
-    debugPrint('📍 [MapLocationPicker] initialLocation: ${widget.initialLocation != null}');
+    AppLogger.debug('MapLocationPicker', '=== 초기 위치 설정 시작 ===');
+    AppLogger.debug('MapLocationPicker', 'initialLocation: ${widget.initialLocation != null}');
     
     setState(() {
       _isInitializing = true;
@@ -103,7 +106,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     
     // 초기 위치가 제공된 경우
     if (widget.initialLocation != null) {
-      debugPrint('📍 [MapLocationPicker] → 초기 위치 사용: ${widget.initialLocation!.latitude}, ${widget.initialLocation!.longitude}');
+      AppLogger.debug('MapLocationPicker', '초기 위치 사용: ${widget.initialLocation!.latitude}, ${widget.initialLocation!.longitude}');
       _initialMapPosition = _createLatLng(
         widget.initialLocation!.latitude,
         widget.initialLocation!.longitude,
@@ -130,16 +133,16 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
       },
     );
     
-    debugPrint('📍 [MapLocationPicker] 위치 결과: isSuccess=${result.isSuccess}, source=${result.source}, errorType=${result.errorType}');
+    AppLogger.debug('MapLocationPicker', '위치 결과: isSuccess=${result.isSuccess}, source=${result.source}, errorType=${result.errorType}');
     
     if (!mounted) {
-      debugPrint('📍 [MapLocationPicker] ⚠️ mounted=false, 상태 업데이트 스킵');
+      AppLogger.warning('MapLocationPicker', 'mounted=false, 상태 업데이트 스킵');
       return;
     }
     
     // 위치 가져오기 실패 시 오류 팝업 표시
     if (!result.isSuccess || result.position == null) {
-      debugPrint('📍 [MapLocationPicker] ❌ 위치 가져오기 실패 - 오류 팝업 표시');
+      AppLogger.warning('MapLocationPicker', '위치 가져오기 실패 - 오류 팝업 표시');
       setState(() {
         _isInitializing = false;
         _locationProgress = null;
@@ -148,7 +151,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
       return;
     }
     
-    debugPrint('📍 [MapLocationPicker] ✅ 위치 획득 (source: ${result.source}): ${result.latitude}, ${result.longitude}');
+    AppLogger.info('MapLocationPicker', '위치 획득 (source: ${result.source}): ${result.latitude}, ${result.longitude}');
     
     _initialMapPosition = _createLatLng(result.latitude, result.longitude);
     
@@ -180,7 +183,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     
     // 50m 이상 차이나면 지도 업데이트
     if (LocationHelper.shouldUpdatePosition(currentPosition, highPosition)) {
-      debugPrint('📍 [MapLocationPicker] 🔄 high 정확도 위치로 업데이트 (50m+ 차이)');
+      AppLogger.debug('MapLocationPicker', 'high 정확도 위치로 업데이트 (50m+ 차이)');
       
       // 지도 카메라 부드럽게 이동
       if (_mapController != null) {
@@ -196,13 +199,13 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
         _fetchAddress(highPosition.latitude, highPosition.longitude);
       }
     } else {
-      debugPrint('📍 [MapLocationPicker] high 정확도 위치 차이 50m 미만 - 업데이트 스킵');
+      AppLogger.debug('MapLocationPicker', 'high 정확도 위치 차이 50m 미만 - 업데이트 스킵');
     }
   }
   
   /// 위치 관련 상태 초기화 (재시도 시 깨끗한 상태에서 시작)
   void _resetLocationState() {
-    debugPrint('📍 [MapLocationPicker] 🔄 위치 상태 초기화');
+    AppLogger.debug('MapLocationPicker', '위치 상태 초기화');
     _initialMapPosition = null;
     _mapController = null;
     _addressState.value = const AddressState(isLoading: true, address: null, location: null);
@@ -317,7 +320,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
       appBar: AppBar(
         title: Text(widget.title),
         backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 0,
+        elevation: AppSizes.elevationNone,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
@@ -358,20 +361,20 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
   }
 
   Widget _buildMapView() {
-    debugPrint('📍 [MapLocationPicker] _buildMapView: kIsWeb=$kIsWeb, _initialMapPosition=${_initialMapPosition != null}');
+    AppLogger.debug('MapLocationPicker', '_buildMapView: kIsWeb=$kIsWeb, _initialMapPosition=${_initialMapPosition != null}');
     
     if (kIsWeb) {
-      debugPrint('📍 [MapLocationPicker] → 웹 플레이스홀더 표시');
+      AppLogger.debug('MapLocationPicker', '웹 플레이스홀더 표시');
       return _buildWebPlaceholder();
     }
     
     // 위치 정보가 없으면 오류 표시
     if (_initialMapPosition == null) {
-      debugPrint('📍 [MapLocationPicker] → 위치 없음, 오류 화면 표시');
+      AppLogger.warning('MapLocationPicker', '위치 없음, 오류 화면 표시');
       return _buildLocationErrorView();
     }
     
-    debugPrint('📍 [MapLocationPicker] → 카카오맵 렌더링: ${_initialMapPosition!.latitude}, ${_initialMapPosition!.longitude}');
+    AppLogger.debug('MapLocationPicker', '카카오맵 렌더링: ${_initialMapPosition!.latitude}, ${_initialMapPosition!.longitude}');
     
     return KakaoMap(
       key: const ValueKey('kakao_map_picker_v2'),
@@ -381,7 +384,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
         mapType: MapType.normal,
       ),
       onMapReady: (controller) {
-        debugPrint('📍 [MapLocationPicker] onMapReady 호출됨');
+        AppLogger.debug('MapLocationPicker', 'onMapReady 호출됨');
         _mapController = controller;
       },
       onCameraMoveEnd: (position, gestureType) => _onCameraMoveEnd(position),
@@ -398,18 +401,14 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
             Icon(
               Icons.location_off_outlined,
               size: 64,
-              color: _accentColor.withOpacity(0.5),
+              color: _accentColor.withValues(alpha: AppOpacity.o50),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             Text(
               '위치를 가져올 수 없습니다',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSizes.gapS),
             TextButton.icon(
               onPressed: () {
                 setState(() => _isInitializing = true);
@@ -430,7 +429,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
   Widget _buildCenterPin() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.only(bottom: 36),
+        padding: const EdgeInsets.only(bottom: AppSizes.paddingXL),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -460,7 +459,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
       child: FloatingActionButton.small(
         heroTag: 'myLocation_v2',
         backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 4,
+        elevation: AppSizes.elevationM,
         onPressed: _goToMyLocation,
         child: Icon(
           Icons.my_location,
@@ -479,8 +478,8 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            _accentColor.withOpacity(0.1),
-            _accentColor.withOpacity(0.2),
+            _accentColor.withValues(alpha: AppOpacity.o10),
+            _accentColor.withValues(alpha: AppOpacity.o20),
           ],
         ),
       ),
@@ -510,13 +509,7 @@ class _AddressPanel extends StatelessWidget {
         padding: const EdgeInsets.all(AppSizes.paddingL),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
+          boxShadow: AppShadows.shadowL(Theme.of(context).brightness == Brightness.dark),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -545,10 +538,10 @@ class _AddressPanel extends StatelessWidget {
     
     return Container(
       height: fixedHeight,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Row(
         children: [
@@ -562,21 +555,15 @@ class _AddressPanel extends StatelessWidget {
             child: state.isLoading
                 ? Row(
                     children: [
-                      SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: accentColor,
-                        ),
+                      MingrrLoadingIndicator(
+                        size: 14,
+                        strokeWidth: 2,
+                        customColor: accentColor,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         '주소를 가져오는 중...',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                        style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                       ),
                     ],
                   )
@@ -586,24 +573,17 @@ class _AddressPanel extends StatelessWidget {
                     children: [
                       Text(
                         state.address ?? '주소 정보 없음',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
+                        style: AppTextStyles.titleLarge(context).withWeight(FontWeight.w600),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (state.location?.fullAddress != null &&
                           state.location!.fullAddress != state.address)
                         Padding(
-                          padding: const EdgeInsets.only(top: 2),
+                          padding: const EdgeInsets.only(top: AppSizes.paddingXXS),
                           child: Text(
                             state.location!.fullAddress!,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Theme.of(context).colorScheme.onSurfaceVariant,
-                            ),
+                            style: AppTextStyles.bodySmall(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -617,27 +597,15 @@ class _AddressPanel extends StatelessWidget {
   }
 
   Widget _buildConfirmButton(BuildContext context, AddressState state) {
-    return SizedBox(
-      width: double.infinity,
+    return MingrrButton(
+      text: '이 위치로 선택',
+      onPressed: state.location != null && !state.isLoading
+          ? () => Navigator.pop(context, state.location)
+          : null,
+      isLoading: state.isLoading,
+      backgroundColor: accentColor,
+      textColor: Colors.white,
       height: 52,
-      child: ElevatedButton(
-        onPressed: state.location != null && !state.isLoading
-            ? () => Navigator.pop(context, state.location)
-            : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: accentColor,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: Theme.of(context).colorScheme.outline,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-        ),
-        child: const Text(
-          '이 위치로 선택',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-      ),
     );
   }
 }
@@ -662,7 +630,7 @@ class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = color.withOpacity(0.15)
+      ..color = color.withValues(alpha: AppOpacity.o15)
       ..strokeWidth = 1;
 
     const spacing = 40.0;

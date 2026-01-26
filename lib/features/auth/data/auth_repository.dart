@@ -253,6 +253,36 @@ class AuthRepository {
     await _firebase.auth.sendPasswordResetEmail(email: email);
   }
 
+  // ===== 이메일 인증 =====
+  
+  /// 이메일 인증 메일 발송
+  Future<void> sendEmailVerification() async {
+    final user = _firebase.currentUser;
+    if (user == null) throw Exception('로그인이 필요합니다');
+    if (user.emailVerified) throw Exception('이미 인증된 이메일입니다');
+    
+    await user.sendEmailVerification();
+  }
+
+  /// 이메일 인증 여부 확인
+  bool get isEmailVerified => _firebase.currentUser?.emailVerified ?? false;
+
+  /// 이메일 인증 상태 새로고침 (인증 완료 여부 확인)
+  Future<bool> reloadAndCheckEmailVerified() async {
+    final user = _firebase.currentUser;
+    if (user == null) return false;
+    
+    await user.reload();
+    return _firebase.auth.currentUser?.emailVerified ?? false;
+  }
+
+  /// 이메일 로그인 사용자인지 확인
+  bool get isEmailLoginUser {
+    final user = _firebase.currentUser;
+    if (user == null) return false;
+    return user.providerData.any((p) => p.providerId == 'password');
+  }
+
   // ===== 회원 탈퇴 (논리 삭제) =====
   
   /// 회원 탈퇴 처리

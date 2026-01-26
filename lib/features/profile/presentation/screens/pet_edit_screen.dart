@@ -4,27 +4,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/form_strings.dart';
 import '../../../../core/constants/pet_constants.dart';
-import '../../../../core/services/image_crop_service.dart';
+import '../../../../core/services/image_service.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/forms/form_components.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/utils/error_handler.dart';
-import '../../../../core/widgets/image_picker_sheet.dart';
+import '../../../../core/widgets/sheets/image_picker_sheet.dart';
 import '../../../../models/pet_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../pet/data/pet_repository.dart';
+import '../../../../core/providers/refresh_notifier.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 
 /// ============================================================
 /// 반려동물 추가/수정 화면
 /// 
 /// 기능:
-/// - 강아지 기본 정보 입력 (이름, 품종, 성별, 생년월일, 체중)
+/// - 반려동물 기본 정보 입력 (이름, 품종, 성별, 생년월일, 체중)
 /// - 특성 선택 (최소 5개)
 /// - 소개글 작성
 /// - 중성화 여부, 혈통서 여부
@@ -126,8 +130,9 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: Text(isEditMode ? '반려동물 수정' : '반려동물 추가'),
+      appBar: MingrrFormAppBar(
+        title: isEditMode ? '반려동물 수정' : '반려동물 추가',
+        onClose: () => Navigator.pop(context),
         actions: [
           if (isEditMode && !_isLoading)
             IconButton(
@@ -137,7 +142,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         ],
       ),
       body: _isLoading && isEditMode && !_isDataLoaded
-          ? const MingrrLoadingState()
+          ? const MingrrLoadingState(type: MingrrLoadingType.primary, message: '반려동물 정보를 불러오고 있어요')
           : Form(
         key: _formKey,
         child: ListView(
@@ -148,31 +153,31 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
             const SizedBox(height: AppSizes.gapXL),
             
             // 기본 정보 섹션
-            _buildSectionTitle('기본 정보'),
+            const MingrrSectionLabel('기본 정보'),
             const SizedBox(height: AppSizes.gapM),
             _buildBasicInfoSection(),
             const SizedBox(height: AppSizes.gapXL),
             
             // 신체 정보 섹션
-            _buildSectionTitle('신체 정보'),
+            const MingrrSectionLabel('신체 정보'),
             const SizedBox(height: AppSizes.gapM),
             _buildPhysicalInfoSection(),
             const SizedBox(height: AppSizes.gapXL),
             
             // 특성 선택 섹션
-            _buildSectionTitle('특성 선택', subtitle: '최소 5개 이상 선택해주세요'),
+            const MingrrSectionLabel('특성 선택', suffix: '최소 5개 이상 선택해주세요'),
             const SizedBox(height: AppSizes.gapM),
             _buildTraitsSection(),
             const SizedBox(height: AppSizes.gapXL),
             
             // 소개글 섹션
-            _buildSectionTitle('소개글'),
+            const MingrrSectionLabel('소개글'),
             const SizedBox(height: AppSizes.gapM),
             _buildBioSection(),
             const SizedBox(height: AppSizes.gapXL),
             
             // 추가 정보 섹션
-            _buildSectionTitle('추가 정보'),
+            const MingrrSectionLabel('추가 정보'),
             const SizedBox(height: AppSizes.gapM),
             _buildAdditionalInfoSection(),
             const SizedBox(height: AppSizes.gapXL),
@@ -184,32 +189,6 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         isLoading: _isLoading,
         onPressed: _selectedTraits.length >= 5 ? _savePet : null,
       ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title, {String? subtitle}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        if (subtitle != null) ...[
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 12,
-              color: Theme.of(context).colorScheme.outlineVariant,
-            ),
-          ),
-        ],
-      ],
     );
   }
 
@@ -322,7 +301,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       width: 120,
       height: 120,
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: AppOpacity.o15),
         shape: BoxShape.circle,
         border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
       ),
@@ -366,16 +345,13 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       child: Column(
         children: [
           // 이름
-          TextFormField(
+          MingrrTextField(
             controller: _nameController,
-            decoration: const InputDecoration(
-              labelText: '이름',
-              hintText: '반려동물 이름을 입력해주세요',
-              border: OutlineInputBorder(),
-            ),
+            labelText: FormStrings.labelName,
+            hintText: FormStrings.hintPetName,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return '반려동물 이름을 입력해주세요';
+                return FormStrings.hintPetName;
               }
               return null;
             },
@@ -383,20 +359,17 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           const SizedBox(height: AppSizes.gapM),
           
           // 품종
-          TextFormField(
+          MingrrTextField(
             controller: _breedController,
-            decoration: const InputDecoration(
-              labelText: '품종',
-              hintText: '예: 골든 리트리버, 말티즈',
-              border: OutlineInputBorder(),
-            ),
+            labelText: '품종',
+            hintText: FormStrings.hintBreed,
           ),
           const SizedBox(height: AppSizes.gapM),
           
           // 성별
           Row(
             children: [
-              const Text('성별', style: TextStyle(fontSize: 14)),
+              Text('성별', style: AppTextStyles.labelLarge(context)),
               const Spacer(),
               SegmentedButton<PetGender>(
                 segments: PetGender.values.map((gender) {
@@ -406,7 +379,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(gender.icon, size: 16),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppSizes.gapXS),
                         Text(gender.label),
                       ],
                     ),
@@ -424,8 +397,8 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           const SizedBox(height: AppSizes.gapM),
           
           // 생년월일
-          const Text('생년월일', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 8),
+          Text('생년월일', style: AppTextStyles.labelLarge(context)),
+          const SizedBox(height: AppSizes.gapS),
           MingrrDateSelector(
             date: _birthDate,
             onSelect: (d) => setState(() => _birthDate = d),
@@ -444,30 +417,25 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       child: Column(
         children: [
           // 체중
-          TextFormField(
+          MingrrTextField(
             controller: _weightController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: '체중 (kg)',
-              hintText: '예: 5.5',
-              border: OutlineInputBorder(),
-              suffixText: 'kg',
-            ),
+            labelText: '체중 (kg)',
+            hintText: FormStrings.hintWeight,
           ),
           const SizedBox(height: AppSizes.gapM),
           
           // 중성화 여부
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('중성화 여부'),
-            subtitle: Text(_isNeutered ? '중성화 완료' : '중성화 안함'),
-            value: _isNeutered,
-            onChanged: (value) {
-              setState(() {
-                _isNeutered = value;
-              });
-            },
-            activeColor: Theme.of(context).colorScheme.primary,
+          MingrrSwitchCard(
+            accentColor: Theme.of(context).colorScheme.primary,
+            items: [
+              MingrrSwitchItem(
+                title: SwitchStrings.neutered,
+                subtitle: _isNeutered ? SwitchStrings.neuteredYes : SwitchStrings.neuteredNo,
+                value: _isNeutered,
+                onChanged: (value) => setState(() => _isNeutered = value),
+              ),
+            ],
           ),
         ],
       ),
@@ -485,17 +453,15 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
             children: [
               Text(
                 '선택됨: ${_selectedTraits.length}개',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: _selectedTraits.length >= 5 ? context.features.success : Colors.orange,
+                style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600).withColor(
+                  _selectedTraits.length >= 5 ? context.features.success : Colors.orange,
                 ),
               ),
               const Spacer(),
               if (_selectedTraits.length < 5)
-                const Text(
+                Text(
                   '최소 5개 선택 필요',
-                  style: TextStyle(fontSize: 12, color: Colors.orange),
+                  style: AppTextStyles.caption(context).copyWith(color: Colors.orange),
                 ),
             ],
           ),
@@ -517,11 +483,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       children: [
         Text(
           category.label,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          style: AppTextStyles.titleSmall(context).withWeight(FontWeight.w600).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         const SizedBox(height: AppSizes.gapS),
         Wrap(
@@ -541,11 +503,23 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
                   }
                 });
               },
-              selectedColor: Theme.of(context).colorScheme.surface,
+              selectedColor: Theme.of(context).colorScheme.primaryContainer,
+              backgroundColor: Theme.of(context).colorScheme.surface,
               checkmarkColor: Theme.of(context).colorScheme.primary,
-              labelStyle: TextStyle(
-                fontSize: 12,
-                color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
+              showCheckmark: false,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
+              labelStyle: AppTextStyles.bodySmall(context).withColor(
+                isSelected 
+                    ? Theme.of(context).colorScheme.tertiary
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              side: BorderSide(
+                color: isSelected 
+                    ? Theme.of(context).colorScheme.primary 
+                    : Theme.of(context).colorScheme.outline,
+                width: isSelected ? 1.5 : 1,
               ),
             );
           }).toList(),
@@ -558,14 +532,10 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
   Widget _buildBioSection() {
     return MingrrCard(
       margin: EdgeInsets.zero,
-      child: TextFormField(
+      child: MingrrTextField(
         controller: _bioController,
         maxLines: 4,
-        maxLength: 200,
-        decoration: const InputDecoration(
-          hintText: '반려동물을 소개해주세요\n예: 활발하고 사람을 좋아하는 아이입니다.',
-          border: OutlineInputBorder(),
-        ),
+        hintText: FormStrings.hintPetBio,
       ),
     );
   }
@@ -577,39 +547,37 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 혈통서 보유 여부
-          SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('혈통서 보유'),
-            subtitle: Text(_hasPedigree ? '혈통서 있음' : '혈통서 없음'),
-            value: _hasPedigree,
-            onChanged: (value) {
-              setState(() {
-                _hasPedigree = value;
-              });
-            },
-            activeColor: Theme.of(context).colorScheme.primary,
+          MingrrSwitchCard(
+            accentColor: Theme.of(context).colorScheme.primary,
+            items: [
+              MingrrSwitchItem(
+                title: SwitchStrings.hasPedigree,
+                subtitle: _hasPedigree ? SwitchStrings.hasPedigreeYes : SwitchStrings.hasPedigreeNo,
+                value: _hasPedigree,
+                onChanged: (value) => setState(() => _hasPedigree = value),
+              ),
+            ],
           ),
-          const Divider(),
           const SizedBox(height: AppSizes.gapM),
           
           // 추가 사진 섹션
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 '추가 사진',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: AppTextStyles.titleLarge(context),
               ),
               Text(
                 '${_getTotalPhotoCount()}/5장',
-                style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: AppTextStyles.caption(context),
               ),
             ],
           ),
           const SizedBox(height: AppSizes.gapS),
           Text(
             '길게 누르고 드래그하여 순서를 변경하세요. 가장 왼쪽 사진이 대표사진으로 사용됩니다.',
-            style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.outlineVariant),
+            style: AppTextStyles.caption(context),
           ),
           const SizedBox(height: AppSizes.gapM),
           
@@ -689,7 +657,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
                   key: ValueKey('photo_$index'),
                   index: index,
                   child: Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.only(right: AppSizes.paddingS),
                     child: _buildDraggablePhotoItem(
                       index: index,
                       isPrimary: isPrimary,
@@ -723,14 +691,14 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           width: 80,
           height: 80,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
             border: Border.all(
               color: isPrimary ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
               width: isPrimary ? 3 : 1,
             ),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
             child: isUrl
                 ? Image.network(
                     imageUrl!,
@@ -748,7 +716,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
             top: 4,
             left: 4,
             child: Container(
-              padding: const EdgeInsets.all(2),
+              padding: const EdgeInsets.all(AppSizes.paddingXXS),
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.primary,
                 shape: BoxShape.circle,
@@ -764,11 +732,11 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
             behavior: HitTestBehavior.opaque,
             onTap: () => _deletePhotoAt(index),
             child: Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(AppSizes.paddingS),
               child: Container(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(AppSizes.paddingXS),
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: AppOpacity.o50),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.close, size: 12, color: Colors.white),
@@ -788,17 +756,17 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         height: 80,
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(color: Theme.of(context).colorScheme.outline),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.add_photo_alternate, color: Theme.of(context).colorScheme.primary, size: 28),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSizes.gapXS),
             Text(
               '추가',
-              style: TextStyle(fontSize: 11, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: AppTextStyles.caption(context),
             ),
           ],
         ),
@@ -821,26 +789,37 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
     try {
       final XFile? image = await _imagePicker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 85,
+        maxWidth: ImageLimits.maxResolution.toDouble(),
+        maxHeight: ImageLimits.maxResolution.toDouble(),
+        imageQuality: ImageLimits.imageQuality,
       );
       
       if (image != null) {
+        // 파일 크기 검사
+        final file = File(image.path);
+        final fileSize = await file.length();
+        if (fileSize > ImageLimits.maxFileSizeBytes) {
+          if (mounted) {
+            final sizeMB = (fileSize / (1024 * 1024)).toStringAsFixed(1);
+            MingrrSnackBar.warning(
+              context, 
+              '이미지 크기가 너무 큽니다 (${sizeMB}MB). 최대 ${ImageLimits.maxFileSizeMB}MB까지 업로드 가능합니다',
+            );
+          }
+          return;
+        }
+
         // 웹에서는 크롭 미지원, 모바일에서만 크롭 적용
         if (!kIsWeb && mounted) {
-          final croppedPath = await ImageCropService().cropImage(
+          final result = await ImageService.instance.crop(
+            context: context,
             imagePath: image.path,
             style: ImageCropStyle.circle,
-            context: context,
-            maxWidth: 800,
-            maxHeight: 800,
-            compressQuality: 85,
           );
           
-          if (croppedPath != null && mounted) {
+          if (result != null && mounted) {
             setState(() {
-              _selectedProfileImage = XFile(croppedPath);
+              _selectedProfileImage = XFile(result.path);
             });
             return;
           }
@@ -863,28 +842,45 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
   Future<void> _pickAdditionalPhotos() async {
     try {
       final List<XFile> images = await _imagePicker.pickMultiImage(
-        maxWidth: 800,
-        maxHeight: 800,
-        imageQuality: 85,
+        maxWidth: ImageLimits.maxResolution.toDouble(),
+        maxHeight: ImageLimits.maxResolution.toDouble(),
+        imageQuality: ImageLimits.imageQuality,
       );
       
       if (images.isNotEmpty && mounted) {
+        // 파일 크기 검사 및 필터링
+        final List<XFile> validImages = [];
+        for (final image in images) {
+          final file = File(image.path);
+          final fileSize = await file.length();
+          if (fileSize > ImageLimits.maxFileSizeBytes) {
+            if (mounted) {
+              final sizeMB = (fileSize / (1024 * 1024)).toStringAsFixed(1);
+              MingrrSnackBar.warning(
+                context, 
+                '이미지 크기가 너무 큽니다 (${sizeMB}MB). 최대 ${ImageLimits.maxFileSizeMB}MB까지 업로드 가능합니다',
+              );
+            }
+            continue;
+          }
+          validImages.add(image);
+        }
+
+        if (validImages.isEmpty) return;
+
         // 웹에서는 크롭 미지원, 모바일에서만 크롭 적용
         if (!kIsWeb) {
           final List<XFile> croppedImages = [];
-          for (final image in images) {
+          for (final image in validImages) {
             if (!mounted) break;
-            final croppedPath = await ImageCropService().cropImage(
+            final result = await ImageService.instance.crop(
+              context: context,
               imagePath: image.path,
               style: ImageCropStyle.square,
-              context: context,
-              maxWidth: 800,
-              maxHeight: 800,
-              compressQuality: 85,
             );
             
-            if (croppedPath != null) {
-              croppedImages.add(XFile(croppedPath));
+            if (result != null) {
+              croppedImages.add(XFile(result.path));
             }
           }
           
@@ -898,7 +894,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         
         // 웹이거나 크롭 취소 시 원본 사용
         setState(() {
-          _selectedAdditionalPhotos.addAll(images);
+          _selectedAdditionalPhotos.addAll(validImages);
         });
       }
     } catch (e) {
@@ -1026,6 +1022,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         
         // 상태 관리 새로고침
         ref.invalidate(userPetsProvider);
+        ref.read(petRefreshProvider.notifier).state++;
         
         if (mounted) {
           MingrrSnackBar.success(context, isEditMode ? '반려동물 정보가 수정되었습니다!' : '반려동물이 등록되었습니다!');
@@ -1066,6 +1063,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       
       // Provider 리프레시
       ref.invalidate(userPetsProvider);
+      ref.read(petRefreshProvider.notifier).state++;
       
       if (mounted) {
         MingrrSnackBar.success(context, '반려동물이 삭제되었습니다');

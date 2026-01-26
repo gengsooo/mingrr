@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 
@@ -33,7 +35,7 @@ class WeightRecordDetailScreen extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSizes.paddingL),
         child: Column(
           children: [
             // 메인 카드
@@ -46,7 +48,7 @@ class WeightRecordDetailScreen extends StatelessWidget {
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
-                      color: context.features.health.withOpacity(0.1),
+                      color: context.features.health.withValues(alpha: AppOpacity.o10),
                       shape: BoxShape.circle,
                     ),
                     child: Column(
@@ -54,23 +56,18 @@ class WeightRecordDetailScreen extends StatelessWidget {
                       children: [
                         Text(
                           '${record.weight}',
-                          style: TextStyle(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w700,
-                            color: context.features.health,
-                          ),
+                          style: AppTextStyles.displayLarge(context).withColor(context.features.health),
                         ),
                         Text(
                           'kg',
-                          style: TextStyle(
-                            fontSize: 16,
+                          style: AppTextStyles.titleLarge(context).copyWith(
                             color: context.features.health,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: AppSizes.gapLL),
                   
                   // 변화량
                   Row(
@@ -89,13 +86,11 @@ class WeightRecordDetailScreen extends StatelessWidget {
                                 : Theme.of(context).colorScheme.onSurfaceVariant,
                         size: 20,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSizes.gapXS),
                       Text(
                         '${record.change > 0 ? '+' : ''}${record.change}kg',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: record.change > 0
+                        style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600).withColor(
+                          record.change > 0
                               ? Colors.red
                               : record.change < 0
                                   ? context.features.success
@@ -104,17 +99,16 @@ class WeightRecordDetailScreen extends StatelessWidget {
                       ),
                       Text(
                         ' (이전 대비)',
-                        style: TextStyle(
-                          fontSize: 14,
+                        style: AppTextStyles.bodyMedium(context).copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
                   
-                  const SizedBox(height: 20),
-                  const Divider(),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSizes.gapLL),
+                  const MingrrDivider(),
+                  const SizedBox(height: AppSizes.gapM),
                   
                   // 날짜/시간
                   _buildInfoRow(context, '측정일', _formatDate(record.date)),
@@ -124,7 +118,7 @@ class WeightRecordDetailScreen extends StatelessWidget {
               ),
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             
             // 목표 체중
             MingrrCard(
@@ -132,11 +126,11 @@ class WeightRecordDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     '목표 체중',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: AppTextStyles.headlineSmall(context),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSizes.gapM),
                   Row(
                     children: [
                       Expanded(
@@ -145,17 +139,11 @@ class WeightRecordDetailScreen extends StatelessWidget {
                           children: [
                             Text(
                               '${record.targetWeight}kg',
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style: AppTextStyles.displaySmall(context),
                             ),
                             Text(
                               '${(record.weight - record.targetWeight).abs().toStringAsFixed(1)}kg ${record.weight > record.targetWeight ? '감량' : '증량'} 필요',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
+                              style: AppTextStyles.bodySmall(context),
                             ),
                           ],
                         ),
@@ -166,19 +154,17 @@ class WeightRecordDetailScreen extends StatelessWidget {
                         height: 80,
                         child: Stack(
                           children: [
-                            CircularProgressIndicator(
+                            MingrrLoadingIndicator.progress(
                               value: _calculateProgress(record),
+                              size: 80,
                               strokeWidth: 8,
                               backgroundColor: Theme.of(context).colorScheme.outline,
-                              valueColor: AlwaysStoppedAnimation(context.features.health),
+                              customColor: context.features.health,
                             ),
                             Center(
                               child: Text(
                                 '${(_calculateProgress(record) * 100).toInt()}%',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: AppTextStyles.titleLarge(context),
                               ),
                             ),
                           ],
@@ -192,7 +178,7 @@ class WeightRecordDetailScreen extends StatelessWidget {
             
             // 메모
             if (record.memo != null && record.memo!.isNotEmpty) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSizes.gapL),
               MingrrCard(
                 margin: EdgeInsets.zero,
                 child: Column(
@@ -201,14 +187,14 @@ class WeightRecordDetailScreen extends StatelessWidget {
                     Row(
                       children: [
                         Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        const SizedBox(width: 8),
-                        const Text('메모', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        const SizedBox(width: AppSizes.gapS),
+                        Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSizes.gapM),
                     Text(
                       record.memo!,
-                      style: const TextStyle(fontSize: 14, height: 1.5),
+                      style: AppTextStyles.bodyMedium(context).copyWith(height: 1.5),
                     ),
                   ],
                 ),
@@ -222,12 +208,12 @@ class WeightRecordDetailScreen extends StatelessWidget {
 
   Widget _buildInfoRow(BuildContext context, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingXS),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          Text(label, style: AppTextStyles.bodySmall(context)),
+          Text(value, style: AppTextStyles.labelLarge(context)),
         ],
       ),
     );
@@ -306,7 +292,7 @@ class GroomingRecordDetailScreen extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSizes.paddingL),
         child: Column(
           children: [
             MingrrCard(
@@ -318,19 +304,19 @@ class GroomingRecordDetailScreen extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: context.features.health.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
+                      color: context.features.health.withValues(alpha: AppOpacity.o10),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     ),
                     child: Icon(record.type.icon, size: 40, color: context.features.health),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSizes.gapL),
                   Text(
                     record.type.label,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                    style: AppTextStyles.headlineMedium(context).copyWith(fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: 20),
-                  const Divider(),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSizes.gapLL),
+                  const MingrrDivider(),
+                  const SizedBox(height: AppSizes.gapM),
                   _buildInfoRow(context, '날짜', _formatDate(record.date)),
                   _buildInfoRow(context, '장소', record.location),
                   _buildInfoRow(context, '반려동물', record.petName),
@@ -341,7 +327,7 @@ class GroomingRecordDetailScreen extends StatelessWidget {
             ),
             
             if (record.memo != null && record.memo!.isNotEmpty) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSizes.gapL),
               MingrrCard(
                 margin: EdgeInsets.zero,
                 child: Column(
@@ -350,12 +336,12 @@ class GroomingRecordDetailScreen extends StatelessWidget {
                     Row(
                       children: [
                         Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        const SizedBox(width: 8),
-                        const Text('메모', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        const SizedBox(width: AppSizes.gapS),
+                        Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(record.memo!, style: const TextStyle(fontSize: 14, height: 1.5)),
+                    const SizedBox(height: AppSizes.gapM),
+                    Text(record.memo!, style: AppTextStyles.bodyMedium(context).copyWith(height: 1.5)),
                   ],
                 ),
               ),
@@ -368,12 +354,12 @@ class GroomingRecordDetailScreen extends StatelessWidget {
 
   Widget _buildInfoRow(BuildContext context, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingXS),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          Text(label, style: AppTextStyles.bodySmall(context)),
+          Text(value, style: AppTextStyles.labelLarge(context)),
         ],
       ),
     );
@@ -453,7 +439,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSizes.paddingL),
         child: Column(
           children: [
             MingrrCard(
@@ -464,37 +450,35 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: context.features.health.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
+                      color: context.features.health.withValues(alpha: AppOpacity.o10),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     ),
                     child: Icon(Icons.vaccines_outlined, size: 40, color: context.features.health),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSizes.gapL),
                   Text(
                     record.vaccineName,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                    style: AppTextStyles.headlineMedium(context).copyWith(fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSizes.gapS),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: 4),
                     decoration: BoxDecoration(
                       color: record.isCompleted
-                          ? context.features.success.withOpacity(0.1)
-                          : Colors.orange.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                          ? context.features.success.withValues(alpha: AppOpacity.o10)
+                          : Colors.orange.withValues(alpha: AppOpacity.o10),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     ),
                     child: Text(
                       record.isCompleted ? '접종 완료' : '접종 예정',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: record.isCompleted ? context.features.success : Colors.orange,
+                      style: AppTextStyles.labelLarge(context).withWeight(FontWeight.w600).withColor(
+                        record.isCompleted ? context.features.success : Colors.orange,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  const Divider(),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSizes.gapLL),
+                  const MingrrDivider(),
+                  const SizedBox(height: AppSizes.gapM),
                   _buildInfoRow(context, '접종일', _formatDate(record.date)),
                   _buildInfoRow(context, '병원', record.hospital),
                   _buildInfoRow(context, '담당 수의사', record.veterinarian ?? '-'),
@@ -507,7 +491,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
             
             // 다음 접종 알림
             if (record.nextDate != null) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSizes.gapL),
               MingrrCard(
                 margin: EdgeInsets.zero,
                 child: Row(
@@ -516,25 +500,25 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.orange.withValues(alpha: AppOpacity.o10),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
                       ),
                       child: const Center(
                         child: Icon(Icons.notifications_outlined, color: Colors.orange),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSizes.gapM),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             '다음 접종 알림',
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                            style: AppTextStyles.labelLarge(context).copyWith(fontWeight: FontWeight.w600),
                           ),
                           Text(
                             _getRemainingDays(record.nextDate!),
-                            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            style: AppTextStyles.bodySmall(context),
                           ),
                         ],
                       ),
@@ -554,7 +538,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
             ],
             
             if (record.memo != null && record.memo!.isNotEmpty) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSizes.gapL),
               MingrrCard(
                 margin: EdgeInsets.zero,
                 child: Column(
@@ -563,12 +547,12 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                     Row(
                       children: [
                         Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        const SizedBox(width: 8),
-                        const Text('메모', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        const SizedBox(width: AppSizes.gapS),
+                        Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(record.memo!, style: const TextStyle(fontSize: 14, height: 1.5)),
+                    const SizedBox(height: AppSizes.gapM),
+                    Text(record.memo!, style: AppTextStyles.bodyMedium(context).copyWith(height: 1.5)),
                   ],
                 ),
               ),
@@ -581,12 +565,12 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
 
   Widget _buildInfoRow(BuildContext context, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingXS),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          Text(label, style: AppTextStyles.bodySmall(context)),
+          Text(value, style: AppTextStyles.labelLarge(context)),
         ],
       ),
     );
@@ -661,7 +645,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSizes.paddingL),
         child: Column(
           children: [
             MingrrCard(
@@ -672,19 +656,19 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: context.features.health.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
+                      color: context.features.health.withValues(alpha: AppOpacity.o10),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     ),
                     child: Icon(Icons.local_hospital_outlined, size: 40, color: context.features.health),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSizes.gapL),
                   Text(
                     record.checkupType,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                    style: AppTextStyles.headlineMedium(context).copyWith(fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: 20),
-                  const Divider(),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSizes.gapLL),
+                  const MingrrDivider(),
+                  const SizedBox(height: AppSizes.gapM),
                   _buildInfoRow(context, '검진일', _formatDate(record.date)),
                   _buildInfoRow(context, '병원', record.hospital),
                   _buildInfoRow(context, '담당 수의사', record.veterinarian ?? '-'),
@@ -696,23 +680,23 @@ class CheckupRecordDetailScreen extends StatelessWidget {
             ),
             
             // 검진 결과
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             MingrrCard(
               margin: EdgeInsets.zero,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     '검진 결과',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: AppTextStyles.headlineSmall(context),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSizes.gapM),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppSizes.paddingL),
                     decoration: BoxDecoration(
-                      color: _getResultColor(context, record.result).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      color: _getResultColor(context, record.result).withValues(alpha: AppOpacity.o10),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     ),
                     child: Row(
                       children: [
@@ -721,14 +705,10 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                           color: _getResultColor(context, record.result),
                           size: 28,
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppSizes.gapM),
                         Text(
                           record.result,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: _getResultColor(context, record.result),
-                          ),
+                          style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600).withColor(_getResultColor(context, record.result)),
                         ),
                       ],
                     ),
@@ -739,24 +719,24 @@ class CheckupRecordDetailScreen extends StatelessWidget {
             
             // 검진 항목
             if (record.items.isNotEmpty) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSizes.gapL),
               MingrrCard(
                 margin: EdgeInsets.zero,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       '검진 항목',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      style: AppTextStyles.headlineSmall(context),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSizes.gapM),
                     ...record.items.map((item) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingXS),
                       child: Row(
                         children: [
                           Icon(Icons.check_circle, color: context.features.success, size: 18),
-                          const SizedBox(width: 8),
-                          Text(item, style: const TextStyle(fontSize: 14)),
+                          const SizedBox(width: AppSizes.gapS),
+                          Text(item, style: AppTextStyles.bodyMedium(context)),
                         ],
                       ),
                     )),
@@ -766,7 +746,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
             ],
             
             if (record.memo != null && record.memo!.isNotEmpty) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSizes.gapL),
               MingrrCard(
                 margin: EdgeInsets.zero,
                 child: Column(
@@ -775,12 +755,12 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                     Row(
                       children: [
                         Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        const SizedBox(width: 8),
-                        const Text('메모', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        const SizedBox(width: AppSizes.gapS),
+                        Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(record.memo!, style: const TextStyle(fontSize: 14, height: 1.5)),
+                    const SizedBox(height: AppSizes.gapM),
+                    Text(record.memo!, style: AppTextStyles.bodyMedium(context).copyWith(height: 1.5)),
                   ],
                 ),
               ),
@@ -793,12 +773,12 @@ class CheckupRecordDetailScreen extends StatelessWidget {
 
   Widget _buildInfoRow(BuildContext context, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingXS),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          Text(label, style: AppTextStyles.bodySmall(context)),
+          Text(value, style: AppTextStyles.labelLarge(context)),
         ],
       ),
     );
@@ -880,7 +860,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSizes.paddingL),
         child: Column(
           children: [
             MingrrCard(
@@ -891,19 +871,19 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
                     width: 80,
                     height: 80,
                     decoration: BoxDecoration(
-                      color: context.features.health.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
+                      color: context.features.health.withValues(alpha: AppOpacity.o10),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     ),
                     child: Icon(Icons.clean_hands_outlined, size: 40, color: context.features.health),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSizes.gapL),
                   Text(
                     record.careType,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                    style: AppTextStyles.headlineMedium(context).copyWith(fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: 20),
-                  const Divider(),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSizes.gapLL),
+                  const MingrrDivider(),
+                  const SizedBox(height: AppSizes.gapM),
                   _buildInfoRow(context, '날짜', _formatDate(record.date)),
                   _buildInfoRow(context, '장소', record.location),
                   _buildInfoRow(context, '반려동물', record.petName),
@@ -914,28 +894,28 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
             ),
             
             // 치아 상태
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             MingrrCard(
               margin: EdgeInsets.zero,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     '치아 상태',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: AppTextStyles.headlineSmall(context),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSizes.gapM),
                   _buildConditionBar(context, '치석', record.tartarLevel),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSizes.gapS),
                   _buildConditionBar(context, '잇몸', record.gumHealth),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSizes.gapS),
                   _buildConditionBar(context, '구취', record.breathLevel),
                 ],
               ),
             ),
             
             if (record.memo != null && record.memo!.isNotEmpty) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSizes.gapL),
               MingrrCard(
                 margin: EdgeInsets.zero,
                 child: Column(
@@ -944,12 +924,12 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
                     Row(
                       children: [
                         Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        const SizedBox(width: 8),
-                        const Text('메모', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        const SizedBox(width: AppSizes.gapS),
+                        Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(record.memo!, style: const TextStyle(fontSize: 14, height: 1.5)),
+                    const SizedBox(height: AppSizes.gapM),
+                    Text(record.memo!, style: AppTextStyles.bodyMedium(context).copyWith(height: 1.5)),
                   ],
                 ),
               ),
@@ -962,12 +942,12 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
 
   Widget _buildInfoRow(BuildContext context, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingXS),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          Text(label, style: AppTextStyles.bodySmall(context)),
+          Text(value, style: AppTextStyles.labelLarge(context)),
         ],
       ),
     );
@@ -981,7 +961,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
       children: [
         SizedBox(
           width: 50,
-          child: Text(label, style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          child: Text(label, style: AppTextStyles.bodySmall(context)),
         ),
         Expanded(
           child: Row(
@@ -989,24 +969,20 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
               return Expanded(
                 child: Container(
                   height: 8,
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  margin: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXXS),
                   decoration: BoxDecoration(
                     color: index < level ? colors[level - 1] : Theme.of(context).colorScheme.outline,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                   ),
                 ),
               );
             }),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSizes.gapS),
         Text(
           labels[level - 1],
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: colors[level - 1],
-          ),
+          style: AppTextStyles.labelLarge(context).withWeight(FontWeight.w500).withColor(colors[level - 1]),
         ),
       ],
     );
@@ -1076,7 +1052,7 @@ class SpecialRecordDetailScreen extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSizes.paddingL),
         child: Column(
           children: [
             MingrrCard(
@@ -1090,8 +1066,8 @@ class SpecialRecordDetailScreen extends StatelessWidget {
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: _getCategoryColor(context, record.category).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
+                          color: _getCategoryColor(context, record.category).withValues(alpha: AppOpacity.o10),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Icon(
                           _getCategoryIcon(record.category),
@@ -1099,27 +1075,25 @@ class SpecialRecordDetailScreen extends StatelessWidget {
                           color: _getCategoryColor(context, record.category),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSizes.gapM),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               record.title,
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                              style: AppTextStyles.headlineSmall(context).copyWith(fontWeight: FontWeight.w700),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: AppSizes.gapXS),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
                               decoration: BoxDecoration(
-                                color: _getCategoryColor(context, record.category).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
+                                color: _getCategoryColor(context, record.category).withValues(alpha: AppOpacity.o10),
+                                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                               ),
                               child: Text(
                                 record.category,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
+                                style: AppTextStyles.labelSmall(context).copyWith(
                                   color: _getCategoryColor(context, record.category),
                                 ),
                               ),
@@ -1129,9 +1103,9 @@ class SpecialRecordDetailScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  const Divider(),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSizes.gapLL),
+                  const MingrrDivider(),
+                  const SizedBox(height: AppSizes.gapM),
                   _buildInfoRow(context, '날짜', _formatDate(record.date)),
                   _buildInfoRow(context, '반려동물', record.petName),
                   if (record.severity != null)
@@ -1141,20 +1115,20 @@ class SpecialRecordDetailScreen extends StatelessWidget {
             ),
             
             // 상세 내용
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSizes.gapL),
             MingrrCard(
               margin: EdgeInsets.zero,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     '상세 내용',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    style: AppTextStyles.headlineSmall(context),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSizes.gapM),
                   Text(
                     record.description,
-                    style: const TextStyle(fontSize: 14, height: 1.6),
+                    style: AppTextStyles.bodyMedium(context).copyWith(height: 1.6),
                   ),
                 ],
               ),
@@ -1162,7 +1136,7 @@ class SpecialRecordDetailScreen extends StatelessWidget {
             
             // 조치 사항
             if (record.action != null && record.action!.isNotEmpty) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSizes.gapL),
               MingrrCard(
                 margin: EdgeInsets.zero,
                 child: Column(
@@ -1171,14 +1145,14 @@ class SpecialRecordDetailScreen extends StatelessWidget {
                     Row(
                       children: [
                         Icon(Icons.medical_services_outlined, size: 20, color: context.features.health),
-                        const SizedBox(width: 8),
-                        const Text('조치 사항', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        const SizedBox(width: AppSizes.gapS),
+                        Text('조치 사항', style: AppTextStyles.headlineSmall(context)),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSizes.gapM),
                     Text(
                       record.action!,
-                      style: const TextStyle(fontSize: 14, height: 1.5),
+                      style: AppTextStyles.bodyMedium(context).copyWith(height: 1.5),
                     ),
                   ],
                 ),
@@ -1192,12 +1166,12 @@ class SpecialRecordDetailScreen extends StatelessWidget {
 
   Widget _buildInfoRow(BuildContext context, String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingXS),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurfaceVariant)),
-          Text(value, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+          Text(label, style: AppTextStyles.bodySmall(context)),
+          Text(value, style: AppTextStyles.labelLarge(context)),
         ],
       ),
     );

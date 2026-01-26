@@ -5,18 +5,17 @@ import '../../models/pet_model.dart';
 import '../../models/user_model.dart';
 
 /// ============================================================
-/// 추천 매칭 알고리즘 서비스 (V3)
+/// 추천 매칭 알고리즘 서비스 (V4 - 기획서 기준 리팩토링)
 /// 
-/// 점수 배분 (총 100점):
-/// - 체형 궁합: 18점 (크기 10점 + 체중 8점)
-/// - 나이 궁합: 15점 (나이차 9점 + 생애단계 6점)
-/// - 성격 궁합: 15점 (보완 6점 + 동일 5점 + 에너지 4점)
-/// - 거리: 14점
-/// - 보호자 인증: 12점
-/// - 꼬순내 지수: 10점
-/// - 품종 궁합: 6점
-/// - 인기도: 6점
-/// - 앱 활성도: 4점
+/// 점수 배분 (총 100%):
+/// - 체형 궁합: 20% (크기 12% + 체중 8%)
+/// - 성격 궁합: 20% (보완 8% + 동일 7% + 에너지 5%)
+/// - 거리: 15%
+/// - 보호자 신뢰도: 15% (인증 9% + 꼬순내지수 6%)
+/// - 인기도: 10% (상대적 계산 + 신규 부스트)
+/// - 앱 활성도: 10%
+/// - 나이 궁합: 5% (나이차 3% + 생애단계 2%)
+/// - 품종 궁합: 5%
 /// ============================================================
 
 class MatchingService {
@@ -33,50 +32,45 @@ class MatchingService {
     double totalScore = 0;
     final details = <String, double>{};
 
-    // ===== 1. 체형 궁합 (18점) =====
+    // ===== 1. 체형 궁합 (20%) =====
     final bodyScore = _calculateBodyScore(myPet, otherPet);
     details['body'] = bodyScore;
     totalScore += bodyScore;
 
-    // ===== 2. 나이 궁합 (15점) =====
-    final ageScore = _calculateAgeScore(myPet, otherPet);
-    details['age'] = ageScore;
-    totalScore += ageScore;
-
-    // ===== 3. 성격 궁합 (15점) =====
+    // ===== 2. 성격 궁합 (20%) =====
     final traitScore = _calculateTraitScore(myPet, otherPet);
     details['traits'] = traitScore;
     totalScore += traitScore;
 
-    // ===== 4. 거리 (14점) =====
+    // ===== 3. 거리 (15%) =====
     final distanceScore = _calculateDistanceScore(distanceMeters);
     details['distance'] = distanceScore;
     totalScore += distanceScore;
 
-    // ===== 5. 보호자 인증 (12점) =====
-    final verificationScore = _calculateVerificationScore(otherUser);
-    details['verification'] = verificationScore;
-    totalScore += verificationScore;
+    // ===== 4. 보호자 신뢰도 (15% = 인증 9% + 꼬순내 6%) =====
+    final trustScore = _calculateTrustScore(otherUser);
+    details['trust'] = trustScore;
+    totalScore += trustScore;
 
-    // ===== 6. 꼬순내 지수 (10점) =====
-    final activityScore = _calculateActivityScore(otherUser);
-    details['activity'] = activityScore;
-    totalScore += activityScore;
-
-    // ===== 7. 품종 궁합 (6점) =====
-    final breedScore = _calculateBreedScore(myPet, otherPet);
-    details['breed'] = breedScore;
-    totalScore += breedScore;
-
-    // ===== 8. 인기도 (6점) =====
+    // ===== 5. 인기도 (10%) =====
     final popularityScore = _calculatePopularityScore(otherPet);
     details['popularity'] = popularityScore;
     totalScore += popularityScore;
 
-    // ===== 9. 앱 활성도 (4점) =====
+    // ===== 6. 앱 활성도 (10%) =====
     final activeScore = _calculateActiveScore(otherUser);
     details['active'] = activeScore;
     totalScore += activeScore;
+
+    // ===== 7. 나이 궁합 (5%) =====
+    final ageScore = _calculateAgeScore(myPet, otherPet);
+    details['age'] = ageScore;
+    totalScore += ageScore;
+
+    // ===== 8. 품종 궁합 (5%) =====
+    final breedScore = _calculateBreedScore(myPet, otherPet);
+    details['breed'] = breedScore;
+    totalScore += breedScore;
 
     return MatchResult(
       score: min(100, totalScore.round()),
@@ -85,27 +79,28 @@ class MatchingService {
     );
   }
 
-  // ===== 1. 체형 궁합 (18점) =====
+  // ===== 1. 체형 궁합 (20%) =====
   static double _calculateBodyScore(PetModel myPet, PetModel otherPet) {
     double score = 0;
 
-    // A. 크기 매칭 (10점)
+    // A. 크기 매칭 (12%)
     final mySize = myPet.size;
     final otherSize = otherPet.size;
     
     if (mySize != null && otherSize != null) {
       if (mySize == otherSize) {
-        score += 10;
+        score += 12;
       } else {
         final sizeDiff = (mySize.index - otherSize.index).abs();
-        if (sizeDiff == 1) score += 5;
-        else if (sizeDiff == 2) score += 2;
+        if (sizeDiff == 1) score += 8;
+        else if (sizeDiff == 2) score += 4;
+        else score += 2;
       }
     } else {
-      score += 5; // 정보 없으면 중간 점수
+      score += 6; // 정보 없으면 중간 점수
     }
 
-    // B. 체중 차이 (8점)
+    // B. 체중 차이 (8%)
     if (myPet.weight != null && otherPet.weight != null) {
       final weightDiff = (myPet.weight! - otherPet.weight!).abs();
       if (weightDiff <= 1) score += 8;
@@ -119,31 +114,31 @@ class MatchingService {
     return score;
   }
 
-  // ===== 2. 나이 궁합 (15점) =====
+  // ===== 7. 나이 궁합 (5%) =====
   static double _calculateAgeScore(PetModel myPet, PetModel otherPet) {
     double score = 0;
     final myAge = myPet.ageYears;
     final otherAge = otherPet.ageYears;
 
-    // A. 나이 차이 (9점)
+    // A. 나이 차이 (3%)
     if (myAge != null && otherAge != null) {
       final ageDiff = (myAge - otherAge).abs();
-      if (ageDiff == 0) score += 9;
-      else if (ageDiff == 1) score += 7;
-      else if (ageDiff == 2) score += 5;
-      else if (ageDiff == 3) score += 3;
-      else score += 1;
+      if (ageDiff == 0) score += 3;
+      else if (ageDiff == 1) score += 2.5;
+      else if (ageDiff == 2) score += 2;
+      else if (ageDiff == 3) score += 1;
+      else score += 0.5;
 
-      // B. 생애 단계 매칭 (6점)
+      // B. 생애 단계 매칭 (2%)
       final myStage = _getLifeStage(myAge);
       final otherStage = _getLifeStage(otherAge);
       final stageDiff = (myStage - otherStage).abs();
       
-      if (stageDiff == 0) score += 6;
-      else if (stageDiff == 1) score += 3;
-      else score += 1;
+      if (stageDiff == 0) score += 2;
+      else if (stageDiff == 1) score += 1;
+      else score += 0.5;
     } else {
-      score += 7.5; // 정보 없으면 중간 점수
+      score += 2.5; // 정보 없으면 중간 점수
     }
 
     return score;
@@ -157,50 +152,50 @@ class MatchingService {
     return 3;
   }
 
-  // ===== 3. 성격 궁합 (15점) =====
+  // ===== 2. 성격 궁합 (20%) =====
   static double _calculateTraitScore(PetModel myPet, PetModel otherPet) {
     if (myPet.traits.isEmpty || otherPet.traits.isEmpty) {
-      return 7.5;
+      return 10; // 정보 없으면 중간 점수
     }
 
     double score = 0;
 
-    // A. 상호 보완 특성 (6점)
+    // A. 상호 보완 특성 (8%)
     final synergyPairs = [
-      (PetTrait.active, PetTrait.calm, 3.0),
-      (PetTrait.curious, PetTrait.gentle, 2.0),
-      (PetTrait.playful, PetTrait.gentle, 2.0),
-      (PetTrait.independent, PetTrait.affectionate, 1.5),
-      (PetTrait.brave, PetTrait.shy, 1.5),
+      (PetTrait.active, PetTrait.calm, 4.0),
+      (PetTrait.curious, PetTrait.gentle, 2.5),
+      (PetTrait.playful, PetTrait.gentle, 2.5),
+      (PetTrait.independent, PetTrait.affectionate, 2.0),
+      (PetTrait.brave, PetTrait.shy, 2.0),
     ];
 
     for (final (trait1, trait2, points) in synergyPairs) {
       if ((myPet.traits.contains(trait1) && otherPet.traits.contains(trait2)) ||
           (myPet.traits.contains(trait2) && otherPet.traits.contains(trait1))) {
         score += points;
-        if (score >= 6) break;
+        if (score >= 8) break;
       }
     }
-    score = min(6, score);
+    score = min(8, score);
 
-    // B. 같은 특성 매칭 (5점)
+    // B. 같은 특성 매칭 (7%)
     final commonCount = myPet.traits.where((t) => otherPet.traits.contains(t)).length;
-    score += min(5, commonCount * 1.0);
+    score += min(7, commonCount * 1.4);
 
-    // C. 에너지 레벨 매칭 (4점)
+    // C. 에너지 레벨 매칭 (5%)
     final myEnergy = _getEnergyLevel(myPet.traits);
     final otherEnergy = _getEnergyLevel(otherPet.traits);
     if (myEnergy == otherEnergy) {
-      score += 4;
+      score += 5;
     } else if ((myEnergy - otherEnergy).abs() == 1) {
-      score += 2;
+      score += 2.5;
     }
 
     // D. 충돌 특성 감점
     final conflictPairs = [
-      (PetTrait.dominant, PetTrait.dominant, -2.0),
-      (PetTrait.territorial, PetTrait.territorial, -2.0),
-      (PetTrait.fearfulOfPets, PetTrait.dominant, -1.5),
+      (PetTrait.dominant, PetTrait.dominant, -3.0),
+      (PetTrait.territorial, PetTrait.territorial, -3.0),
+      (PetTrait.fearfulOfPets, PetTrait.dominant, -2.0),
     ];
 
     for (final (trait1, trait2, penalty) in conflictPairs) {
@@ -209,7 +204,7 @@ class MatchingService {
       }
     }
 
-    return max(0, min(15, score));
+    return max(0, min(20, score));
   }
 
   /// 에너지 레벨 (0: 낮음, 1: 보통, 2: 높음)
@@ -225,71 +220,60 @@ class MatchingService {
     return 1;
   }
 
-  // ===== 4. 거리 (14점) =====
+  // ===== 4. 거리 (15%) =====
   static double _calculateDistanceScore(double? distanceMeters) {
-    if (distanceMeters == null) return 7;
+    if (distanceMeters == null) return 7.5;
 
-    if (distanceMeters <= 300) return 14;
-    if (distanceMeters <= 500) return 12;
-    if (distanceMeters <= 1000) return 10;
-    if (distanceMeters <= 2000) return 8;
-    if (distanceMeters <= 3000) return 6;
-    if (distanceMeters <= 5000) return 4;
-    if (distanceMeters <= 10000) return 2;
+    if (distanceMeters <= 300) return 15;
+    if (distanceMeters <= 500) return 13;
+    if (distanceMeters <= 1000) return 11;
+    if (distanceMeters <= 2000) return 9;
+    if (distanceMeters <= 3000) return 7;
+    if (distanceMeters <= 5000) return 5;
+    if (distanceMeters <= 10000) return 3;
     return 1;
   }
 
-  // ===== 5. 보호자 인증 (12점) =====
-  static double _calculateVerificationScore(UserModel? user) {
+  // ===== 5. 보호자 신뢰도 (15% = 인증 9% + 꼬순내 6%) =====
+  static double _calculateTrustScore(UserModel? user) {
     if (user == null) return 0;
 
     double score = 0;
-    if (user.isIdentityVerified) score += 5;
-    if (user.isLocationVerified) score += 4;
-    if (user.isVerified) score += 3; // 동물등록 인증
-    return min(12, score);
+    
+    // A. 인증 점수 (9%)
+    if (user.isIdentityVerified) score += 4;  // 본인인증
+    if (user.isLocationVerified) score += 3;  // 위치인증
+    if (user.isVerified) score += 2;          // 동물등록 인증
+    
+    // B. 꼬순내 지수 (6%) - 실제 점수 직접 사용
+    final kkosunnaeScore = user.kkosunnaeScore ?? 50;
+    score += (kkosunnaeScore / 100) * 6;
+    
+    return min(15, score);
   }
 
-  // ===== 6. 꼬순내 지수 (10점) =====
-  static double _calculateActivityScore(UserModel? user) {
-    if (user == null) return 0;
-
-    // 활동 점수 계산
-    final activityPoints = 
-        (user.matchCount * 4) + 
-        (user.walkCount * 2) + 
-        (user.transactionCount * 3) + 
-        (user.groupCount * 1);
-
-    // 상위 퍼센트 기준 점수 (임시 기준값)
-    if (activityPoints >= 50) return 10;  // 상위 5%
-    if (activityPoints >= 30) return 8;   // 상위 15%
-    if (activityPoints >= 15) return 6;   // 상위 30%
-    if (activityPoints >= 5) return 4;    // 상위 50%
-    return 2;
-  }
-
-  // ===== 7. 품종 궁합 (6점) =====
+  // ===== 8. 품종 궁합 (5%) =====
   static double _calculateBreedScore(PetModel myPet, PetModel otherPet) {
     double score = 0;
 
-    // A. 품종 매칭 (4점)
+    // A. 품종 매칭 (3%)
     if (myPet.breed == null || otherPet.breed == null) {
-      score += 2;
+      score += 1.5;
     } else if (myPet.breed == otherPet.breed) {
-      score += 4;
+      score += 3;
     } else if (_isSameBreedGroup(myPet.breed!, otherPet.breed!)) {
       score += 2;
     } else {
       score += 1;
     }
 
-    // B. 털 타입 매칭 (2점) - 품종으로 추정
-    // 같은 품종이면 같은 털 타입
+    // B. 털 타입 매칭 (2%) - 품종으로 추정
     if (myPet.breed == otherPet.breed) {
       score += 2;
+    } else if (_isSameBreedGroup(myPet.breed ?? '', otherPet.breed ?? '')) {
+      score += 1.5;
     } else {
-      score += 1;
+      score += 0.5;
     }
 
     return score;
@@ -315,28 +299,46 @@ class MatchingService {
     return false;
   }
 
-  // ===== 8. 인기도 (6점) =====
+  // ===== 7. 인기도 (10%) - 부익부 방지 + 신규 부스트 =====
   static double _calculatePopularityScore(PetModel pet) {
+    double score = 0;
     final likes = pet.likeCount;
-    if (likes >= 100) return 6;
-    if (likes >= 50) return 5;
-    if (likes >= 20) return 4;
-    if (likes >= 10) return 3;
-    if (likes >= 5) return 2;
-    if (likes >= 1) return 1;
-    return 0;
+    
+    // A. 상대적 인기도 (7%) - 일평균 좋아요 기준
+    final daysActive = DateTime.now().difference(pet.createdAt).inDays + 1;
+    final likesPerDay = likes / daysActive;
+    
+    if (likesPerDay >= 3) score += 7;
+    else if (likesPerDay >= 2) score += 6;
+    else if (likesPerDay >= 1) score += 5;
+    else if (likesPerDay >= 0.5) score += 4;
+    else if (likesPerDay >= 0.2) score += 3;
+    else if (likes >= 1) score += 2;
+    else score += 1;
+    
+    // B. 신규 가입자 부스트 (3%) - 가입 30일 이내
+    if (daysActive <= 30) {
+      score += 3;
+    } else if (daysActive <= 60) {
+      score += 1.5;
+    }
+    
+    return min(10, score);
   }
 
-  // ===== 9. 앱 활성도 (4점) =====
+  // ===== 6. 앱 활성도 (10%) =====
   static double _calculateActiveScore(UserModel? user) {
     if (user == null) return 0;
 
     final minutesAgo = DateTime.now().difference(user.lastActiveAt).inMinutes;
 
-    if (minutesAgo <= 5) return 4;      // 현재 온라인
-    if (minutesAgo <= 60) return 3;     // 1시간 내
-    if (minutesAgo <= 1440) return 2;   // 24시간 내
-    if (minutesAgo <= 10080) return 1;  // 7일 내
+    if (minutesAgo <= 5) return 10;      // 현재 온라인
+    if (minutesAgo <= 30) return 8;      // 30분 내
+    if (minutesAgo <= 60) return 7;      // 1시간 내
+    if (minutesAgo <= 360) return 6;     // 6시간 내
+    if (minutesAgo <= 1440) return 4;    // 24시간 내
+    if (minutesAgo <= 4320) return 2;    // 3일 내
+    if (minutesAgo <= 10080) return 1;   // 7일 내
     return 0;
   }
 

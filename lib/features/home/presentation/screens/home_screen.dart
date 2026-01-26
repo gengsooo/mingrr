@@ -1,17 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/feature_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/pet_constants.dart';
+import '../../../../core/constants/location_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/profile_icon.dart';
+import '../../../../core/widgets/mingrr_image.dart';
+import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/navigation/appbar_actions.dart';
+import '../../../../core/widgets/home_reminder_banner.dart';
+import '../../../../core/widgets/badges/svg_icons.dart';
+import '../../../../core/widgets/badges/info_badge.dart';
+import '../../../../core/providers/home_reminder_provider.dart';
 import '../../../../models/pet_model.dart';
-import '../../../../models/community_model.dart';
+import '../../../../models/group_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
-import '../../../community/presentation/providers/community_provider.dart';
+import '../../../social/presentation/providers/group_provider.dart';
+import '../../../dating/presentation/providers/dating_provider.dart';
+import '../../../dating/presentation/screens/pet_detail_screen.dart';
+import '../../../../core/widgets/location_bubble_widget.dart';
+import '../../../../core/providers/location_verification_provider.dart';
+import '../../../../core/utils/responsive_utils.dart';
 
 /// ============================================================
 /// 홈 화면 (V3 리팩토링 - 반려동물 전용)
@@ -39,7 +52,7 @@ class HomeScreen extends ConsumerWidget {
     final petsAsync = ref.watch(userPetsProvider);
     final selectedIndex = ref.watch(selectedPetIndexProvider);
     final healthCategories = ref.watch(_homeHealthCategoriesProvider);
-    final otherPetsAsync = ref.watch(otherPetsProvider);
+    final recommendedPetsAsync = ref.watch(recommendedPetsProvider);
 
     // 로딩 중에도 기본 레이아웃 유지 (깜빡임 방지)
     final pets = petsAsync.valueOrNull ?? [];
@@ -60,6 +73,12 @@ class HomeScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(AppSizes.paddingM),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
+                  // 홈 리마인더 배너
+                  _buildReminderBanners(context, ref),
+                  
+                  // 위치 불일치 알림 (배너 아래)
+                  _buildLocationMismatchBanner(context, ref),
+                  
                   // 반려동물 선택기 (여러 마리 지원)
                   if (pets.isNotEmpty)
                     _buildPetSelector(context, ref, pets, selectedIndex),
@@ -81,8 +100,8 @@ class HomeScreen extends ConsumerWidget {
                     onActionTap: () => context.go('/dating'),
                   ),
                   const SizedBox(height: AppSizes.gapM),
-                  otherPetsAsync.when(
-                    data: (otherPets) => _buildAiRecommendSection(context, otherPets),
+                  recommendedPetsAsync.when(
+                    data: (recommendedPets) => _buildAiRecommendSection(context, recommendedPets),
                     loading: () => _buildLoadingAiSection(),
                     error: (_, __) => const SizedBox(),
                   ),
@@ -92,7 +111,7 @@ class HomeScreen extends ConsumerWidget {
                   MingrrSectionHeader(
                     title: '인기 소모임',
                     actionText: '더보기',
-                    onActionTap: () => context.push('/community'),
+                    onActionTap: () => context.push('/social'),
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   _buildPopularGroupsSection(context),
@@ -116,44 +135,27 @@ class HomeScreen extends ConsumerWidget {
     
     return SliverAppBar(
       floating: true,
-      elevation: 0,
+      elevation: AppSizes.elevationNone,
       backgroundColor: theme.scaffoldBackgroundColor,
       title: Row(
         children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              gradient: features.warmGradient,
-              shape: BoxShape.circle,
+          ClipOval(
+            child: SvgPicture.asset(
+              SvgAssets.mingrrLogo,
+              width: 36,
+              height: 36,
             ),
-            child: Icon(Icons.pets, size: 20, color: colorScheme.onSurface),
           ),
           const SizedBox(width: AppSizes.gapS),
           Text(
             AppStrings.appName,
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: colorScheme.onSurface,
-            ),
+            style: AppTextStyles.displaySmall(context),
           ),
         ],
       ),
       actions: [
-        // 알림 버튼
-        IconButton(
-          icon: const Icon(Icons.notifications_outlined),
-          onPressed: () => context.push('/notifications'),
-        ),
-        // 프로필 버튼
-        Padding(
-          padding: const EdgeInsets.only(right: AppSizes.paddingM),
-          child: GestureDetector(
-            onTap: () => context.push('/profile'),
-            child: ProfileButton(size: 36, backgroundColor: theme.scaffoldBackgroundColor),
-          ),
-        ),
+        AppBarActionButton.notification(),
+        AppBarActionButton.profile(backgroundColor: theme.scaffoldBackgroundColor),
       ],
     );
   }
@@ -168,65 +170,39 @@ class HomeScreen extends ConsumerWidget {
         children: [
           Icon(Icons.pets, size: 48, color: colorScheme.outlineVariant),
           const SizedBox(height: AppSizes.gapM),
-          const Text(
+          Text(
             '등록된 반려동물이 없습니다',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: AppTextStyles.headlineSmall(context),
           ),
           const SizedBox(height: AppSizes.gapS),
           Text(
             '프로필에서 반려동물을 추가해보세요',
-            style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+            style: AppTextStyles.bodySmall(context),
           ),
           const SizedBox(height: AppSizes.gapM),
-          ElevatedButton(
+          MingrrButton(
+            text: '반려동물 추가하기',
             onPressed: () => context.push('/profile'),
-            child: const Text('반려동물 추가하기'),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            textColor: Colors.white,
+            height: 44,
+            width: 180,
           ),
         ],
       ),
     );
   }
 
-  /// 로딩 중 반려동물 카드 (Skeleton UI)
+  /// 로딩 중 반려동물 카드
   Widget _buildLoadingPetsCard() {
-    return Builder(
-      builder: (context) {
-        final colorScheme = Theme.of(context).colorScheme;
-        
-        return MingrrCard(
-          margin: EdgeInsets.zero,
-          child: Column(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: colorScheme.outline,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(height: AppSizes.gapM),
-              Container(
-                width: 150,
-                height: 16,
-                decoration: BoxDecoration(
-                  color: colorScheme.outline,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              const SizedBox(height: AppSizes.gapS),
-              Container(
-                width: 200,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: colorScheme.outline,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
+    return MingrrCard(
+      margin: EdgeInsets.zero,
+      child: const Center(
+        child: Padding(
+          padding: EdgeInsets.all(AppSizes.paddingL),
+          child: MingrrLoadingIndicator.medium(type: MingrrLoadingType.primary),
+        ),
+      ),
     );
   }
 
@@ -241,10 +217,7 @@ class HomeScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(AppSizes.paddingL),
             child: Text(
               '아직 등록된 반려동물이 없습니다',
-              style: TextStyle(
-                fontSize: 14,
-                color: colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyles.bodyLarge(context).withColor(colorScheme.onSurfaceVariant),
             ),
           ),
         );
@@ -266,14 +239,14 @@ class HomeScreen extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               '내 반려동물',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: AppTextStyles.headlineSmall(context),
             ),
             Builder(
               builder: (context) => TextButton(
                 onPressed: () => context.push('/profile'),
-                child: Text('관리', style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                child: Text('관리', style: AppTextStyles.bodySmall(context)),
               ),
             ),
           ],
@@ -303,41 +276,24 @@ class HomeScreen extends ConsumerWidget {
                       Builder(
                         builder: (ctx) {
                           final cs = Theme.of(ctx).colorScheme;
-                          return Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              color: cs.primaryContainer,
-                              shape: BoxShape.circle,
-                              border: isSelected 
-                                  ? Border.all(color: cs.primary, width: 3)
-                                  : null,
-                              image: _getPetProfileImageOnly(pet),
-                            ),
-                            child: _getPetProfileImageOnly(pet) == null
-                                ? Icon(
-                                    Icons.pets,
-                                    size: 28,
-                                    color: cs.primary,
-                                  )
-                                : null,
+                          return MingrrPetAvatar(
+                            imageUrl: pet.profileImageUrl,
+                            size: 60,
+                            borderColor: isSelected ? cs.primary : null,
+                            borderWidth: 3,
                           );
                         },
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: AppSizes.gapXS),
                       // 이름만 표시
                       Builder(
                         builder: (ctx) {
                           final cs = Theme.of(ctx).colorScheme;
                           return Text(
                             pet.name,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                              color: isSelected 
-                                  ? cs.primary 
-                                  : cs.onSurface,
-                            ),
+                            style: AppTextStyles.titleSmall(ctx)
+                                .withWeight(isSelected ? FontWeight.w600 : FontWeight.w400)
+                                .withColor(isSelected ? cs.primary : cs.onSurface),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           );
@@ -370,20 +326,20 @@ class HomeScreen extends ConsumerWidget {
           children: [
             Text(
               '${selectedPet.name}의 건강 기록',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: AppTextStyles.headlineSmall(context),
             ),
             Builder(
               builder: (ctx) => TextButton(
                 onPressed: () => _showHealthCategorySettings(ctx, ref),
-                child: Text('설정', style: TextStyle(fontSize: 13, color: Theme.of(ctx).colorScheme.onSurfaceVariant)),
+                child: Text('설정', style: AppTextStyles.bodySmall(ctx)),
               ),
             ),
           ],
         ),
         const SizedBox(height: AppSizes.gapM),
         
-        // 산책 시작하기 카드
-        _buildWalkStartCard(context),
+        // 산책 시작하기 카드 (위치 불일치 배너 포함)
+        _buildWalkStartCardWithLocationBanner(context, ref),
         const SizedBox(height: AppSizes.gapM),
         
         // 건강 기록 카드
@@ -405,7 +361,7 @@ class HomeScreen extends ConsumerWidget {
                 }).toList(),
               ),
               const SizedBox(height: AppSizes.gapM),
-              const Divider(),
+              const MingrrDivider(),
               const SizedBox(height: AppSizes.gapS),
               
               // 건강수첩으로 이동 버튼
@@ -419,13 +375,9 @@ class HomeScreen extends ConsumerWidget {
                       const SizedBox(width: AppSizes.gapS),
                       Text(
                         '건강수첩 열기',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: cs.onSurfaceVariant,
-                        ),
+                        style: AppTextStyles.titleMedium(ctx).withColor(cs.onSurfaceVariant),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSizes.gapXS),
                       Icon(Icons.chevron_right, size: 18, color: cs.onSurfaceVariant),
                     ],
                   );
@@ -440,18 +392,17 @@ class HomeScreen extends ConsumerWidget {
 
   /// 건강 카테고리 설정 바텀시트
   void _showHealthCategorySettings(BuildContext context, WidgetRef ref) {
-    final currentCategories = ref.read(_homeHealthCategoriesProvider);
     final availableCategories = HealthCategory.homeDisplayable;
     
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) {
-        final colorScheme = Theme.of(context).colorScheme;
+      builder: (sheetContext) {
+        final colorScheme = Theme.of(sheetContext).colorScheme;
         
         return Container(
-          height: MediaQuery.of(context).size.height * 0.6,
+          height: ResponsiveUtils.heightPercent(sheetContext, 0.6),
           decoration: BoxDecoration(
             color: colorScheme.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
@@ -459,159 +410,181 @@ class HomeScreen extends ConsumerWidget {
           child: Column(
             children: [
               const BottomSheetHandle(),
-            // 헤더
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: const Text(
-                '메인화면 건강기록 설정',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                textAlign: TextAlign.center,
+              // 헤더
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: 12),
+                child: Text(
+                  '메인화면 건강기록 설정',
+                  style: AppTextStyles.headlineSmall(sheetContext),
+                  textAlign: TextAlign.center,
+                ),
               ),
-            ),
-            // 안내 문구
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                '메인화면에 표시할 건강기록을 선택하세요 (최소 1개, 최대 5개)',
-                style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+              // 안내 문구
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
+                child: Text(
+                  '메인화면에 표시할 건강기록을 선택하세요 (최소 1개, 최대 5개)',
+                  style: AppTextStyles.bodySmall(sheetContext),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            // 카테고리 목록
-            Expanded(
-              child: ListView.builder(
-                itemCount: availableCategories.length,
-                itemBuilder: (context, index) {
-                  final category = availableCategories[index];
-                  final isSelected = currentCategories.contains(category);
-                  
-                  return CheckboxListTile(
-                    value: isSelected,
-                    onChanged: (value) {
-                      final updated = List<HealthCategory>.from(currentCategories);
-                      if (value == true) {
-                        if (updated.length < 5) {
-                          updated.add(category);
-                        } else {
-                          MingrrSnackBar.warning(context, '최대 5개까지 선택 가능합니다');
-                          return;
-                        }
-                      } else {
-                        if (updated.length > 1) {
-                          updated.remove(category);
-                        } else {
-                          MingrrSnackBar.warning(context, '최소 1개는 선택해야 합니다');
-                          return;
-                        }
-                      }
-                      ref.read(_homeHealthCategoriesProvider.notifier).state = updated;
-                    },
-                    title: Row(
-                      children: [
-                        Icon(category.icon, size: 20, color: context.features.health),
-                        const SizedBox(width: 12),
-                        Text(category.label),
-                      ],
-                    ),
-                    subtitle: Text(
-                      category.description,
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    activeColor: colorScheme.primary,
-                  );
-                },
+              const SizedBox(height: AppSizes.gapL),
+              // 카테고리 목록 (Consumer로 상태 변경 감지)
+              Expanded(
+                child: Consumer(
+                  builder: (ctx, watchRef, _) {
+                    final currentCategories = watchRef.watch(_homeHealthCategoriesProvider);
+                    
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS),
+                      itemCount: availableCategories.length,
+                      itemBuilder: (context, index) {
+                        final category = availableCategories[index];
+                        final isSelected = currentCategories.contains(category);
+                        
+                        return CheckboxListTile(
+                          value: isSelected,
+                          onChanged: (value) {
+                            final updated = List<HealthCategory>.from(currentCategories);
+                            if (value == true) {
+                              if (updated.length < 5) {
+                                updated.add(category);
+                              } else {
+                                MingrrSnackBar.warning(context, '최대 5개까지 선택 가능합니다');
+                                return;
+                              }
+                            } else {
+                              if (updated.length > 1) {
+                                updated.remove(category);
+                              } else {
+                                MingrrSnackBar.warning(context, '최소 1개는 선택해야 합니다');
+                                return;
+                              }
+                            }
+                            ref.read(_homeHealthCategoriesProvider.notifier).state = updated;
+                          },
+                          title: Row(
+                            children: [
+                              Icon(category.icon, size: 20, color: sheetContext.features.health),
+                              const SizedBox(width: AppSizes.gapM),
+                              Text(category.label),
+                            ],
+                          ),
+                          subtitle: Text(
+                            category.description,
+                            style: AppTextStyles.caption(ctx),
+                          ),
+                          activeColor: sheetContext.features.health,
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
         );
       },
     );
   }
 
   /// 산책 시작하기 카드
-  Widget _buildWalkStartCard(BuildContext context) {
+  Widget _buildWalkStartCardWithLocationBanner(BuildContext context, WidgetRef ref) {
     final features = Theme.of(context).extension<FeatureColors>()!;
+    final accentColor = features.health; // 건강수첩 색상으로 통일
     
+    // 산책 카드
     return GestureDetector(
-      onTap: () => context.push('/walk'),
-      child: Container(
-        padding: const EdgeInsets.all(AppSizes.paddingM),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              features.walk,
-              features.walk.withOpacity(0.8),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(AppSizes.radiusL),
-          boxShadow: [
-            BoxShadow(
-              color: features.walk.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            // 아이콘
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Center(
-                child: Icon(Icons.pets, size: 32, color: Colors.white),
-              ),
-            ),
-            const SizedBox(width: AppSizes.gapM),
-            // 텍스트
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '산책하러 가기',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    '반려동물과 함께 건강한 산책을!',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.white70,
-                    ),
-                  ),
+          onTap: () => context.push('/walk'),
+          child: Container(
+            padding: const EdgeInsets.all(AppSizes.paddingM),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  accentColor,
+                  accentColor.withValues(alpha: AppOpacity.o80),
                 ],
               ),
+              borderRadius: BorderRadius.circular(AppSizes.radiusL),
+              boxShadow: AppShadows.shadowM(Theme.of(context).brightness == Brightness.dark),
             ),
-            // 화살표
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.arrow_forward_rounded,
-                color: Colors.white,
-                size: 22,
-              ),
+            child: Row(
+              children: [
+                // 아이콘
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: AppOpacity.o20),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.directions_walk, size: 32, color: Colors.white),
+                  ),
+                ),
+                const SizedBox(width: AppSizes.gapM),
+                // 텍스트
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '산책하러 가기',
+                        style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w700).withColor(Colors.white),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '반려동물과 함께 건강한 산책을!',
+                        style: AppTextStyles.bodyMedium(context).withColor(Colors.white70),
+                      ),
+                    ],
+                  ),
+                ),
+                // 화살표
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: AppOpacity.o20),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+  }
+  
+  /// 홈 화면에서 위치 업데이트 처리 - 공통 함수 사용
+  Future<void> _handleLocationUpdateFromHome(BuildContext context, WidgetRef ref) async {
+    final userAsync = ref.read(currentUserStreamProvider);
+    final user = userAsync.valueOrNull;
+    
+    if (user == null) {
+      MingrrSnackBar.error(context, '로그인이 필요합니다');
+      return;
+    }
+    
+    await LocationVerificationService.handleLocationUpdateWithUI(
+      context: context,
+      userId: user.id,
     );
+  }
+  
+  /// 홈 화면에서 위치 알림 무시 처리
+  Future<void> _handleLocationDismissFromHome(WidgetRef ref) async {
+    final userAsync = ref.read(currentUserStreamProvider);
+    final user = userAsync.valueOrNull;
+    
+    if (user == null) return;
+    
+    await LocationVerificationService.dismissReminder(user.id);
   }
 
   /// 건강 아이템 위젯
@@ -627,10 +600,10 @@ class HomeScreen extends ConsumerWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            shape: BoxShape.circle,
+            color: color.withValues(alpha: AppOpacity.o15),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
-          child: Icon(icon, size: 20, color: color),
+          child: Icon(icon, size: 22, color: color),
         ),
         const SizedBox(height: AppSizes.gapS),
         Builder(
@@ -638,11 +611,7 @@ class HomeScreen extends ConsumerWidget {
             final cs = Theme.of(ctx).colorScheme;
             return Text(
               value,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: cs.onSurface,
-              ),
+              style: AppTextStyles.titleLarge(ctx).withWeight(FontWeight.w700),
             );
           },
         ),
@@ -651,7 +620,7 @@ class HomeScreen extends ConsumerWidget {
             final cs = Theme.of(ctx).colorScheme;
             return Text(
               label,
-              style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+              style: AppTextStyles.captionSmall(ctx),
             );
           },
         ),
@@ -675,27 +644,15 @@ class HomeScreen extends ConsumerWidget {
     }
   }
 
-  /// 카테고리별 색상
+  /// 카테고리별 색상 (건강수첩과 동일하게 health 색상 통일)
   Color _getCategoryColor(BuildContext context, HealthCategory category) {
-    final features = context.features;
-    switch (category) {
-      case HealthCategory.weight:
-        return features.health;
-      case HealthCategory.walk:
-        return features.walk;
-      case HealthCategory.grooming:
-        return features.health;
-      case HealthCategory.medication:
-        return features.community;
-      default:
-        return Theme.of(context).colorScheme.onSurfaceVariant;
-    }
+    return context.features.health;
   }
 
-  /// 추천친구 섹션 (사각형 카드)
-  Widget _buildAiRecommendSection(BuildContext context, List<PetModel> otherPets) {
+  /// 추천친구 섹션 (사각형 카드) - 실제 궁합 점수 사용
+  Widget _buildAiRecommendSection(BuildContext context, List<RecommendedPet> recommendedPets) {
     // 최대 4마리만 표시
-    final displayPets = otherPets.take(4).toList();
+    final displayPets = recommendedPets.take(4).toList();
     
     if (displayPets.isEmpty) {
       return Builder(
@@ -714,11 +671,21 @@ class HomeScreen extends ConsumerWidget {
         scrollDirection: Axis.horizontal,
         itemCount: displayPets.length,
         itemBuilder: (context, index) {
-          final pet = displayPets[index];
-          final score = 95 - (index * 5); // 임시 궁합 점수
+          final recommended = displayPets[index];
+          final pet = recommended.pet;
+          final score = recommended.matchScore; // 실제 궁합 점수 사용
           
           return GestureDetector(
-            onTap: () => context.push('/dating/detail/${pet.id}'),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PetDetailScreen(
+                  petId: pet.id,
+                  cachedDistanceMeters: recommended.distanceMeters,
+                  cachedMatchScore: recommended.matchScore,
+                ),
+              ),
+            ),
             child: Container(
               width: 140,
               margin: const EdgeInsets.only(right: AppSizes.gapM),
@@ -739,33 +706,24 @@ class HomeScreen extends ConsumerWidget {
                           children: [
                             Text(
                               pet.name,
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                              style: AppTextStyles.titleMedium(context),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                             Builder(
                               builder: (ctx) => Text(
                                 '${pet.breed ?? '품종 미상'} · ${_calculateAge(pet.birthDate)}',
-                                style: TextStyle(fontSize: 10, color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                                style: AppTextStyles.caption(ctx),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: _getScoreColor(context, score).withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                '궁합 $score%',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w600,
-                                  color: _getScoreColor(context, score),
-                                ),
-                              ),
+                            const SizedBox(height: AppSizes.gapXS),
+                            MatchScoreBadge(
+                              score: score,
+                              style: MatchBadgeStyle.transparent,
+                              size: InfoBadgeSize.small,
+                              showIcon: false,
                             ),
                           ],
                         ),
@@ -783,32 +741,17 @@ class HomeScreen extends ConsumerWidget {
 
   /// 반려동물 사각형 이미지 (추가사진 > 기본 아이콘)
   Widget _buildPetSquareImage(PetModel pet, double height) {
-    final imageUrl = pet.displayImageUrl;
-    
-    return Builder(
-      builder: (ctx) {
-        final features = Theme.of(ctx).extension<FeatureColors>()!;
-        return ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusM)),
-          child: Container(
-            height: height,
-            color: features.datingContainer,
-            child: imageUrl != null
-                ? Image.network(
-                    imageUrl,
-                    width: double.infinity,
-                    height: height,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildDefaultPetIcon(height),
-                  )
-                : _buildDefaultPetIcon(height),
-          ),
-        );
-      },
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusM)),
+      child: MingrrBackgroundImage(
+        imageUrl: pet.displayImageUrl,
+        height: height,
+        placeholder: _buildDefaultPetIcon(height),
+      ),
     );
   }
 
-  /// 기본 강아지 아이콘 (사각형 배경) - 공통 위젯 사용
+  /// 기본 반려동물 아이콘 (사각형 배경) - 공통 위젯 사용
   Widget _buildDefaultPetIcon(double height) {
     return DefaultPetImage(
       height: height,
@@ -818,48 +761,10 @@ class HomeScreen extends ConsumerWidget {
 
   /// 반려동물 프로필 이미지 (원형, 내 반려동물 선택기용)
   Widget _buildPetProfileImage(PetModel pet, double size) {
-    final imageUrl = pet.profileImageUrl ?? pet.displayImageUrl;
-    
-    return Builder(
-      builder: (ctx) {
-        final cs = Theme.of(ctx).colorScheme;
-        return Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: cs.primary.withOpacity(0.15),
-            shape: BoxShape.circle,
-          ),
-          child: imageUrl != null
-              ? ClipOval(
-                  child: Image.network(
-                    imageUrl,
-                    width: size,
-                    height: size,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Icon(
-                      Icons.pets,
-                      size: size * 0.5,
-                      color: cs.primary,
-                    ),
-                  ),
-                )
-              : Icon(
-                  Icons.pets,
-                  size: size * 0.5,
-                  color: cs.primary,
-                ),
-        );
-      },
+    return MingrrPetAvatar(
+      imageUrl: pet.profileImageUrl ?? pet.displayImageUrl,
+      size: size,
     );
-  }
-
-  Color _getScoreColor(BuildContext context, int score) {
-    final features = context.features;
-    if (score >= 90) return features.success;
-    if (score >= 75) return features.dating;
-    if (score >= 60) return features.warning;
-    return Theme.of(context).colorScheme.outlineVariant;
   }
 
   String _calculateAge(DateTime? birthDate) {
@@ -905,11 +810,11 @@ class HomeScreen extends ConsumerWidget {
           loading: () => const Center(
             child: Padding(
               padding: EdgeInsets.all(AppSizes.paddingL),
-              child: CircularProgressIndicator(),
+              child: MingrrLoadingIndicator(),
             ),
           ),
-          error: (_, __) => const Center(
-            child: Text('데이터를 불러올 수 없습니다'),
+          error: (_, __) => MingrrErrorState(
+            onRetry: () => ref.invalidate(popularGroupsProvider),
           ),
         );
       },
@@ -923,25 +828,23 @@ class HomeScreen extends ConsumerWidget {
     
     return MingrrCard(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
-      onTap: () => context.push('/community/group/${group.id}'),
+      onTap: () => context.push('/social/group/${group.id}'),
       child: Row(
         children: [
-          Container(
+          MingrrThumbnail(
+            imageUrl: group.imageUrl,
             width: 50,
             height: 50,
-            decoration: BoxDecoration(
-              color: features.community.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(AppSizes.radiusM),
-              image: group.imageUrl != null
-                  ? DecorationImage(
-                      image: NetworkImage(group.imageUrl!),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
+            borderRadius: AppSizes.radiusM,
+            errorWidget: Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: features.social.withValues(alpha: AppOpacity.o15),
+                borderRadius: BorderRadius.circular(AppSizes.radiusM),
+              ),
+              child: Icon(Icons.groups, color: features.social, size: 26),
             ),
-            child: group.imageUrl == null
-                ? Icon(Icons.groups, color: features.community, size: 26)
-                : null,
           ),
           const SizedBox(width: AppSizes.gapM),
           Expanded(
@@ -951,41 +854,37 @@ class HomeScreen extends ConsumerWidget {
                 Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                       decoration: BoxDecoration(
-                        color: features.community.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
+                        color: features.social.withValues(alpha: AppOpacity.o10),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                       ),
                       child: Text(
                         group.category,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: features.community,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: AppTextStyles.labelSmall(context).withWeight(FontWeight.w600).withColor(features.social),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSizes.gapXS),
                 Text(
                   group.name,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  style: AppTextStyles.titleMedium(context),
                 ),
                 Row(
                   children: [
-                    Icon(Icons.location_on, size: 12, color: colorScheme.outlineVariant),
+                    Icon(LocationConstants.distanceIcon, size: 12, color: colorScheme.outlineVariant),
                     const SizedBox(width: 2),
                     Text(
-                      group.address ?? '위치 미상',
-                      style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                      group.address ?? LocationConstants.noLocationText,
+                      style: AppTextStyles.captionSmall(context),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSizes.gapS),
                     Icon(Icons.people, size: 12, color: colorScheme.outlineVariant),
                     const SizedBox(width: 2),
                     Text(
                       '${group.memberCount}명',
-                      style: TextStyle(fontSize: 11, color: colorScheme.onSurfaceVariant),
+                      style: AppTextStyles.captionSmall(context),
                     ),
                   ],
                 ),
@@ -998,19 +897,69 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  /// 반려동물 프로필 이미지만 가져오기 (대표사진 제외)
-  DecorationImage? _getPetProfileImageOnly(PetModel pet) {
-    // 프로필 이미지만 사용 (대표사진 제외)
-    if (pet.profileImageUrl != null && pet.profileImageUrl!.isNotEmpty) {
-      // 기본 아바타인 경우 null 반환
-      if (pet.profileImageUrl!.startsWith('default_avatar:')) {
-        return null;
-      }
-      return DecorationImage(
-        image: NetworkImage(pet.profileImageUrl!),
-        fit: BoxFit.cover,
-      );
+
+  /// 위치 불일치 알림 배너 (홈 배너 아래)
+  Widget _buildLocationMismatchBanner(BuildContext context, WidgetRef ref) {
+    final mismatchAsync = ref.watch(locationMismatchProvider);
+    final shouldShowBubble = mismatchAsync.valueOrNull?.shouldShowBubble ?? false;
+    final userAsync = ref.watch(currentUserStreamProvider);
+    final user = userAsync.valueOrNull;
+    
+    if (!shouldShowBubble) return const SizedBox.shrink();
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.gapM),
+      child: LocationMismatchBanner(
+        savedAddress: user?.homeAddress,
+        onUpdateLocation: () => _handleLocationUpdateFromHome(context, ref),
+        onDismiss: () => _handleLocationDismissFromHome(ref),
+      ),
+    );
+  }
+
+  /// 홈 리마인더 배너 빌더 (스와이프 캐러셀)
+  Widget _buildReminderBanners(BuildContext context, WidgetRef ref) {
+    final banners = ref.watch(homeReminderBannersProvider);
+    
+    if (banners.isEmpty) return const SizedBox.shrink();
+    
+    // onTap 핸들러를 포함한 배너 데이터 생성
+    final bannersWithHandlers = banners.map((banner) => HomeReminderBannerData(
+      type: banner.type,
+      count: banner.count,
+      onTap: () => _handleBannerTap(context, banner.type),
+    )).toList();
+    
+    return HomeReminderBannerCarousel(
+      banners: bannersWithHandlers,
+      maxVisible: 7,
+    );
+  }
+
+  /// 배너 탭 핸들러
+  void _handleBannerTap(BuildContext context, ReminderBannerType type) {
+    switch (type) {
+      case ReminderBannerType.rating:
+        context.push('/profile/pending-ratings');
+        break;
+      case ReminderBannerType.groupSchedule:
+        context.push('/social');
+        break;
+      case ReminderBannerType.petLike:
+        context.push('/profile/received-likes');
+        break;
+      case ReminderBannerType.receivedRating:
+        context.push('/notifications');
+        break;
+      case ReminderBannerType.verification:
+        context.push('/profile');
+        break;
+      case ReminderBannerType.groupJoinRequest:
+        context.push('/social');
+        break;
+      case ReminderBannerType.healthRecord:
+        context.push('/health');
+        break;
     }
-    return null;
   }
 }

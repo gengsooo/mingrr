@@ -18,6 +18,7 @@ dependencies:
   cloud_firestore: ^5.5.1
   firebase_storage: ^12.3.7
   firebase_messaging: ^15.1.6
+  firebase_remote_config: ^5.1.5
 
   # ===== 소셜 로그인 =====
   google_sign_in: ^6.2.2
@@ -30,7 +31,7 @@ dependencies:
   # ===== 위치 기반 =====
   geolocator: ^13.0.2
   kakao_map_sdk: ^1.2.3  # 네이티브 카카오맵 SDK (폴리라인/마커 지원)
-  # geoflutterfire_plus: ^0.0.28  # 위치 기반 쿼리
+  geoflutterfire_plus: ^0.0.28  # 위치 기반 GeoHash 쿼리
 
   # ===== UI/UX =====
   cupertino_icons: ^1.0.8
@@ -40,11 +41,15 @@ dependencies:
   cached_network_image: ^3.4.1
   image_picker: ^1.1.2
   image_cropper: ^8.0.2
+  gal: ^2.3.0
   flutter_animate: ^4.5.2
   shimmer: ^3.0.0
   flutter_staggered_grid_view: ^0.7.0
   carousel_slider: ^5.0.0
   fl_chart: ^0.69.2
+
+  # ===== 네트워크 =====
+  connectivity_plus: ^6.1.1
 
   # ===== 유틸리티 =====
   intl: ^0.20.1
@@ -59,6 +64,8 @@ dependencies:
   url_launcher: ^6.2.5
   package_info_plus: ^8.0.0
   flutter_cache_manager: ^3.3.2
+  video_player: ^2.10.1
+  video_thumbnail: ^0.5.6
 
 dev_dependencies:
   flutter_test:

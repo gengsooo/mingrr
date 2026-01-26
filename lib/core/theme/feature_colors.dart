@@ -24,10 +24,10 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
     required this.market,
     required this.marketContainer,
     required this.onMarket,
-    // 커뮤니티
-    required this.community,
-    required this.communityContainer,
-    required this.onCommunity,
+    // 소셜 (소모임 + 커뮤니티 게시판)
+    required this.social,
+    required this.socialContainer,
+    required this.onSocial,
     // 건강
     required this.health,
     required this.healthContainer,
@@ -66,10 +66,10 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
   final Color marketContainer;
   final Color onMarket;
 
-  // ===== 커뮤니티 (틸) =====
-  final Color community;
-  final Color communityContainer;
-  final Color onCommunity;
+  // ===== 소셜 (틸) - 소모임/커뮤니티 게시판 공통 =====
+  final Color social;
+  final Color socialContainer;
+  final Color onSocial;
 
   // ===== 건강 (블루) =====
   final Color health;
@@ -113,10 +113,10 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
     market: Color(0xFF5C6BC0),
     marketContainer: Color(0xFFE8EAF6),
     onMarket: Colors.white,
-    // 커뮤니티 - 틸 계열
-    community: Color(0xFF4DB6AC),
-    communityContainer: Color(0xFFE0F2F1),
-    onCommunity: Colors.white,
+    // 소셜 - 틸 계열
+    social: Color(0xFF4DB6AC),
+    socialContainer: Color(0xFFE0F2F1),
+    onSocial: Colors.white,
     // 건강 - 블루 계열
     health: Color(0xFF64B5F6),
     healthContainer: Color(0xFFE3F2FD),
@@ -140,9 +140,9 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
     warningContainer: Color(0xFFFFF3E0),
     info: Color(0xFF64B5F6),
     infoContainer: Color(0xFFE3F2FD),
-    // 그라데이션
+    // 그라데이션 (프로필 상단 배경 - 빅뱅 금색과 구분되도록 연한 색상)
     warmGradient: LinearGradient(
-      colors: [Color(0xFFFFF3E0), Color(0xFFFFECB3)],
+      colors: [Color(0xFFFFFBF5), Color(0xFFFFF8E8)],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ),
@@ -163,10 +163,10 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
     market: Color(0xFF7986CB),
     marketContainer: Color(0xFF1E1E1E),  // 다크 서피스와 동일
     onMarket: Colors.white,
-    // 커뮤니티 - 틸 계열 (다크모드)
-    community: Color(0xFF4DB6AC),
-    communityContainer: Color(0xFF1E1E1E),  // 다크 서피스와 동일
-    onCommunity: Colors.white,
+    // 소셜 - 틸 계열 (다크모드)
+    social: Color(0xFF4DB6AC),
+    socialContainer: Color(0xFF1E1E1E),  // 다크 서피스와 동일
+    onSocial: Colors.white,
     // 건강 - 블루 계열 (다크모드)
     health: Color(0xFF64B5F6),
     healthContainer: Color(0xFF1E1E1E),  // 다크 서피스와 동일
@@ -211,9 +211,9 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
     Color? market,
     Color? marketContainer,
     Color? onMarket,
-    Color? community,
-    Color? communityContainer,
-    Color? onCommunity,
+    Color? social,
+    Color? socialContainer,
+    Color? onSocial,
     Color? health,
     Color? healthContainer,
     Color? onHealth,
@@ -242,9 +242,9 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
       market: market ?? this.market,
       marketContainer: marketContainer ?? this.marketContainer,
       onMarket: onMarket ?? this.onMarket,
-      community: community ?? this.community,
-      communityContainer: communityContainer ?? this.communityContainer,
-      onCommunity: onCommunity ?? this.onCommunity,
+      social: social ?? this.social,
+      socialContainer: socialContainer ?? this.socialContainer,
+      onSocial: onSocial ?? this.onSocial,
       health: health ?? this.health,
       healthContainer: healthContainer ?? this.healthContainer,
       onHealth: onHealth ?? this.onHealth,
@@ -278,9 +278,9 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
       market: Color.lerp(market, other.market, t)!,
       marketContainer: Color.lerp(marketContainer, other.marketContainer, t)!,
       onMarket: Color.lerp(onMarket, other.onMarket, t)!,
-      community: Color.lerp(community, other.community, t)!,
-      communityContainer: Color.lerp(communityContainer, other.communityContainer, t)!,
-      onCommunity: Color.lerp(onCommunity, other.onCommunity, t)!,
+      social: Color.lerp(social, other.social, t)!,
+      socialContainer: Color.lerp(socialContainer, other.socialContainer, t)!,
+      onSocial: Color.lerp(onSocial, other.onSocial, t)!,
       health: Color.lerp(health, other.health, t)!,
       healthContainer: Color.lerp(healthContainer, other.healthContainer, t)!,
       onHealth: Color.lerp(onHealth, other.onHealth, t)!,

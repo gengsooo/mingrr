@@ -1,0 +1,21 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 밍그르르 앱 아이콘 (mingrr_logo.svg와 동일한 디자인, 크기만 확대) -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFE082"/>
+      <stop offset="50%" style="stop-color:#FFD54F"/>
+      <stop offset="100%" style="stop-color:#FFC107"/>
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="245" fill="url(#bgGradient)"/>
+  
+  <!-- 발바닥 아이콘 -->
+  <!-- 메인 패드 (하트 모양) -->
+  <path d="M256 405 Q171 362 171 298 Q171 256 213 256 Q256 256 256 298 Q256 256 299 256 Q341 256 341 298 Q341 362 256 405 Z" fill="white"/>
+  
+  <!-- 발가락 패드들 -->
+  <ellipse cx="139" cy="213" rx="43" ry="48" fill="white"/>
+  <ellipse cx="213" cy="149" rx="43" ry="48" fill="white"/>
+  <ellipse cx="299" cy="149" rx="43" ry="48" fill="white"/>
+  <ellipse cx="373" cy="213" rx="43" ry="48" fill="white"/>
+</svg>

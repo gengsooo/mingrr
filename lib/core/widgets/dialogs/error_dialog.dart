@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_sizes.dart';
-import '../svg_icons.dart';
+import '../../theme/app_text_styles.dart';
+import '../badges/svg_icons.dart';
+import '../common_widgets.dart';
 
 /// ============================================================
 /// ErrorDialog - 오류 다이얼로그
@@ -206,11 +208,7 @@ class ErrorDialog extends StatelessWidget {
             Text(
               title ?? type.title,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
+              style: AppTextStyles.headlineMedium(context).withColor(color),
             ),
             const SizedBox(height: AppSizes.gapS),
             
@@ -218,11 +216,7 @@ class ErrorDialog extends StatelessWidget {
             Text(
               message ?? type.message,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                height: 1.5,
-              ),
+              style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant).withHeight(1.5),
             ),
             const SizedBox(height: AppSizes.gapXL),
             
@@ -243,18 +237,15 @@ class ErrorDialog extends StatelessWidget {
       child: OutlinedButton(
         onPressed: () => Navigator.pop(context, ErrorResult.cancel),
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
           side: BorderSide(color: Theme.of(context).colorScheme.outline),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
         ),
         child: Text(
           cancelText ?? '닫기',
-          style: TextStyle(
-            fontSize: 15,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          style: AppTextStyles.titleLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
         ),
       ),
     );
@@ -267,38 +258,27 @@ class ErrorDialog extends StatelessWidget {
           child: OutlinedButton(
             onPressed: () => Navigator.pop(context, ErrorResult.cancel),
             style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
               side: BorderSide(color: Theme.of(context).colorScheme.outline),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
             ),
             child: Text(
               cancelText ?? '취소',
-              style: TextStyle(
-                fontSize: 15,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyles.titleLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ),
         ),
         const SizedBox(width: AppSizes.gapM),
         Expanded(
-          child: ElevatedButton.icon(
+          child: MingrrButton(
+            text: retryText ?? '재시도',
+            icon: Icons.refresh,
             onPressed: () => Navigator.pop(context, ErrorResult.retry),
-            icon: const Icon(Icons.refresh, size: 18),
-            label: Text(
-              retryText ?? '재시도',
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: color,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
+            backgroundColor: color,
+            textColor: Colors.white,
+            height: 48,
           ),
         ),
       ],

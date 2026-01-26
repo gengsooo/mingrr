@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 /// ============================================================
 /// MINGRR 반려동물 전용 앱 상수
 /// 
-/// 이 앱은 반려동물(강아지) 전용 서비스입니다.
+/// 이 앱은 반려동물 전용 서비스입니다.
 /// - 반려동물 품종, 크기, 성별
 /// - 특성 (50개)
 /// - 건강수첩 카테고리
@@ -279,25 +279,24 @@ enum BadgeType {
 /// ============================================================
 /// 소모임 카테고리
 /// ============================================================
-enum CommunityCategory {
-  walk('산책 모임', Icons.directions_walk, '함께 산책해요'),
-  play('놀이 모임', Icons.sports_tennis, '함께 놀아요'),
-  share('나눔 모임', Icons.card_giftcard, '물품을 나눠요'),
-  coffee('커피 모임', Icons.coffee, '보호자끼리 모여요'),
+enum GroupCategory {
+  walk('산책 모임', Icons.directions_walk_outlined, '함께 산책해요'),
+  play('놀이 모임', Icons.sports_tennis_outlined, '함께 놀아요'),
+  share('나눔 모임', Icons.card_giftcard_outlined, '물품을 나눠요'),
+  coffee('커피 모임', Icons.coffee_outlined, '보호자끼리 모여요'),
   training('훈련 모임', Icons.school_outlined, '함께 훈련해요'),
-  health('건강 모임', Icons.fitness_center, '건강 정보를 나눠요'),
-  breeding('교배 모임', Icons.favorite_outline, '교배 정보를 나눠요'),
-  other('기타', Icons.more_horiz, '기타 모임이에요');
+  health('건강 모임', Icons.fitness_center_outlined, '건강 정보를 나눠요'),
+  other('기타', Icons.more_horiz_outlined, '기타 모임이에요');
 
   final String label;
   final IconData icon;
   final String description;
 
-  const CommunityCategory(this.label, this.icon, this.description);
+  const GroupCategory(this.label, this.icon, this.description);
 }
 
 /// 소모임 제한 타입
-enum CommunityRestriction {
+enum GroupRestriction {
   none('제한 없음'),
   petTypeOnly('종류 제한'),
   weightOnly('체중 제한'),
@@ -305,7 +304,7 @@ enum CommunityRestriction {
 
   final String label;
 
-  const CommunityRestriction(this.label);
+  const GroupRestriction(this.label);
 }
 
 /// ============================================================
@@ -316,8 +315,8 @@ enum CommunityRestriction {
 /// ============================================================
 enum ChatType {
   dating('데이팅', Icons.favorite, '친구 만들기 채팅'),
-  breeding('교배', Icons.pets, '교배 상대 채팅'),
-  community('소모임', Icons.groups, '소모임 채팅'),
+  breeding('교배', Icons.family_restroom, '교배 상대 채팅'),
+  group('소모임', Icons.groups, '소모임 채팅'),
   market('마켓', Icons.storefront, '중고거래 채팅');
 
   final String label;
@@ -328,28 +327,9 @@ enum ChatType {
   
   /// 교배 채팅인지 확인
   bool get isBreeding => this == ChatType.breeding;
-}
-
-/// ============================================================
-/// 위치 관련 상수
-/// ============================================================
-class LocationConstants {
-  LocationConstants._();
   
-  /// 집 반경 안전구역 (200m) - 산책 기능 비활성화
-  static const double homeSafetyRadiusMeters = 200.0;
-  
-  /// 마켓 기본 거리 필터 (1.5km)
-  static const double marketDefaultRadiusKm = 1.5;
-  
-  /// 마켓 최대 거리 필터 (10km)
-  static const double marketMaxRadiusKm = 10.0;
-  
-  /// 소모임 기본 거리 필터 (5km)
-  static const double communityDefaultRadiusKm = 5.0;
-  
-  /// 위치 인증 반경 (당근마켓 스타일)
-  static const double locationVerificationRadiusKm = 6.0;
+  /// 소모임 채팅인지 확인
+  bool get isGroup => this == ChatType.group;
 }
 
 // ============================================================
@@ -385,7 +365,7 @@ class BreedingFilterOptions {
   static const List<double> weightMaxOptions = [4, 10, 25, 45, 100];
 }
 
-/// 인기 품종 목록 (한국 기준, 강아지)
+/// 인기 품종 목록 (한국 기준)
 class PetBreeds {
   PetBreeds._();
   
