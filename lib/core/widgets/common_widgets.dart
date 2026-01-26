@@ -2683,7 +2683,7 @@ class _DateTimeRangePickerSheetState extends State<_DateTimeRangePickerSheet> {
                 ? widget.accentColor.withValues(alpha: AppOpacity.o10) 
                 : (isCompleted 
                     ? widget.accentColor.withValues(alpha: AppOpacity.o05) 
-                    : colorScheme.surfaceContainerHighest),
+                    : colorScheme.surface),
             border: Border.all(
               color: isActive 
                   ? widget.accentColor 
