@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/services/nickname_service.dart';
 import '../../../../models/user_model.dart';
 import '../../data/auth_repository.dart';
 import '../screens/consent_screen.dart';
@@ -267,12 +268,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final exists = await _authRepository.checkUserExists(user.uid);
     
     if (!exists) {
-      // 신규 사용자 - 프로필 생성 필요
+      // 신규 사용자 - 고유 닉네임 자동 생성
+      final uniqueNickname = await NicknameService.generateUnique();
+      
       final newUser = UserModel.empty(user.uid, provider).copyWith(
         email: user.email,
         phoneNumber: user.phoneNumber,
         profileImageUrl: user.photoURL,
-        nickname: user.displayName ?? '새로운 친구',
+        nickname: uniqueNickname,
         // 동의 정보 저장
         termsAgreedAt: consentData?.agreedAt,
         privacyAgreedAt: consentData?.agreedAt,
@@ -280,6 +283,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         marketingConsentAt: consentData?.marketingAgreed == true ? consentData?.agreedAt : null,
       );
       await _authRepository.createUser(newUser);
+      
+      // nicknames 컬렉션에 등록
+      await NicknameService.register(user.uid, uniqueNickname);
       state = state.copyWith(
         isLoading: false,
         isNewUser: true,

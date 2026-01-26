@@ -13,6 +13,7 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/constants/location_constants.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/firestore_service.dart';
+import '../../../../core/services/nickname_service.dart';
 import '../../../../core/services/animal_registration_service.dart';
 import '../../../../core/services/share_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
@@ -1247,21 +1248,18 @@ class ProfileScreen extends ConsumerWidget {
       title: '닉네임 변경',
       hintText: '새 닉네임을 입력해주세요',
       initialValue: user.nickname,
-      maxLength: 10,
+      maxLength: NicknameService.maxLength,
       confirmText: '변경',
       validator: (value) {
-        if (value.trim().isEmpty) return '닉네임을 입력해주세요';
-        if (value.trim().length < 2) return '2자 이상 입력해주세요';
-        return null;
+        return NicknameService.validate(value);
       },
     );
     
     if (newNickname == null || newNickname.trim() == user.nickname) return;
     
     try {
-      // 닉네임 중복 체크
-      final firestoreService = FirestoreService();
-      final isAvailable = await firestoreService.isNicknameAvailable(
+      // 닉네임 중복 체크 (NicknameService 사용)
+      final isAvailable = await NicknameService.isAvailable(
         newNickname.trim(),
         excludeUserId: user.id,
       );
@@ -1273,10 +1271,12 @@ class ProfileScreen extends ConsumerWidget {
         return;
       }
       
-      final firestore = FirebaseFirestore.instance;
-      await firestore.collection('users').doc(user.id).update({
-        'nickname': newNickname.trim(),
-      });
+      // 닉네임 변경 (트랜잭션 처리)
+      await NicknameService.change(
+        userId: user.id,
+        oldNickname: user.nickname ?? '',
+        newNickname: newNickname.trim(),
+      );
       
       if (context.mounted) {
         MingrrSnackBar.success(context, '닉네임이 변경되었습니다!');

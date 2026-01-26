@@ -11,6 +11,7 @@ import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/dating_service.dart';
 import '../../../../core/services/share_service.dart';
+import '../../../../core/services/transaction_service.dart';
 import '../../../../core/widgets/sheets/report_sheet.dart';
 import '../../../../core/widgets/sheets/request_sheet.dart';
 import '../../../../core/widgets/kkosunnae_widgets.dart';
@@ -114,7 +115,6 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       return;
     }
 
-    final likeDocId = '${currentUser.uid}_${widget.petId}';
     final wasLiked = _isLiked;
 
     // 낙관적 업데이트
@@ -124,26 +124,22 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
     });
 
     try {
-      if (wasLiked) {
-        // 좋아요 취소
-        await _firebase.firestore.collection('likes').doc(likeDocId).delete();
-        await _firebase.petsCollection.doc(widget.petId).update({
-          'likeCount': FieldValue.increment(-1),
+      // 트랜잭션으로 Race Condition 방지
+      final isNowLiked = await TransactionService.togglePetLike(
+        petId: widget.petId,
+        userId: currentUser.uid,
+      );
+      
+      // 실제 결과와 UI 동기화
+      if (mounted && isNowLiked != _isLiked) {
+        setState(() {
+          _isLiked = isNowLiked;
+          _likeCount += isNowLiked ? 1 : -1;
         });
-      } else {
-        // 좋아요 추가
-        await _firebase.firestore.collection('likes').doc(likeDocId).set({
-          'userId': currentUser.uid,
-          'petId': widget.petId,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        await _firebase.petsCollection.doc(widget.petId).update({
-          'likeCount': FieldValue.increment(1),
-        });
-        
-        if (mounted) {
-          MingrrSnackBar.success(context, '좋아요를 보냈어요! 💕');
-        }
+      }
+      
+      if (mounted && isNowLiked && !wasLiked) {
+        MingrrSnackBar.success(context, '좋아요를 보냈어요! 💕');
       }
     } catch (e) {
       // 실패 시 롤백

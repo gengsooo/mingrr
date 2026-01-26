@@ -11,6 +11,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/firestore_service.dart';
+import '../../../../core/services/nickname_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/forms/form_components.dart';
@@ -430,9 +431,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         
         final newNickname = _nicknameController.text.trim();
         
-        // 닉네임 변경 시 중복 체크
+        // 닉네임 변경 시 중복 체크 및 트랜잭션 처리
         if (newNickname != _originalNickname) {
-          final isAvailable = await _firestoreService.isNicknameAvailable(
+          final isAvailable = await NicknameService.isAvailable(
             newNickname,
             excludeUserId: authUser.uid,
           );
@@ -444,6 +445,13 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
             setState(() => _isLoading = false);
             return;
           }
+          
+          // 닉네임 변경 (트랜잭션 처리 - nicknames 컬렉션 업데이트)
+          await NicknameService.change(
+            userId: authUser.uid,
+            oldNickname: _originalNickname,
+            newNickname: newNickname,
+          );
         }
         
         // 프로필 이미지 업로드
@@ -454,8 +462,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           uploadedImageUrl = await _uploadProfileImage(authUser.uid);
         }
         
+        // 닉네임은 NicknameService.change()에서 이미 업데이트됨
         final updateData = <String, dynamic>{
-          'nickname': newNickname,
+          if (newNickname == _originalNickname) 'nickname': newNickname,
           'gender': _selectedGender?.name,
           'birthDate': _birthDate != null ? Timestamp.fromDate(_birthDate!) : null,
           'bio': _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),

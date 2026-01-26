@@ -6,6 +6,7 @@ import '../../../../core/providers/location_provider.dart';
 import '../../../../core/providers/paginated_provider.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/location_service.dart';
+import '../../../../core/services/transaction_service.dart';
 import '../../../../models/group_model.dart';
 
 /// ============================================================
@@ -247,16 +248,11 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
           'createdAt': FieldValue.serverTimestamp(),
         });
       } else {
-        // 바로 가입
-        await _firebase.groupsCollection.doc(groupId).update({
-          'memberIds': FieldValue.arrayUnion([userId]),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-        
-        // 사용자 소모임 카운터 증가
-        await _firebase.usersCollection.doc(userId).update({
-          'groupCount': FieldValue.increment(1),
-        });
+        // 바로 가입 (트랜잭션으로 Race Condition 방지)
+        await TransactionService.joinGroup(
+          groupId: groupId,
+          userId: userId,
+        );
       }
 
       state = const AsyncValue.data(null);
@@ -267,7 +263,7 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  /// 소모임 탈퇴
+  /// 소모임 탈퇴 (트랜잭션으로 Race Condition 방지)
   Future<bool> leaveGroup(String groupId) async {
     state = const AsyncValue.loading();
 
@@ -275,15 +271,15 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
       final userId = _firebase.currentUserId;
       if (userId == null) throw Exception('로그인이 필요합니다');
 
+      await TransactionService.leaveGroup(
+        groupId: groupId,
+        userId: userId,
+      );
+      
+      // 관리자 목록에서도 제거
       await _firebase.groupsCollection.doc(groupId).update({
-        'memberIds': FieldValue.arrayRemove([userId]),
         'adminIds': FieldValue.arrayRemove([userId]),
         'updatedAt': FieldValue.serverTimestamp(),
-      });
-      
-      // 사용자 소모임 카운터 감소
-      await _firebase.usersCollection.doc(userId).update({
-        'groupCount': FieldValue.increment(-1),
       });
 
       state = const AsyncValue.data(null);
@@ -351,32 +347,16 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  /// 좋아요 토글
+  /// 좋아요 토글 (트랜잭션으로 Race Condition 방지)
   Future<bool> toggleLike(String groupId) async {
     try {
       final userId = _firebase.currentUserId;
       if (userId == null) return false;
 
-      final likeId = '${userId}_$groupId';
-      final likeDoc = await _firebase.groupLikesCollection.doc(likeId).get();
-
-      if (likeDoc.exists) {
-        await _firebase.groupLikesCollection.doc(likeId).delete();
-        await _firebase.groupsCollection.doc(groupId).update({
-          'likeCount': FieldValue.increment(-1),
-        });
-        return false;
-      } else {
-        await _firebase.groupLikesCollection.doc(likeId).set({
-          'userId': userId,
-          'groupId': groupId,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        await _firebase.groupsCollection.doc(groupId).update({
-          'likeCount': FieldValue.increment(1),
-        });
-        return true;
-      }
+      return await TransactionService.toggleGroupLike(
+        groupId: groupId,
+        userId: userId,
+      );
     } catch (e) {
       return false;
     }
