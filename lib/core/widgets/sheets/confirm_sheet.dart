@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/feature_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../constants/app_sizes.dart';
+import '../dialogs/dialog_buttons.dart';
 import '../common_widgets.dart';
 
 /// ============================================================
@@ -263,37 +264,13 @@ class ConfirmSheet extends StatelessWidget {
               const SizedBox(height: AppSizes.gapXL),
               
               // 버튼
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: onCancel ?? () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingL),
-                        side: BorderSide(color: colorScheme.outline),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                        ),
-                      ),
-                      child: Text(
-                        cancelText ?? '취소',
-                        style: AppTextStyles.titleLarge(context).copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSizes.gapM),
-                  Expanded(
-                    child: MingrrButton(
-                      text: confirmText ?? type.confirmText,
-                      onPressed: onConfirm,
-                      backgroundColor: type.getColor(context),
-                      textColor: Colors.white,
-                      height: 52,
-                    ),
-                  ),
-                ],
+              MingrrDialogButtons(
+                cancelText: cancelText ?? '취소',
+                confirmText: confirmText ?? type.confirmText,
+                onCancel: onCancel ?? () => Navigator.pop(context),
+                onConfirm: onConfirm,
+                confirmColor: type.getColor(context),
+                height: 52,
               ),
               const SizedBox(height: AppSizes.paddingL),
             ],

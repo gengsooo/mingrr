@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
-import '../common_widgets.dart';
+import 'dialog_buttons.dart';
 
 /// ============================================================
 /// MingrrInfoActionDialog - 정보 표시 + 확인 다이얼로그
@@ -147,35 +147,12 @@ class MingrrInfoActionDialog extends StatelessWidget {
             const SizedBox(height: AppSizes.gapLL),
             
             // 버튼
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
-                      side: BorderSide(color: colorScheme.outline),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                      ),
-                    ),
-                    child: Text(
-                      cancelText,
-                      style: AppTextStyles.titleLarge(context).withColor(colorScheme.onSurfaceVariant),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: AppSizes.gapM),
-                Expanded(
-                  child: MingrrButton(
-                    text: confirmText,
-                    onPressed: () => Navigator.pop(context, true),
-                    backgroundColor: iconColor,
-                    textColor: Colors.white,
-                    height: 48,
-                  ),
-                ),
-              ],
+            MingrrDialogButtons(
+              cancelText: cancelText,
+              confirmText: confirmText,
+              onCancel: () => Navigator.pop(context, false),
+              onConfirm: () => Navigator.pop(context, true),
+              confirmColor: iconColor,
             ),
           ],
         ),

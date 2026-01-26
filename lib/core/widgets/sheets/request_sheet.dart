@@ -3,6 +3,7 @@ import '../../theme/feature_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../constants/app_sizes.dart';
 import '../../../models/pet_model.dart';
+import '../dialogs/dialog_buttons.dart';
 import '../common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
 import '../cards/pet_selector_card.dart';
@@ -207,39 +208,20 @@ class _RequestSheetState extends State<RequestSheet> {
               color: Theme.of(context).colorScheme.surface,
               boxShadow: AppShadows.shadowL(Theme.of(context).brightness == Brightness.dark),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      widget.onCancel?.call();
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
-                      side: BorderSide(color: Theme.of(context).colorScheme.outline),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                      ),
-                    ),
-                    child: Text('취소', style: AppTextStyles.labelLarge(context)),
-                  ),
-                ),
-                const SizedBox(width: AppSizes.gapM),
-                Expanded(
-                  child: MingrrButton(
-                    text: config.confirmText,
-                    onPressed: _canSubmit ? () {
-                      final message = _messageController.text.trim();
-                      Navigator.pop(context);
-                      widget.onConfirm(message.isEmpty ? null : message, selectedPet: _selectedPet);
-                    } : null,
-                    backgroundColor: config.color,
-                    textColor: Colors.white,
-                    height: 44,
-                  ),
-                ),
-              ],
+            child: MingrrDialogButtons(
+              cancelText: '취소',
+              confirmText: config.confirmText,
+              onCancel: () {
+                Navigator.pop(context);
+                widget.onCancel?.call();
+              },
+              onConfirm: _canSubmit ? () {
+                final message = _messageController.text.trim();
+                Navigator.pop(context);
+                widget.onConfirm(message.isEmpty ? null : message, selectedPet: _selectedPet);
+              } : null,
+              confirmColor: config.color,
+              height: 44,
             ),
           ),
         ],

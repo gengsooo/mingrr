@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../badges/svg_icons.dart';
-import '../common_widgets.dart';
+import 'dialog_buttons.dart';
 
 /// ============================================================
 /// ErrorDialog - 오류 다이얼로그
@@ -232,56 +232,19 @@ class ErrorDialog extends StatelessWidget {
   }
 
   Widget _buildSingleButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: OutlinedButton(
-        onPressed: () => Navigator.pop(context, ErrorResult.cancel),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
-          side: BorderSide(color: Theme.of(context).colorScheme.outline),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusS),
-          ),
-        ),
-        child: Text(
-          cancelText ?? '닫기',
-          style: AppTextStyles.titleLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
-        ),
-      ),
+    return MingrrDialogButton.cancel(
+      text: cancelText ?? '닫기',
+      onPressed: () => Navigator.pop(context, ErrorResult.cancel),
     );
   }
 
   Widget _buildTwoButtons(BuildContext context, Color color) {
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton(
-            onPressed: () => Navigator.pop(context, ErrorResult.cancel),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
-              side: BorderSide(color: Theme.of(context).colorScheme.outline),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.radiusS),
-              ),
-            ),
-            child: Text(
-              cancelText ?? '취소',
-              style: AppTextStyles.titleLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
-            ),
-          ),
-        ),
-        const SizedBox(width: AppSizes.gapM),
-        Expanded(
-          child: MingrrButton(
-            text: retryText ?? '재시도',
-            icon: Icons.refresh,
-            onPressed: () => Navigator.pop(context, ErrorResult.retry),
-            backgroundColor: color,
-            textColor: Colors.white,
-            height: 48,
-          ),
-        ),
-      ],
+    return MingrrDialogButtons(
+      cancelText: cancelText ?? '취소',
+      confirmText: retryText ?? '재시도',
+      onCancel: () => Navigator.pop(context, ErrorResult.cancel),
+      onConfirm: () => Navigator.pop(context, ErrorResult.retry),
+      confirmColor: color,
     );
   }
 }

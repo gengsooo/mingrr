@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../services/image_service.dart';
+import '../dialogs/dialog_buttons.dart';
 import '../common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
 import '../../utils/responsive_utils.dart';
@@ -301,19 +302,11 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
             children: [
               if (widget.allowClear && (widget.currentImageUrl != null || widget.currentDefaultAvatar != null))
                 Expanded(
-                  child: OutlinedButton(
+                  child: MingrrDialogButton.destructiveOutlined(
+                    text: '삭제',
                     onPressed: () {
                       Navigator.pop(context, const ImagePickerResult(cleared: true));
                     },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      side: const BorderSide(color: Colors.red),
-                      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                      ),
-                    ),
-                    child: const Text('삭제'),
                   ),
                 ),
               if (widget.allowClear && (widget.currentImageUrl != null || widget.currentDefaultAvatar != null))

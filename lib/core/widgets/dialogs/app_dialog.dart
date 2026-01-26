@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../theme/feature_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../constants/app_sizes.dart';
-import '../common_widgets.dart';
+import 'dialog_buttons.dart';
 
 /// ============================================================
 /// AppDialog - 통합 알림/확인 다이얼로그
@@ -196,41 +196,20 @@ class AppDialog extends StatelessWidget {
   }
 
   Widget _buildSingleButton(BuildContext context, Color color) {
-    return MingrrButton(
+    return MingrrDialogButton.confirm(
       text: confirmText ?? '확인',
       onPressed: () => Navigator.pop(context, true),
-      backgroundColor: color,
-      textColor: Colors.white,
-      height: 48,
+      color: color,
     );
   }
 
   Widget _buildTwoButtons(BuildContext context, Color color) {
-    final colorScheme = Theme.of(context).colorScheme;
-    
-    return Row(
-      children: [
-        Expanded(
-          child: MingrrButton(
-            text: cancelText ?? '취소',
-            onPressed: () => Navigator.pop(context, false),
-            isOutlined: true,
-            backgroundColor: colorScheme.outline,
-            textColor: colorScheme.onSurfaceVariant,
-            height: 48,
-          ),
-        ),
-        const SizedBox(width: AppSizes.gapM),
-        Expanded(
-          child: MingrrButton(
-            text: confirmText ?? '확인',
-            onPressed: () => Navigator.pop(context, true),
-            backgroundColor: color,
-            textColor: Colors.white,
-            height: 48,
-          ),
-        ),
-      ],
+    return MingrrDialogButtons(
+      cancelText: cancelText ?? '취소',
+      confirmText: confirmText ?? '확인',
+      onCancel: () => Navigator.pop(context, false),
+      onConfirm: () => Navigator.pop(context, true),
+      confirmColor: color,
     );
   }
 }
@@ -323,34 +302,17 @@ Future<String?> showAppInputDialog(
             const SizedBox(height: AppSizes.gapL),
             
             // 버튼
-            Row(
-              children: [
-                Expanded(
-                  child: MingrrButton(
-                    text: cancelText ?? '취소',
-                    onPressed: () => Navigator.pop(ctx),
-                    isOutlined: true,
-                    backgroundColor: colorScheme.outline,
-                    textColor: colorScheme.onSurfaceVariant,
-                    height: 48,
-                  ),
-                ),
-                const SizedBox(width: AppSizes.gapM),
-                Expanded(
-                  child: MingrrButton(
-                    text: confirmText ?? '확인',
-                    onPressed: () {
-                      final value = controller.text.trim();
-                      if (value.isNotEmpty) {
-                        Navigator.pop(ctx, value);
-                      }
-                    },
-                    backgroundColor: type.getColor(context),
-                    textColor: Colors.white,
-                    height: 48,
-                  ),
-                ),
-              ],
+            MingrrDialogButtons(
+              cancelText: cancelText ?? '취소',
+              confirmText: confirmText ?? '확인',
+              onCancel: () => Navigator.pop(ctx),
+              onConfirm: () {
+                final value = controller.text.trim();
+                if (value.isNotEmpty) {
+                  Navigator.pop(ctx, value);
+                }
+              },
+              confirmColor: type.getColor(context),
             ),
           ],
         ),

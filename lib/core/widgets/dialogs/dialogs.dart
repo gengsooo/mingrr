@@ -17,6 +17,7 @@
 /// ============================================================
 
 export 'app_dialog.dart';
+export 'dialog_buttons.dart';
 export 'error_dialog.dart';
 export '../sheets/confirm_sheet.dart';
 export 'info_dialog.dart';

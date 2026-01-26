@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
-import '../common_widgets.dart';
+import 'dialog_buttons.dart';
 
 /// ============================================================
 /// MingrrSelectionDialog - 선택 다이얼로그
@@ -140,33 +140,15 @@ class _MingrrSelectionDialogState extends State<MingrrSelectionDialog> {
             const SizedBox(height: AppSizes.gapM),
             
             // 버튼
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppSizes.radiusM),
-                      ),
-                    ),
-                    child: Text(widget.cancelText),
-                  ),
-                ),
-                const SizedBox(width: AppSizes.gapM),
-                Expanded(
-                  child: MingrrButton(
-                    text: widget.confirmText,
-                    onPressed: _selectedOption == null 
-                        ? null 
-                        : () => Navigator.pop(context, _selectedOption),
-                    backgroundColor: confirmColor,
-                    textColor: Colors.white,
-                    height: 44,
-                  ),
-                ),
-              ],
+            MingrrDialogButtons(
+              cancelText: widget.cancelText,
+              confirmText: widget.confirmText,
+              onCancel: () => Navigator.pop(context),
+              onConfirm: _selectedOption == null 
+                  ? null 
+                  : () => Navigator.pop(context, _selectedOption),
+              confirmColor: confirmColor,
+              height: 44,
             ),
           ],
         ),

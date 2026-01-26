@@ -7,6 +7,7 @@ import '../theme/feature_colors.dart';
 import '../constants/app_sizes.dart';
 import '../../models/rating_model.dart';
 import 'common_widgets.dart';
+import 'dialogs/dialog_buttons.dart';
 import 'mingrr_image.dart';
 import 'sheets/mingrr_bottom_sheet.dart';
 import 'dialogs/action_prompt_dialog.dart';
@@ -775,16 +776,12 @@ class TransactionCompleteDialog extends StatelessWidget {
             const SizedBox(height: AppSizes.gapS),
             
             // 노쇼 버튼
-            MingrrButton(
+            MingrrDialogButton.destructiveOutlined(
               text: '상대방이 안 나왔어요',
               onPressed: () {
                 Navigator.pop(context);
                 onNoShow();
               },
-              isOutlined: true,
-              backgroundColor: Colors.red,
-              textColor: Colors.red,
-              height: 48,
             ),
             const SizedBox(height: AppSizes.gapS),
             

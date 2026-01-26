@@ -5,6 +5,7 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/dialogs/dialog_buttons.dart';
 import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/badges/svg_icons.dart';
@@ -360,33 +361,13 @@ class ChatListScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppSizes.gapM),
             // 수락/거절 버튼
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 36,
-                    child: OutlinedButton(
-                      onPressed: () => _showRejectConfirmation(context, ref, request),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                        side: BorderSide(color: Theme.of(context).colorScheme.outline),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusXS)),
-                      ),
-                      child: Text('거절', style: AppTextStyles.bodyMedium(context)),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: MingrrButton(
-                    text: '수락',
-                    onPressed: () => _showAcceptConfirmation(context, ref, request),
-                    backgroundColor: accentColor,
-                    textColor: Colors.white,
-                    height: 36,
-                  ),
-                ),
-              ],
+            MingrrDialogButtons(
+              cancelText: '거절',
+              confirmText: '수락',
+              onCancel: () => _showRejectConfirmation(context, ref, request),
+              onConfirm: () => _showAcceptConfirmation(context, ref, request),
+              confirmColor: accentColor,
+              height: 36,
             ),
           ],
         ),
@@ -438,34 +419,16 @@ class ChatListScreen extends ConsumerWidget {
               style: AppTextStyles.bodyMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSizes.gapXL),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
-                      side: BorderSide(color: Theme.of(context).colorScheme.outline),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusS)),
-                    ),
-                    child: const Text('취소'),
-                  ),
-                ),
-                const SizedBox(width: AppSizes.gapM),
-                Expanded(
-                  child: MingrrButton(
-                    text: '수락하기',
-                    onPressed: () {
-                      ref.read(receivedRequestsProvider.notifier).acceptRequest(request.id);
-                      Navigator.pop(ctx);
-                      MingrrSnackBar.success(context, '${request.senderPetName}의 ${request.typeLabel}을 수락했어요! 💕');
-                    },
-                    backgroundColor: context.features.dating,
-                    textColor: Colors.white,
-                    height: 48,
-                  ),
-                ),
-              ],
+            MingrrDialogButtons(
+              cancelText: '취소',
+              confirmText: '수락하기',
+              onCancel: () => Navigator.pop(ctx),
+              onConfirm: () {
+                ref.read(receivedRequestsProvider.notifier).acceptRequest(request.id);
+                Navigator.pop(ctx);
+                MingrrSnackBar.success(context, '${request.senderPetName}의 ${request.typeLabel}을 수락했어요! 💕');
+              },
+              confirmColor: context.features.dating,
             ),
             SizedBox(height: ResponsiveUtils.bottomSafeArea(ctx)),
           ],
@@ -503,34 +466,16 @@ class ChatListScreen extends ConsumerWidget {
               style: AppTextStyles.bodyMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSizes.gapXL),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
-                      side: BorderSide(color: Theme.of(context).colorScheme.outline),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusS)),
-                    ),
-                    child: const Text('취소'),
-                  ),
-                ),
-                const SizedBox(width: AppSizes.gapM),
-                Expanded(
-                  child: MingrrButton(
-                    text: '거절하기',
-                    onPressed: () {
-                      ref.read(receivedRequestsProvider.notifier).rejectRequest(request.id);
-                      Navigator.pop(ctx);
-                      MingrrSnackBar.info(context, '신청을 거절했어요');
-                    },
-                    backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                    textColor: Colors.white,
-                    height: 48,
-                  ),
-                ),
-              ],
+            MingrrDialogButtons(
+              cancelText: '취소',
+              confirmText: '거절하기',
+              onCancel: () => Navigator.pop(ctx),
+              onConfirm: () {
+                ref.read(receivedRequestsProvider.notifier).rejectRequest(request.id);
+                Navigator.pop(ctx);
+                MingrrSnackBar.info(context, '신청을 거절했어요');
+              },
+              confirmColor: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             SizedBox(height: ResponsiveUtils.bottomSafeArea(ctx)),
           ],

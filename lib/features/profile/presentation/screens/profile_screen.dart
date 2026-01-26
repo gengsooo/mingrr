@@ -1691,29 +1691,12 @@ class _LocationVerificationDialogState extends State<_LocationVerificationDialog
           )
         else
           // 인증/동네변경: 취소/확인 버튼
-          Row(
-            children: [
-              Expanded(
-                child: MingrrButton(
-                  text: '취소',
-                  onPressed: () => Navigator.pop(context, false),
-                  isOutlined: true,
-                  backgroundColor: colorScheme.outline,
-                  textColor: colorScheme.onSurfaceVariant,
-                  height: 48,
-                ),
-              ),
-              const SizedBox(width: AppSizes.gapM),
-              Expanded(
-                child: MingrrButton(
-                  text: buttonText,
-                  onPressed: _doVerification,
-                  backgroundColor: themeColor,
-                  textColor: Colors.white,
-                  height: 48,
-                ),
-              ),
-            ],
+          MingrrDialogButtons(
+            cancelText: '취소',
+            confirmText: buttonText,
+            onCancel: () => Navigator.pop(context, false),
+            onConfirm: _doVerification,
+            confirmColor: themeColor,
           ),
       ],
     );
@@ -1977,30 +1960,12 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
         const SizedBox(height: AppSizes.gapLL),
         
         // 버튼
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context, false),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
-                  side: BorderSide(color: colorScheme.outline),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusS)),
-                ),
-                child: Text('취소', style: AppTextStyles.titleMedium(context).copyWith(color: colorScheme.onSurfaceVariant)),
-              ),
-            ),
-            const SizedBox(width: AppSizes.gapM),
-            Expanded(
-              child: MingrrButton(
-                text: '인증하기',
-                onPressed: _startVerification,
-                backgroundColor: primaryColor,
-                textColor: Colors.white,
-                height: 48,
-              ),
-            ),
-          ],
+        MingrrDialogButtons(
+          cancelText: '취소',
+          confirmText: '인증하기',
+          onCancel: () => Navigator.pop(context, false),
+          onConfirm: _startVerification,
+          confirmColor: primaryColor,
         ),
       ],
     );
@@ -2179,33 +2144,15 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
           style: AppTextStyles.bodySmall(context).copyWith(height: 1.5),
         ),
         const SizedBox(height: AppSizes.gapLL),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context, false),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
-                  side: BorderSide(color: colorScheme.outline),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusS)),
-                ),
-                child: Text('닫기', style: AppTextStyles.titleMedium(context).copyWith(color: colorScheme.onSurfaceVariant)),
-              ),
-            ),
-            const SizedBox(width: AppSizes.gapM),
-            Expanded(
-              child: MingrrButton(
-                text: '다시 시도',
-                onPressed: () => setState(() {
-                  _step = _VerificationStep.input;
-                  _errorMessage = null;
-                }),
-                backgroundColor: colorScheme.primary,
-                textColor: Colors.white,
-                height: 48,
-              ),
-            ),
-          ],
+        MingrrDialogButtons(
+          cancelText: '닫기',
+          confirmText: '다시 시도',
+          onCancel: () => Navigator.pop(context, false),
+          onConfirm: () => setState(() {
+            _step = _VerificationStep.input;
+            _errorMessage = null;
+          }),
+          confirmColor: colorScheme.primary,
         ),
       ],
     );
@@ -2304,32 +2251,14 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
         const SizedBox(height: AppSizes.gapLL),
         
         // 버튼
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context, false),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
-                  side: BorderSide(color: colorScheme.outline),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusS)),
-                ),
-                child: Text('취소', style: AppTextStyles.titleMedium(context).copyWith(color: colorScheme.onSurfaceVariant)),
-              ),
-            ),
-            const SizedBox(width: AppSizes.gapM),
-            Expanded(
-              child: MingrrButton(
-                text: '다음',
-                onPressed: () {
-                  setState(() => _step = _VerificationStep.success);
-                },
-                backgroundColor: primaryColor,
-                textColor: Colors.white,
-                height: 48,
-              ),
-            ),
-          ],
+        MingrrDialogButtons(
+          cancelText: '취소',
+          confirmText: '다음',
+          onCancel: () => Navigator.pop(context, false),
+          onConfirm: () {
+            setState(() => _step = _VerificationStep.success);
+          },
+          confirmColor: primaryColor,
         ),
       ],
     );
