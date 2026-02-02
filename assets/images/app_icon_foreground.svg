@@ -1,0 +1,21 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 
+    밍그르르 앱 아이콘 (Android Adaptive Icon Foreground)
+    - 정사각형 투명 배경
+    - 중앙 66% 안전 영역에 로고 배치
+    - 배경색은 adaptive_icon_background에서 설정
+    - splash_logo와 동일한 디자인
+  -->
+  
+  <!-- 발바닥 아이콘 (중앙 배치) -->
+  <g transform="translate(512, 512)">
+    <!-- 메인 패드 (하트 모양) - splash_logo와 동일 -->
+    <path d="M0 213 Q-151 124 -151 0 Q-151 -76 -76 -76 Q0 -76 0 0 Q0 -76 76 -76 Q151 -76 151 0 Q151 124 0 213 Z" fill="white"/>
+    
+    <!-- 발가락 패드들 - splash_logo와 동일 비율 -->
+    <ellipse cx="-209" cy="-111" rx="67" ry="76" fill="white"/>
+    <ellipse cx="-76" cy="-200" rx="67" ry="76" fill="white"/>
+    <ellipse cx="76" cy="-200" rx="67" ry="76" fill="white"/>
+    <ellipse cx="209" cy="-111" rx="67" ry="76" fill="white"/>
+  </g>
+</svg>
