@@ -186,10 +186,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             boxShadow: isDark ? null : AppShadows.shadowS(false),
           ),
         ),
-        leading: IconButton(
-          icon: const Icon(AppIcons.back, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const MingrrLeadingButton.back(showShadow: false),
         titleSpacing: 0,
         title: GestureDetector(
           behavior: HitTestBehavior.opaque,

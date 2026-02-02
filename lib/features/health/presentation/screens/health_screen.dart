@@ -53,13 +53,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
     final categories = _getCategories();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('건강수첩'),
-        leading: IconButton(
-          icon: const Icon(AppIcons.back, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      appBar: const MingrrAppBar(title: '건강수첩'),
       body: petsAsync.when(
         loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
         error: (_, __) => MingrrErrorState(

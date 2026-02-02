@@ -100,8 +100,8 @@ class ProfileScreen extends ConsumerWidget {
             scrolledUnderElevation: 0.5,
             title: const Text('프로필'),
             centerTitle: true,
-            leading: IconButton(
-              icon: const Icon(AppIcons.back, size: 20),
+            leading: MingrrLeadingButton.back(
+              showShadow: false,
               onPressed: () {
                 if (context.canPop()) {
                   context.pop();

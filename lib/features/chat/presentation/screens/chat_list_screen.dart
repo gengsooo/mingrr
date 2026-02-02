@@ -64,8 +64,8 @@ class ChatListScreen extends ConsumerWidget {
     
     return Scaffold(
       backgroundColor: isDark ? colorScheme.surface : backgroundColor,
-      appBar: AppBar(
-        title: const Text('채팅'),
+      appBar: MingrrAppBar.mainTab(
+        title: '채팅',
         actions: [
           AppBarActionButton.notification(),
           AppBarActionButton.profile(backgroundColor: Theme.of(context).scaffoldBackgroundColor),

@@ -83,14 +83,9 @@ class _MingrrImageViewerState extends State<MingrrImageViewer> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.white),
+      appBar: MingrrAppBar.dark(
         title: widget.imageUrls.length > 1
-            ? Text(
-                '${_currentIndex + 1} / ${widget.imageUrls.length}',
-                style: const TextStyle(color: Colors.white),
-              )
+            ? '${_currentIndex + 1} / ${widget.imageUrls.length}'
             : null,
         actions: [
           // 저장 버튼

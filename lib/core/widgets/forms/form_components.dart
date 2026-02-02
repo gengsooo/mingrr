@@ -8,6 +8,7 @@ import '../../theme/app_theme.dart';
 import '../../utils/image_utils.dart';
 import '../dividers/app_dividers.dart';
 import '../mingrr_image.dart';
+import '../mingrr_app_bar.dart';
 
 /// ============================================================
 /// MINGRR 폼 공통 컴포넌트 모음
@@ -575,13 +576,23 @@ class _RemoveButton extends StatelessWidget {
 // ===== 폼 앱바 =====
 /// 등록/수정 화면용 앱바
 /// 
+/// @deprecated [MingrrAppBar.form]을 대신 사용하세요.
+/// 
 /// 사용 예시:
 /// ```dart
+/// // 기존 (deprecated)
 /// appBar: MingrrFormAppBar(
 ///   title: '글 작성',
 ///   onClose: () => Navigator.pop(context),
 /// )
+/// 
+/// // 권장
+/// appBar: MingrrAppBar.form(
+///   title: '글 작성',
+///   onClose: () => Navigator.pop(context),
+/// )
 /// ```
+@Deprecated('MingrrAppBar.form()을 대신 사용하세요')
 class MingrrFormAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final VoidCallback onClose;
@@ -596,12 +607,10 @@ class MingrrFormAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppBar(
-      title: Text(title),
-      leading: IconButton(
-        icon: const Icon(AppIcons.close),
-        onPressed: onClose,
-      ),
+    // MingrrAppBar.form()으로 위임
+    return MingrrAppBar.form(
+      title: title,
+      onClose: onClose,
       actions: actions,
     );
   }

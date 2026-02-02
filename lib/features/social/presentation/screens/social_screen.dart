@@ -42,8 +42,8 @@ class SocialScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: isDark ? colorScheme.surface : context.features.socialContainer,
-      appBar: AppBar(
-        title: const Text('소셜'),
+      appBar: MingrrAppBar.mainTab(
+        title: '소셜',
         actions: [
           AppBarActionButton.search(
             onTap: () {

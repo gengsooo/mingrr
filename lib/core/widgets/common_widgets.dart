@@ -14,6 +14,7 @@ import 'badges/svg_icons.dart';
 import 'loading/loading_widgets.dart' show MingrrLoadingType, MingrrLoadingIndicator;
 import 'dividers/app_dividers.dart';
 import '../utils/responsive_utils.dart';
+import 'mingrr_app_bar.dart';
 
 // 공통 로딩 위젯 export
 export 'loading/loading_widgets.dart';
@@ -38,6 +39,9 @@ export 'mingrr_image_header.dart';
 
 // 공통 구분선 컴포넌트 export
 export 'dividers/app_dividers.dart';
+
+// 공통 AppBar 컴포넌트 export
+export 'mingrr_app_bar.dart';
 
 /// ============================================================
 /// MINGRR 공통 위젯 모음
@@ -754,13 +758,16 @@ class DefaultPetImage extends StatelessWidget {
 }
 
 // ===== 섹션 헤더 =====
-/// 공통 뒤로가기 버튼
-/// 화면 상단에 사용되는 통일된 뒤로가기 버튼
+/// @deprecated [MingrrLeadingButton]을 사용하세요.
+/// 
+/// 공통 뒤로가기 버튼 (레거시)
+/// 새 코드에서는 [MingrrLeadingButton] 또는 [MingrrAppBar]를 사용하세요.
+@Deprecated('MingrrLeadingButton을 사용하세요')
 class MingrrBackButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final Color? backgroundColor;
   final Color? iconColor;
-  final bool isClose; // true면 X 아이콘, false면 화살표 아이콘
+  final bool isClose;
 
   const MingrrBackButton({
     super.key,
@@ -772,22 +779,12 @@ class MingrrBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return Container(
-      decoration: BoxDecoration(
-        color: backgroundColor ?? Theme.of(context).colorScheme.surface,
-        shape: BoxShape.circle,
-        boxShadow: AppShadows.shadowS(isDark),
-      ),
-      child: IconButton(
-        icon: Icon(
-          isClose ? AppIcons.close : AppIcons.back,
-          size: 20,
-          color: iconColor ?? Theme.of(context).colorScheme.onSurface,
-        ),
-        onPressed: onPressed ?? () => Navigator.pop(context),
-      ),
+    // MingrrLeadingButton으로 위임
+    return MingrrLeadingButton(
+      type: isClose ? LeadingType.close : LeadingType.back,
+      onPressed: onPressed,
+      backgroundColor: backgroundColor,
+      iconColor: iconColor,
     );
   }
 }

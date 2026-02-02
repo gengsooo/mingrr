@@ -54,7 +54,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       data: (job) {
         if (job == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('알바')),
+            appBar: const MingrrAppBar(title: '알바'),
             body: const MingrrEmptyState(
               icon: AppIcons.work,
               title: '아직 데이터가 없어요',
@@ -71,7 +71,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         ),
       ),
       error: (_, __) => Scaffold(
-        appBar: AppBar(title: const Text('알바')),
+        appBar: const MingrrAppBar(title: '알바'),
         body: MingrrErrorState(
           onRetry: () => ref.invalidate(jobDetailProvider(widget.jobId)),
         ),

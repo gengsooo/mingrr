@@ -38,9 +38,7 @@ class PendingRatingsScreen extends ConsumerWidget {
     final pendingRatingsAsync = ref.watch(pendingRatingsProvider);
     
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('평가 대기'),
-      ),
+      appBar: const MingrrAppBar(title: '평가 대기'),
       body: pendingRatingsAsync.when(
         data: (transactions) {
           if (transactions.isEmpty) {

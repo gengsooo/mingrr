@@ -31,9 +31,7 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
     final requestsAsync = ref.watch(receivedDatingRequestsProvider);
     
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('받은 데이팅 신청'),
-      ),
+      appBar: const MingrrAppBar(title: '받은 데이팅 신청'),
       body: requestsAsync.when(
         data: (requests) {
           if (requests.isEmpty) {

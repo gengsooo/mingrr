@@ -318,14 +318,10 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        title: Text(widget.title),
+      appBar: MingrrAppBar.form(
+        title: widget.title,
+        onClose: () => Navigator.pop(context),
         backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: AppSizes.elevationNone,
-        leading: IconButton(
-          icon: Icon(AppIcons.close),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: _isInitializing
           ? _buildLoadingView()

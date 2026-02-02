@@ -7,6 +7,7 @@ import 'common_widgets.dart';
 import 'badges/info_badge.dart';
 import '../utils/responsive_utils.dart';
 import 'mingrr_image.dart';
+import 'mingrr_app_bar.dart';
 
 /// ============================================================
 /// 상세 화면 이미지 헤더 (SliverAppBar 통합)
@@ -105,17 +106,7 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
   }
 
   Widget _buildBackButton(BuildContext context) {
-    return IconButton(
-      icon: Container(
-        padding: const EdgeInsets.all(AppSizes.paddingS),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: AppOpacity.o30),
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(AppIcons.back, color: Colors.white, size: 18),
-      ),
-      onPressed: () => Navigator.pop(context),
-    );
+    return const MingrrLeadingButtonOverlay.back();
   }
 
   List<Widget> _buildActions() {

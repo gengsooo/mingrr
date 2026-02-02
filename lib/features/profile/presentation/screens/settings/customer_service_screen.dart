@@ -27,9 +27,7 @@ class CustomerServiceScreen extends StatelessWidget {
     final theme = Theme.of(context);
     
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('고객센터'),
-      ),
+      appBar: const MingrrAppBar(title: '고객센터'),
       body: ListView(
         padding: const EdgeInsets.all(AppSizes.paddingM),
         children: [

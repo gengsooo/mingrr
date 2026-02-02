@@ -27,9 +27,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
     final notifier = ref.watch(notificationSettingsNotifierProvider.notifier);
     
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('알림 설정'),
-      ),
+      appBar: const MingrrAppBar(title: '알림 설정'),
       body: settingsAsync.when(
         data: (settings) => _buildContent(context, ref, settings, notifier),
         loading: () => const MingrrLoadingState(

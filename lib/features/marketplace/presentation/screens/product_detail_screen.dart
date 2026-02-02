@@ -183,14 +183,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: const MingrrAppBar(title: '상품'),
         body: const MingrrLoadingState(type: MingrrLoadingType.market, message: '상품 정보를 불러오고 있어요'),
       );
     }
 
     if (_product == null) {
       return Scaffold(
-        appBar: AppBar(),
+        appBar: const MingrrAppBar(title: '상품'),
         body: const MingrrEmptyState(
           icon: AppIcons.shoppingBag,
           title: '아직 데이터가 없어요',

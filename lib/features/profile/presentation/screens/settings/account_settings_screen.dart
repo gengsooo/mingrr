@@ -41,9 +41,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     final theme = Theme.of(context);
     
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('계정 관리'),
-      ),
+      appBar: const MingrrAppBar(title: '계정 관리'),
       body: ListView(
         padding: const EdgeInsets.all(AppSizes.paddingM),
         children: [

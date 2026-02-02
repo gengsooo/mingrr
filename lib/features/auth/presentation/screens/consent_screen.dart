@@ -60,13 +60,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('약관 동의'),
-        leading: IconButton(
-          icon: const Icon(AppIcons.back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+      appBar: const MingrrAppBar(title: '약관 동의'),
       body: SafeArea(
         child: Column(
           children: [

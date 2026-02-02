@@ -61,17 +61,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
+      appBar: MingrrAppBar.search(
+        searchWidget: _buildSearchField(),
+        onCancel: () => Navigator.pop(context),
         backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: AppSizes.elevationNone,
-        titleSpacing: 0,
-        title: _buildSearchField(),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('취소', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-          ),
-        ],
       ),
       body: _buildBody(),
     );

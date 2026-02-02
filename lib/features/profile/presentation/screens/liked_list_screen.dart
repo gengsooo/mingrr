@@ -28,9 +28,7 @@ class LikedListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('좋아요 목록'),
-      ),
+      appBar: const MingrrAppBar(title: '좋아요 목록'),
       body: DefaultTabController(
         length: 4,
         child: Column(

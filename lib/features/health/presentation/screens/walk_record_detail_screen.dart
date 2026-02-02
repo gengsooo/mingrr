@@ -60,10 +60,7 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
             expandedHeight: 300,
             pinned: true,
             backgroundColor: context.features.walk,
-            leading: IconButton(
-              icon: const Icon(AppIcons.back, color: Colors.white, size: 20),
-              onPressed: () => Navigator.pop(context),
-            ),
+            leading: const MingrrLeadingButtonOverlay.back(),
             actions: [
               IconButton(
                 icon: const Icon(AppIcons.share, color: Colors.white),

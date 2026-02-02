@@ -135,8 +135,8 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     
     return Scaffold(
       backgroundColor: isDark ? colorScheme.surface : context.features.marketContainer,
-      appBar: AppBar(
-        title: const Text('마켓'),
+      appBar: MingrrAppBar.mainTab(
+        title: '마켓',
         actions: [
           AppBarActionButton.search(
             onTap: () {

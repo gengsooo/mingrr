@@ -52,8 +52,8 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     final unreadCount = ref.watch(unreadNotificationCountProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
+      appBar: MingrrAppBar.mainTab(
+        titleWidget: Row(
           children: [
             const Text('알림'),
             if (unreadCount > 0) ...[
@@ -419,7 +419,7 @@ class _ReceivedLikesNavigator extends StatelessWidget {
   Widget build(BuildContext context) {
     // 실제 받은 좋아요 화면 import 후 사용
     return Scaffold(
-      appBar: AppBar(title: const Text('받은 좋아요')),
+      appBar: const MingrrAppBar(title: '받은 좋아요'),
       body: const Center(child: Text('받은 좋아요 화면')),
     );
   }

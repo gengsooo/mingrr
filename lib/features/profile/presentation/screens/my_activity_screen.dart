@@ -25,9 +25,7 @@ class MyActivityScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('내 활동'),
-      ),
+      appBar: const MingrrAppBar(title: '내 활동'),
       body: DefaultTabController(
         length: 5,
         child: Column(

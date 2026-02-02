@@ -22,8 +22,8 @@ class WeightRecordDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: const Text('체중 기록'),
+      appBar: MingrrAppBar(
+        title: '체중 기록',
         actions: [
           IconButton(
             icon: const Icon(AppIcons.editOutlined),
@@ -283,8 +283,8 @@ class GroomingRecordDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: const Text('그루밍 기록'),
+      appBar: MingrrAppBar(
+        title: '그루밍 기록',
         actions: [
           IconButton(
             icon: const Icon(AppIcons.deleteOutlined, color: Colors.red),
@@ -430,8 +430,8 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: const Text('예방접종 기록'),
+      appBar: MingrrAppBar(
+        title: '예방접종 기록',
         actions: [
           IconButton(
             icon: const Icon(AppIcons.deleteOutlined, color: Colors.red),
@@ -636,8 +636,8 @@ class CheckupRecordDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: const Text('검진 기록'),
+      appBar: MingrrAppBar(
+        title: '검진 기록',
         actions: [
           IconButton(
             icon: const Icon(AppIcons.deleteOutlined, color: Colors.red),
@@ -851,8 +851,8 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: const Text('치아 관리 기록'),
+      appBar: MingrrAppBar(
+        title: '치아 관리 기록',
         actions: [
           IconButton(
             icon: const Icon(AppIcons.deleteOutlined, color: Colors.red),
@@ -1043,11 +1043,11 @@ class SpecialRecordDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: const Text('특이사항 기록'),
+      appBar: MingrrAppBar(
+        title: '특이사항 기록',
         actions: [
           IconButton(
-            icon: Icon(AppIcons.delete, color: Colors.red),
+            icon: const Icon(AppIcons.deleteOutlined, color: Colors.red),
             onPressed: () => _confirmDelete(context),
           ),
         ],

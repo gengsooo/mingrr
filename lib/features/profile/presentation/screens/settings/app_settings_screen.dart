@@ -30,9 +30,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('앱 설정'),
-      ),
+      appBar: const MingrrAppBar(title: '앱 설정'),
       body: ListView(
         padding: const EdgeInsets.all(AppSizes.paddingM),
         children: [

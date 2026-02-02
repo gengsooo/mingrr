@@ -50,9 +50,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
     final colorScheme = theme.colorScheme;
     
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('앱 정보'),
-      ),
+      appBar: const MingrrAppBar(title: '앱 정보'),
       body: ListView(
         padding: const EdgeInsets.all(AppSizes.paddingM),
         children: [

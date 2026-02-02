@@ -73,8 +73,8 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
 
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: const Text('게시글'),
+      appBar: MingrrAppBar(
+        title: '게시글',
         actions: [
           IconButton(
             icon: const Icon(AppIcons.moreVert),
@@ -980,10 +980,8 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text('동영상', style: TextStyle(color: Colors.white)),
+      appBar: const MingrrAppBar.dark(
+        title: '동영상',
       ),
       body: _hasError
           ? _buildErrorState()

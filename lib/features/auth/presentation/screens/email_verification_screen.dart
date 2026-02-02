@@ -53,12 +53,9 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('이메일 인증'),
-        leading: IconButton(
-          icon: const Icon(AppIcons.back),
-          onPressed: _showLogoutConfirm,
-        ),
+      appBar: MingrrAppBar(
+        title: '이메일 인증',
+        onLeadingPressed: _showLogoutConfirm,
       ),
       body: SafeArea(
         child: Padding(

@@ -143,8 +143,8 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
     
     return Scaffold(
       backgroundColor: features.datingContainer,
-      appBar: AppBar(
-        title: const Text('데이팅'),
+      appBar: MingrrAppBar.mainTab(
+        title: '데이팅',
         actions: [
           // 교배찾기 탭에서만 검색 아이콘 표시
           if (selectedTab == 2)

@@ -163,7 +163,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       data: (pet) {
         if (pet == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('반려동물 정보')),
+            appBar: const MingrrAppBar(title: '반려동물 정보'),
             body: const MingrrEmptyState(
               icon: AppIcons.pet,
               title: '아직 데이터가 없어요',
@@ -180,7 +180,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         ),
       ),
       error: (_, __) => Scaffold(
-        appBar: AppBar(title: const Text('반려동물 정보')),
+        appBar: const MingrrAppBar(title: '반려동물 정보'),
         body: MingrrErrorState(
           onRetry: () => ref.invalidate(petByIdProvider(widget.petId)),
         ),

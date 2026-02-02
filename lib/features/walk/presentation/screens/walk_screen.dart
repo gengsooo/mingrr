@@ -209,7 +209,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                   ),
                   child: Row(
                     children: [
-                      const MingrrBackButton(),
+                      const MingrrLeadingButton.back(),
                       const Spacer(),
                       Container(
                         decoration: BoxDecoration(
