@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/constants/app_icons.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/form_strings.dart';
@@ -165,7 +166,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   border: Border.all(color: Colors.white, width: 2),
                 ),
                 child: const Icon(
-                  Icons.camera_alt,
+                  AppIcons.camera,
                   size: 18,
                   color: Colors.white,
                 ),
@@ -257,7 +258,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
       ),
       child: Icon(
-        Icons.person,
+        AppIcons.profile,
         size: 60,
         color: Theme.of(context).colorScheme.primary,
       ),
@@ -388,7 +389,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         // 안내 텍스트
         Row(
           children: [
-            Icon(Icons.info_outline, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(AppIcons.info, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(width: AppSizes.gapXS),
             Expanded(
               child: Text(

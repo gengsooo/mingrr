@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../constants/app_icons.dart';
 import '../../services/bottom_sheet_stack_manager.dart';
 import '../../theme/feature_colors.dart';
 import '../../theme/app_theme.dart';
@@ -282,7 +283,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
       return ProfileModalSection(
         title: '사진',
         content: const MingrrEmptySection(
-          icon: Icons.photo_library_outlined,
+          icon: AppIcons.photoOutlined,
           message: '등록된 사진이 없어요',
         ),
       );
@@ -308,7 +309,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
     return ProfileModalHeader(
       avatar: ProfileModalAvatar(
         imageUrl: widget.profileImageUrl,
-        fallbackIcon: Icons.pets,
+        fallbackIcon: AppIcons.pet,
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       ),
       name: widget.petName,
@@ -338,7 +339,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            isMale ? Icons.male : Icons.female,
+            isMale ? AppIcons.male : AppIcons.female,
             size: 14,
             color: isMale ? Colors.blue : Colors.pink,
           ),
@@ -368,8 +369,8 @@ class _PetProfileModalState extends State<PetProfileModal> {
     if (widget.introduction == null || widget.introduction!.isEmpty) {
       return ProfileModalSection(
         title: '소개',
-        content: const MingrrEmptySection(
-          icon: Icons.description_outlined,
+        content: MingrrEmptySection(
+          icon: AppIcons.description,
           message: '등록된 소개가 없어요',
           height: 60,
         ),
@@ -426,7 +427,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
                         color: Theme.of(context).colorScheme.primary.withValues(alpha: AppOpacity.o10),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.person, size: 22, color: Theme.of(context).colorScheme.primary),
+                      child: Icon(AppIcons.profile, size: 22, color: Theme.of(context).colorScheme.primary),
                     ),
                     const SizedBox(width: AppSizes.gapM),
                     Expanded(
@@ -442,7 +443,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
                         ],
                       ),
                     ),
-                    Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+                    Icon(AppIcons.chevronRight, color: Theme.of(context).colorScheme.outlineVariant),
                   ],
                 ),
                 // 인증 배지 (소형)
@@ -453,17 +454,17 @@ class _PetProfileModalState extends State<PetProfileModal> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _buildSmallVerificationBadge(
-                      icon: Icons.verified_user_outlined,
+                      icon: AppIcons.verified,
                       label: '본인인증',
                       isVerified: guardian.isIdentityVerified,
                     ),
                     _buildSmallVerificationBadge(
-                      icon: Icons.pets_outlined,
+                      icon: AppIcons.petOutlined,
                       label: '동물등록',
                       isVerified: guardian.isPetVerified,
                     ),
                     _buildSmallVerificationBadge(
-                      icon: Icons.location_on_outlined,
+                      icon: AppIcons.locationOutlined,
                       label: '위치인증',
                       isVerified: guardian.isLocationVerified,
                     ),
@@ -498,7 +499,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
           ),
         ),
         if (!isVerified)
-          Icon(Icons.close, size: 10, color: Theme.of(context).colorScheme.outlineVariant),
+          Icon(AppIcons.close, size: 10, color: Theme.of(context).colorScheme.outlineVariant),
       ],
     );
   }

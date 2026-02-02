@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../common_widgets.dart';
@@ -303,7 +304,7 @@ class InfoDialog extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.lightbulb_outline, size: 16, color: accentColor),
+                  Icon(AppIcons.lightbulb, size: 16, color: accentColor),
                   const SizedBox(width: AppSizes.gapS),
                   Expanded(
                     child: Text(

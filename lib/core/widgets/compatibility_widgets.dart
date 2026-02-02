@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_icons.dart';
 import '../constants/app_sizes.dart';
 import '../theme/app_text_styles.dart';
 import '../theme/feature_colors.dart';
@@ -98,49 +99,49 @@ const List<CompatibilityFactor> compatibilityFactors = [
     name: '체형 궁합',
     percentage: 20,
     description: '크기와 체중이 비슷할수록 높아요',
-    icon: Icons.straighten,
+    icon: AppIcons.distance,
   ),
   CompatibilityFactor(
     name: '성격 궁합',
     percentage: 20,
     description: '성격이 잘 맞을수록 높아요',
-    icon: Icons.psychology,
+    icon: AppIcons.psychology,
   ),
   CompatibilityFactor(
     name: '거리',
     percentage: 15,
     description: '가까울수록 만나기 쉬워요',
-    icon: Icons.location_on,
+    icon: AppIcons.location,
   ),
   CompatibilityFactor(
     name: '보호자 신뢰도',
     percentage: 15,
     description: '인증과 꼬순내지수가 높을수록 좋아요',
-    icon: Icons.verified_user,
+    icon: AppIcons.verified,
   ),
   CompatibilityFactor(
     name: '인기도',
     percentage: 10,
     description: '활발하게 활동하는 친구예요',
-    icon: Icons.favorite,
+    icon: AppIcons.like,
   ),
   CompatibilityFactor(
     name: '앱 활성도',
     percentage: 10,
     description: '최근 활동이 많을수록 높아요',
-    icon: Icons.access_time,
+    icon: AppIcons.accessTime,
   ),
   CompatibilityFactor(
     name: '나이 궁합',
     percentage: 5,
     description: '비슷한 나이대면 더 잘 놀아요',
-    icon: Icons.cake,
+    icon: AppIcons.cake,
   ),
   CompatibilityFactor(
     name: '품종 궁합',
     percentage: 5,
     description: '같은 품종이면 더 잘 맞아요',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
   ),
 ];
 
@@ -151,7 +152,7 @@ void showCompatibilityGuideModal(BuildContext context) {
   showInfoDialog(
     context,
     title: '궁합이란?',
-    icon: Icons.auto_awesome,
+    icon: AppIcons.autoAwesome,
     subtitle: '우리 아이와 얼마나 잘 맞는지 알려드려요',
     accentColor: features.dating,
     customContent: const _CompatibilityGuideContent(),
@@ -315,7 +316,7 @@ class CompatibilityScoreBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.auto_awesome, size: badgeSize, color: Colors.white),
+          Icon(AppIcons.autoAwesome, size: badgeSize, color: Colors.white),
           if (showLabel) ...[
             const SizedBox(width: AppSizes.gapXS),
             Text(
@@ -407,7 +408,7 @@ class CompatibilityScoreCard extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.help_outline,
+                  AppIcons.help,
                   size: 18,
                   color: features.dating,
                 ),

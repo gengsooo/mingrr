@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -168,7 +169,7 @@ class HomeScreen extends ConsumerWidget {
       margin: EdgeInsets.zero,
       child: Column(
         children: [
-          Icon(Icons.pets, size: 48, color: colorScheme.outlineVariant),
+          Icon(AppIcons.pet, size: 48, color: colorScheme.outlineVariant),
           const SizedBox(height: AppSizes.gapM),
           Text(
             '등록된 반려동물이 없습니다',
@@ -236,20 +237,10 @@ class HomeScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 섹션 헤더
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '내 반려동물',
-              style: AppTextStyles.headlineSmall(context),
-            ),
-            Builder(
-              builder: (context) => TextButton(
-                onPressed: () => context.push('/profile'),
-                child: Text('관리', style: AppTextStyles.bodySmall(context)),
-              ),
-            ),
-          ],
+        MingrrSectionHeader(
+          title: '내 반려동물',
+          actionText: '관리',
+          onActionTap: () => context.push('/profile'),
         ),
         const SizedBox(height: AppSizes.gapS),
         
@@ -268,15 +259,15 @@ class HomeScreen extends ConsumerWidget {
                   ref.read(selectedPetIndexProvider.notifier).state = index;
                 },
                 child: Container(
-                  width: 85,
-                  margin: const EdgeInsets.only(right: AppSizes.gapM),
+                  width: 70,
+                  margin: const EdgeInsets.only(right: AppSizes.gapS),
                   child: Column(
                     children: [
                       // 프로필 이미지 (프로필 이미지만 사용, 없으면 기본 아이콘)
                       Builder(
                         builder: (ctx) {
                           final cs = Theme.of(ctx).colorScheme;
-                          return MingrrPetAvatar(
+                          return MingrrImage.petAvatar(
                             imageUrl: pet.profileImageUrl,
                             size: 60,
                             borderColor: isSelected ? cs.primary : null,
@@ -321,20 +312,10 @@ class HomeScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 섹션 헤더
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '${selectedPet.name}의 건강 기록',
-              style: AppTextStyles.headlineSmall(context),
-            ),
-            Builder(
-              builder: (ctx) => TextButton(
-                onPressed: () => _showHealthCategorySettings(ctx, ref),
-                child: Text('설정', style: AppTextStyles.bodySmall(ctx)),
-              ),
-            ),
-          ],
+        MingrrSectionHeader(
+          title: '${selectedPet.name}의 건강 기록',
+          actionText: '설정',
+          onActionTap: () => _showHealthCategorySettings(context, ref),
         ),
         const SizedBox(height: AppSizes.gapM),
         
@@ -371,14 +352,14 @@ class HomeScreen extends ConsumerWidget {
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.add_circle_outline, size: 18, color: cs.onSurfaceVariant),
+                      Icon(AppIcons.addCircle, size: 18, color: cs.onSurfaceVariant),
                       const SizedBox(width: AppSizes.gapS),
                       Text(
                         '건강수첩 열기',
                         style: AppTextStyles.titleMedium(ctx).withColor(cs.onSurfaceVariant),
                       ),
                       const SizedBox(width: AppSizes.gapXS),
-                      Icon(Icons.chevron_right, size: 18, color: cs.onSurfaceVariant),
+                      Icon(AppIcons.chevronRight, size: 18, color: cs.onSurfaceVariant),
                     ],
                   );
                 },
@@ -520,7 +501,7 @@ class HomeScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(AppSizes.radiusM),
                   ),
                   child: const Center(
-                    child: Icon(Icons.directions_walk, size: 32, color: Colors.white),
+                    child: Icon(AppIcons.walk, size: 32, color: Colors.white),
                   ),
                 ),
                 const SizedBox(width: AppSizes.gapM),
@@ -549,8 +530,8 @@ class HomeScreen extends ConsumerWidget {
                     color: Colors.white.withValues(alpha: AppOpacity.o20),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.arrow_forward_rounded,
+                  child: Icon(
+                    AppIcons.arrowForward,
                     color: Colors.white,
                     size: 22,
                   ),
@@ -743,7 +724,7 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildPetSquareImage(PetModel pet, double height) {
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusM)),
-      child: MingrrBackgroundImage(
+      child: MingrrImage.background(
         imageUrl: pet.displayImageUrl,
         height: height,
         placeholder: _buildDefaultPetIcon(height),
@@ -761,7 +742,7 @@ class HomeScreen extends ConsumerWidget {
 
   /// 반려동물 프로필 이미지 (원형, 내 반려동물 선택기용)
   Widget _buildPetProfileImage(PetModel pet, double size) {
-    return MingrrPetAvatar(
+    return MingrrImage.petAvatar(
       imageUrl: pet.profileImageUrl ?? pet.displayImageUrl,
       size: size,
     );
@@ -831,11 +812,11 @@ class HomeScreen extends ConsumerWidget {
       onTap: () => context.push('/social/group/${group.id}'),
       child: Row(
         children: [
-          MingrrThumbnail(
+          MingrrImage.thumbnail(
             imageUrl: group.imageUrl,
             width: 50,
             height: 50,
-            borderRadius: AppSizes.radiusM,
+            radius: AppSizes.radiusM,
             errorWidget: Container(
               width: 50,
               height: 50,
@@ -843,7 +824,7 @@ class HomeScreen extends ConsumerWidget {
                 color: features.social.withValues(alpha: AppOpacity.o15),
                 borderRadius: BorderRadius.circular(AppSizes.radiusM),
               ),
-              child: Icon(Icons.groups, color: features.social, size: 26),
+              child: Icon(AppIcons.group, color: features.social, size: 26),
             ),
           ),
           const SizedBox(width: AppSizes.gapM),
@@ -880,7 +861,7 @@ class HomeScreen extends ConsumerWidget {
                       style: AppTextStyles.captionSmall(context),
                     ),
                     const SizedBox(width: AppSizes.gapS),
-                    Icon(Icons.people, size: 12, color: colorScheme.outlineVariant),
+                    Icon(AppIcons.people, size: 12, color: colorScheme.outlineVariant),
                     const SizedBox(width: 2),
                     Text(
                       '${group.memberCount}명',
@@ -891,7 +872,7 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
           ),
-          Icon(Icons.chevron_right, color: colorScheme.outlineVariant),
+          Icon(AppIcons.chevronRight, color: colorScheme.outlineVariant),
         ],
       ),
     );

@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_sizes.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/location_constants.dart';
-import '../../constants/pet_constants.dart';
 import '../../theme/feature_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../common_widgets.dart';
 import '../badges/info_badge.dart';
 import '../badges/trait_badge.dart';
-import '../badges/svg_icons.dart';
+import '../mingrr_image.dart';
 
 /// ============================================================
 /// 데이팅 카드 컴포넌트
@@ -175,31 +175,11 @@ class DatingRecommendCard extends StatelessWidget {
   }
 
   Widget _buildBackground(BuildContext context) {
-    if (imageUrl != null) {
-      return Image.network(
-        imageUrl!,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => _buildPlaceholder(context),
-      );
-    }
-    return _buildPlaceholder(context);
-  }
-
-  Widget _buildPlaceholder(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            context.features.datingContainer,
-            context.features.dating.withValues(alpha: AppOpacity.o20),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: Center(
-        child: DefaultPetIcon(size: 80),
-      ),
+    return MingrrImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      accentColor: context.features.dating,
+      placeholderIcon: AppIcons.pet,
     );
   }
 
@@ -291,26 +271,20 @@ class DatingNearbyCard extends StatelessWidget {
   }
 
   Widget _buildImageSection(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.features.datingContainer,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppSizes.radiusL),
-        ),
-        image: imageUrl != null
-            ? DecorationImage(
-                image: NetworkImage(imageUrl!),
-                fit: BoxFit.cover,
-              )
-            : null,
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(AppSizes.radiusL),
       ),
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (imageUrl == null)
-            Center(
-              child: DefaultPetIcon(size: 50),
-            ),
+          // 이미지 또는 플레이스홀더
+          MingrrImage(
+            imageUrl: imageUrl,
+            fit: BoxFit.cover,
+            accentColor: context.features.dating,
+            placeholderIcon: AppIcons.pet,
+          ),
           // 거리 배지 (우상단)
           Positioned(
             top: 8,
@@ -412,7 +386,6 @@ class DatingBreedingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final features = context.features;
 
     return GestureDetector(
       onTap: onTap,
@@ -495,39 +468,35 @@ class DatingBreedingCard extends StatelessWidget {
   }
 
   Widget _buildImageSection(BuildContext context) {
-    return Container(
-      width: 120,
-      decoration: BoxDecoration(
-        color: context.features.datingContainer,
-        borderRadius: const BorderRadius.horizontal(
-          left: Radius.circular(AppSizes.radiusL),
-        ),
-        image: imageUrl != null
-            ? DecorationImage(
-                image: NetworkImage(imageUrl!),
-                fit: BoxFit.cover,
-              )
-            : null,
+    return ClipRRect(
+      borderRadius: const BorderRadius.horizontal(
+        left: Radius.circular(AppSizes.radiusL),
       ),
-      child: Stack(
-        children: [
-          if (imageUrl == null)
-            Center(
-              child: DefaultPetIcon(size: 50),
+      child: SizedBox(
+        width: 120,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // 이미지 또는 플레이스홀더 (데이팅 테마 사용으로 통일)
+            MingrrImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.cover,
+              accentColor: context.features.dating,
+              placeholderIcon: AppIcons.pet,
             ),
-          // 성별 배지 (좌상단)
-          Positioned(
-            top: 8,
-            left: 8,
-            child: PetGenderBadge(
-              isMale: isMale,
-              showLabel: true,
-              size: InfoBadgeSize.small,
+            // 성별 배지 (좌상단)
+            Positioned(
+              top: 8,
+              left: 8,
+              child: PetGenderBadge(
+                isMale: isMale,
+                showLabel: true,
+                size: InfoBadgeSize.small,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
-
 }

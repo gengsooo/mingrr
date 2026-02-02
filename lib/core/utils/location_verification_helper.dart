@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../constants/app_icons.dart';
 import '../constants/app_sizes.dart';
 import '../constants/location_constants.dart';
 import '../theme/app_text_styles.dart';
@@ -277,7 +278,7 @@ class _LocationVerificationDialogState extends State<LocationVerificationDialog>
             color: Colors.red.withValues(alpha: AppOpacity.o10),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.location_off, size: 28, color: Colors.red),
+          child: const Icon(AppIcons.locationOff, size: 28, color: Colors.red),
         ),
         const SizedBox(height: AppSizes.gapLL),
         Text(
@@ -330,23 +331,23 @@ class _LocationVerificationDialogState extends State<LocationVerificationDialog>
         title = '위치 인증';
         message = '현재 위치를 내 동네로 등록하시겠습니까?';
         buttonText = '인증하기';
-        icon = Icons.location_on;
+        icon = AppIcons.location;
       } else {
         title = '위치 인증 갱신';
         message = '현재 위치에서 인증을 갱신하시겠습니까?';
         buttonText = '인증 갱신';
-        icon = Icons.check_circle;
+        icon = AppIcons.checkCircle;
       }
     } else if (isTooFar) {
       title = '조금 더 가까이';
       message = '설정한 동네에서 ${_distance!.round()}m 떨어져 있어요.\n저장된 동네 근처(500m 이내)에서 인증할 수 있습니다.';
       buttonText = '확인';
-      icon = Icons.near_me;
+      icon = AppIcons.nearMe;
     } else {
       title = '동네 변경';
       message = '현재 위치가 저장된 동네와\n${LocationService.formatDistance(_distance!)} 떨어져 있어요.';
       buttonText = '동네 변경';
-      icon = Icons.swap_horiz;
+      icon = AppIcons.swap;
     }
     
     return Column(
@@ -390,7 +391,7 @@ class _LocationVerificationDialogState extends State<LocationVerificationDialog>
             ),
             child: Row(
               children: [
-                Icon(Icons.my_location, color: themeColor, size: 20),
+                Icon(AppIcons.myLocation, color: themeColor, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(

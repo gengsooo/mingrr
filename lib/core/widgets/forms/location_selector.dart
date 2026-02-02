@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/feature_colors.dart';
 import '../../theme/app_text_styles.dart';
@@ -582,7 +583,7 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
                                             ),
                                             if (cityDistricts.isEmpty)
                                               Icon(
-                                                isSelected ? Icons.check : Icons.add,
+                                                isSelected ? AppIcons.check : AppIcons.add,
                                                 size: 16,
                                                 color: accentColor,
                                               ),
@@ -643,7 +644,7 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
                                             ),
                                           ),
                                           Icon(
-                                            isSelected ? Icons.check : Icons.add,
+                                            isSelected ? AppIcons.check : AppIcons.add,
                                             size: 16,
                                             color: accentColor,
                                           ),
@@ -795,7 +796,7 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
                   children: _tempSelected.map((location) {
                     return Chip(
                       label: Text(location, style: AppTextStyles.labelMedium(context)),
-                      deleteIcon: const Icon(Icons.close, size: 14),
+                      deleteIcon: Icon(AppIcons.close, size: 14),
                       onDeleted: () => setState(() => _tempSelected.remove(location)),
                       backgroundColor: accentColor.withValues(alpha: AppOpacity.o10),
                       side: BorderSide.none,
@@ -899,9 +900,9 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
                                         ),
                                       ),
                                       if (_tempSelected.contains('$_selectedProvince $city'))
-                                        Icon(Icons.check, size: 18, color: accentColor)
+                                        Icon(AppIcons.check, size: 18, color: accentColor)
                                       else if (!hasDistricts)
-                                        Icon(Icons.add, size: 18, color: accentColor),
+                                        Icon(AppIcons.add, size: 18, color: accentColor),
                                     ],
                                   ),
                                 ),
@@ -946,9 +947,9 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
                                       ),
                                     ),
                                     if (isSelected)
-                                      Icon(Icons.check, size: 18, color: accentColor)
+                                      Icon(AppIcons.check, size: 18, color: accentColor)
                                     else
-                                      Icon(Icons.add, size: 18, color: accentColor),
+                                      Icon(AppIcons.add, size: 18, color: accentColor),
                                   ],
                                 ),
                               ),

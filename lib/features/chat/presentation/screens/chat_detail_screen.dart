@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/feature_colors.dart';
@@ -186,7 +187,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          icon: const Icon(AppIcons.back, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         titleSpacing: 0,
@@ -233,7 +234,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                         ),
                       ),
                       const SizedBox(width: AppSizes.gapXS),
-                      Icon(Icons.chevron_right, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
+                      Icon(AppIcons.chevronRight, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
                     ],
                   ),
                 ),
@@ -245,7 +246,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           // 검색 버튼
           IconButton(
             icon: Icon(
-              _isSearching ? Icons.close : Icons.search,
+              _isSearching ? AppIcons.close : AppIcons.search,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             onPressed: () {
@@ -259,7 +260,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             },
           ),
           IconButton(
-            icon: Icon(Icons.more_vert, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            icon: Icon(AppIcons.moreVert, color: Theme.of(context).colorScheme.onSurfaceVariant),
             onPressed: () => _showOptionsSheet(context),
           ),
         ],
@@ -277,7 +278,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 decoration: InputDecoration(
                   hintText: '메시지 검색...',
                   hintStyle: AppTextStyles.bodySmall(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
-                  prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.outlineVariant),
+                  prefixIcon: Icon(AppIcons.search, color: Theme.of(context).colorScheme.outlineVariant),
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   border: OutlineInputBorder(
@@ -313,7 +314,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   
                   if (messages.isEmpty) {
                     return MingrrEmptyState(
-                      icon: Icons.chat_outlined,
+                      icon: AppIcons.chatOutlined,
                       title: '대화를 시작해보세요!',
                       subtitle: '반려동물 친구를 만들어보세요',
                     );
@@ -321,7 +322,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   
                   if (_searchQuery.isNotEmpty && filteredMessages.isEmpty) {
                     return MingrrEmptyState(
-                      icon: Icons.search_off,
+                      icon: AppIcons.searchOff,
                       title: '검색 결과가 없습니다',
                       subtitle: '"$_searchQuery"에 대한 메시지를 찾을 수 없습니다',
                     );
@@ -670,7 +671,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           imageUrl.isNotEmpty && 
                           !imageUrl.startsWith('default_avatar:');
     
-    return MingrrPetAvatar(
+    return MingrrImage.petAvatar(
       imageUrl: hasValidImage ? imageUrl : null,
       size: size,
       borderColor: themeColor.withValues(alpha: AppOpacity.o30),
@@ -682,7 +683,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   Widget _buildAvatarPlaceholder(String name, double size, Color color) {
     return Center(
       child: Icon(
-        Icons.pets,
+        AppIcons.pet,
         size: size * 0.5,
         color: color,
       ),
@@ -693,17 +694,17 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   IconData _getChatTypeIcon(String type) {
     switch (type) {
       case 'dating':
-        return Icons.favorite;
+        return AppIcons.dating;
       case 'breeding':
-        return Icons.pets;
+        return AppIcons.pet;
       case 'marketplace':
       case 'market':
-        return Icons.store;
+        return AppIcons.market;
       case 'community':
       case 'group':
-        return Icons.groups;
+        return AppIcons.group;
       default:
-        return Icons.chat;
+        return AppIcons.chat;
     }
   }
 
@@ -830,19 +831,18 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       case MessageType.image:
         return GestureDetector(
           onTap: () => _showFullScreenImage(context, message.imageUrl!),
-          child: MingrrNetworkImage(
+          child: MingrrImage.thumbnail(
             imageUrl: message.imageUrl,
             width: 200,
             height: 150,
-            fit: BoxFit.cover,
-            borderRadius: BorderRadius.circular(AppSizes.radiusS),
+            radius: AppSizes.radiusS,
           ),
         );
       case MessageType.location:
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.location_on, color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface, size: 18),
+            Icon(AppIcons.location, color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface, size: 18),
             const SizedBox(width: AppSizes.gapSM),
             Flexible(
               child: Text(
@@ -905,11 +905,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                             strokeWidth: 2,
                             customColor: themeColor,
                           ),
-                          Icon(Icons.image, color: themeColor, size: 12),
+                          Icon(AppIcons.image, color: themeColor, size: 12),
                         ],
                       )
                     : IconButton(
-                        icon: Icon(Icons.add_photo_alternate_outlined, color: themeColor, size: 20),
+                        icon: Icon(AppIcons.addPhoto, color: themeColor, size: 20),
                         onPressed: _pickAndSendImage,
                         padding: EdgeInsets.zero,
                       ),
@@ -956,7 +956,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                               strokeWidth: 2,
                               customColor: Colors.white,
                             )
-                          : const Icon(Icons.send, color: Colors.white, size: 20),
+                          : const Icon(AppIcons.send, color: Colors.white, size: 20),
                     ),
                   ),
                 ),
@@ -1068,7 +1068,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                                chatType == 'breeding';
     if (hasCompleteAction && (_transaction == null || _transaction!.status == 'pending')) {
       options.add(MingrrOptionItem(
-        icon: Icons.check_circle_outline,
+        icon: AppIcons.successOutlined,
         label: chatType == 'marketplace' ? '거래 완료하기' : '만남 완료하기',
         color: context.features.success,
         onTap: _showCompleteDialog,
@@ -1078,7 +1078,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     // 평가하기 버튼
     if (canRate) {
       options.add(MingrrOptionItem(
-        icon: Icons.star_outline,
+        icon: AppIcons.starOutlined,
         label: '평가하기',
         color: Colors.amber,
         onTap: _showRatingSheet,
@@ -1087,24 +1087,24 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     
     options.addAll([
       MingrrOptionItem(
-        icon: Icons.notifications_off_outlined,
+        icon: AppIcons.notificationsNone,
         label: '알림 끄기',
         onTap: () => MingrrSnackBar.success(context, '알림이 꺼졌습니다'),
       ),
       MingrrOptionItem(
-        icon: Icons.block_outlined,
+        icon: AppIcons.block,
         label: '차단하기',
         color: Colors.orange,
         onTap: () => _blockUser(context),
       ),
       MingrrOptionItem(
-        icon: Icons.report_outlined,
+        icon: AppIcons.report,
         label: '신고하기',
         color: Colors.orange,
         onTap: _showReportDialog,
       ),
       MingrrOptionItem(
-        icon: Icons.exit_to_app,
+        icon: AppIcons.exit,
         label: '채팅방 나가기',
         isDestructive: true,
         onTap: () => _leaveChatRoom(context),
@@ -1261,7 +1261,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       options: ['욕설/비방', '사기/허위정보', '노쇼', '부적절한 행동', '기타'],
       confirmText: '신고',
       confirmColor: Colors.red,
-      icon: Icons.report_outlined,
+      icon: AppIcons.report,
     );
 
     if (reason != null && mounted) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_icons.dart';
 
 /// ============================================================
 /// MINGRR 반려동물 전용 앱 상수
@@ -19,8 +20,8 @@ import 'package:flutter/material.dart';
 /// 사용자(보호자) 성별
 /// - 안전한 만남을 위해 보호자 성별 정보 필수
 enum UserGender {
-  male('남성', Icons.male),
-  female('여성', Icons.female);
+  male('남성', AppIcons.male),
+  female('여성', AppIcons.female);
 
   final String label;
   final IconData icon;
@@ -60,8 +61,8 @@ enum PetSize {
 /// 반려동물 성별
 /// - 교배 매칭 시 필수 정보
 enum PetGender {
-  male('남아', Icons.male),
-  female('여아', Icons.female);
+  male('남아', AppIcons.male),
+  female('여아', AppIcons.female);
 
   final String label;
   final IconData icon;
@@ -163,13 +164,13 @@ enum PetTraitCategory {
 /// ============================================================
 enum HealthCategory {
   // ===== 건강수첩 카테고리 (건강수첩 화면과 동기화) =====
-  weight('체중', Icons.monitor_weight_outlined, '체중 변화를 기록해요', true),
-  walk('산책', Icons.directions_walk, '산책 시간과 거리를 기록해요', true),
-  grooming('그루밍', Icons.content_cut, '미용/위생 관리를 기록해요', true),
-  medication('약', Icons.medication_outlined, '복용 중인 약을 관리해요', true),
-  vaccination('예방접종', Icons.vaccines_outlined, '예방접종 일정을 관리해요', true),
-  checkup('정기검진', Icons.local_hospital_outlined, '정기검진 일정을 관리해요', true),
-  special('특이사항', Icons.note_alt_outlined, '기타 특이사항을 기록해요', true);
+  weight('체중', AppIcons.weight, '체중 변화를 기록해요', true),
+  walk('산책', AppIcons.walk, '산책 시간과 거리를 기록해요', true),
+  grooming('그루밍', AppIcons.grooming, '미용/위생 관리를 기록해요', true),
+  medication('약', AppIcons.medication, '복용 중인 약을 관리해요', true),
+  vaccination('예방접종', AppIcons.vaccination, '예방접종 일정을 관리해요', true),
+  checkup('정기검진', AppIcons.checkup, '정기검진 일정을 관리해요', true),
+  special('특이사항', AppIcons.special, '기타 특이사항을 기록해요', true);
 
   final String label;
   final IconData icon;
@@ -186,17 +187,17 @@ enum HealthCategory {
 /// 그루밍 세부 항목
 /// - 샤워, 빗질, 발톱정리, 이발, 귀청소 등
 enum GroomingType {
-  shower('샤워', Icons.shower_outlined, '목욕/샤워'),
-  brushing('빗질', Icons.brush_outlined, '털 빗질'),
-  nailTrim('발톱정리', Icons.content_cut, '발톱 깎기'),
-  haircut('이발', Icons.cut_outlined, '털 미용/커트'),
-  earCleaning('귀청소', Icons.hearing_outlined, '귀 청소'),
-  eyeCleaning('눈물자국', Icons.visibility_outlined, '눈물자국 닦기'),
-  analGland('항문낭', Icons.circle_outlined, '항문낭 짜기'),
-  pawCare('발바닥', Icons.pets, '발바닥 관리'),
-  teethBrushing('양치', Icons.clean_hands_outlined, '양치질'),
-  teethScaling('치석제거', Icons.auto_fix_high, '치석 제거/스케일링'),
-  other('기타', Icons.more_horiz, '기타 그루밍');
+  shower('샤워', AppIcons.shower, '목욕/샤워'),
+  brushing('빗질', AppIcons.brushing, '털 빗질'),
+  nailTrim('발톱정리', AppIcons.nailTrim, '발톱 깎기'),
+  haircut('이발', AppIcons.haircut, '털 미용/커트'),
+  earCleaning('귀청소', AppIcons.earCleaning, '귀 청소'),
+  eyeCleaning('눈물자국', AppIcons.eyeCleaning, '눈물자국 닦기'),
+  analGland('항문낭', AppIcons.analGland, '항문낭 짜기'),
+  pawCare('발바닥', AppIcons.pawCare, '발바닥 관리'),
+  teethBrushing('양치', AppIcons.teethBrushing, '양치질'),
+  teethScaling('치석제거', AppIcons.teethScaling, '치석 제거/스케일링'),
+  other('기타', AppIcons.more, '기타 그루밍');
 
   final String label;
   final IconData icon;
@@ -265,9 +266,9 @@ enum MedicationIconType {
 /// - 위치 인증 추가 (당근마켓 스타일)
 /// ============================================================
 enum BadgeType {
-  identity('본인인증', Icons.verified_user_outlined, '본인 인증을 완료했어요'),
-  location('위치인증', Icons.location_on_outlined, '동네 인증을 완료했어요'),
-  petRegistration('동물등록', Icons.pets, '동물등록 인증을 완료했어요');
+  identity('본인인증', AppIcons.badgeIdentity, '본인 인증을 완료했어요'),
+  location('위치인증', AppIcons.badgeLocation, '동네 인증을 완료했어요'),
+  petRegistration('동물등록', AppIcons.badgePet, '동물등록 인증을 완료했어요');
 
   final String label;
   final IconData icon;
@@ -280,13 +281,13 @@ enum BadgeType {
 /// 소모임 카테고리
 /// ============================================================
 enum GroupCategory {
-  walk('산책 모임', Icons.directions_walk_outlined, '함께 산책해요'),
-  play('놀이 모임', Icons.sports_tennis_outlined, '함께 놀아요'),
-  share('나눔 모임', Icons.card_giftcard_outlined, '물품을 나눠요'),
-  coffee('커피 모임', Icons.coffee_outlined, '보호자끼리 모여요'),
-  training('훈련 모임', Icons.school_outlined, '함께 훈련해요'),
-  health('건강 모임', Icons.fitness_center_outlined, '건강 정보를 나눠요'),
-  other('기타', Icons.more_horiz_outlined, '기타 모임이에요');
+  walk('산책 모임', AppIcons.groupWalk, '함께 산책해요'),
+  play('놀이 모임', AppIcons.groupPlay, '함께 놀아요'),
+  share('나눔 모임', AppIcons.groupShare, '물품을 나눠요'),
+  coffee('커피 모임', AppIcons.groupCoffee, '보호자끼리 모여요'),
+  training('훈련 모임', AppIcons.groupTraining, '함께 훈련해요'),
+  health('건강 모임', AppIcons.groupHealth, '건강 정보를 나눠요'),
+  other('기타', AppIcons.more, '기타 모임이에요');
 
   final String label;
   final IconData icon;
@@ -314,10 +315,10 @@ enum GroupRestriction {
 /// - 교배 채팅 타입 분리 (배지 표시용)
 /// ============================================================
 enum ChatType {
-  dating('데이팅', Icons.favorite, '친구 만들기 채팅'),
-  breeding('교배', Icons.family_restroom, '교배 상대 채팅'),
-  group('소모임', Icons.groups, '소모임 채팅'),
-  market('마켓', Icons.storefront, '중고거래 채팅');
+  dating('데이팅', AppIcons.dating, '친구 만들기 채팅'),
+  breeding('교배', AppIcons.breeding, '교배 상대 채팅'),
+  group('소모임', AppIcons.group, '소모임 채팅'),
+  market('마켓', AppIcons.market, '중고거래 채팅');
 
   final String label;
   final IconData icon;

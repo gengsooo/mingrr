@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/widgets/navigation/appbar_actions.dart';
 import '../../../../core/widgets/common_widgets.dart';
@@ -35,8 +36,8 @@ class SocialScreen extends ConsumerWidget {
     final selectedTab = ref.watch(_selectedTabProvider);
 
     final tabs = [
-      MingrrTabItem(label: '커뮤니티', icon: Icons.article_outlined, color: accentColor),
-      MingrrTabItem(label: '소모임', icon: Icons.groups_outlined, color: accentColor),
+      MingrrTabItem(label: '커뮤니티', icon: AppIcons.communityOutlined, color: accentColor),
+      MingrrTabItem(label: '소모임', icon: AppIcons.group, color: accentColor),
     ];
 
     return Scaffold(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -189,7 +190,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         MingrrTextField(
           controller: _phoneController,
           hintText: '010-1234-5678',
-          prefixIcon: Icons.phone_android,
+          prefixIcon: AppIcons.phone,
           keyboardType: TextInputType.phone,
           enabled: !_isCodeSent,
         ),
@@ -200,7 +201,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           MingrrTextField(
             controller: _codeController,
             hintText: '인증번호 6자리',
-            prefixIcon: Icons.lock_outline,
+            prefixIcon: AppIcons.lock,
             keyboardType: TextInputType.number,
           ),
         ],
@@ -250,7 +251,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           key: const ValueKey('email_field'),
           controller: _emailController,
           hintText: 'test@mingrr.com',
-          prefixIcon: Icons.email_outlined,
+          prefixIcon: AppIcons.email,
           keyboardType: TextInputType.emailAddress,
         ),
         const SizedBox(height: AppSizes.gapM),
@@ -260,7 +261,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           key: const ValueKey('password_field'),
           controller: _passwordController,
           hintText: '비밀번호',
-          prefixIcon: Icons.lock_outline,
+          prefixIcon: AppIcons.lock,
           obscureText: true,
         ),
         const SizedBox(height: AppSizes.gapL),

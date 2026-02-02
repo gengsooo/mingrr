@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/feature_colors.dart';
@@ -320,7 +321,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
               child: Opacity(
                 opacity: opacity,
                 child: Icon(
-                  Icons.pets,
+                  AppIcons.pet,
                   size: 16,
                   color: _accentColor.withValues(alpha: AppOpacity.o50),
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../theme/feature_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../constants/app_sizes.dart';
@@ -75,20 +76,12 @@ class ProductCard extends StatelessWidget {
   }
 
   Widget _buildImage(BuildContext context) {
-    return MingrrBackgroundImage(
+    return MingrrImage.background(
       imageUrl: product.imageUrls.isNotEmpty ? product.imageUrls.first : null,
       width: 100,
       height: 100,
-      borderRadius: AppSizes.radiusM,
-      placeholder: Container(
-        decoration: BoxDecoration(
-          color: context.features.marketContainer,
-          borderRadius: BorderRadius.circular(AppSizes.radiusM),
-        ),
-        child: Center(
-          child: Icon(Icons.image, size: 40, color: context.features.market),
-        ),
-      ),
+      radius: AppSizes.radiusM,
+      accentColor: context.features.market,
       child: Stack(
         children: [
           if (product.status == ProductStatus.reserved)
@@ -152,12 +145,12 @@ class ProductCard extends StatelessWidget {
         const Spacer(),
         Row(
           children: [
-            Icon(Icons.bookmark_border, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(AppIcons.bookmarkOutlined, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(width: 2),
             Text('${product.likeCount}',
                 style: AppTextStyles.captionSmall(context)),
             const SizedBox(width: AppSizes.gapS),
-            Icon(Icons.chat_bubble_outline, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(AppIcons.chatBubbleOutlined, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(width: 2),
             Text('${product.chatCount}',
                 style: AppTextStyles.captionSmall(context)),
@@ -229,7 +222,7 @@ class JobCard extends StatelessWidget {
                 // 3줄: 기간 (없으면 '기간 정보 없음')
                 Row(
                   children: [
-                    Icon(Icons.calendar_today, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    Icon(AppIcons.calendar, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: AppSizes.gapXS),
                     Expanded(
                       child: Text(
@@ -256,18 +249,18 @@ class JobCard extends StatelessWidget {
 
   /// 좌측 이미지 영역 (썸네일 이미지 + 상태 배지)
   Widget _buildImage(BuildContext context) {
-    return MingrrBackgroundImage(
+    return MingrrImage.background(
       imageUrl: job.imageUrls.isNotEmpty ? job.imageUrls.first : null,
       width: 100,
       height: 100,
-      borderRadius: AppSizes.radiusM,
+      radius: AppSizes.radiusM,
       placeholder: Container(
         decoration: BoxDecoration(
           color: context.features.marketContainer,
           borderRadius: BorderRadius.circular(AppSizes.radiusM),
         ),
         child: Center(
-          child: Icon(Icons.image, size: 40, color: context.features.market),
+          child: Icon(AppIcons.image, size: 40, color: context.features.market),
         ),
       ),
       child: Stack(
@@ -364,7 +357,7 @@ class JobCard extends StatelessWidget {
         // 채팅수
         Row(
           children: [
-            Icon(Icons.chat_bubble_outline, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(AppIcons.chatBubbleOutlined, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(width: 2),
             Text('${job.chatCount}', style: AppTextStyles.captionSmall(context)),
           ],

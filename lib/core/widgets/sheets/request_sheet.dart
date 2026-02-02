@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../theme/feature_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../constants/app_sizes.dart';
@@ -136,7 +137,7 @@ class _RequestSheetState extends State<RequestSheet> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.info_outline, color: Theme.of(context).colorScheme.outlineVariant, size: 20),
+                            Icon(AppIcons.info, color: Theme.of(context).colorScheme.outlineVariant, size: 20),
                             const SizedBox(width: AppSizes.gapS),
                             Expanded(
                               child: Text(
@@ -233,7 +234,7 @@ class _RequestSheetState extends State<RequestSheet> {
     switch (widget.type) {
       case RequestSheetType.date:
         return _RequestConfig(
-          icon: Icons.favorite,
+          icon: AppIcons.dating,
           color: context.features.dating,
           title: '데이트 신청',
           description: '${widget.targetName ?? '상대방'}에게 데이트 신청을 보낼까요?\n수락되면 채팅이 시작됩니다.',
@@ -241,7 +242,7 @@ class _RequestSheetState extends State<RequestSheet> {
         );
       case RequestSheetType.breeding:
         return _RequestConfig(
-          icon: Icons.pets,
+          icon: AppIcons.pet,
           color: context.features.dating,
           title: '교배 신청',
           description: '${widget.targetName ?? '상대방'}에게 교배 신청을 보낼까요?\n수락되면 채팅이 시작됩니다.',
@@ -249,7 +250,7 @@ class _RequestSheetState extends State<RequestSheet> {
         );
       case RequestSheetType.groupJoin:
         return _RequestConfig(
-          icon: Icons.groups,
+          icon: AppIcons.group,
           color: context.features.social,
           title: '소모임 가입',
           description: '${widget.targetName ?? '이 모임'}에 가입 신청을 보낼까요?\n승인되면 모임에 참여할 수 있습니다.',

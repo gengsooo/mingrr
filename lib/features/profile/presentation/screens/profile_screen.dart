@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
@@ -100,7 +101,7 @@ class ProfileScreen extends ConsumerWidget {
             title: const Text('프로필'),
             centerTitle: true,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+              icon: const Icon(AppIcons.back, size: 20),
               onPressed: () {
                 if (context.canPop()) {
                   context.pop();
@@ -117,13 +118,13 @@ class ProfileScreen extends ConsumerWidget {
               // 개발자 도구 버튼 (admin 전용)
               if (currentUser.valueOrNull?.email == 'admin@mingrr.com')
                 IconButton(
-                  icon: const Icon(Icons.developer_mode, color: Colors.orange),
+                  icon: const Icon(AppIcons.developerMode, color: Colors.orange),
                   onPressed: () => context.push('/dev-tools'),
                   tooltip: '개발자 도구',
                 ),
               // 설정 버튼 (우상단 톱니바퀴)
               IconButton(
-                icon: const Icon(Icons.settings_outlined),
+                icon: const Icon(AppIcons.settingsOutlined),
                 onPressed: () => _showSettingsSheet(context, ref),
               ),
             ],
@@ -210,7 +211,7 @@ class ProfileScreen extends ConsumerWidget {
                           border: Border.all(color: Colors.white, width: 2),
                         ),
                         child: const Icon(
-                          Icons.camera_alt,
+                          AppIcons.camera,
                           size: 14,
                           color: Colors.white,
                         ),
@@ -240,7 +241,7 @@ class ProfileScreen extends ConsumerWidget {
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
-                          Icons.edit,
+                          AppIcons.edit,
                           size: 14,
                           color: Colors.white,
                         ),
@@ -410,7 +411,7 @@ class ProfileScreen extends ConsumerWidget {
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
-                        Icons.add,
+                        AppIcons.add,
                         color: Theme.of(context).colorScheme.primary,
                         size: 28,
                       ),
@@ -440,11 +441,11 @@ class ProfileScreen extends ConsumerWidget {
   /// 반려동물 카드 (V2: 건강수첩 버튼 포함)
   Widget _buildPetCard(BuildContext context, pet) {
     return Container(
-      width: 150,
-      margin: const EdgeInsets.only(right: AppSizes.gapM),
+      width: 130,
+      margin: const EdgeInsets.only(right: AppSizes.gapS),
       child: MingrrCard(
         margin: EdgeInsets.zero,
-        padding: const EdgeInsets.all(AppSizes.paddingS),
+        padding: const EdgeInsets.all(AppSizes.paddingXS),
         onTap: () {
           Navigator.push(
             context,
@@ -457,7 +458,7 @@ class ProfileScreen extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // 프로필 이미지 (프로필 이미지만 사용, 없으면 발바닥 아이콘)
-            MingrrPetAvatar(
+            MingrrImage.petAvatar(
               size: 55,
               imageUrl: pet.profileImageUrl,
             ),
@@ -480,7 +481,7 @@ class ProfileScreen extends ConsumerWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.medical_services, size: 16, color: context.features.health),
+                    Icon(AppIcons.health, size: 16, color: context.features.health),
                     const SizedBox(width: AppSizes.gapSM),
                     Text(
                       '건강수첩',
@@ -596,13 +597,13 @@ class ProfileScreen extends ConsumerWidget {
     // 받은 데이팅 신청은 채팅 > 데이팅 탭에서 관리하므로 제거
     final menus = [
       {
-        'icon': Icons.history,
+        'icon': AppIcons.history,
         'label': '내 활동',
         'badge': null,
         'screen': const MyActivityScreen(),
       },
       {
-        'icon': Icons.favorite_border,
+        'icon': AppIcons.likeOutlined,
         'label': '좋아요 목록',
         'badge': null,
         'screen': const LikedListScreen(),
@@ -758,7 +759,7 @@ class ProfileScreen extends ConsumerWidget {
               ? Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.check_circle, color: context.features.success, size: 20),
+                    Icon(AppIcons.success, color: context.features.success, size: 20),
                     const SizedBox(width: AppSizes.gapS),
                     TextButton(
                       onPressed: () async {
@@ -782,7 +783,7 @@ class ProfileScreen extends ConsumerWidget {
                   ],
                 )
               // 다른 인증: 체크 아이콘만
-              : Icon(Icons.check_circle, color: context.features.success)
+              : Icon(AppIcons.success, color: context.features.success)
           : TextButton(
               onPressed: () async {
                 Navigator.pop(context);
@@ -891,7 +892,7 @@ class ProfileScreen extends ConsumerWidget {
       showCancel: true,
       cancelText: '취소',
       confirmText: '설정으로 이동',
-      icon: Icons.location_off,
+      icon: AppIcons.locationOff,
     );
     if (goToSettings == true) {
       Geolocator.openLocationSettings();
@@ -908,7 +909,7 @@ class ProfileScreen extends ConsumerWidget {
       showCancel: true,
       cancelText: '취소',
       confirmText: '설정으로 이동',
-      icon: Icons.location_disabled,
+      icon: AppIcons.locationDisabled,
     );
     if (goToSettings == true) {
       Geolocator.openAppSettings();
@@ -922,7 +923,7 @@ class ProfileScreen extends ConsumerWidget {
       type: DialogType.error,
       title: '위치 확인 실패',
       message: 'GPS 신호를 찾을 수 없습니다.\n\n실외로 이동 후 다시 시도해주세요.',
-      icon: Icons.timer_off,
+      icon: AppIcons.timerOff,
     );
   }
   
@@ -932,13 +933,13 @@ class ProfileScreen extends ConsumerWidget {
     
     return showInfoActionDialog(
       context,
-      icon: Icons.location_on,
+      icon: AppIcons.location,
       iconColor: colorScheme.primary,
       title: '위치 인증',
       message: '현재 위치를 내 동네로 등록하시겠습니까?',
       infoBoxes: [
         InfoBoxItem(
-          icon: Icons.my_location,
+          icon: AppIcons.myLocation,
           content: addressText,
         ),
       ],
@@ -952,13 +953,13 @@ class ProfileScreen extends ConsumerWidget {
     
     return showInfoActionDialog(
       context,
-      icon: Icons.check_circle,
+      icon: AppIcons.success,
       iconColor: color,
       title: '위치 인증 갱신',
       message: '현재 위치에서 인증을 갱신하시겠습니까?',
       infoBoxes: [
         InfoBoxItem(
-          icon: Icons.my_location,
+          icon: AppIcons.myLocation,
           content: addressText,
           subtitle: '저장된 위치에서 ${distance.round()}m',
           color: color,
@@ -975,7 +976,7 @@ class ProfileScreen extends ConsumerWidget {
       type: DialogType.info,
       title: '조금 더 가까이',
       message: '설정한 동네에서 ${distance.round()}m 떨어져 있어요.\n\n저장된 동네 근처(500m 이내)에서 인증할 수 있습니다.',
-      icon: Icons.near_me,
+      icon: AppIcons.nearMe,
     );
   }
   
@@ -985,20 +986,20 @@ class ProfileScreen extends ConsumerWidget {
     
     return showInfoActionDialog(
       context,
-      icon: Icons.swap_horiz,
+      icon: AppIcons.swap,
       iconColor: colorScheme.primary,
       title: '동네 변경',
       message: '현재 위치가 저장된 동네와\n${LocationService.formatDistance(distance)} 떨어져 있어요.',
       infoBoxes: [
         if (savedAddress != null)
           InfoBoxItem(
-            icon: Icons.location_on_outlined,
+            icon: AppIcons.locationOutlined,
             label: '저장된 동네',
             content: savedAddress,
             isPrimary: false,
           ),
         InfoBoxItem(
-          icon: Icons.my_location,
+          icon: AppIcons.myLocation,
           label: '현재 위치',
           content: newAddress,
         ),
@@ -1029,7 +1030,7 @@ class ProfileScreen extends ConsumerWidget {
       context: context,
       options: [
         MingrrOptionItem(
-          icon: Icons.edit_outlined,
+          icon: AppIcons.editOutlined,
           label: '프로필 수정',
           onTap: () => Navigator.push(
             context,
@@ -1037,7 +1038,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
         MingrrOptionItem(
-          icon: Icons.notifications_outlined,
+          icon: AppIcons.notification,
           label: '알림 설정',
           onTap: () => Navigator.push(
             context,
@@ -1045,7 +1046,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
         MingrrOptionItem(
-          icon: Icons.settings_outlined,
+          icon: AppIcons.settingsOutlined,
           label: '앱 설정',
           subtitle: '다크모드, 캐시 삭제',
           onTap: () => Navigator.push(
@@ -1054,7 +1055,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
         MingrrOptionItem(
-          icon: Icons.person_outline,
+          icon: AppIcons.profileOutlined,
           label: '계정 관리',
           subtitle: '연동 계정, 비밀번호, 회원 탈퇴',
           onTap: () => Navigator.push(
@@ -1063,7 +1064,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
         MingrrOptionItem(
-          icon: Icons.headset_mic_outlined,
+          icon: AppIcons.headset,
           label: '고객센터',
           subtitle: '문의, FAQ, 공지사항',
           onTap: () => Navigator.push(
@@ -1072,7 +1073,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
         MingrrOptionItem(
-          icon: Icons.info_outline,
+          icon: AppIcons.info,
           label: '앱 정보',
           subtitle: '버전, 이용약관, 라이선스',
           onTap: () => Navigator.push(
@@ -1081,13 +1082,13 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
         MingrrOptionItem(
-          icon: Icons.share_outlined,
+          icon: AppIcons.share,
           label: '앱 공유하기',
           subtitle: '친구에게 밍그르르 추천하기',
           onTap: () => ShareService.shareApp(context),
         ),
         MingrrOptionItem(
-          icon: Icons.logout,
+          icon: AppIcons.logout,
           label: '로그아웃',
           isDestructive: true,
           onTap: () => showConfirmSheet(
@@ -1152,12 +1153,12 @@ class ProfileScreen extends ConsumerWidget {
     
     // 실제 이미지 URL인 경우
     if (imageUrl != null && imageUrl.isNotEmpty) {
-      return MingrrAvatar(
+      return MingrrImage.avatar(
         imageUrl: imageUrl,
         size: 100,
         borderColor: Colors.white,
         borderWidth: 3,
-        placeholderIcon: Icons.person,
+        icon: AppIcons.profile,
       );
     }
     
@@ -1175,7 +1176,7 @@ class ProfileScreen extends ConsumerWidget {
         border: Border.all(color: Colors.white, width: 3),
       ),
       child: Icon(
-        Icons.person,
+        AppIcons.profile,
         size: 50,
         color: Theme.of(context).colorScheme.primary,
       ),
@@ -1485,7 +1486,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             color: primaryColor.withValues(alpha: AppOpacity.o10),
             shape: BoxShape.circle,
           ),
-          child: Icon(Icons.pets, size: 28, color: primaryColor),
+          child: Icon(AppIcons.pet, size: 28, color: primaryColor),
         ),
         const SizedBox(height: AppSizes.gapL),
         
@@ -1508,7 +1509,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
           decoration: InputDecoration(
             labelText: '동물등록번호',
             hintText: '15자리 숫자',
-            prefixIcon: const Icon(Icons.tag),
+            prefixIcon: Icon(AppIcons.tag),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppSizes.radiusS)),
             counterText: '',
           ),
@@ -1523,7 +1524,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
           decoration: InputDecoration(
             labelText: '소유자 성명',
             hintText: '실명을 입력해주세요',
-            prefixIcon: const Icon(Icons.person_outline),
+            prefixIcon: const Icon(AppIcons.profileOutlined),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppSizes.radiusS)),
           ),
           keyboardType: TextInputType.name,
@@ -1607,7 +1608,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             color: successColor.withValues(alpha: AppOpacity.o10),
             shape: BoxShape.circle,
           ),
-          child: Icon(Icons.check_circle, size: 28, color: successColor),
+          child: Icon(AppIcons.checkCircle, size: 28, color: successColor),
         ),
         const SizedBox(height: AppSizes.gapL),
         
@@ -1632,7 +1633,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
                 // 이름
                 Row(
                   children: [
-                    Icon(Icons.pets, color: successColor, size: 20),
+                    Icon(AppIcons.pet, color: successColor, size: 20),
                     const SizedBox(width: AppSizes.gapS),
                     Text(
                       _animalInfo!.dogNm,
@@ -1664,7 +1665,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             ),
             child: Row(
               children: [
-                Icon(Icons.link, color: primaryColor, size: 18),
+                Icon(AppIcons.link, color: primaryColor, size: 18),
                 const SizedBox(width: AppSizes.gapS),
                 Expanded(
                   child: Text(
@@ -1716,7 +1717,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             color: Colors.red.withValues(alpha: AppOpacity.o10),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.error_outline, size: 28, color: Colors.red),
+          child: const Icon(AppIcons.error, size: 28, color: Colors.red),
         ),
         const SizedBox(height: AppSizes.gapLL),
         Text(
@@ -1757,7 +1758,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             color: primaryColor.withValues(alpha: AppOpacity.o10),
             shape: BoxShape.circle,
           ),
-          child: Icon(Icons.pets, size: 28, color: primaryColor),
+          child: Icon(AppIcons.pet, size: 28, color: primaryColor),
         ),
         const SizedBox(height: AppSizes.gapL),
         
@@ -1785,7 +1786,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             ),
             child: Row(
               children: [
-                Icon(Icons.verified, color: primaryColor, size: 20),
+                Icon(AppIcons.verified, color: primaryColor, size: 20),
                 const SizedBox(width: AppSizes.gapS),
                 Expanded(
                   child: Column(
@@ -1869,11 +1870,11 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
         child: Row(
           children: [
             // 프로필 이미지 또는 아이콘
-            MingrrThumbnail(
+            MingrrImage.thumbnail(
               imageUrl: pet?.displayImageUrl,
               width: 40,
               height: 40,
-              borderRadius: AppSizes.radiusXS,
+              radius: AppSizes.radiusXS,
               errorWidget: Container(
                 width: 40,
                 height: 40,
@@ -1882,7 +1883,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
                   borderRadius: BorderRadius.circular(AppSizes.radiusXS),
                 ),
                 child: Icon(
-                  pet == null ? Icons.link_off : Icons.pets,
+                  pet == null ? AppIcons.linkOff : AppIcons.pet,
                   color: colorScheme.onSurfaceVariant,
                   size: 20,
                 ),
@@ -1912,7 +1913,7 @@ class _PetRegistrationVerificationDialogState extends State<_PetRegistrationVeri
             
             // 체크 아이콘
             if (isSelected)
-              Icon(Icons.check_circle, color: colorScheme.primary, size: 20),
+              Icon(AppIcons.checkCircle, color: colorScheme.primary, size: 20),
           ],
         ),
       ),

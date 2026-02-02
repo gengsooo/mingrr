@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/app_theme.dart';
@@ -394,7 +395,7 @@ class TraitSection extends StatelessWidget {
           ),
           const SizedBox(height: AppSizes.gapM),
           const MingrrEmptySection(
-            icon: Icons.pets_outlined,
+            icon: AppIcons.petOutlined,
             message: '등록된 특성이 없어요',
             height: 60,
           ),

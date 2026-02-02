@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -49,9 +50,9 @@ class ChatListScreen extends ConsumerWidget {
     // 탭 정의 (아이콘 사용 - 선택 시 흰색으로 변경됨)
     // 순서: 데이팅 → 마켓 → 소모임
     final tabs = [
-      MingrrTabItem(label: '데이팅', icon: Icons.favorite, color: features.dating),
-      MingrrTabItem(label: '마켓', icon: Icons.store, color: features.market),
-      MingrrTabItem(label: '소모임', icon: Icons.groups, color: features.social),
+      MingrrTabItem(label: '데이팅', icon: AppIcons.dating, color: features.dating),
+      MingrrTabItem(label: '마켓', icon: AppIcons.market, color: features.market),
+      MingrrTabItem(label: '소모임', icon: AppIcons.group, color: features.social),
     ];
 
     // 탭별 배경색 (채팅 목록은 각 탭의 테마색 유지)
@@ -146,7 +147,7 @@ class ChatListScreen extends ConsumerWidget {
             
             if (filteredRooms.isEmpty) {
               return MingrrEmptyState(
-                icon: Icons.chat_bubble_outline,
+                icon: AppIcons.chatOutlined,
                 title: '아직 데이터가 없어요',
                 subtitle: _getEmptyStateMessage(type),
                 accentColor: _getTabColor(context, type),
@@ -197,7 +198,7 @@ class ChatListScreen extends ConsumerWidget {
             // 신청도 없고 채팅도 없으면 빈 화면 표시
             if (filteredRooms.isEmpty && pendingRequests.isEmpty) {
               return MingrrEmptyState(
-                icon: Icons.chat_bubble_outline,
+                icon: AppIcons.chatOutlined,
                 title: '아직 데이터가 없어요',
                 subtitle: _getEmptyStateMessage(ChatType.dating),
                 accentColor: context.features.dating,
@@ -241,7 +242,7 @@ class ChatListScreen extends ConsumerWidget {
           ),
           error: (_, __) => Center(
             child: MingrrEmptyState(
-              icon: Icons.error_outline,
+              icon: AppIcons.error,
               title: '데이터를 불러올 수 없어요',
               subtitle: '잠시 후 다시 시도해주세요',
               accentColor: context.features.dating,
@@ -304,7 +305,7 @@ class ChatListScreen extends ConsumerWidget {
                 // 프로필 이미지 (클릭 시 보호자 정보 바텀시트)
                 GestureDetector(
                   onTap: () => _showSenderGuardianProfile(context, request),
-                  child: MingrrPetAvatar(
+                  child: MingrrImage.petAvatar(
                     imageUrl: request.senderPetImageUrl,
                     size: 44,
                     borderColor: accentColor.withValues(alpha: AppOpacity.o30),
@@ -411,7 +412,7 @@ class ChatListScreen extends ConsumerWidget {
             const BottomSheetHandle(),
             const SizedBox(height: AppSizes.gapL),
             Icon(
-              isBreeding ? Icons.family_restroom : Icons.favorite,
+              isBreeding ? AppIcons.breeding : AppIcons.dating,
               size: 48,
               color: context.features.dating,
             ),
@@ -467,7 +468,7 @@ class ChatListScreen extends ConsumerWidget {
           children: [
             const BottomSheetHandle(),
             const SizedBox(height: AppSizes.gapL),
-            Icon(Icons.close, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(AppIcons.close, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(height: AppSizes.gapL),
             Text(
               '${request.typeLabel} 거절',
@@ -530,19 +531,19 @@ class ChatListScreen extends ConsumerWidget {
       displayName = otherParticipant?.petName ?? otherParticipant?.nickname ?? '알 수 없음';
       displayImage = otherParticipant?.petImageUrl ?? otherParticipant?.profileImageUrl;
       subtitle = otherParticipant?.nickname != null ? '보호자: ${otherParticipant!.nickname}' : null;
-      placeholderIcon = Icons.pets;
+      placeholderIcon = AppIcons.pet;
     } else if (isMarket) {
       // 마켓: 보호자 중심
       displayName = otherParticipant?.nickname ?? '알 수 없음';
       displayImage = otherParticipant?.profileImageUrl;
       subtitle = null; // 마켓은 상품명 대신 마지막 메시지로 충분
-      placeholderIcon = Icons.person;
+      placeholderIcon = AppIcons.profile;
     } else {
       // 소모임: 모임명 표시 (소모임 이름 우선)
       displayName = groupName ?? '소모임';
       displayImage = null; // 소모임은 아이콘 사용
       subtitle = null;
-      placeholderIcon = Icons.groups;
+      placeholderIcon = AppIcons.group;
     }
     
     // 시간 포맷팅
@@ -581,10 +582,10 @@ class ChatListScreen extends ConsumerWidget {
           // 프로필 이미지
           Stack(
             children: [
-              MingrrAvatar(
+              MingrrImage.avatar(
                 size: 55,
                 imageUrl: displayImage,
-                placeholderIcon: placeholderIcon,
+                icon: placeholderIcon,
               ),
               // 채팅 타입 배지
               Positioned(
@@ -762,9 +763,9 @@ class ChatListScreen extends ConsumerWidget {
           // 프로필 이미지
           Stack(
             children: [
-              MingrrAvatar(
+              MingrrImage.avatar(
                 size: 55,
-                placeholderIcon: isGroup ? Icons.groups : Icons.pets,
+                icon: isGroup ? AppIcons.group : AppIcons.pet,
               ),
               // 온라인 상태 (데이팅만)
               if (type == ChatType.dating && chat['isOnline'] == true)
@@ -907,13 +908,13 @@ class ChatListScreen extends ConsumerWidget {
   IconData _getChatTypeIcon(ChatType type) {
     switch (type) {
       case ChatType.dating:
-        return Icons.favorite;
+        return AppIcons.dating;
       case ChatType.breeding:
-        return Icons.pets;
+        return AppIcons.pet;
       case ChatType.group:
-        return Icons.groups;
+        return AppIcons.group;
       case ChatType.market:
-        return Icons.store;
+        return AppIcons.market;
     }
   }
 

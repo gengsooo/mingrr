@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'app_logger.dart';
+import '../constants/app_icons.dart';
 import '../constants/app_sizes.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/sheets/mingrr_bottom_sheet.dart';
@@ -83,13 +84,13 @@ class ImageUtils {
               children: [
                 _buildSourceOption(
                   context: ctx,
-                  icon: Icons.camera_alt,
+                  icon: AppIcons.camera,
                   label: '카메라',
                   source: ImageSource.camera,
                 ),
                 _buildSourceOption(
                   context: ctx,
-                  icon: Icons.photo_library,
+                  icon: AppIcons.gallery,
                   label: '갤러리',
                   source: ImageSource.gallery,
                 ),

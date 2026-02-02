@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -75,7 +76,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         data: (group) {
           if (group == null) {
             return const MingrrEmptyState(
-              icon: Icons.groups_outlined,
+              icon: AppIcons.group,
               title: '모임을 찾을 수 없어요',
               subtitle: '삭제되었거나 존재하지 않는 모임입니다',
             );
@@ -157,7 +158,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         ),
       ),
       child: const Center(
-        child: Icon(Icons.groups, size: 80, color: Colors.white),
+        child: Icon(AppIcons.group, size: 80, color: Colors.white),
       ),
     );
   }
@@ -197,7 +198,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.pets, size: 12, color: context.features.dating),
+                      Icon(AppIcons.pet, size: 12, color: context.features.dating),
                       const SizedBox(width: AppSizes.gapXS),
                       Text(
                         '반려동물 동반',
@@ -249,12 +250,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           const SizedBox(height: AppSizes.gapS),
           Row(
             children: [
-              _buildInfoChip(Icons.people_outline, '${group.memberCount}명', colorScheme),
+              _buildInfoChip(AppIcons.people, '${group.memberCount}명', colorScheme),
               const SizedBox(width: 16),
               LikeCountText(count: group.likeCount, size: InfoBadgeSize.small),
               const SizedBox(width: 16),
               if (group.maxMembers > 0)
-                _buildInfoChip(Icons.group_add_outlined, '정원 ${group.maxMembers}명', colorScheme),
+                _buildInfoChip(AppIcons.groupAdd, '정원 ${group.maxMembers}명', colorScheme),
             ],
           ),
 
@@ -313,11 +314,11 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           _buildSectionBox(
             child: Column(
               children: [
-                _buildSettingRow('공개 모임', group.isPublic ? '예' : '아니오', Icons.visibility_outlined),
+                _buildSettingRow('공개 모임', group.isPublic ? '예' : '아니오', AppIcons.eyeCleaning),
                 const MingrrDivider.section(),
-                _buildSettingRow('가입 승인', group.requireApproval ? '필요' : '자유 가입', Icons.how_to_reg_outlined),
+                _buildSettingRow('가입 승인', group.requireApproval ? '필요' : '자유 가입', AppIcons.verified),
                 const MingrrDivider.section(),
-                _buildSettingRow('반려동물 동반', group.isPetAccompanied ? '예' : '아니오', Icons.pets_outlined),
+                _buildSettingRow('반려동물 동반', group.isPetAccompanied ? '예' : '아니오', AppIcons.petOutlined),
               ],
             ),
           ),
@@ -386,7 +387,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                 hasScrollBody: false,
                 child: Center(
                   child: MingrrEmptyState(
-                    icon: Icons.people_outline,
+                    icon: AppIcons.people,
                     title: '멤버가 없어요',
                     subtitle: '아직 가입한 멤버가 없습니다',
                   ),
@@ -412,10 +413,10 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                 ),
                 child: Row(
                   children: [
-                    MingrrAvatar(
+                    MingrrImage.avatar(
                       size: 48,
                       imageUrl: member.profileUrl,
-                      placeholderIcon: Icons.person,
+                      icon: AppIcons.profile,
                     ),
                     const SizedBox(width: AppSizes.gapM),
                     Expanded(
@@ -439,7 +440,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                           const SizedBox(height: AppSizes.gapXS),
                           Row(
                             children: [
-                              Icon(Icons.pets, size: 12, color: context.features.dating),
+                              Icon(AppIcons.pet, size: 12, color: context.features.dating),
                               const SizedBox(width: AppSizes.gapXS),
                               Text(
                                 member.petNames.join(', '),
@@ -454,7 +455,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                   // 관리 버튼 (모임장/운영진만)
                   if ((isCreator || isAdmin) && !member.isCreator && member.id != FirebaseService().currentUserId)
                     PopupMenuButton<String>(
-                      icon: Icon(Icons.more_vert, color: colorScheme.onSurfaceVariant),
+                      icon: Icon(AppIcons.moreVert, color: colorScheme.onSurfaceVariant),
                       onSelected: (value) => _handleMemberAction(value, member, group),
                       itemBuilder: (context) => [
                         if (isCreator)
@@ -646,7 +647,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                 hasScrollBody: false,
                 child: Center(
                   child: MingrrEmptyState(
-                    icon: Icons.event_outlined,
+                    icon: AppIcons.event,
                     title: '일정이 없어요',
                     subtitle: isJoined ? '새로운 일정을 만들어보세요' : '예정된 일정이 없습니다',
                   ),
@@ -708,7 +709,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                   const SizedBox(height: AppSizes.gapS),
                   Row(
                     children: [
-                      Icon(Icons.calendar_today, size: 14, color: colorScheme.onSurfaceVariant),
+                      Icon(AppIcons.calendar, size: 14, color: colorScheme.onSurfaceVariant),
                       const SizedBox(width: AppSizes.gapSM),
                       Text(
                         _formatScheduleDate(schedule.startTime),
@@ -720,7 +721,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                     const SizedBox(height: AppSizes.gapSM),
                     Row(
                       children: [
-                        Icon(Icons.location_on_outlined, size: 14, color: colorScheme.onSurfaceVariant),
+                        Icon(AppIcons.locationOutlined, size: 14, color: colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppSizes.gapSM),
                         Expanded(
                           child: Text(
@@ -778,7 +779,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusM)),
                   padding: EdgeInsets.zero,
                 ),
-                child: Icon(Icons.chat_bubble_outline, color: accentColor),
+                child: Icon(AppIcons.chatOutlined, color: accentColor),
               ),
             ),
             const SizedBox(width: AppSizes.gapM),
@@ -850,7 +851,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       context: context,
       options: [
         MingrrOptionItem(
-          icon: Icons.edit_outlined,
+          icon: AppIcons.editOutlined,
           label: '모임 수정',
           onTap: () {
             Navigator.push(
@@ -864,12 +865,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           },
         ),
         MingrrOptionItem(
-          icon: Icons.person_add_outlined,
+          icon: AppIcons.groupAdd,
           label: '가입 신청 관리',
           onTap: () => _showJoinRequests(context, group),
         ),
         MingrrOptionItem(
-          icon: Icons.delete_outline,
+          icon: AppIcons.deleteOutlined,
           label: '모임 삭제',
           isDestructive: true,
           onTap: () => _deleteGroup(group),
@@ -898,7 +899,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
 
           if (requests.isEmpty) {
             return const MingrrEmptyState(
-              icon: Icons.person_add_disabled,
+              icon: AppIcons.personRemove,
               title: '대기 중인 신청이 없어요',
               subtitle: '새로운 가입 신청이 들어오면 여기에 표시됩니다',
             );
@@ -1134,7 +1135,7 @@ class _JoinRequestTileState extends State<_JoinRequestTile> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const ListTile(
-        leading: CircleAvatar(child: Icon(Icons.person)),
+        leading: CircleAvatar(child: Icon(AppIcons.profile)),
         title: Text('로딩 중...'),
       );
     }
@@ -1147,10 +1148,10 @@ class _JoinRequestTileState extends State<_JoinRequestTile> {
         horizontal: AppSizes.paddingM,
         vertical: AppSizes.paddingS,
       ),
-      leading: MingrrAvatar(
+      leading: MingrrImage.avatar(
         imageUrl: _user?.profileImageUrl,
         size: 48,
-        placeholderIcon: Icons.person,
+        icon: AppIcons.profile,
       ),
       title: Row(
         children: [
@@ -1187,13 +1188,13 @@ class _JoinRequestTileState extends State<_JoinRequestTile> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
-                  icon: Icon(Icons.close, color: theme.colorScheme.error),
+                  icon: Icon(AppIcons.close, color: theme.colorScheme.error),
                   onPressed: _reject,
                   tooltip: '거절',
                 ),
                 const SizedBox(width: AppSizes.gapXS),
                 IconButton(
-                  icon: Icon(Icons.check, color: theme.colorScheme.primary),
+                  icon: Icon(AppIcons.check, color: theme.colorScheme.primary),
                   onPressed: _approve,
                   tooltip: '승인',
                 ),

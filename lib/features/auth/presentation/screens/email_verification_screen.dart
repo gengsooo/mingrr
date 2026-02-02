@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/common_widgets.dart';
@@ -55,7 +56,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
       appBar: AppBar(
         title: const Text('이메일 인증'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(AppIcons.back),
           onPressed: _showLogoutConfirm,
         ),
       ),
@@ -75,7 +76,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.mark_email_unread_outlined,
+                  AppIcons.email,
                   size: 50,
                   color: colorScheme.primary,
                 ),
@@ -111,7 +112,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.email_outlined, color: colorScheme.primary),
+                    Icon(AppIcons.email, color: colorScheme.primary),
                     const SizedBox(width: AppSizes.gapS),
                     Flexible(
                       child: Text(

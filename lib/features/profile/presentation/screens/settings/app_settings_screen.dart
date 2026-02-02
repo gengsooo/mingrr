@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import '../../../../../core/constants/app_icons.dart';
 import '../../../../../core/constants/app_sizes.dart';
 import '../../../../../core/providers/theme_provider.dart';
 import '../../../../../core/widgets/common_widgets.dart';
@@ -74,7 +75,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> {
                   ),
                 ),
                 MingrrSettingsTile.destructive(
-                  icon: Icons.delete_outline,
+                  icon: AppIcons.delete,
                   title: '캐시 삭제',
                   subtitle: '이미지 캐시를 삭제하여 저장 공간을 확보합니다',
                   onTap: _isClearing ? null : _clearCache,

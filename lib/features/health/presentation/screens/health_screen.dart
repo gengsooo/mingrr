@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
@@ -55,7 +56,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
       appBar: AppBar(
         title: const Text('건강수첩'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
+          icon: const Icon(AppIcons.back, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -170,7 +171,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // 동그란 프로필 이미지
-                    MingrrPetAvatar(
+                    MingrrImage.petAvatar(
                       imageUrl: pet.profileImageUrl,
                       size: 56,
                       borderColor: isSelected ? context.features.health : Theme.of(context).colorScheme.outline,
@@ -446,7 +447,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
         return Column(
           children: records.take(5).map((record) {
             return MingrrRecordTile(
-              icon: Icons.monitor_weight_outlined,
+              icon: AppIcons.weight,
               iconColor: context.features.health,
               title: '${record.weight.toStringAsFixed(1)}kg',
               subtitle: _formatDate(record.recordDate),
@@ -474,7 +475,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
         return Column(
           children: records.take(5).map((record) {
             return MingrrRecordTile(
-              icon: Icons.directions_walk,
+              icon: AppIcons.walk,
               iconColor: context.features.walk,
               title: '${record.durationMinutes}분, ${record.distanceString}',
               subtitle: _formatDateTime(record.startTime),
@@ -510,7 +511,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
         return Column(
           children: records.take(5).map((record) {
             return MingrrRecordTile(
-              icon: Icons.content_cut,
+              icon: AppIcons.grooming,
               iconColor: context.features.health,
               title: record.groomingType.label,
               subtitle: '${_formatDate(record.recordDate)} • ${record.location ?? ""}',
@@ -536,7 +537,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
         return Column(
           children: records.take(5).map((record) {
             return MingrrRecordTile(
-              icon: Icons.vaccines_outlined,
+              icon: AppIcons.vaccination,
               iconColor: context.features.health,
               title: record.vaccineName,
               subtitle: '${_formatDate(record.vaccinationDate)} • ${record.hospitalName ?? ""}',
@@ -562,7 +563,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
         return Column(
           children: records.take(5).map((record) {
             return MingrrRecordTile(
-              icon: Icons.local_hospital_outlined,
+              icon: AppIcons.checkup,
               iconColor: context.features.health,
               title: record.diagnosis ?? '정기 검진',
               subtitle: '${_formatDate(record.checkupDate)} • ${record.hospitalName ?? ""}',
@@ -638,7 +639,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
       child: Center(
         child: Column(
           children: [
-            Icon(Icons.note_alt_outlined, size: 40, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(AppIcons.special, size: 40, color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(height: AppSizes.gapM),
             Text(
               '아직 기록이 없습니다',

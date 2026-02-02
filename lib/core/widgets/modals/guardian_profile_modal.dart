@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../services/bottom_sheet_stack_manager.dart';
 import '../sheets/mingrr_bottom_sheet.dart';
@@ -173,7 +174,7 @@ class GuardianProfileModal extends StatelessWidget {
     return MingrrBottomButtonBar(
       child: MingrrButton(
         text: '꼬순내지수 평가하기',
-        icon: Icons.pets,
+        icon: AppIcons.pet,
         onPressed: () {
           showRatingModal(
             context,
@@ -193,7 +194,7 @@ class GuardianProfileModal extends StatelessWidget {
     return ProfileModalHeader(
       avatar: ProfileModalAvatar(
         imageUrl: profileImageUrl,
-        fallbackIcon: Icons.person,
+        fallbackIcon: AppIcons.profile,
       ),
       name: guardianName,
       subtitle: KkosunnaeScoreSmall(score: kkosunnaeScore),
@@ -232,7 +233,7 @@ class GuardianProfileModal extends StatelessWidget {
       return ProfileModalSection(
         title: '반려동물',
         content: const MingrrEmptySection(
-          icon: Icons.pets_outlined,
+          icon: AppIcons.petOutlined,
           message: '등록된 반려동물이 없어요',
         ),
       );
@@ -256,7 +257,7 @@ class GuardianProfileModal extends StatelessWidget {
       avatar: ProfileModalAvatar(
         size: 50,
         imageUrl: pet.profileImageUrl,
-        fallbackIcon: Icons.pets,
+        fallbackIcon: AppIcons.pet,
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       ),
       title: pet.name,
@@ -303,10 +304,10 @@ class GuardianProfileModal extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              ProfileModalActivityItem(icon: Icons.directions_walk, label: '산책', count: info.walkCount),
-              ProfileModalActivityItem(icon: Icons.favorite, label: '데이팅', count: info.datingCount),
-              ProfileModalActivityItem(icon: Icons.shopping_bag, label: '거래', count: info.marketCount),
-              ProfileModalActivityItem(icon: Icons.groups, label: '소모임', count: info.groupCount),
+              ProfileModalActivityItem(icon: AppIcons.walk, label: '산책', count: info.walkCount),
+              ProfileModalActivityItem(icon: AppIcons.like, label: '데이팅', count: info.datingCount),
+              ProfileModalActivityItem(icon: AppIcons.shoppingBag, label: '거래', count: info.marketCount),
+              ProfileModalActivityItem(icon: AppIcons.group, label: '소모임', count: info.groupCount),
             ],
           ),
         ],

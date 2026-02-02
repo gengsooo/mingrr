@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../constants/app_icons.dart';
 import '../constants/app_sizes.dart';
 import '../theme/feature_colors.dart';
 import '../theme/app_theme.dart';
@@ -149,7 +150,7 @@ class SocialLoginButton extends StatelessWidget {
       onPressed: onPressed,
       backgroundColor: const Color(0xFFFEE500),
       textColor: const Color(0xFF191919),
-      icon: Icons.chat_bubble,
+      icon: AppIcons.chatBubble,
     );
   }
 
@@ -162,7 +163,7 @@ class SocialLoginButton extends StatelessWidget {
       onPressed: onPressed,
       backgroundColor: const Color(0xFF03C75A),
       textColor: Colors.white,
-      icon: Icons.north_east,
+      icon: AppIcons.arrowUp,
     );
   }
 
@@ -175,7 +176,7 @@ class SocialLoginButton extends StatelessWidget {
       onPressed: onPressed,
       backgroundColor: Colors.white,
       textColor: const Color(0xFF757575),
-      icon: Icons.g_mobiledata,
+      icon: AppIcons.profile,
     );
   }
 
@@ -280,8 +281,8 @@ class MingrrCard extends StatelessWidget {
 }
 
 // ===== 프로필 아바타 =====
-// MingrrAvatar, MingrrPetAvatar, MingrrThumbnail, MingrrNetworkImage, MingrrBackgroundImage는
-// mingrr_image.dart에서 export됩니다.
+// MingrrImage 통합 컴포넌트는 mingrr_image.dart에서 export됩니다.
+// 사용법: MingrrImage.avatar(), MingrrImage.petAvatar(), MingrrImage.thumbnail(), MingrrImage.background()
 
 // ===== 입력 필드 =====
 /// 동글동글한 스타일의 텍스트 입력 필드
@@ -432,7 +433,7 @@ class _MingrrTextFieldState extends State<MingrrTextField> {
                 ? Icon(widget.prefixIcon, color: hasError ? Colors.red : colorScheme.outlineVariant)
                 : null,
             suffixIcon: widget.suffixIcon ?? (hasError 
-                ? const Icon(Icons.error_outline, color: Colors.red, size: 20)
+                ? const Icon(AppIcons.error, color: Colors.red, size: 20)
                 : null),
             errorText: _hasInteracted ? _errorText : null,
             counterText: widget.showCounter ? null : '',
@@ -669,7 +670,7 @@ class MingrrBadge extends StatelessWidget {
       text: '인증됨',
       backgroundColor: context.features.success,
       textColor: Colors.white,
-      icon: Icons.verified,
+      icon: AppIcons.verified,
     );
   }
 
@@ -679,7 +680,7 @@ class MingrrBadge extends StatelessWidget {
       text: '산책 중',
       backgroundColor: context.features.walk,
       textColor: Colors.white,
-      icon: Icons.directions_walk,
+      icon: AppIcons.walk,
     );
   }
 
@@ -743,7 +744,7 @@ class DefaultPetImage extends StatelessWidget {
       ),
       child: Center(
         child: Icon(
-          Icons.pets,
+          AppIcons.pet,
           size: (height ?? 100) * 0.4,
           color: context.features.dating.withValues(alpha: AppOpacity.o50),
         ),
@@ -781,7 +782,7 @@ class MingrrBackButton extends StatelessWidget {
       ),
       child: IconButton(
         icon: Icon(
-          isClose ? Icons.close : Icons.arrow_back_ios_new,
+          isClose ? AppIcons.close : AppIcons.back,
           size: 20,
           color: iconColor ?? Theme.of(context).colorScheme.onSurface,
         ),
@@ -944,7 +945,7 @@ class MingrrDateSelector extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Icon(
-                hasDate ? Icons.date_range : Icons.date_range_outlined,
+                hasDate ? AppIcons.dateRange : AppIcons.dateRange,
                 size: 22,
                 color: hasDate ? color : Theme.of(context).colorScheme.outlineVariant,
               ),
@@ -992,7 +993,7 @@ class MingrrDateSelector extends StatelessWidget {
               )
             else
               Icon(
-                Icons.chevron_right,
+                AppIcons.chevronRight,
                 color: Theme.of(context).colorScheme.outlineVariant,
                 size: 20,
               ),
@@ -1079,7 +1080,7 @@ class MingrrDateSelector extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Icon(
-                hasDate ? Icons.calendar_month : Icons.calendar_month_outlined,
+                hasDate ? AppIcons.calendarMonth : AppIcons.calendarMonth,
                 size: 22,
                 color: hasDate ? color : Theme.of(context).colorScheme.outlineVariant,
               ),
@@ -1133,7 +1134,7 @@ class MingrrDateSelector extends StatelessWidget {
               )
             else
               Icon(
-                Icons.chevron_right,
+                AppIcons.chevronRight,
                 color: Theme.of(context).colorScheme.outlineVariant,
                 size: 20,
               ),
@@ -1184,7 +1185,7 @@ class MingrrDateSelector extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Icon(
-                (hasStartDate || hasEndDate) ? Icons.date_range : Icons.date_range_outlined,
+                (hasStartDate || hasEndDate) ? AppIcons.dateRange : AppIcons.dateRange,
                 size: 22,
                 color: (hasStartDate || hasEndDate) ? color : Theme.of(context).colorScheme.outlineVariant,
               ),
@@ -1260,7 +1261,7 @@ class MingrrDateSelector extends StatelessWidget {
               )
             else
               Icon(
-                Icons.chevron_right,
+                AppIcons.chevronRight,
                 color: Theme.of(context).colorScheme.outlineVariant,
                 size: 20,
               ),
@@ -1461,7 +1462,7 @@ class _CustomDatePickerSheetState extends State<_CustomDatePickerSheet> {
               // 입력 모드 토글 버튼
               IconButton(
                 icon: Icon(
-                  _isInputMode ? Icons.calendar_month : Icons.edit,
+                  _isInputMode ? AppIcons.calendarMonth : AppIcons.edit,
                   color: widget.accentColor,
                 ),
                 onPressed: () => setState(() {
@@ -1510,7 +1511,7 @@ class _CustomDatePickerSheetState extends State<_CustomDatePickerSheet> {
                 hintText: 'YYYY.MM.DD',
                 hintStyle: TextStyle(color: Theme.of(context).colorScheme.outlineVariant),
                 errorText: _errorText,
-                prefixIcon: Icon(Icons.calendar_today, color: widget.accentColor),
+                prefixIcon: Icon(AppIcons.calendar, color: widget.accentColor),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
@@ -1542,7 +1543,7 @@ class _CustomDatePickerSheetState extends State<_CustomDatePickerSheet> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.check_circle, color: widget.accentColor, size: 20),
+                    Icon(AppIcons.success, color: widget.accentColor, size: 20),
                     const SizedBox(width: AppSizes.gapM),
                     Text(
                       '${_selectedDate.year}년 ${_selectedDate.month}월 ${_selectedDate.day}일',
@@ -1629,7 +1630,7 @@ class _CustomDatePickerSheetState extends State<_CustomDatePickerSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: Icon(Icons.chevron_left, color: widget.accentColor),
+                  icon: Icon(AppIcons.chevronLeft, color: widget.accentColor),
                   onPressed: () {
                     setState(() {
                       _displayedMonth = DateTime(_displayedMonth.year, _displayedMonth.month - 1);
@@ -1654,14 +1655,14 @@ class _CustomDatePickerSheetState extends State<_CustomDatePickerSheet> {
                         ),
                         if (widget.enableYearMonthPicker) ...[
                           const SizedBox(width: AppSizes.gapXS),
-                          Icon(Icons.arrow_drop_down, color: widget.accentColor, size: 20),
+                          Icon(AppIcons.chevronDown, color: widget.accentColor, size: 20),
                         ],
                       ],
                     ),
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.chevron_right, color: widget.accentColor),
+                  icon: Icon(AppIcons.chevronRight, color: widget.accentColor),
                   onPressed: () {
                     setState(() {
                       _displayedMonth = DateTime(_displayedMonth.year, _displayedMonth.month + 1);
@@ -1815,7 +1816,7 @@ class _CustomDatePickerSheetState extends State<_CustomDatePickerSheet> {
                       Text('년도/월 선택', style: AppTextStyles.headlineSmall(context)),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.close),
+                        icon: const Icon(AppIcons.close),
                         onPressed: () => Navigator.pop(context),
                       ),
                     ],
@@ -2032,7 +2033,7 @@ class _MingrrLoadingStateState extends ConsumerState<MingrrLoadingState> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.wifi_off,
+              AppIcons.wifiOff,
               size: 48,
               color: colorScheme.outlineVariant,
             ),
@@ -2077,7 +2078,7 @@ class _MingrrLoadingStateState extends ConsumerState<MingrrLoadingState> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.hourglass_empty,
+              AppIcons.hourglass,
               size: 48,
               color: colorScheme.outlineVariant,
             ),
@@ -2220,7 +2221,7 @@ class MingrrErrorState extends StatelessWidget {
     this.buttonText,
   }) : title = null,
        subtitle = null,
-       icon = Icons.wifi_off_rounded,
+       icon = AppIcons.wifiOff,
        errorType = ErrorStateType.network;
 
   /// 서버 에러 상태
@@ -2230,7 +2231,7 @@ class MingrrErrorState extends StatelessWidget {
     this.buttonText,
   }) : title = null,
        subtitle = null,
-       icon = Icons.cloud_off_rounded,
+       icon = AppIcons.cloudOff,
        errorType = ErrorStateType.server;
 
   /// 인증 필요 상태
@@ -2240,7 +2241,7 @@ class MingrrErrorState extends StatelessWidget {
     this.buttonText,
   }) : title = null,
        subtitle = null,
-       icon = Icons.lock_outline_rounded,
+       icon = AppIcons.lock,
        errorType = ErrorStateType.auth;
 
   /// 권한 필요 상태
@@ -2250,7 +2251,7 @@ class MingrrErrorState extends StatelessWidget {
     this.buttonText,
   }) : title = null,
        subtitle = null,
-       icon = Icons.security_rounded,
+       icon = AppIcons.security,
        errorType = ErrorStateType.permission;
 
   /// 데이터 없음 상태
@@ -2270,7 +2271,7 @@ class MingrrErrorState extends StatelessWidget {
     this.buttonText,
   }) : title = null,
        subtitle = null,
-       icon = Icons.search_off_rounded,
+       icon = AppIcons.searchOff,
        errorType = ErrorStateType.notFound;
 
   /// 시간 초과 상태
@@ -2280,7 +2281,7 @@ class MingrrErrorState extends StatelessWidget {
     this.buttonText,
   }) : title = null,
        subtitle = null,
-       icon = Icons.timer_off_rounded,
+       icon = AppIcons.timerOff,
        errorType = ErrorStateType.timeout;
 
   /// 로딩 실패 상태
@@ -2290,7 +2291,7 @@ class MingrrErrorState extends StatelessWidget {
     this.buttonText,
   }) : title = null,
        subtitle = null,
-       icon = Icons.refresh_rounded,
+       icon = AppIcons.refresh,
        errorType = ErrorStateType.loadFailed;
 
   // 에러 타입별 기본 제목
@@ -2359,24 +2360,24 @@ class MingrrErrorState extends StatelessWidget {
   IconData _getDefaultIcon() {
     switch (errorType) {
       case ErrorStateType.network:
-        return Icons.wifi_off_rounded;
+        return AppIcons.wifiOff;
       case ErrorStateType.server:
-        return Icons.cloud_off_rounded;
+        return AppIcons.cloudOff;
       case ErrorStateType.auth:
-        return Icons.lock_outline_rounded;
+        return AppIcons.lock;
       case ErrorStateType.permission:
-        return Icons.security_rounded;
+        return AppIcons.security;
       case ErrorStateType.empty:
-        return Icons.inbox_rounded;
+        return AppIcons.inbox;
       case ErrorStateType.notFound:
-        return Icons.search_off_rounded;
+        return AppIcons.searchOff;
       case ErrorStateType.timeout:
-        return Icons.timer_off_rounded;
+        return AppIcons.timerOff;
       case ErrorStateType.loadFailed:
-        return Icons.refresh_rounded;
+        return AppIcons.refresh;
       case ErrorStateType.unknown:
       default:
-        return Icons.error_outline_rounded;
+        return AppIcons.error;
     }
   }
 
@@ -2743,9 +2744,9 @@ class _DateTimeRangePickerSheetState extends State<_DateTimeRangePickerSheet> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              IconButton(icon: Icon(Icons.chevron_left, color: widget.accentColor), onPressed: () => setState(() => _displayedMonth = DateTime(_displayedMonth.year, _displayedMonth.month - 1))),
+              IconButton(icon: Icon(AppIcons.chevronLeft, color: widget.accentColor), onPressed: () => setState(() => _displayedMonth = DateTime(_displayedMonth.year, _displayedMonth.month - 1))),
               Text('${_displayedMonth.year}년 ${_displayedMonth.month}월', style: AppTextStyles.titleLarge(context)),
-              IconButton(icon: Icon(Icons.chevron_right, color: widget.accentColor), onPressed: () => setState(() => _displayedMonth = DateTime(_displayedMonth.year, _displayedMonth.month + 1))),
+              IconButton(icon: Icon(AppIcons.chevronRight, color: widget.accentColor), onPressed: () => setState(() => _displayedMonth = DateTime(_displayedMonth.year, _displayedMonth.month + 1))),
             ],
           ),
         ),
@@ -2857,7 +2858,7 @@ class _DateTimeRangePickerSheetState extends State<_DateTimeRangePickerSheet> {
               ),
               child: Row(
                 children: [
-                  Icon(isFlexible ? Icons.check_circle : Icons.circle_outlined, size: 20, color: isFlexible ? widget.accentColor : Theme.of(context).colorScheme.outlineVariant),
+                  Icon(isFlexible ? AppIcons.checkCircle : AppIcons.circleOutlined, size: 20, color: isFlexible ? widget.accentColor : Theme.of(context).colorScheme.outlineVariant),
                   const SizedBox(width: AppSizes.gapS),
                   Text(isStartTime ? '시작 시간 미정' : '종료 시간 미정', style: AppTextStyles.labelLarge(context)),
                 ],
@@ -2923,14 +2924,14 @@ class _DateTimeRangePickerSheetState extends State<_DateTimeRangePickerSheet> {
         children: [
           Text('선택 완료', style: AppTextStyles.titleLarge(context)),
           const SizedBox(height: AppSizes.gapL),
-          _buildPickerSummaryItem(icon: Icons.calendar_today, label: '기간', value: '${_fmtDateFull(_startDate!)} ~ ${_fmtDateFull(_endDate!)}'),
+          _buildPickerSummaryItem(icon: AppIcons.calendar, label: '기간', value: '${_fmtDateFull(_startDate!)} ~ ${_fmtDateFull(_endDate!)}'),
           const SizedBox(height: AppSizes.gapM),
-          _buildPickerSummaryItem(icon: Icons.access_time, label: '시간', value: timeValue),
+          _buildPickerSummaryItem(icon: AppIcons.accessTime, label: '시간', value: timeValue),
           const SizedBox(height: AppSizes.gapXL),
           Container(
             padding: const EdgeInsets.all(AppSizes.paddingM),
             decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerLow, borderRadius: BorderRadius.circular(AppSizes.radiusXS)),
-            child: Row(children: [Icon(Icons.info_outline, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant), const SizedBox(width: AppSizes.gapS), Expanded(child: Text('상단 탭을 눌러 날짜나 시간을 수정할 수 있습니다', style: AppTextStyles.caption(context)))]),
+            child: Row(children: [Icon(AppIcons.info, size: 18, color: Theme.of(context).colorScheme.onSurfaceVariant), const SizedBox(width: AppSizes.gapS), Expanded(child: Text('상단 탭을 눌러 날짜나 시간을 수정할 수 있습니다', style: AppTextStyles.caption(context)))]),
           ),
         ],
       ),

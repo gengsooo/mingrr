@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
@@ -44,7 +45,7 @@ class PendingRatingsScreen extends ConsumerWidget {
         data: (transactions) {
           if (transactions.isEmpty) {
             return MingrrEmptyState(
-              icon: Icons.rate_review_outlined,
+              icon: AppIcons.starOutlined,
               title: '평가할 항목이 없어요',
               subtitle: '거래나 활동이 완료되면 여기에 표시됩니다',
             );
@@ -143,10 +144,10 @@ class _PendingRatingCardState extends ConsumerState<_PendingRatingCard> {
                       ),
                       child: const CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : MingrrAvatar(
+                  : MingrrImage.avatar(
                       imageUrl: _targetImageUrl,
                       size: 56,
-                      placeholderIcon: Icons.person,
+                      icon: AppIcons.profile,
                     ),
               const SizedBox(width: AppSizes.gapM),
               // 정보

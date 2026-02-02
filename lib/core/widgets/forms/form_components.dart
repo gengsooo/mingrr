@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/image_utils.dart';
 import '../dividers/app_dividers.dart';
+import '../mingrr_image.dart';
 
 /// ============================================================
 /// MINGRR 폼 공통 컴포넌트 모음
@@ -434,7 +436,7 @@ class MingrrImagePicker extends StatelessWidget {
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.add_photo_alternate, size: 48, color: colorScheme.outlineVariant),
+                  Icon(AppIcons.addPhoto, size: 48, color: colorScheme.outlineVariant),
                   const SizedBox(height: AppSizes.gapS),
                   Text('이미지 추가', style: TextStyle(color: colorScheme.outlineVariant)),
                 ],
@@ -469,7 +471,7 @@ class MingrrImagePicker extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.camera_alt,
+                    AppIcons.camera,
                     color: totalImages >= maxImages 
                         ? colorScheme.outline 
                         : colorScheme.outlineVariant,
@@ -533,7 +535,7 @@ class _ImageTile extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(AppSizes.radiusM),
             child: imageUrl != null
-                ? Image.network(imageUrl!, width: 80, height: 80, fit: BoxFit.cover)
+                ? MingrrImage.thumbnail(imageUrl: imageUrl, width: 80, height: 80)
                 : Image.file(file!, width: 80, height: 80, fit: BoxFit.cover),
           ),
           Positioned(
@@ -564,7 +566,7 @@ class _RemoveButton extends StatelessWidget {
           color: Colors.black54,
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.close, size: 14, color: Colors.white),
+        child: const Icon(AppIcons.close, size: 14, color: Colors.white),
       ),
     );
   }
@@ -597,7 +599,7 @@ class MingrrFormAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       title: Text(title),
       leading: IconButton(
-        icon: const Icon(Icons.close),
+        icon: const Icon(AppIcons.close),
         onPressed: onClose,
       ),
       actions: actions,
@@ -676,7 +678,7 @@ class MingrrSelectButton extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  Icons.chevron_right,
+                  AppIcons.chevronRight,
                   color: colorScheme.outlineVariant,
                   size: 20,
                 ),
@@ -749,7 +751,7 @@ class MingrrVideoPicker extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(Icons.videocam_outlined, size: 48, color: colorScheme.outlineVariant),
+        Icon(AppIcons.video, size: 48, color: colorScheme.outlineVariant),
         const SizedBox(height: AppSizes.gapS),
         Text('동영상 추가', style: AppTextStyles.bodySmall(context).copyWith(color: colorScheme.outlineVariant)),
         const SizedBox(height: AppSizes.gapXS),
@@ -788,7 +790,7 @@ class MingrrVideoPicker extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: const Icon(
-              Icons.play_arrow,
+              AppIcons.play,
               color: Colors.white,
               size: 32,
             ),
@@ -807,7 +809,7 @@ class MingrrVideoPicker extends StatelessWidget {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.videocam, color: Colors.white, size: 14),
+                const Icon(AppIcons.video, color: Colors.white, size: 14),
                 const SizedBox(width: AppSizes.gapXS),
                 Text(
                   selectedFile != null ? '새 동영상' : '동영상',
@@ -830,7 +832,7 @@ class MingrrVideoPicker extends StatelessWidget {
                 color: Colors.black54,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.close, size: 16, color: Colors.white),
+              child: const Icon(AppIcons.close, size: 16, color: Colors.white),
             ),
           ),
         ),
@@ -843,7 +845,7 @@ class MingrrVideoPicker extends StatelessWidget {
       color: colorScheme.surfaceContainerHighest,
       child: Center(
         child: Icon(
-          Icons.videocam,
+          AppIcons.video,
           size: 48,
           color: colorScheme.outlineVariant,
         ),
@@ -920,7 +922,7 @@ class MingrrMediaPicker extends StatelessWidget {
               // 이미지 추가 버튼
               _buildAddButton(
                 context: context,
-                icon: Icons.camera_alt,
+                icon: AppIcons.camera,
                 label: '$_totalImages/$maxImages',
                 onTap: _totalImages < maxImages ? onPickImages : null,
                 isDisabled: _totalImages >= maxImages,
@@ -930,7 +932,7 @@ class MingrrMediaPicker extends StatelessWidget {
               if (!_hasVideo)
                 _buildAddButton(
                   context: context,
-                  icon: Icons.videocam,
+                  icon: AppIcons.video,
                   label: '동영상',
                   onTap: onPickVideo,
                 ),
@@ -1032,7 +1034,7 @@ class MingrrMediaPicker extends StatelessWidget {
                 color: Colors.black.withValues(alpha: AppOpacity.o50),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.play_arrow, color: Colors.white, size: 18),
+              child: const Icon(AppIcons.play, color: Colors.white, size: 18),
             ),
           ),
           // 삭제 버튼
@@ -1048,7 +1050,7 @@ class MingrrMediaPicker extends StatelessWidget {
                   color: Colors.black54,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.close, size: 12, color: Colors.white),
+                child: const Icon(AppIcons.close, size: 12, color: Colors.white),
               ),
             ),
           ),
@@ -1060,7 +1062,7 @@ class MingrrMediaPicker extends StatelessWidget {
   Widget _buildVideoIcon(ColorScheme colorScheme) {
     return Container(
       color: colorScheme.surfaceContainerHighest,
-      child: Icon(Icons.videocam, color: colorScheme.outlineVariant),
+      child: Icon(AppIcons.video, color: colorScheme.outlineVariant),
     );
   }
 }
@@ -1103,7 +1105,7 @@ class _MediaTile extends StatelessWidget {
                   color: Colors.black54,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.close, size: 12, color: Colors.white),
+                child: const Icon(AppIcons.close, size: 12, color: Colors.white),
               ),
             ),
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../mingrr_image.dart';
@@ -42,7 +43,7 @@ class AppBarActionButton extends StatelessWidget {
       key: key,
       onTap: onTap,
       type: _ActionType.search,
-      child: const Icon(Icons.search, size: 24),
+      child: const Icon(AppIcons.search, size: 24),
     );
   }
 
@@ -121,7 +122,7 @@ class _NotificationIcon extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        const Icon(Icons.notifications_outlined, size: 24),
+        const Icon(AppIcons.notification, size: 24),
         if (badgeCount > 0)
           Positioned(
             top: -4,
@@ -168,10 +169,10 @@ class _ProfileIcon extends StatelessWidget {
           width: 1,
         ),
       ),
-      child: MingrrAvatar(
+      child: MingrrImage.avatar(
         imageUrl: imageUrl,
         size: 32,
-        placeholderIcon: Icons.person,
+        icon: AppIcons.profile,
       ),
     );
   }

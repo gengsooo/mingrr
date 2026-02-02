@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -67,7 +68,7 @@ class _LikedProductsTab extends ConsumerWidget {
       data: (products) {
         if (products.isEmpty) {
           return MingrrEmptyState(
-            icon: Icons.bookmark_border,
+            icon: AppIcons.bookmarkOutlined,
             title: '찜한 상품이 없어요',
             subtitle: '마켓에서 마음에 드는 상품을 찜해보세요',
           );
@@ -80,7 +81,7 @@ class _LikedProductsTab extends ConsumerWidget {
             return _LikedItemCard(
               onTap: () => context.push('/market/product/${product.id}'),
               imageUrl: product.imageUrls.isNotEmpty ? product.imageUrls.first : null,
-              icon: Icons.shopping_bag,
+              icon: AppIcons.shoppingBag,
               iconColor: context.features.market,
               title: product.title,
               subtitle: product.priceString,
@@ -116,7 +117,7 @@ class _LikedPetsTab extends ConsumerWidget {
       data: (pets) {
         if (pets.isEmpty) {
           return MingrrEmptyState(
-            icon: Icons.pets,
+            icon: AppIcons.pet,
             title: '좋아요한 친구가 없어요',
             subtitle: '데이팅에서 마음에 드는 친구를 찾아보세요',
           );
@@ -161,7 +162,7 @@ class _LikedCommunityTab extends ConsumerWidget {
       data: (posts) {
         if (posts.isEmpty) {
           return MingrrEmptyState(
-            icon: Icons.article_outlined,
+            icon: AppIcons.communityOutlined,
             title: '좋아요한 글이 없어요',
             subtitle: '커뮤니티에서 마음에 드는 글에 좋아요를 눌러보세요',
           );
@@ -173,7 +174,7 @@ class _LikedCommunityTab extends ConsumerWidget {
             final post = posts[index];
             return _LikedItemCard(
               onTap: () => context.push('/social/community/${post.id}'),
-              icon: Icons.article,
+              icon: AppIcons.community,
               iconColor: context.features.social,
               title: post.title,
               subtitle: '${post.category.label} · 💬 ${post.commentCount} · ❤️ ${post.likeCount}',
@@ -205,7 +206,7 @@ class _LikedGroupsTab extends ConsumerWidget {
       data: (groups) {
         if (groups.isEmpty) {
           return MingrrEmptyState(
-            icon: Icons.groups_outlined,
+            icon: AppIcons.group,
             title: '좋아요한 소모임이 없어요',
             subtitle: '소모임에서 마음에 드는 모임에 좋아요를 눌러보세요',
           );
@@ -218,7 +219,7 @@ class _LikedGroupsTab extends ConsumerWidget {
             return _LikedItemCard(
               onTap: () => context.push('/social/group/${group.id}'),
               imageUrl: group.imageUrl,
-              icon: Icons.groups,
+              icon: AppIcons.group,
               iconColor: context.features.social,
               title: group.name,
               subtitle: '멤버 ${group.memberCount}명 · ❤️ ${group.likeCount}',
@@ -274,11 +275,11 @@ class _LikedItemCard extends StatelessWidget {
         children: [
           // 이미지 또는 아이콘
           if (imageUrl != null)
-            MingrrThumbnail(
+            MingrrImage.thumbnail(
               imageUrl: imageUrl,
               width: 60,
               height: 60,
-              borderRadius: AppSizes.radiusS,
+              radius: AppSizes.radiusS,
               errorWidget: _buildIconContainer(context),
             )
           else
@@ -324,7 +325,7 @@ class _LikedItemCard extends StatelessWidget {
               ),
             )
           else
-            Icon(Icons.chevron_right, color: colorScheme.outlineVariant),
+            Icon(AppIcons.chevronRight, color: colorScheme.outlineVariant),
         ],
       ),
     );
@@ -365,11 +366,11 @@ class _LikedPetCard extends StatelessWidget {
       child: Row(
         children: [
           // 프로필 이미지
-          MingrrThumbnail(
+          MingrrImage.thumbnail(
             imageUrl: pet.displayImageUrl,
             width: 70,
             height: 70,
-            borderRadius: AppSizes.radiusS,
+            radius: AppSizes.radiusS,
             errorWidget: _buildDefaultImage(context),
           ),
           const SizedBox(width: AppSizes.gapM),
@@ -387,7 +388,7 @@ class _LikedPetCard extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSizes.gapXS),
                     Icon(
-                      pet.gender == PetGender.male ? Icons.male : Icons.female,
+                      pet.gender == PetGender.male ? AppIcons.male : AppIcons.female,
                       size: 16,
                       color: pet.gender == PetGender.male ? Colors.blue : Colors.pink,
                     ),
@@ -426,7 +427,7 @@ class _LikedPetCard extends StatelessWidget {
           // 좋아요 해제 버튼
           IconButton(
             onPressed: onUnlike,
-            icon: Icon(Icons.favorite, color: context.features.dating),
+            icon: Icon(AppIcons.like, color: context.features.dating),
           ),
         ],
       ),
@@ -441,7 +442,7 @@ class _LikedPetCard extends StatelessWidget {
         color: context.features.datingContainer,
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
-      child: Icon(Icons.pets, color: context.features.dating, size: 32),
+      child: Icon(AppIcons.pet, color: context.features.dating, size: 32),
     );
   }
 }

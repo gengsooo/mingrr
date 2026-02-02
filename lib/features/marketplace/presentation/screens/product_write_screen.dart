@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -123,11 +124,11 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
               const MingrrSectionLabel(FormStrings.labelType),
               Row(
                 children: [
-                  _buildTypeButton(ProductType.sell, '판매', Icons.sell),
+                  _buildTypeButton(ProductType.sell, '판매', AppIcons.sell),
                   const SizedBox(width: AppSizes.gapS),
-                  _buildTypeButton(ProductType.share, '나눔', Icons.volunteer_activism),
+                  _buildTypeButton(ProductType.share, '나눔', AppIcons.gift),
                   const SizedBox(width: AppSizes.gapS),
-                  _buildTypeButton(ProductType.job, '알바', Icons.work_outline),
+                  _buildTypeButton(ProductType.job, '알바', AppIcons.work),
                 ],
               ),
               const SizedBox(height: AppSizes.gapXL),
@@ -429,11 +430,11 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.pets, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
+                      Icon(AppIcons.pet, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
                       const SizedBox(width: AppSizes.gapM),
                       Text('반려동물 추가', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
                       const Spacer(),
-                      Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+                      Icon(AppIcons.chevronRight, color: Theme.of(context).colorScheme.outlineVariant),
                     ],
                   ),
                 ),
@@ -454,11 +455,11 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.pets, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
+                Icon(AppIcons.pet, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
                 const SizedBox(width: AppSizes.gapM),
                 Text('반려동물을 선택해주세요', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
                 const Spacer(),
-                Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+                Icon(AppIcons.chevronRight, color: Theme.of(context).colorScheme.outlineVariant),
               ],
             ),
           ),

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import '../core/constants/app_icons.dart';
 
 /// ============================================================
 /// 마켓플레이스(중고거래/나눔) 모델
@@ -40,13 +41,13 @@ enum ProductType {
 
 /// 상품 카테고리
 enum ProductCategory {
-  food('사료/간식', Icons.restaurant_outlined),
-  clothes('의류/악세서리', Icons.checkroom_outlined),
-  toys('장난감', Icons.toys_outlined),
-  supplies('용품', Icons.inventory_2_outlined),
-  furniture('가구/하우스', Icons.house_outlined),
-  health('건강/위생', Icons.medical_services_outlined),
-  other('기타', Icons.more_horiz);
+  food('사료/간식', AppIcons.food),
+  clothes('의류/악세서리', AppIcons.clothes),
+  toys('장난감', AppIcons.toys),
+  supplies('용품', AppIcons.supplies),
+  furniture('가구/하우스', AppIcons.furniture),
+  health('건강/위생', AppIcons.healthOutlined),
+  other('기타', AppIcons.more);
 
   final String label;
   final IconData icon;
@@ -373,11 +374,11 @@ class ProductLikeModel extends Equatable {
 
 /// 알바 타입
 enum JobType {
-  care('돌봄', Icons.home_outlined),
-  walk('산책', Icons.directions_walk),
-  bath('목욕', Icons.shower_outlined),
-  training('훈련', Icons.school_outlined),
-  other('기타', Icons.more_horiz);
+  care('돌봄', AppIcons.care),
+  walk('산책', AppIcons.walk),
+  bath('목욕', AppIcons.bath),
+  training('훈련', AppIcons.training),
+  other('기타', AppIcons.more);
 
   final String label;
   final IconData icon;

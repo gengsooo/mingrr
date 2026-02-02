@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -76,7 +77,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
         title: const Text('게시글'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert),
+            icon: const Icon(AppIcons.moreVert),
             onPressed: () => _showMoreOptions(context, postAsync.valueOrNull),
           ),
         ],
@@ -85,7 +86,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
         data: (post) {
           if (post == null) {
             return const MingrrEmptyState(
-              icon: Icons.article_outlined,
+              icon: AppIcons.communityOutlined,
               title: '아직 데이터가 없어요',
               subtitle: '게시글을 찾을 수 없습니다',
             );
@@ -155,10 +156,10 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
             onTap: post.isAnonymous ? null : () => _showAuthorProfile(context, post),
             child: Row(
               children: [
-                MingrrAvatar(
+                MingrrImage.avatar(
                   size: 48,
                   imageUrl: post.isAnonymous ? null : post.authorProfileUrl,
-                  placeholderIcon: Icons.person,
+                  icon: AppIcons.profile,
                 ),
                 const SizedBox(width: AppSizes.gapM),
                 Expanded(
@@ -263,7 +264,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               const SizedBox(width: 24),
               // 댓글
               _buildActionButton(
-                icon: Icons.chat_bubble_outline,
+                icon: AppIcons.chatOutlined,
                 label: '댓글 ${post.commentCount}',
                 color: colorScheme.onSurfaceVariant,
                 onTap: () {
@@ -277,7 +278,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               const Spacer(),
               // 공유
               IconButton(
-                icon: Icon(Icons.share_outlined, color: colorScheme.onSurfaceVariant),
+                icon: Icon(AppIcons.share, color: colorScheme.onSurfaceVariant),
                 onPressed: () => ShareService.sharePost(context, post),
               ),
             ],
@@ -303,9 +304,9 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
           fit: StackFit.expand,
           children: [
             // 썸네일
-            MingrrBackgroundImage(
+            MingrrImage.background(
               imageUrl: thumbnailUrl,
-              borderRadius: AppSizes.radiusS,
+              radius: AppSizes.radiusS,
               placeholder: _buildVideoPlaceholder(colorScheme),
             ),
             // 재생 버튼 오버레이
@@ -318,7 +319,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.play_arrow,
+                  AppIcons.play,
                   color: Colors.white,
                   size: 40,
                 ),
@@ -337,7 +338,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.videocam, color: Colors.white, size: 16),
+                    const Icon(AppIcons.video, color: Colors.white, size: 16),
                     const SizedBox(width: AppSizes.gapXS),
                     Text(
                       '동영상',
@@ -361,7 +362,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
       ),
       child: Center(
         child: Icon(
-          Icons.videocam,
+          AppIcons.video,
           size: 48,
           color: colorScheme.outlineVariant,
         ),
@@ -425,7 +426,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                   child: Center(
                     child: Column(
                       children: [
-                        Icon(Icons.chat_bubble_outline, size: 40, color: colorScheme.outlineVariant),
+                        Icon(AppIcons.chatOutlined, size: 40, color: colorScheme.outlineVariant),
                         const SizedBox(height: AppSizes.gapS),
                         Text(
                           '첫 번째 댓글을 남겨보세요!',
@@ -480,10 +481,10 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
             children: [
               GestureDetector(
                 onTap: comment.isAnonymous ? null : () => _showCommentAuthorProfile(context, comment),
-                child: MingrrAvatar(
+                child: MingrrImage.avatar(
                   size: 36,
                   imageUrl: comment.isAnonymous ? null : comment.authorProfileUrl,
-                  placeholderIcon: Icons.person,
+                  icon: AppIcons.profile,
                 ),
               ),
               const SizedBox(width: 10),
@@ -578,10 +579,10 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
         children: [
           GestureDetector(
             onTap: reply.isAnonymous ? null : () => _showCommentAuthorProfile(context, reply),
-            child: MingrrAvatar(
+            child: MingrrImage.avatar(
               size: 28,
               imageUrl: reply.isAnonymous ? null : reply.authorProfileUrl,
-              placeholderIcon: Icons.person,
+              icon: AppIcons.profile,
             ),
           ),
           const SizedBox(width: AppSizes.gapS),
@@ -668,7 +669,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                   const Spacer(),
                   GestureDetector(
                     onTap: _cancelReply,
-                    child: Icon(Icons.close, size: 16, color: accentColor),
+                    child: Icon(AppIcons.close, size: 16, color: accentColor),
                   ),
                 ],
               ),
@@ -691,7 +692,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                     ),
                   ),
                   child: Icon(
-                    Icons.person_off_outlined,
+                    AppIcons.profileOutlined,
                     size: 20,
                     color: _isAnonymousComment ? accentColor : colorScheme.onSurfaceVariant,
                   ),
@@ -729,7 +730,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                     color: accentColor,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.send, size: 20, color: Colors.white),
+                  child: const Icon(AppIcons.send, size: 20, color: Colors.white),
                 ),
               ),
             ],
@@ -1003,7 +1004,7 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, color: Colors.white54, size: 64),
+          const Icon(AppIcons.error, color: Colors.white54, size: 64),
           const SizedBox(height: AppSizes.gapL),
           Text(
             '동영상을 재생할 수 없습니다',
@@ -1058,7 +1059,7 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                  _controller.value.isPlaying ? AppIcons.play : AppIcons.play,
                   color: Colors.white,
                   size: 40,
                 ),

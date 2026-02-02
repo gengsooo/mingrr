@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/feature_colors.dart';
 import '../../constants/app_sizes.dart';
@@ -49,7 +50,7 @@ class PetSelectorCard extends StatelessWidget {
         child: Row(
           children: [
             // 프로필 이미지 (동그라미) - 프로필 이미지만 사용
-            MingrrPetAvatar(
+            MingrrImage.petAvatar(
               imageUrl: pet.profileImageUrl,
               size: 48,
             ),
@@ -164,7 +165,7 @@ class _PetSelectorSheetState extends State<PetSelectorSheet> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.pets, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
+                          Icon(AppIcons.pet, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
                           const SizedBox(height: AppSizes.gapM),
                           Text(
                             '등록된 반려동물이 없습니다',

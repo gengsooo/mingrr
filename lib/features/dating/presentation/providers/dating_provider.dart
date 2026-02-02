@@ -49,6 +49,9 @@ final datingPetsProvider = FutureProvider.autoDispose<List<PetWithDistance>>((re
   final userLocation = ref.watch(currentUserLocationProvider);
   final blockedUserIds = ref.watch(blockedUserIdsProvider).valueOrNull ?? [];
   
+  // 홈 화면에서 선택한 반려동물 (궁합 계산 기준)
+  final selectedPet = ref.watch(selectedPetProvider);
+  
   final petRepository = ref.watch(petRepositoryProvider);
   final allPets = await petRepository.getAllPets();
   
@@ -57,13 +60,16 @@ final datingPetsProvider = FutureProvider.autoDispose<List<PetWithDistance>>((re
       ? allPets.where((pet) => pet.ownerId != userId && !blockedUserIds.contains(pet.ownerId)).toList()
       : allPets.where((pet) => !blockedUserIds.contains(pet.ownerId)).toList();
   
-  // 내 대표 반려동물 가져오기 (궁합 계산용)
-  PetModel? myPet;
+  // 내 정보 가져오기 (궁합 계산용)
+  PetModel? myPet = selectedPet;
   UserModel? myUser;
   if (userId != null) {
-    final myPets = await petRepository.getUserPetsOnce(userId);
-    if (myPets.isNotEmpty) {
-      myPet = myPets.firstWhere((p) => p.isPrimary, orElse: () => myPets.first);
+    // 선택된 반려동물이 없으면 첫번째 반려동물 사용
+    if (myPet == null) {
+      final myPets = await petRepository.getUserPetsOnce(userId);
+      if (myPets.isNotEmpty) {
+        myPet = myPets.first;
+      }
     }
     final myUserDoc = await _firebase.usersCollection.doc(userId).get();
     if (myUserDoc.exists) {
@@ -266,6 +272,9 @@ final recommendedPetsProvider = FutureProvider.autoDispose<List<RecommendedPet>>
   final userLocation = ref.watch(currentUserLocationProvider);
   final blockedUserIds = ref.watch(blockedUserIdsProvider).valueOrNull ?? [];
   
+  // 홈 화면에서 선택한 반려동물 (궁합 계산 기준)
+  final selectedPet = ref.watch(selectedPetProvider);
+  
   if (userId == null) return [];
   
   // 내 정보 가져오기
@@ -274,16 +283,14 @@ final recommendedPetsProvider = FutureProvider.autoDispose<List<RecommendedPet>>
       ? UserModel.fromFirestore(myUserDoc.data()!, id: myUserDoc.id)
       : null;
   
-  // 내 대표 반려동물 가져오기
+  // 선택된 반려동물 사용 (없으면 첫번째)
   final petRepository = ref.watch(petRepositoryProvider);
-  final myPets = await petRepository.getUserPetsOnce(userId);
-  if (myPets.isEmpty) return [];
-  
-  // 대표 반려동물 (isPrimary가 true인 것 또는 첫번째)
-  final myPet = myPets.firstWhere(
-    (p) => p.isPrimary,
-    orElse: () => myPets.first,
-  );
+  PetModel? myPet = selectedPet;
+  if (myPet == null) {
+    final myPets = await petRepository.getUserPetsOnce(userId);
+    if (myPets.isEmpty) return [];
+    myPet = myPets.first;
+  }
   
   // 다른 반려동물 목록 가져오기 (차단된 사용자 제외)
   final allPets = await petRepository.getAllPets();
@@ -481,13 +488,18 @@ final paginatedNearbyPetsProvider = StateNotifierProvider
           ? allPets.where((pet) => pet.ownerId != userId && !blockedUserIds.contains(pet.ownerId)).toList()
           : allPets.where((pet) => !blockedUserIds.contains(pet.ownerId)).toList();
       
-      // 내 대표 반려동물 가져오기 (궁합 계산용)
-      PetModel? myPet;
+      // 홈 화면에서 선택한 반려동물 (궁합 계산 기준)
+      final selectedPet = ref.read(selectedPetProvider);
+      
+      PetModel? myPet = selectedPet;
       UserModel? myUser;
       if (userId != null) {
-        final myPets = await petRepository.getUserPetsOnce(userId);
-        if (myPets.isNotEmpty) {
-          myPet = myPets.firstWhere((p) => p.isPrimary, orElse: () => myPets.first);
+        // 선택된 반려동물이 없으면 첫번째 반려동물 사용
+        if (myPet == null) {
+          final myPets = await petRepository.getUserPetsOnce(userId);
+          if (myPets.isNotEmpty) {
+            myPet = myPets.first;
+          }
         }
         final myUserDoc = await _firebase.usersCollection.doc(userId).get();
         if (myUserDoc.exists) {
@@ -576,11 +588,15 @@ final paginatedRecommendedPetsProvider = StateNotifierProvider<
       
       final petRepository = ref.read(petRepositoryProvider);
       
-      // 내 대표 반려동물 가져오기
-      final myPets = await petRepository.getUserPetsOnce(userId);
-      if (myPets.isEmpty) return [];
+      // 홈 화면에서 선택한 반려동물 (궁합 계산 기준)
+      final selectedPet = ref.read(selectedPetProvider);
       
-      final myPet = myPets.firstWhere((p) => p.isPrimary, orElse: () => myPets.first);
+      PetModel? myPet = selectedPet;
+      if (myPet == null) {
+        final myPets = await petRepository.getUserPetsOnce(userId);
+        if (myPets.isEmpty) return [];
+        myPet = myPets.first;
+      }
       
       // 내 사용자 정보
       final myUserDoc = await _firebase.usersCollection.doc(userId).get();

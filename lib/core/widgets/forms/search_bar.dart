@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 
@@ -81,7 +82,7 @@ class MingrrSearchBar extends StatelessWidget {
           hintText: hintText,
           hintStyle: AppTextStyles.bodyMedium(context).withColor(colorScheme.outlineVariant),
           prefixIcon: Icon(
-            Icons.search,
+            AppIcons.search,
             color: effectiveAccentColor,
             size: 20,
           ),

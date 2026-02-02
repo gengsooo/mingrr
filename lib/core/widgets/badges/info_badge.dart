@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/feature_colors.dart';
@@ -227,7 +228,7 @@ class MatchScoreBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (showIcon) ...[
-            Icon(Icons.auto_awesome, size: _iconSize, color: textColor),
+            Icon(AppIcons.star, size: _iconSize, color: textColor),
             SizedBox(width: size == InfoBadgeSize.small ? 2 : 4),
           ],
           Text(
@@ -236,7 +237,7 @@ class MatchScoreBadge extends StatelessWidget {
           ),
           if (showInfoIcon) ...[
             const SizedBox(width: AppSizes.gapXS),
-            Icon(Icons.info_outline, size: _iconSize - 2, color: textColor.withValues(alpha: AppOpacity.o70)),
+            Icon(AppIcons.info, size: _iconSize - 2, color: textColor.withValues(alpha: AppOpacity.o70)),
           ],
         ],
       ),
@@ -285,7 +286,7 @@ class GenderAgeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return InfoBadge(
       text: _displayText,
-      icon: isMale ? Icons.male : Icons.female,
+      icon: isMale ? AppIcons.male : AppIcons.female,
       backgroundColor: _backgroundColor,
       textColor: _textColor,
       iconColor: _textColor,
@@ -331,7 +332,7 @@ class LikeCountText extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
-          Icons.favorite,
+          AppIcons.like,
           size: _iconSize,
           color: color,
         ),
@@ -473,7 +474,7 @@ class _LikeButtonState extends State<LikeButton> with SingleTickerProviderStateM
                         return ScaleTransition(scale: animation, child: child);
                       },
                       child: Icon(
-                        widget.isLiked ? Icons.favorite : Icons.favorite_border,
+                        widget.isLiked ? AppIcons.like : AppIcons.likeOutlined,
                         key: ValueKey(widget.isLiked),
                         size: _iconSize,
                         color: color,
@@ -546,7 +547,7 @@ class LikeOverlayBadge extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              isLiked ? Icons.favorite : Icons.favorite_border,
+              isLiked ? AppIcons.like : AppIcons.likeOutlined,
               size: 16.0,
               color: isLiked ? likedColor : Colors.white,
             ),
@@ -615,7 +616,7 @@ class PetGenderBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            isMale ? Icons.male : Icons.female,
+            isMale ? AppIcons.male : AppIcons.female,
             size: _symbolSize,
             color: textColor,
           ),
@@ -649,7 +650,7 @@ class VerifiedBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     return InfoBadge(
       text: label,
-      icon: isVerified ? Icons.check_circle : Icons.cancel_outlined,
+      icon: isVerified ? AppIcons.success : AppIcons.cancel,
       backgroundColor: isVerified 
           ? context.features.success.withValues(alpha: AppOpacity.o10) 
           : Theme.of(context).colorScheme.surface,
@@ -780,7 +781,7 @@ class PedigreeBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            hasPedigree ? Icons.verified : Icons.block,
+            hasPedigree ? AppIcons.verified : AppIcons.block,
             size: _iconSize,
             color: hasPedigree ? color : colorScheme.onSurfaceVariant,
           ),

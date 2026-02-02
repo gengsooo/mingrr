@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../../core/constants/app_icons.dart';
 import '../../../../../core/constants/app_sizes.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/widgets/common_widgets.dart';
@@ -46,7 +47,7 @@ class CustomerServiceScreen extends StatelessWidget {
                   ),
                 ),
                 MingrrSettingsTile(
-                  icon: Icons.chat_bubble_outline,
+                  icon: AppIcons.chatBubbleOutlined,
                   title: '카카오톡 문의',
                   subtitle: '평일 10:00 ~ 18:00 (주말/공휴일 휴무)',
                   iconColor: const Color(0xFF3C1E1E),
@@ -54,7 +55,7 @@ class CustomerServiceScreen extends StatelessWidget {
                   onTap: () => _openKakaoChannel(context),
                 ),
                 MingrrSettingsTile(
-                  icon: Icons.email_outlined,
+                  icon: AppIcons.email,
                   title: '이메일 문의',
                   subtitle: 'support@mingrr.com',
                   onTap: () => _sendEmail(context),

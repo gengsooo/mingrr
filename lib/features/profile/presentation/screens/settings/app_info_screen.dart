@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import '../../../../../core/constants/app_icons.dart';
 import '../../../../../core/constants/app_sizes.dart';
 import '../../../../../core/constants/legal_texts.dart';
 import '../../../../../core/theme/app_text_styles.dart';
@@ -70,7 +71,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
                     borderRadius: BorderRadius.circular(AppSizes.radiusL),
                   ),
                   child: Icon(
-                    Icons.pets,
+                    AppIcons.pet,
                     size: 40,
                     color: Theme.of(context).colorScheme.primary,
                   ),
@@ -120,17 +121,17 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
                   ),
                 ),
                 MingrrSettingsTile(
-                  icon: Icons.description_outlined,
+                  icon: AppIcons.description,
                   title: '이용약관',
                   onTap: () => _showTerms(context),
                 ),
                 MingrrSettingsTile(
-                  icon: Icons.privacy_tip_outlined,
+                  icon: AppIcons.security,
                   title: '개인정보처리방침',
                   onTap: () => _showPrivacyPolicy(context),
                 ),
                 MingrrSettingsTile(
-                  icon: Icons.code,
+                  icon: AppIcons.developerMode,
                   title: '오픈소스 라이선스',
                   onTap: () => _showLicenses(context),
                 ),
@@ -191,7 +192,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
           borderRadius: BorderRadius.circular(AppSizes.radiusM),
         ),
         child: Icon(
-          Icons.pets,
+          AppIcons.pet,
           size: 30,
           color: Theme.of(context).colorScheme.primary,
         ),

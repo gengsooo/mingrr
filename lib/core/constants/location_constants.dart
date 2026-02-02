@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_icons.dart';
 
 /// ============================================================
 /// 위치 관련 상수
@@ -61,7 +62,7 @@ class LocationConstants {
   static const String noLocationText = '위치 정보 없음';
   
   /// 거리 표시 아이콘
-  static const IconData distanceIcon = Icons.location_on_outlined;
+  static const IconData distanceIcon = AppIcons.locationOutlined;
 }
 
 /// ============================================================

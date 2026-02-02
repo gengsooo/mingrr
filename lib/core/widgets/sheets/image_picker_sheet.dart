@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../services/image_service.dart';
@@ -44,49 +45,49 @@ class DefaultAvatar {
 final List<DefaultAvatar> petDefaultAvatars = [
   DefaultAvatar(
     id: 'dog_1',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
     backgroundColor: const Color(0xFFFFE0B2),
     iconColor: const Color(0xFFFF9800),
   ),
   DefaultAvatar(
     id: 'dog_2',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
     backgroundColor: const Color(0xFFBBDEFB),
     iconColor: const Color(0xFF2196F3),
   ),
   DefaultAvatar(
     id: 'dog_3',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
     backgroundColor: const Color(0xFFC8E6C9),
     iconColor: const Color(0xFF4CAF50),
   ),
   DefaultAvatar(
     id: 'dog_4',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
     backgroundColor: const Color(0xFFFFCDD2),
     iconColor: const Color(0xFFF44336),
   ),
   DefaultAvatar(
     id: 'dog_5',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
     backgroundColor: const Color(0xFFE1BEE7),
     iconColor: const Color(0xFF9C27B0),
   ),
   DefaultAvatar(
     id: 'dog_6',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
     backgroundColor: const Color(0xFFB2EBF2),
     iconColor: const Color(0xFF00BCD4),
   ),
   DefaultAvatar(
     id: 'dog_7',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
     backgroundColor: const Color(0xFFFFF9C4),
     iconColor: const Color(0xFFFFC107),
   ),
   DefaultAvatar(
     id: 'dog_8',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
     backgroundColor: const Color(0xFFD7CCC8),
     iconColor: const Color(0xFF795548),
   ),
@@ -96,49 +97,49 @@ final List<DefaultAvatar> petDefaultAvatars = [
 final List<DefaultAvatar> personDefaultAvatars = [
   DefaultAvatar(
     id: 'person_1',
-    icon: Icons.person,
+    icon: AppIcons.profile,
     backgroundColor: const Color(0xFFFFE0B2),
     iconColor: const Color(0xFFFF9800),
   ),
   DefaultAvatar(
     id: 'person_2',
-    icon: Icons.person,
+    icon: AppIcons.profile,
     backgroundColor: const Color(0xFFBBDEFB),
     iconColor: const Color(0xFF2196F3),
   ),
   DefaultAvatar(
     id: 'person_3',
-    icon: Icons.person,
+    icon: AppIcons.profile,
     backgroundColor: const Color(0xFFC8E6C9),
     iconColor: const Color(0xFF4CAF50),
   ),
   DefaultAvatar(
     id: 'person_4',
-    icon: Icons.person,
+    icon: AppIcons.profile,
     backgroundColor: const Color(0xFFFFCDD2),
     iconColor: const Color(0xFFF44336),
   ),
   DefaultAvatar(
     id: 'person_5',
-    icon: Icons.person,
+    icon: AppIcons.profile,
     backgroundColor: const Color(0xFFE1BEE7),
     iconColor: const Color(0xFF9C27B0),
   ),
   DefaultAvatar(
     id: 'person_6',
-    icon: Icons.person,
+    icon: AppIcons.profile,
     backgroundColor: const Color(0xFFB2EBF2),
     iconColor: const Color(0xFF00BCD4),
   ),
   DefaultAvatar(
     id: 'person_7',
-    icon: Icons.person,
+    icon: AppIcons.profile,
     backgroundColor: const Color(0xFFFFF9C4),
     iconColor: const Color(0xFFFFC107),
   ),
   DefaultAvatar(
     id: 'person_8',
-    icon: Icons.person,
+    icon: AppIcons.profile,
     backgroundColor: const Color(0xFFD7CCC8),
     iconColor: const Color(0xFF795548),
   ),
@@ -265,7 +266,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
             children: [
               Expanded(
                 child: _buildActionButton(
-                  icon: Icons.camera_alt,
+                  icon: AppIcons.camera,
                   label: '카메라',
                   onTap: _pickFromCamera,
                 ),
@@ -273,7 +274,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
               const SizedBox(width: AppSizes.gapM),
               Expanded(
                 child: _buildActionButton(
-                  icon: Icons.photo_library,
+                  icon: AppIcons.gallery,
                   label: '갤러리',
                   onTap: _pickFromGallery,
                 ),
@@ -418,7 +419,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
         shape: BoxShape.circle,
       ),
       child: Icon(
-        widget.avatarType == DefaultAvatarType.pet ? Icons.pets : Icons.person,
+        widget.avatarType == DefaultAvatarType.pet ? AppIcons.pet : AppIcons.profile,
         size: 50,
         color: Theme.of(context).colorScheme.outlineVariant,
       ),

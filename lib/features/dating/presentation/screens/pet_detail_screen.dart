@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -164,7 +165,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
           return Scaffold(
             appBar: AppBar(title: const Text('반려동물 정보')),
             body: const MingrrEmptyState(
-              icon: Icons.pets,
+              icon: AppIcons.pet,
               title: '아직 데이터가 없어요',
               subtitle: '반려동물 정보를 찾을 수 없습니다',
             ),
@@ -299,7 +300,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
             )
           : !widget.isBreeding
               ? const EmptyInfoBadge(
-                  icon: Icons.auto_awesome_outlined,
+                  icon: AppIcons.autoAwesome,
                   text: '궁합 정보 없음',
                 )
               : null,
@@ -342,7 +343,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         // 반려동물 프로필 이미지 (클릭 시 모달 열기)
         GestureDetector(
           onTap: () => _openPetProfileModal(pet),
-          child: MingrrPetAvatar(
+          child: MingrrImage.petAvatar(
             imageUrl: pet.displayImageUrl,
             size: 56,
             borderColor: context.features.dating.withValues(alpha: AppOpacity.o30),
@@ -561,10 +562,10 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                     Row(
                       children: [
                         // 아이콘
-                        MingrrAvatar(
+                        MingrrImage.avatar(
                           imageUrl: owner?.profileImageUrl,
                           size: 50,
-                          placeholderIcon: Icons.person,
+                          icon: AppIcons.profile,
                         ),
                         const SizedBox(width: AppSizes.gapM),
                         // 닉네임 + 꼬순내지수 (성별/나이 제거 - 개인정보 보호)
@@ -582,7 +583,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                           ),
                         ),
                         // 화살표
-                        Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+                        Icon(AppIcons.chevronRight, color: Theme.of(context).colorScheme.outlineVariant),
                       ],
                     ),
                     // 인증 배지 (소형)
@@ -593,17 +594,17 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _buildSmallVerificationBadge(
-                          icon: Icons.verified_user_outlined,
+                          icon: AppIcons.badgeIdentity,
                           label: '본인인증',
                           isVerified: owner?.isIdentityVerified ?? false,
                         ),
                         _buildSmallVerificationBadge(
-                          icon: Icons.pets_outlined,
+                          icon: AppIcons.petOutlined,
                           label: '동물등록',
                           isVerified: owner?.isVerified ?? false,
                         ),
                         _buildSmallVerificationBadge(
-                          icon: Icons.location_on_outlined,
+                          icon: AppIcons.badgeLocation,
                           label: '위치인증',
                           isVerified: owner?.isLocationVerified ?? false,
                         ),
@@ -640,7 +641,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
           ),
         ),
         if (!isVerified)
-          Icon(Icons.close, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
+          Icon(AppIcons.close, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
       ],
     );
   }

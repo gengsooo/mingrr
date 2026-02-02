@@ -16,6 +16,7 @@ import 'core/providers/theme_provider.dart';  // 테마 Provider
 import 'core/providers/location_verification_provider.dart';  // 위치 인증 Provider
 import 'core/widgets/loading/loading_widgets.dart';  // 공통 로딩 위젯
 import 'core/widgets/badges/svg_icons.dart';  // SVG 아이콘 경로
+import 'core/constants/app_icons.dart';  // 아이콘 상수
 import 'core/widgets/network_status_banner.dart';  // 네트워크 상태 배너
 import 'package:flutter_svg/flutter_svg.dart';  // SVG 렌더링
 
@@ -438,8 +439,8 @@ class MingrrBottomNavBar extends ConsumerWidget {
               Expanded(
                 child: _buildNavItem(
                   context: context,
-                  icon: Icons.home_outlined,
-                  activeIcon: Icons.home,
+                  icon: AppIcons.homeOutlined,
+                  activeIcon: AppIcons.home,
                   label: '홈',
                   index: 0,
                   currentIndex: currentIndex,
@@ -451,8 +452,8 @@ class MingrrBottomNavBar extends ConsumerWidget {
               Expanded(
                 child: _buildNavItem(
                   context: context,
-                  icon: Icons.favorite_outline,
-                  activeIcon: Icons.favorite,
+                  icon: AppIcons.datingOutlined,
+                  activeIcon: AppIcons.dating,
                   label: '데이팅',
                   index: 1,
                   currentIndex: currentIndex,
@@ -465,8 +466,8 @@ class MingrrBottomNavBar extends ConsumerWidget {
               Expanded(
                 child: _buildNavItem(
                   context: context,
-                  icon: Icons.chat_bubble_outline,
-                  activeIcon: Icons.chat_bubble,
+                  icon: AppIcons.chatBubbleOutlined,
+                  activeIcon: AppIcons.chatBubble,
                   label: '채팅',
                   index: 2,
                   currentIndex: currentIndex,
@@ -480,8 +481,8 @@ class MingrrBottomNavBar extends ConsumerWidget {
               Expanded(
                 child: _buildNavItem(
                   context: context,
-                  icon: Icons.store_outlined,
-                  activeIcon: Icons.store,
+                  icon: AppIcons.marketOutlined,
+                  activeIcon: AppIcons.market,
                   label: '마켓',
                   index: 3,
                   currentIndex: currentIndex,
@@ -494,8 +495,8 @@ class MingrrBottomNavBar extends ConsumerWidget {
               Expanded(
                 child: _buildNavItem(
                   context: context,
-                  icon: Icons.forum_outlined,
-                  activeIcon: Icons.forum,
+                  icon: AppIcons.forumOutlined,
+                  activeIcon: AppIcons.forum,
                   label: '소셜',
                   index: 4,
                   currentIndex: currentIndex,

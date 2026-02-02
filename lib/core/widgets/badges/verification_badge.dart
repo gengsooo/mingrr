@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/feature_colors.dart';
@@ -25,11 +26,11 @@ enum VerificationBadgeType {
   IconData get icon {
     switch (this) {
       case VerificationBadgeType.identity:
-        return Icons.badge_outlined; // 신분증 아이콘
+        return AppIcons.badgeIdentity; // 신분증 아이콘
       case VerificationBadgeType.pet:
-        return Icons.sell_outlined; // 태그 아이콘 (동물등록 태그)
+        return AppIcons.badgePet; // 태그 아이콘 (동물등록 태그)
       case VerificationBadgeType.location:
-        return Icons.location_on_outlined; // 위치 아이콘
+        return AppIcons.badgeLocation; // 위치 아이콘
     }
   }
 
@@ -37,11 +38,11 @@ enum VerificationBadgeType {
   IconData get verifiedIcon {
     switch (this) {
       case VerificationBadgeType.identity:
-        return Icons.badge; // 신분증 아이콘 (채워진)
+        return AppIcons.badgeIdentity; // 신분증 아이콘 (채워진)
       case VerificationBadgeType.pet:
-        return Icons.sell; // 태그 아이콘 (채워진)
+        return AppIcons.badgePet; // 태그 아이콘 (채워진)
       case VerificationBadgeType.location:
-        return Icons.location_on; // 위치 아이콘 (채워진)
+        return AppIcons.badgeLocation; // 위치 아이콘 (채워진)
     }
   }
 }
@@ -113,7 +114,7 @@ class VerificationBadgeMedium extends StatelessWidget {
             ),
             const SizedBox(height: AppSizes.gapXXS),
             Icon(
-              isVerified ? Icons.check_circle : Icons.cancel_outlined,
+              isVerified ? AppIcons.checkCircle : AppIcons.circleOutlined,
               size: 14,
               color: isVerified ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
             ),

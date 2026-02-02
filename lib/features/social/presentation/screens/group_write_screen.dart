@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/app_sizes.dart';
@@ -152,7 +153,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
                 label: '활동 지역',
                 value: _selectedLocation,
                 placeholder: FormStrings.hintLocation,
-                icon: Icons.location_on_outlined,
+                icon: AppIcons.locationOutlined,
                 onTap: () => showLocationSelectorWithCoordinates(
                   context: context,
                   initialLocation: _selectedLocation,

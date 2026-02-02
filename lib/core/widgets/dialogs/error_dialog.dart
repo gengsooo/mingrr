@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../badges/svg_icons.dart';
@@ -26,7 +27,7 @@ import 'dialog_buttons.dart';
 enum ErrorType {
   /// 위치/GPS 오류
   location(
-    icon: Icons.location_off_outlined,
+    icon: AppIcons.locationOff,
     svgAsset: SvgAssets.errorLocation,
     color: Colors.red,
     title: '위치를 가져올 수 없습니다',
@@ -35,7 +36,7 @@ enum ErrorType {
   
   /// 네트워크 오류
   network(
-    icon: Icons.wifi_off_outlined,
+    icon: AppIcons.wifiOff,
     svgAsset: SvgAssets.errorNetwork,
     color: Colors.red,
     title: '네트워크 연결 오류',
@@ -44,7 +45,7 @@ enum ErrorType {
   
   /// 서버/API 오류
   server(
-    icon: Icons.cloud_off_outlined,
+    icon: AppIcons.cloudOff,
     svgAsset: SvgAssets.errorServer,
     color: Colors.red,
     title: '서버 연결 오류',
@@ -53,7 +54,7 @@ enum ErrorType {
   
   /// 데이터베이스 오류
   database(
-    icon: Icons.storage_outlined,
+    icon: AppIcons.supplies,
     svgAsset: SvgAssets.errorDatabase,
     color: Colors.red,
     title: '데이터 처리 오류',
@@ -62,7 +63,7 @@ enum ErrorType {
   
   /// 권한 오류
   permission(
-    icon: Icons.lock_outline,
+    icon: AppIcons.lock,
     svgAsset: SvgAssets.errorPermission,
     color: Colors.orange,
     title: '권한이 필요합니다',
@@ -71,7 +72,7 @@ enum ErrorType {
   
   /// 데이터 로드 오류
   dataLoad(
-    icon: Icons.error_outline,
+    icon: AppIcons.error,
     svgAsset: SvgAssets.errorServer,
     color: Colors.red,
     title: '데이터를 불러올 수 없습니다',
@@ -80,7 +81,7 @@ enum ErrorType {
   
   /// 이미지 업로드 오류
   imageUpload(
-    icon: Icons.image_not_supported_outlined,
+    icon: AppIcons.imageOutlined,
     svgAsset: SvgAssets.errorServer,
     color: Colors.red,
     title: '이미지 업로드 실패',
@@ -89,7 +90,7 @@ enum ErrorType {
   
   /// 인증 오류
   auth(
-    icon: Icons.person_off_outlined,
+    icon: AppIcons.profileOutlined,
     svgAsset: SvgAssets.errorPermission,
     color: Colors.red,
     title: '인증 오류',
@@ -98,7 +99,7 @@ enum ErrorType {
   
   /// 타임아웃 오류
   timeout(
-    icon: Icons.timer_off_outlined,
+    icon: AppIcons.timerOff,
     svgAsset: SvgAssets.errorNetwork,
     color: Colors.orange,
     title: '요청 시간 초과',
@@ -107,7 +108,7 @@ enum ErrorType {
   
   /// 일반 오류
   general(
-    icon: Icons.warning_amber_outlined,
+    icon: AppIcons.warning,
     svgAsset: SvgAssets.errorServer,
     color: Colors.red,
     title: '오류가 발생했습니다',

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
@@ -241,7 +242,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
           // 모임 카드들
           if (filteredGroups.isEmpty)
             MingrrEmptyState(
-              icon: Icons.groups_outlined,
+              icon: AppIcons.group,
               title: '아직 데이터가 없어요',
               subtitle: '새로운 모임을 만들어보세요',
               buttonText: '모임 만들기',
@@ -298,7 +299,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
           ),
           child: Column(
             children: [
-              Icon(Icons.groups_outlined, size: 48, color: colorScheme.outlineVariant),
+              Icon(AppIcons.group, size: 48, color: colorScheme.outlineVariant),
               const SizedBox(height: AppSizes.gapL),
               Text(
                 '가입한 모임이 없어요',
@@ -417,7 +418,7 @@ class _MyGroupCard extends StatelessWidget {
                 color: accentColor.withValues(alpha: AppOpacity.o10),
                 borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
-              child: Icon(Icons.groups, size: 20, color: accentColor),
+              child: Icon(AppIcons.group, size: 20, color: accentColor),
             ),
             const SizedBox(height: AppSizes.gapS),
             Text(
@@ -469,14 +470,10 @@ class _GroupCard extends StatelessWidget {
             // 이미지
             ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusL)),
-              child: MingrrBackgroundImage(
+              child: MingrrImage.background(
                 imageUrl: group.imageUrl,
                 height: group.imageUrl != null ? 120 : 80,
-                placeholder: Container(
-                  height: group.imageUrl != null ? 120 : 80,
-                  color: accentColor.withValues(alpha: AppOpacity.o10),
-                  child: Center(child: Icon(Icons.groups, size: 40, color: accentColor)),
-                ),
+                accentColor: accentColor,
               ),
             ),
 
@@ -535,7 +532,7 @@ class _GroupCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: AppSizes.gapM),
-                      Icon(Icons.people_outline, size: 14, color: colorScheme.onSurfaceVariant),
+                      Icon(AppIcons.people, size: 14, color: colorScheme.onSurfaceVariant),
                       const SizedBox(width: AppSizes.gapXS),
                       Text(
                         '${group.memberCount}명',

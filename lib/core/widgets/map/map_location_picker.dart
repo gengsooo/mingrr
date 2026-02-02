@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
+import '../../constants/app_icons.dart';
 import '../../theme/feature_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../constants/app_sizes.dart';
@@ -322,7 +323,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: AppSizes.elevationNone,
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: Icon(AppIcons.close),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -399,7 +400,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.location_off_outlined,
+              AppIcons.locationOff,
               size: 64,
               color: _accentColor.withValues(alpha: AppOpacity.o50),
             ),
@@ -414,7 +415,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                 setState(() => _isInitializing = true);
                 _initializePosition();
               },
-              icon: const Icon(Icons.refresh),
+              icon: Icon(AppIcons.refresh),
               label: const Text('다시 시도'),
               style: TextButton.styleFrom(
                 foregroundColor: _accentColor,
@@ -434,7 +435,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.location_on,
+              AppIcons.location,
               size: 48,
               color: _accentColor,
             ),
@@ -462,7 +463,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
         elevation: AppSizes.elevationM,
         onPressed: _goToMyLocation,
         child: Icon(
-          Icons.my_location,
+          AppIcons.myLocation,
           color: _accentColor,
         ),
       ),
@@ -546,7 +547,7 @@ class _AddressPanel extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            Icons.location_on_outlined,
+            AppIcons.locationOutlined,
             size: 20,
             color: accentColor,
           ),

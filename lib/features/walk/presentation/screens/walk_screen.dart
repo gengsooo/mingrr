@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
@@ -217,7 +218,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                           boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
                         ),
                         child: TextButton.icon(
-                          icon: Icon(Icons.history, size: 18, color: context.features.health),
+                          icon: Icon(AppIcons.history, size: 18, color: context.features.health),
                           label: Text('산책 기록', style: TextStyle(color: context.features.health)),
                           onPressed: () => _showWalkHistory(context),
                         ),
@@ -258,7 +259,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                               boxShadow: AppShadows.shadowM(Theme.of(context).brightness == Brightness.dark),
                             ),
                             child: Icon(
-                              Icons.pets,
+                              AppIcons.pet,
                               size: 32,
                               color: context.features.health,
                             ),
@@ -447,7 +448,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.map_outlined,
+              AppIcons.mapOutlined,
               size: 64,
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
@@ -502,7 +503,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                     boxShadow: AppShadows.shadowM(Theme.of(context).brightness == Brightness.dark),
                   ),
                   child: Icon(
-                    Icons.pets,
+                    AppIcons.pet,
                     size: 40,
                     color: context.features.health,
                   ),
@@ -622,7 +623,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                                         width: 3,
                                       ),
                                     ),
-                                    child: MingrrAvatar(
+                                    child: MingrrImage.avatar(
                                       size: 50,
                                       imageUrl: pet.profileImageUrl,
                                     ),
@@ -639,7 +640,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                                           shape: BoxShape.circle,
                                         ),
                                         child: const Icon(
-                                          Icons.check,
+                                          AppIcons.check,
                                           color: Colors.white,
                                           size: 14,
                                         ),
@@ -684,7 +685,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildWalkStat(
-                  icon: Icons.timer,
+                  icon: AppIcons.timer,
                   value: _formatDuration(_walkDuration),
                   label: '시간',
                 ),
@@ -694,7 +695,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                   color: Colors.white30,
                 ),
                 _buildWalkStat(
-                  icon: Icons.straighten,
+                  icon: AppIcons.distance,
                   value: _formatDistance(_walkDistance),
                   label: '거리',
                 ),
@@ -704,7 +705,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                   color: Colors.white30,
                 ),
                 _buildWalkStat(
-                  icon: Icons.local_fire_department,
+                  icon: AppIcons.fire,
                   value: '${(_walkDistance * 0.05).toInt()}',
                   label: 'kcal',
                 ),
@@ -785,7 +786,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
               text: _isWalking ? '산책 종료' : '산책 시작',
               backgroundColor: _isWalking ? Colors.red : context.features.health,
               textColor: Colors.white,
-              icon: _isWalking ? Icons.stop : Icons.play_arrow,
+              icon: _isWalking ? AppIcons.stop : AppIcons.play,
               onPressed: _isWalking ? _stopWalk : _startWalk,
             ),
           ],
@@ -1029,7 +1030,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.error_outline, size: 64, color: Colors.red),
+                          Icon(AppIcons.error, size: 64, color: Colors.red),
                           const SizedBox(height: AppSizes.gapL),
                           Text(
                             '산책 기록을 불러올 수 없어요',
@@ -1051,7 +1052,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.pets, size: 64, color: Theme.of(context).colorScheme.outlineVariant),
+                          Icon(AppIcons.pet, size: 64, color: Theme.of(context).colorScheme.outlineVariant),
                           const SizedBox(height: AppSizes.gapL),
                           Text(
                             '아직 산책 기록이 없어요',
@@ -1093,7 +1094,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                                 color: context.features.health.withValues(alpha: AppOpacity.o15),
                                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
                               ),
-                              child: Icon(Icons.directions_walk, color: context.features.health),
+                              child: Icon(AppIcons.walk, color: context.features.health),
                             ),
                             const SizedBox(width: AppSizes.gapM),
                             Expanded(
@@ -1114,7 +1115,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                                 ],
                               ),
                             ),
-                            Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+                            Icon(AppIcons.chevronRight, color: Theme.of(context).colorScheme.outlineVariant),
                           ],
                         ),
                       );
@@ -1139,7 +1140,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         ),
         title: Row(
           children: [
-            Icon(Icons.celebration, color: context.features.health),
+            Icon(AppIcons.celebration, color: context.features.health),
             const SizedBox(width: AppSizes.gapS),
             const Text('산책 완료!'),
           ],

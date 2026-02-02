@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../../core/constants/app_icons.dart';
 import '../../../../../core/constants/app_sizes.dart';
 import '../../../../../core/widgets/common_widgets.dart';
 import '../../../../../core/widgets/dialogs/dialogs.dart';
@@ -60,24 +61,24 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                   ),
                 ),
                 MingrrSettingsTile.connection(
-                  icon: Icons.email_outlined,
+                  icon: AppIcons.email,
                   title: '이메일',
                   isConnected: isEmailLogin,
                   connectedText: authUser?.email ?? '연동됨',
                 ),
                 MingrrSettingsTile.connection(
-                  icon: Icons.chat_bubble_outline,
+                  icon: AppIcons.chatOutlined,
                   title: '카카오',
                   isConnected: isKakaoLogin,
                   iconColor: const Color(0xFFFEE500),
                 ),
                 MingrrSettingsTile.connection(
-                  icon: Icons.apple,
+                  icon: AppIcons.apple,
                   title: 'Apple',
                   isConnected: isAppleLogin,
                 ),
                 MingrrSettingsTile.connection(
-                  icon: Icons.g_mobiledata,
+                  icon: AppIcons.google,
                   title: 'Google',
                   isConnected: isGoogleLogin,
                   iconColor: const Color(0xFF4285F4),
@@ -103,7 +104,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                     ),
                   ),
                   MingrrSettingsTile(
-                    icon: Icons.lock_outline,
+                    icon: AppIcons.lock,
                     title: '비밀번호 변경',
                     subtitle: '비밀번호 재설정 이메일을 발송합니다',
                     onTap: _sendPasswordResetEmail,
@@ -128,13 +129,13 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                   ),
                 ),
                 MingrrSettingsTile(
-                  icon: Icons.email_outlined,
+                  icon: AppIcons.email,
                   title: '이메일',
                   subtitle: authUser?.email ?? '등록되지 않음',
                   showChevron: false,
                 ),
                 MingrrSettingsTile(
-                  icon: Icons.phone_outlined,
+                  icon: AppIcons.phone,
                   title: '전화번호',
                   subtitle: currentUser?.phoneNumber ?? '등록되지 않음',
                   showChevron: false,
@@ -149,7 +150,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           MingrrCard(
             margin: EdgeInsets.zero,
             child: MingrrSettingsTile.destructive(
-              icon: Icons.person_remove_outlined,
+              icon: AppIcons.personRemove,
               title: '회원 탈퇴',
               subtitle: '계정과 모든 데이터가 삭제됩니다',
               onTap: _showDeleteAccountDialog,

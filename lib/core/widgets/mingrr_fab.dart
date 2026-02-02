@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_icons.dart';
 import '../constants/app_sizes.dart';
 
 /// ============================================================
@@ -109,7 +110,7 @@ class MingrrFAB extends StatelessWidget {
   }) {
     return MingrrFAB(
       key: key,
-      icon: Icons.edit,
+      icon: AppIcons.edit,
       onPressed: onPressed,
       backgroundColor: backgroundColor,
       heroTag: heroTag,
@@ -118,7 +119,7 @@ class MingrrFAB extends StatelessWidget {
     );
   }
 
-  /// 추가 FAB (Icons.add)
+  /// 추가 FAB (AppIcons.add)
   /// 
   /// 사용처: 소모임(모임 생성), 건강수첩(기록 추가)
   factory MingrrFAB.add({
@@ -131,7 +132,7 @@ class MingrrFAB extends StatelessWidget {
   }) {
     return MingrrFAB(
       key: key,
-      icon: Icons.add,
+      icon: AppIcons.add,
       onPressed: onPressed,
       backgroundColor: backgroundColor,
       heroTag: heroTag,
@@ -140,7 +141,7 @@ class MingrrFAB extends StatelessWidget {
     );
   }
 
-  /// 현재 위치 FAB (Icons.my_location)
+  /// 현재 위치 FAB (AppIcons.myLocation)
   /// 
   /// 사용처: 산책 화면 (지도 위 현재 위치 버튼)
   /// 기본적으로 small 사이즈, surface 배경색 사용
@@ -155,7 +156,7 @@ class MingrrFAB extends StatelessWidget {
   }) {
     return MingrrFAB(
       key: key,
-      icon: Icons.my_location,
+      icon: AppIcons.myLocation,
       onPressed: onPressed,
       backgroundColor: backgroundColor,
       iconColor: iconColor,

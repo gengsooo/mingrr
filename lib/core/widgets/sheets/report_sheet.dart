@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../services/firebase_service.dart';
@@ -103,7 +104,7 @@ class _ReportSheetState extends State<ReportSheet> {
                   const SizedBox(height: AppSizes.gapM),
                   Row(
                     children: [
-                      const Icon(Icons.report_outlined, color: Colors.red),
+                      Icon(AppIcons.report, color: Colors.red),
                       const SizedBox(width: AppSizes.gapS),
                       Text(
                         '${widget.targetName} 신고하기',
@@ -136,7 +137,7 @@ class _ReportSheetState extends State<ReportSheet> {
                         child: Row(
                           children: [
                             Icon(
-                              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                              isSelected ? AppIcons.checkCircle : AppIcons.circleOutlined,
                               size: 20,
                               color: isSelected ? Colors.red : Theme.of(context).colorScheme.outlineVariant,
                             ),

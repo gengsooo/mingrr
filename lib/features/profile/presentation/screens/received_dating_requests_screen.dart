@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
@@ -40,7 +41,7 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.favorite_border, size: 64, color: Theme.of(context).colorScheme.outlineVariant),
+                  Icon(AppIcons.datingOutlined, size: 64, color: Theme.of(context).colorScheme.outlineVariant),
                   const SizedBox(height: AppSizes.gapL),
                   Text(
                     '아직 받은 신청이 없어요',
@@ -121,11 +122,11 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
         // 프로필 이미지
         GestureDetector(
           onTap: () => context.push('/dating/detail/${request.fromPetId}'),
-          child: MingrrThumbnail(
+          child: MingrrImage.thumbnail(
             imageUrl: pet?.displayImageUrl,
             width: 60,
             height: 60,
-            borderRadius: AppSizes.radiusS,
+            radius: AppSizes.radiusS,
             errorWidget: _buildDefaultPetImage(),
           ),
         ),
@@ -164,11 +165,11 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
           Row(
             children: [
               IconButton(
-                icon: Icon(Icons.close, color: Theme.of(context).colorScheme.outlineVariant),
+                icon: Icon(AppIcons.close, color: Theme.of(context).colorScheme.outlineVariant),
                 onPressed: _isProcessing ? null : () => _rejectRequest(request),
               ),
               IconButton(
-                icon: Icon(Icons.favorite, color: context.features.dating),
+                icon: Icon(AppIcons.dating, color: context.features.dating),
                 onPressed: _isProcessing ? null : () => _acceptRequest(request),
               ),
             ],
@@ -203,7 +204,7 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
         color: context.features.datingContainer,
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
-      child: Icon(Icons.pets, color: context.features.dating, size: 30),
+      child: Icon(AppIcons.pet, color: context.features.dating, size: 30),
     );
   }
   

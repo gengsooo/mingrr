@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../services/bottom_sheet_stack_manager.dart';
 import '../../theme/feature_colors.dart';
 import '../../theme/app_text_styles.dart';
@@ -148,7 +149,7 @@ class GroupProfileModal extends StatelessWidget {
         children: [
           ProfileModalAvatar(
             size: 50,
-            fallbackIcon: Icons.person,
+            fallbackIcon: AppIcons.profile,
           ),
           if (member.isOnline)
             Positioned(
@@ -221,7 +222,7 @@ class GroupProfileModal extends StatelessWidget {
   Widget _buildGroupInfo(BuildContext context) {
     return ProfileModalHeader(
       avatar: ProfileModalAvatar(
-        fallbackIcon: Icons.groups,
+        fallbackIcon: AppIcons.group,
         backgroundColor: context.features.social.withValues(alpha: AppOpacity.o10),
         iconColor: context.features.social,
       ),
@@ -282,14 +283,14 @@ class GroupProfileModal extends StatelessWidget {
       content: ProfileModalDetailsBox(
         children: [
           if (location != null)
-            ProfileModalDetailRow(icon: Icons.location_on, label: '활동 지역', value: location!),
+            ProfileModalDetailRow(icon: AppIcons.location, label: '활동 지역', value: location!),
           if (createdAt != null) ...[
             if (location != null) const MingrrDivider.section(),
-            ProfileModalDetailRow(icon: Icons.calendar_today, label: '개설일', value: createdAt!),
+            ProfileModalDetailRow(icon: AppIcons.calendar, label: '개설일', value: createdAt!),
           ],
           const MingrrDivider.section(),
           ProfileModalDetailRow(
-            icon: Icons.check_circle,
+            icon: AppIcons.checkCircle,
             label: '가입 상태',
             value: isJoined ? '가입됨' : '미가입',
           ),

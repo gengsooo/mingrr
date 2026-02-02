@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../constants/app_icons.dart';
 import '../../models/pet_model.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/group_model.dart';
@@ -250,7 +251,7 @@ class _ShareBottomSheet extends StatelessWidget {
             children: [
               _buildShareOption(
                 context,
-                icon: Icons.copy,
+                icon: AppIcons.copy,
                 label: '링크 복사',
                 onTap: () async {
                   await Clipboard.setData(ClipboardData(text: text));
@@ -262,7 +263,7 @@ class _ShareBottomSheet extends StatelessWidget {
               ),
               _buildShareOption(
                 context,
-                icon: Icons.chat_bubble,
+                icon: AppIcons.chatBubble,
                 label: '카카오톡',
                 onTap: () {
                   Navigator.pop(context);
@@ -271,7 +272,7 @@ class _ShareBottomSheet extends StatelessWidget {
               ),
               _buildShareOption(
                 context,
-                icon: Icons.message,
+                icon: AppIcons.send,
                 label: '문자',
                 onTap: () {
                   Navigator.pop(context);
@@ -280,7 +281,7 @@ class _ShareBottomSheet extends StatelessWidget {
               ),
               _buildShareOption(
                 context,
-                icon: Icons.more_horiz,
+                icon: AppIcons.moreHoriz,
                 label: '더보기',
                 onTap: () {
                   Navigator.pop(context);

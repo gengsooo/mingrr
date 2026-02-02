@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/legal_texts.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -62,7 +63,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
       appBar: AppBar(
         title: const Text('약관 동의'),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(AppIcons.back),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -145,7 +146,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Icon(
-                            Icons.info_outline,
+                            AppIcons.info,
                             size: 16,
                             color: colorScheme.onSurfaceVariant,
                           ),
@@ -226,7 +227,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
         child: Row(
           children: [
             Icon(
-              _allAgreed ? Icons.check_circle : Icons.circle_outlined,
+              _allAgreed ? AppIcons.checkCircle : AppIcons.successOutlined,
               color: _allAgreed ? colorScheme.primary : colorScheme.outline,
               size: 24,
             ),

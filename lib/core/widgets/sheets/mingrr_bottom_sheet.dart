@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../common_widgets.dart';
@@ -326,7 +327,7 @@ Future<void> showDetailOptionsSheet({
   // 공유 옵션 (항상 표시)
   if (onShare != null) {
     options.add(MingrrOptionItem(
-      icon: Icons.share_outlined,
+      icon: AppIcons.share,
       label: '공유하기',
       onTap: onShare,
     ));
@@ -336,14 +337,14 @@ Future<void> showDetailOptionsSheet({
     // 본인 글: 수정/삭제
     if (onEdit != null) {
       options.add(MingrrOptionItem(
-        icon: Icons.edit_outlined,
+        icon: AppIcons.editOutlined,
         label: '수정하기',
         onTap: onEdit,
       ));
     }
     if (onDelete != null) {
       options.add(MingrrOptionItem(
-        icon: Icons.delete_outline,
+        icon: AppIcons.deleteOutlined,
         label: '삭제하기',
         isDestructive: true,
         onTap: onDelete,
@@ -353,14 +354,14 @@ Future<void> showDetailOptionsSheet({
     // 타인 글: 차단/신고
     if (onBlock != null) {
       options.add(MingrrOptionItem(
-        icon: Icons.block_outlined,
+        icon: AppIcons.block,
         label: blockLabel ?? '차단하기',
         onTap: onBlock,
       ));
     }
     if (onReport != null) {
       options.add(MingrrOptionItem(
-        icon: Icons.report_outlined,
+        icon: AppIcons.report,
         label: reportLabel ?? '신고하기',
         isDestructive: true,
         onTap: onReport,

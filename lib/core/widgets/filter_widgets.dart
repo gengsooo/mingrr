@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_icons.dart';
 import '../constants/app_sizes.dart';
 import '../theme/app_text_styles.dart';
 import 'sheets/mingrr_bottom_sheet.dart';
@@ -78,7 +79,7 @@ class DistanceFilterBar extends StatelessWidget {
       child: Row(
         children: [
           // 위치 아이콘
-          Icon(Icons.location_on, size: 18, color: accentColor),
+          Icon(AppIcons.location, size: 18, color: accentColor),
           const SizedBox(width: AppSizes.gapSM),
           
           // 위치 라벨
@@ -106,7 +107,7 @@ class DistanceFilterBar extends StatelessWidget {
                   ),
                   const SizedBox(width: AppSizes.gapXS),
                   Icon(
-                    Icons.keyboard_arrow_down,
+                    AppIcons.chevronDown,
                     size: 18,
                     color: accentColor,
                   ),
@@ -217,7 +218,7 @@ class DistanceBottomSheet extends StatelessWidget {
                   onTap: () => onDistanceSelected(option.km),
                   contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS),
                   leading: Icon(
-                    isSelected ? Icons.check_circle : Icons.circle_outlined,
+                    isSelected ? AppIcons.success : AppIcons.successOutlined,
                     color: isSelected ? accentColor : Theme.of(context).colorScheme.outlineVariant,
                     size: 22,
                   ),
@@ -286,7 +287,7 @@ class LocationFilterBar extends StatelessWidget {
       child: Row(
         children: [
           // 위치 아이콘
-          Icon(Icons.location_on, size: 18, color: accentColor),
+          Icon(AppIcons.location, size: 18, color: accentColor),
           const SizedBox(width: AppSizes.gapSM),
           
           // 위치 선택 버튼
@@ -307,7 +308,7 @@ class LocationFilterBar extends StatelessWidget {
                   ),
                   const SizedBox(width: AppSizes.gapXS),
                   Icon(
-                    Icons.keyboard_arrow_down,
+                    AppIcons.chevronDown,
                     size: 18,
                     color: accentColor,
                   ),
@@ -331,7 +332,7 @@ class LocationFilterBar extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.close, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    Icon(AppIcons.close, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: 2),
                     Text(
                       '초기화',
@@ -504,7 +505,7 @@ class _LocationBottomSheetState extends State<LocationBottomSheet> {
                                 .withColor(isSelected ? widget.accentColor : Theme.of(context).colorScheme.onSurface),
                           ),
                           trailing: isSelected
-                              ? Icon(Icons.chevron_right, color: widget.accentColor)
+                              ? Icon(AppIcons.chevronRight, color: widget.accentColor)
                               : null,
                         );
                       },
@@ -532,7 +533,7 @@ class _LocationBottomSheetState extends State<LocationBottomSheet> {
                                     .withColor(isSelected ? widget.accentColor : Theme.of(context).colorScheme.onSurface),
                               ),
                               trailing: isSelected
-                                  ? Icon(Icons.check, color: widget.accentColor)
+                                  ? Icon(AppIcons.check, color: widget.accentColor)
                                   : null,
                             );
                           },

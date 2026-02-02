@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../constants/app_icons.dart';
 import '../services/network_service.dart';
 import '../theme/feature_colors.dart';
 
@@ -34,7 +35,7 @@ class NetworkStatusBanner extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(
-                  Icons.wifi_off_rounded,
+                  AppIcons.wifiOff,
                   color: Colors.white,
                   size: 18,
                 ),
@@ -89,7 +90,7 @@ class _NetworkAwareWidgetState extends ConsumerState<NetworkAwareWidget> {
               SnackBar(
                 content: const Row(
                   children: [
-                    Icon(Icons.wifi_off_rounded, color: Colors.white, size: 18),
+                    Icon(AppIcons.wifiOff, color: Colors.white, size: 18),
                     SizedBox(width: 8),
                     Text('인터넷 연결이 끊어졌습니다'),
                   ],
@@ -108,7 +109,7 @@ class _NetworkAwareWidgetState extends ConsumerState<NetworkAwareWidget> {
               SnackBar(
                 content: const Row(
                   children: [
-                    Icon(Icons.wifi_rounded, color: Colors.white, size: 18),
+                    Icon(AppIcons.wifi, color: Colors.white, size: 18),
                     SizedBox(width: 8),
                     Text('인터넷에 다시 연결되었습니다'),
                   ],

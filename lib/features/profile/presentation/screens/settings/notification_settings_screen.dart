@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/constants/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/constants/app_sizes.dart';
 import '../../../../../core/theme/app_text_styles.dart';
@@ -58,7 +59,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
         MingrrCard(
           margin: EdgeInsets.zero,
           child: _NotificationToggleTile(
-            icon: Icons.notifications,
+            icon: AppIcons.notification,
             iconColor: colorScheme.primary,
             title: '전체 알림',
             subtitle: '모든 알림을 받습니다',
@@ -78,7 +79,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
           child: Column(
             children: [
               _NotificationToggleTile(
-                icon: Icons.favorite,
+                icon: AppIcons.dating,
                 iconColor: context.features.dating,
                 title: '데이팅 알림',
                 subtitle: '매칭, 좋아요, 데이팅 신청',
@@ -88,7 +89,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
                 showDivider: true,
               ),
               _NotificationToggleTile(
-                icon: Icons.shopping_bag,
+                icon: AppIcons.market,
                 iconColor: context.features.market,
                 title: '마켓 알림',
                 subtitle: '상품 문의, 거래 상태 변경',
@@ -98,7 +99,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
                 showDivider: true,
               ),
               _NotificationToggleTile(
-                icon: Icons.chat_bubble,
+                icon: AppIcons.chatBubble,
                 iconColor: context.features.chat,
                 title: '채팅 알림',
                 subtitle: '새 메시지',
@@ -108,7 +109,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
                 showDivider: true,
               ),
               _NotificationToggleTile(
-                icon: Icons.groups,
+                icon: AppIcons.group,
                 iconColor: context.features.social,
                 title: '소모임 알림',
                 subtitle: '일정, 공지, 멤버 활동',
@@ -118,7 +119,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
                 showDivider: true,
               ),
               _NotificationToggleTile(
-                icon: Icons.article,
+                icon: AppIcons.community,
                 iconColor: context.features.social,
                 title: '커뮤니티 알림',
                 subtitle: '댓글, 좋아요',
@@ -140,7 +141,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
           child: Column(
             children: [
               _NotificationToggleTile(
-                icon: Icons.nightlight_round,
+                icon: AppIcons.nightMode,
                 iconColor: Colors.indigo,
                 title: '야간 방해금지',
                 subtitle: '${settings.nightModeStart} ~ ${settings.nightModeEnd}',
@@ -159,7 +160,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
         MingrrCard(
           margin: EdgeInsets.zero,
           child: _NotificationToggleTile(
-            icon: Icons.campaign,
+            icon: AppIcons.campaign,
             iconColor: Colors.orange,
             title: '마케팅 알림',
             subtitle: '이벤트, 프로모션, 혜택 정보',

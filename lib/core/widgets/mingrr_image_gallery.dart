@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../constants/app_sizes.dart';
+import 'mingrr_image.dart';
 import 'mingrr_image_viewer.dart';
 
 /// ============================================================
@@ -30,6 +30,9 @@ class MingrrImageGallery extends StatelessWidget {
   
   /// 테두리 반경
   final double borderRadius;
+  
+  /// 테마 강조 색상 (로딩/플레이스홀더에 사용)
+  final Color? accentColor;
 
   const MingrrImageGallery({
     super.key,
@@ -39,6 +42,7 @@ class MingrrImageGallery extends StatelessWidget {
     this.enableViewer = true,
     this.onShare,
     this.borderRadius = AppSizes.radiusS,
+    this.accentColor,
   });
 
   @override
@@ -59,17 +63,11 @@ class MingrrImageGallery extends StatelessWidget {
   Widget _buildSingleImage(BuildContext context) {
     return GestureDetector(
       onTap: enableViewer ? () => _openViewer(context, 0) : null,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: CachedNetworkImage(
-          imageUrl: imageUrls.first,
-          width: double.infinity,
-          height: height,
-          fit: BoxFit.cover,
-          memCacheHeight: (height * 2).toInt(),
-          placeholder: (context, url) => _buildLoadingPlaceholder(context),
-          errorWidget: (context, url, error) => _buildErrorPlaceholder(context),
-        ),
+      child: MingrrImage.background(
+        imageUrl: imageUrls.first,
+        height: height,
+        radius: borderRadius,
+        accentColor: accentColor,
       ),
     );
   }
@@ -89,57 +87,16 @@ class MingrrImageGallery extends StatelessWidget {
               padding: EdgeInsets.only(
                 right: index < imageUrls.length - 1 ? 8 : 0,
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(borderRadius),
-                child: CachedNetworkImage(
-                  imageUrl: imageUrls[index],
-                  width: width,
-                  height: height,
-                  fit: BoxFit.cover,
-                  memCacheWidth: (width * 2).toInt(),
-                  memCacheHeight: (height * 2).toInt(),
-                  placeholder: (context, url) => _buildLoadingPlaceholder(
-                    context,
-                    width: width,
-                  ),
-                  errorWidget: (context, url, error) => _buildErrorPlaceholder(
-                    context,
-                    width: width,
-                  ),
-                ),
+              child: MingrrImage.thumbnail(
+                imageUrl: imageUrls[index],
+                width: width,
+                height: height,
+                radius: borderRadius,
+                accentColor: accentColor,
               ),
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildLoadingPlaceholder(BuildContext context, {double? width}) {
-    return Container(
-      width: width ?? double.infinity,
-      height: height,
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
-      child: Center(
-        child: SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: Theme.of(context).colorScheme.outlineVariant,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorPlaceholder(BuildContext context, {double? width}) {
-    return Container(
-      width: width ?? double.infinity,
-      height: height,
-      color: Theme.of(context).colorScheme.surfaceContainerLow,
-      child: const Center(
-        child: Icon(Icons.image_not_supported),
       ),
     );
   }

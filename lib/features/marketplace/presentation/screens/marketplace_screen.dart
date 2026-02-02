@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
@@ -102,9 +103,9 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
 
     // 탭 정의 (판매 / 나눔 / 알바)
     final tabs = [
-      MingrrTabItem(label: '판매', icon: Icons.sell, color: context.features.market),
-      MingrrTabItem(label: '나눔', icon: Icons.volunteer_activism, color: context.features.market),
-      MingrrTabItem(label: '알바', icon: Icons.work_outline, color: context.features.market),
+      MingrrTabItem(label: '판매', icon: AppIcons.sell, color: context.features.market),
+      MingrrTabItem(label: '나눔', icon: AppIcons.gift, color: context.features.market),
+      MingrrTabItem(label: '알바', icon: AppIcons.work, color: context.features.market),
     ];
 
     // 카테고리 정의 (탭에 따라 다름)
@@ -253,7 +254,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     // 빈 상태
     if (paginatedState.isEmpty) {
       return MingrrEmptyState(
-        icon: type == ProductType.sell ? Icons.sell : Icons.volunteer_activism,
+        icon: type == ProductType.sell ? AppIcons.sell : AppIcons.gift,
         title: '아직 데이터가 없어요',
         subtitle: '거리를 늘리거나 다른 카테고리를 확인해보세요',
         accentColor: context.features.market,
@@ -373,7 +374,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     // 빈 상태
     if (paginatedState.isEmpty) {
       return MingrrEmptyState(
-        icon: Icons.work_outline,
+        icon: AppIcons.work,
         title: '아직 데이터가 없어요',
         subtitle: '새로운 알바를 등록해보세요',
         accentColor: context.features.market,
@@ -436,9 +437,9 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
 
 /// 마켓 글쓰기 종류
 enum MarketWriteType {
-  sell('판매', Icons.sell),
-  share('나눔', Icons.volunteer_activism),
-  job('알바', Icons.work_outline);
+  sell('판매', AppIcons.sell),
+  share('나눔', AppIcons.gift),
+  job('알바', AppIcons.work);
 
   final String label;
   final IconData icon;
@@ -541,7 +542,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(AppIcons.close),
                   onPressed: () => Navigator.pop(context),
                 ),
                 Expanded(
@@ -649,7 +650,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.camera_alt, color: Theme.of(context).colorScheme.outlineVariant),
+                    Icon(AppIcons.camera, color: Theme.of(context).colorScheme.outlineVariant),
                     const SizedBox(height: AppSizes.gapXS),
                     Text('0/10', style: AppTextStyles.captionSmall(context)),
                   ],
@@ -672,7 +673,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
           const MingrrTextField(
             labelText: '가격',
             hintText: '가격을 입력해주세요',
-            prefixIcon: Icons.attach_money,
+            prefixIcon: AppIcons.sell,
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: AppSizes.gapL),
@@ -753,7 +754,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   child: Row(
                     children: [
                       Icon(
-                        Icons.calendar_today, 
+                        AppIcons.calendar, 
                         size: 18, 
                         color: _startDate != null 
                             ? context.features.market 
@@ -793,7 +794,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   child: Row(
                     children: [
                       Icon(
-                        Icons.calendar_today, 
+                        AppIcons.calendar, 
                         size: 18, 
                         color: _endDate != null 
                             ? context.features.market 
@@ -833,7 +834,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.pets, size: 20, color: context.features.market),
+                  Icon(AppIcons.pet, size: 20, color: context.features.market),
                   const SizedBox(width: AppSizes.gapS),
                   Expanded(
                     child: Column(
@@ -852,7 +853,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   ),
                   GestureDetector(
                     onTap: () => setState(() => _selectedPets.removeAt(index)),
-                    child: Icon(Icons.close, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
+                    child: Icon(AppIcons.close, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
                   ),
                 ],
               ),
@@ -871,7 +872,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.add, size: 20, color: context.features.market),
+                Icon(AppIcons.add, size: 20, color: context.features.market),
                 const SizedBox(width: AppSizes.gapS),
                 Text(
                   '반려동물 추가',
@@ -923,7 +924,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
               : _payType == JobPayType.hourly 
                   ? '시급을 입력해주세요'
                   : '일급을 입력해주세요',
-          prefixIcon: Icons.attach_money,
+          prefixIcon: AppIcons.sell,
           keyboardType: TextInputType.number,
         ),
         const SizedBox(height: AppSizes.gapL),
@@ -1007,7 +1008,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                           color: Theme.of(context).colorScheme.outline,
                           borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
-                        child: Icon(Icons.pets, color: Theme.of(context).colorScheme.outlineVariant),
+                        child: Icon(AppIcons.pet, color: Theme.of(context).colorScheme.outlineVariant),
                       ),
                       const SizedBox(width: AppSizes.gapM),
                       Expanded(
@@ -1036,7 +1037,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                         ),
                       ),
                       if (isAlreadySelected)
-                        Icon(Icons.check_circle, color: context.features.market, size: 20),
+                        Icon(AppIcons.success, color: context.features.market, size: 20),
                     ],
                   ),
                 ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_icons.dart';
 import '../constants/app_sizes.dart';
 import '../theme/app_text_styles.dart';
 
@@ -154,7 +155,7 @@ class MingrrSortChip extends StatelessWidget {
             if (isSelected) ...[
               const SizedBox(width: AppSizes.gapXXS),
               Icon(
-                isAscending ? Icons.arrow_upward : Icons.arrow_downward,
+                isAscending ? AppIcons.arrowUp : AppIcons.arrowDown,
                 size: AppSizes.iconXXS,
                 color: Colors.white,
               ),
@@ -273,7 +274,7 @@ class MingrrFilterSection extends StatelessWidget {
   const MingrrFilterSection({
     super.key,
     required this.rows,
-    this.showDividers = true,
+    this.showDividers = false,
   });
 
   @override
@@ -327,12 +328,7 @@ class MingrrCategoryChips extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(color: colorScheme.outline.withValues(alpha: AppOpacity.o30)),
-        ),
-      ),
+      color: colorScheme.surface,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -409,12 +405,7 @@ class MingrrCategoryChipsWithIcon extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(color: colorScheme.outline.withValues(alpha: AppOpacity.o30)),
-        ),
-      ),
+      color: colorScheme.surface,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
@@ -493,12 +484,7 @@ class MingrrSortChips extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(color: colorScheme.outline.withValues(alpha: AppOpacity.o30)),
-        ),
-      ),
+      color: colorScheme.surface,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import '../constants/app_icons.dart';
 import '../constants/app_sizes.dart';
 import '../theme/app_text_styles.dart';
 import '../theme/feature_colors.dart';
@@ -90,7 +91,7 @@ class _WebMapWidget extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.map_outlined,
+              AppIcons.mapOutlined,
               size: 48,
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
@@ -202,7 +203,7 @@ class _MobileMapWidgetState extends State<_MobileMapWidget> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    Icons.map,
+                    AppIcons.mapOutlined,
                     size: 48,
                     color: context.features.walk.withValues(alpha: AppOpacity.o70),
                   ),
@@ -247,7 +248,7 @@ class _MobileMapWidgetState extends State<_MobileMapWidget> {
                 onPressed: () {
                   // 현재 위치로 이동
                 },
-                child: Icon(Icons.my_location, color: context.features.walk),
+                child: Icon(AppIcons.myLocation, color: context.features.walk),
               ),
             ),
         ],

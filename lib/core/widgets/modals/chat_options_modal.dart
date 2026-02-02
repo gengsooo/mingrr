@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../services/bottom_sheet_stack_manager.dart';
@@ -100,7 +101,7 @@ class ChatOptionsModal extends StatelessWidget {
             // 옵션 리스트
             _buildOption(
               context,
-              icon: Icons.pets,
+              icon: AppIcons.pet,
               label: '꼬순내지수 평가하기',
               subtitle: '상대방을 평가해주세요',
               color: Theme.of(context).colorScheme.primary,
@@ -115,7 +116,7 @@ class ChatOptionsModal extends StatelessWidget {
             
             _buildOption(
               context,
-              icon: Icons.notifications_off_outlined,
+              icon: AppIcons.notificationsOff,
               label: '알림 끄기',
               color: Theme.of(context).colorScheme.onSurface,
               onTap: () {
@@ -126,7 +127,7 @@ class ChatOptionsModal extends StatelessWidget {
             
             _buildOption(
               context,
-              icon: Icons.block_outlined,
+              icon: AppIcons.block,
               label: '차단하기',
               color: Theme.of(context).colorScheme.onSurface,
               onTap: () {
@@ -137,7 +138,7 @@ class ChatOptionsModal extends StatelessWidget {
             
             _buildOption(
               context,
-              icon: Icons.report_outlined,
+              icon: AppIcons.report,
               label: '신고하기',
               color: Colors.red,
               onTap: () {
@@ -148,7 +149,7 @@ class ChatOptionsModal extends StatelessWidget {
             
             _buildOption(
               context,
-              icon: Icons.exit_to_app_outlined,
+              icon: AppIcons.logout,
               label: '채팅방 나가기',
               color: Colors.red,
               onTap: () {

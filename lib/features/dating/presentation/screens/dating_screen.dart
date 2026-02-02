@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/location_constants.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -135,9 +136,9 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
     
     // 탭 정의 (추천친구 / 근처 검색 / 교배찾기)
     final tabs = [
-      MingrrTabItem(label: '추천친구', icon: Icons.auto_awesome, color: features.dating),
-      MingrrTabItem(label: '근처 검색', icon: Icons.radar, color: features.dating),
-      MingrrTabItem(label: '교배찾기', icon: Icons.family_restroom, color: features.dating),
+      MingrrTabItem(label: '추천친구', icon: AppIcons.autoAwesome, color: features.dating),
+      MingrrTabItem(label: '근처 검색', icon: AppIcons.radar, color: features.dating),
+      MingrrTabItem(label: '교배찾기', icon: AppIcons.breeding, color: features.dating),
     ];
     
     return Scaffold(
@@ -296,7 +297,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
       children: [
         MingrrFilterChip(
           label: '남아',
-          icon: Icons.male,
+          icon: AppIcons.male,
           iconSize: 14,
           isSelected: selectedGenders.contains('male'),
           onTap: () {
@@ -313,7 +314,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
         const SizedBox(width: AppSizes.gapSM),
         MingrrFilterChip(
           label: '여아',
-          icon: Icons.female,
+          icon: AppIcons.female,
           iconSize: 14,
           isSelected: selectedGenders.contains('female'),
           onTap: () {
@@ -374,7 +375,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
               color: accentColor.withValues(alpha: AppOpacity.o10),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.help_outline, size: 14, color: accentColor),
+            child: Icon(AppIcons.help, size: 14, color: accentColor),
           ),
         ),
         const SizedBox(width: AppSizes.gapS),
@@ -410,7 +411,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
     showInfoDialog(
       context,
       title: '반려동물 크기 안내',
-      icon: Icons.pets,
+      icon: AppIcons.pet,
       subtitle: '체중 기준으로 분류해요',
       accentColor: features.dating,
       items: const [
@@ -462,7 +463,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
         const SizedBox(width: AppSizes.gapSM),
         MingrrFilterChip(
           label: '혈통서 보유',
-          icon: Icons.verified,
+          icon: AppIcons.verified,
           iconSize: 12,
           isSelected: pedigreeFilter == true,
           onTap: () => ref.read(_breedingPedigreeFilterProvider.notifier).state = 
@@ -514,7 +515,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
     // 빈 상태
     if (filteredPets.isEmpty) {
       return MingrrEmptyState(
-        icon: Icons.family_restroom,
+        icon: AppIcons.breeding,
         title: '아직 데이터가 없어요',
         subtitle: '거리를 늘리거나 필터를 조정해보세요',
         accentColor: context.features.dating,
@@ -681,7 +682,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.pets, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
+              Icon(AppIcons.pet, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
               const SizedBox(height: AppSizes.gapL),
               Text(
                 '반려동물을 먼저 등록해주세요',
@@ -689,7 +690,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                '반려동물을 등록하면 근처의\n친구들을 찾아드려요',
+                '내 반려동물을 등록하면\n추천 친구를 찾아드릴게요!',
                 style: AppTextStyles.caption(context),
                 textAlign: TextAlign.center,
               ),
@@ -706,7 +707,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
         );
       }
       return MingrrEmptyState(
-        icon: Icons.radar,
+        icon: AppIcons.radar,
         title: '아직 데이터가 없어요',
         subtitle: '거리를 늘려보세요',
         accentColor: context.features.dating,
@@ -807,7 +808,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.pets, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
+              Icon(AppIcons.pet, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
               const SizedBox(height: AppSizes.gapL),
               Text(
                 '반려동물을 먼저 등록해주세요',
@@ -832,7 +833,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
         );
       }
       return MingrrEmptyState(
-        icon: Icons.auto_awesome,
+        icon: AppIcons.autoAwesome,
         title: '추천할 반려동물이 없어요',
         subtitle: '근처에 등록된 반려동물이 없어요',
         accentColor: context.features.dating,

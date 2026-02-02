@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -136,7 +137,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         actions: [
           if (isEditMode && !_isLoading)
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              icon: const Icon(AppIcons.deleteOutlined, color: Colors.red),
               onPressed: _showDeleteConfirmation,
             ),
         ],
@@ -213,7 +214,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
                   border: Border.all(color: Colors.white, width: 2),
                 ),
                 child: const Icon(
-                  Icons.camera_alt,
+                  AppIcons.camera,
                   size: 18,
                   color: Colors.white,
                 ),
@@ -306,7 +307,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
       ),
       child: Icon(
-        Icons.pets,
+        AppIcons.pet,
         size: 60,
         color: Theme.of(context).colorScheme.primary,
       ),
@@ -703,7 +704,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
                 ? Image.network(
                     imageUrl!,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
+                    errorBuilder: (_, __, ___) => Icon(AppIcons.brokenImage),
                   )
                 : kIsWeb
                     ? Image.network(imageFile!.path, fit: BoxFit.cover)
@@ -721,7 +722,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
                 color: Theme.of(context).colorScheme.primary,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.star, size: 14, color: Colors.white),
+              child: const Icon(AppIcons.star, size: 14, color: Colors.white),
             ),
           ),
         // 삭제 버튼
@@ -739,7 +740,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
                   color: Colors.black.withValues(alpha: AppOpacity.o50),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.close, size: 12, color: Colors.white),
+                child: const Icon(AppIcons.close, size: 12, color: Colors.white),
               ),
             ),
           ),
@@ -762,7 +763,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.add_photo_alternate, color: Theme.of(context).colorScheme.primary, size: 28),
+            Icon(AppIcons.addPhoto, color: Theme.of(context).colorScheme.primary, size: 28),
             const SizedBox(height: AppSizes.gapXS),
             Text(
               '추가',

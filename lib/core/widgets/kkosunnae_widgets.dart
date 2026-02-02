@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../constants/app_icons.dart';
 import '../services/kkosunnae_service.dart';
 import '../constants/app_sizes.dart';
 import '../theme/app_text_styles.dart';
@@ -78,7 +79,7 @@ class _KkosunaeMasterBadgeSmall extends StatelessWidget {
       ),
       child: Center(
         child: Icon(
-          Icons.pets,
+          AppIcons.pet,
           size: size * 0.6,
           color: Colors.white,
         ),
@@ -139,7 +140,7 @@ class KkosunnaeScoreMedium extends StatelessWidget {
             const SizedBox(width: AppSizes.gapXS),
             // 클릭 가능 표시 아이콘
             Icon(
-              Icons.help_outline,
+              AppIcons.help,
               size: 14,
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
@@ -245,7 +246,7 @@ Widget _buildPawIcon(double score, double size) {
       children: [
         // 배경 (회색 발바닥)
         Icon(
-          Icons.pets,
+          AppIcons.pet,
           size: size,
           color: Colors.grey.withValues(alpha: AppOpacity.o30),
         ),
@@ -253,7 +254,7 @@ Widget _buildPawIcon(double score, double size) {
         ClipRect(
           clipper: _PawClipper(fillPercent),
           child: Icon(
-            Icons.pets,
+            AppIcons.pet,
             size: size,
             color: color,
           ),
@@ -568,7 +569,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
             child: Row(
               children: [
                 Icon(
-                  Icons.info_outline,
+                  AppIcons.info,
                   size: 14,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -608,7 +609,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
       ),
       child: Row(
         children: [
-          Icon(Icons.pets, size: 16, color: color),
+          Icon(AppIcons.pet, size: 16, color: color),
           const SizedBox(width: AppSizes.gapS),
           SizedBox(
             width: 65,
@@ -722,7 +723,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
-                  Icons.lightbulb_outline,
+                  AppIcons.lightbulb,
                   size: 12,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';  // 상태 관리 라�
 import 'package:go_router/go_router.dart';  // 화면 이동(라우팅)을 관리하는 라이브러리
 
 // 우리 앱의 커스텀 파일들을 불러옵니다
+import 'core/constants/app_icons.dart';  // 앱에서 사용하는 아이콘 상수
 import 'core/theme/app_theme.dart';  // 앱의 전체적인 디자인 테마 (색상, 폰트 등)
 import 'core/constants/app_strings.dart';  // 앱에서 사용하는 모든 텍스트 상수
 import 'core/theme/feature_colors.dart';  // 앱에서 사용하는 색상 상수
@@ -189,8 +190,8 @@ class DemoBottomNavBar extends StatelessWidget {
               // 1️⃣ 홈 버튼
               _buildNavItem(
                 context: context,
-                icon: Icons.home_outlined,  // 비활성 상태 아이콘 (빈 집)
-                activeIcon: Icons.home,  // 활성 상태 아이콘 (꽉 찬 집)
+                icon: AppIcons.homeOutlined,  // 비활성 상태 아이콘 (빈 집)
+                activeIcon: AppIcons.home,  // 활성 상태 아이콘 (꽉 찬 집)
                 label: '홈',  // 버튼 아래 텍스트
                 index: 0,  // 이 버튼의 인덱스 번호
                 currentIndex: currentIndex,  // 현재 선택된 인덱스
@@ -200,8 +201,8 @@ class DemoBottomNavBar extends StatelessWidget {
               // 2️⃣ 데이팅 버튼
               _buildNavItem(
                 context: context,
-                icon: Icons.favorite_outline,
-                activeIcon: Icons.favorite,
+                icon: AppIcons.datingOutlined,
+                activeIcon: AppIcons.dating,
                 label: '데이팅',
                 index: 1,
                 currentIndex: currentIndex,
@@ -212,8 +213,8 @@ class DemoBottomNavBar extends StatelessWidget {
               // 3️⃣ 채팅 버튼
               _buildNavItem(
                 context: context,
-                icon: Icons.chat_bubble_outline,
-                activeIcon: Icons.chat_bubble,
+                icon: AppIcons.chatBubbleOutlined,
+                activeIcon: AppIcons.chatBubble,
                 label: '채팅',
                 index: 2,
                 currentIndex: currentIndex,
@@ -225,8 +226,8 @@ class DemoBottomNavBar extends StatelessWidget {
               // 4️⃣ 마켓 버튼
               _buildNavItem(
                 context: context,
-                icon: Icons.store_outlined,
-                activeIcon: Icons.store,
+                icon: AppIcons.marketOutlined,
+                activeIcon: AppIcons.market,
                 label: '마켓',
                 index: 3,
                 currentIndex: currentIndex,
@@ -237,8 +238,8 @@ class DemoBottomNavBar extends StatelessWidget {
               // 5️⃣ 소셜 버튼
               _buildNavItem(
                 context: context,
-                icon: Icons.forum_outlined,
-                activeIcon: Icons.forum,
+                icon: AppIcons.forumOutlined,
+                activeIcon: AppIcons.forum,
                 label: '소셜',
                 index: 4,
                 currentIndex: currentIndex,

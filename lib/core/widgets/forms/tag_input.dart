@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/app_theme.dart';
 import '../../constants/app_sizes.dart';
@@ -183,7 +184,7 @@ class _TagChip extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               child: Icon(
-                Icons.close,
+                AppIcons.close,
                 size: 14,
                 color: accentColor,
               ),

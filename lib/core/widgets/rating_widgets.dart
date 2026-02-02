@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../constants/app_icons.dart';
 import '../services/bottom_sheet_stack_manager.dart';
 import '../services/rating_service.dart';
 import '../theme/app_text_styles.dart';
@@ -203,10 +204,10 @@ class _RatingModalState extends State<RatingModal> {
         children: [
           // 프로필 이미지
           if (widget.targetImageUrl != null) ...[
-            MingrrAvatar(
+            MingrrImage.avatar(
               imageUrl: widget.targetImageUrl,
               size: 64,
-              placeholderIcon: Icons.person,
+              icon: AppIcons.profile,
             ),
             const SizedBox(height: AppSizes.gapM),
           ],
@@ -307,7 +308,7 @@ class _RatingModalState extends State<RatingModal> {
                     scale: isSelected ? 1.1 : 1.0,
                     duration: const Duration(milliseconds: 150),
                     child: Icon(
-                      isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
+                      isSelected ? AppIcons.star : AppIcons.starOutlined,
                       size: 44,
                       color: isSelected ? Colors.amber : Theme.of(context).colorScheme.outline,
                     ),
@@ -471,7 +472,7 @@ void showActivityCompleteDialog(
   showActionPromptDialog(
     context,
     icon: MingrrActionPromptDialog.buildCircleIcon(
-      icon: Icons.check_circle_outline,
+      icon: AppIcons.successOutlined,
       color: Colors.green,
     ),
     title: '🎉 $typeLabel이 완료되었어요!',
@@ -532,7 +533,7 @@ void showRatingCompleteDialog(BuildContext context) {
   showActionPromptDialog(
     context,
     icon: MingrrActionPromptDialog.buildGradientIcon(
-      icon: Icons.pets,
+      icon: AppIcons.pet,
       colors: [Colors.amber.shade300, Colors.orange.shade400],
     ),
     title: '✨ 평가 완료!',
@@ -591,7 +592,7 @@ class RatingReminderBanner extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.rate_review_outlined,
+                AppIcons.edit,
                 size: 20,
                 color: Colors.white,
               ),
@@ -613,7 +614,7 @@ class RatingReminderBanner extends StatelessWidget {
               ),
             ),
             Icon(
-              Icons.arrow_forward_ios,
+              AppIcons.chevronRight,
               size: 14,
               color: Colors.grey.shade600,
             ),
@@ -655,7 +656,7 @@ class RatingReceivedBanner extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.pets, size: 20),
+              const Icon(AppIcons.pet, size: 20),
               const SizedBox(width: AppSizes.gapS),
               Expanded(
                 child: Text(
@@ -666,7 +667,7 @@ class RatingReceivedBanner extends StatelessWidget {
               GestureDetector(
                 onTap: onDismiss,
                 child: Icon(
-                  Icons.close,
+                  AppIcons.close,
                   size: 18,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -745,7 +746,7 @@ class TransactionCompleteDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.check_circle_outline,
+              AppIcons.successOutlined,
               size: 48,
               color: context.features.success,
             ),

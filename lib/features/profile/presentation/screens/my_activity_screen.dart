@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
@@ -65,7 +66,7 @@ class _WalkHistoryTab extends ConsumerWidget {
       data: (walks) {
         if (walks.isEmpty) {
           return MingrrEmptyState(
-            icon: Icons.directions_walk,
+            icon: AppIcons.walk,
             title: '산책 기록이 없어요',
             subtitle: '반려동물과 함께 산책을 시작해보세요',
           );
@@ -77,7 +78,7 @@ class _WalkHistoryTab extends ConsumerWidget {
             final walk = walks[index];
             return _ActivityCard(
               onTap: () => context.push('/health/walk/${walk.id}'),
-              icon: Icons.directions_walk,
+              icon: AppIcons.walk,
               iconColor: context.features.walk,
               title: '${walk.durationMinutes}분 산책',
               subtitle: walk.distanceString,
@@ -110,7 +111,7 @@ class _MatchHistoryTab extends ConsumerWidget {
       data: (activities) {
         if (activities.isEmpty) {
           return MingrrEmptyState(
-            icon: Icons.favorite_border,
+            icon: AppIcons.likeOutlined,
             title: '매칭 내역이 없어요',
             subtitle: '데이팅에서 새로운 친구를 만나보세요',
           );
@@ -165,11 +166,11 @@ class _MatchActivityCard extends StatelessWidget {
     final typeLabel = activity.isBreeding ? '교배' : '데이팅';
     switch (activity.type) {
       case MatchActivityType.sent:
-        return (activity.isBreeding ? Icons.family_restroom : Icons.send, '보낸 $typeLabel 신청', context.features.dating);
+        return (activity.isBreeding ? AppIcons.breeding : AppIcons.send, '보낸 $typeLabel 신청', context.features.dating);
       case MatchActivityType.received:
-        return (activity.isBreeding ? Icons.family_restroom : Icons.inbox, '받은 $typeLabel 신청', context.features.dating);
+        return (activity.isBreeding ? AppIcons.breeding : AppIcons.empty, '받은 $typeLabel 신청', context.features.dating);
       case MatchActivityType.matched:
-        return (activity.isBreeding ? Icons.family_restroom : Icons.favorite, '$typeLabel 매칭 성사', context.features.success);
+        return (activity.isBreeding ? AppIcons.breeding : AppIcons.dating, '$typeLabel 매칭 성사', context.features.success);
     }
   }
 
@@ -202,7 +203,7 @@ class _TransactionHistoryTab extends ConsumerWidget {
       data: (transactions) {
         if (transactions.isEmpty) {
           return MingrrEmptyState(
-            icon: Icons.receipt_long_outlined,
+            icon: AppIcons.history,
             title: '거래 내역이 없어요',
             subtitle: '마켓에서 거래해보세요',
           );
@@ -216,7 +217,7 @@ class _TransactionHistoryTab extends ConsumerWidget {
             return _ActivityCard(
               onTap: () => context.push('/market/product/${tx.product.id}'),
               imageUrl: tx.product.imageUrls.isNotEmpty ? tx.product.imageUrls.first : null,
-              icon: isSell ? Icons.sell : Icons.shopping_bag,
+              icon: isSell ? AppIcons.sell : AppIcons.shoppingBag,
               iconColor: context.features.market,
               title: tx.product.title,
               subtitle: '${tx.product.priceString} · ${isSell ? "판매" : "구매"}',
@@ -253,7 +254,7 @@ class _CommunityHistoryTab extends ConsumerWidget {
       data: (activities) {
         if (activities.isEmpty) {
           return MingrrEmptyState(
-            icon: Icons.article_outlined,
+            icon: AppIcons.communityOutlined,
             title: '커뮤니티 활동이 없어요',
             subtitle: '커뮤니티에서 글을 작성해보세요',
           );
@@ -267,7 +268,7 @@ class _CommunityHistoryTab extends ConsumerWidget {
             
             return _ActivityCard(
               onTap: () => context.push('/social/community/${isPost ? activity.id : activity.postId}'),
-              icon: isPost ? Icons.article : Icons.comment,
+              icon: isPost ? AppIcons.community : AppIcons.chatOutlined,
               iconColor: context.features.social,
               title: isPost ? activity.title : '댓글: ${activity.title}',
               subtitle: isPost 
@@ -302,7 +303,7 @@ class _GroupHistoryTab extends ConsumerWidget {
       data: (groups) {
         if (groups.isEmpty) {
           return MingrrEmptyState(
-            icon: Icons.groups_outlined,
+            icon: AppIcons.group,
             title: '소모임 활동이 없어요',
             subtitle: '소모임에 참여해보세요',
           );
@@ -375,11 +376,11 @@ class _ActivityCard extends StatelessWidget {
         children: [
           // 이미지 또는 아이콘
           if (imageUrl != null)
-            MingrrThumbnail(
+            MingrrImage.thumbnail(
               imageUrl: imageUrl,
               width: 56,
               height: 56,
-              borderRadius: AppSizes.radiusS,
+              radius: AppSizes.radiusS,
               errorWidget: _buildIconContainer(context),
             )
           else
@@ -484,11 +485,11 @@ class _GroupActivityCard extends StatelessWidget {
           Row(
             children: [
               // 이미지
-              MingrrThumbnail(
+              MingrrImage.thumbnail(
                 imageUrl: imageUrl,
                 width: 56,
                 height: 56,
-                borderRadius: AppSizes.radiusS,
+                radius: AppSizes.radiusS,
                 errorWidget: _buildDefaultImage(context),
               ),
               const SizedBox(width: AppSizes.gapM),
@@ -513,7 +514,7 @@ class _GroupActivityCard extends StatelessWidget {
                 ),
               ),
               
-              Icon(Icons.chevron_right, color: colorScheme.outlineVariant),
+              Icon(AppIcons.chevronRight, color: colorScheme.outlineVariant),
             ],
           ),
           
@@ -528,7 +529,7 @@ class _GroupActivityCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.event, size: 16, color: context.features.social),
+                  Icon(AppIcons.event, size: 16, color: context.features.social),
                   const SizedBox(width: AppSizes.gapS),
                   Expanded(
                     child: Text(
@@ -555,7 +556,7 @@ class _GroupActivityCard extends StatelessWidget {
         color: context.features.socialContainer,
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
-      child: Icon(Icons.groups, color: context.features.social, size: 28),
+      child: Icon(AppIcons.group, color: context.features.social, size: 28),
     );
   }
   

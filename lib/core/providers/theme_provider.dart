@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../constants/app_icons.dart';
 
 /// 테마 모드 열거형
 enum AppThemeMode {
@@ -70,11 +71,11 @@ extension AppThemeModeExtension on AppThemeMode {
   IconData get icon {
     switch (this) {
       case AppThemeMode.system:
-        return Icons.settings_brightness;
+        return AppIcons.settingsBrightness;
       case AppThemeMode.light:
-        return Icons.light_mode;
+        return AppIcons.lightMode;
       case AppThemeMode.dark:
-        return Icons.dark_mode;
+        return AppIcons.darkMode;
     }
   }
 }

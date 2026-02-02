@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -191,7 +192,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
       return Scaffold(
         appBar: AppBar(),
         body: const MingrrEmptyState(
-          icon: Icons.shopping_bag_outlined,
+          icon: AppIcons.shoppingBag,
           title: '아직 데이터가 없어요',
           subtitle: '상품을 찾을 수 없습니다',
         ),
@@ -258,7 +259,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
       placeholder: Container(
         color: context.features.marketContainer,
         child: Center(
-          child: Icon(Icons.image, size: 80, color: context.features.market),
+          child: Icon(AppIcons.image, size: 80, color: context.features.market),
         ),
       ),
     );
@@ -317,7 +318,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(_product?.category.icon ?? Icons.more_horiz, size: 12, color: context.features.market),
+              Icon(_product?.category.icon ?? AppIcons.moreHoriz, size: 12, color: context.features.market),
               const SizedBox(width: AppSizes.gapXS),
               Text(
                 _product?.category.label ?? '기타',
@@ -445,7 +446,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: Icon(AppIcons.close),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -465,7 +466,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                 padding: const EdgeInsets.all(AppSizes.paddingL),
                 child: Row(
                   children: [
-                    Icon(Icons.location_on, color: context.features.market),
+                    Icon(AppIcons.location, color: context.features.market),
                     const SizedBox(width: AppSizes.gapS),
                     Expanded(
                       child: Text(
@@ -498,7 +499,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    _isWishlisted ? Icons.bookmark : Icons.bookmark_border,
+                    _isWishlisted ? AppIcons.bookmark : AppIcons.bookmarkOutlined,
                     color: _isWishlisted ? context.features.market : Theme.of(context).colorScheme.onSurfaceVariant,
                     size: 24,
                   ),

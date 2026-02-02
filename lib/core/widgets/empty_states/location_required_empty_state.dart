@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/location_constants.dart';
 import '../../theme/app_text_styles.dart';
@@ -48,7 +49,7 @@ class LocationRequiredEmptyState extends ConsumerWidget {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.location_off_outlined,
+                AppIcons.locationOff,
                 size: 40,
                 color: accentColor,
               ),
@@ -82,7 +83,7 @@ class LocationRequiredEmptyState extends ConsumerWidget {
               height: 48,
               child: ElevatedButton.icon(
                 onPressed: () => LocationVerificationHelper.showVerificationDialog(context, ref),
-                icon: const Icon(Icons.location_on, size: 20),
+                icon: Icon(AppIcons.location, size: 20),
                 label: const Text('위치 인증하기'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: accentColor,

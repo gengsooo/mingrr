@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import '../constants/app_icons.dart';
 import '../constants/app_sizes.dart';
 import '../constants/location_constants.dart';
 import '../theme/app_text_styles.dart';
 import 'common_widgets.dart';
 import 'badges/info_badge.dart';
 import '../utils/responsive_utils.dart';
+import 'mingrr_image.dart';
 
 /// ============================================================
 /// 상세 화면 이미지 헤더 (SliverAppBar 통합)
@@ -111,7 +112,7 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
           color: Colors.black.withValues(alpha: AppOpacity.o30),
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
+        child: const Icon(AppIcons.back, color: Colors.white, size: 18),
       ),
       onPressed: () => Navigator.pop(context),
     );
@@ -135,7 +136,7 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
               color: Colors.black.withValues(alpha: AppOpacity.o30),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.share, color: Colors.white, size: 20),
+            child: const Icon(AppIcons.share, color: Colors.white, size: 20),
           ),
           onPressed: widget.onShare,
         ),
@@ -152,7 +153,7 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
               color: Colors.black.withValues(alpha: AppOpacity.o30),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.more_vert, color: Colors.white, size: 20),
+            child: const Icon(AppIcons.moreVert, color: Colors.white, size: 20),
           ),
           onPressed: widget.onMore,
         ),
@@ -179,17 +180,10 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
             widget.onPageChanged?.call(index);
           },
           itemBuilder: (context, index) {
-            return CachedNetworkImage(
+            return MingrrImage(
               imageUrl: widget.imageUrls[index],
               fit: BoxFit.cover,
-              placeholder: (context, url) => Container(
-                color: Theme.of(context).colorScheme.surfaceContainerLow,
-                child: const Center(
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-              errorWidget: (context, url, error) => 
-                  widget.placeholder ?? const DefaultPetImage(height: double.infinity),
+              errorWidget: widget.placeholder ?? const DefaultPetImage(height: double.infinity),
             );
           },
         ),
@@ -279,7 +273,7 @@ class GenderBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            isMale ? Icons.male : Icons.female,
+            isMale ? AppIcons.male : AppIcons.female,
             size: 14,
             color: Colors.white,
           ),
@@ -362,14 +356,14 @@ class ImageHeaderMatchBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.auto_awesome, size: 14, color: Colors.white),
+            const Icon(AppIcons.autoAwesome, size: 14, color: Colors.white),
             const SizedBox(width: AppSizes.gapXS),
             Text(
               '궁합 $score%',
               style: AppTextStyles.bodyMedium(context).withWeight(FontWeight.w600).withColor(Colors.white),
             ),
             const SizedBox(width: AppSizes.gapXS),
-            const Icon(Icons.info_outline, size: 12, color: Colors.white70),
+            const Icon(AppIcons.info, size: 12, color: Colors.white70),
           ],
         ),
       ),

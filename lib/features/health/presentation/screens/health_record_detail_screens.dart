@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -25,11 +26,11 @@ class WeightRecordDetailScreen extends StatelessWidget {
         title: const Text('체중 기록'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_outlined),
+            icon: const Icon(AppIcons.editOutlined),
             onPressed: () => _showEditDialog(context),
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            icon: const Icon(AppIcons.deleteOutlined, color: Colors.red),
             onPressed: () => _confirmDelete(context),
           ),
         ],
@@ -75,10 +76,10 @@ class WeightRecordDetailScreen extends StatelessWidget {
                     children: [
                       Icon(
                         record.change > 0
-                            ? Icons.arrow_upward
+                            ? AppIcons.arrowUp
                             : record.change < 0
-                                ? Icons.arrow_downward
-                                : Icons.remove,
+                                ? AppIcons.arrowDown
+                                : AppIcons.more,
                         color: record.change > 0
                             ? Colors.red
                             : record.change < 0
@@ -186,7 +187,7 @@ class WeightRecordDetailScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        Icon(AppIcons.note, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppSizes.gapS),
                         Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
@@ -286,7 +287,7 @@ class GroomingRecordDetailScreen extends StatelessWidget {
         title: const Text('그루밍 기록'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            icon: const Icon(AppIcons.deleteOutlined, color: Colors.red),
             onPressed: () => _confirmDelete(context),
           ),
         ],
@@ -335,7 +336,7 @@ class GroomingRecordDetailScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        Icon(AppIcons.note, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppSizes.gapS),
                         Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
@@ -384,14 +385,14 @@ class GroomingRecordDetailScreen extends StatelessWidget {
 
 /// 그루밍 타입
 enum _LocalGroomingType {
-  shower('샤워', Icons.shower_outlined),
-  brushing('빗질', Icons.brush_outlined),
-  nailTrim('발톱정리', Icons.content_cut),
-  haircut('이발', Icons.cut_outlined),
-  earCleaning('귀청소', Icons.hearing_outlined),
-  tearStain('눈물자국', Icons.visibility_outlined),
-  analGland('항문낭', Icons.circle_outlined),
-  pawCare('발바닥', Icons.pets);
+  shower('샤워', AppIcons.shower),
+  brushing('빗질', AppIcons.brushing),
+  nailTrim('발톱정리', AppIcons.nailTrim),
+  haircut('이발', AppIcons.haircut),
+  earCleaning('귀청소', AppIcons.earCleaning),
+  tearStain('눈물자국', AppIcons.eyeCleaning),
+  analGland('항문낭', AppIcons.analGland),
+  pawCare('발바닥', AppIcons.pawCare);
 
   final String label;
   final IconData icon;
@@ -433,7 +434,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
         title: const Text('예방접종 기록'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            icon: const Icon(AppIcons.deleteOutlined, color: Colors.red),
             onPressed: () => _confirmDelete(context),
           ),
         ],
@@ -453,7 +454,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                       color: context.features.health.withValues(alpha: AppOpacity.o10),
                       borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     ),
-                    child: Icon(Icons.vaccines_outlined, size: 40, color: context.features.health),
+                    child: Icon(AppIcons.vaccination, size: 40, color: context.features.health),
                   ),
                   const SizedBox(height: AppSizes.gapL),
                   Text(
@@ -504,7 +505,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppSizes.radiusS),
                       ),
                       child: const Center(
-                        child: Icon(Icons.notifications_outlined, color: Colors.orange),
+                        child: Icon(AppIcons.notification, color: Colors.orange),
                       ),
                     ),
                     const SizedBox(width: AppSizes.gapM),
@@ -546,7 +547,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        Icon(AppIcons.note, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppSizes.gapS),
                         Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
@@ -639,7 +640,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
         title: const Text('검진 기록'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            icon: const Icon(AppIcons.deleteOutlined, color: Colors.red),
             onPressed: () => _confirmDelete(context),
           ),
         ],
@@ -659,7 +660,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                       color: context.features.health.withValues(alpha: AppOpacity.o10),
                       borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     ),
-                    child: Icon(Icons.local_hospital_outlined, size: 40, color: context.features.health),
+                    child: Icon(AppIcons.checkup, size: 40, color: context.features.health),
                   ),
                   const SizedBox(height: AppSizes.gapL),
                   Text(
@@ -734,7 +735,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingXS),
                       child: Row(
                         children: [
-                          Icon(Icons.check_circle, color: context.features.success, size: 18),
+                          Icon(AppIcons.success, color: context.features.success, size: 18),
                           const SizedBox(width: AppSizes.gapS),
                           Text(item, style: AppTextStyles.bodyMedium(context)),
                         ],
@@ -754,7 +755,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        Icon(AppIcons.note, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppSizes.gapS),
                         Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
@@ -795,9 +796,9 @@ class CheckupRecordDetailScreen extends StatelessWidget {
   }
 
   IconData _getResultIcon(String result) {
-    if (result.contains('정상') || result.contains('양호')) return Icons.check_circle;
-    if (result.contains('주의') || result.contains('관찰')) return Icons.warning;
-    return Icons.error;
+    if (result.contains('정상') || result.contains('양호')) return AppIcons.checkCircle;
+    if (result.contains('주의') || result.contains('관찰')) return AppIcons.warning;
+    return AppIcons.error;
   }
 
   void _confirmDelete(BuildContext context) {
@@ -854,7 +855,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
         title: const Text('치아 관리 기록'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            icon: const Icon(AppIcons.deleteOutlined, color: Colors.red),
             onPressed: () => _confirmDelete(context),
           ),
         ],
@@ -874,7 +875,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
                       color: context.features.health.withValues(alpha: AppOpacity.o10),
                       borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     ),
-                    child: Icon(Icons.clean_hands_outlined, size: 40, color: context.features.health),
+                    child: Icon(AppIcons.teethBrushing, size: 40, color: context.features.health),
                   ),
                   const SizedBox(height: AppSizes.gapL),
                   Text(
@@ -923,7 +924,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        Icon(AppIcons.description, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppSizes.gapS),
                         Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
@@ -1046,7 +1047,7 @@ class SpecialRecordDetailScreen extends StatelessWidget {
         title: const Text('특이사항 기록'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            icon: Icon(AppIcons.delete, color: Colors.red),
             onPressed: () => _confirmDelete(context),
           ),
         ],
@@ -1144,7 +1145,7 @@ class SpecialRecordDetailScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.medical_services_outlined, size: 20, color: context.features.health),
+                        Icon(AppIcons.healthOutlined, size: 20, color: context.features.health),
                         const SizedBox(width: AppSizes.gapS),
                         Text('조치 사항', style: AppTextStyles.headlineSmall(context)),
                       ],
@@ -1193,11 +1194,11 @@ class SpecialRecordDetailScreen extends StatelessWidget {
 
   IconData _getCategoryIcon(String category) {
     switch (category) {
-      case '증상': return Icons.sick_outlined;
-      case '행동': return Icons.pets;
-      case '식이': return Icons.restaurant_outlined;
-      case '기타': return Icons.note_alt_outlined;
-      default: return Icons.star_outline;
+      case '증상': return AppIcons.health;
+      case '행동': return AppIcons.pet;
+      case '식이': return AppIcons.food;
+      case '기타': return AppIcons.special;
+      default: return AppIcons.starOutlined;
     }
   }
 

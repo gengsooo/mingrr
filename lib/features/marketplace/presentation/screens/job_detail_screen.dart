@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -55,7 +56,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
           return Scaffold(
             appBar: AppBar(title: const Text('알바')),
             body: const MingrrEmptyState(
-              icon: Icons.work_outline,
+              icon: AppIcons.work,
               title: '아직 데이터가 없어요',
               subtitle: '알바 정보를 찾을 수 없습니다',
             ),
@@ -146,15 +147,15 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   IconData _getJobIcon(JobType type) {
     switch (type) {
       case JobType.care:
-        return Icons.pets;
+        return AppIcons.pet;
       case JobType.walk:
-        return Icons.directions_walk;
+        return AppIcons.walk;
       case JobType.bath:
-        return Icons.bathtub_outlined;
+        return AppIcons.shower;
       case JobType.training:
-        return Icons.school_outlined;
+        return AppIcons.school;
       case JobType.other:
-        return Icons.work_outline;
+        return AppIcons.work;
     }
   }
 
@@ -202,7 +203,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         if (job.fullPeriodString.isNotEmpty) ...[
           Row(
             children: [
-              Icon(Icons.calendar_today, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              Icon(AppIcons.calendar, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: AppSizes.gapXS),
               Expanded(
                 child: Text(

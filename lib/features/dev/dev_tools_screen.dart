@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/constants/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_sizes.dart';
@@ -10,17 +11,17 @@ import '../auth/presentation/providers/auth_provider.dart';
 
 /// 데이터 항목 정의 (사용자 계정은 Firebase Auth에서 관리하므로 제외)
 enum DataCategory {
-  pets('반려동물', Icons.pets),
-  products('상품', Icons.shopping_bag),
-  groups('소모임', Icons.groups),
-  groupSchedules('소모임 일정', Icons.event),
-  jobs('알바', Icons.work),
-  breeding('교배', Icons.favorite_border),
-  likesMatches('좋아요/매칭', Icons.favorite),
-  chats('채팅', Icons.chat),
-  communityPosts('커뮤니티', Icons.article),
-  ratings('꼬순내 평가', Icons.star),
-  healthRecords('건강수첩', Icons.medical_services);
+  pets('반려동물', AppIcons.pet),
+  products('상품', AppIcons.shoppingBag),
+  groups('소모임', AppIcons.group),
+  groupSchedules('소모임 일정', AppIcons.event),
+  jobs('알바', AppIcons.work),
+  breeding('교배', AppIcons.likeOutlined),
+  likesMatches('좋아요/매칭', AppIcons.like),
+  chats('채팅', AppIcons.chat),
+  communityPosts('커뮤니티', AppIcons.community),
+  ratings('꼼순내 평가', AppIcons.star),
+  healthRecords('건강수첩', AppIcons.health);
 
   final String label;
   final IconData icon;
@@ -384,7 +385,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.lock, size: 80, color: Colors.red),
+              Icon(AppIcons.lock, size: 80, color: Colors.red),
               const SizedBox(height: 24),
               Text(
                 '관리자 전용 페이지입니다',
@@ -412,12 +413,12 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
         backgroundColor: Colors.orange,
         actions: [
           IconButton(
-            icon: const Icon(Icons.home),
+            icon: Icon(AppIcons.home),
             onPressed: () => context.go('/'),
             tooltip: '메인으로',
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: Icon(AppIcons.logout),
             onPressed: () async {
               await ref.read(authNotifierProvider.notifier).signOut();
               if (context.mounted) context.go('/login');
@@ -465,7 +466,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text('$_selectedCount / ${DataCategory.values.length}개 선택됨'),
-                    secondary: const Icon(Icons.select_all),
+                    secondary: Icon(AppIcons.selectAll),
                     activeColor: Colors.orange,
                   ),
                 ),
@@ -499,7 +500,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: _isLoading ? null : _seedSelectedData,
-                        icon: const Icon(Icons.add_circle),
+                        icon: Icon(AppIcons.addCircle),
                         label: const Text('생성'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
@@ -512,7 +513,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: _isLoading ? null : _clearSelectedData,
-                        icon: const Icon(Icons.delete_forever),
+                        icon: Icon(AppIcons.deleteForever),
                         label: const Text('전체 삭제'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
@@ -531,7 +532,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: _isLoading ? null : _clearTestDataOnly,
-                    icon: const Icon(Icons.cleaning_services),
+                    icon: Icon(AppIcons.cleaning),
                     label: const Text('테스트 데이터만 삭제 (test_ 접두사)'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
@@ -548,7 +549,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: _isLoading ? null : _seedUserLocations,
-                    icon: const Icon(Icons.location_on),
+                    icon: Icon(AppIcons.location),
                     label: const Text('사용자 위치 정보 생성 (대한민국 전역)'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,

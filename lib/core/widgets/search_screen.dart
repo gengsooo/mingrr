@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../theme/feature_colors.dart';
@@ -112,14 +113,14 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 
     if (_lastQuery.isEmpty) {
       return const MingrrEmptyState(
-        icon: Icons.search,
+        icon: AppIcons.search,
         title: '검색어를 입력해주세요',
       );
     }
 
     if (_results.isEmpty) {
       return const MingrrEmptyState(
-        icon: Icons.search_off,
+        icon: AppIcons.searchOff,
         title: '검색 결과가 없습니다',
       );
     }
@@ -150,11 +151,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       child: ListTile(
-        leading: MingrrThumbnail(
+        leading: MingrrImage.thumbnail(
           imageUrl: product.imageUrls.isNotEmpty ? product.imageUrls.first : null,
           width: 60,
           height: 60,
-          borderRadius: AppSizes.radiusXS,
+          radius: AppSizes.radiusXS,
           errorWidget: Container(
             width: 60,
             height: 60,
@@ -162,7 +163,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               color: context.features.marketContainer,
               borderRadius: BorderRadius.circular(AppSizes.radiusXS),
             ),
-            child: Icon(Icons.image, color: context.features.market),
+            child: Icon(AppIcons.image, color: context.features.market),
           ),
         ),
         title: Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -189,11 +190,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       child: ListTile(
-        leading: MingrrThumbnail(
+        leading: MingrrImage.thumbnail(
           imageUrl: group.imageUrl,
           width: 60,
           height: 60,
-          borderRadius: AppSizes.radiusXS,
+          radius: AppSizes.radiusXS,
           errorWidget: Container(
             width: 60,
             height: 60,
@@ -201,7 +202,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               color: context.features.socialContainer,
               borderRadius: BorderRadius.circular(AppSizes.radiusXS),
             ),
-            child: Icon(Icons.groups, color: context.features.social),
+            child: Icon(AppIcons.group, color: context.features.social),
           ),
         ),
         title: Text(group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -209,7 +210,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           children: [
             Text(group.typeString, style: AppTextStyles.caption(context)),
             const SizedBox(width: AppSizes.gapS),
-            Icon(Icons.person, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(AppIcons.profile, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
             Text(' ${group.memberCount}', style: AppTextStyles.captionSmall(context)),
           ],
         ),
@@ -256,11 +257,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       child: ListTile(
-        leading: MingrrThumbnail(
+        leading: MingrrImage.thumbnail(
           imageUrl: breeding.imageUrls != null && breeding.imageUrls.isNotEmpty ? breeding.imageUrls.first : null,
           width: 60,
           height: 60,
-          borderRadius: AppSizes.radiusXS,
+          radius: AppSizes.radiusXS,
           errorWidget: Container(
             width: 60,
             height: 60,
@@ -268,7 +269,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               color: context.features.breedingContainer,
               borderRadius: BorderRadius.circular(AppSizes.radiusXS),
             ),
-            child: Icon(Icons.family_restroom, color: context.features.breeding),
+            child: Icon(AppIcons.breeding, color: context.features.breeding),
           ),
         ),
         title: Text(breeding.title ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -276,7 +277,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           '${breeding.breed ?? '품종 미상'}',
           style: AppTextStyles.captionSmall(context),
         ),
-        trailing: Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+        trailing: Icon(AppIcons.chevronRight, color: Theme.of(context).colorScheme.outlineVariant),
         onTap: () {
           Navigator.pop(context);
           context.push('/dating/detail/${breeding.petId}');
@@ -289,11 +290,11 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       child: ListTile(
-        leading: MingrrThumbnail(
+        leading: MingrrImage.thumbnail(
           imageUrl: post.imageUrls.isNotEmpty ? post.imageUrls.first : null,
           width: 60,
           height: 60,
-          borderRadius: AppSizes.radiusXS,
+          radius: AppSizes.radiusXS,
           errorWidget: Container(
             width: 60,
             height: 60,
@@ -301,7 +302,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               color: context.features.socialContainer,
               borderRadius: BorderRadius.circular(AppSizes.radiusXS),
             ),
-            child: Icon(Icons.article, color: context.features.social),
+            child: Icon(AppIcons.article, color: context.features.social),
           ),
         ),
         title: Text(
@@ -325,7 +326,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             const SizedBox(width: AppSizes.gapS),
             LikeCountText(count: post.likeCount, size: InfoBadgeSize.small),
             const SizedBox(width: AppSizes.gapS),
-            Icon(Icons.chat_bubble_outline, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(AppIcons.chatOutlined, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
             Text(' ${post.commentCount}', style: AppTextStyles.captionSmall(context)),
           ],
         ),
@@ -344,15 +345,15 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   IconData _getJobIcon(JobType type) {
     switch (type) {
       case JobType.care:
-        return Icons.pets;
+        return AppIcons.pet;
       case JobType.walk:
-        return Icons.directions_walk;
+        return AppIcons.walk;
       case JobType.bath:
-        return Icons.bathtub;
+        return AppIcons.bath;
       case JobType.training:
-        return Icons.school;
+        return AppIcons.training;
       case JobType.other:
-        return Icons.work;
+        return AppIcons.work;
     }
   }
 

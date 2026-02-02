@@ -1,12 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:http/http.dart' as http;
 import 'package:gal/gal.dart';
+import '../constants/app_icons.dart';
 import 'package:path_provider/path_provider.dart';
 import '../constants/app_sizes.dart';
 import 'common_widgets.dart';
 import 'loading/loading_widgets.dart';
+import 'mingrr_image.dart';
 
 /// ============================================================
 /// 통합 이미지 뷰어 (MingrrImageViewer)
@@ -107,13 +108,13 @@ class _MingrrImageViewerState extends State<MingrrImageViewer> {
                     ),
                   )
                 : IconButton(
-                    icon: const Icon(Icons.download, color: Colors.white),
+                    icon: const Icon(AppIcons.download, color: Colors.white),
                     onPressed: _saveCurrentImage,
                   ),
           // 공유 버튼
           if (widget.onShare != null)
             IconButton(
-              icon: const Icon(Icons.share, color: Colors.white),
+              icon: const Icon(AppIcons.share, color: Colors.white),
               onPressed: widget.onShare,
             ),
         ],
@@ -123,14 +124,11 @@ class _MingrrImageViewerState extends State<MingrrImageViewer> {
         itemCount: widget.imageUrls.length,
         onPageChanged: (index) => setState(() => _currentIndex = index),
         itemBuilder: (context, index) {
-          final imageWidget = CachedNetworkImage(
+          final imageWidget = MingrrImage(
             imageUrl: widget.imageUrls[index],
             fit: BoxFit.contain,
-            placeholder: (context, url) => const Center(
-              child: MingrrLoadingIndicator(customColor: Colors.white),
-            ),
-            errorWidget: (context, url, error) => const Icon(
-              Icons.image_not_supported,
+            errorWidget: const Icon(
+              AppIcons.imageNotSupported,
               color: Colors.white54,
               size: 64,
             ),
