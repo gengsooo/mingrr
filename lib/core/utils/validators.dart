@@ -41,7 +41,7 @@ class Validators {
     return ValidationResult.valid();
   }
   
-  /// 비밀번호 유효성 검사 (8자 이상 + 2종류 이상 조합)
+  /// 비밀번호 유효성 검사 (8~16자, 영문+숫자+특수문자 조합)
   /// 개인정보보호법 안전성 확보조치 기준 준수
   static ValidationResult password(String? value) {
     if (value == null || value.isEmpty) {
@@ -49,18 +49,20 @@ class Validators {
     }
     
     if (value.length < 8) {
-      return ValidationResult.invalid('비밀번호는 8자 이상이어야 합니다');
+      return ValidationResult.invalid('8~16자 영문, 숫자, 특수문자를 사용해주세요');
     }
     
-    // 2종류 이상 조합 검사 (영문/숫자/특수문자)
+    if (value.length > 16) {
+      return ValidationResult.invalid('비밀번호는 16자 이하여야 합니다');
+    }
+    
+    // 영문, 숫자, 특수문자 모두 포함 검사
     final hasLetter = value.contains(RegExp(r'[a-zA-Z]'));
     final hasDigit = value.contains(RegExp(r'[0-9]'));
     final hasSpecial = value.contains(RegExp(r'[!@#$%^&*(),.?:{}|<>\[\]\-_=+;~`]'));
     
-    final typeCount = [hasLetter, hasDigit, hasSpecial].where((e) => e).length;
-    
-    if (typeCount < 2) {
-      return ValidationResult.invalid('영문, 숫자, 특수문자 중 2종류 이상 조합해주세요');
+    if (!hasLetter || !hasDigit || !hasSpecial) {
+      return ValidationResult.invalid('영문, 숫자, 특수문자를 모두 포함해주세요');
     }
     
     return ValidationResult.valid();
@@ -69,7 +71,7 @@ class Validators {
   /// 비밀번호 강도 표시 (UI용)
   static PasswordStrength getPasswordStrength(String? value) {
     if (value == null || value.isEmpty) return PasswordStrength.none;
-    if (value.length < 8) return PasswordStrength.weak;
+    if (value.length < 8 || value.length > 16) return PasswordStrength.weak;
     
     final hasLetter = value.contains(RegExp(r'[a-zA-Z]'));
     final hasDigit = value.contains(RegExp(r'[0-9]'));
@@ -77,11 +79,10 @@ class Validators {
     
     final typeCount = [hasLetter, hasDigit, hasSpecial].where((e) => e).length;
     
-    if (typeCount < 2) return PasswordStrength.weak;
-    if (typeCount == 2 && value.length < 10) return PasswordStrength.medium;
-    if (typeCount == 3 || value.length >= 12) return PasswordStrength.strong;
+    if (typeCount < 3) return PasswordStrength.weak;
+    if (value.length < 12) return PasswordStrength.medium;
     
-    return PasswordStrength.medium;
+    return PasswordStrength.strong;
   }
   
   /// 비밀번호 확인 일치 검사

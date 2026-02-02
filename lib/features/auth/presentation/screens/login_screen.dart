@@ -9,6 +9,7 @@ import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/badges/svg_icons.dart';
 import '../providers/auth_provider.dart';
 import 'consent_screen.dart';
+import 'sign_up_screen.dart';
 
 /// ============================================================
 /// 로그인 화면
@@ -378,6 +379,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   /// 이메일 로그인
+  /// 로그인 시에는 비밀번호 규칙 검사를 하지 않음 (기존 계정 호환)
+  /// 비밀번호 규칙은 회원가입 시에만 적용
   void _signInWithEmail(AuthNotifier authNotifier) async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
@@ -388,41 +391,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       return;
     }
     
-    final passwordValidation = Validators.password(password);
-    if (!passwordValidation.isValid) {
-      MingrrSnackBar.error(context, passwordValidation.errorMessage!);
+    // 로그인 시에는 비밀번호 입력 여부만 확인 (규칙 검사 X)
+    if (password.isEmpty) {
+      MingrrSnackBar.error(context, '비밀번호를 입력해주세요');
       return;
     }
     
     authNotifier.signInWithEmail(email, password);
   }
 
-  /// 이메일 회원가입 - 동의 화면으로 이동
-  void _signUpWithEmail(AuthNotifier authNotifier) async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-    
-    final emailValidation = Validators.email(email);
-    if (!emailValidation.isValid) {
-      MingrrSnackBar.error(context, emailValidation.errorMessage!);
-      return;
-    }
-    
-    final passwordValidation = Validators.password(password);
-    if (!passwordValidation.isValid) {
-      MingrrSnackBar.error(context, passwordValidation.errorMessage!);
-      return;
-    }
-    
-    // 동의 화면으로 이동
+  /// 이메일 회원가입 - 회원가입 화면으로 이동
+  void _signUpWithEmail(AuthNotifier authNotifier) {
     if (mounted) {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ConsentScreen(
-            email: email,
-            password: password,
-          ),
+          builder: (context) => const SignUpScreen(),
         ),
       );
     }

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/nickname_service.dart';
 import '../../../../models/user_model.dart';
 import '../../data/auth_repository.dart';
-import '../screens/consent_screen.dart';
+import '../../data/consent_data.dart';
 
 /// ============================================================
 /// 인증 상태 관리 Provider
@@ -375,6 +375,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// 이메일 중복 검사
+  /// 반환값: true = 이미 사용 중, false = 사용 가능
+  Future<bool> checkEmailExists(String email) async {
+    return await _authRepository.checkEmailExists(email);
+  }
+
   // ===== 회원 탈퇴 (논리 삭제) =====
   /// 회원 탈퇴 시 물리 삭제가 아닌 논리 삭제를 수행합니다.
   /// - isDeleted: true로 설정
@@ -429,7 +435,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       case 'invalid-email':
         return '올바른 이메일 형식이 아닙니다.';
       case 'weak-password':
-        return '비밀번호가 너무 약합니다. 6자 이상 입력해주세요.';
+        return '8~16자 영문, 숫자, 특수문자를 사용해주세요.';
       case 'too-many-requests':
         return '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
       case 'network-request-failed':

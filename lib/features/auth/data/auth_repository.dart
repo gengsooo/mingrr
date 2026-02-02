@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/services/firebase_service.dart';
 import '../../../models/user_model.dart';
@@ -188,6 +189,42 @@ class AuthRepository {
       email: email,
       password: password,
     );
+  }
+
+  /// 이메일 중복 검사
+  /// Firestore users 컬렉션에서 이메일 존재 여부 확인
+  /// (fetchSignInMethodsForEmail은 Email Enumeration Protection으로 인해 작동 안 함)
+  /// [email] : 검사할 이메일
+  /// 반환값: true = 이미 사용 중, false = 사용 가능
+  Future<bool> checkEmailExists(String email) async {
+    try {
+      final normalizedEmail = email.trim();
+      
+      // Firestore는 대소문자를 구분하므로 원본과 소문자 모두 검색
+      final querySnapshot = await _firebase.usersCollection
+          .where('email', isEqualTo: normalizedEmail)
+          .limit(1)
+          .get();
+      
+      if (querySnapshot.docs.isNotEmpty) {
+        return true;
+      }
+      
+      // 소문자로도 검색 (기존 데이터 호환)
+      if (normalizedEmail != normalizedEmail.toLowerCase()) {
+        final lowerQuerySnapshot = await _firebase.usersCollection
+            .where('email', isEqualTo: normalizedEmail.toLowerCase())
+            .limit(1)
+            .get();
+        return lowerQuerySnapshot.docs.isNotEmpty;
+      }
+      
+      return false;
+    } catch (e) {
+      // 에러 발생 시 false 반환 (가입 시도 시 Firebase Auth에서 최종 검증)
+      debugPrint('checkEmailExists error: $e');
+      return false;
+    }
   }
 
   // ===== 로그아웃 =====
