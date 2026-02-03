@@ -314,20 +314,16 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
     );
   }
 
-  /// 이미지 없을 때 빈 상태 UI
+  /// 이미지 없을 때 빈 상태 UI (발바닥 아이콘만 표시)
   Widget _buildEmptyImageState(BuildContext context) {
     return Container(
       color: context.features.datingContainer,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          DefaultPetIcon(size: 80),
-          const SizedBox(height: AppSizes.gapM),
-          Text(
-            '사진이 없어요',
-            style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
-          ),
-        ],
+      child: Center(
+        child: Icon(
+          AppIcons.pet,
+          size: 80,
+          color: context.features.dating,
+        ),
       ),
     );
   }

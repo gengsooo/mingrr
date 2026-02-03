@@ -135,7 +135,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         color: context.features.marketContainer,
         child: Center(
           child: Icon(
-            _getJobIcon(job.type),
+            AppIcons.image,
             size: 80,
             color: context.features.market,
           ),

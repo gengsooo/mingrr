@@ -155,31 +155,31 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
   }
 
   Widget _buildSliderContent(BuildContext context) {
-    // 이미지가 없으면 emptyStateWidget 또는 placeholder 표시
-    if (widget.imageUrls.isEmpty) {
-      return widget.emptyStateWidget ?? widget.placeholder ?? const DefaultPetImage(height: double.infinity);
-    }
-
+    final hasImages = widget.imageUrls.isNotEmpty;
+    
     return Stack(
       fit: StackFit.expand,
       children: [
-        // 이미지 슬라이더
-        PageView.builder(
-          itemCount: widget.imageUrls.length,
-          onPageChanged: (index) {
-            setState(() => _currentIndex = index);
-            widget.onPageChanged?.call(index);
-          },
-          itemBuilder: (context, index) {
-            return MingrrImage(
-              imageUrl: widget.imageUrls[index],
-              fit: BoxFit.cover,
-              errorWidget: widget.placeholder ?? const DefaultPetImage(height: double.infinity),
-            );
-          },
-        ),
+        // 이미지 슬라이더 또는 빈 상태
+        if (hasImages)
+          PageView.builder(
+            itemCount: widget.imageUrls.length,
+            onPageChanged: (index) {
+              setState(() => _currentIndex = index);
+              widget.onPageChanged?.call(index);
+            },
+            itemBuilder: (context, index) {
+              return MingrrImage(
+                imageUrl: widget.imageUrls[index],
+                fit: BoxFit.cover,
+                errorWidget: widget.placeholder ?? const DefaultPetImage(height: double.infinity),
+              );
+            },
+          )
+        else
+          widget.emptyStateWidget ?? widget.placeholder ?? const DefaultPetImage(height: double.infinity),
 
-        // 페이지 인디케이터
+        // 페이지 인디케이터 (이미지가 2개 이상일 때만)
         if (widget.showIndicator && widget.imageUrls.length > 1)
           Positioned(
             bottom: widget.indicatorBottomPadding,
@@ -204,7 +204,7 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
             ),
           ),
 
-        // 좌상단 오버레이
+        // 좌상단 오버레이 (이미지 유무와 관계없이 표시)
         if (widget.topLeftOverlay != null)
           Positioned(
             top: ResponsiveUtils.topSafeArea(context) + 60,
@@ -212,7 +212,7 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
             child: widget.topLeftOverlay!,
           ),
 
-        // 우상단 오버레이
+        // 우상단 오버레이 (이미지 유무와 관계없이 표시)
         if (widget.topRightOverlay != null)
           Positioned(
             top: ResponsiveUtils.topSafeArea(context) + 60,
@@ -220,7 +220,7 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
             child: widget.topRightOverlay!,
           ),
 
-        // 좌하단 오버레이
+        // 좌하단 오버레이 (이미지 유무와 관계없이 표시)
         if (widget.bottomLeftOverlay != null)
           Positioned(
             bottom: 16,
@@ -228,7 +228,7 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
             child: widget.bottomLeftOverlay!,
           ),
 
-        // 우하단 오버레이
+        // 우하단 오버레이 (이미지 유무와 관계없이 표시)
         if (widget.bottomRightOverlay != null)
           Positioned(
             bottom: 16,
