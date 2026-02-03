@@ -7,3 +7,4 @@ export 'form_components.dart';
 export 'tag_input.dart';
 export 'search_bar.dart';
 export 'location_selector.dart';
+export 'breed_picker.dart';

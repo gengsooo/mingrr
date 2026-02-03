@@ -15,8 +15,8 @@ class SvgAssets {
   SvgAssets._();
   
   // 아이콘
-  static const String logo = 'assets/icons/logo.svg';
-  static const String logoText = 'assets/icons/logo_text.svg';
+  static const String logo = 'assets/icons/mingrr_logo.svg';
+  static const String logoText = 'assets/icons/mingrr_logo.svg';
   static const String mingrrLogo = 'assets/icons/mingrr_logo.svg';
   static const String appIcon = 'assets/icons/app_icon.svg';
   static const String defaultPet = 'assets/icons/default_pet.svg';

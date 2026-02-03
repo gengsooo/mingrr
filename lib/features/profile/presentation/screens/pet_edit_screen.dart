@@ -16,6 +16,7 @@ import '../../../../core/services/storage_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/forms/form_components.dart';
+import '../../../../core/widgets/forms/breed_picker.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/sheets/image_picker_sheet.dart';
@@ -48,8 +49,8 @@ class PetEditScreen extends ConsumerStatefulWidget {
 class _PetEditScreenState extends ConsumerState<PetEditScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _breedController = TextEditingController();
   final _weightController = TextEditingController();
+  String? _selectedBreed;
   final _bioController = TextEditingController();
   
   PetGender _selectedGender = PetGender.male;
@@ -96,7 +97,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       if (pet != null && mounted) {
         _existingPet = pet;
         _nameController.text = pet.name;
-        _breedController.text = pet.breed ?? '';
+        _selectedBreed = pet.breed;
         _weightController.text = pet.weight?.toString() ?? '';
         _bioController.text = pet.bio ?? '';
         _selectedGender = pet.gender;
@@ -121,7 +122,6 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _breedController.dispose();
     _weightController.dispose();
     _bioController.dispose();
     super.dispose();
@@ -359,11 +359,13 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           ),
           const SizedBox(height: AppSizes.gapM),
           
-          // 품종
-          MingrrTextField(
-            controller: _breedController,
+          // 품종 (SelectBox + 바텀시트 선택)
+          MingrrBreedPicker(
+            value: _selectedBreed,
             labelText: '품종',
-            hintText: FormStrings.hintBreed,
+            hintText: '품종을 선택하세요',
+            accentColor: Theme.of(context).colorScheme.primary,
+            onChanged: (breed) => setState(() => _selectedBreed = breed),
           ),
           const SizedBox(height: AppSizes.gapM),
           
@@ -1001,7 +1003,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           ownerId: currentUser.uid,
           isPrimary: isEditMode ? (_existingPet?.isPrimary ?? isFirstPet) : isFirstPet,
           name: _nameController.text.trim(),
-          breed: _breedController.text.trim().isEmpty ? null : _breedController.text.trim(),
+          breed: _selectedBreed?.trim().isEmpty == true ? null : _selectedBreed?.trim(),
           gender: _selectedGender,
           birthDate: _birthDate,
           weight: double.tryParse(_weightController.text),

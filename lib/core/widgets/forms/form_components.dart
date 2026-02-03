@@ -131,11 +131,12 @@ class MingrrSwitchRow extends StatelessWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeColor: Colors.white,
+          activeThumbColor: Colors.white,
           activeTrackColor: accentColor,
-          inactiveThumbColor: Colors.white,
-          inactiveTrackColor: colorScheme.outlineVariant,
-          trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+          // 다크모드에서 OFF 상태 thumb이 track과 구분되도록 설정
+          inactiveThumbColor: colorScheme.outline,
+          inactiveTrackColor: colorScheme.surfaceContainerHighest,
+          trackOutlineColor: WidgetStateProperty.all(colorScheme.outline),
         ),
       ],
     );
