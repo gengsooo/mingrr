@@ -17,6 +17,7 @@ import '../../../../models/breeding_model.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
+import '../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 교배 등록 화면
@@ -391,7 +392,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '${FormStrings.errorGeneral}: $e');
+        ErrorHandler.showError(context, e, tag: 'BreedingWrite', operation: '교배 등록');
       }
     } finally {
       if (mounted) {

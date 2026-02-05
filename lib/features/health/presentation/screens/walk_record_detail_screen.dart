@@ -18,6 +18,7 @@ import '../../../../core/widgets/map/map_loading_widget.dart';
 import '../../../../core/services/share_service.dart';
 import '../../../../models/health_model.dart';
 import '../providers/health_provider.dart';
+import '../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 산책 기록 상세 화면
@@ -608,7 +609,7 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '삭제 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'WalkRecord', operation: '산책 기록 삭제');
       }
     } finally {
       if (mounted) {

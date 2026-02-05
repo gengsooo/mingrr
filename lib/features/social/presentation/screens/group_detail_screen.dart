@@ -28,6 +28,7 @@ import '../../../chat/presentation/screens/chat_detail_screen.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 import '../../../../core/services/share_service.dart';
 import '../providers/group_provider.dart';
+import '../../../../core/utils/error_handler.dart';
 import 'group_write_screen.dart';
 
 /// ============================================================
@@ -943,7 +944,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         }
       } catch (e) {
         if (mounted) {
-          MingrrSnackBar.error(context, '삭제 실패: $e');
+          ErrorHandler.showError(context, e, tag: 'GroupDetail', operation: '모임 삭제');
         }
       }
     }
@@ -1001,7 +1002,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '채팅 시작 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'GroupDetail', operation: '채팅 시작');
       }
     }
   }
@@ -1105,7 +1106,7 @@ class _JoinRequestTileState extends State<_JoinRequestTile> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '승인 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'GroupDetail', operation: '가입 승인');
         setState(() => _isProcessing = false);
       }
     }
@@ -1125,7 +1126,7 @@ class _JoinRequestTileState extends State<_JoinRequestTile> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '거절 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'GroupDetail', operation: '가입 거절');
         setState(() => _isProcessing = false);
       }
     }

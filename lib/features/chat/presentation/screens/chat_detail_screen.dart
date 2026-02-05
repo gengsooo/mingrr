@@ -489,7 +489,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     } catch (e) {
       AppLogger.error('ChatDetail', '_showPetProfile 에러', e);
       if (!mounted) return;
-      MingrrSnackBar.error(context, '반려동물 정보를 불러오는데 실패했습니다');
+      ErrorHandler.showError(context, e, tag: 'ChatDetail', operation: '반려동물 정보 로드');
     }
   }
 
@@ -575,7 +575,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      MingrrSnackBar.error(context, '소모임 정보를 불러오는데 실패했습니다');
+      ErrorHandler.showError(context, e, tag: 'ChatDetail', operation: '소모임 정보 로드');
     }
   }
 
@@ -1134,7 +1134,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           }
         } catch (e) {
           if (mounted) {
-            MingrrSnackBar.error(context, '차단 실패: $e');
+            ErrorHandler.showError(context, e, tag: 'ChatDetail', operation: '사용자 차단');
           }
         }
       },
@@ -1203,7 +1203,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '오류가 발생했습니다: $e');
+        ErrorHandler.showError(context, e, tag: 'ChatDetail', operation: '데이터 처리');
       }
     }
   }

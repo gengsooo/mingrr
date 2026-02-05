@@ -10,6 +10,7 @@ import '../dialogs/dialog_buttons.dart';
 import '../common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
 import '../../utils/responsive_utils.dart';
+import '../../utils/error_handler.dart';
 
 /// ============================================================
 /// 이미지 선택 바텀시트
@@ -498,7 +499,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '카메라 접근 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'ImagePicker', operation: '카메라 접근');
       }
     }
   }
@@ -517,7 +518,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '갤러리 접근 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'ImagePicker', operation: '갤러리 접근');
       }
     }
   }

@@ -15,6 +15,7 @@ import '../utils/format_utils.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/group_model.dart';
 import '../../models/community_post_model.dart';
+import '../utils/error_handler.dart';
 
 /// ============================================================
 /// 통합 검색 화면
@@ -382,7 +383,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       setState(() => _results = results);
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '검색 중 오류가 발생했습니다: $e');
+        ErrorHandler.showError(context, e, tag: 'Search', operation: '검색');
       }
     } finally {
       if (mounted) {

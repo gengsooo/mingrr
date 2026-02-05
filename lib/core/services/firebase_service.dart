@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -7,12 +8,20 @@ import '../utils/app_logger.dart';
 /// ============================================================
 /// Firebase 서비스
 /// Firebase 인스턴스들을 중앙에서 관리하는 싱글톤 서비스
+/// 
+/// Firestore 설정:
+/// - 오프라인 지속성 활성화 (모바일)
+/// - 캐시 크기 제한 (100MB)
+/// - 네트워크 타임아웃 설정
 /// ============================================================
 class FirebaseService {
   // 싱글톤 패턴
   static final FirebaseService _instance = FirebaseService._internal();
   factory FirebaseService() => _instance;
   FirebaseService._internal();
+  
+  // 초기화 상태
+  static bool _isInitialized = false;
 
   // ===== Firebase 인스턴스들 =====
   
@@ -24,6 +33,31 @@ class FirebaseService {
   
   /// Firebase Storage 인스턴스
   FirebaseStorage get storage => FirebaseStorage.instance;
+  
+  // ===== Firestore 초기화 =====
+  
+  /// Firestore 설정 초기화
+  /// main.dart에서 Firebase.initializeApp() 후 호출
+  static Future<void> initializeFirestore() async {
+    if (_isInitialized) return;
+    
+    try {
+      final firestore = FirebaseFirestore.instance;
+      
+      // Firestore 설정
+      firestore.settings = Settings(
+        // 오프라인 지속성 (모바일에서만, 웹은 기본 비활성화)
+        persistenceEnabled: !kIsWeb,
+        // 캐시 크기 제한 (100MB, 기본값은 무제한)
+        cacheSizeBytes: 100 * 1024 * 1024,
+      );
+      
+      _isInitialized = true;
+      AppLogger.info('FirebaseService', 'Firestore 설정 완료 (persistenceEnabled: ${!kIsWeb})');
+    } catch (e) {
+      AppLogger.error('FirebaseService', 'Firestore 설정 실패', e);
+    }
+  }
 
   // ===== Firestore 컬렉션 참조 =====
   

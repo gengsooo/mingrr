@@ -35,6 +35,7 @@ import '../../../../core/utils/location_verification_helper.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import '../../../../models/pet_model.dart';
+import '../../../../core/utils/error_handler.dart';
 import 'my_activity_screen.dart';
 import 'liked_list_screen.dart';
 import 'pet_edit_screen.dart';
@@ -355,7 +356,7 @@ class ProfileScreen extends ConsumerWidget {
     final userId = authState.valueOrNull?.uid;
     
     if (userId == null) {
-      MingrrSnackBar.error(context, '로그인이 필요합니다');
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
       return;
     }
     
@@ -812,7 +813,7 @@ class ProfileScreen extends ConsumerWidget {
     final userId = authState.valueOrNull?.uid;
     
     if (userId == null) {
-      MingrrSnackBar.error(context, '로그인이 필요합니다');
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
       return;
     }
 
@@ -835,7 +836,7 @@ class ProfileScreen extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        MingrrSnackBar.error(context, '인증 처리 중 오류가 발생했습니다: $e');
+        ErrorHandler.showError(context, e, tag: 'Profile', operation: '동물등록 인증');
       }
     }
   }
@@ -1234,7 +1235,7 @@ class ProfileScreen extends ConsumerWidget {
         }
       } catch (e) {
         if (context.mounted) {
-          MingrrSnackBar.error(context, '이미지 변경 실패: $e');
+          ErrorHandler.showError(context, e, tag: 'Profile', operation: '이미지 변경');
         }
       }
     }
@@ -1267,7 +1268,7 @@ class ProfileScreen extends ConsumerWidget {
       
       if (!isAvailable) {
         if (context.mounted) {
-          MingrrSnackBar.error(context, '이미 사용 중인 닉네임입니다');
+          MingrrSnackBar.warning(context, '이미 사용 중인 닉네임입니다');
         }
         return;
       }
@@ -1284,7 +1285,7 @@ class ProfileScreen extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        MingrrSnackBar.error(context, '닉네임 변경 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'Profile', operation: '닉네임 변경');
       }
     }
   }

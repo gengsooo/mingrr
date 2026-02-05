@@ -22,6 +22,7 @@ import '../../../dating/presentation/providers/dating_request_provider.dart' sho
 import '../providers/chat_provider.dart';
 import 'chat_detail_screen.dart';
 import '../../../../core/utils/responsive_utils.dart';
+import '../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 채팅 목록 화면 (V4 - 반려동물 전용 + 교배 배지)
@@ -439,7 +440,7 @@ class ChatListScreen extends ConsumerWidget {
                   if (chatRoomId != null) {
                     MingrrSnackBar.success(context, '${request.senderPetName}의 ${request.typeLabel}을 수락했어요! 💕');
                   } else {
-                    MingrrSnackBar.error(context, '수락 처리 중 오류가 발생했어요');
+                    MingrrSnackBar.warning(context, '수락 처리 중 문제가 발생했어요. 다시 시도해주세요.');
                   }
                 }
               },

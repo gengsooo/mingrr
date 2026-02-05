@@ -5,6 +5,7 @@ import '../../../../../core/constants/app_icons.dart';
 import '../../../../../core/constants/app_sizes.dart';
 import '../../../../../core/providers/theme_provider.dart';
 import '../../../../../core/widgets/common_widgets.dart';
+import '../../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 앱 설정 화면
@@ -97,7 +98,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '캐시 삭제 중 오류가 발생했습니다');
+        ErrorHandler.showError(context, e, tag: 'AppSettings', operation: '캐시 삭제');
       }
     } finally {
       if (mounted) {

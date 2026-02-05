@@ -25,6 +25,7 @@ import '../providers/dating_provider.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import 'breeding_write_screen.dart';
 import 'pet_detail_screen.dart';
+import '../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 데이팅 화면 (V2 리팩토링 - 반려동물 전용)
@@ -583,7 +584,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
     final myUserId = FirebaseService().currentUserId;
     
     if (myUserId == null) {
-      MingrrSnackBar.error(context, '로그인이 필요합니다');
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
       return;
     }
     
@@ -601,7 +602,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
           final targetPetDoc = await FirebaseService().petsCollection.doc(targetPetId).get();
           if (!targetPetDoc.exists) {
             if (context.mounted) {
-              MingrrSnackBar.error(context, '반려동물 정보를 찾을 수 없습니다');
+              MingrrSnackBar.warning(context, '반려동물 정보를 찾을 수 없습니다');
             }
             return;
           }
@@ -630,7 +631,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
           }
         } catch (e) {
           if (context.mounted) {
-            MingrrSnackBar.error(context, e.toString().replaceAll('Exception: ', ''));
+            ErrorHandler.showError(context, e, tag: 'Dating', operation: '교배 신청');
           }
         }
       },

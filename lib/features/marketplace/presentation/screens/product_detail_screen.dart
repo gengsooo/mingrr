@@ -174,7 +174,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
           _isWishlisted = wasWishlisted;
           _isWishlistLoading = false;
         });
-        MingrrSnackBar.error(context, '찜하기 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'ProductDetail', operation: '찜하기');
       }
     }
   }
@@ -581,7 +581,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
           }
         } catch (e) {
           if (mounted) {
-            MingrrSnackBar.error(context, '차단 실패: $e');
+            ErrorHandler.showError(context, e, tag: 'ProductDetail', operation: '판매자 차단');
           }
         }
       },
@@ -712,7 +712,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '채팅 시작 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'ProductDetail', operation: '채팅 시작');
       }
     }
   }

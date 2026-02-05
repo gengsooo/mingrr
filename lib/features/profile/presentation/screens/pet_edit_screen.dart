@@ -112,7 +112,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '데이터 로드 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'PetEdit', operation: '데이터 로드');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -837,7 +837,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '이미지 선택 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'PetEdit', operation: '이미지 선택');
       }
     }
   }
@@ -902,7 +902,7 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '이미지 선택 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'PetEdit', operation: '이미지 선택');
       }
     }
   }

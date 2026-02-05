@@ -9,6 +9,7 @@ import 'app.dart';
 import 'core/config/api_config.dart';
 import 'core/services/kkosunnae_service.dart';
 import 'core/services/network_service.dart';
+import 'core/services/firebase_service.dart';
 import 'core/utils/app_logger.dart';
 // import 'core/services/notification_service.dart';
 
@@ -38,6 +39,9 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    
+    // Firestore 설정 초기화 (오프라인 지속성, 캐시 크기 등)
+    await FirebaseService.initializeFirestore();
   } catch (e) {
     AppLogger.error('Main', 'Firebase 초기화 실패', e);
   }

@@ -13,6 +13,7 @@ import 'mingrr_image.dart';
 import 'sheets/mingrr_bottom_sheet.dart';
 import 'dialogs/action_prompt_dialog.dart';
 import '../utils/responsive_utils.dart';
+import '../utils/error_handler.dart';
 
 /// ============================================================
 /// 꼬순내지수 평가 시스템 통합 위젯
@@ -442,7 +443,7 @@ class _RatingModalState extends State<RatingModal> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '평가 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'Rating', operation: '평가 제출');
       }
     } finally {
       if (mounted) {

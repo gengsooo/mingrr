@@ -8,6 +8,7 @@ import '../../services/firebase_service.dart';
 import '../common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
 import '../../utils/responsive_utils.dart';
+import '../../utils/error_handler.dart';
 
 /// ============================================================
 /// 신고 기능 위젯
@@ -220,7 +221,7 @@ class _ReportSheetState extends State<ReportSheet> {
                         }
                       } catch (e) {
                         if (mounted) {
-                          MingrrSnackBar.error(context, '신고 실패: $e');
+                          ErrorHandler.showError(context, e, tag: 'Report', operation: '신고 제출');
                         }
                       } finally {
                         if (mounted) setState(() => _isSubmitting = false);

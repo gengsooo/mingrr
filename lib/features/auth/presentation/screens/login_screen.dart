@@ -8,6 +8,7 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/badges/svg_icons.dart';
 import '../providers/auth_provider.dart';
+import '../../../../core/utils/error_handler.dart';
 import 'consent_screen.dart';
 import 'sign_up_screen.dart';
 
@@ -48,7 +49,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // 에러 메시지 표시
     ref.listen<AuthState>(authNotifierProvider, (previous, next) {
       if (next.error != null) {
-        MingrrSnackBar.error(context, next.error!);
+        // AuthState.error는 이미 사용자 친화적 메시지로 변환됨
+        MingrrSnackBar.error(context, ErrorHandler.getMessage(next.error!));
         authNotifier.clearError();
       }
     });
@@ -352,7 +354,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final phone = _phoneController.text;
     final validation = Validators.phone(phone);
     if (!validation.isValid) {
-      MingrrSnackBar.error(context, validation.errorMessage!);
+      MingrrSnackBar.warning(context, validation.errorMessage!);
       return;
     }
 
@@ -371,7 +373,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _verifyCode(AuthNotifier authNotifier) {
     final code = _codeController.text.trim();
     if (code.isEmpty || code.length != 6) {
-      MingrrSnackBar.error(context, '6자리 인증번호를 입력해주세요.');
+      MingrrSnackBar.warning(context, '6자리 인증번호를 입력해주세요.');
       return;
     }
 
@@ -387,13 +389,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     
     final emailValidation = Validators.email(email);
     if (!emailValidation.isValid) {
-      MingrrSnackBar.error(context, emailValidation.errorMessage!);
+      MingrrSnackBar.warning(context, emailValidation.errorMessage!);
       return;
     }
     
     // 로그인 시에는 비밀번호 입력 여부만 확인 (규칙 검사 X)
     if (password.isEmpty) {
-      MingrrSnackBar.error(context, '비밀번호를 입력해주세요');
+      MingrrSnackBar.warning(context, '비밀번호를 입력해주세요');
       return;
     }
     

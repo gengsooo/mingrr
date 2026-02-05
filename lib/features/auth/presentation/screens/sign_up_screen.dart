@@ -10,6 +10,7 @@ import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../data/consent_data.dart';
 import '../providers/auth_provider.dart';
+import '../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 회원가입 화면
@@ -199,7 +200,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     // 에러 메시지 표시
     ref.listen<AuthState>(authNotifierProvider, (previous, next) {
       if (next.error != null) {
-        MingrrSnackBar.error(context, next.error!);
+        MingrrSnackBar.error(context, ErrorHandler.getMessage(next.error!));
         ref.read(authNotifierProvider.notifier).clearError();
       }
     });

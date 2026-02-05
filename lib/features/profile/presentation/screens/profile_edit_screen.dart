@@ -19,6 +19,7 @@ import '../../../../core/widgets/forms/form_components.dart';
 import '../../../../core/widgets/sheets/image_picker_sheet.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
 import '../../../../core/models/location_model.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// ============================================================
@@ -441,7 +442,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           
           if (!isAvailable) {
             if (mounted) {
-              MingrrSnackBar.error(context, '이미 사용 중인 닉네임입니다');
+              MingrrSnackBar.warning(context, '이미 사용 중인 닉네임입니다');
             }
             setState(() => _isLoading = false);
             return;
@@ -489,7 +490,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         }
       } catch (e) {
         if (mounted) {
-          MingrrSnackBar.error(context, '저장 실패: $e');
+          ErrorHandler.showError(context, e, tag: 'ProfileEdit', operation: '프로필 저장');
         }
       } finally {
         if (mounted) setState(() => _isLoading = false);

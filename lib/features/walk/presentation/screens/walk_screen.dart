@@ -21,6 +21,7 @@ import '../../../pet/presentation/providers/pet_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/utils/responsive_utils.dart';
 import '../../../health/presentation/providers/health_provider.dart';
+import '../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 산책 화면
@@ -856,7 +857,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       if (mounted) MingrrSnackBar.success(context, '산책을 시작했습니다! 🐾');
     } catch (e) {
       AppLogger.error('WalkScreen', '산책 시작 오류', e);
-      if (mounted) MingrrSnackBar.error(context, '산책 시작 중 오류가 발생했습니다: $e');
+      if (mounted) ErrorHandler.showError(context, e, tag: 'Walk', operation: '산책 시작');
     }
   }
   
@@ -977,7 +978,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       }
     } catch (e) {
       AppLogger.error('WalkScreen', '산책 종료 오류', e);
-      if (mounted) MingrrSnackBar.error(context, '산책 종료 중 오류가 발생했습니다: $e');
+      if (mounted) ErrorHandler.showError(context, e, tag: 'Walk', operation: '산책 종료');
     }
   }
   

@@ -27,6 +27,7 @@ import '../../../../core/widgets/compatibility_widgets.dart';
 import '../../../../core/widgets/badges/info_badge.dart' show LikeButton, InfoBadgeSize, EmptyInfoBadge, PedigreeBadge, MatchScoreBadge, MatchBadgeStyle;
 import '../../../../core/widgets/mingrr_image_header.dart' show ImageHeaderDistanceBadge, LikeBadge;
 import '../../../../core/widgets/badges/svg_icons.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../models/user_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -791,7 +792,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '신청 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'PetDetail', operation: '데이트 신청');
       }
     } finally {
       if (mounted) {
@@ -831,7 +832,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '신청 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'PetDetail', operation: '교배 신청');
       }
     } finally {
       if (mounted) {
@@ -888,7 +889,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
           }
         } catch (e) {
           if (mounted) {
-            MingrrSnackBar.error(context, '차단 실패: $e');
+            ErrorHandler.showError(context, e, tag: 'PetDetail', operation: '사용자 차단');
           }
         }
       },

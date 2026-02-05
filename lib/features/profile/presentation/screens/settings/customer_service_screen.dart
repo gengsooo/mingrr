@@ -6,6 +6,7 @@ import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/widgets/common_widgets.dart';
 import '../../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../../core/utils/responsive_utils.dart';
+import '../../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 고객센터 화면
@@ -128,7 +129,7 @@ class CustomerServiceScreen extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        MingrrSnackBar.error(context, '카카오톡을 열 수 없습니다');
+        ErrorHandler.showError(context, e, tag: 'CustomerService', operation: '카카오톡 열기');
       }
     }
   }
@@ -153,7 +154,7 @@ class CustomerServiceScreen extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        MingrrSnackBar.error(context, '이메일을 열 수 없습니다');
+        ErrorHandler.showError(context, e, tag: 'CustomerService', operation: '이메일 열기');
       }
     }
   }

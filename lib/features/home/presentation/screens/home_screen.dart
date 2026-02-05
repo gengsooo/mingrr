@@ -548,7 +548,7 @@ class HomeScreen extends ConsumerWidget {
     final user = userAsync.valueOrNull;
     
     if (user == null) {
-      MingrrSnackBar.error(context, '로그인이 필요합니다');
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
       return;
     }
     

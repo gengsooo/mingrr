@@ -18,6 +18,7 @@ import '../../../../core/widgets/forms/tag_input.dart';
 import '../../../../models/community_post_model.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 import '../providers/community_provider.dart';
+import '../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 커뮤니티(Community) 게시글 작성 화면
@@ -339,7 +340,7 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '${FormStrings.errorGeneral}: $e');
+        ErrorHandler.showError(context, e, tag: 'CommunityWrite', operation: '게시글 등록');
       }
     } finally {
       if (mounted) {

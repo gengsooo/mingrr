@@ -5,6 +5,7 @@ import '../../../../../core/constants/app_sizes.dart';
 import '../../../../../core/widgets/common_widgets.dart';
 import '../../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 계정 관리 화면
@@ -176,7 +177,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     final email = authUser?.email;
     
     if (email == null) {
-      MingrrSnackBar.error(context, '이메일 정보를 찾을 수 없습니다');
+      MingrrSnackBar.warning(context, '이메일 정보를 찾을 수 없습니다');
       return;
     }
     
@@ -190,7 +191,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '이메일 발송에 실패했습니다');
+        ErrorHandler.showError(context, e, tag: 'Account', operation: '비밀번호 재설정 이메일 발송');
       }
     } finally {
       if (mounted) {
@@ -223,7 +224,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '회원 탈퇴 중 오류가 발생했습니다');
+        ErrorHandler.showError(context, e, tag: 'Account', operation: '회원 탈퇴');
         setState(() => _isLoading = false);
       }
     }

@@ -8,6 +8,7 @@ import '../constants/app_sizes.dart';
 import 'common_widgets.dart';
 import 'loading/loading_widgets.dart';
 import 'mingrr_image.dart';
+import '../utils/error_handler.dart';
 
 /// ============================================================
 /// 통합 이미지 뷰어 (MingrrImageViewer)
@@ -171,7 +172,7 @@ class _MingrrImageViewerState extends State<MingrrImageViewer> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '이미지 저장 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'ImageViewer', operation: '이미지 저장');
       }
     } finally {
       if (mounted) {

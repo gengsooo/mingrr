@@ -310,7 +310,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
 
   void _showError(String message) {
     if (mounted) {
-      MingrrSnackBar.error(context, message);
+      MingrrSnackBar.warning(context, message);
     }
   }
 

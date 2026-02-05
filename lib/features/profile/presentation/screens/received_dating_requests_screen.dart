@@ -13,6 +13,7 @@ import '../../../../models/dating_model.dart';
 import '../../../../models/pet_model.dart';
 import '../../../dating/presentation/providers/dating_provider.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
+import '../../../../core/utils/error_handler.dart';
 
 /// 받은 데이팅 신청 화면
 class ReceivedDatingRequestsScreen extends ConsumerStatefulWidget {
@@ -228,7 +229,7 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '오류가 발생했습니다: $e');
+        ErrorHandler.showError(context, e, tag: 'DatingRequest', operation: '신청 처리');
       }
     } finally {
       if (mounted) {
@@ -253,7 +254,7 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
           }
         } catch (e) {
           if (mounted) {
-            MingrrSnackBar.error(context, '오류가 발생했습니다: $e');
+            ErrorHandler.showError(context, e, tag: 'DatingRequest', operation: '신청 처리');
           }
         } finally {
           if (mounted) {
