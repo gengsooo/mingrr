@@ -85,9 +85,11 @@ class TransactionService {
   }
 
   /// 반려동물 좋아요 토글
+  /// [ownerId]는 반려동물 소유자 ID (Firestore 규칙 검증용)
   static Future<bool> togglePetLike({
     required String petId,
     required String userId,
+    String? ownerId,
   }) async {
     final likeId = '${userId}_$petId';
     final likeRef = _firestore.collection('likes').doc(likeId);
@@ -103,8 +105,16 @@ class TransactionService {
         });
         return false;
       } else {
+        // ownerId가 없으면 pet 문서에서 조회
+        String? petOwnerId = ownerId;
+        if (petOwnerId == null) {
+          final petDoc = await transaction.get(petRef);
+          petOwnerId = petDoc.data()?['ownerId'] as String?;
+        }
+        
         transaction.set(likeRef, {
           'fromUserId': userId,
+          'toUserId': petOwnerId ?? '',
           'toPetId': petId,
           'createdAt': FieldValue.serverTimestamp(),
         });

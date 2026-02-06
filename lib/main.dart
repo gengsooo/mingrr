@@ -65,13 +65,17 @@ void main() async {
   if (ApiConfig.hasKakaoMapKey) {
     try {
       AppLogger.debug('Main', '카카오맵 SDK 초기화 시작...');
+      AppLogger.debug('Main', '카카오맵 키: ${ApiConfig.kakaoMapKey.substring(0, 8)}...');
       await KakaoMapSdk.instance.initialize(ApiConfig.kakaoMapKey);
+      ApiConfig.setKakaoMapSdkInitialized(true);
       AppLogger.info('Main', '카카오맵 SDK 초기화 성공');
     } catch (e) {
       AppLogger.error('Main', '카카오맵 초기화 실패', e);
+      ApiConfig.setKakaoMapSdkInitialized(false);
     }
   } else {
     AppLogger.warning('Main', '카카오맵 API 키가 설정되지 않음 (Firebase Remote Config에서 kakao_map_key 설정 필요)');
+    ApiConfig.setKakaoMapSdkInitialized(false);
   }
   
   // 꼬순내지수 등급 구간 로드 (하이브리드 방식)

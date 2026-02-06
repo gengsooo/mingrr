@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
+import '../../config/api_config.dart';
 import '../../constants/app_icons.dart';
 import '../../theme/feature_colors.dart';
 import '../../theme/app_text_styles.dart';
@@ -85,10 +86,25 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     _initializePosition();
   }
 
+  /// 지도 dispose 진행 중 플래그 (크래시 방지)
+  bool _isDisposing = false;
+  
   @override
   void dispose() {
+    // 1. dispose 진행 중 플래그 설정 (비동기 작업에서 참조)
+    _isDisposing = true;
+    
+    // 2. 타이머 취소
     _addressDebounceTimer?.cancel();
+    _addressDebounceTimer = null;
+    
+    // 3. 지도 컨트롤러 안전하게 정리 (크래시 방지 핵심)
+    // SurfaceView가 dispose된 후 접근하는 것을 방지
+    _mapController = null;
+    
+    // 4. ValueNotifier dispose
     _addressState.dispose();
+    
     super.dispose();
   }
 
@@ -365,6 +381,12 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
       return _buildWebPlaceholder();
     }
     
+    // 카카오맵 SDK 초기화 체크 (안전장치)
+    if (!ApiConfig.isKakaoMapSdkInitialized) {
+      AppLogger.warning('MapLocationPicker', '카카오맵 SDK 미초기화, 대체 UI 표시');
+      return _buildMapUnavailableView();
+    }
+    
     // 위치 정보가 없으면 오류 표시
     if (_initialMapPosition == null) {
       AppLogger.warning('MapLocationPicker', '위치 없음, 오류 화면 표시');
@@ -385,6 +407,44 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
         _mapController = controller;
       },
       onCameraMoveEnd: (position, gestureType) => _onCameraMoveEnd(position),
+    );
+  }
+  
+  /// 지도 사용 불가 화면 (SDK 미초기화 시)
+  Widget _buildMapUnavailableView() {
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              AppIcons.mapOutlined,
+              size: 64,
+              color: _accentColor.withValues(alpha: AppOpacity.o50),
+            ),
+            const SizedBox(height: AppSizes.gapL),
+            Text(
+              '지도를 불러올 수 없습니다',
+              style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: AppSizes.gapS),
+            Text(
+              '앱을 다시 시작해주세요',
+              style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: AppSizes.gapL),
+            TextButton.icon(
+              onPressed: () => Navigator.pop(context),
+              icon: Icon(AppIcons.close),
+              label: const Text('돌아가기'),
+              style: TextButton.styleFrom(
+                foregroundColor: _accentColor,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
   

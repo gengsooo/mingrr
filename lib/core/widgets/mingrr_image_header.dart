@@ -244,41 +244,6 @@ class _MingrrImageHeaderState extends State<MingrrImageHeader> {
 /// 이미지 헤더용 오버레이 배지 위젯들
 /// ============================================================
 
-/// 성별 배지
-class GenderBadge extends StatelessWidget {
-  final bool isMale;
-
-  const GenderBadge({super.key, required this.isMale});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
-      decoration: BoxDecoration(
-        color: isMale 
-            ? const Color(0xFF2196F3)  // 파란색
-            : const Color(0xFFE91E63), // 핑크색
-        borderRadius: BorderRadius.circular(AppSizes.radiusS),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isMale ? AppIcons.male : AppIcons.female,
-            size: 14,
-            color: Colors.white,
-          ),
-          const SizedBox(width: 2),
-          Text(
-            isMale ? '남아' : '여아',
-            style: AppTextStyles.bodySmall(context).withWeight(FontWeight.w500).withColor(Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// 이미지 헤더용 거리 배지 (오버레이 스타일)
 class ImageHeaderDistanceBadge extends StatelessWidget {
   final double distanceKm;

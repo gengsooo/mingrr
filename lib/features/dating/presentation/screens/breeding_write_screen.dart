@@ -361,7 +361,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
 
       final post = BreedingPostModel(
         id: _isEditMode ? widget.post!.id : const Uuid().v4(),
-        userId: currentUser.uid,
+        authorId: currentUser.uid,
         petId: _selectedPet!.id,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),

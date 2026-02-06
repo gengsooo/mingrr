@@ -198,7 +198,7 @@ class NicknameService {
   }
   
   /// 닉네임 변경 (트랜잭션 처리)
-  /// 1. 기존 nicknames 문서 삭제
+  /// 1. 기존 nicknames 문서 존재 확인 후 삭제
   /// 2. 새 nicknames 문서 생성
   /// 3. users 문서 업데이트
   static Future<void> change({
@@ -223,8 +223,15 @@ class NicknameService {
           }
         }
         
-        // 2. 기존 닉네임 문서 삭제
-        transaction.delete(_nicknamesCollection.doc(normalizedOld));
+        // 2. 기존 닉네임 문서 존재 확인 후 삭제 (없으면 스킵)
+        final oldDoc = await transaction.get(_nicknamesCollection.doc(normalizedOld));
+        if (oldDoc.exists) {
+          final oldData = oldDoc.data();
+          // 본인 문서인 경우에만 삭제
+          if (oldData != null && oldData['userId'] == userId) {
+            transaction.delete(_nicknamesCollection.doc(normalizedOld));
+          }
+        }
         
         // 3. 새 닉네임 문서 생성
         transaction.set(_nicknamesCollection.doc(normalizedNew), {

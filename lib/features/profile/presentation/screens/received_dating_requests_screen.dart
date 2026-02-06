@@ -215,6 +215,9 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
       final match = await _datingService.acceptDatingRequest(request.id);
       
       if (mounted) {
+        // 리스트 갱신
+        ref.invalidate(receivedDatingRequestsProvider);
+        
         if (match?.chatRoomId != null) {
           MingrrSnackBar.withAction(
             context,
@@ -250,6 +253,8 @@ class _ReceivedDatingRequestsScreenState extends ConsumerState<ReceivedDatingReq
           await _datingService.rejectDatingRequest(request.id);
           
           if (mounted) {
+            // 리스트 갱신
+            ref.invalidate(receivedDatingRequestsProvider);
             MingrrSnackBar.info(context, '신청을 거절했습니다');
           }
         } catch (e) {

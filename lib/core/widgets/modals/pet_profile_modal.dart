@@ -208,10 +208,21 @@ class _PetProfileModalState extends State<PetProfileModal> {
           'likeCount': FieldValue.increment(-1),
         });
       } else {
-        // 좋아요 추가
+        // 좋아요 추가 (Firestore 규칙: fromUserId, toUserId 필드 필요)
+        // guardianInfo에서 ownerId 가져오기, 없으면 pet 문서에서 조회
+        String? ownerId = widget.guardianInfo?.id;
+        if (ownerId == null) {
+          final petDoc = await FirebaseFirestore.instance
+              .collection('pets')
+              .doc(widget.petId)
+              .get();
+          ownerId = petDoc.data()?['ownerId'] as String?;
+        }
+        
         await FirebaseFirestore.instance.collection('likes').doc(likeDocId).set({
-          'userId': currentUser.uid,
-          'petId': widget.petId,
+          'fromUserId': currentUser.uid,
+          'toUserId': ownerId ?? '',
+          'toPetId': widget.petId,
           'createdAt': FieldValue.serverTimestamp(),
         });
         await FirebaseFirestore.instance.collection('pets').doc(widget.petId).update({
@@ -313,7 +324,11 @@ class _PetProfileModalState extends State<PetProfileModal> {
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       ),
       name: widget.petName,
-      badge: _buildGenderBadge(isMale),
+      badge: PetGenderBadge(
+        isMale: isMale,
+        size: InfoBadgeSize.medium,
+        style: GenderBadgeStyle.tinted,
+      ),
       subtitle: Text(
         [
           if (widget.breed != null) widget.breed,
@@ -323,33 +338,6 @@ class _PetProfileModalState extends State<PetProfileModal> {
         style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
       ),
       trailing: _buildLikeButton(),
-    );
-  }
-
-  /// 성별 배지
-  Widget _buildGenderBadge(bool isMale) {
-    final genderText = isMale ? '남아' : '여아';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 3),
-      decoration: BoxDecoration(
-        color: isMale ? Colors.blue.withValues(alpha: AppOpacity.o15) : Colors.pink.withValues(alpha: AppOpacity.o15),
-        borderRadius: BorderRadius.circular(AppSizes.radiusS),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isMale ? AppIcons.male : AppIcons.female,
-            size: 14,
-            color: isMale ? Colors.blue : Colors.pink,
-          ),
-          const SizedBox(width: 3),
-          Text(
-            genderText,
-            style: AppTextStyles.bodySmall(context).withWeight(FontWeight.w500).withColor(isMale ? Colors.blue : Colors.pink),
-          ),
-        ],
-      ),
     );
   }
 

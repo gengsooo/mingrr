@@ -21,8 +21,8 @@ class BreedingPostModel extends Equatable {
   /// 글 ID
   final String id;
   
-  /// 작성자 ID
-  final String userId;
+  /// 작성자 ID (Firestore 규칙과 일치: authorId)
+  final String authorId;
   
   /// 교배할 반려동물 ID
   final String petId;
@@ -74,7 +74,7 @@ class BreedingPostModel extends Equatable {
 
   const BreedingPostModel({
     required this.id,
-    required this.userId,
+    required this.authorId,
     required this.petId,
     required this.title,
     required this.description,
@@ -99,7 +99,7 @@ class BreedingPostModel extends Equatable {
   factory BreedingPostModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
     return BreedingPostModel(
       id: id ?? data['id'] ?? '',
-      userId: data['userId'] ?? '',
+      authorId: data['authorId'] ?? data['userId'] ?? '',
       petId: data['petId'] ?? '',
       title: data['title'] ?? '',
       description: data['description'] ?? '',
@@ -128,7 +128,7 @@ class BreedingPostModel extends Equatable {
 
   Map<String, dynamic> toFirestore() {
     return {
-      'userId': userId,
+      'authorId': authorId,
       'petId': petId,
       'title': title,
       'description': description,
@@ -150,7 +150,7 @@ class BreedingPostModel extends Equatable {
 
   BreedingPostModel copyWith({
     String? id,
-    String? userId,
+    String? authorId,
     String? petId,
     String? title,
     String? description,
@@ -170,7 +170,7 @@ class BreedingPostModel extends Equatable {
   }) {
     return BreedingPostModel(
       id: id ?? this.id,
-      userId: userId ?? this.userId,
+      authorId: authorId ?? this.authorId,
       petId: petId ?? this.petId,
       title: title ?? this.title,
       description: description ?? this.description,
@@ -193,7 +193,7 @@ class BreedingPostModel extends Equatable {
   @override
   List<Object?> get props => [
         id,
-        userId,
+        authorId,
         petId,
         title,
         description,

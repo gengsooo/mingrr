@@ -240,7 +240,7 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
 
       if (group.requireApproval) {
         // 가입 승인 필요 - 신청서 저장
-        await _firebase.joinRequestsCollection.add({
+        await _firebase.groupJoinRequestsCollection.add({
           'groupId': groupId,
           'userId': userId,
           'message': message,
@@ -365,7 +365,7 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
   /// 가입 신청 승인
   Future<bool> approveJoinRequest(String requestId, String groupId, String userId) async {
     try {
-      await _firebase.joinRequestsCollection.doc(requestId).update({
+      await _firebase.groupJoinRequestsCollection.doc(requestId).update({
         'status': 'approved',
         'respondedAt': FieldValue.serverTimestamp(),
         'respondedBy': _firebase.currentUserId,
@@ -390,7 +390,7 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
   /// 가입 신청 거절
   Future<bool> rejectJoinRequest(String requestId) async {
     try {
-      await _firebase.joinRequestsCollection.doc(requestId).update({
+      await _firebase.groupJoinRequestsCollection.doc(requestId).update({
         'status': 'rejected',
         'respondedAt': FieldValue.serverTimestamp(),
         'respondedBy': _firebase.currentUserId,
@@ -421,7 +421,7 @@ final isGroupLikedProvider = FutureProvider.autoDispose.family<bool, String>((re
 /// 소모임 가입 신청 목록 (관리자용)
 final groupJoinRequestsProvider = FutureProvider.autoDispose.family<List<GroupJoinRequestModel>, String>((ref, groupId) async {
   final firebase = FirebaseService();
-  final snapshot = await firebase.joinRequestsCollection
+  final snapshot = await firebase.groupJoinRequestsCollection
       .where('groupId', isEqualTo: groupId)
       .where('status', isEqualTo: 'pending')
       .orderBy('createdAt', descending: true)

@@ -563,17 +563,31 @@ class LikeOverlayBadge extends StatelessWidget {
   }
 }
 
-/// 반려동물 성별 배지 (데이팅/교배찾기용)
+/// 성별 배지 스타일
+enum GenderBadgeStyle {
+  /// 불투명 배경 + 흰색 텍스트 (이미지 위에 표시용)
+  filled,
+  /// 투명 배경 + 컬러 텍스트 (일반 UI용)
+  tinted,
+}
+
+/// 반려동물 성별 배지 (통합 컴포넌트)
+/// 
+/// 사용 예시:
+/// - 이미지 위: PetGenderBadge(isMale: true, style: GenderBadgeStyle.filled)
+/// - 일반 UI: PetGenderBadge(isMale: true, style: GenderBadgeStyle.tinted)
 class PetGenderBadge extends StatelessWidget {
   final bool isMale;
   final bool showLabel;
   final InfoBadgeSize size;
+  final GenderBadgeStyle style;
 
   const PetGenderBadge({
     super.key,
     required this.isMale,
     this.showLabel = true,
     this.size = InfoBadgeSize.medium,
+    this.style = GenderBadgeStyle.tinted,
   });
 
   double get _symbolSize {
@@ -581,9 +595,9 @@ class PetGenderBadge extends StatelessWidget {
       case InfoBadgeSize.small:
         return 11;
       case InfoBadgeSize.medium:
-        return 13;
+        return 14;
       case InfoBadgeSize.large:
-        return 15;
+        return 16;
     }
   }
 
@@ -600,11 +614,24 @@ class PetGenderBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 투명도 없는 배경색, 흰색 텍스트
-    final bgColor = isMale 
-        ? const Color(0xFF2196F3)  // 파란색 (투명도 없음)
-        : const Color(0xFFE91E63); // 핑크색 (투명도 없음)
-    const textColor = Colors.white;
+    final baseColor = isMale ? Colors.blue : Colors.pink;
+    
+    // 스타일에 따른 색상 설정
+    final Color bgColor;
+    final Color textColor;
+    
+    switch (style) {
+      case GenderBadgeStyle.filled:
+        // 불투명 배경 + 흰색 텍스트 (이미지 위에 표시용)
+        bgColor = isMale ? const Color(0xFF2196F3) : const Color(0xFFE91E63);
+        textColor = Colors.white;
+        break;
+      case GenderBadgeStyle.tinted:
+        // 투명 배경 + 컬러 텍스트 (일반 UI용)
+        bgColor = baseColor.withValues(alpha: AppOpacity.o15);
+        textColor = baseColor;
+        break;
+    }
     
     return Container(
       padding: _padding,

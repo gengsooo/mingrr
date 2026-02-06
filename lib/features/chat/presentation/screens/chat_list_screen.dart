@@ -16,13 +16,12 @@ import '../../../../core/widgets/modals/guardian_profile_modal.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../models/chat_model.dart';
-import '../../../../models/dating_request_model.dart';
+import '../../../../models/dating_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../dating/presentation/providers/dating_request_provider.dart' show receivedRequestsProvider, receivedDatingRequestsProvider, receivedBreedingRequestsProvider, DatingRequestActionService;
 import '../providers/chat_provider.dart';
 import 'chat_detail_screen.dart';
 import '../../../../core/utils/responsive_utils.dart';
-import '../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 채팅 목록 화면 (V4 - 반려동물 전용 + 교배 배지)
@@ -970,7 +969,7 @@ class ChatListScreen extends ConsumerWidget {
       showGuardianProfileModal(
         context,
         guardianId: request.senderId,
-        guardianName: request.senderName,
+        guardianName: request.senderName ?? '사용자',
         kkosunnaeScore: kkosunnaeScore,
         profileImageUrl: userData?['profileImageUrl'],
         gender: gender,
@@ -986,12 +985,12 @@ class ChatListScreen extends ConsumerWidget {
       showGuardianProfileModal(
         context,
         guardianId: request.senderId,
-        guardianName: request.senderName,
+        guardianName: request.senderName ?? '사용자',
         kkosunnaeScore: 50.0,
         pets: [
           GuardianPetInfo(
             id: request.senderPetId,
-            name: request.senderPetName,
+            name: request.senderPetName ?? '반려동물',
             profileImageUrl: request.senderPetImageUrl,
           ),
         ],

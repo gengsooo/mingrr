@@ -161,9 +161,15 @@ class DatingService {
       createdAt: DateTime.now(),
     );
     
-    // breeding_requests 컬렉션에 저장
+    // breeding_requests 컬렉션에 저장 (Firestore 규칙: senderId/receiverId 사용)
     await _firestore.collection('breeding_requests').doc(requestId).set({
-      ...request.toFirestore(),
+      'senderId': fromUserId,
+      'senderPetId': fromPetId,
+      'receiverId': toUserId,
+      'receiverPetId': toPetId,
+      'status': request.status.name,
+      'message': message,
+      'createdAt': Timestamp.fromDate(request.createdAt),
       'type': 'breeding',
     });
     

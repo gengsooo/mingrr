@@ -817,6 +817,8 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           MingrrSnackBar.success(context, '가입 신청을 보냈습니다');
         } else {
           MingrrSnackBar.success(context, '모임에 가입했습니다! 🎉');
+          // 리스트 새로고침 트리거 (내 모임 목록 갱신)
+          ref.read(groupRefreshProvider.notifier).state++;
         }
         ref.invalidate(groupDetailProvider(widget.groupId));
       }
@@ -839,6 +841,8 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         final success = await ref.read(groupNotifierProvider.notifier).leaveGroup(group.id);
         if (success && mounted) {
           MingrrSnackBar.success(context, '모임에서 탈퇴했습니다');
+          // 리스트 새로고침 트리거 (내 모임 목록 갱신)
+          ref.read(groupRefreshProvider.notifier).state++;
           ref.invalidate(groupDetailProvider(widget.groupId));
         }
       } finally {
@@ -888,15 +892,25 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     showMingrrBottomSheet(
       context: context,
       title: '가입 신청 관리',
-      height: 0.7,
+      height: MediaQuery.of(context).size.height * 0.7,
       child: StreamBuilder<List<GroupJoinRequestModel>>(
         stream: firestoreService.watchPendingJoinRequests(group.id),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          // 오류 처리 먼저
+          if (snapshot.hasError) {
+            return MingrrEmptyState(
+              icon: AppIcons.error,
+              title: '데이터를 불러올 수 없어요',
+              subtitle: '오류: ${snapshot.error}',
+            );
+          }
+          
+          // 로딩 중 (데이터가 없고 연결 대기 중)
+          if (!snapshot.hasData) {
             return const Center(child: MingrrLoadingIndicator());
           }
 
-          final requests = snapshot.data ?? [];
+          final requests = snapshot.data!;
 
           if (requests.isEmpty) {
             return const MingrrEmptyState(
@@ -917,6 +931,16 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                 groupId: group.id,
                 myUserId: myUserId,
                 firestoreService: firestoreService,
+                onApproved: () {
+                  // 가입 승인 후 리스트 갱신
+                  ref.invalidate(groupJoinRequestsProvider(group.id));
+                  ref.invalidate(groupDetailProvider(widget.groupId));
+                  ref.read(groupRefreshProvider.notifier).state++;
+                },
+                onRejected: () {
+                  // 가입 거절 후 리스트 갱신
+                  ref.invalidate(groupJoinRequestsProvider(group.id));
+                },
               );
             },
           );
@@ -1053,12 +1077,16 @@ class _JoinRequestTile extends StatefulWidget {
   final String groupId;
   final String myUserId;
   final FirestoreService firestoreService;
+  final VoidCallback? onApproved;
+  final VoidCallback? onRejected;
 
   const _JoinRequestTile({
     required this.request,
     required this.groupId,
     required this.myUserId,
     required this.firestoreService,
+    this.onApproved,
+    this.onRejected,
   });
 
   @override
@@ -1103,6 +1131,7 @@ class _JoinRequestTileState extends State<_JoinRequestTile> {
       );
       if (mounted) {
         MingrrSnackBar.success(context, '${_user?.nickname ?? '사용자'}님의 가입을 승인했습니다');
+        widget.onApproved?.call();
       }
     } catch (e) {
       if (mounted) {
@@ -1123,6 +1152,7 @@ class _JoinRequestTileState extends State<_JoinRequestTile> {
       );
       if (mounted) {
         MingrrSnackBar.info(context, '${_user?.nickname ?? '사용자'}님의 가입을 거절했습니다');
+        widget.onRejected?.call();
       }
     } catch (e) {
       if (mounted) {

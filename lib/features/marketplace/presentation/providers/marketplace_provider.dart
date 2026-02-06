@@ -48,9 +48,10 @@ final _allProductsWithDistanceProvider = FutureProvider.autoDispose<List<Product
   final filteredProducts = products.where((p) => !blockedUserIds.contains(p.sellerId)).toList();
   
   if (userLocation == null) {
+    // 사용자 위치 없음 - 모든 상품 거리를 infinity로 설정 (위치 정보 없음 표시)
     return filteredProducts.map((p) => ProductWithDistance(
       product: p,
-      distanceMeters: 0,
+      distanceMeters: double.infinity,
     )).toList();
   }
   
@@ -180,7 +181,7 @@ final paginatedProductsProvider = StateNotifierProvider
       final isAllDistance = params.radiusKm == 0; // 0 = 전체 (거리 제한 없음)
       
       for (final product in filteredProducts) {
-        double distance = 0; // 위치 정보 없으면 0으로 처리 (리스트에 표시)
+        double distance = double.infinity; // 위치 정보 없으면 infinity (가장 나중에 표시)
         if (product.location != null && userLocation != null) {
           distance = LocationService.calculateDistanceFromGeoPoints(
             userLocation,
@@ -194,7 +195,7 @@ final paginatedProductsProvider = StateNotifierProvider
         result.add(ProductWithDistance(product: product, distanceMeters: distance));
       }
       
-      // 거리순 정렬 (위치 없는 상품은 맨 앞에 표시)
+      // 거리순 정렬 (위치 없는 상품은 가장 나중에 표시)
       result.sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
       return result;
     },
@@ -223,7 +224,7 @@ final paginatedJobsProvider = StateNotifierProvider<
       
       final result = <JobWithDistance>[];
       for (final job in filteredJobs) {
-        double distance = 0; // 위치 정보 없으면 0으로 처리
+        double distance = double.infinity; // 위치 정보 없으면 infinity (가장 나중에 표시)
         if (job.location != null && userLocation != null) {
           distance = LocationService.calculateDistanceFromGeoPoints(
             userLocation,
@@ -233,7 +234,7 @@ final paginatedJobsProvider = StateNotifierProvider<
         result.add(JobWithDistance(job: job, distanceMeters: distance));
       }
       
-      // 거리순 정렬
+      // 거리순 정렬 (위치 없는 알바는 가장 나중에 표시)
       result.sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
       return result;
     },

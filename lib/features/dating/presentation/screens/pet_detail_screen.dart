@@ -24,7 +24,7 @@ import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/sheets/confirm_sheet.dart';
 import '../../../../core/widgets/compatibility_widgets.dart';
-import '../../../../core/widgets/badges/info_badge.dart' show LikeButton, InfoBadgeSize, EmptyInfoBadge, PedigreeBadge, MatchScoreBadge, MatchBadgeStyle;
+import '../../../../core/widgets/badges/info_badge.dart' show LikeButton, InfoBadgeSize, EmptyInfoBadge, PedigreeBadge, MatchScoreBadge, MatchBadgeStyle, PetGenderBadge, GenderBadgeStyle;
 import '../../../../core/widgets/mingrr_image_header.dart' show ImageHeaderDistanceBadge, LikeBadge;
 import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/utils/error_handler.dart';
@@ -289,7 +289,11 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       onMore: () => _showMoreOptions(context),
       // 이미지 없을 때 빈 상태 UI
       emptyStateWidget: _buildEmptyImageState(context),
-      topLeftOverlay: GenderBadge(isMale: isMale),
+      topLeftOverlay: PetGenderBadge(
+        isMale: isMale,
+        size: InfoBadgeSize.large,
+        style: GenderBadgeStyle.tinted,
+      ),
       // 궁합 정보: 있으면 점수 표시, 없으면 안내 배지
       topRightOverlay: hasMatchScore
           ? MatchScoreBadge(
@@ -782,17 +786,27 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         message: message,
       );
       
-      // 좋아요 수 증가 (이미 좋아요 안 했으면)
-      if (!_isLiked) {
-        await _toggleLike();
-      }
-      
+      // 성공 스낵바 먼저 표시
       if (mounted) {
         MingrrSnackBar.success(context, '${myPet.name}(으)로 데이트 신청을 보냈어요! 💕');
       }
+      
+      // 좋아요 수 증가 (이미 좋아요 안 했으면) - 실패해도 무시
+      if (!_isLiked) {
+        try {
+          await _toggleLike();
+        } catch (_) {
+          // 좋아요 실패는 무시 (신청은 이미 성공)
+        }
+      }
     } catch (e) {
       if (mounted) {
-        ErrorHandler.showError(context, e, tag: 'PetDetail', operation: '데이트 신청');
+        final errorMessage = e.toString();
+        if (errorMessage.contains('이미 데이팅 신청')) {
+          MingrrSnackBar.info(context, '이미 데이트 신청을 보냈어요! 상대방의 응답을 기다려주세요 💕');
+        } else {
+          MingrrSnackBar.error(context, '데이트 신청에 실패했어요. 다시 시도해주세요.');
+        }
       }
     } finally {
       if (mounted) {

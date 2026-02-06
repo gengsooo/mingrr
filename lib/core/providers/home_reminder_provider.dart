@@ -136,7 +136,7 @@ final pendingGroupJoinRequestsCountProvider = FutureProvider.autoDispose<int>((r
   // 대기 중인 가입 신청 조회
   int count = 0;
   for (final groupId in groupIds) {
-    final requestsSnapshot = await _firebase.joinRequestsCollection
+    final requestsSnapshot = await _firebase.groupJoinRequestsCollection
         .where('groupId', isEqualTo: groupId)
         .where('status', isEqualTo: 'pending')
         .get();

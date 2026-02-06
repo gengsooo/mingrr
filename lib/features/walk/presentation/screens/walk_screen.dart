@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../../core/config/api_config.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -73,10 +74,26 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
     _getCurrentLocation();
   }
   
+  /// 지도 dispose 진행 중 플래그 (크래시 방지)
+  bool _isDisposing = false;
+  
   @override
   void dispose() {
+    // 1. dispose 진행 중 플래그 설정 (비동기 작업에서 참조)
+    _isDisposing = true;
+    
+    // 2. 위치 스트림 구독 취소
     _positionStreamSubscription?.cancel();
+    _positionStreamSubscription = null;
+    
+    // 3. 타이머 취소
     _walkTimer?.cancel();
+    _walkTimer = null;
+    
+    // 4. 지도 컨트롤러 안전하게 정리 (크래시 방지 핵심)
+    // SurfaceView가 dispose된 후 접근하는 것을 방지
+    _mapController = null;
+    
     super.dispose();
   }
   
@@ -317,6 +334,12 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       return _buildWebMapPlaceholder();
     }
     
+    // 카카오맵 SDK 초기화 체크 (안전장치)
+    if (!ApiConfig.isKakaoMapSdkInitialized) {
+      AppLogger.warning('WalkScreen', '카카오맵 SDK 미초기화, 대체 UI 표시');
+      return _buildMapUnavailableView();
+    }
+    
     // 위치 로딩 중이면 로딩 위젯 표시
     if (_isLocationLoading) {
       AppLogger.debug('WalkScreen', '로딩 위젯 표시 (progress: $_locationProgress)');
@@ -348,6 +371,35 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
     // 위치 정보가 없으면 로딩 위젯
     AppLogger.warning('WalkScreen', '위치 없음, 오류 메시지 표시');
     return MapLoadingWidget.walk(message: '위치를 확인할 수 없습니다');
+  }
+  
+  /// 지도 사용 불가 화면 (SDK 미초기화 시)
+  Widget _buildMapUnavailableView() {
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              AppIcons.mapOutlined,
+              size: 64,
+              color: context.features.walk.withValues(alpha: AppOpacity.o50),
+            ),
+            const SizedBox(height: AppSizes.gapL),
+            Text(
+              '지도를 불러올 수 없습니다',
+              style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: AppSizes.gapS),
+            Text(
+              '앱을 다시 시작해주세요',
+              style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+          ],
+        ),
+      ),
+    );
   }
   
   /// 카카오맵 생성 완료 콜백

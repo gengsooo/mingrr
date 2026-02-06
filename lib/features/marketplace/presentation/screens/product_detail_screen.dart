@@ -520,16 +520,21 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
               style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w700).withColor(
                 _isShare ? context.features.walk : Theme.of(context).colorScheme.onSurface,
               ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
           // 채팅하기 버튼
-          MingrrButton(
-            text: '채팅하기',
-            onPressed: _isOwner ? null : () => _startChat(),
-            backgroundColor: context.features.market,
-            textColor: Colors.white,
-            width: 100,
-            height: 48,
+          Flexible(
+            flex: 0,
+            child: MingrrButton(
+              text: '채팅하기',
+              onPressed: _isOwner ? null : () => _startChat(),
+              backgroundColor: context.features.market,
+              textColor: Colors.white,
+              width: 100,
+              height: 48,
+            ),
           ),
         ],
       ),

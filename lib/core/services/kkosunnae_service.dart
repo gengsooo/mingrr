@@ -344,9 +344,10 @@ class KkosunnaeService {
       }
 
       // C. 받은 좋아요 수 (2점) - 최대 20개
+      // Firestore 규칙: toUserId 필드 사용
       final likesSnapshot = await _firebase.firestore
           .collection('likes')
-          .where('targetUserId', isEqualTo: userId)
+          .where('toUserId', isEqualTo: userId)
           .limit(20)
           .get();
       final likeCount = likesSnapshot.docs.length;

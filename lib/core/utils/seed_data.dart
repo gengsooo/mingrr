@@ -974,7 +974,7 @@ class SeedData {
       
       final post = BreedingPostModel(
         id: '${TestDataPrefix.breeding}${(i + 1).toString().padLeft(3, '0')}',
-        userId: postData['userId'] as String,
+        authorId: postData['userId'] as String,
         petId: postData['petId'] as String,
         title: postData['title'] as String,
         description: postData['description'] as String,

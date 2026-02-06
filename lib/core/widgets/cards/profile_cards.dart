@@ -6,7 +6,7 @@ import '../../constants/app_sizes.dart';
 import '../common_widgets.dart';
 import '../kkosunnae_widgets.dart';
 import '../badges/verification_badge.dart';
-import '../badges/info_badge.dart';
+import '../badges/info_badge.dart' show PetGenderBadge, GenderBadgeStyle, InfoBadgeSize, LikeCountText;
 
 /// ============================================================
 /// 프로필 카드 공통 위젯
@@ -155,10 +155,11 @@ class GuardianProfileCard extends StatelessWidget {
 
   Widget _buildGenderIcon() {
     final isMale = gender == 'male' || gender == '남성';
-    return Icon(
-      isMale ? AppIcons.male : AppIcons.female,
-      size: 16,
-      color: isMale ? Colors.blue : Colors.pink,
+    return PetGenderBadge(
+      isMale: isMale,
+      showLabel: false,
+      size: InfoBadgeSize.small,
+      style: GenderBadgeStyle.tinted,
     );
   }
 
@@ -318,10 +319,11 @@ class PetProfileCard extends StatelessWidget {
 
   Widget _buildGenderIcon() {
     final isMale = gender == 'male';
-    return Icon(
-      isMale ? AppIcons.male : AppIcons.female,
-      size: 16,
-      color: isMale ? Colors.blue : Colors.pink,
+    return PetGenderBadge(
+      isMale: isMale,
+      showLabel: false,
+      size: InfoBadgeSize.small,
+      style: GenderBadgeStyle.tinted,
     );
   }
 

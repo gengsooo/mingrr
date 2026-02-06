@@ -4,7 +4,7 @@ import '../../../../core/services/chat_service.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/notification_service.dart';
 import '../../../../models/chat_model.dart';
-import '../../../../models/dating_request_model.dart';
+import '../../../../models/dating_model.dart';
 
 /// ============================================================
 /// 데이팅/교배 신청 Provider
@@ -16,13 +16,13 @@ final _firebaseService = FirebaseService();
 final _notificationService = NotificationService();
 
 /// 받은 데이팅 신청 목록 (Firebase Stream)
-/// Firestore 필드: receiverId (dating_request_model.dart 기준)
+/// Firestore 필드: toUserId (dating_model.dart 기준)
 final receivedDatingRequestsProvider = StreamProvider.autoDispose<List<DatingRequestModel>>((ref) {
   final userId = _firebaseService.currentUserId;
   if (userId == null) return Stream.value([]);
   
   return _firebaseService.datingRequestsCollection
-      .where('receiverId', isEqualTo: userId)
+      .where('toUserId', isEqualTo: userId)
       .orderBy('createdAt', descending: true)
       .snapshots()
       .map((snapshot) => snapshot.docs
@@ -57,13 +57,13 @@ final receivedRequestsProvider = Provider.autoDispose<List<DatingRequestModel>>(
 });
 
 /// 보낸 데이팅 신청 목록 (Firebase Stream)
-/// Firestore 필드: senderId (dating_request_model.dart 기준)
+/// Firestore 필드: fromUserId (dating_model.dart 기준)
 final sentDatingRequestsProvider = StreamProvider.autoDispose<List<DatingRequestModel>>((ref) {
   final userId = _firebaseService.currentUserId;
   if (userId == null) return Stream.value([]);
   
   return _firebaseService.datingRequestsCollection
-      .where('senderId', isEqualTo: userId)
+      .where('fromUserId', isEqualTo: userId)
       .orderBy('createdAt', descending: true)
       .snapshots()
       .map((snapshot) => snapshot.docs

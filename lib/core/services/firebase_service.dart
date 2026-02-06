@@ -89,10 +89,6 @@ class FirebaseService {
   CollectionReference<Map<String, dynamic>> get productLikesCollection =>
       firestore.collection('productLikes');
   
-  /// 가입 신청 컬렉션
-  CollectionReference<Map<String, dynamic>> get joinRequestsCollection =>
-      firestore.collection('joinRequests');
-  
   /// 모임 컬렉션
   CollectionReference<Map<String, dynamic>> get groupsCollection =>
       firestore.collection('groups');

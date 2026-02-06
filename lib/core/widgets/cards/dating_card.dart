@@ -90,6 +90,7 @@ class DatingRecommendCard extends StatelessWidget {
                   isMale: isMale,
                   showLabel: true,
                   size: InfoBadgeSize.medium,
+                  style: GenderBadgeStyle.tinted,
                 ),
               ),
               

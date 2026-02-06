@@ -823,7 +823,7 @@ class ProfileScreen extends ConsumerWidget {
       switch (badgeType) {
         case BadgeType.identity:
           // 본인인증 - 실제로는 PASS 등 본인인증 서비스 연동 필요
-          _showIdentityVerificationDialog(context, firestoreService, userId);
+          _showIdentityVerificationDialog(context, ref, firestoreService, userId);
           break;
         case BadgeType.location:
           // 위치인증 - 현재 위치 기반 인증 (거리 검증 포함)
@@ -831,7 +831,7 @@ class ProfileScreen extends ConsumerWidget {
           break;
         case BadgeType.petRegistration:
           // 동물등록 인증 - 동물등록번호 입력
-          await _showPetRegistrationDialog(context, firestoreService, userId);
+          await _showPetRegistrationDialog(context, ref, firestoreService, userId);
           break;
       }
     } catch (e) {
@@ -842,12 +842,17 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   /// 본인인증 다이얼로그
-  void _showIdentityVerificationDialog(BuildContext context, FirestoreService firestoreService, String userId) {
+  void _showIdentityVerificationDialog(BuildContext context, WidgetRef ref, FirestoreService firestoreService, String userId) {
     showConfirmSheet(
       context,
       type: ConfirmSheetType.identityVerify,
       onConfirm: () async {
         await firestoreService.verifyIdentity(userId);
+        
+        // UI 갱신을 위해 Provider invalidate
+        ref.invalidate(userVerificationsProvider);
+        ref.invalidate(currentUserProvider);
+        
         if (context.mounted) {
           MingrrSnackBar.success(context, '본인인증이 완료되었습니다! ');
         }
@@ -878,8 +883,14 @@ class ProfileScreen extends ConsumerWidget {
   Future<void> _showLocationVerificationDialog(BuildContext context, WidgetRef ref, FirestoreService firestoreService, String userId) async {
     final result = await LocationVerificationHelper.showVerificationDialog(context, ref);
     
-    if (result == true && context.mounted) {
-      MingrrSnackBar.success(context, '위치인증이 완료되었습니다! 📍');
+    if (result == true) {
+      // UI 갱신을 위해 Provider invalidate
+      ref.invalidate(userVerificationsProvider);
+      ref.invalidate(currentUserProvider);
+      
+      if (context.mounted) {
+        MingrrSnackBar.success(context, '위치인증이 완료되었습니다! 📍');
+      }
     }
   }
   
@@ -1010,7 +1021,7 @@ class ProfileScreen extends ConsumerWidget {
   }
 
   /// 동물등록 인증 다이얼로그 (API 연동 + PetModel 매칭)
-  Future<void> _showPetRegistrationDialog(BuildContext context, FirestoreService firestoreService, String userId) async {
+  Future<void> _showPetRegistrationDialog(BuildContext context, WidgetRef ref, FirestoreService firestoreService, String userId) async {
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -1020,8 +1031,15 @@ class ProfileScreen extends ConsumerWidget {
       ),
     );
 
-    if (result == true && context.mounted) {
-      MingrrSnackBar.success(context, '동물등록 인증이 완료되었습니다! 🐕');
+    if (result == true) {
+      // UI 갱신을 위해 Provider invalidate
+      ref.invalidate(userVerificationsProvider);
+      ref.invalidate(currentUserProvider);
+      ref.invalidate(userPetsProvider);
+      
+      if (context.mounted) {
+        MingrrSnackBar.success(context, '동물등록 인증이 완료되었습니다! 🐕');
+      }
     }
   }
 
@@ -1279,6 +1297,9 @@ class ProfileScreen extends ConsumerWidget {
         oldNickname: user.nickname ?? '',
         newNickname: newNickname.trim(),
       );
+      
+      // UI 갱신을 위해 Provider invalidate
+      ref.invalidate(currentUserProvider);
       
       if (context.mounted) {
         MingrrSnackBar.success(context, '닉네임이 변경되었습니다!');

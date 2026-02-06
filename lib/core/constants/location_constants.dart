@@ -20,8 +20,8 @@ class LocationConstants {
   
   // ===== 거리 필터 옵션 =====
   
-  /// 데이팅 거리 필터 옵션 (2, 5, 10, 20, 30km)
-  static const List<double> datingDistanceOptions = [2, 5, 10, 20, 30];
+  /// 데이팅 거리 필터 옵션 (2, 5, 10, 20, 30, 200km)
+  static const List<double> datingDistanceOptions = [2, 5, 10, 20, 30, 200];
   
   /// 마켓 거리 필터 옵션 (2, 5, 10, 20km, 전체)
   /// 0 = 전체 (거리 제한 없음)
