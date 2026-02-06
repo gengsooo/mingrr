@@ -41,7 +41,8 @@
 | [groupJoinRequests](#groupjoinrequests) | 소모임 가입 신청 | - | groupId, userId |
 | [groupLikes](#grouplikes) | 소모임 좋아요 | - | userId |
 | [schedules](#schedules) | 모임 일정 | - | groupId |
-| [jobs](#jobs) | 알바 (펫시터/산책) | - | userId, status |
+| [jobs](#jobs) | 알바 (펫시터/산책) | `marketplace_model.dart` | userId, status |
+| [job_applications](#job_applications) | 알바 지원 | `job_application_model.dart` | applicantId, employerId |
 | [walks](#walks) | 산책 기록 | - | userId |
 | [feedPosts](#feedposts) | 커뮤니티 게시글 | `community_post_model.dart` | authorId, category |
 | [feedComments](#feedcomments) | 커뮤니티 댓글 | - | postId |
@@ -483,6 +484,39 @@ class DatingRequestModel extends Equatable {
 | `startDate` | timestamp | ❌ | 시작일 | |
 | `endDate` | timestamp | ❌ | 종료일 | |
 | `createdAt` | timestamp | ✅ | 생성일 | |
+
+---
+
+## 🔷 job_applications
+
+알바 지원 정보를 저장합니다. 데이팅 신청(dating_requests)과 동일한 패턴으로 설계되었습니다.
+
+### 문서 ID
+- **형식**: UUID v4 또는 자동 생성
+
+### 필드 정의
+
+| 필드명 | 타입 | 필수 | 설명 | 예시 |
+|--------|------|------|------|------|
+| `jobId` | string | ✅ | 알바 ID | `"job1"` |
+| `jobTitle` | string | ✅ | 알바 제목 (비정규화) | `"펫시터 구합니다"` |
+| `jobType` | string | ✅ | 알바 타입 (비정규화) | `"care"`, `"walk"` |
+| `applicantId` | string | ✅ | 지원자 ID | `"user1"` |
+| `applicantName` | string | ✅ | 지원자 닉네임 (비정규화) | `"홍길동"` |
+| `applicantImageUrl` | string | ❌ | 지원자 프로필 이미지 | |
+| `applicantKkosunnaeScore` | number | ❌ | 지원자 꼬순내 지수 | `75.5` |
+| `employerId` | string | ✅ | 알바 등록자 ID | `"user2"` |
+| `message` | string | ❌ | 한줄 메시지 | `"열심히 하겠습니다!"` |
+| `status` | string | ✅ | 상태 | `"pending"`, `"accepted"`, `"rejected"`, `"cancelled"` |
+| `createdAt` | timestamp | ✅ | 지원 시간 | |
+| `respondedAt` | timestamp | ❌ | 응답 시간 | |
+| `chatRoomId` | string | ❌ | 수락 시 생성된 채팅방 ID | |
+
+### 상태 값
+- `pending`: 대기 중
+- `accepted`: 수락됨 (채팅 시작)
+- `rejected`: 거절됨
+- `cancelled`: 지원 취소
 
 ---
 

@@ -8,6 +8,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/sheets/request_sheet.dart';
 import '../../../../core/widgets/cards/profile_cards.dart';
 import '../../../../core/widgets/sheets/report_sheet.dart';
 import '../../../../core/widgets/modals/guardian_profile_modal.dart';
@@ -16,7 +17,13 @@ import '../../../../core/mixins/distance_calculator_mixin.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/share_service.dart';
 import '../../../../models/marketplace_model.dart';
+import '../../../../models/chat_model.dart';
+import '../../../../models/job_application_model.dart';
+import '../../../../core/services/chat_service.dart';
+import '../../../../core/utils/error_handler.dart';
+import '../../../chat/presentation/screens/chat_detail_screen.dart';
 import '../providers/marketplace_provider.dart';
+import '../providers/job_application_provider.dart';
 
 /// ============================================================
 /// 알바 상세 화면
@@ -310,31 +317,150 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   }
 
   Widget _buildBottomBar(BuildContext context, JobModel job) {
+    // 본인 글이면 버튼 없음
+    if (_isOwner(job)) {
+      return MingrrBottomButtonBar(
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                '${formatPrice(job.price)}원/${job.priceUnit}',
+                style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 내 지원 상태 확인
+    final myApplicationAsync = ref.watch(myJobApplicationProvider(job.id));
+    
+    return myApplicationAsync.when(
+      data: (myApplication) => _buildActionButton(context, job, myApplication),
+      loading: () => MingrrBottomButtonBar(
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                '${formatPrice(job.price)}원/${job.priceUnit}',
+                style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w700),
+              ),
+            ),
+            const SizedBox(width: AppSizes.gapM),
+            const Expanded(
+              child: Center(child: MingrrLoadingIndicator.small()),
+            ),
+          ],
+        ),
+      ),
+      error: (_, __) => _buildActionButton(context, job, null),
+    );
+  }
+
+  /// 지원 상태에 따른 버튼 표시
+  Widget _buildActionButton(BuildContext context, JobModel job, JobApplicationModel? myApplication) {
+    String buttonText;
+    VoidCallback? onPressed;
+    Color buttonColor = context.features.market;
+    
+    if (myApplication == null) {
+      // 미지원 상태
+      buttonText = '지원하기';
+      onPressed = job.status == JobStatus.recruiting ? () => _showApplySheet(job) : null;
+    } else {
+      switch (myApplication.status) {
+        case JobApplicationStatus.pending:
+          buttonText = '지원 완료';
+          onPressed = null; // 비활성화
+          buttonColor = Theme.of(context).colorScheme.outlineVariant;
+          break;
+        case JobApplicationStatus.accepted:
+          buttonText = '채팅하기';
+          onPressed = () => _openChat(myApplication.chatRoomId, job);
+          break;
+        case JobApplicationStatus.rejected:
+          buttonText = '거절됨';
+          onPressed = null;
+          buttonColor = Theme.of(context).colorScheme.outlineVariant;
+          break;
+        case JobApplicationStatus.cancelled:
+          buttonText = '지원하기';
+          onPressed = job.status == JobStatus.recruiting ? () => _showApplySheet(job) : null;
+          break;
+      }
+    }
+    
     return MingrrBottomButtonBar(
       child: Row(
-        mainAxisSize: MainAxisSize.max,
         children: [
-          // 가격 표시
           Expanded(
             child: Text(
               '${formatPrice(job.price)}원/${job.priceUnit}',
               style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w700),
             ),
           ),
-          // 채팅하기 버튼
-          MingrrButton(
-            text: '채팅하기',
-            onPressed: job.status == JobStatus.recruiting
-                ? () => _startChat(job)
-                : null,
-            backgroundColor: context.features.market,
-            textColor: Colors.white,
-            height: 48,
-            width: 100,
+          const SizedBox(width: AppSizes.gapM),
+          Expanded(
+            child: MingrrButton(
+              text: buttonText,
+              onPressed: onPressed,
+              backgroundColor: buttonColor,
+              textColor: Colors.white,
+              height: 48,
+            ),
           ),
         ],
       ),
     );
+  }
+
+  /// 지원하기 바텀시트 표시
+  void _showApplySheet(JobModel job) {
+    showJobApplySheet(
+      context,
+      jobTitle: job.title,
+      onConfirm: (message) async {
+        final applicationId = await JobApplicationActionService.applyForJob(
+          job: job,
+          message: message,
+        );
+        if (mounted) {
+          if (applicationId != null) {
+            MingrrSnackBar.success(context, '지원이 완료되었어요! 💼');
+            ref.invalidate(myJobApplicationProvider(job.id));
+          } else {
+            MingrrSnackBar.warning(context, '지원 처리 중 문제가 발생했어요. 다시 시도해주세요.');
+          }
+        }
+      },
+    );
+  }
+
+  /// 채팅방 열기
+  Future<void> _openChat(String? chatRoomId, JobModel job) async {
+    if (chatRoomId == null) {
+      MingrrSnackBar.warning(context, '채팅방을 찾을 수 없어요');
+      return;
+    }
+    
+    final firebaseService = FirebaseService();
+    final posterDoc = await firebaseService.usersCollection.doc(job.userId).get();
+    final posterData = posterDoc.data();
+    
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatDetailScreen(
+            chatRoomId: chatRoomId,
+            otherUserName: posterData?['nickname'] ?? '등록자',
+            otherUserImageUrl: posterData?['profileImageUrl'],
+            chatType: 'job',
+          ),
+        ),
+      );
+    }
   }
 
   Color _getTypeColor(JobType type) {
@@ -405,8 +531,68 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     );
   }
 
-  void _startChat(JobModel job) {
-    // 채팅 시작
-    MingrrSnackBar.info(context, '채팅방을 생성합니다...');
+  Future<void> _startChat(JobModel job) async {
+    final firebaseService = FirebaseService();
+    final myUserId = firebaseService.currentUserId;
+    
+    if (myUserId == null) {
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
+      return;
+    }
+
+    // 본인 글이면 채팅 불가
+    if (job.userId == myUserId) return;
+
+    try {
+      final chatService = ChatService();
+      
+      // 내 정보 가져오기
+      final myUserDoc = await firebaseService.usersCollection.doc(myUserId).get();
+      final myUserData = myUserDoc.data();
+      
+      // 등록자 정보 가져오기
+      final posterDoc = await firebaseService.usersCollection.doc(job.userId).get();
+      final posterData = posterDoc.data();
+
+      final myInfo = ChatParticipant(
+        id: myUserId,
+        nickname: myUserData?['nickname'] ?? '사용자',
+        profileImageUrl: myUserData?['profileImageUrl'],
+      );
+
+      final posterInfo = ChatParticipant(
+        id: job.userId,
+        nickname: posterData?['nickname'] ?? '등록자',
+        profileImageUrl: posterData?['profileImageUrl'],
+      );
+
+      // 채팅방 생성 또는 기존 채팅방 찾기
+      final chatRoom = await chatService.getOrCreateChatRoom(
+        myUserId: myUserId,
+        otherUserId: job.userId,
+        type: 'job',
+        myInfo: myInfo,
+        otherInfo: posterInfo,
+        relatedId: job.id,
+      );
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatDetailScreen(
+              chatRoomId: chatRoom.id,
+              otherUserName: posterInfo.nickname,
+              otherUserImageUrl: posterInfo.profileImageUrl,
+              chatType: 'marketplace',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ErrorHandler.showError(context, e, tag: 'JobDetail', operation: '채팅 시작');
+      }
+    }
   }
 }

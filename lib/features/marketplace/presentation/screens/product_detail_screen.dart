@@ -488,7 +488,6 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
   Widget _buildBottomButton(BuildContext context) {
     return MingrrBottomButtonBar(
       child: Row(
-        mainAxisSize: MainAxisSize.max,
         children: [
           // 찜하기 버튼
           GestureDetector(
@@ -524,15 +523,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
               maxLines: 1,
             ),
           ),
+          const SizedBox(width: AppSizes.gapM),
           // 채팅하기 버튼
-          Flexible(
-            flex: 0,
+          Expanded(
             child: MingrrButton(
               text: '채팅하기',
               onPressed: _isOwner ? null : () => _startChat(),
               backgroundColor: context.features.market,
               textColor: Colors.white,
-              width: 100,
               height: 48,
             ),
           ),

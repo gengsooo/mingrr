@@ -10,6 +10,7 @@ import '../../../../core/widgets/dialogs/dialog_buttons.dart';
 import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/badges/svg_icons.dart';
+import '../../../../core/widgets/kkosunnae_widgets.dart';
 import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../core/widgets/navigation/appbar_actions.dart';
 import '../../../../core/widgets/modals/guardian_profile_modal.dart';
@@ -17,8 +18,10 @@ import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../models/chat_model.dart';
 import '../../../../models/dating_model.dart';
+import '../../../../models/job_application_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../dating/presentation/providers/dating_request_provider.dart' show receivedRequestsProvider, receivedDatingRequestsProvider, receivedBreedingRequestsProvider, DatingRequestActionService;
+import '../../../marketplace/presentation/providers/job_application_provider.dart';
 import '../providers/chat_provider.dart';
 import 'chat_detail_screen.dart';
 import '../../../../core/utils/responsive_utils.dart';
@@ -133,6 +136,11 @@ class ChatListScreen extends ConsumerWidget {
       return _buildDatingTabContent(context);
     }
     
+    // 마켓 탭인 경우 받은 지원 목록도 함께 표시
+    if (type == ChatType.market) {
+      return _buildMarketTabContent(context);
+    }
+    
     return Consumer(
       builder: (context, ref, child) {
         final chatRoomsAsync = ref.watch(userChatRoomsProvider);
@@ -174,6 +182,82 @@ class ChatListScreen extends ConsumerWidget {
           ),
           error: (_, __) => MingrrErrorState(
             onRetry: () => ref.invalidate(userChatRoomsProvider),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 마켓 탭 콘텐츠 (받은 지원 목록 + 채팅 목록) - 데이팅 탭과 동일 구조
+  Widget _buildMarketTabContent(BuildContext context) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final receivedApplications = ref.watch(receivedJobApplicationsProvider);
+        final pendingApplications = receivedApplications.valueOrNull
+            ?.where((a) => a.status == JobApplicationStatus.pending).toList() ?? [];
+        final chatRoomsAsync = ref.watch(userChatRoomsProvider);
+        final currentUserId = ref.watch(authStateProvider).valueOrNull?.uid;
+
+        return chatRoomsAsync.when(
+          data: (allChatRooms) {
+            final filteredRooms = allChatRooms.where((room) {
+              return room.type == 'marketplace' || room.type == 'market' || room.type == 'job';
+            }).toList();
+            
+            // 지원도 없고 채팅도 없으면 빈 화면 표시
+            if (filteredRooms.isEmpty && pendingApplications.isEmpty) {
+              return MingrrEmptyState(
+                icon: AppIcons.chatOutlined,
+                title: '아직 데이터가 없어요',
+                subtitle: _getEmptyStateMessage(ChatType.market),
+                accentColor: context.features.market,
+                onRefresh: () async {
+                  ref.invalidate(userChatRoomsProvider);
+                  ref.invalidate(receivedJobApplicationsProvider);
+                },
+              );
+            }
+            
+            // 데이터가 있으면 리스트 표시
+            return ListView(
+              padding: const EdgeInsets.all(AppSizes.paddingM),
+              children: [
+                // 대기 중인 지원이 있으면 표시
+                if (pendingApplications.isNotEmpty) ...[
+                  _buildJobApplicationsSection(context, ref, pendingApplications),
+                  const SizedBox(height: AppSizes.gapL),
+                ],
+                
+                // 채팅 목록
+                if (filteredRooms.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSizes.gapS),
+                    child: Text(
+                      '채팅',
+                      style: AppTextStyles.titleMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+                  ...filteredRooms.map((room) => _buildChatRoomItem(context, ref, room, ChatType.market, currentUserId ?? '')),
+                ],
+              ],
+            );
+          },
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(AppSizes.paddingXL),
+              child: MingrrLoadingIndicator.medium(type: MingrrLoadingType.chat),
+            ),
+          ),
+          error: (_, __) => Center(
+            child: MingrrEmptyState(
+              icon: AppIcons.error,
+              title: '데이터를 불러올 수 없어요',
+              subtitle: '잠시 후 다시 시도해주세요',
+              accentColor: context.features.market,
+              onRefresh: () async {
+                ref.invalidate(userChatRoomsProvider);
+              },
+            ),
           ),
         );
       },
@@ -254,6 +338,328 @@ class ChatListScreen extends ConsumerWidget {
         );
       },
     );
+  }
+
+  /// 알바 지원 목록 섹션 (마켓 탭)
+  Widget _buildJobApplicationsSection(BuildContext context, WidgetRef ref, List<JobApplicationModel> applications) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              '받은 지원',
+              style: AppTextStyles.titleMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(width: AppSizes.gapS),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
+              decoration: BoxDecoration(
+                color: context.features.market,
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
+              ),
+              child: Text(
+                '${applications.length}',
+                style: AppTextStyles.labelLarge(context).copyWith(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSizes.gapS),
+        ...applications.map((application) => _buildJobApplicationItem(context, ref, application)),
+      ],
+    );
+  }
+
+  /// 알바 지원 아이템 (데이팅 신청 카드와 동일 패턴)
+  Widget _buildJobApplicationItem(BuildContext context, WidgetRef ref, JobApplicationModel application) {
+    final accentColor = context.features.market;
+    
+    return MingrrCard(
+      margin: const EdgeInsets.only(bottom: AppSizes.gapS),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSizes.paddingM),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // 프로필 이미지 (클릭 시 보호자 정보 바텀시트)
+                GestureDetector(
+                  onTap: () => _showApplicantGuardianProfile(context, application),
+                  child: MingrrImage.avatar(
+                    imageUrl: application.applicantImageUrl,
+                    size: 44,
+                    borderColor: accentColor.withValues(alpha: AppOpacity.o30),
+                    borderWidth: 1,
+                  ),
+                ),
+                const SizedBox(width: AppSizes.gapM),
+                // 정보
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
+                            decoration: BoxDecoration(
+                              color: accentColor.withValues(alpha: AppOpacity.o10),
+                              borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                            ),
+                            child: Text(
+                              application.jobTypeLabel,
+                              style: AppTextStyles.captionSmall(context).copyWith(color: accentColor),
+                            ),
+                          ),
+                          const SizedBox(width: AppSizes.gapS),
+                          Expanded(
+                            child: Text(
+                              application.applicantName,
+                              style: AppTextStyles.titleMedium(context),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: AppSizes.gapS),
+                          // 꼬순내 지수
+                          if (application.applicantKkosunnaeScore > 0) ...[
+                            KkosunnaeScoreSmall(score: application.applicantKkosunnaeScore),
+                            const SizedBox(width: AppSizes.gapS),
+                          ],
+                          Text(
+                            _formatRequestTime(application.createdAt),
+                            style: AppTextStyles.captionSmall(context),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSizes.gapXXS),
+                      // 알바 제목
+                      Text(
+                        application.jobTitle,
+                        style: AppTextStyles.bodySmall(context).copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (application.message != null && application.message!.isNotEmpty) ...[
+                        const SizedBox(height: AppSizes.gapSM),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Theme.of(context).colorScheme.surfaceContainerHighest
+                                : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: AppOpacity.o30),
+                            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                          ),
+                          child: Text(
+                            application.message!,
+                            style: AppTextStyles.bodySmall(context),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSizes.gapM),
+            // 수락/거절 버튼
+            MingrrDialogButtons(
+              cancelText: '거절',
+              confirmText: '수락',
+              onCancel: () => _showJobRejectConfirmation(context, ref, application),
+              onConfirm: () => _showJobAcceptConfirmation(context, ref, application),
+              confirmColor: accentColor,
+              height: 36,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 알바 지원 수락 확인 다이얼로그
+  void _showJobAcceptConfirmation(BuildContext context, WidgetRef ref, JobApplicationModel application) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
+        decoration: BoxDecoration(
+          color: Theme.of(ctx).colorScheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const BottomSheetHandle(),
+            const SizedBox(height: AppSizes.gapL),
+            Icon(
+              AppIcons.market,
+              size: 48,
+              color: context.features.market,
+            ),
+            const SizedBox(height: AppSizes.gapL),
+            Text(
+              '알바 지원 수락',
+              style: AppTextStyles.headlineMedium(context),
+            ),
+            const SizedBox(height: AppSizes.gapS),
+            Text(
+              '${application.applicantName}님의 지원을 수락할까요?\n채팅이 시작됩니다.',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodyMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: AppSizes.gapXL),
+            MingrrDialogButtons(
+              cancelText: '취소',
+              confirmText: '수락하기',
+              onCancel: () => Navigator.pop(ctx),
+              onConfirm: () async {
+                Navigator.pop(ctx);
+                final chatRoomId = await JobApplicationActionService.acceptApplication(application);
+                if (context.mounted) {
+                  if (chatRoomId != null) {
+                    MingrrSnackBar.success(context, '${application.applicantName}님의 지원을 수락했어요! 💼');
+                  } else {
+                    MingrrSnackBar.warning(context, '수락 처리 중 문제가 발생했어요. 다시 시도해주세요.');
+                  }
+                }
+              },
+              confirmColor: context.features.market,
+            ),
+            SizedBox(height: ResponsiveUtils.bottomSafeArea(ctx)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 알바 지원 거절 확인 다이얼로그
+  void _showJobRejectConfirmation(BuildContext context, WidgetRef ref, JobApplicationModel application) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
+        decoration: BoxDecoration(
+          color: Theme.of(ctx).colorScheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const BottomSheetHandle(),
+            const SizedBox(height: AppSizes.gapL),
+            Icon(AppIcons.close, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
+            const SizedBox(height: AppSizes.gapL),
+            Text(
+              '알바 지원 거절',
+              style: AppTextStyles.headlineMedium(context),
+            ),
+            const SizedBox(height: AppSizes.gapS),
+            Text(
+              '${application.applicantName}님의 지원을 거절할까요?',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodyMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: AppSizes.gapXL),
+            MingrrDialogButtons(
+              cancelText: '취소',
+              confirmText: '거절하기',
+              onCancel: () => Navigator.pop(ctx),
+              onConfirm: () async {
+                Navigator.pop(ctx);
+                await JobApplicationActionService.rejectApplication(application);
+                if (context.mounted) {
+                  MingrrSnackBar.info(context, '지원을 거절했어요');
+                }
+              },
+              confirmColor: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            SizedBox(height: ResponsiveUtils.bottomSafeArea(ctx)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 지원자 보호자 프로필 바텀시트 표시
+  Future<void> _showApplicantGuardianProfile(BuildContext context, JobApplicationModel application) async {
+    final firebaseService = FirebaseService();
+    
+    try {
+      // Firebase에서 보호자 상세 정보 조회
+      final userDoc = await firebaseService.firestore
+          .collection('users')
+          .doc(application.applicantId)
+          .get();
+      
+      final userData = userDoc.data();
+      final kkosunnaeScore = (userData?['kkosunnaeScore'] as num?)?.toDouble() ?? application.applicantKkosunnaeScore;
+      final isIdentityVerified = userData?['isIdentityVerified'] as bool? ?? false;
+      final isPetVerified = userData?['isPetVerified'] as bool? ?? false;
+      final isLocationVerified = userData?['isLocationVerified'] as bool? ?? false;
+      final genderStr = userData?['gender'] as String?;
+      final age = userData?['age'] as int?;
+      
+      // 성별 변환
+      GuardianGender gender = GuardianGender.unknown;
+      if (genderStr == 'male') gender = GuardianGender.male;
+      if (genderStr == 'female') gender = GuardianGender.female;
+      
+      // 반려동물 정보 조회
+      List<GuardianPetInfo> pets = [];
+      final petsSnapshot = await firebaseService.firestore
+          .collection('pets')
+          .where('ownerId', isEqualTo: application.applicantId)
+          .get();
+      
+      for (final petDoc in petsSnapshot.docs) {
+        final petData = petDoc.data();
+        pets.add(GuardianPetInfo(
+          id: petDoc.id,
+          name: petData['name'] ?? '반려동물',
+          breed: petData['breed'],
+          ageString: petData['age'] != null ? '${petData['age']}살' : null,
+          introduction: petData['introduction'],
+          traits: List<String>.from(petData['traits'] ?? []),
+          photoUrls: List<String>.from(petData['photoUrls'] ?? []),
+          profileImageUrl: petData['profileImageUrl'],
+          likeCount: petData['likeCount'] ?? 0,
+        ));
+      }
+      
+      if (!context.mounted) return;
+      
+      showGuardianProfileModal(
+        context,
+        guardianId: application.applicantId,
+        guardianName: application.applicantName,
+        kkosunnaeScore: kkosunnaeScore,
+        profileImageUrl: userData?['profileImageUrl'] ?? application.applicantImageUrl,
+        gender: gender,
+        age: age,
+        isIdentityVerified: isIdentityVerified,
+        isPetVerified: isPetVerified,
+        isLocationVerified: isLocationVerified,
+        pets: pets,
+      );
+    } catch (e) {
+      // 에러 시 기본 정보로 표시
+      if (!context.mounted) return;
+      showGuardianProfileModal(
+        context,
+        guardianId: application.applicantId,
+        guardianName: application.applicantName,
+        kkosunnaeScore: application.applicantKkosunnaeScore,
+        profileImageUrl: application.applicantImageUrl,
+        pets: [],
+      );
+    }
   }
 
   /// 신청 목록 섹션

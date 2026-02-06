@@ -19,6 +19,7 @@ enum RequestSheetType {
   date,      // 데이트 신청
   breeding,  // 교배 신청
   groupJoin, // 소모임 가입
+  jobApply,  // 알바 지원
 }
 
 class RequestSheet extends StatefulWidget {
@@ -49,15 +50,15 @@ class _RequestSheetState extends State<RequestSheet> {
 
   /// 제출 가능 여부 (데이트/교배 신청 시 반려동물 선택 필수)
   bool get _canSubmit {
-    if (widget.type != RequestSheetType.groupJoin) {
-      // 반려동물이 없으면 신청 불가
-      if (widget.myPets == null || widget.myPets!.isEmpty) {
-        return false;
-      }
-      // 반려동물이 있으면 선택 필수
-      return _selectedPet != null;
+    // 소모임 가입, 알바 지원은 반려동물 선택 불필요
+    if (widget.type == RequestSheetType.groupJoin || widget.type == RequestSheetType.jobApply) {
+      return true;
     }
-    return true;
+    // 데이트/교배 신청은 반려동물 선택 필수
+    if (widget.myPets == null || widget.myPets!.isEmpty) {
+      return false;
+    }
+    return _selectedPet != null;
   }
 
   @override
@@ -69,7 +70,7 @@ class _RequestSheetState extends State<RequestSheet> {
   @override
   Widget build(BuildContext context) {
     final config = _getConfig();
-    final showInput = widget.showMessageInput && widget.type != RequestSheetType.groupJoin;
+    final showInput = widget.showMessageInput;
     final keyboardHeight = ResponsiveUtils.keyboardHeight(context);
     final bottomPadding = ResponsiveUtils.bottomSafeArea(context);
     
@@ -117,8 +118,8 @@ class _RequestSheetState extends State<RequestSheet> {
                     style: AppTextStyles.bodySmall(context).copyWith(height: 1.4),
                   ),
                   
-                  // 반려동물 선택 (데이트/교배 신청 시)
-                  if (widget.type != RequestSheetType.groupJoin) ...[
+                  // 반려동물 선택 (데이트/교배 신청 시만)
+                  if (widget.type != RequestSheetType.groupJoin && widget.type != RequestSheetType.jobApply) ...[
                     const SizedBox(height: AppSizes.gapM),
                     Align(
                       alignment: Alignment.centerLeft,
@@ -256,6 +257,14 @@ class _RequestSheetState extends State<RequestSheet> {
           description: '${widget.targetName ?? '이 모임'}에 가입 신청을 보낼까요?\n승인되면 모임에 참여할 수 있습니다.',
           confirmText: '가입하기',
         );
+      case RequestSheetType.jobApply:
+        return _RequestConfig(
+          icon: AppIcons.market,
+          color: context.features.market,
+          title: '알바 지원',
+          description: '${widget.targetName ?? '이 알바'}에 지원할까요?\n수락되면 채팅이 시작됩니다.',
+          confirmText: '지원하기',
+        );
     }
   }
 }
@@ -326,15 +335,40 @@ void showBreedingRequestSheet(
 void showGroupJoinSheet(
   BuildContext context, {
   String? groupName,
-  required VoidCallback onConfirm,
+  required void Function(String? message) onConfirm,
 }) {
   showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => RequestSheet(
-      type: RequestSheetType.groupJoin,
-      targetName: groupName,
-      onConfirm: (_, {selectedPet}) => onConfirm(),
+    isScrollControlled: true,
+    builder: (ctx) => Padding(
+      padding: EdgeInsets.only(bottom: ResponsiveUtils.keyboardHeight(ctx)),
+      child: RequestSheet(
+        type: RequestSheetType.groupJoin,
+        targetName: groupName,
+        onConfirm: (message, {selectedPet}) => onConfirm(message),
+      ),
+    ),
+  );
+}
+
+/// 알바 지원 바텀시트 표시
+void showJobApplySheet(
+  BuildContext context, {
+  String? jobTitle,
+  required void Function(String? message) onConfirm,
+}) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (ctx) => Padding(
+      padding: EdgeInsets.only(bottom: ResponsiveUtils.keyboardHeight(ctx)),
+      child: RequestSheet(
+        type: RequestSheetType.jobApply,
+        targetName: jobTitle,
+        onConfirm: (message, {selectedPet}) => onConfirm(message),
+      ),
     ),
   );
 }

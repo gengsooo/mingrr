@@ -131,6 +131,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final messagesAsync = ref.watch(chatMessagesProvider(widget.chatRoomId));
     final currentUser = ref.watch(authStateProvider).valueOrNull;
     final myUserId = currentUser?.uid ?? '';
+    
+    // 메시지가 변경될 때마다 읽음 처리 (채팅방 내에서 새 메시지 수신 시)
+    ref.listen(chatMessagesProvider(widget.chatRoomId), (previous, next) {
+      if (next.hasValue && myUserId.isNotEmpty) {
+        _chatService.markAsRead(widget.chatRoomId, myUserId);
+      }
+    });
 
     // 채팅 타입 (위젯 파라미터 우선, 없으면 _chatRoom에서, 그것도 없으면 기본값)
     final chatType = widget.chatType ?? _chatRoom?.type ?? 'dating';
@@ -770,49 +777,17 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           
           // 메시지 버블 + 꼬리
           Flexible(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // 상대방 메시지 꼬리 (왼쪽)
-                if (!isMe)
-                  CustomPaint(
-                    size: const Size(8, 12),
-                    painter: _BubbleTailPainter(
-                      color: bubbleColor,
-                      isMe: false,
-                    ),
-                  ),
-                // 메시지 버블
-                Flexible(
-                  child: Container(
-                    constraints: BoxConstraints(maxWidth: ResponsiveUtils.widthPercent(context, 0.7)),
-                    padding: message.type == MessageType.image 
-                        ? const EdgeInsets.all(AppSizes.paddingXS) 
-                        : const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
-                    decoration: BoxDecoration(
-                      color: bubbleColor,
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(AppSizes.radiusL),
-                        topRight: const Radius.circular(AppSizes.radiusL),
-                        bottomLeft: Radius.circular(isMe ? AppSizes.radiusL : AppSizes.radiusS),
-                        bottomRight: Radius.circular(isMe ? AppSizes.radiusS : AppSizes.radiusL),
-                      ),
-                      boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
-                    ),
-                    child: _buildMessageContent(message, isMe, themeColor),
-                  ),
-                ),
-                // 내 메시지 꼬리 (오른쪽)
-                if (isMe)
-                  CustomPaint(
-                    size: const Size(8, 12),
-                    painter: _BubbleTailPainter(
-                      color: bubbleColor,
-                      isMe: true,
-                    ),
-                  ),
-              ],
+            child: Container(
+              constraints: BoxConstraints(maxWidth: ResponsiveUtils.widthPercent(context, 0.7)),
+              padding: message.type == MessageType.image 
+                  ? const EdgeInsets.all(AppSizes.paddingXS) 
+                  : const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
+              decoration: BoxDecoration(
+                color: bubbleColor,
+                borderRadius: BorderRadius.circular(AppSizes.radiusL),
+                boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
+              ),
+              child: _buildMessageContent(message, isMe, themeColor),
             ),
           ),
           
@@ -1330,40 +1305,4 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         return Theme.of(context).colorScheme.primary;
     }
   }
-}
-
-/// 메시지 버블 꼬리 페인터
-class _BubbleTailPainter extends CustomPainter {
-  final Color color;
-  final bool isMe;
-
-  _BubbleTailPainter({required this.color, required this.isMe});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    
-    if (isMe) {
-      // 오른쪽 꼬리 (내 메시지)
-      path.moveTo(0, 0);
-      path.lineTo(size.width, size.height * 0.3);
-      path.lineTo(0, size.height);
-      path.close();
-    } else {
-      // 왼쪽 꼬리 (상대방 메시지)
-      path.moveTo(size.width, 0);
-      path.lineTo(0, size.height * 0.3);
-      path.lineTo(size.width, size.height);
-      path.close();
-    }
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

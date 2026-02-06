@@ -770,6 +770,13 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
       _cancelReply();
       ref.invalidate(communityCommentsProvider(widget.postId));
       ref.invalidate(communityPostDetailProvider(widget.postId));
+      if (mounted) {
+        MingrrSnackBar.success(context, '댓글이 등록되었습니다');
+      }
+    } else {
+      if (mounted) {
+        MingrrSnackBar.warning(context, '댓글 등록에 실패했습니다. 다시 시도해주세요.');
+      }
     }
   }
 

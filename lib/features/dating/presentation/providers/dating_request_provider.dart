@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/notification_service.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../models/chat_model.dart';
 import '../../../../models/dating_model.dart';
 
@@ -183,6 +184,7 @@ class DatingRequestActionService {
 
       return chatRoom.id;
     } catch (e) {
+      AppLogger.error('DatingRequestAction', '신청 수락 오류', e);
       return null;
     }
   }

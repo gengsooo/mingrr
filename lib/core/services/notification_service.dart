@@ -370,6 +370,44 @@ class NotificationService {
     );
   }
 
+  /// 알바 지원 알림 (알바 등록자에게)
+  Future<void> sendJobApplicationNotification({
+    required String recipientId,
+    required String applicantName,
+    required String jobTitle,
+    required String applicationId,
+  }) async {
+    await _saveNotification(
+      recipientId: recipientId,
+      type: NotificationType.jobApplication,
+      title: '새 알바 지원',
+      body: '$applicantName님이 "$jobTitle" 알바에 지원했어요 💼',
+      data: {
+        'type': 'jobApplication',
+        'applicationId': applicationId,
+      },
+    );
+  }
+
+  /// 알바 지원 수락 알림 (지원자에게)
+  Future<void> sendJobAcceptedNotification({
+    required String recipientId,
+    required String employerName,
+    required String jobTitle,
+    required String chatRoomId,
+  }) async {
+    await _saveNotification(
+      recipientId: recipientId,
+      type: NotificationType.jobAccepted,
+      title: '알바 지원 수락됨',
+      body: '$employerName님이 "$jobTitle" 지원을 수락했어요! 💼',
+      data: {
+        'type': 'jobAccepted',
+        'chatRoomId': chatRoomId,
+      },
+    );
+  }
+
   /// 소모임 새 일정 알림
   Future<void> sendGroupScheduleNotification({
     required String groupId,
@@ -741,6 +779,8 @@ enum NotificationType {
   ratingReminder,   // 평가 리마인더 알림
   gradeChange,      // 꼬순내지수 등급 변동 알림
   scoreChange,      // 꼬순내지수 점수 변동 알림
+  jobApplication,   // 알바 지원 알림
+  jobAccepted,      // 알바 지원 수락 알림
   system,
 }
 

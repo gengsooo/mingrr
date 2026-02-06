@@ -6,6 +6,7 @@ import '../../../../core/providers/paginated_provider.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/kkosunnae_service.dart';
 import '../../../../core/services/transaction_service.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../core/utils/input_sanitizer.dart';
 import '../../../../models/community_post_model.dart';
 
@@ -250,6 +251,7 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
         userId: userId,
       );
     } catch (e) {
+      AppLogger.error('CommunityProvider', '좋아요 토글 오류', e);
       return false;
     }
   }
@@ -303,6 +305,7 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
       
       return docRef.id;
     } catch (e) {
+      AppLogger.error('CommunityProvider', '댓글 작성 오류', e);
       return null;
     }
   }
@@ -316,6 +319,7 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
       );
       return true;
     } catch (e) {
+      AppLogger.error('CommunityProvider', '댓글 삭제 오류', e);
       return false;
     }
   }

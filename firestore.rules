@@ -673,5 +673,27 @@ service cloud.firestore {
       allow delete: if isAdmin() || (isSignedIn()
         && existingData().senderId == request.auth.uid);
     }
+    
+    // ============================================================
+    // job_applications Collection - 알바 지원
+    // ============================================================
+    match /job_applications/{applicationId} {
+      // 읽기: 지원자 또는 알바 등록자만 조회 가능
+      allow read: if isAdmin() || (isSignedIn()
+        && (request.auth.uid == resource.data.applicantId 
+            || request.auth.uid == resource.data.employerId));
+      
+      // 생성: 본인이 지원자인 경우만 생성 가능
+      allow create: if isAdmin() || (isSignedIn()
+        && incomingData().applicantId == request.auth.uid);
+      
+      // 수정: 알바 등록자만 상태 변경 가능 (수락/거절)
+      allow update: if isAdmin() || (isSignedIn()
+        && existingData().employerId == request.auth.uid);
+      
+      // 삭제: 지원자 본인만 삭제 가능 (지원 취소)
+      allow delete: if isAdmin() || (isSignedIn()
+        && existingData().applicantId == request.auth.uid);
+    }
   }
 }

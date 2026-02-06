@@ -7,6 +7,7 @@ import '../../../../core/providers/paginated_provider.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/location_service.dart';
 import '../../../../core/services/transaction_service.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../models/group_model.dart';
 
 /// ============================================================
@@ -258,6 +259,7 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
       state = const AsyncValue.data(null);
       return true;
     } catch (e, st) {
+      AppLogger.error('GroupProvider', '소모임 가입 오류', e);
       state = AsyncValue.error(e, st);
       return false;
     }
@@ -285,6 +287,7 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
       state = const AsyncValue.data(null);
       return true;
     } catch (e, st) {
+      AppLogger.error('GroupProvider', '소모임 탈퇴 오류', e);
       state = AsyncValue.error(e, st);
       return false;
     }
@@ -315,6 +318,7 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
       state = const AsyncValue.data(null);
       return true;
     } catch (e, st) {
+      AppLogger.error('GroupProvider', '멤버 강퇴 오류', e);
       state = AsyncValue.error(e, st);
       return false;
     }
@@ -358,6 +362,7 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
         userId: userId,
       );
     } catch (e) {
+      AppLogger.error('GroupProvider', '좋아요 토글 오류', e);
       return false;
     }
   }
@@ -383,6 +388,7 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
 
       return true;
     } catch (e) {
+      AppLogger.error('GroupProvider', '가입 신청 승인 오류', e);
       return false;
     }
   }
@@ -397,6 +403,7 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
       });
       return true;
     } catch (e) {
+      AppLogger.error('GroupProvider', '가입 신청 거절 오류', e);
       return false;
     }
   }

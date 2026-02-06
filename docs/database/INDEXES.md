@@ -236,6 +236,16 @@ firebase deploy --only firestore
 
 ---
 
+### job_applications
+
+| 필드 조합 | 용도 |
+|----------|------|
+| `employerId` ASC + `createdAt` DESC | 받은 지원 목록 (알바 등록자용) |
+| `applicantId` ASC + `createdAt` DESC | 보낸 지원 목록 (지원자용) |
+| `jobId` ASC + `applicantId` ASC | 중복 지원 체크 |
+
+---
+
 ### 건강수첩 컬렉션
 
 | 컬렉션 | 필드 조합 | 용도 |

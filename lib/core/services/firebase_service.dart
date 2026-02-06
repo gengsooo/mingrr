@@ -140,6 +140,10 @@ class FirebaseService {
   /// 커뮤니티 게시판 좋아요 컨렉션 (Firestore: feedLikes)
   CollectionReference<Map<String, dynamic>> get feedLikesCollection =>
       firestore.collection('feedLikes');
+  
+  /// 알바 지원 컬렉션
+  CollectionReference<Map<String, dynamic>> get jobApplicationsCollection =>
+      firestore.collection('job_applications');
 
   // ===== 메시지 서브컬렉션 접근 =====
   

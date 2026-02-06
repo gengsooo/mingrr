@@ -14,6 +14,7 @@ import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/loading/loading_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/sheets/request_sheet.dart';
 import '../../../../core/widgets/sheets/report_sheet.dart';
 import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
@@ -29,6 +30,7 @@ import '../../../../core/providers/refresh_notifier.dart';
 import '../../../../core/services/share_service.dart';
 import '../providers/group_provider.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../../../core/utils/responsive_utils.dart';
 import 'group_write_screen.dart';
 
 /// ============================================================
@@ -808,22 +810,40 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   }
 
   Future<void> _joinGroup(GroupModel group) async {
-    setState(() => _isJoining = true);
-
-    try {
-      final success = await ref.read(groupNotifierProvider.notifier).joinGroup(group.id);
-      if (success && mounted) {
-        if (group.requireApproval) {
-          MingrrSnackBar.success(context, '가입 신청을 보냈습니다');
-        } else {
+    // 승인 필요한 모임인 경우 공통 RequestSheet 사용
+    if (group.requireApproval) {
+      showGroupJoinSheet(
+        context,
+        groupName: group.name,
+        onConfirm: (message) async {
+          setState(() => _isJoining = true);
+          try {
+            final success = await ref.read(groupNotifierProvider.notifier).joinGroup(
+              group.id,
+              message: message,
+            );
+            if (success && mounted) {
+              MingrrSnackBar.success(context, '가입 신청을 보냈습니다');
+              ref.invalidate(groupDetailProvider(widget.groupId));
+            }
+          } finally {
+            if (mounted) setState(() => _isJoining = false);
+          }
+        },
+      );
+    } else {
+      // 바로 가입
+      setState(() => _isJoining = true);
+      try {
+        final success = await ref.read(groupNotifierProvider.notifier).joinGroup(group.id);
+        if (success && mounted) {
           MingrrSnackBar.success(context, '모임에 가입했습니다! 🎉');
-          // 리스트 새로고침 트리거 (내 모임 목록 갱신)
           ref.read(groupRefreshProvider.notifier).state++;
+          ref.invalidate(groupDetailProvider(widget.groupId));
         }
-        ref.invalidate(groupDetailProvider(widget.groupId));
+      } finally {
+        if (mounted) setState(() => _isJoining = false);
       }
-    } finally {
-      if (mounted) setState(() => _isJoining = false);
     }
   }
 
@@ -839,11 +859,15 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       setState(() => _isJoining = true);
       try {
         final success = await ref.read(groupNotifierProvider.notifier).leaveGroup(group.id);
-        if (success && mounted) {
-          MingrrSnackBar.success(context, '모임에서 탈퇴했습니다');
-          // 리스트 새로고침 트리거 (내 모임 목록 갱신)
-          ref.read(groupRefreshProvider.notifier).state++;
-          ref.invalidate(groupDetailProvider(widget.groupId));
+        if (mounted) {
+          if (success) {
+            // 리스트 새로고침 트리거 (내 모임 목록 갱신)
+            ref.read(groupRefreshProvider.notifier).state++;
+            Navigator.pop(context); // 상세 화면 닫기
+            MingrrSnackBar.success(context, '모임에서 탈퇴했습니다');
+          } else {
+            MingrrSnackBar.warning(context, '탈퇴에 실패했습니다. 다시 시도해주세요.');
+          }
         }
       } finally {
         if (mounted) setState(() => _isJoining = false);
@@ -1136,8 +1160,9 @@ class _JoinRequestTileState extends State<_JoinRequestTile> {
     } catch (e) {
       if (mounted) {
         ErrorHandler.showError(context, e, tag: 'GroupDetail', operation: '가입 승인');
-        setState(() => _isProcessing = false);
       }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
@@ -1157,8 +1182,9 @@ class _JoinRequestTileState extends State<_JoinRequestTile> {
     } catch (e) {
       if (mounted) {
         ErrorHandler.showError(context, e, tag: 'GroupDetail', operation: '가입 거절');
-        setState(() => _isProcessing = false);
       }
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
     }
   }
 
@@ -1179,10 +1205,13 @@ class _JoinRequestTileState extends State<_JoinRequestTile> {
         horizontal: AppSizes.paddingM,
         vertical: AppSizes.paddingS,
       ),
-      leading: MingrrImage.avatar(
-        imageUrl: _user?.profileImageUrl,
-        size: 48,
-        icon: AppIcons.profile,
+      leading: GestureDetector(
+        onTap: _user != null ? () => _showUserProfile() : null,
+        child: MingrrImage.avatar(
+          imageUrl: _user?.profileImageUrl,
+          size: 48,
+          icon: AppIcons.profile,
+        ),
       ),
       title: Row(
         children: [
@@ -1240,5 +1269,18 @@ class _JoinRequestTileState extends State<_JoinRequestTile> {
     if (diff.inHours > 0) return '${diff.inHours}시간 전';
     if (diff.inMinutes > 0) return '${diff.inMinutes}분 전';
     return '방금 전';
+  }
+
+  void _showUserProfile() {
+    if (_user == null) return;
+    showGuardianProfileModal(
+      context,
+      guardianId: _user!.id,
+      guardianName: _user!.nickname,
+      kkosunnaeScore: _user!.kkosunnaeScore,
+      profileImageUrl: _user!.profileImageUrl,
+      isIdentityVerified: _user!.isIdentityVerified,
+      isLocationVerified: _user!.isLocationVerified,
+    );
   }
 }
