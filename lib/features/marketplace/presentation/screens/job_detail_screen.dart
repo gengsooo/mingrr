@@ -16,6 +16,7 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/mixins/distance_calculator_mixin.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/share_service.dart';
+import '../../../../core/widgets/buttons/wishlist_button.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../../models/chat_model.dart';
 import '../../../../models/job_application_model.dart';
@@ -48,6 +49,37 @@ class JobDetailScreen extends ConsumerStatefulWidget {
 
 class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     with DistanceCalculatorMixin {
+  final FirebaseService _firebase = FirebaseService();
+  bool _isWishlistLoading = false;
+  
+  /// 찜하기 토글 (Provider 기반)
+  Future<void> _toggleWishlist(JobModel job) async {
+    final userId = _firebase.currentUserId;
+    if (userId == null) {
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
+      return;
+    }
+    if (_isWishlistLoading) return;
+
+    setState(() => _isWishlistLoading = true);
+
+    try {
+      final isNowLiked = await ref.read(marketplaceNotifierProvider.notifier).toggleJobLike(job.id);
+      if (mounted) {
+        setState(() => _isWishlistLoading = false);
+        MingrrSnackBar.success(context, isNowLiked ? '찜 목록에 추가했어요' : '찜 목록에서 제거했어요');
+        // Provider 새로고침으로 최신 데이터 반영
+        ref.invalidate(jobDetailProvider(widget.jobId));
+        ref.invalidate(isJobLikedProvider(widget.jobId));
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isWishlistLoading = false);
+        ErrorHandler.showError(context, e, tag: 'JobDetail', operation: '찜하기');
+      }
+    }
+  }
+  
   /// 거리 문자열 계산 (Mixin 활용)
   String _getDistanceString(JobModel job) {
     return getDistanceFromLocation(job.location, job.address);
@@ -56,6 +88,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   @override
   Widget build(BuildContext context) {
     final jobAsync = ref.watch(jobByIdProvider(widget.jobId));
+    final isLikedAsync = ref.watch(isJobLikedProvider(widget.jobId));
 
     return jobAsync.when(
       data: (job) {
@@ -69,7 +102,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
             ),
           );
         }
-        return _buildContent(context, job);
+        final isLiked = isLikedAsync.valueOrNull ?? false;
+        return _buildContent(context, job, isLiked);
       },
       loading: () => Scaffold(
         body: MingrrFullScreenLoading(
@@ -86,7 +120,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     );
   }
 
-  Widget _buildContent(BuildContext context, JobModel job) {
+  Widget _buildContent(BuildContext context, JobModel job, bool isLiked) {
     return Scaffold(
       backgroundColor: context.detailBackground,
       body: CustomScrollView(
@@ -127,7 +161,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         ],
       ),
       // 하단 고정 버튼
-      bottomNavigationBar: _buildBottomBar(context, job),
+      bottomNavigationBar: _buildBottomBar(context, job, isLiked),
     );
   }
 
@@ -316,7 +350,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     );
   }
 
-  Widget _buildBottomBar(BuildContext context, JobModel job) {
+  Widget _buildBottomBar(BuildContext context, JobModel job, bool isLiked) {
     // 본인 글이면 버튼 없음
     if (_isOwner(job)) {
       return MingrrBottomButtonBar(
@@ -337,7 +371,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     final myApplicationAsync = ref.watch(myJobApplicationProvider(job.id));
     
     return myApplicationAsync.when(
-      data: (myApplication) => _buildActionButton(context, job, myApplication),
+      data: (myApplication) => _buildActionButton(context, job, myApplication, isLiked),
       loading: () => MingrrBottomButtonBar(
         child: Row(
           children: [
@@ -354,12 +388,12 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
           ],
         ),
       ),
-      error: (_, __) => _buildActionButton(context, job, null),
+      error: (_, __) => _buildActionButton(context, job, null, isLiked),
     );
   }
 
   /// 지원 상태에 따른 버튼 표시
-  Widget _buildActionButton(BuildContext context, JobModel job, JobApplicationModel? myApplication) {
+  Widget _buildActionButton(BuildContext context, JobModel job, JobApplicationModel? myApplication, bool isLiked) {
     String buttonText;
     VoidCallback? onPressed;
     Color buttonColor = context.features.market;
@@ -394,6 +428,15 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     return MingrrBottomButtonBar(
       child: Row(
         children: [
+          // 찜 버튼 (공통 컴포넌트)
+          WishlistButton(
+            isWishlisted: isLiked,
+            isLoading: _isWishlistLoading,
+            count: job.likeCount,
+            onTap: () => _toggleWishlist(job),
+            activeColor: context.features.market,
+          ),
+          const SizedBox(width: AppSizes.gapM),
           Expanded(
             child: Text(
               '${formatPrice(job.price)}원/${job.priceUnit}',

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../constants/app_icons.dart';
 import '../../services/bottom_sheet_stack_manager.dart';
+import '../../services/firebase_service.dart';
+import '../../services/transaction_service.dart';
 import '../../theme/feature_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_text_styles.dart';
@@ -157,11 +158,10 @@ class _PetProfileModalState extends State<PetProfileModal> {
         return;
       }
 
+      final firebase = FirebaseService();
+      
       // 반려동물의 좋아요 수 조회
-      final petDoc = await FirebaseFirestore.instance
-          .collection('pets')
-          .doc(widget.petId)
-          .get();
+      final petDoc = await firebase.petsCollection.doc(widget.petId).get();
       if (petDoc.exists) {
         final data = petDoc.data();
         setState(() {
@@ -170,7 +170,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
       }
 
       // 내가 좋아요 했는지 확인
-      final likeDoc = await FirebaseFirestore.instance
+      final likeDoc = await firebase.firestore
           .collection('likes')
           .doc('${currentUser.uid}_${widget.petId}')
           .get();
@@ -183,7 +183,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
     }
   }
 
-  /// 좋아요 토글
+  /// 좋아요 토글 (TransactionService 사용)
   Future<void> _toggleLike() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
@@ -191,7 +191,6 @@ class _PetProfileModalState extends State<PetProfileModal> {
       return;
     }
 
-    final likeDocId = '${currentUser.uid}_${widget.petId}';
     final wasLiked = _isLiked;
 
     // 낙관적 업데이트
@@ -201,36 +200,13 @@ class _PetProfileModalState extends State<PetProfileModal> {
     });
 
     try {
-      if (wasLiked) {
-        // 좋아요 취소
-        await FirebaseFirestore.instance.collection('likes').doc(likeDocId).delete();
-        await FirebaseFirestore.instance.collection('pets').doc(widget.petId).update({
-          'likeCount': FieldValue.increment(-1),
-        });
-      } else {
-        // 좋아요 추가 (Firestore 규칙: fromUserId, toUserId 필드 필요)
-        // guardianInfo에서 ownerId 가져오기, 없으면 pet 문서에서 조회
-        String? ownerId = widget.guardianInfo?.id;
-        if (ownerId == null) {
-          final petDoc = await FirebaseFirestore.instance
-              .collection('pets')
-              .doc(widget.petId)
-              .get();
-          ownerId = petDoc.data()?['ownerId'] as String?;
-        }
-        
-        await FirebaseFirestore.instance.collection('likes').doc(likeDocId).set({
-          'fromUserId': currentUser.uid,
-          'toUserId': ownerId ?? '',
-          'toPetId': widget.petId,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        await FirebaseFirestore.instance.collection('pets').doc(widget.petId).update({
-          'likeCount': FieldValue.increment(1),
-        });
-      }
+      await TransactionService.togglePetLike(
+        petId: widget.petId,
+        userId: currentUser.uid,
+        ownerId: widget.guardianInfo?.id,
+      );
       
-      // 스낵바 표시 (rootScaffoldMessenger 사용하여 바텀시트에서도 표시)
+      // 스낵바 표시
       final messenger = widget.rootScaffoldMessenger ?? ScaffoldMessenger.of(context);
       messenger.showSnackBar(
         SnackBar(

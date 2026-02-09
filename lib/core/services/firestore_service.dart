@@ -9,6 +9,7 @@ import '../../models/breeding_model.dart';
 import '../../models/community_post_model.dart';
 import 'firebase_service.dart';
 import 'geohash_service.dart';
+import 'transaction_service.dart';
 import '../utils/app_logger.dart';
 
 class FirestoreService {
@@ -458,28 +459,6 @@ class FirestoreService {
     }
   }
   
-  Future<void> incrementProductLikeCount(String productId) async {
-    try {
-      await _firebase.productsCollection.doc(productId).update({
-        'likeCount': FieldValue.increment(1),
-      });
-    } catch (e) {
-      AppLogger.dbError('FirestoreService', 'incrementProductLikeCount (productId: $productId)', e);
-      rethrow;
-    }
-  }
-  
-  Future<void> decrementProductLikeCount(String productId) async {
-    try {
-      await _firebase.productsCollection.doc(productId).update({
-        'likeCount': FieldValue.increment(-1),
-      });
-    } catch (e) {
-      AppLogger.dbError('FirestoreService', 'decrementProductLikeCount (productId: $productId)', e);
-      rethrow;
-    }
-  }
-  
   // ===== 알바(Job) 관련 =====
   
   Future<void> createJob(JobModel job) async {
@@ -658,31 +637,13 @@ class FirestoreService {
   
   // ===== 소모임 좋아요 관련 =====
   
-  /// 소모임 좋아요 토글
+  /// 소모임 좋아요 토글 (TransactionService 위임)
   Future<bool> toggleGroupLike(String groupId, String userId) async {
     try {
-      final likeId = '${userId}_$groupId';
-      final likeDoc = await _firebase.groupLikesCollection.doc(likeId).get();
-      
-      if (likeDoc.exists) {
-        // 좋아요 취소
-        await _firebase.groupLikesCollection.doc(likeId).delete();
-        await _firebase.groupsCollection.doc(groupId).update({
-          'likeCount': FieldValue.increment(-1),
-        });
-        return false;
-      } else {
-        // 좋아요 추가
-        await _firebase.groupLikesCollection.doc(likeId).set({
-          'userId': userId,
-          'groupId': groupId,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        await _firebase.groupsCollection.doc(groupId).update({
-          'likeCount': FieldValue.increment(1),
-        });
-        return true;
-      }
+      return await TransactionService.toggleGroupLike(
+        groupId: groupId,
+        userId: userId,
+      );
     } catch (e) {
       AppLogger.dbError('FirestoreService', 'toggleGroupLike (groupId: $groupId)', e);
       rethrow;
@@ -1119,35 +1080,13 @@ class FirestoreService {
   // 상품 찜(북마크) 관련 메서드
   // ============================================================
 
-  /// 상품 찜하기 토글
+  /// 상품 찜하기 토글 (TransactionService 위임)
   /// Returns: true = 찜 추가됨, false = 찜 해제됨
   Future<bool> toggleProductLike(String productId, String userId) async {
-    try {
-      final likeId = '${userId}_$productId';
-      final likeDoc = await _firebase.productLikesCollection.doc(likeId).get();
-      
-      if (likeDoc.exists) {
-        // 찜 해제
-        await _firebase.productLikesCollection.doc(likeId).delete();
-        await _firebase.productsCollection.doc(productId).update({
-          'likeCount': FieldValue.increment(-1),
-        });
-        return false;
-      } else {
-        // 찜 추가
-        await _firebase.productLikesCollection.doc(likeId).set({
-          'userId': userId,
-          'productId': productId,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        await _firebase.productsCollection.doc(productId).update({
-          'likeCount': FieldValue.increment(1),
-        });
-        return true;
-      }
-    } catch (e) {
-      rethrow;
-    }
+    return TransactionService.toggleProductLike(
+      productId: productId,
+      userId: userId,
+    );
   }
 
   /// 상품 찜 여부 확인
@@ -1272,6 +1211,7 @@ class FirestoreService {
       // 2. 모임 멤버 목록에 추가
       batch.update(_firebase.groupsCollection.doc(groupId), {
         'memberIds': FieldValue.arrayUnion([userId]),
+        'memberCount': FieldValue.increment(1),
       });
       
       await batch.commit();

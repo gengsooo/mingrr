@@ -414,6 +414,7 @@ class JobModel extends Equatable {
   final String? address;
   final List<String> imageUrls;
   final int chatCount;
+  final int likeCount;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -436,6 +437,7 @@ class JobModel extends Equatable {
     this.address,
     this.imageUrls = const [],
     this.chatCount = 0,
+    this.likeCount = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -528,6 +530,7 @@ class JobModel extends Equatable {
       address: data['address'],
       imageUrls: List<String>.from(data['imageUrls'] ?? []),
       chatCount: data['chatCount'] ?? 0,
+      likeCount: data['likeCount'] ?? 0,
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
@@ -556,6 +559,7 @@ class JobModel extends Equatable {
       'address': address,
       'imageUrls': imageUrls,
       'chatCount': chatCount,
+      'likeCount': likeCount,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': Timestamp.fromDate(updatedAt),
     };
@@ -581,6 +585,7 @@ class JobModel extends Equatable {
         address,
         imageUrls,
         chatCount,
+        likeCount,
         createdAt,
         updatedAt,
       ];

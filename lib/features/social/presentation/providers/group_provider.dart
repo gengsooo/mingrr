@@ -277,13 +277,6 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
         groupId: groupId,
         userId: userId,
       );
-      
-      // 관리자 목록에서도 제거
-      await _firebase.groupsCollection.doc(groupId).update({
-        'adminIds': FieldValue.arrayRemove([userId]),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
       state = const AsyncValue.data(null);
       return true;
     } catch (e, st) {
@@ -312,7 +305,12 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
       await _firebase.groupsCollection.doc(groupId).update({
         'memberIds': FieldValue.arrayRemove([memberId]),
         'adminIds': FieldValue.arrayRemove([memberId]),
-        'updatedAt': FieldValue.serverTimestamp(),
+        'memberCount': FieldValue.increment(-1),
+      });
+      
+      // 강퇴된 사용자의 소모임 카운터 감소
+      await _firebase.usersCollection.doc(memberId).update({
+        'groupCount': FieldValue.increment(-1),
       });
 
       state = const AsyncValue.data(null);
@@ -378,7 +376,7 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
 
       await _firebase.groupsCollection.doc(groupId).update({
         'memberIds': FieldValue.arrayUnion([userId]),
-        'updatedAt': FieldValue.serverTimestamp(),
+        'memberCount': FieldValue.increment(1),
       });
       
       // 사용자 소모임 카운터 증가

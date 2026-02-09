@@ -265,7 +265,7 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
     } catch (_) {}
   }
   
-  /// 댓글 작성
+  /// 댓글 작성 (트랜잭션으로 원자적 처리)
   Future<String?> createComment({
     required String postId,
     required String content,
@@ -279,31 +279,21 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
       final userDoc = await _firebase.usersCollection.doc(userId).get();
       final userData = userDoc.data();
       
-      final docRef = _firebase.feedCommentsCollection.doc();
-      
-      final comment = CommunityCommentModel(
-        id: docRef.id,
+      // TransactionService로 댓글 생성 + 카운터 증가 원자적 처리
+      final commentId = await TransactionService.addComment(
         postId: postId,
         authorId: userId,
-        authorName: userData?['nickname'] ?? '사용자',
-        authorProfileUrl: userData?['profileImageUrl'],
         content: content,
+        authorName: userData?['nickname'],
+        authorProfileUrl: userData?['profileImageUrl'],
         parentId: parentId,
         isAnonymous: isAnonymous,
-        createdAt: DateTime.now(),
       );
-      
-      await docRef.set(comment.toFirestore());
-      
-      // 게시글 댓글 수 증가
-      await _firebase.feedPostsCollection.doc(postId).update({
-        'commentCount': FieldValue.increment(1),
-      });
       
       // 꼬순내 점수 업데이트 (커뮤니티 활동 반영)
       KkosunnaeService.updateScore(userId);
       
-      return docRef.id;
+      return commentId;
     } catch (e) {
       AppLogger.error('CommunityProvider', '댓글 작성 오류', e);
       return null;

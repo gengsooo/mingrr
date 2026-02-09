@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_service.dart';
+import '../utils/app_logger.dart';
 
 /// ============================================================
 /// 트랜잭션 서비스
@@ -131,32 +132,83 @@ class TransactionService {
     required String productId,
     required String userId,
   }) async {
-    final likeId = '${userId}_product_$productId';
-    final likeRef = _firestore.collection('favorites').doc(likeId);
+    final likeId = '${userId}_$productId';
+    final likeRef = _firebase.productLikesCollection.doc(likeId);
     final productRef = _firebase.productsCollection.doc(productId);
 
-    return _firestore.runTransaction<bool>((transaction) async {
-      final likeDoc = await transaction.get(likeRef);
+    AppLogger.info('TransactionService', '상품 찜 토글 시작 - productId: $productId, userId: $userId');
 
-      if (likeDoc.exists) {
-        transaction.delete(likeRef);
-        transaction.update(productRef, {
-          'likeCount': FieldValue.increment(-1),
-        });
-        return false;
-      } else {
-        transaction.set(likeRef, {
-          'userId': userId,
-          'targetId': productId,
-          'targetType': 'product',
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        transaction.update(productRef, {
-          'likeCount': FieldValue.increment(1),
-        });
-        return true;
-      }
-    });
+    try {
+      final result = await _firestore.runTransaction<bool>((transaction) async {
+        final likeDoc = await transaction.get(likeRef);
+
+        if (likeDoc.exists) {
+          transaction.delete(likeRef);
+          transaction.update(productRef, {
+            'likeCount': FieldValue.increment(-1),
+          });
+          AppLogger.info('TransactionService', '상품 찜 취소 완료');
+          return false;
+        } else {
+          transaction.set(likeRef, {
+            'userId': userId,
+            'productId': productId,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+          transaction.update(productRef, {
+            'likeCount': FieldValue.increment(1),
+          });
+          AppLogger.info('TransactionService', '상품 찜 추가 완료');
+          return true;
+        }
+      });
+      return result;
+    } catch (e) {
+      AppLogger.error('TransactionService', '상품 찜 토글 오류', e);
+      rethrow;
+    }
+  }
+
+  /// 알바 좋아요 토글
+  static Future<bool> toggleJobLike({
+    required String jobId,
+    required String userId,
+  }) async {
+    final likeId = '${userId}_$jobId';
+    final likeRef = _firebase.jobLikesCollection.doc(likeId);
+    final jobRef = _firebase.jobsCollection.doc(jobId);
+
+    AppLogger.info('TransactionService', '알바 찜 토글 시작 - jobId: $jobId, userId: $userId');
+
+    try {
+      final result = await _firestore.runTransaction<bool>((transaction) async {
+        final likeDoc = await transaction.get(likeRef);
+
+        if (likeDoc.exists) {
+          transaction.delete(likeRef);
+          transaction.update(jobRef, {
+            'likeCount': FieldValue.increment(-1),
+          });
+          AppLogger.info('TransactionService', '알바 찜 취소 완료');
+          return false;
+        } else {
+          transaction.set(likeRef, {
+            'userId': userId,
+            'jobId': jobId,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+          transaction.update(jobRef, {
+            'likeCount': FieldValue.increment(1),
+          });
+          AppLogger.info('TransactionService', '알바 찜 추가 완료');
+          return true;
+        }
+      });
+      return result;
+    } catch (e) {
+      AppLogger.error('TransactionService', '알바 찜 토글 오류', e);
+      rethrow;
+    }
   }
 
   // ===== 소모임 멤버십 (트랜잭션) =====
@@ -321,13 +373,15 @@ class TransactionService {
 
   // ===== 댓글 관리 (트랜잭션) =====
 
-  /// 댓글 추가
+  /// 댓글 추가 (트랜잭션으로 원자적 처리)
   static Future<String> addComment({
     required String postId,
     required String authorId,
     required String content,
     String? authorName,
     String? authorProfileUrl,
+    String? parentId,
+    bool isAnonymous = false,
   }) async {
     final commentRef = _firebase.feedCommentsCollection.doc();
     final postRef = _firebase.feedPostsCollection.doc(postId);
@@ -335,11 +389,15 @@ class TransactionService {
     await _firestore.runTransaction((transaction) async {
       // 댓글 생성
       transaction.set(commentRef, {
+        'id': commentRef.id,
         'postId': postId,
         'authorId': authorId,
         'authorName': authorName ?? '사용자',
         'authorProfileUrl': authorProfileUrl,
         'content': content,
+        'parentId': parentId,
+        'isAnonymous': isAnonymous,
+        'likeCount': 0,
         'createdAt': FieldValue.serverTimestamp(),
       });
 

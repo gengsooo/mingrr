@@ -4,7 +4,10 @@ import '../../../../core/providers/firebase_providers.dart';
 import '../../../../core/providers/location_provider.dart';
 import '../../../../core/providers/block_provider.dart';
 import '../../../../core/providers/paginated_provider.dart';
+import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/location_service.dart';
+import '../../../../core/services/transaction_service.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../models/marketplace_model.dart';
 
 /// ============================================================
@@ -200,6 +203,77 @@ final paginatedProductsProvider = StateNotifierProvider
       return result;
     },
   );
+});
+
+// ===== 찜(좋아요) 관련 Provider =====
+
+/// 상품 찜 여부 확인
+final isProductLikedProvider = FutureProvider.autoDispose.family<bool, String>((ref, productId) async {
+  final firebase = FirebaseService();
+  final userId = firebase.currentUserId;
+  if (userId == null) return false;
+
+  final likeId = '${userId}_$productId';
+  final doc = await firebase.productLikesCollection.doc(likeId).get();
+  return doc.exists;
+});
+
+/// 알바 찜 여부 확인
+final isJobLikedProvider = FutureProvider.autoDispose.family<bool, String>((ref, jobId) async {
+  final firebase = FirebaseService();
+  final userId = firebase.currentUserId;
+  if (userId == null) return false;
+
+  final likeId = '${userId}_$jobId';
+  final doc = await firebase.jobLikesCollection.doc(likeId).get();
+  return doc.exists;
+});
+
+/// 마켓플레이스 Notifier (찜 토글 등 액션 처리)
+class MarketplaceNotifier extends StateNotifier<AsyncValue<void>> {
+  final Ref _ref;
+  final FirebaseService _firebase = FirebaseService();
+
+  MarketplaceNotifier(this._ref) : super(const AsyncValue.data(null));
+
+  /// 상품 찜 토글
+  Future<bool> toggleProductLike(String productId) async {
+    try {
+      final userId = _firebase.currentUserId;
+      if (userId == null) return false;
+
+      final result = await TransactionService.toggleProductLike(
+        productId: productId,
+        userId: userId,
+      );
+      return result;
+    } catch (e) {
+      AppLogger.error('MarketplaceNotifier', '상품 찜 토글 오류', e);
+      return false;
+    }
+  }
+
+  /// 알바 찜 토글
+  Future<bool> toggleJobLike(String jobId) async {
+    try {
+      final userId = _firebase.currentUserId;
+      if (userId == null) return false;
+
+      final result = await TransactionService.toggleJobLike(
+        jobId: jobId,
+        userId: userId,
+      );
+      return result;
+    } catch (e) {
+      AppLogger.error('MarketplaceNotifier', '알바 찜 토글 오류', e);
+      return false;
+    }
+  }
+}
+
+/// 마켓플레이스 Notifier Provider
+final marketplaceNotifierProvider = StateNotifierProvider<MarketplaceNotifier, AsyncValue<void>>((ref) {
+  return MarketplaceNotifier(ref);
 });
 
 /// 페이지네이션 알바 목록 Provider (거리 정보 포함)

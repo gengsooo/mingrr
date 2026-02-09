@@ -34,19 +34,11 @@ class FavoriteService {
     final userId = _firebase.currentUserId;
     if (userId == null) throw Exception('로그인이 필요합니다');
     
-    final favoriteId = '${userId}_pet_$petId';
-    
-    await _favoritesCollection.doc(favoriteId).set({
-      'userId': userId,
-      'targetId': petId,
-      'targetType': 'pet',
-      'createdAt': Timestamp.fromDate(DateTime.now()),
-    });
-    
-    // 펫 좋아요 수 증가
-    await _firebase.petsCollection.doc(petId).update({
-      'likeCount': FieldValue.increment(1),
-    });
+    // TransactionService로 좋아요 처리 (트랜잭션 보장)
+    await TransactionService.togglePetLike(
+      petId: petId,
+      userId: userId,
+    );
     
     // 반려동물 주인에게 알림 발송
     await _sendPetLikeNotification(petId, userId);
@@ -93,14 +85,11 @@ class FavoriteService {
     final userId = _firebase.currentUserId;
     if (userId == null) throw Exception('로그인이 필요합니다');
     
-    final favoriteId = '${userId}_pet_$petId';
-    
-    await _favoritesCollection.doc(favoriteId).delete();
-    
-    // 펫 좋아요 수 감소
-    await _firebase.petsCollection.doc(petId).update({
-      'likeCount': FieldValue.increment(-1),
-    });
+    // TransactionService로 좋아요 취소 처리 (트랜잭션 보장)
+    await TransactionService.togglePetLike(
+      petId: petId,
+      userId: userId,
+    );
   }
   
   /// 반려동물 좋아요 여부 확인

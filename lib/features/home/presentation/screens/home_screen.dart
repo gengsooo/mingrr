@@ -26,6 +26,8 @@ import '../../../dating/presentation/screens/pet_detail_screen.dart';
 import '../../../../core/widgets/location_bubble_widget.dart';
 import '../../../../core/providers/location_verification_provider.dart';
 import '../../../../core/utils/responsive_utils.dart';
+import '../../../../core/utils/format_utils.dart';
+import '../../../health/presentation/providers/health_provider.dart';
 
 /// ============================================================
 /// 홈 화면 (V3 리팩토링 - 반려동물 전용)
@@ -329,15 +331,15 @@ class HomeScreen extends ConsumerWidget {
           onTap: () => context.push('/health'),
           child: Column(
             children: [
-              // 선택된 카테고리들 표시
+              // 선택된 카테고리들 표시 (DB 연동)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: categories.map((category) {
-                  return _buildHealthItem(
-                    icon: category.icon,
-                    label: category.label,
-                    value: _getDemoValue(category),
-                    color: _getCategoryColor(context, category),
+                  return _buildHealthItemWithData(
+                    context: context,
+                    ref: ref,
+                    category: category,
+                    petId: selectedPet.id,
                   );
                 }).toList(),
               ),
@@ -609,19 +611,244 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  /// 데모용 값 반환
-  String _getDemoValue(HealthCategory category) {
+  /// DB 연동된 건강 아이템 위젯 (카테고리별 Provider 사용)
+  Widget _buildHealthItemWithData({
+    required BuildContext context,
+    required WidgetRef ref,
+    required HealthCategory category,
+    required String petId,
+  }) {
+    final color = context.features.health;
+    
     switch (category) {
       case HealthCategory.weight:
-        return '5.2kg';
+        final recordsAsync = ref.watch(weightRecordsProvider(petId));
+        return recordsAsync.when(
+          data: (records) {
+            final value = records.isNotEmpty 
+                ? '${records.first.weight.toStringAsFixed(1)}kg'
+                : '-';
+            return _buildHealthItem(
+              icon: category.icon,
+              label: category.label,
+              value: value,
+              color: color,
+            );
+          },
+          loading: () => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '...',
+            color: color,
+          ),
+          error: (_, __) => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '-',
+            color: color,
+          ),
+        );
+        
       case HealthCategory.walk:
-        return '1회';
+        final recordsAsync = ref.watch(walkRecordsProvider(petId));
+        return recordsAsync.when(
+          data: (records) {
+            // 오늘 산책 횟수 계산
+            final today = DateTime.now();
+            final todayWalks = records.where((r) => 
+              r.startTime.year == today.year &&
+              r.startTime.month == today.month &&
+              r.startTime.day == today.day
+            ).length;
+            return _buildHealthItem(
+              icon: category.icon,
+              label: category.label,
+              value: '${todayWalks}회',
+              color: color,
+            );
+          },
+          loading: () => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '...',
+            color: color,
+          ),
+          error: (_, __) => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '-',
+            color: color,
+          ),
+        );
+        
       case HealthCategory.grooming:
-        return '3일 전';
+        final recordsAsync = ref.watch(groomingRecordsProvider(petId));
+        return recordsAsync.when(
+          data: (records) {
+            if (records.isEmpty) {
+              return _buildHealthItem(
+                icon: category.icon,
+                label: category.label,
+                value: '-',
+                color: color,
+              );
+            }
+            // 마지막 그루밍 날짜로부터 경과일
+            final lastDate = records.first.recordDate;
+            final daysAgo = DateTime.now().difference(lastDate).inDays;
+            final value = daysAgo == 0 ? '오늘' : '$daysAgo일 전';
+            return _buildHealthItem(
+              icon: category.icon,
+              label: category.label,
+              value: value,
+              color: color,
+            );
+          },
+          loading: () => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '...',
+            color: color,
+          ),
+          error: (_, __) => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '-',
+            color: color,
+          ),
+        );
+        
       case HealthCategory.medication:
-        return '1회';
-      default:
-        return '-';
+        final recordsAsync = ref.watch(medicationRecordsProvider(petId));
+        return recordsAsync.when(
+          data: (records) {
+            // 현재 복용 중인 약 개수
+            final now = DateTime.now();
+            final activeCount = records.where((r) => 
+              r.endDate == null || r.endDate!.isAfter(now)
+            ).length;
+            return _buildHealthItem(
+              icon: category.icon,
+              label: category.label,
+              value: '${activeCount}개',
+              color: color,
+            );
+          },
+          loading: () => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '...',
+            color: color,
+          ),
+          error: (_, __) => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '-',
+            color: color,
+          ),
+        );
+        
+      case HealthCategory.vaccination:
+        final recordsAsync = ref.watch(vaccinationRecordsProvider(petId));
+        return recordsAsync.when(
+          data: (records) {
+            // 다음 접종까지 남은 일수 또는 총 접종 횟수
+            final now = DateTime.now();
+            final upcoming = records.where((r) => 
+              r.nextDueDate != null && r.nextDueDate!.isAfter(now)
+            ).toList();
+            if (upcoming.isNotEmpty) {
+              upcoming.sort((a, b) => a.nextDueDate!.compareTo(b.nextDueDate!));
+              final daysUntil = upcoming.first.nextDueDate!.difference(now).inDays;
+              return _buildHealthItem(
+                icon: category.icon,
+                label: category.label,
+                value: 'D-$daysUntil',
+                color: color,
+              );
+            }
+            return _buildHealthItem(
+              icon: category.icon,
+              label: category.label,
+              value: '${records.length}회',
+              color: color,
+            );
+          },
+          loading: () => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '...',
+            color: color,
+          ),
+          error: (_, __) => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '-',
+            color: color,
+          ),
+        );
+        
+      case HealthCategory.checkup:
+        final recordsAsync = ref.watch(checkupRecordsProvider(petId));
+        return recordsAsync.when(
+          data: (records) {
+            if (records.isEmpty) {
+              return _buildHealthItem(
+                icon: category.icon,
+                label: category.label,
+                value: '-',
+                color: color,
+              );
+            }
+            // 마지막 검진 날짜로부터 경과일
+            final lastDate = records.first.checkupDate;
+            final daysAgo = DateTime.now().difference(lastDate).inDays;
+            final value = daysAgo == 0 ? '오늘' : '$daysAgo일 전';
+            return _buildHealthItem(
+              icon: category.icon,
+              label: category.label,
+              value: value,
+              color: color,
+            );
+          },
+          loading: () => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '...',
+            color: color,
+          ),
+          error: (_, __) => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '-',
+            color: color,
+          ),
+        );
+        
+      case HealthCategory.special:
+        final recordsAsync = ref.watch(specialNotesProvider(petId));
+        return recordsAsync.when(
+          data: (records) {
+            return _buildHealthItem(
+              icon: category.icon,
+              label: category.label,
+              value: '${records.length}건',
+              color: color,
+            );
+          },
+          loading: () => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '...',
+            color: color,
+          ),
+          error: (_, __) => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '-',
+            color: color,
+          ),
+        );
     }
   }
 

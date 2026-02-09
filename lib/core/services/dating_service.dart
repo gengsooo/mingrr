@@ -304,19 +304,4 @@ class DatingService {
     });
   }
   
-  // ===== 펫 좋아요 수 업데이트 =====
-  
-  /// 펫 좋아요 수 증가
-  Future<void> incrementPetLikeCount(String petId) async {
-    await _firebase.petsCollection.doc(petId).update({
-      'likeCount': FieldValue.increment(1),
-    });
-  }
-  
-  /// 펫 좋아요 수 감소
-  Future<void> decrementPetLikeCount(String petId) async {
-    await _firebase.petsCollection.doc(petId).update({
-      'likeCount': FieldValue.increment(-1),
-    });
-  }
 }

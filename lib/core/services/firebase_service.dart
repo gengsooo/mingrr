@@ -101,6 +101,10 @@ class FirebaseService {
   CollectionReference<Map<String, dynamic>> get jobsCollection =>
       firestore.collection('jobs');
   
+  /// 알바 찜 컬렉션
+  CollectionReference<Map<String, dynamic>> get jobLikesCollection =>
+      firestore.collection('jobLikes');
+  
   /// 교배 글 컬렉션
   CollectionReference<Map<String, dynamic>> get breedingPostsCollection =>
       firestore.collection('breedingPosts');
