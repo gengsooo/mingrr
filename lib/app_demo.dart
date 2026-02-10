@@ -56,10 +56,14 @@ final demoRouterProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const HomeScreen(),  // 보여줄 화면
           ),
           
-          // 2️⃣ 데이팅 화면 (경로: '/dating')
+          // 2️⃣ 데이팅 화면 (경로: '/dating', 쿼리: ?tab=0,1,2)
           GoRoute(
             path: '/dating',
-            builder: (context, state) => const DatingScreen(),
+            builder: (context, state) {
+              final tabParam = state.uri.queryParameters['tab'];
+              final initialTab = int.tryParse(tabParam ?? '0') ?? 0;
+              return DatingScreen(initialTab: initialTab);
+            },
           ),
           
           // 3️⃣ 채팅 화면 (경로: '/chat')

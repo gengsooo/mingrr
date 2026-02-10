@@ -188,12 +188,14 @@ class TraitBadgeListCompact extends StatelessWidget {
   final List<String> traits;
   final TraitBadgeSize size;
   final double maxWidth;
+  final int maxLines;
 
   const TraitBadgeListCompact({
     super.key,
     required this.traits,
     this.size = TraitBadgeSize.small,
     this.maxWidth = double.infinity,
+    this.maxLines = 2,
   });
 
   /// 크기별 간격
@@ -224,8 +226,8 @@ class TraitBadgeListCompact extends StatelessWidget {
   Widget build(BuildContext context) {
     if (traits.isEmpty) return const SizedBox.shrink();
 
-    // 최대 2줄 높이 계산
-    final maxHeight = (_badgeHeight * 2) + _spacing;
+    // 최대 N줄 높이 계산
+    final maxHeight = (_badgeHeight * maxLines) + (_spacing * (maxLines - 1));
 
     return ConstrainedBox(
       constraints: BoxConstraints(
@@ -240,6 +242,7 @@ class TraitBadgeListCompact extends StatelessWidget {
             spacing: _spacing,
             badgeHeight: _badgeHeight,
             maxWidth: constraints.maxWidth,
+            maxLines: maxLines,
           );
         },
       ),
@@ -254,6 +257,7 @@ class _TraitBadgeFlow extends StatelessWidget {
   final double spacing;
   final double badgeHeight;
   final double maxWidth;
+  final int maxLines;
 
   const _TraitBadgeFlow({
     required this.traits,
@@ -261,6 +265,7 @@ class _TraitBadgeFlow extends StatelessWidget {
     required this.spacing,
     required this.badgeHeight,
     required this.maxWidth,
+    this.maxLines = 2,
   });
 
   @override
@@ -307,7 +312,6 @@ class _TraitBadgeFlow extends StatelessWidget {
     List<String> visibleTraits = [];
     double currentLineWidth = 0;
     int currentLine = 1;
-    const maxLines = 2;
 
     for (int i = 0; i < traits.length; i++) {
       final trait = traits[i];

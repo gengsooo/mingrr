@@ -25,11 +25,28 @@ import 'group_list_screen.dart';
 /// 현재 선택된 탭 인덱스
 final _selectedTabProvider = StateProvider<int>((ref) => 0);
 
-class SocialScreen extends ConsumerWidget {
-  const SocialScreen({super.key});
+class SocialScreen extends ConsumerStatefulWidget {
+  /// 초기 탭 인덱스 (0: 커뮤니티, 1: 소모임)
+  final int initialTab;
+  
+  const SocialScreen({super.key, this.initialTab = 0});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SocialScreen> createState() => _SocialScreenState();
+}
+
+class _SocialScreenState extends ConsumerState<SocialScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // 초기 탭 설정 (항상 initialTab으로 설정하여 이전 상태 무시)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(_selectedTabProvider.notifier).state = widget.initialTab;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColor = context.features.social;

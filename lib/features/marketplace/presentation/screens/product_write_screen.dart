@@ -53,7 +53,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
   final _descriptionController = TextEditingController();
   
   late ProductType _selectedType;
-  ProductCategory? _selectedCategory;
+  ProductCategory? _selectedCategory = ProductCategory.food;
   final List<XFile> _selectedImages = [];
   final List<String> _existingImageUrls = [];
   bool _isLoading = false;

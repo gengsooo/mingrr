@@ -79,8 +79,12 @@ service cloud.firestore {
       // - transactionCount: 거래 완료
       // - reportCount: 신고 접수
       // - locationMismatchCount: 위치 불일치
+      // - ratingCount: 평가 횟수
+      // - averageRating: 평균 평점
+      // - noShowCount: 노쇼 횟수
+      // - kkosunnaeScore: 꼬순내 지수
       allow update: if isAdmin() || isOwner(userId) || 
-        (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['groupCount', 'postCount', 'walkCount', 'matchCount', 'transactionCount', 'reportCount', 'locationMismatchCount']));
+        (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['groupCount', 'postCount', 'walkCount', 'matchCount', 'transactionCount', 'reportCount', 'locationMismatchCount', 'ratingCount', 'averageRating', 'noShowCount', 'kkosunnaeScore']));
       
       // 삭제: 본인 계정만 삭제 가능 (또는 관리자)
       allow delete: if isOwner(userId) || isAdmin();

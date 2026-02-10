@@ -345,6 +345,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
               return _MyGroupCard(
                 name: group.name,
                 memberCount: group.memberCount,
+                imageUrl: group.imageUrl,
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => GroupDetailScreen(groupId: group.id)),
@@ -383,11 +384,13 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
 class _MyGroupCard extends StatelessWidget {
   final String name;
   final int memberCount;
+  final String? imageUrl;
   final VoidCallback onTap;
 
   const _MyGroupCard({
     required this.name,
     required this.memberCount,
+    this.imageUrl,
     required this.onTap,
   });
 
@@ -411,14 +414,25 @@ class _MyGroupCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: AppOpacity.o10),
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+              child: SizedBox(
+                width: 36,
+                height: 36,
+                child: imageUrl != null && imageUrl!.isNotEmpty
+                    ? MingrrImage(
+                        imageUrl: imageUrl,
+                        fit: BoxFit.cover,
+                        accentColor: accentColor,
+                        placeholderIcon: AppIcons.group,
+                      )
+                    : Container(
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: AppOpacity.o10),
+                        ),
+                        child: Icon(AppIcons.group, size: 20, color: accentColor),
+                      ),
               ),
-              child: Icon(AppIcons.group, size: 20, color: accentColor),
             ),
             const SizedBox(height: AppSizes.gapS),
             Text(

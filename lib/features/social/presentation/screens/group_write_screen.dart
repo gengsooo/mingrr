@@ -44,7 +44,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
   final _descriptionController = TextEditingController();
   final _maxMembersController = TextEditingController();
 
-  GroupType _selectedType = GroupType.social;
+  GroupType _selectedType = GroupType.walking;
   XFile? _selectedImage;
   String? _existingImageUrl;
   bool _isPublic = true;

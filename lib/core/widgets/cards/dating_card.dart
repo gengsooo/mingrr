@@ -157,12 +157,12 @@ class DatingRecommendCard extends StatelessWidget {
                       ),
                       const SizedBox(height: AppSizes.gapS),
                       
-                      // 특성 태그
+                      // 특성 태그 (2줄까지 표시)
                       if (traits.isNotEmpty)
-                        TraitBadgeList(
+                        TraitBadgeListCompact(
                           traits: traits,
                           size: TraitBadgeSize.small,
-                          maxCount: 3,
+                          maxLines: 2,
                         ),
                     ],
                   ),
@@ -224,6 +224,7 @@ class DatingNearbyCard extends StatelessWidget {
   final String name;
   final String? breed;
   final String ageString;
+  final bool isMale;
   final int? matchScore;
   final String distanceString;
   final List<String> traits;
@@ -235,6 +236,7 @@ class DatingNearbyCard extends StatelessWidget {
     required this.name,
     this.breed,
     required this.ageString,
+    required this.isMale,
     this.matchScore,
     required this.distanceString,
     this.traits = const [],
@@ -286,20 +288,14 @@ class DatingNearbyCard extends StatelessWidget {
             accentColor: context.features.dating,
             placeholderIcon: AppIcons.pet,
           ),
-          // 거리 배지 (우상단)
+          // 성별 배지 (좌상단) - 교배찾기 카드와 동일한 스타일
           Positioned(
             top: 8,
-            right: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
-              decoration: BoxDecoration(
-                color: Colors.black54,
-                borderRadius: BorderRadius.circular(AppSizes.radiusS),
-              ),
-              child: Text(
-                distanceString,
-                style: AppTextStyles.captionSmall(context).copyWith(color: Colors.white),
-              ),
+            left: 8,
+            child: PetGenderBadge(
+              isMale: isMale,
+              showLabel: true,
+              size: InfoBadgeSize.small,
             ),
           ),
         ],
@@ -308,17 +304,36 @@ class DatingNearbyCard extends StatelessWidget {
   }
 
   Widget _buildInfoSection(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
     return Padding(
       padding: const EdgeInsets.all(AppSizes.paddingS),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 이름
-          Text(
-            name,
-            style: AppTextStyles.titleMedium(context),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          // 이름 + 거리
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  name,
+                  style: AppTextStyles.titleMedium(context),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(LocationConstants.distanceIcon, size: 10, color: colorScheme.onSurfaceVariant),
+                  const SizedBox(width: 2),
+                  Text(
+                    distanceString,
+                    style: AppTextStyles.captionSmall(context),
+                  ),
+                ],
+              ),
+            ],
           ),
           const SizedBox(height: AppSizes.gapXXS),
           // 품종 · 나이
@@ -328,13 +343,17 @@ class DatingNearbyCard extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const Spacer(),
-          // 특성 태그
+          // 특성 태그 (남은 공간 활용, 최대 2줄)
           if (traits.isNotEmpty)
-            TraitBadgeList(
-              traits: traits,
-              size: TraitBadgeSize.small,
-              maxCount: 2,
+            Expanded(
+              child: Align(
+                alignment: Alignment.bottomLeft,
+                child: TraitBadgeListCompact(
+                  traits: traits,
+                  size: TraitBadgeSize.small,
+                  maxLines: 2,
+                ),
+              ),
             ),
         ],
       ),
@@ -350,6 +369,7 @@ class DatingNearbyCard extends StatelessWidget {
 /// [name]: 반려동물 이름
 /// [breed]: 품종
 /// [ageString]: 나이 문자열
+/// [sizeString]: 크기 문자열 (초소형/소형/중형/대형/초대형)
 /// [isMale]: 성별
 /// [distanceString]: 거리 문자열
 /// [description]: 교배 글 상세 내용
@@ -362,6 +382,7 @@ class DatingBreedingCard extends StatelessWidget {
   final String name;
   final String? breed;
   final String ageString;
+  final String? sizeString;
   final bool isMale;
   final String distanceString;
   final String? description;
@@ -375,6 +396,7 @@ class DatingBreedingCard extends StatelessWidget {
     required this.name,
     this.breed,
     required this.ageString,
+    this.sizeString,
     required this.isMale,
     required this.distanceString,
     this.description,
@@ -437,10 +459,19 @@ class DatingBreedingCard extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: AppSizes.gapSM),
+                          const SizedBox(height: AppSizes.gapXS),
+                          // 품종
                           Text(
-                            '${breed ?? '품종 미상'} · $ageString',
+                            breed ?? '품종 미상',
                             style: AppTextStyles.bodySmall(context),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: AppSizes.gapXXS),
+                          // 크기 · 나이
+                          Text(
+                            '${sizeString ?? '크기 미상'} · $ageString',
+                            style: AppTextStyles.captionSmall(context),
                           ),
                           // 상세 내용 (최대 2줄)
                           if (description != null && description!.isNotEmpty) ...[

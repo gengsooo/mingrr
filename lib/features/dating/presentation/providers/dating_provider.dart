@@ -189,6 +189,53 @@ final receivedDatingRequestsCountProvider = Provider.autoDispose<int>((ref) {
   return requests.where((r) => r.status == DatingRequestStatus.pending).length;
 });
 
+/// 특정 반려동물에 대한 데이팅 신청 상태 확인
+/// 내가 해당 반려동물에게 pending 상태의 신청을 보냈는지 확인
+final myDatingRequestStatusProvider = FutureProvider.autoDispose.family<bool, String>((ref, toPetId) async {
+  final userId = _firebase.currentUserId;
+  if (userId == null) return false;
+  
+  // 내 반려동물 목록 가져오기
+  final myPets = ref.watch(userPetsProvider).valueOrNull ?? [];
+  if (myPets.isEmpty) return false;
+  
+  // 내 반려동물 중 하나라도 해당 반려동물에게 pending 신청을 보냈는지 확인
+  for (final myPet in myPets) {
+    final snapshot = await _firebase.datingRequestsCollection
+        .where('fromPetId', isEqualTo: myPet.id)
+        .where('toPetId', isEqualTo: toPetId)
+        .where('status', isEqualTo: DatingRequestStatus.pending.name)
+        .limit(1)
+        .get();
+    
+    if (snapshot.docs.isNotEmpty) return true;
+  }
+  
+  return false;
+});
+
+/// 특정 반려동물에 대한 교배 신청 상태 확인
+final myBreedingRequestStatusProvider = FutureProvider.autoDispose.family<bool, String>((ref, toPetId) async {
+  final userId = _firebase.currentUserId;
+  if (userId == null) return false;
+  
+  final myPets = ref.watch(userPetsProvider).valueOrNull ?? [];
+  if (myPets.isEmpty) return false;
+  
+  for (final myPet in myPets) {
+    final snapshot = await _firebase.firestore.collection('breeding_requests')
+        .where('fromPetId', isEqualTo: myPet.id)
+        .where('toPetId', isEqualTo: toPetId)
+        .where('status', isEqualTo: DatingRequestStatus.pending.name)
+        .limit(1)
+        .get();
+    
+    if (snapshot.docs.isNotEmpty) return true;
+  }
+  
+  return false;
+});
+
 // 교배 가능한 반려동물 목록 (isBreedingAvailable = true, 거리 정보 포함)
 final breedingPetsProvider = FutureProvider.autoDispose<List<PetWithDistance>>((ref) async {
   final authState = ref.watch(authStateProvider);

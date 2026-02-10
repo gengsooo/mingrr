@@ -239,7 +239,24 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
 
       final group = GroupModel.fromFirestore(groupDoc.data()!, id: groupDoc.id);
 
+      // 이미 멤버인지 확인
+      if (group.memberIds.contains(userId)) {
+        throw Exception('이미 가입된 모임입니다');
+      }
+
       if (group.requireApproval) {
+        // 중복 신청 확인
+        final existingRequest = await _firebase.groupJoinRequestsCollection
+            .where('groupId', isEqualTo: groupId)
+            .where('userId', isEqualTo: userId)
+            .where('status', isEqualTo: 'pending')
+            .limit(1)
+            .get();
+        
+        if (existingRequest.docs.isNotEmpty) {
+          throw Exception('이미 가입 신청 중입니다');
+        }
+
         // 가입 승인 필요 - 신청서 저장
         await _firebase.groupJoinRequestsCollection.add({
           'groupId': groupId,
@@ -421,6 +438,22 @@ final isGroupLikedProvider = FutureProvider.autoDispose.family<bool, String>((re
   final likeId = '${userId}_$groupId';
   final doc = await firebase.groupLikesCollection.doc(likeId).get();
   return doc.exists;
+});
+
+/// 현재 사용자의 소모임 가입 신청 상태 확인
+final myJoinRequestStatusProvider = FutureProvider.autoDispose.family<bool, String>((ref, groupId) async {
+  final firebase = FirebaseService();
+  final userId = firebase.currentUserId;
+  if (userId == null) return false;
+
+  final snapshot = await firebase.groupJoinRequestsCollection
+      .where('groupId', isEqualTo: groupId)
+      .where('userId', isEqualTo: userId)
+      .where('status', isEqualTo: 'pending')
+      .limit(1)
+      .get();
+  
+  return snapshot.docs.isNotEmpty;
 });
 
 /// 소모임 가입 신청 목록 (관리자용)

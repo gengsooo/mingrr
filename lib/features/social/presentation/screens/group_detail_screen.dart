@@ -53,11 +53,40 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isJoining = false;
+  
+  // 가입 신청 상태 (State 기반 - 깜빡임 방지)
+  bool _hasPendingJoinRequest = false;
+  bool _joinRequestStatusLoaded = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadJoinRequestStatus();
+  }
+  
+  /// 가입 신청 상태 로드 (State 기반 - 깜빡임 방지)
+  Future<void> _loadJoinRequestStatus() async {
+    try {
+      final userId = FirebaseService().currentUserId;
+      if (userId == null) {
+        setState(() => _joinRequestStatusLoaded = true);
+        return;
+      }
+      
+      final hasPending = await FirestoreService().hasUserRequestedJoin(widget.groupId, userId);
+      
+      if (mounted) {
+        setState(() {
+          _hasPendingJoinRequest = hasPending;
+          _joinRequestStatusLoaded = true;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _joinRequestStatusLoaded = true);
+      }
+    }
   }
 
   @override
@@ -643,20 +672,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     return schedulesAsync.when(
       data: (schedules) {
         if (schedules.isEmpty) {
-          // NestedScrollView 내부에서는 Center 대신 CustomScrollView 사용
-          return CustomScrollView(
-            slivers: [
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: MingrrEmptyState(
-                    icon: AppIcons.event,
-                    title: '일정이 없어요',
-                    subtitle: isJoined ? '새로운 일정을 만들어보세요' : '예정된 일정이 없습니다',
-                  ),
-                ),
-              ),
-            ],
+          return Center(
+            child: MingrrEmptyState(
+              icon: AppIcons.event,
+              title: '일정이 없어요',
+              subtitle: isJoined ? '새로운 일정을 만들어보세요' : '예정된 일정이 없습니다',
+            ),
           );
         }
 
@@ -749,8 +770,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           child: MingrrLoadingIndicator.medium(type: MingrrLoadingType.community),
         ),
       ),
-      error: (_, __) => MingrrErrorState(
-        onRetry: () => ref.invalidate(groupSchedulesProvider(group.id)),
+      error: (error, stack) => Center(
+        child: MingrrEmptyState(
+          icon: AppIcons.event,
+          title: '일정을 불러올 수 없어요',
+          subtitle: '잠시 후 다시 시도해주세요',
+        ),
       ),
     );
   }
@@ -766,7 +791,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
     final isJoined = myUserId != null && group.isMember(myUserId);
     final isCreator = myUserId != null && group.isCreator(myUserId);
     final accentColor = context.features.social;
-
+    
     return MingrrBottomButtonBar(
       child: Row(
         children: [
@@ -787,25 +812,61 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             ),
             const SizedBox(width: AppSizes.gapM),
           ],
-          // 메인 버튼
+          // 메인 버튼 (State 기반 - 깜빡임 방지)
           Expanded(
-            child: MingrrButton(
-              text: isJoined
-                  ? (isCreator ? '모임 관리' : '모임 탈퇴')
-                  : (group.requireApproval ? '가입 신청' : '모임 가입'),
-              onPressed: _isJoining
-                  ? null
-                  : isJoined
-                      ? (isCreator ? () => _showCreatorOptions(context, group) : () => _leaveGroup(group))
-                      : () => _joinGroup(group),
-              isLoading: _isJoining,
-              backgroundColor: isJoined && !isCreator ? Colors.red : accentColor,
-              textColor: Colors.white,
-              height: 56,
-            ),
+            child: _buildJoinButton(context, group, isJoined, isCreator, accentColor),
           ),
         ],
       ),
+    );
+  }
+  
+  /// 가입 버튼 빌드 (State 기반 - 깜빡임 방지)
+  Widget _buildJoinButton(BuildContext context, GroupModel group, bool isJoined, bool isCreator, Color accentColor) {
+    // 이미 가입한 경우
+    if (isJoined) {
+      return MingrrButton(
+        text: isCreator ? '모임 관리' : '모임 탈퇴',
+        onPressed: _isJoining
+            ? null
+            : isCreator ? () => _showCreatorOptions(context, group) : () => _leaveGroup(group),
+        isLoading: _isJoining,
+        backgroundColor: isCreator ? accentColor : Colors.red,
+        textColor: Colors.white,
+        height: 56,
+      );
+    }
+    
+    // 로딩 중이면 비활성화된 버튼 표시 (텍스트는 기본값)
+    if (!_joinRequestStatusLoaded) {
+      return MingrrButton(
+        text: group.requireApproval ? '가입 신청' : '모임 가입',
+        onPressed: null,
+        backgroundColor: accentColor,
+        textColor: Colors.white,
+        height: 56,
+      );
+    }
+    
+    // 이미 신청한 경우 비활성화
+    if (_hasPendingJoinRequest) {
+      return MingrrButton(
+        text: '신청 대기 중',
+        onPressed: null,
+        backgroundColor: Theme.of(context).colorScheme.outlineVariant,
+        textColor: Colors.white,
+        height: 56,
+      );
+    }
+    
+    // 가입 가능
+    return MingrrButton(
+      text: group.requireApproval ? '가입 신청' : '모임 가입',
+      onPressed: _isJoining ? null : () => _joinGroup(group),
+      isLoading: _isJoining,
+      backgroundColor: accentColor,
+      textColor: Colors.white,
+      height: 56,
     );
   }
 
@@ -822,9 +883,17 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
               group.id,
               message: message,
             );
-            if (success && mounted) {
-              MingrrSnackBar.success(context, '가입 신청을 보냈습니다');
+            if (mounted) {
+              if (success) {
+                MingrrSnackBar.success(context, '가입 신청을 보냈습니다');
+                // State 기반 신청 상태 갱신
+                setState(() => _hasPendingJoinRequest = true);
+              }
               ref.invalidate(groupDetailProvider(widget.groupId));
+            }
+          } catch (e) {
+            if (mounted) {
+              ErrorHandler.showError(context, e, tag: 'GroupDetail', operation: '가입 신청');
             }
           } finally {
             if (mounted) setState(() => _isJoining = false);
@@ -836,10 +905,16 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       setState(() => _isJoining = true);
       try {
         final success = await ref.read(groupNotifierProvider.notifier).joinGroup(group.id);
-        if (success && mounted) {
-          MingrrSnackBar.success(context, '모임에 가입했습니다! 🎉');
+        if (mounted) {
+          if (success) {
+            MingrrSnackBar.success(context, '모임에 가입했습니다! 🎉');
+          }
           ref.read(groupRefreshProvider.notifier).state++;
           ref.invalidate(groupDetailProvider(widget.groupId));
+        }
+      } catch (e) {
+        if (mounted) {
+          ErrorHandler.showError(context, e, tag: 'GroupDetail', operation: '모임 가입');
         }
       } finally {
         if (mounted) setState(() => _isJoining = false);
@@ -956,7 +1031,8 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                 myUserId: myUserId,
                 firestoreService: firestoreService,
                 onApproved: () {
-                  // 가입 승인 후 리스트 갱신
+                  // 가입 승인 후 바텀시트 닫고 상세 화면 갱신
+                  Navigator.pop(context);
                   ref.invalidate(groupJoinRequestsProvider(group.id));
                   ref.invalidate(groupDetailProvider(widget.groupId));
                   ref.read(groupRefreshProvider.notifier).state++;
@@ -1191,75 +1267,110 @@ class _JoinRequestTileState extends State<_JoinRequestTile> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const ListTile(
-        leading: CircleAvatar(child: Icon(AppIcons.profile)),
-        title: Text('로딩 중...'),
+      return Container(
+        padding: const EdgeInsets.all(AppSizes.paddingM),
+        child: Row(
+          children: [
+            const CircleAvatar(child: Icon(AppIcons.profile)),
+            const SizedBox(width: AppSizes.gapM),
+            Text('로딩 중...', style: Theme.of(context).textTheme.bodyMedium),
+          ],
+        ),
       );
     }
 
     final theme = Theme.of(context);
     final timeAgo = _formatTimeAgo(widget.request.createdAt);
 
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.paddingM,
-        vertical: AppSizes.paddingS,
-      ),
-      leading: GestureDetector(
-        onTap: _user != null ? () => _showUserProfile() : null,
-        child: MingrrImage.avatar(
-          imageUrl: _user?.profileImageUrl,
-          size: 48,
-          icon: AppIcons.profile,
-        ),
-      ),
-      title: Row(
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.paddingM),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            _user?.nickname ?? '알 수 없음',
-            style: theme.textTheme.titleSmall,
+          // 상단: 프로필 + 닉네임 + 시간
+          Row(
+            children: [
+              GestureDetector(
+                onTap: _user != null ? () => _showUserProfile() : null,
+                child: MingrrImage.avatar(
+                  imageUrl: _user?.profileImageUrl,
+                  size: 44,
+                  icon: AppIcons.profile,
+                ),
+              ),
+              const SizedBox(width: AppSizes.gapM),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _user?.nickname ?? '알 수 없음',
+                      style: theme.textTheme.titleSmall,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      timeAgo,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.outline,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: AppSizes.gapS),
-          Text(
-            timeAgo,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.outline,
-            ),
-          ),
-        ],
-      ),
-      subtitle: widget.request.message != null && widget.request.message!.isNotEmpty
-          ? Padding(
-              padding: const EdgeInsets.only(top: AppSizes.paddingXS),
+          
+          // 메시지 (있는 경우)
+          if (widget.request.message != null && widget.request.message!.isNotEmpty) ...[
+            const SizedBox(height: AppSizes.gapS),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSizes.paddingS),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerLow,
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
+              ),
               child: Text(
                 widget.request.message!,
                 style: theme.textTheme.bodySmall,
-                maxLines: 2,
+                maxLines: 3,
                 overflow: TextOverflow.ellipsis,
               ),
-            )
-          : null,
-      trailing: _isProcessing
-          ? const MingrrLoadingIndicator(
-              size: 24,
-              strokeWidth: 2,
-            )
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(AppIcons.close, color: theme.colorScheme.error),
+            ),
+          ],
+          
+          // 하단: 버튼 영역
+          const SizedBox(height: AppSizes.gapM),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (_isProcessing)
+                const MingrrLoadingIndicator(size: 24, strokeWidth: 2)
+              else ...[
+                OutlinedButton.icon(
                   onPressed: _reject,
-                  tooltip: '거절',
+                  icon: Icon(AppIcons.close, size: 18, color: theme.colorScheme.error),
+                  label: Text('거절', style: TextStyle(color: theme.colorScheme.error)),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: theme.colorScheme.error),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
+                  ),
                 ),
-                const SizedBox(width: AppSizes.gapXS),
-                IconButton(
-                  icon: Icon(AppIcons.check, color: theme.colorScheme.primary),
+                const SizedBox(width: AppSizes.gapS),
+                FilledButton.icon(
                   onPressed: _approve,
-                  tooltip: '승인',
+                  icon: const Icon(AppIcons.check, size: 18),
+                  label: const Text('승인'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: theme.colorScheme.primary,
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
+                  ),
                 ),
               ],
-            ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 

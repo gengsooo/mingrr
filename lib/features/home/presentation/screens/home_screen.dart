@@ -100,7 +100,7 @@ class HomeScreen extends ConsumerWidget {
                   MingrrSectionHeader(
                     title: '추천친구',
                     actionText: '더보기',
-                    onActionTap: () => context.go('/dating'),
+                    onActionTap: () => context.go('/dating?tab=0'),
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   recommendedPetsAsync.when(
@@ -114,7 +114,7 @@ class HomeScreen extends ConsumerWidget {
                   MingrrSectionHeader(
                     title: '인기 소모임',
                     actionText: '더보기',
-                    onActionTap: () => context.push('/social'),
+                    onActionTap: () => context.go('/social?tab=1'),
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   _buildPopularGroupsSection(context),

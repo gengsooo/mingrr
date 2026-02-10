@@ -68,6 +68,11 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
   bool _isSending = false;
   // ignore: unused_field - 향후 로딩 상태 표시용
   bool _likeLoaded = false;
+  
+  // 신청 상태 (State 기반 - 깜빡임 방지)
+  bool _hasPendingRequest = false;
+  bool _requestStatusLoaded = false;
+  
   final FirebaseService _firebase = FirebaseService();
   final FirestoreService _firestoreService = FirestoreService();
   final DatingService _datingService = DatingService();
@@ -76,6 +81,54 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
   void initState() {
     super.initState();
     _loadLikeStatus();
+    _loadRequestStatus();
+  }
+  
+  /// 신청 상태 로드 (State 기반 - 깜빡임 방지)
+  Future<void> _loadRequestStatus() async {
+    try {
+      final userId = _firebase.currentUserId;
+      if (userId == null) {
+        setState(() => _requestStatusLoaded = true);
+        return;
+      }
+      
+      final myPets = ref.read(userPetsProvider).valueOrNull ?? [];
+      if (myPets.isEmpty) {
+        setState(() => _requestStatusLoaded = true);
+        return;
+      }
+      
+      // 내 반려동물 중 하나라도 해당 반려동물에게 pending 신청을 보냈는지 확인
+      bool hasPending = false;
+      final collectionName = widget.isBreeding ? 'breeding_requests' : 'dating_requests';
+      
+      for (final myPet in myPets) {
+        final snapshot = await _firebase.firestore.collection(collectionName)
+            .where('fromPetId', isEqualTo: myPet.id)
+            .where('toPetId', isEqualTo: widget.petId)
+            .where('status', isEqualTo: 'pending')
+            .limit(1)
+            .get();
+        
+        if (snapshot.docs.isNotEmpty) {
+          hasPending = true;
+          break;
+        }
+      }
+      
+      if (mounted) {
+        setState(() {
+          _hasPendingRequest = hasPending;
+          _requestStatusLoaded = true;
+        });
+      }
+    } catch (e) {
+      AppLogger.error('PetDetail', '신청 상태 로드 오류', e);
+      if (mounted) {
+        setState(() => _requestStatusLoaded = true);
+      }
+    }
   }
 
   /// Firebase에서 좋아요 상태 로드
@@ -714,18 +767,46 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
             ),
           ),
           const SizedBox(width: AppSizes.gapM),
-          // 신청 버튼
+          // 신청 버튼 (State 기반 - 깜빡임 방지)
           Expanded(
-            child: MingrrButton(
-              text: widget.isBreeding ? '교배 신청하기' : '데이트 신청하기',
-              onPressed: () => _showRequestConfirmation(context),
-              backgroundColor: context.features.dating,
-              textColor: Colors.white,
-              height: 56,
-            ),
+            child: _buildRequestButton(context),
           ),
         ],
       ),
+    );
+  }
+  
+  /// 신청 버튼 빌드 (State 기반 - 깜빡임 방지)
+  Widget _buildRequestButton(BuildContext context) {
+    // 로딩 중이면 비활성화된 버튼 표시 (텍스트는 기본값)
+    if (!_requestStatusLoaded) {
+      return MingrrButton(
+        text: widget.isBreeding ? '교배 신청하기' : '데이트 신청하기',
+        onPressed: null,
+        backgroundColor: context.features.dating,
+        textColor: Colors.white,
+        height: 56,
+      );
+    }
+    
+    // 이미 신청한 경우 비활성화
+    if (_hasPendingRequest) {
+      return MingrrButton(
+        text: '신청 대기 중',
+        onPressed: null,
+        backgroundColor: Theme.of(context).colorScheme.outlineVariant,
+        textColor: Colors.white,
+        height: 56,
+      );
+    }
+    
+    // 신청 가능
+    return MingrrButton(
+      text: widget.isBreeding ? '교배 신청하기' : '데이트 신청하기',
+      onPressed: () => _showRequestConfirmation(context),
+      backgroundColor: context.features.dating,
+      textColor: Colors.white,
+      height: 56,
     );
   }
 
@@ -786,9 +867,11 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         message: message,
       );
       
-      // 성공 스낵바 먼저 표시
+      // 성공 스낵바 먼저 표시 및 상태 갱신
       if (mounted) {
         MingrrSnackBar.success(context, '${myPet.name}(으)로 데이트 신청을 보냈어요! 💕');
+        // State 기반 신청 상태 갱신
+        setState(() => _hasPendingRequest = true);
       }
       
       // 좋아요 수 증가 (이미 좋아요 안 했으면) - 실패해도 무시
@@ -843,10 +926,17 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       
       if (mounted) {
         MingrrSnackBar.success(context, '${myPet.name}(으)로 교배 신청을 보냈어요! 🐶');
+        // State 기반 신청 상태 갱신
+        setState(() => _hasPendingRequest = true);
       }
     } catch (e) {
       if (mounted) {
-        ErrorHandler.showError(context, e, tag: 'PetDetail', operation: '교배 신청');
+        final errorMessage = e.toString();
+        if (errorMessage.contains('이미') && errorMessage.contains('신청')) {
+          MingrrSnackBar.info(context, '이미 교배 신청을 보냈어요! 상대방의 응답을 기다려주세요 🐶');
+        } else {
+          ErrorHandler.showError(context, e, tag: 'PetDetail', operation: '교배 신청');
+        }
       }
     } finally {
       if (mounted) {

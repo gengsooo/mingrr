@@ -63,7 +63,10 @@ final _breedingAgeFilterProvider = StateProvider<int?>((ref) => null);
 final _breedingPedigreeFilterProvider = StateProvider<bool?>((ref) => null);
 
 class DatingScreen extends ConsumerStatefulWidget {
-  const DatingScreen({super.key});
+  /// 초기 탭 인덱스 (0: 추천친구, 1: 근처 검색, 2: 교배찾기)
+  final int initialTab;
+  
+  const DatingScreen({super.key, this.initialTab = 0});
 
   @override
   ConsumerState<DatingScreen> createState() => _DatingScreenState();
@@ -80,6 +83,11 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
     _breedingScrollController.addListener(_onBreedingScroll);
     _nearbyScrollController.addListener(_onNearbyScroll);
     _recommendScrollController.addListener(_onRecommendScroll);
+    
+    // 초기 탭 설정 (항상 initialTab으로 설정하여 이전 상태 무시)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(_selectedTabProvider.notifier).state = widget.initialTab;
+    });
   }
 
   @override
@@ -563,6 +571,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
       name: pet.name,
       breed: pet.breed,
       ageString: pet.ageString,
+      sizeString: pet.sizeString,
       isMale: pet.gender == PetGender.male,
       distanceString: petWithDistance.distanceString,
       description: petWithDistance.breedingDescription,
@@ -764,6 +773,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
       name: pet.name,
       breed: pet.breed,
       ageString: pet.ageString,
+      isMale: pet.gender == PetGender.male,
       matchScore: petWithDistance.matchScore,
       distanceString: petWithDistance.distanceString,
       traits: pet.traits.map((t) => t.label).toList(),

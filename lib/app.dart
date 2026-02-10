@@ -210,10 +210,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const HomeScreen(),
           ),
           
-          // 2️⃣ 데이팅 화면 (경로: '/dating')
+          // 2️⃣ 데이팅 화면 (경로: '/dating', 쿼리: ?tab=0,1,2)
           GoRoute(
             path: '/dating',
-            builder: (context, state) => const DatingScreen(),
+            builder: (context, state) {
+              final tabParam = state.uri.queryParameters['tab'];
+              final initialTab = int.tryParse(tabParam ?? '0') ?? 0;
+              return DatingScreen(initialTab: initialTab);
+            },
           ),
           
           // 3️⃣ 마켓 화면 (경로: '/market')
@@ -228,10 +232,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ChatListScreen(),
           ),
           
-          // 5️⃣ 소셜 화면 (경로: '/social') - 바텀바에서 접근
+          // 5️⃣ 소셜 화면 (경로: '/social', 쿼리: ?tab=0,1)
           GoRoute(
             path: '/social',
-            builder: (context, state) => const SocialScreen(),
+            builder: (context, state) {
+              final tabParam = state.uri.queryParameters['tab'];
+              final initialTab = int.tryParse(tabParam ?? '0') ?? 0;
+              return SocialScreen(initialTab: initialTab);
+            },
           ),
         ],
       ),

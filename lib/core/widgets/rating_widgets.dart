@@ -181,10 +181,7 @@ class _RatingModalState extends State<RatingModal> {
                 
                 // 태그 선택 (별점 선택 후)
                 if (_selectedRating > 0)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
-                    child: _buildTagSelection(),
-                  ),
+                  _buildTagSelection(),
               ],
               
               // 제출 버튼
@@ -213,7 +210,7 @@ class _RatingModalState extends State<RatingModal> {
             const SizedBox(height: AppSizes.gapM),
           ],
           Text(
-            '${widget.targetName}님에 대한 평가를 보내주세요! 🐾',
+            '${widget.targetName}님에 대한 평가를 보내주세요!',
             style: AppTextStyles.headlineMedium(context),
             textAlign: TextAlign.center,
           ),
@@ -302,7 +299,15 @@ class _RatingModalState extends State<RatingModal> {
               final isSelected = starIndex <= _selectedRating;
               
               return GestureDetector(
-                onTap: () => setState(() => _selectedRating = starIndex),
+                onTap: () => setState(() {
+                  // 별점 변경 시 태그 초기화 (긍정/부정 태그가 다르므로)
+                  final wasPositive = _selectedRating >= 3;
+                  final willBePositive = starIndex >= 3;
+                  if (wasPositive != willBePositive) {
+                    _selectedTags.clear();
+                  }
+                  _selectedRating = starIndex;
+                }),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS),
                   child: AnimatedScale(
@@ -335,52 +340,59 @@ class _RatingModalState extends State<RatingModal> {
     final tags = isPositive ? _positiveTags : _negativeTags;
     final tagColor = isPositive ? context.features.success : Colors.red;
     
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          isPositive ? '어떤 점이 좋았나요?' : '어떤 점이 아쉬웠나요?',
-          style: AppTextStyles.labelLarge(context),
-        ),
-        const SizedBox(height: AppSizes.gapM),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: tags.map((tag) {
-            final isSelected = _selectedTags.contains(tag);
-            return GestureDetector(
-              onTap: () {
-                setState(() {
-                  if (isSelected) {
-                    _selectedTags.remove(tag);
-                  } else {
-                    _selectedTags.add(tag);
-                  }
-                });
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
-                decoration: BoxDecoration(
-                  color: isSelected ? tagColor.withValues(alpha: AppOpacity.o10) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusL),
-                  border: Border.all(
-                    color: isSelected ? tagColor : Theme.of(context).colorScheme.outline,
-                    width: isSelected ? 1.5 : 1,
+    // SizedBox.expand로 부모 너비에 맞춰 고정
+    return SizedBox(
+      width: double.infinity,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isPositive ? '어떤 점이 좋았나요?' : '어떤 점이 아쉬웠나요?',
+              style: AppTextStyles.labelLarge(context),
+            ),
+            const SizedBox(height: AppSizes.gapM),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: tags.map((tag) {
+                final isSelected = _selectedTags.contains(tag);
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (isSelected) {
+                        _selectedTags.remove(tag);
+                      } else {
+                        _selectedTags.add(tag);
+                      }
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
+                    decoration: BoxDecoration(
+                      color: isSelected ? tagColor.withValues(alpha: AppOpacity.o10) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(AppSizes.radiusL),
+                      border: Border.all(
+                        color: isSelected ? tagColor : Theme.of(context).colorScheme.outline,
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Text(
+                      tag,
+                      style: AppTextStyles.titleSmall(context)
+                          .withWeight(isSelected ? FontWeight.w500 : FontWeight.normal)
+                          .withColor(isSelected ? tagColor : Theme.of(context).colorScheme.onSurfaceVariant),
+                    ),
                   ),
-                ),
-                child: Text(
-                  tag,
-                  style: AppTextStyles.titleSmall(context)
-                      .withWeight(isSelected ? FontWeight.w500 : FontWeight.normal)
-                      .withColor(isSelected ? tagColor : Theme.of(context).colorScheme.onSurfaceVariant),
-                ),
-              ),
-            );
-          }).toList(),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: AppSizes.gapL),
+          ],
         ),
-        const SizedBox(height: AppSizes.gapL),
-      ],
+      ),
     );
   }
 
@@ -537,7 +549,7 @@ void showRatingCompleteDialog(BuildContext context) {
       icon: AppIcons.pet,
       colors: [Colors.amber.shade300, Colors.orange.shade400],
     ),
-    title: '✨ 평가 완료!',
+    title: '평가 완료!',
     message: '당신의 평가가 더 좋은 커뮤니티를\n만드는 데 도움이 돼요 🐾',
     primaryButtonText: '확인',
     onPrimaryPressed: () {},

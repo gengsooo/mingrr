@@ -71,7 +71,7 @@ extension CommunityCategoryLabel on CommunityCategory {
       case CommunityCategory.event:
         return AppIcons.celebration;
       case CommunityCategory.other:
-        return AppIcons.chatBubbleOutlined;
+        return AppIcons.more;
     }
   }
 }

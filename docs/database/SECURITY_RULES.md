@@ -71,8 +71,21 @@ function isAdmin() {
 | **read** | `isSignedIn()` | 로그인한 사용자는 모든 사용자 조회 가능 |
 | **list** | `limit <= 1` | 이메일 중복 검사용 (회원가입 시) |
 | **create** | `isOwner(userId)` | 본인 계정만 생성 |
-| **update** | `isOwner(userId)` | 본인 계정만 수정 |
+| **update** | `isOwner(userId)` 또는 카운터 필드만 변경 | 본인 계정만 수정 |
 | **delete** | `isOwner(userId)` | 본인 계정만 삭제 |
+
+📌 **카운터 필드 예외**: 다른 사용자도 다음 필드만 변경 가능 (가입/탈퇴/평가 등)
+- `groupCount`, `postCount`, `walkCount`, `matchCount`
+- `transactionCount`, `reportCount`, `locationMismatchCount`
+- `ratingCount`, `averageRating`, `noShowCount`, `kkosunnaeScore`
+
+```javascript
+allow update: if isOwner(userId) || 
+  (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys()
+    .hasOnly(['groupCount', 'postCount', 'walkCount', 'matchCount', 
+              'transactionCount', 'reportCount', 'locationMismatchCount',
+              'ratingCount', 'averageRating', 'noShowCount', 'kkosunnaeScore']));
+```
 
 ---
 
@@ -471,6 +484,8 @@ test('사용자는 본인 프로필만 수정 가능', async () => {
 | 날짜 | 버전 | 변경 내용 |
 |------|------|----------|
 | 2026-02-06 | 1.0.0 | 최초 작성 |
+| 2026-02-09 | 1.1.0 | users 컬렉션 update 규칙에 평가 관련 필드 추가 (ratingCount, averageRating, noShowCount) |
+| 2026-02-09 | 1.1.1 | users 컬렉션 update 규칙에 kkosunnaeScore 필드 추가 |
 
 ---
 
