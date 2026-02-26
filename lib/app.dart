@@ -15,10 +15,8 @@ import 'core/theme/app_text_styles.dart';  // 텍스트 스타일
 import 'core/providers/theme_provider.dart';  // 테마 Provider
 import 'core/providers/location_verification_provider.dart';  // 위치 인증 Provider
 import 'core/widgets/loading/loading_widgets.dart';  // 공통 로딩 위젯
-import 'core/widgets/badges/svg_icons.dart';  // SVG 아이콘 경로
 import 'core/constants/app_icons.dart';  // 아이콘 상수
 import 'core/widgets/network_status_banner.dart';  // 네트워크 상태 배너
-import 'package:flutter_svg/flutter_svg.dart';  // SVG 렌더링
 
 // 인증 관련
 import 'features/auth/presentation/providers/auth_provider.dart';  // 로그인 상태 관리 Provider
@@ -35,13 +33,16 @@ import 'features/social/presentation/screens/social_screen.dart';  // 소셜 화
 import 'features/social/presentation/screens/group_detail_screen.dart';  // 소모임 상세 화면
 import 'features/social/presentation/screens/community_detail_screen.dart';  // 커뮤니티 게시글 상세 화면
 import 'features/chat/presentation/screens/chat_list_screen.dart';  // 채팅 목록 화면
+import 'features/chat/presentation/screens/chat_detail_screen.dart';  // 채팅 상세 화면
 import 'features/chat/presentation/providers/chat_provider.dart';  // 채팅 Provider
 import 'features/profile/presentation/screens/profile_screen.dart';  // 프로필 화면
 import 'features/profile/presentation/screens/pending_ratings_screen.dart';  // 평가 대기 목록 화면
+import 'features/profile/presentation/screens/rating_history_screen.dart';  // 평가 이력 화면
 import 'features/auth/presentation/screens/email_verification_screen.dart';  // 이메일 인증 화면
 import 'features/dev/dev_tools_screen.dart';  // 개발자 도구 화면
 import 'features/notification/presentation/screens/notification_screen.dart';  // 알림 화면
 import 'features/marketplace/presentation/screens/job_detail_screen.dart';  // 알바 상세 화면
+import 'features/marketplace/presentation/screens/product_detail_screen.dart';  // 상품 상세 화면
 import 'features/onboarding/presentation/screens/onboarding_screen.dart';  // 온보딩 화면
 
 /// ============================================================
@@ -276,6 +277,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const PendingRatingsScreen(),
       ),
       
+      // 평가 이력 화면 (경로: '/profile/rating-history')
+      GoRoute(
+        path: '/profile/rating-history',
+        builder: (context, state) => const RatingHistoryScreen(),
+      ),
+      
       // 반려동물 상세 화면 (경로: '/dating/detail/:id')
       GoRoute(
         path: '/dating/detail/:id',
@@ -321,6 +328,24 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final jobId = state.pathParameters['id'] ?? '';
           return JobDetailScreen(jobId: jobId);
+        },
+      ),
+      
+      // 상품 상세 화면 (경로: '/market/product/:id')
+      GoRoute(
+        path: '/market/product/:id',
+        builder: (context, state) {
+          final productId = state.pathParameters['id'] ?? '';
+          return ProductDetailScreen(productId: productId);
+        },
+      ),
+      
+      // 채팅 상세 화면 (경로: '/chat/:id')
+      GoRoute(
+        path: '/chat/:id',
+        builder: (context, state) {
+          final chatRoomId = state.pathParameters['id'] ?? '';
+          return ChatDetailScreen(chatRoomId: chatRoomId);
         },
       ),
     ],

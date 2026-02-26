@@ -3,9 +3,7 @@ import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../services/bottom_sheet_stack_manager.dart';
-import '../common_widgets.dart';
 import '../sheets/mingrr_bottom_sheet.dart';
-import '../rating_widgets.dart';
 
 /// ============================================================
 /// 채팅방 옵션 모달 (공통 위젯)
@@ -99,21 +97,7 @@ class ChatOptionsModal extends StatelessWidget {
             const SizedBox(height: AppSizes.gapS),
             
             // 옵션 리스트
-            _buildOption(
-              context,
-              icon: AppIcons.pet,
-              label: '꼬순내지수 평가하기',
-              subtitle: '상대방을 평가해주세요',
-              color: Theme.of(context).colorScheme.primary,
-              onTap: () {
-                showRatingModal(
-                  context,
-                  targetUserId: targetId,
-                  targetName: chatName,
-                );
-              },
-            ),
-            
+            // 평가 옵션 제거 - 활동 기반 평가만 허용 (채팅 상세 화면에서 평가)
             _buildOption(
               context,
               icon: AppIcons.notificationsOff,

@@ -11,6 +11,7 @@ import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../models/pet_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import '../providers/health_provider.dart';
+import '../../../../core/utils/format_utils.dart';
 import 'walk_record_detail_screen.dart';
 import 'health_record_add_screens.dart';
 
@@ -444,7 +445,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
               icon: AppIcons.weight,
               iconColor: context.features.health,
               title: '${record.weight.toStringAsFixed(1)}kg',
-              subtitle: _formatDate(record.recordDate),
+              subtitle: formatShortDate(record.recordDate),
               onTap: () {
                 // TODO: 상세 화면으로 이동
               },
@@ -472,7 +473,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
               icon: AppIcons.walk,
               iconColor: context.features.walk,
               title: '${record.durationMinutes}분, ${record.distanceString}',
-              subtitle: _formatDateTime(record.startTime),
+              subtitle: formatShortDateTime(record.startTime),
               onTap: () {
                 Navigator.push(
                   context,
@@ -508,7 +509,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
               icon: AppIcons.grooming,
               iconColor: context.features.health,
               title: record.groomingType.label,
-              subtitle: '${_formatDate(record.recordDate)} • ${record.location ?? ""}',
+              subtitle: '${formatShortDate(record.recordDate)} • ${record.location ?? ""}',
               onTap: () {},
             );
           }).toList(),
@@ -534,7 +535,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
               icon: AppIcons.vaccination,
               iconColor: context.features.health,
               title: record.vaccineName,
-              subtitle: '${_formatDate(record.vaccinationDate)} • ${record.hospitalName ?? ""}',
+              subtitle: '${formatShortDate(record.vaccinationDate)} • ${record.hospitalName ?? ""}',
               onTap: () {},
             );
           }).toList(),
@@ -560,7 +561,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
               icon: AppIcons.checkup,
               iconColor: context.features.health,
               title: record.diagnosis ?? '정기 검진',
-              subtitle: '${_formatDate(record.checkupDate)} • ${record.hospitalName ?? ""}',
+              subtitle: '${formatShortDate(record.checkupDate)} • ${record.hospitalName ?? ""}',
               onTap: () {},
             );
           }).toList(),
@@ -648,14 +649,6 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
         ),
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.month}/${date.day}';
-  }
-
-  String _formatDateTime(DateTime date) {
-    return '${date.month}/${date.day} ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
   }
 
   void _showAddRecordSheet(BuildContext context, WidgetRef ref, HealthCategory category, PetModel pet) {

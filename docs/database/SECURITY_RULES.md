@@ -326,10 +326,12 @@ allow update: if isAdmin() || (isSignedIn() && (
 
 | 작업 | 조건 | 설명 |
 |------|------|------|
-| **read** | `isSignedIn()` | 로그인한 사용자 조회 가능 |
-| **create** | `incomingData().raterId == uid` | 본인이 평가자 |
-| **update** | `existingData().raterId == uid` | 본인 평가만 수정 |
+| **read** | `isSignedIn() && (isVisible == true \|\| raterId == uid \|\| targetId == uid)` | 공개된 평가 또는 본인 관련 평가만 조회 |
+| **create** | `incomingData().raterId == uid && incomingData().isVisible in [true, false]` | 본인이 평가자, isVisible 필드 필수 |
+| **update** | `existingData().raterId == uid \|\| isAdmin()` | 본인 평가 수정 또는 관리자(isVisible 공개 처리) |
 | **delete** | `isAdmin()` | 관리자만 삭제 |
+
+> **상호 평가 정책**: 평가는 양쪽 모두 완료 시 공개(`isVisible: true`). 14일 경과 시 자동 공개.
 
 ---
 

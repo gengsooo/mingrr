@@ -8,3 +8,4 @@ export 'trait_badge.dart';
 export 'verification_badge.dart';
 export 'distance_badge.dart';
 export 'svg_icons.dart';
+export 'request_status_badge.dart';

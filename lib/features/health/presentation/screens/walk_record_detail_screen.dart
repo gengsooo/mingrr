@@ -20,6 +20,7 @@ import '../../../../core/services/share_service.dart';
 import '../../../../models/health_model.dart';
 import '../providers/health_provider.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../../../core/utils/format_utils.dart';
 
 /// ============================================================
 /// 산책 기록 상세 화면
@@ -324,13 +325,13 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _formatDate(record.startTime),
+                      formatDateWithWeekday(record.startTime),
                       style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600),
                     ),
                     Text(
                       record.endTime != null
-                          ? '${_formatTime(record.startTime)} ~ ${_formatTime(record.endTime!)}'
-                          : '${_formatTime(record.startTime)} (진행 중)',
+                          ? formatTimeRange(record.startTime, record.endTime)
+                          : formatTimeRange(record.startTime, null),
                       style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
@@ -420,9 +421,9 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
               '평균 속도',
               '${((record.distance / 1000) / (record.durationMinutes / 60)).toStringAsFixed(1)} km/h',
             ),
-          _buildDetailRow('시작 시간', _formatTime(record.startTime)),
+          _buildDetailRow('시작 시간', formatTime(record.startTime)),
           if (record.endTime != null)
-            _buildDetailRow('종료 시간', _formatTime(record.endTime!)),
+            _buildDetailRow('종료 시간', formatTime(record.endTime!)),
         ],
       ),
     );
@@ -578,7 +579,6 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
           MingrrImageGallery(
             imageUrls: record.photoUrls,
             height: 100,
-            itemWidth: 100,
             enableViewer: true,
           ),
         ],
@@ -637,15 +637,6 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
         setState(() => _isDeleting = false);
       }
     }
-  }
-
-  String _formatDate(DateTime date) {
-    final weekdays = ['월', '화', '수', '목', '금', '토', '일'];
-    return '${date.year}년 ${date.month}월 ${date.day}일 (${weekdays[date.weekday - 1]})';
-  }
-
-  String _formatTime(DateTime time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 
   String _formatDuration(int minutes) {

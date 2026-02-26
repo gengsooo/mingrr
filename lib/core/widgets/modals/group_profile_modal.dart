@@ -191,30 +191,11 @@ class GroupProfileModal extends StatelessWidget {
 
   /// 멤버 프로필 모달 열기
   void _openMemberProfile(BuildContext context, GroupMember member) {
-    showGuardianProfileModal(
+    showGuardianProfileFromFirestore(
       context,
-      guardianId: member.id,
-      guardianName: member.nickname,
-      kkosunnaeScore: member.kkosunnaeScore,
-      gender: GuardianGender.unknown,
-      isIdentityVerified: true,
-      isPetVerified: true,
-      isLocationVerified: false,
-      pets: [
-        GuardianPetInfo(
-          id: 'pet_${member.id}',
-          name: '멍멍이',
-          breed: '골든 리트리버',
-          ageString: '3살',
-          likeCount: 42,
-        ),
-      ],
-      activityInfo: const GuardianActivityInfo(
-        walkCount: 85,
-        datingCount: 12,
-        marketCount: 5,
-        groupCount: 18,
-      ),
+      userId: member.id,
+      fallbackName: member.nickname,
+      fallbackScore: member.kkosunnaeScore,
     );
   }
 

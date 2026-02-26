@@ -272,16 +272,13 @@ class _LikedItemCard extends StatelessWidget {
       child: Row(
         children: [
           // 이미지 또는 아이콘
-          if (imageUrl != null)
-            MingrrImage.thumbnail(
-              imageUrl: imageUrl,
-              width: 60,
-              height: 60,
-              radius: AppSizes.radiusS,
-              errorWidget: _buildIconContainer(context),
-            )
-          else
-            _buildIconContainer(context),
+          MingrrImage.thumbnail(
+            imageUrl: imageUrl,
+            width: 60,
+            height: 60,
+            radius: AppSizes.radiusS,
+            accentColor: iconColor,
+          ),
           const SizedBox(width: AppSizes.gapM),
           
           // 정보

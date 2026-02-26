@@ -6,6 +6,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/utils/format_utils.dart';
 
 /// ============================================================
 /// 건강수첩 상세 화면 모음
@@ -112,8 +113,8 @@ class WeightRecordDetailScreen extends StatelessWidget {
                   const SizedBox(height: AppSizes.gapM),
                   
                   // 날짜/시간
-                  _buildInfoRow(context, '측정일', _formatDate(record.date)),
-                  _buildInfoRow(context, '측정 시간', _formatTime(record.date)),
+                  _buildInfoRow(context, '측정일', formatDateKorean(record.date)),
+                  _buildInfoRow(context, '측정 시간', formatTime(record.date)),
                   _buildInfoRow(context, '반려동물', record.petName),
                 ],
               ),
@@ -227,14 +228,6 @@ class WeightRecordDetailScreen extends StatelessWidget {
     return (1 - diff / 5).clamp(0.0, 1.0);
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.year}년 ${date.month}월 ${date.day}일';
-  }
-
-  String _formatTime(DateTime date) {
-    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-  }
-
   void _showEditDialog(BuildContext context) {
     MingrrSnackBar.info(context, '수정 기능은 준비 중입니다');
   }
@@ -318,7 +311,7 @@ class GroomingRecordDetailScreen extends StatelessWidget {
                   const SizedBox(height: AppSizes.gapLL),
                   const MingrrDivider(),
                   const SizedBox(height: AppSizes.gapM),
-                  _buildInfoRow(context, '날짜', _formatDate(record.date)),
+                  _buildInfoRow(context, '날짜', formatDateKorean(record.date)),
                   _buildInfoRow(context, '장소', record.location),
                   _buildInfoRow(context, '반려동물', record.petName),
                   if (record.cost != null)
@@ -364,10 +357,6 @@ class GroomingRecordDetailScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.year}년 ${date.month}월 ${date.day}일';
   }
 
   void _confirmDelete(BuildContext context) {
@@ -480,12 +469,12 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                   const SizedBox(height: AppSizes.gapLL),
                   const MingrrDivider(),
                   const SizedBox(height: AppSizes.gapM),
-                  _buildInfoRow(context, '접종일', _formatDate(record.date)),
+                  _buildInfoRow(context, '접종일', formatDateKorean(record.date)),
                   _buildInfoRow(context, '병원', record.hospital),
                   _buildInfoRow(context, '담당 수의사', record.veterinarian ?? '-'),
                   _buildInfoRow(context, '반려동물', record.petName),
                   if (record.nextDate != null)
-                    _buildInfoRow(context, '다음 접종일', _formatDate(record.nextDate!)),
+                    _buildInfoRow(context, '다음 접종일', formatDateKorean(record.nextDate!)),
                 ],
               ),
             ),
@@ -580,10 +569,6 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.year}년 ${date.month}월 ${date.day}일';
-  }
-
   String _getRemainingDays(DateTime date) {
     final remaining = date.difference(DateTime.now()).inDays;
     if (remaining < 0) return '${-remaining}일 지남';
@@ -673,7 +658,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                   const SizedBox(height: AppSizes.gapLL),
                   const MingrrDivider(),
                   const SizedBox(height: AppSizes.gapM),
-                  _buildInfoRow(context, '검진일', _formatDate(record.date)),
+                  _buildInfoRow(context, '검진일', formatDateKorean(record.date)),
                   _buildInfoRow(context, '병원', record.hospital),
                   _buildInfoRow(context, '담당 수의사', record.veterinarian ?? '-'),
                   _buildInfoRow(context, '반려동물', record.petName),
@@ -788,10 +773,6 @@ class CheckupRecordDetailScreen extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.year}년 ${date.month}월 ${date.day}일';
-  }
-
   Color _getResultColor(BuildContext context, String result) {
     if (result.contains('정상') || result.contains('양호')) return context.features.success;
     if (result.contains('주의') || result.contains('관찰')) return Colors.orange;
@@ -888,7 +869,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
                   const SizedBox(height: AppSizes.gapLL),
                   const MingrrDivider(),
                   const SizedBox(height: AppSizes.gapM),
-                  _buildInfoRow(context, '날짜', _formatDate(record.date)),
+                  _buildInfoRow(context, '날짜', formatDateKorean(record.date)),
                   _buildInfoRow(context, '장소', record.location),
                   _buildInfoRow(context, '반려동물', record.petName),
                   if (record.cost != null)
@@ -990,10 +971,6 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.year}년 ${date.month}월 ${date.day}일';
   }
 
   void _confirmDelete(BuildContext context) {
@@ -1110,7 +1087,7 @@ class SpecialRecordDetailScreen extends StatelessWidget {
                   const SizedBox(height: AppSizes.gapLL),
                   const MingrrDivider(),
                   const SizedBox(height: AppSizes.gapM),
-                  _buildInfoRow(context, '날짜', _formatDate(record.date)),
+                  _buildInfoRow(context, '날짜', formatDateKorean(record.date)),
                   _buildInfoRow(context, '반려동물', record.petName),
                   if (record.severity != null)
                     _buildInfoRow(context, '심각도', record.severity!),
@@ -1179,10 +1156,6 @@ class SpecialRecordDetailScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.year}년 ${date.month}월 ${date.day}일';
   }
 
   Color _getCategoryColor(BuildContext context, String category) {

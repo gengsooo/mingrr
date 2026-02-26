@@ -173,6 +173,13 @@ firebase deploy --only firestore
 | 필드 조합 | 용도 |
 |----------|------|
 | `targetId` ASC + `createdAt` DESC | 대상별 평가 목록 |
+| `targetId` ASC + `isVisible` ASC + `createdAt` DESC | 공개된 받은 평가 목록 조회 |
+| `targetId` ASC + `isVisible` ASC + `result` ASC | 공개된 완료 평가 통계 (평균 평점, 노쇼 횟수) |
+| `raterId` ASC + `relatedId` ASC | 중복 평가 체크 |
+| `raterId` ASC + `targetId` ASC + `relatedId` ASC | 상호 평가 체크 |
+| `raterId` ASC + `targetId` ASC + `type` ASC + `createdAt` DESC | 쿨다운 체크 (30일 내 재평가 방지) |
+| `raterId` ASC + `createdAt` DESC | 이상 탐지 (시간당/일당 평가 횟수 체크) |
+| `isVisible` ASC + `createdAt` ASC | 만료된 비공개 평가 자동 공개 처리 |
 
 ---
 

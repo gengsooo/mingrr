@@ -87,3 +87,53 @@ String formatSmartDateTime(DateTime dateTime) {
   }
   return formatDateTime(dateTime);
 }
+
+/// 상대 날짜 포맷팅 (오늘, 어제, N일 전, MM/dd)
+/// 
+/// 사용 예시:
+/// ```dart
+/// final label = formatRelativeDate(DateTime.now()); // '오늘'
+/// ```
+String formatRelativeDate(DateTime dateTime) {
+  final now = DateTime.now();
+  final diff = now.difference(dateTime);
+  
+  if (diff.inDays == 0) return '오늘';
+  if (diff.inDays == 1) return '어제';
+  if (diff.inDays < 7) return '${diff.inDays}일 전';
+  return '${dateTime.month}월 ${dateTime.day}일';
+}
+
+/// 짧은 날짜+시간 포맷팅 (M/d HH:mm)
+/// 
+/// 사용 예시:
+/// ```dart
+/// final label = formatShortDateTime(DateTime.now()); // '2/10 14:30'
+/// ```
+String formatShortDateTime(DateTime dateTime) {
+  return '${dateTime.month}/${dateTime.day} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+}
+
+/// 시간 범위 포맷팅 (HH:mm ~ HH:mm)
+/// 
+/// 사용 예시:
+/// ```dart
+/// final label = formatTimeRange(start, end); // '14:30 ~ 15:30'
+/// final label = formatTimeRange(start, null); // '14:30 (진행 중)'
+/// ```
+String formatTimeRange(DateTime start, DateTime? end) {
+  final startStr = formatTime(start);
+  if (end == null) return '$startStr (진행 중)';
+  return '$startStr ~ ${formatTime(end)}';
+}
+
+/// 날짜+요일 포맷팅 (yyyy년 M월 d일 (요일))
+/// 
+/// 사용 예시:
+/// ```dart
+/// final label = formatDateWithWeekday(DateTime.now()); // '2026년 2월 10일 (월)'
+/// ```
+String formatDateWithWeekday(DateTime dateTime) {
+  const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+  return '${dateTime.year}년 ${dateTime.month}월 ${dateTime.day}일 (${weekdays[dateTime.weekday - 1]})';
+}

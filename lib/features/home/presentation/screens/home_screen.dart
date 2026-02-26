@@ -1044,15 +1044,7 @@ class HomeScreen extends ConsumerWidget {
             width: 50,
             height: 50,
             radius: AppSizes.radiusM,
-            errorWidget: Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: features.social.withValues(alpha: AppOpacity.o15),
-                borderRadius: BorderRadius.circular(AppSizes.radiusM),
-              ),
-              child: Icon(AppIcons.group, color: features.social, size: 26),
-            ),
+            accentColor: features.social,
           ),
           const SizedBox(width: AppSizes.gapM),
           Expanded(

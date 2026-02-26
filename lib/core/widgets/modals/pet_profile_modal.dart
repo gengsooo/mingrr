@@ -81,6 +81,7 @@ class GuardianInfo {
   final bool isPetVerified;
   final bool isLocationVerified;
   final List<GuardianPetInfo> pets;
+  final GuardianActivityInfo? activityInfo;
 
   const GuardianInfo({
     required this.id,
@@ -93,6 +94,7 @@ class GuardianInfo {
     this.isPetVerified = false,
     this.isLocationVerified = false,
     this.pets = const [],
+    this.activityInfo,
   });
 }
 
@@ -282,7 +284,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
       content: MingrrImageGallery(
         imageUrls: widget.photoUrls,
         height: 80,
-        itemWidth: 80,
+        fullWidthSingle: false,
         borderRadius: 12,
         enableViewer: true,
       ),
@@ -372,6 +374,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
               isPetVerified: guardian.isPetVerified,
               isLocationVerified: guardian.isLocationVerified,
               pets: guardian.pets,
+              activityInfo: guardian.activityInfo,
             );
           },
           child: Container(

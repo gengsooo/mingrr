@@ -281,14 +281,10 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           shape: BoxShape.circle,
           border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
         ),
-        child: ClipOval(
-          child: Image.network(
-            _profileImageUrl!,
-            width: 120,
-            height: 120,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _buildDefaultProfileImage(),
-          ),
+        child: MingrrImage.avatar(
+          imageUrl: _profileImageUrl,
+          size: 120,
+          icon: AppIcons.pet,
         ),
       );
     }
@@ -703,10 +699,10 @@ class _PetEditScreenState extends ConsumerState<PetEditScreen> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(AppSizes.radiusS),
             child: isUrl
-                ? Image.network(
-                    imageUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Icon(AppIcons.brokenImage),
+                ? MingrrImage.thumbnail(
+                    imageUrl: imageUrl,
+                    width: 80,
+                    height: 80,
                   )
                 : kIsWeb
                     ? Image.network(imageFile!.path, fit: BoxFit.cover)

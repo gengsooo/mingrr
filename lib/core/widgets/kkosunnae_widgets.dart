@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../constants/app_icons.dart';
+import '../services/firebase_service.dart';
 import '../services/kkosunnae_service.dart';
 import '../constants/app_sizes.dart';
 import '../theme/app_text_styles.dart';
@@ -299,8 +300,8 @@ String _getScoreDescription(double score) {
 // ============================================================
 
 /// 꼬순내지수 상세 바텀시트 표시
-void showKkosunnaeDetailSheet(BuildContext context, {String? userId}) {
-  showModalBottomSheet(
+Future<void> showKkosunnaeDetailSheet(BuildContext context, {String? userId}) {
+  return showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
@@ -374,6 +375,15 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
         _result = result;
         _isLoading = false;
       });
+
+      // Firestore 캐시 갱신 (Write-through) - 본인 점수만 갱신
+      // Security Rules 보호: 다른 사용자 문서는 write 불가
+      final currentUid = FirebaseAuth.instance.currentUser?.uid;
+      if (currentUid != null && targetUserId == currentUid) {
+        FirebaseService().usersCollection.doc(targetUserId).update({
+          'kkosunnaeScore': result.totalScore.toDouble(),
+        }).catchError((_) {});
+      }
     } catch (e) {
       setState(() {
         _error = '점수를 불러올 수 없습니다';

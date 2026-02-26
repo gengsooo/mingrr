@@ -8,7 +8,6 @@ import '../constants/app_sizes.dart';
 import '../services/firestore_service.dart';
 import 'common_widgets.dart';
 import 'mingrr_image.dart';
-import 'badges/svg_icons.dart';
 import 'badges/info_badge.dart';
 import 'forms/search_bar.dart';
 import '../utils/format_utils.dart';
@@ -90,13 +89,13 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       case SearchType.breeding:
         return '교배 글 제목, 상세 내용으로 검색';
       case SearchType.group:
-        return '모임명, 태그로 검색';
+        return '모임명, 설명, 태그로 검색';
       case SearchType.community:
-        return '게시글 내용, 태그로 검색';
+        return '게시글 제목, 내용, 태그로 검색';
       case SearchType.job:
         return '알바 제목, 설명으로 검색';
       case SearchType.market:
-        return '상품명, 설명으로 검색';
+        return '상품, 알바 제목으로 검색';
     }
   }
 
@@ -126,7 +125,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         final item = _results[index];
         switch (widget.searchType) {
           case SearchType.market:
-            return _buildProductItem(item as ProductModel);
+            // 마켓 통합 검색: 상품과 알바 모두 표시
+            return _buildMarketItem(item);
           case SearchType.group:
             return _buildGroupItem(item as GroupModel);
           case SearchType.community:
@@ -141,6 +141,128 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
 
+  /// 마켓 통합 검색 결과 아이템 빌더
+  Widget _buildMarketItem(dynamic item) {
+    if (item is ProductModel) {
+      return _buildProductItemWithBadge(item);
+    } else if (item is JobModel) {
+      return _buildJobItemWithBadge(item);
+    }
+    return const SizedBox.shrink();
+  }
+
+  /// 상품 아이템 (타입 배지 포함)
+  Widget _buildProductItemWithBadge(ProductModel product) {
+    final isShare = product.type == ProductType.share;
+    final badgeColor = isShare ? context.features.walk : context.features.market;
+    final badgeText = isShare ? '나눔' : '판매';
+    
+    return Card(
+      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
+      child: ListTile(
+        leading: Stack(
+          children: [
+            MingrrImage.thumbnail(
+              imageUrl: product.imageUrls.isNotEmpty ? product.imageUrls.first : null,
+              width: 60,
+              height: 60,
+              radius: AppSizes.radiusXS,
+              accentColor: context.features.market,
+            ),
+            // 타입 배지
+            Positioned(
+              top: 0,
+              left: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(
+                  color: badgeColor,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(AppSizes.radiusXS),
+                    bottomRight: Radius.circular(AppSizes.radiusXS),
+                  ),
+                ),
+                child: Text(
+                  badgeText,
+                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
+        ),
+        title: Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text(
+          product.priceString,
+          style: TextStyle(
+            color: isShare ? context.features.walk : Theme.of(context).colorScheme.onSurface,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        trailing: Text(
+          formatRelativeTime(product.createdAt),
+          style: AppTextStyles.captionSmall(context),
+        ),
+        onTap: () {
+          Navigator.pop(context);
+          context.push('/market/product/${product.id}');
+        },
+      ),
+    );
+  }
+
+  /// 알바 아이템 (타입 배지 포함)
+  Widget _buildJobItemWithBadge(JobModel job) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
+      child: ListTile(
+        leading: Stack(
+          children: [
+            MingrrImage.thumbnail(
+              imageUrl: job.imageUrls.isNotEmpty ? job.imageUrls.first : null,
+              width: 60,
+              height: 60,
+              radius: AppSizes.radiusXS,
+              accentColor: context.features.market,
+            ),
+            // 타입 배지
+            Positioned(
+              top: 0,
+              left: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(
+                  color: context.features.market,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(AppSizes.radiusXS),
+                    bottomRight: Radius.circular(AppSizes.radiusXS),
+                  ),
+                ),
+                child: const Text(
+                  '알바',
+                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
+        ),
+        title: Text(job.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text(
+          '${formatPrice(job.price)}원/${job.priceUnit}',
+          style: TextStyle(fontWeight: FontWeight.w600, color: context.features.market),
+        ),
+        trailing: Text(
+          formatRelativeTime(job.createdAt),
+          style: AppTextStyles.captionSmall(context),
+        ),
+        onTap: () {
+          Navigator.pop(context);
+          context.push('/market/job/${job.id}');
+        },
+      ),
+    );
+  }
+
+  /// 상품 아이템 (기존 - job 전용 검색용)
   Widget _buildProductItem(ProductModel product) {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
@@ -150,15 +272,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           width: 60,
           height: 60,
           radius: AppSizes.radiusXS,
-          errorWidget: Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: context.features.marketContainer,
-              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-            ),
-            child: Icon(AppIcons.image, color: context.features.market),
-          ),
+          accentColor: context.features.market,
         ),
         title: Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(
@@ -189,15 +303,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           width: 60,
           height: 60,
           radius: AppSizes.radiusXS,
-          errorWidget: Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: context.features.socialContainer,
-              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-            ),
-            child: Icon(AppIcons.group, color: context.features.social),
-          ),
+          accentColor: context.features.social,
         ),
         title: Text(group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Row(
@@ -221,14 +327,12 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
       child: ListTile(
-        leading: Container(
+        leading: MingrrImage.thumbnail(
+          imageUrl: job.imageUrls.isNotEmpty ? job.imageUrls.first : null,
           width: 60,
           height: 60,
-          decoration: BoxDecoration(
-            color: context.features.marketContainer,
-            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-          ),
-          child: Icon(_getJobIcon(job.type), color: context.features.market),
+          radius: AppSizes.radiusXS,
+          accentColor: context.features.market,
         ),
         title: Text(job.title, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(
@@ -256,15 +360,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           width: 60,
           height: 60,
           radius: AppSizes.radiusXS,
-          errorWidget: Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: context.features.breedingContainer,
-              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-            ),
-            child: Icon(AppIcons.breeding, color: context.features.breeding),
-          ),
+          accentColor: context.features.dating,
         ),
         title: Text(breeding.title ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(
@@ -289,18 +385,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           width: 60,
           height: 60,
           radius: AppSizes.radiusXS,
-          errorWidget: Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: context.features.socialContainer,
-              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-            ),
-            child: Icon(AppIcons.article, color: context.features.social),
-          ),
+          accentColor: context.features.social,
         ),
         title: Text(
-          post.content.length > 30 ? '${post.content.substring(0, 30)}...' : post.content,
+          post.title.isNotEmpty ? post.title : (post.content.length > 30 ? '${post.content.substring(0, 30)}...' : post.content),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -364,7 +452,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       List<dynamic> results;
       switch (widget.searchType) {
         case SearchType.market:
-          results = await _firestoreService.searchProducts(trimmedQuery);
+          results = await _firestoreService.searchMarketAll(trimmedQuery);
           break;
         case SearchType.group:
           results = await _firestoreService.searchGroups(trimmedQuery);

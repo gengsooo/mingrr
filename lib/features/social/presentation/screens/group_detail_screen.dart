@@ -1,37 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/constants/location_constants.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
-import '../../../../core/widgets/loading/loading_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/sheets/request_sheet.dart';
 import '../../../../core/widgets/sheets/report_sheet.dart';
-import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/badges/info_badge.dart';
-import '../../../../core/widgets/mingrr_image_header.dart';
 import '../../../../core/widgets/modals/guardian_profile_modal.dart';
 import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../models/group_model.dart';
 import '../../../../models/chat_model.dart';
-import '../../../../models/user_model.dart';
-import '../../../chat/presentation/screens/chat_detail_screen.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 import '../../../../core/services/share_service.dart';
 import '../providers/group_provider.dart';
 import '../../../../core/utils/error_handler.dart';
-import '../../../../core/utils/responsive_utils.dart';
 import 'group_write_screen.dart';
+import '../../../../core/widgets/sheets/schedule_sheet.dart';
+import '../../../../core/widgets/cards/request_card.dart';
+import '../../../../core/widgets/badges/request_status_badge.dart';
 
 /// ============================================================
 /// 소모임(Group) 상세 화면
@@ -155,6 +151,26 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       bottomNavigationBar: groupAsync.whenData((group) {
         if (group == null) return const SizedBox.shrink();
         return _buildBottomButton(context, group);
+      }).valueOrNull,
+      floatingActionButton: groupAsync.whenData((group) {
+        if (group == null) return null;
+        final myUserId = FirebaseService().currentUserId;
+        final isJoined = myUserId != null && group.isMember(myUserId);
+        
+        // 일정 탭이고 멤버인 경우에만 FAB 표시
+        return AnimatedBuilder(
+          animation: _tabController,
+          builder: (context, child) {
+            if (_tabController.index != 2 || !isJoined) {
+              return const SizedBox.shrink();
+            }
+            return FloatingActionButton(
+              onPressed: () => showScheduleWriteSheet(context, groupId: group.id),
+              backgroundColor: context.features.social,
+              child: const Icon(AppIcons.add, color: Colors.white),
+            );
+          },
+        );
       }).valueOrNull,
     );
   }
@@ -512,69 +528,13 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   }
 
   /// 멤버 프로필 바텀시트 표시
-  Future<void> _showMemberProfile(BuildContext context, _MemberInfo member) async {
-    try {
-      final userDoc = await FirebaseService().usersCollection.doc(member.id).get();
-      final userData = userDoc.data();
-      
-      final kkosunnaeScore = (userData?['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0;
-      final isIdentityVerified = userData?['isIdentityVerified'] as bool? ?? false;
-      final isPetVerified = userData?['isPetVerified'] as bool? ?? false;
-      final isLocationVerified = userData?['isLocationVerified'] as bool? ?? false;
-      final genderStr = userData?['gender'] as String?;
-      final age = userData?['age'] as int?;
-      
-      GuardianGender gender = GuardianGender.unknown;
-      if (genderStr == 'male') gender = GuardianGender.male;
-      if (genderStr == 'female') gender = GuardianGender.female;
-      
-      // 반려동물 정보 조회
-      List<GuardianPetInfo> pets = [];
-      final petsSnapshot = await FirebaseService().petsCollection
-          .where('ownerId', isEqualTo: member.id)
-          .get();
-      
-      for (final petDoc in petsSnapshot.docs) {
-        final petData = petDoc.data();
-        pets.add(GuardianPetInfo(
-          id: petDoc.id,
-          name: petData['name'] ?? '반려동물',
-          breed: petData['breed'],
-          ageString: petData['age'] != null ? '${petData['age']}살' : null,
-          introduction: petData['introduction'],
-          traits: List<String>.from(petData['traits'] ?? []),
-          photoUrls: List<String>.from(petData['photoUrls'] ?? []),
-          profileImageUrl: petData['profileImageUrl'],
-          likeCount: petData['likeCount'] ?? 0,
-        ));
-      }
-      
-      if (!mounted) return;
-      
-      showGuardianProfileModal(
-        context,
-        guardianId: member.id,
-        guardianName: member.nickname,
-        kkosunnaeScore: kkosunnaeScore,
-        profileImageUrl: member.profileUrl,
-        gender: gender,
-        age: age,
-        isIdentityVerified: isIdentityVerified,
-        isPetVerified: isPetVerified,
-        isLocationVerified: isLocationVerified,
-        pets: pets,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      showGuardianProfileModal(
-        context,
-        guardianId: member.id,
-        guardianName: member.nickname,
-        kkosunnaeScore: 50.0,
-        profileImageUrl: member.profileUrl,
-        pets: [],
-      );
-    }
+  void _showMemberProfile(BuildContext context, _MemberInfo member) {
+    showGuardianProfileFromFirestore(
+      context,
+      userId: member.id,
+      fallbackName: member.nickname,
+      fallbackImageUrl: member.profileUrl,
+    );
   }
 
   Widget _buildRoleBadge(String label, Color color) {
@@ -688,77 +648,97 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             final schedule = schedules[index];
             final isPast = schedule.isPast;
 
-            return Container(
-              margin: const EdgeInsets.only(bottom: AppSizes.paddingM),
-              padding: const EdgeInsets.all(AppSizes.paddingL),
-              decoration: BoxDecoration(
-                color: colorScheme.surface,
-                borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                border: isPast ? null : Border.all(color: accentColor.withValues(alpha: AppOpacity.o30)),
+            final myUserId = FirebaseService().currentUserId;
+            final isAdmin = myUserId != null && group.isAdmin(myUserId);
+            
+            return GestureDetector(
+              onTap: () => showScheduleDetailSheet(
+                context,
+                schedule: schedule,
+                groupId: group.id,
+                isGroupAdmin: isAdmin,
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
-                        decoration: BoxDecoration(
-                          color: isPast
-                              ? colorScheme.surfaceContainerLow
-                              : accentColor.withValues(alpha: AppOpacity.o10),
-                          borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
-                        ),
-                        child: Text(
-                          isPast ? '종료' : '예정',
-                          style: AppTextStyles.labelMedium(context).copyWith(
-                            color: isPast ? colorScheme.onSurfaceVariant : accentColor,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        '${schedule.participantCount}명 참여',
-                        style: AppTextStyles.caption(context),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: AppSizes.gapM),
-                  Text(
-                    schedule.title,
-                    style: AppTextStyles.headlineSmall(context).copyWith(
-                      color: isPast ? colorScheme.onSurfaceVariant : null,
-                    ),
-                  ),
-                  const SizedBox(height: AppSizes.gapS),
-                  Row(
-                    children: [
-                      Icon(AppIcons.calendar, size: 14, color: colorScheme.onSurfaceVariant),
-                      const SizedBox(width: AppSizes.gapSM),
-                      Text(
-                        _formatScheduleDate(schedule.startTime),
-                        style: AppTextStyles.bodySmall(context),
-                      ),
-                    ],
-                  ),
-                  if (schedule.place != null) ...[
-                    const SizedBox(height: AppSizes.gapSM),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: AppSizes.paddingM),
+                padding: const EdgeInsets.all(AppSizes.paddingL),
+                decoration: BoxDecoration(
+                  color: colorScheme.surface,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                  border: isPast ? null : Border.all(color: accentColor.withValues(alpha: AppOpacity.o30)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Row(
                       children: [
-                        Icon(AppIcons.locationOutlined, size: 14, color: colorScheme.onSurfaceVariant),
-                        const SizedBox(width: AppSizes.gapSM),
-                        Expanded(
-                          child: Text(
-                            schedule.place!,
-                            style: AppTextStyles.bodySmall(context),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
+                          decoration: BoxDecoration(
+                            color: isPast
+                                ? colorScheme.surfaceContainerLow
+                                : accentColor.withValues(alpha: AppOpacity.o10),
+                            borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
                           ),
+                          child: Text(
+                            isPast ? '종료' : '예정',
+                            style: AppTextStyles.labelMedium(context).copyWith(
+                              color: isPast ? colorScheme.onSurfaceVariant : accentColor,
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        // 참여자 아바타 미리보기 (최대 3명)
+                        if (schedule.participantIds.isNotEmpty)
+                          _ScheduleParticipantAvatars(
+                            participantIds: schedule.participantIds,
+                            maxDisplay: 3,
+                          ),
+                        const SizedBox(width: AppSizes.gapS),
+                        Text(
+                          '${schedule.participantCount}명',
+                          style: AppTextStyles.caption(context),
+                        ),
+                        const SizedBox(width: AppSizes.gapS),
+                        Icon(AppIcons.chevronRight, size: 16, color: colorScheme.onSurfaceVariant),
+                      ],
+                    ),
+                    const SizedBox(height: AppSizes.gapM),
+                    Text(
+                      schedule.title,
+                      style: AppTextStyles.headlineSmall(context).copyWith(
+                        color: isPast ? colorScheme.onSurfaceVariant : null,
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.gapS),
+                    Row(
+                      children: [
+                        Icon(AppIcons.calendar, size: 14, color: colorScheme.onSurfaceVariant),
+                        const SizedBox(width: AppSizes.gapSM),
+                        Text(
+                          _formatScheduleDate(schedule.startTime),
+                          style: AppTextStyles.bodySmall(context),
                         ),
                       ],
                     ),
+                    if (schedule.place != null) ...[
+                      const SizedBox(height: AppSizes.gapSM),
+                      Row(
+                        children: [
+                          Icon(AppIcons.locationOutlined, size: 14, color: colorScheme.onSurfaceVariant),
+                          const SizedBox(width: AppSizes.gapSM),
+                          Expanded(
+                            child: Text(
+                              schedule.place!,
+                              style: AppTextStyles.bodySmall(context),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             );
           },
@@ -1019,27 +999,67 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             );
           }
 
-          return ListView.separated(
-            padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
+          return ListView.builder(
+            padding: const EdgeInsets.all(AppSizes.paddingM),
             itemCount: requests.length,
-            separatorBuilder: (_, __) => const MingrrDivider(),
             itemBuilder: (context, index) {
               final request = requests[index];
-              return _JoinRequestTile(
-                request: request,
-                groupId: group.id,
-                myUserId: myUserId,
-                firestoreService: firestoreService,
-                onApproved: () {
-                  // 가입 승인 후 바텀시트 닫고 상세 화면 갱신
-                  Navigator.pop(context);
-                  ref.invalidate(groupJoinRequestsProvider(group.id));
-                  ref.invalidate(groupDetailProvider(widget.groupId));
-                  ref.read(groupRefreshProvider.notifier).state++;
+              return AsyncRequestCard(
+                type: RequestCardType.groupJoin,
+                userId: request.userId,
+                status: UnifiedRequestStatus.fromGroup(request.status),
+                message: request.message,
+                requestedAt: request.createdAt,
+                loadUserInfo: (userId) async {
+                  final user = await firestoreService.getUser(userId);
+                  if (user == null) return null;
+                  return {
+                    'name': user.nickname,
+                    'imageUrl': user.profileImageUrl,
+                  };
                 },
-                onRejected: () {
-                  // 가입 거절 후 리스트 갱신
-                  ref.invalidate(groupJoinRequestsProvider(group.id));
+                onTap: () => showGuardianProfileFromFirestore(
+                  context,
+                  userId: request.userId,
+                ),
+                onAccept: () async {
+                  try {
+                    await firestoreService.approveJoinRequest(
+                      requestId: request.id,
+                      groupId: group.id,
+                      userId: request.userId,
+                      respondedBy: myUserId,
+                    );
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                    if (context.mounted) {
+                      MingrrSnackBar.success(context, '가입을 승인했습니다');
+                    }
+                    ref.invalidate(groupJoinRequestsProvider(group.id));
+                    ref.invalidate(groupDetailProvider(widget.groupId));
+                    ref.read(groupRefreshProvider.notifier).state++;
+                  } catch (e) {
+                    if (context.mounted) {
+                      MingrrSnackBar.error(context, '승인에 실패했어요. 다시 시도해주세요');
+                    }
+                  }
+                },
+                onReject: () async {
+                  try {
+                    await firestoreService.rejectJoinRequest(
+                      requestId: request.id,
+                      respondedBy: myUserId,
+                    );
+                    if (context.mounted) {
+                      MingrrSnackBar.info(context, '가입을 거절했습니다');
+                      ref.invalidate(groupJoinRequestsProvider(group.id));
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      MingrrSnackBar.error(context, '거절에 실패했어요. 다시 시도해주세요');
+                    }
+                  }
                 },
               );
             },
@@ -1113,16 +1133,8 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       );
 
       if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatDetailScreen(
-              chatRoomId: chatRoom.id,
-              otherUserName: group.name,
-              chatType: 'group',
-            ),
-          ),
-        );
+        // go_router를 사용하여 채팅 탭으로 이동 (하단 메뉴 동기화)
+        context.go('/chat/${chatRoom.id}');
       }
     } catch (e) {
       if (mounted) {
@@ -1171,227 +1183,92 @@ class _MemberInfo {
   });
 }
 
-/// 가입 신청 타일 위젯
-class _JoinRequestTile extends StatefulWidget {
-  final GroupJoinRequestModel request;
-  final String groupId;
-  final String myUserId;
-  final FirestoreService firestoreService;
-  final VoidCallback? onApproved;
-  final VoidCallback? onRejected;
+/// 일정 카드용 참여자 아바타 미리보기
+class _ScheduleParticipantAvatars extends StatefulWidget {
+  final List<String> participantIds;
+  final int maxDisplay;
 
-  const _JoinRequestTile({
-    required this.request,
-    required this.groupId,
-    required this.myUserId,
-    required this.firestoreService,
-    this.onApproved,
-    this.onRejected,
+  const _ScheduleParticipantAvatars({
+    required this.participantIds,
+    this.maxDisplay = 3,
   });
 
   @override
-  State<_JoinRequestTile> createState() => _JoinRequestTileState();
+  State<_ScheduleParticipantAvatars> createState() => _ScheduleParticipantAvatarsState();
 }
 
-class _JoinRequestTileState extends State<_JoinRequestTile> {
-  UserModel? _user;
+class _ScheduleParticipantAvatarsState extends State<_ScheduleParticipantAvatars> {
+  final List<String?> _profileUrls = [];
   bool _isLoading = true;
-  bool _isProcessing = false;
 
   @override
   void initState() {
     super.initState();
-    _loadUser();
+    _loadParticipantProfiles();
   }
 
-  Future<void> _loadUser() async {
-    try {
-      final user = await widget.firestoreService.getUser(widget.request.userId);
-      if (mounted) {
-        setState(() {
-          _user = user;
-          _isLoading = false;
-        });
+  Future<void> _loadParticipantProfiles() async {
+    final displayIds = widget.participantIds.take(widget.maxDisplay).toList();
+    
+    for (final userId in displayIds) {
+      try {
+        final user = await FirestoreService().getUser(userId);
+        if (mounted) {
+          setState(() {
+            _profileUrls.add(user?.profileImageUrl);
+          });
+        }
+      } catch (_) {
+        if (mounted) {
+          setState(() {
+            _profileUrls.add(null);
+          });
+        }
       }
-    } catch (e) {
-      if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  Future<void> _approve() async {
-    if (_isProcessing) return;
-    setState(() => _isProcessing = true);
-
-    try {
-      await widget.firestoreService.approveJoinRequest(
-        requestId: widget.request.id,
-        groupId: widget.groupId,
-        userId: widget.request.userId,
-        respondedBy: widget.myUserId,
-      );
-      if (mounted) {
-        MingrrSnackBar.success(context, '${_user?.nickname ?? '사용자'}님의 가입을 승인했습니다');
-        widget.onApproved?.call();
-      }
-    } catch (e) {
-      if (mounted) {
-        ErrorHandler.showError(context, e, tag: 'GroupDetail', operation: '가입 승인');
-      }
-    } finally {
-      if (mounted) setState(() => _isProcessing = false);
-    }
-  }
-
-  Future<void> _reject() async {
-    if (_isProcessing) return;
-    setState(() => _isProcessing = true);
-
-    try {
-      await widget.firestoreService.rejectJoinRequest(
-        requestId: widget.request.id,
-        respondedBy: widget.myUserId,
-      );
-      if (mounted) {
-        MingrrSnackBar.info(context, '${_user?.nickname ?? '사용자'}님의 가입을 거절했습니다');
-        widget.onRejected?.call();
-      }
-    } catch (e) {
-      if (mounted) {
-        ErrorHandler.showError(context, e, tag: 'GroupDetail', operation: '가입 거절');
-      }
-    } finally {
-      if (mounted) setState(() => _isProcessing = false);
+    
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Container(
-        padding: const EdgeInsets.all(AppSizes.paddingM),
-        child: Row(
-          children: [
-            const CircleAvatar(child: Icon(AppIcons.profile)),
-            const SizedBox(width: AppSizes.gapM),
-            Text('로딩 중...', style: Theme.of(context).textTheme.bodyMedium),
-          ],
-        ),
-      );
+    final colorScheme = Theme.of(context).colorScheme;
+    final displayCount = widget.participantIds.take(widget.maxDisplay).length;
+    
+    if (_isLoading && _profileUrls.isEmpty) {
+      return const SizedBox(width: 60);
     }
-
-    final theme = Theme.of(context);
-    final timeAgo = _formatTimeAgo(widget.request.createdAt);
-
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.paddingM),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 상단: 프로필 + 닉네임 + 시간
-          Row(
-            children: [
-              GestureDetector(
-                onTap: _user != null ? () => _showUserProfile() : null,
-                child: MingrrImage.avatar(
-                  imageUrl: _user?.profileImageUrl,
-                  size: 44,
-                  icon: AppIcons.profile,
-                ),
-              ),
-              const SizedBox(width: AppSizes.gapM),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _user?.nickname ?? '알 수 없음',
-                      style: theme.textTheme.titleSmall,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      timeAgo,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.outline,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          
-          // 메시지 (있는 경우)
-          if (widget.request.message != null && widget.request.message!.isNotEmpty) ...[
-            const SizedBox(height: AppSizes.gapS),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSizes.paddingS),
+    
+    return SizedBox(
+      width: 20.0 + (displayCount - 1) * 14.0,
+      height: 20,
+      child: Stack(
+        children: List.generate(
+          _profileUrls.length,
+          (index) => Positioned(
+            left: index * 14.0,
+            child: Container(
+              width: 20,
+              height: 20,
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                shape: BoxShape.circle,
+                border: Border.all(color: colorScheme.surface, width: 1.5),
+                color: colorScheme.surfaceContainerLow,
               ),
-              child: Text(
-                widget.request.message!,
-                style: theme.textTheme.bodySmall,
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
+              child: ClipOval(
+                child: _profileUrls[index] != null
+                    ? MingrrImage(
+                        imageUrl: _profileUrls[index],
+                        fit: BoxFit.cover,
+                      )
+                    : Icon(AppIcons.profile, size: 12, color: colorScheme.onSurfaceVariant),
               ),
             ),
-          ],
-          
-          // 하단: 버튼 영역
-          const SizedBox(height: AppSizes.gapM),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (_isProcessing)
-                const MingrrLoadingIndicator(size: 24, strokeWidth: 2)
-              else ...[
-                OutlinedButton.icon(
-                  onPressed: _reject,
-                  icon: Icon(AppIcons.close, size: 18, color: theme.colorScheme.error),
-                  label: Text('거절', style: TextStyle(color: theme.colorScheme.error)),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: theme.colorScheme.error),
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
-                  ),
-                ),
-                const SizedBox(width: AppSizes.gapS),
-                FilledButton.icon(
-                  onPressed: _approve,
-                  icon: const Icon(AppIcons.check, size: 18),
-                  label: const Text('승인'),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
-                  ),
-                ),
-              ],
-            ],
           ),
-        ],
+        ),
       ),
-    );
-  }
-
-  String _formatTimeAgo(DateTime dateTime) {
-    final diff = DateTime.now().difference(dateTime);
-    if (diff.inDays > 0) return '${diff.inDays}일 전';
-    if (diff.inHours > 0) return '${diff.inHours}시간 전';
-    if (diff.inMinutes > 0) return '${diff.inMinutes}분 전';
-    return '방금 전';
-  }
-
-  void _showUserProfile() {
-    if (_user == null) return;
-    showGuardianProfileModal(
-      context,
-      guardianId: _user!.id,
-      guardianName: _user!.nickname,
-      kkosunnaeScore: _user!.kkosunnaeScore,
-      profileImageUrl: _user!.profileImageUrl,
-      isIdentityVerified: _user!.isIdentityVerified,
-      isLocationVerified: _user!.isLocationVerified,
     );
   }
 }

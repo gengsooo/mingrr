@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/theme/feature_colors.dart';
@@ -7,15 +8,12 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/dialogs/dialog_buttons.dart';
-import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/badges/svg_icons.dart';
-import '../../../../core/widgets/kkosunnae_widgets.dart';
 import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../core/widgets/navigation/appbar_actions.dart';
 import '../../../../core/widgets/modals/guardian_profile_modal.dart';
-import '../../../../core/widgets/refresh_wrapper.dart';
-import '../../../../core/services/firebase_service.dart';
+import '../../../../core/widgets/cards/request_card.dart';
+import '../../../../core/widgets/badges/request_status_badge.dart';
 import '../../../../models/chat_model.dart';
 import '../../../../models/dating_model.dart';
 import '../../../../models/job_application_model.dart';
@@ -23,7 +21,6 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../dating/presentation/providers/dating_request_provider.dart' show receivedRequestsProvider, receivedDatingRequestsProvider, receivedBreedingRequestsProvider, DatingRequestActionService;
 import '../../../marketplace/presentation/providers/job_application_provider.dart';
 import '../providers/chat_provider.dart';
-import 'chat_detail_screen.dart';
 import '../../../../core/utils/responsive_utils.dart';
 
 /// ============================================================
@@ -371,113 +368,19 @@ class ChatListScreen extends ConsumerWidget {
     );
   }
 
-  /// 알바 지원 아이템 (데이팅 신청 카드와 동일 패턴)
+  /// 알바 지원 아이템 - RequestCard 공통 컴포넌트 사용
   Widget _buildJobApplicationItem(BuildContext context, WidgetRef ref, JobApplicationModel application) {
-    final accentColor = context.features.market;
-    
-    return MingrrCard(
-      margin: const EdgeInsets.only(bottom: AppSizes.gapS),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.paddingM),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                // 프로필 이미지 (클릭 시 보호자 정보 바텀시트)
-                GestureDetector(
-                  onTap: () => _showApplicantGuardianProfile(context, application),
-                  child: MingrrImage.avatar(
-                    imageUrl: application.applicantImageUrl,
-                    size: 44,
-                    borderColor: accentColor.withValues(alpha: AppOpacity.o30),
-                    borderWidth: 1,
-                  ),
-                ),
-                const SizedBox(width: AppSizes.gapM),
-                // 정보
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
-                            decoration: BoxDecoration(
-                              color: accentColor.withValues(alpha: AppOpacity.o10),
-                              borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
-                            ),
-                            child: Text(
-                              application.jobTypeLabel,
-                              style: AppTextStyles.captionSmall(context).copyWith(color: accentColor),
-                            ),
-                          ),
-                          const SizedBox(width: AppSizes.gapS),
-                          Expanded(
-                            child: Text(
-                              application.applicantName,
-                              style: AppTextStyles.titleMedium(context),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: AppSizes.gapS),
-                          // 꼬순내 지수
-                          if (application.applicantKkosunnaeScore > 0) ...[
-                            KkosunnaeScoreSmall(score: application.applicantKkosunnaeScore),
-                            const SizedBox(width: AppSizes.gapS),
-                          ],
-                          Text(
-                            _formatRequestTime(application.createdAt),
-                            style: AppTextStyles.captionSmall(context),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSizes.gapXXS),
-                      // 알바 제목
-                      Text(
-                        application.jobTitle,
-                        style: AppTextStyles.bodySmall(context).copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (application.message != null && application.message!.isNotEmpty) ...[
-                        const SizedBox(height: AppSizes.gapSM),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Theme.of(context).colorScheme.surfaceContainerHighest
-                                : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: AppOpacity.o30),
-                            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-                          ),
-                          child: Text(
-                            application.message!,
-                            style: AppTextStyles.bodySmall(context),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSizes.gapM),
-            // 수락/거절 버튼
-            MingrrDialogButtons(
-              cancelText: '거절',
-              confirmText: '수락',
-              onCancel: () => _showJobRejectConfirmation(context, ref, application),
-              onConfirm: () => _showJobAcceptConfirmation(context, ref, application),
-              confirmColor: accentColor,
-              height: 36,
-            ),
-          ],
-        ),
-      ),
+    return RequestCard(
+      type: RequestCardType.jobApply,
+      senderName: application.applicantName,
+      senderImageUrl: application.applicantImageUrl,
+      senderSubtitle: '${application.jobTypeLabel} · ${application.jobTitle}',
+      status: UnifiedRequestStatus.fromJob(application.status),
+      message: application.message,
+      requestedAt: application.createdAt,
+      onTap: () => _showApplicantGuardianProfile(context, application),
+      onAccept: () => _showJobAcceptConfirmation(context, ref, application),
+      onReject: () => _showJobRejectConfirmation(context, ref, application),
     );
   }
 
@@ -588,78 +491,14 @@ class ChatListScreen extends ConsumerWidget {
   }
 
   /// 지원자 보호자 프로필 바텀시트 표시
-  Future<void> _showApplicantGuardianProfile(BuildContext context, JobApplicationModel application) async {
-    final firebaseService = FirebaseService();
-    
-    try {
-      // Firebase에서 보호자 상세 정보 조회
-      final userDoc = await firebaseService.firestore
-          .collection('users')
-          .doc(application.applicantId)
-          .get();
-      
-      final userData = userDoc.data();
-      final kkosunnaeScore = (userData?['kkosunnaeScore'] as num?)?.toDouble() ?? application.applicantKkosunnaeScore;
-      final isIdentityVerified = userData?['isIdentityVerified'] as bool? ?? false;
-      final isPetVerified = userData?['isPetVerified'] as bool? ?? false;
-      final isLocationVerified = userData?['isLocationVerified'] as bool? ?? false;
-      final genderStr = userData?['gender'] as String?;
-      final age = userData?['age'] as int?;
-      
-      // 성별 변환
-      GuardianGender gender = GuardianGender.unknown;
-      if (genderStr == 'male') gender = GuardianGender.male;
-      if (genderStr == 'female') gender = GuardianGender.female;
-      
-      // 반려동물 정보 조회
-      List<GuardianPetInfo> pets = [];
-      final petsSnapshot = await firebaseService.firestore
-          .collection('pets')
-          .where('ownerId', isEqualTo: application.applicantId)
-          .get();
-      
-      for (final petDoc in petsSnapshot.docs) {
-        final petData = petDoc.data();
-        pets.add(GuardianPetInfo(
-          id: petDoc.id,
-          name: petData['name'] ?? '반려동물',
-          breed: petData['breed'],
-          ageString: petData['age'] != null ? '${petData['age']}살' : null,
-          introduction: petData['introduction'],
-          traits: List<String>.from(petData['traits'] ?? []),
-          photoUrls: List<String>.from(petData['photoUrls'] ?? []),
-          profileImageUrl: petData['profileImageUrl'],
-          likeCount: petData['likeCount'] ?? 0,
-        ));
-      }
-      
-      if (!context.mounted) return;
-      
-      showGuardianProfileModal(
-        context,
-        guardianId: application.applicantId,
-        guardianName: application.applicantName,
-        kkosunnaeScore: kkosunnaeScore,
-        profileImageUrl: userData?['profileImageUrl'] ?? application.applicantImageUrl,
-        gender: gender,
-        age: age,
-        isIdentityVerified: isIdentityVerified,
-        isPetVerified: isPetVerified,
-        isLocationVerified: isLocationVerified,
-        pets: pets,
-      );
-    } catch (e) {
-      // 에러 시 기본 정보로 표시
-      if (!context.mounted) return;
-      showGuardianProfileModal(
-        context,
-        guardianId: application.applicantId,
-        guardianName: application.applicantName,
-        kkosunnaeScore: application.applicantKkosunnaeScore,
-        profileImageUrl: application.applicantImageUrl,
-        pets: [],
-      );
-    }
+  void _showApplicantGuardianProfile(BuildContext context, JobApplicationModel application) {
+    showGuardianProfileFromFirestore(
+      context,
+      userId: application.applicantId,
+      fallbackName: application.applicantName,
+      fallbackImageUrl: application.applicantImageUrl,
+      fallbackScore: application.applicantKkosunnaeScore,
+    );
   }
 
   /// 신청 목록 섹션
@@ -693,111 +532,22 @@ class ChatListScreen extends ConsumerWidget {
     );
   }
 
-  /// 신청 아이템
+  /// 신청 아이템 - RequestCard 공통 컴포넌트 사용
   Widget _buildRequestItem(BuildContext context, WidgetRef ref, DatingRequestModel request) {
     final isBreeding = request.type == DatingRequestType.breeding;
-    // 데이트/교배 모두 동일한 색상 사용
-    final accentColor = context.features.dating;
     
-    return MingrrCard(
-      margin: const EdgeInsets.only(bottom: AppSizes.gapS),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.paddingM),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                // 프로필 이미지 (클릭 시 보호자 정보 바텀시트)
-                GestureDetector(
-                  onTap: () => _showSenderGuardianProfile(context, request),
-                  child: MingrrImage.petAvatar(
-                    imageUrl: request.senderPetImageUrl,
-                    size: 44,
-                    borderColor: accentColor.withValues(alpha: AppOpacity.o30),
-                    borderWidth: 1,
-                  ),
-                ),
-                const SizedBox(width: AppSizes.gapM),
-                // 정보
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
-                            decoration: BoxDecoration(
-                              color: accentColor.withValues(alpha: AppOpacity.o10),
-                              borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
-                            ),
-                            child: Text(
-                              isBreeding ? '교배' : '데이트',
-                              style: AppTextStyles.captionSmall(context).copyWith(color: accentColor),
-                            ),
-                          ),
-                          const SizedBox(width: AppSizes.gapS),
-                          Expanded(
-                            child: Text(
-                              '${request.senderPetName} · ${request.senderName}',
-                              style: AppTextStyles.titleMedium(context),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: AppSizes.gapS),
-                          Text(
-                            _formatRequestTime(request.createdAt),
-                            style: AppTextStyles.captionSmall(context),
-                          ),
-                        ],
-                      ),
-                      if (request.message != null && request.message!.isNotEmpty) ...[
-                        const SizedBox(height: AppSizes.gapSM),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Theme.of(context).colorScheme.surfaceContainerHighest
-                                : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: AppOpacity.o30),
-                            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-                          ),
-                          child: Text(
-                            request.message!,
-                            style: AppTextStyles.bodySmall(context),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSizes.gapM),
-            // 수락/거절 버튼
-            MingrrDialogButtons(
-              cancelText: '거절',
-              confirmText: '수락',
-              onCancel: () => _showRejectConfirmation(context, ref, request),
-              onConfirm: () => _showAcceptConfirmation(context, ref, request),
-              confirmColor: accentColor,
-              height: 36,
-            ),
-          ],
-        ),
-      ),
+    return RequestCard(
+      type: isBreeding ? RequestCardType.breeding : RequestCardType.dating,
+      senderName: request.senderPetName ?? '알 수 없음',
+      senderImageUrl: request.senderPetImageUrl,
+      senderSubtitle: request.senderName,
+      status: UnifiedRequestStatus.fromDating(request.status),
+      message: request.message,
+      requestedAt: request.createdAt,
+      onTap: () => _showSenderGuardianProfile(context, request),
+      onAccept: () => _showAcceptConfirmation(context, ref, request),
+      onReject: () => _showRejectConfirmation(context, ref, request),
     );
-  }
-
-  /// 신청 시간 포맷
-  String _formatRequestTime(DateTime time) {
-    final now = DateTime.now();
-    final diff = now.difference(time);
-    if (diff.inMinutes < 1) return '방금';
-    if (diff.inHours < 1) return '${diff.inMinutes}분 전';
-    if (diff.inDays < 1) return '${diff.inHours}시간 전';
-    return '${diff.inDays}일 전';
   }
 
   /// 수락 확인 다이얼로그
@@ -970,19 +720,7 @@ class ChatListScreen extends ConsumerWidget {
 
     return MingrrCard(
       margin: const EdgeInsets.only(bottom: AppSizes.gapS),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatDetailScreen(
-              chatRoomId: room.id,
-              otherUserName: displayName,
-              otherUserImageUrl: displayImage,
-              chatType: room.type,
-            ),
-          ),
-        );
-      },
+      onTap: () => context.push('/chat/${room.id}'),
       child: Row(
         children: [
           // 프로필 이미지
@@ -1152,18 +890,7 @@ class ChatListScreen extends ConsumerWidget {
 
     return MingrrCard(
       margin: const EdgeInsets.only(bottom: AppSizes.gapS),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatDetailScreen(
-              chatRoomId: chat['id'] as String,
-              otherUserName: chat['name'] as String,
-              chatType: type == ChatType.dating ? 'dating' : type == ChatType.group ? 'group' : 'marketplace',
-            ),
-          ),
-        );
-      },
+      onTap: () => context.push('/chat/${chat['id']}'),
       child: Row(
         children: [
           // 프로필 이미지
@@ -1325,83 +1052,12 @@ class ChatListScreen extends ConsumerWidget {
   }
 
   /// 신청자 보호자 프로필 바텀시트 표시
-  Future<void> _showSenderGuardianProfile(BuildContext context, DatingRequestModel request) async {
-    final firebaseService = FirebaseService();
-    
-    try {
-      // Firebase에서 보호자 상세 정보 조회
-      final userDoc = await firebaseService.firestore
-          .collection('users')
-          .doc(request.senderId)
-          .get();
-      
-      final userData = userDoc.data();
-      final kkosunnaeScore = (userData?['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0;
-      final isIdentityVerified = userData?['isIdentityVerified'] as bool? ?? false;
-      final isPetVerified = userData?['isPetVerified'] as bool? ?? false;
-      final isLocationVerified = userData?['isLocationVerified'] as bool? ?? false;
-      final genderStr = userData?['gender'] as String?;
-      final age = userData?['age'] as int?;
-      
-      // 성별 변환
-      GuardianGender gender = GuardianGender.unknown;
-      if (genderStr == 'male') gender = GuardianGender.male;
-      if (genderStr == 'female') gender = GuardianGender.female;
-      
-      // 반려동물 정보 조회
-      List<GuardianPetInfo> pets = [];
-      final petsSnapshot = await firebaseService.firestore
-          .collection('pets')
-          .where('ownerId', isEqualTo: request.senderId)
-          .get();
-      
-      for (final petDoc in petsSnapshot.docs) {
-        final petData = petDoc.data();
-        pets.add(GuardianPetInfo(
-          id: petDoc.id,
-          name: petData['name'] ?? '반려동물',
-          breed: petData['breed'],
-          ageString: petData['age'] != null ? '${petData['age']}살' : null,
-          introduction: petData['introduction'],
-          traits: List<String>.from(petData['traits'] ?? []),
-          photoUrls: List<String>.from(petData['photoUrls'] ?? []),
-          profileImageUrl: petData['profileImageUrl'],
-          likeCount: petData['likeCount'] ?? 0,
-        ));
-      }
-      
-      if (!context.mounted) return;
-      
-      showGuardianProfileModal(
-        context,
-        guardianId: request.senderId,
-        guardianName: request.senderName ?? '사용자',
-        kkosunnaeScore: kkosunnaeScore,
-        profileImageUrl: userData?['profileImageUrl'],
-        gender: gender,
-        age: age,
-        isIdentityVerified: isIdentityVerified,
-        isPetVerified: isPetVerified,
-        isLocationVerified: isLocationVerified,
-        pets: pets,
-      );
-    } catch (e) {
-      // 에러 시 기본 정보로 표시
-      if (!context.mounted) return;
-      showGuardianProfileModal(
-        context,
-        guardianId: request.senderId,
-        guardianName: request.senderName ?? '사용자',
-        kkosunnaeScore: 50.0,
-        pets: [
-          GuardianPetInfo(
-            id: request.senderPetId,
-            name: request.senderPetName ?? '반려동물',
-            profileImageUrl: request.senderPetImageUrl,
-          ),
-        ],
-      );
-    }
+  void _showSenderGuardianProfile(BuildContext context, DatingRequestModel request) {
+    showGuardianProfileFromFirestore(
+      context,
+      userId: request.senderId,
+      fallbackName: request.senderName ?? '사용자',
+    );
   }
 }
 

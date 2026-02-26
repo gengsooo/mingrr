@@ -44,15 +44,26 @@ class SeedData {
     print('🌱 더미 데이터 생성 시작...');
     
     try {
-      // 기존 사용자 ID 가져오기 (users는 생성하지 않음)
+      // 테스트 사용자 먼저 생성 (다른 사용자 펫 표시를 위해 필수)
+      await seedTestUsers();
+      
+      // 기존 사용자 ID 가져오기
       final userIds = await _getExistingUserIds();
       if (userIds.isEmpty) {
         throw Exception('사용자 데이터가 없습니다. 먼저 회원가입을 해주세요.');
       }
-      print('✅ 기존 사용자 ${userIds.length}명 확인');
+      print('✅ 사용자 ${userIds.length}명 확인');
+      
+      // 사용자 위치 정보 업데이트 (거리 기반 기능에 필수)
+      await seedUserLocations();
+      print('✅ 사용자 위치 정보 생성 완료');
       
       await _seedPets(userIds);
       print('✅ 반려동물 데이터 생성 완료');
+      
+      // 교배글 생성 (펫 데이터 생성 후 호출해야 함)
+      await _seedBreedingPosts(userIds);
+      print('✅ 교배글 데이터 생성 완료');
       
       await _seedProducts(userIds);
       print('✅ 상품 데이터 생성 완료');
@@ -107,9 +118,15 @@ class SeedData {
       {'name': '제우스', 'breed': '그레이트데인', 'gender': 'male', 'weight': 55.0, 'ageDays': 365 * 3, 'neutered': true, 'traits': [PetTrait.gentle, PetTrait.calm, PetTrait.loyal], 'bio': '거대하지만 순한 제우스입니다', 'hasProfile': false, 'photoCount': 2},
     ];
     
+    // 테스트 펫은 첫 번째 사용자(현재 로그인 사용자)가 아닌 다른 사용자에게 할당
+    // 이렇게 해야 교배찾기에서 "다른 사용자의 펫"으로 표시됨
+    final otherUserIds = userIds.length > 1 
+        ? userIds.sublist(1)  // 첫 번째 사용자 제외
+        : userIds;  // 사용자가 1명뿐이면 그대로 사용
+    
     for (int i = 0; i < petDataList.length; i++) {
       final data = petDataList[i];
-      final ownerId = userIds[i % userIds.length];
+      final ownerId = otherUserIds[i % otherUserIds.length];
       final petId = '${TestDataPrefix.pet}${(i + 1).toString().padLeft(3, '0')}';
       
       // 이미지 설정
@@ -841,149 +858,78 @@ class SeedData {
   Future<void> _seedBreedingPosts(List<String> userIds) async {
     final now = DateTime.now();
     
-    // 교배 가능한 펫 ID만 가져오기 (isBreedingAvailable: true)
+    // 교배 가능한 펫 정보 가져오기 (isBreedingAvailable: true)
     final petsSnapshot = await _firebase.petsCollection
         .where('isBreedingAvailable', isEqualTo: true)
         .limit(15)
         .get();
-    final petIds = petsSnapshot.docs.map((doc) => doc.id).toList();
     
-    if (petIds.isEmpty) {
+    // 펫 ID와 소유자 ID를 함께 저장
+    final petInfoList = petsSnapshot.docs.map((doc) {
+      final data = doc.data();
+      return {
+        'petId': doc.id,
+        'ownerId': data['ownerId'] as String? ?? '',
+      };
+    }).toList();
+    
+    if (petInfoList.isEmpty) {
       print('  ⚠️ 반려동물 데이터가 없어서 교배 글을 생성할 수 없습니다.');
       return;
     }
     
-    print('  📋 교배 가능한 펫 ${petIds.length}마리 발견: ${petIds.take(5).join(', ')}...');
+    print('  📋 교배 가능한 펫 ${petInfoList.length}마리 발견');
     
-    // 다양한 교배 글 데이터 (10개)
-    final posts = [
-      {
-        'userId': userIds[0 % userIds.length],
-        'petId': petIds[0 % petIds.length],
-        'title': '건강한 골든 리트리버 교배 원해요',
-        'description': '3살 남아 골든 리트리버입니다.\n\n✅ 건강검진 완료 (2024년 12월)\n✅ 예방접종 완료\n✅ 혈통서 보유\n\n성격이 온순하고 사람을 좋아해요. 같은 품종 또는 대형견 여아 찾습니다. 첫 교배라 경험 있는 보호자분이면 좋겠어요.',
-        'preferredGender': 'female',
-        'preferredSizes': ['large', 'giant'],
-        'sameBreedOnly': false,
-        'maxAge': 5,
-        'minAge': 2,
-      },
-      {
-        'userId': userIds[1 % userIds.length],
-        'petId': petIds[1 % petIds.length],
-        'title': '토이푸들 여아 교배 상대 구해요',
-        'description': '1살 토이푸들 쿠키입니다 🐩\n\n혈통서 있고, 건강검진 완료했어요!\n성격이 활발하고 애교가 많아요.\n\n같은 품종 남아 원합니다.\n서울/경기 지역 선호해요.',
-        'preferredGender': 'male',
-        'preferredSizes': ['tiny', 'small'],
-        'sameBreedOnly': true,
-        'maxAge': 4,
-        'minAge': 1,
-      },
-      {
-        'userId': userIds[2 % userIds.length],
-        'petId': petIds[2 % petIds.length],
-        'title': '포메라니안 남아 교배 파트너 찾아요',
-        'description': '활발한 뽀미입니다! 1살이에요.\n\n건강하고 털 상태도 좋아요.\n소형견 여아 구합니다.\n\n📍 강남구 거주\n📞 채팅으로 연락주세요!',
-        'preferredGender': 'female',
-        'preferredSizes': ['tiny', 'small'],
-        'sameBreedOnly': false,
-        'maxAge': 3,
-        'minAge': 1,
-      },
-      {
-        'userId': userIds[3 % userIds.length],
-        'petId': petIds[3 % petIds.length],
-        'title': '시바견 여아 교배 원해요',
-        'description': '2살 반 시바견 시바입니다.\n\n도도하지만 다른 강아지와는 잘 지내요.\n건강검진 완료, 예방접종 완료!\n\n같은 품종 남아 찾습니다.\n성격 좋은 아이면 좋겠어요.',
-        'preferredGender': 'male',
-        'preferredSizes': ['medium'],
-        'sameBreedOnly': true,
-        'maxAge': 4,
-        'minAge': 2,
-      },
-      {
-        'userId': userIds[4 % userIds.length],
-        'petId': petIds[4 % petIds.length],
-        'title': '보더콜리 교배 상대 구합니다',
-        'description': '1살 반 보더콜리 까미예요!\n\n✅ 건강검진 완료\n✅ 유전병 검사 완료\n✅ 혈통서 보유\n\n똑똑하고 에너지가 넘쳐요.\n같은 품종 또는 중형견 여아 찾습니다.',
-        'preferredGender': 'female',
-        'preferredSizes': ['medium', 'large'],
-        'sameBreedOnly': false,
-        'maxAge': 5,
-        'minAge': 1,
-      },
-      {
-        'userId': userIds[5 % userIds.length],
-        'petId': petIds[5 % petIds.length],
-        'title': '사모예드 여아 교배 파트너 찾아요',
-        'description': '웃는 천사 루나입니다 😊\n\n2살 사모예드 여아예요.\n성격이 정말 좋고 사람을 좋아해요.\n\n건강하고 털 관리 잘 되어있어요.\n대형견 남아 찾습니다!',
-        'preferredGender': 'male',
-        'preferredSizes': ['large', 'giant'],
-        'sameBreedOnly': false,
-        'maxAge': 5,
-        'minAge': 2,
-      },
-      {
-        'userId': userIds[6 % userIds.length],
-        'petId': petIds[6 % petIds.length],
-        'title': '말티즈 남아 교배 원해요',
-        'description': '5살 비숑프리제 뭉치입니다.\n\n모든 강아지와 친하게 지내요!\n건강검진 완료했고 성격 좋아요.\n\n소형견 여아 구합니다.\n나이는 상관없어요~',
-        'preferredGender': 'female',
-        'preferredSizes': ['tiny', 'small'],
-        'sameBreedOnly': false,
-        'maxAge': 7,
-        'minAge': 1,
-      },
-      {
-        'userId': userIds[7 % userIds.length],
-        'petId': petIds[7 % petIds.length],
-        'title': '진돗개 교배 상대 구해요',
-        'description': '3살 진돗개 백구입니다.\n\n충성스럽고 건강해요!\n등산도 좋아하고 체력이 좋아요.\n\n같은 품종 여아 찾습니다.\n혈통서 있으면 좋겠어요.',
-        'preferredGender': 'female',
-        'preferredSizes': ['large'],
-        'sameBreedOnly': true,
-        'maxAge': 5,
-        'minAge': 2,
-      },
-      {
-        'userId': userIds[8 % userIds.length],
-        'petId': petIds[8 % petIds.length],
-        'title': '웰시코기 교배 파트너 찾아요',
-        'description': '4살 웰시코기 코코예요!\n\n에너지 넘치고 건강해요.\n산책을 정말 좋아합니다.\n\n같은 품종 여아 원해요.\n서울 지역 선호합니다.',
-        'preferredGender': 'female',
-        'preferredSizes': ['medium'],
-        'sameBreedOnly': true,
-        'maxAge': 5,
-        'minAge': 2,
-      },
-      {
-        'userId': userIds[9 % userIds.length],
-        'petId': petIds[9 % petIds.length],
-        'title': '비글 여아 교배 원해요',
-        'description': '1살 반 비글 비비입니다 🐕\n\n호기심 많고 활발해요!\n건강검진 완료, 예방접종 완료.\n\n같은 품종 또는 중형견 남아 찾습니다.\n성격 좋은 아이면 좋겠어요~',
-        'preferredGender': 'male',
-        'preferredSizes': ['medium'],
-        'sameBreedOnly': false,
-        'maxAge': 4,
-        'minAge': 1,
-      },
+    // 대한민국 주요 도시 위치 정보 (교배글용)
+    final koreaLocations = [
+      {'lat': 37.2346, 'lng': 127.2090, 'address': '경기도 용인시'},
+      {'lat': 36.3504, 'lng': 127.3845, 'address': '대전광역시 서구'},
+      {'lat': 37.5172, 'lng': 127.0473, 'address': '서울시 강남구'},
+      {'lat': 35.1796, 'lng': 129.0756, 'address': '부산시 해운대구'},
+      {'lat': 35.8714, 'lng': 128.6014, 'address': '대구광역시 중구'},
+      {'lat': 37.4563, 'lng': 126.7052, 'address': '인천시 연수구'},
+      {'lat': 35.1595, 'lng': 126.8526, 'address': '광주광역시 서구'},
+      {'lat': 35.5384, 'lng': 129.3114, 'address': '울산광역시 남구'},
+      {'lat': 33.4996, 'lng': 126.5312, 'address': '제주시'},
+      {'lat': 37.3825, 'lng': 127.1188, 'address': '경기도 성남시 분당구'},
     ];
     
-    for (int i = 0; i < posts.length; i++) {
-      final postData = posts[i];
+    // 다양한 교배 글 템플릿 (제목, 설명, 조건)
+    final postTemplates = [
+      {'title': '건강한 교배 상대 찾아요', 'desc': '건강검진 완료, 예방접종 완료!\n성격이 온순하고 사람을 좋아해요.\n같은 품종 또는 비슷한 크기 원합니다.', 'preferredGender': 'female', 'preferredSizes': ['large', 'giant'], 'sameBreedOnly': false},
+      {'title': '교배 상대 구해요', 'desc': '혈통서 있고, 건강검진 완료했어요!\n성격이 활발하고 애교가 많아요.\n서울/경기 지역 선호해요.', 'preferredGender': 'male', 'preferredSizes': ['tiny', 'small'], 'sameBreedOnly': true},
+      {'title': '교배 파트너 찾아요', 'desc': '건강하고 털 상태도 좋아요.\n📍 채팅으로 연락주세요!', 'preferredGender': 'female', 'preferredSizes': ['tiny', 'small'], 'sameBreedOnly': false},
+      {'title': '교배 원해요', 'desc': '건강검진 완료, 예방접종 완료!\n성격 좋은 아이면 좋겠어요.', 'preferredGender': 'male', 'preferredSizes': ['medium'], 'sameBreedOnly': true},
+      {'title': '교배 상대 구합니다', 'desc': '✅ 건강검진 완료\n✅ 유전병 검사 완료\n똑똑하고 에너지가 넘쳐요.', 'preferredGender': 'female', 'preferredSizes': ['medium', 'large'], 'sameBreedOnly': false},
+      {'title': '교배 파트너 찾아요', 'desc': '성격이 정말 좋고 사람을 좋아해요.\n건강하고 털 관리 잘 되어있어요.', 'preferredGender': 'male', 'preferredSizes': ['large', 'giant'], 'sameBreedOnly': false},
+      {'title': '교배 원해요', 'desc': '모든 강아지와 친하게 지내요!\n건강검진 완료했고 성격 좋아요.', 'preferredGender': 'female', 'preferredSizes': ['tiny', 'small'], 'sameBreedOnly': false},
+      {'title': '교배 상대 구해요', 'desc': '충성스럽고 건강해요!\n등산도 좋아하고 체력이 좋아요.', 'preferredGender': 'female', 'preferredSizes': ['large'], 'sameBreedOnly': true},
+      {'title': '교배 파트너 찾아요', 'desc': '에너지 넘치고 건강해요.\n산책을 정말 좋아합니다.', 'preferredGender': 'female', 'preferredSizes': ['medium'], 'sameBreedOnly': true},
+      {'title': '교배 원해요', 'desc': '호기심 많고 활발해요!\n건강검진 완료, 예방접종 완료.', 'preferredGender': 'male', 'preferredSizes': ['medium'], 'sameBreedOnly': false},
+    ];
+    
+    // 실제 펫 정보를 기반으로 교배글 생성 (펫 소유자 = 교배글 작성자)
+    final postCount = petInfoList.length < postTemplates.length ? petInfoList.length : postTemplates.length;
+    
+    for (int i = 0; i < postCount; i++) {
+      final petInfo = petInfoList[i];
+      final template = postTemplates[i];
+      final locationInfo = koreaLocations[i % koreaLocations.length];
       
       final post = BreedingPostModel(
         id: '${TestDataPrefix.breeding}${(i + 1).toString().padLeft(3, '0')}',
-        authorId: postData['userId'] as String,
-        petId: postData['petId'] as String,
-        title: postData['title'] as String,
-        description: postData['description'] as String,
-        status: BreedingStatus.active, // 모든 교배 글을 active로 설정
-        preferredGender: postData['preferredGender'] as String?,
-        preferredSizes: List<String>.from(postData['preferredSizes'] as List),
-        sameBreedOnly: postData['sameBreedOnly'] as bool,
-        minAge: postData['minAge'] as int?,
-        maxAge: postData['maxAge'] as int?,
+        authorId: petInfo['ownerId'] as String,  // 펫 소유자 = 교배글 작성자
+        petId: petInfo['petId'] as String,
+        title: template['title'] as String,
+        description: template['desc'] as String,
+        status: BreedingStatus.active,
+        preferredGender: template['preferredGender'] as String?,
+        preferredSizes: List<String>.from(template['preferredSizes'] as List),
+        sameBreedOnly: template['sameBreedOnly'] as bool,
+        minAge: 1,
+        maxAge: 5,
+        location: GeoPoint(locationInfo['lat'] as double, locationInfo['lng'] as double),
+        address: locationInfo['address'] as String,
         viewCount: (i + 1) * 15 + (i * 7),
         likeCount: (i + 1) * 4,
         chatCount: i % 5,
@@ -994,7 +940,7 @@ class SeedData {
       await _firebase.breedingPostsCollection.doc(post.id).set(post.toFirestore());
     }
     
-    print('  ✓ 교배 글 ${posts.length}개 생성 완료');
+    print('  ✓ 교배 글 $postCount개 생성 완료');
   }
   
   // ===== 항목별 삭제 메서드 =====
@@ -1004,31 +950,76 @@ class SeedData {
   }
   
   Future<void> clearPets() async {
-    await _clearCollection(_firebase.petsCollection);
+    // 테스트 데이터만 삭제 (권한 문제 방지)
+    await _clearTestDataFromCollection(_firebase.petsCollection, TestDataPrefix.pet);
   }
   
   Future<void> clearProducts() async {
-    await _clearCollection(_firebase.productsCollection);
+    // 테스트 데이터만 삭제 (권한 문제 방지)
+    await _clearTestDataFromCollection(_firebase.productsCollection, TestDataPrefix.product);
   }
   
   Future<void> clearGroups() async {
-    await _clearCollection(_firebase.groupsCollection);
+    // 테스트 데이터만 삭제 (권한 문제 방지)
+    await _clearTestDataFromCollection(_firebase.groupsCollection, TestDataPrefix.group);
   }
   
   Future<void> clearJobs() async {
-    await _clearCollection(_firebase.jobsCollection);
+    // 테스트 데이터만 삭제 (권한 문제 방지)
+    await _clearTestDataFromCollection(_firebase.jobsCollection, TestDataPrefix.job);
   }
   
   Future<void> clearLikesAndMatches() async {
-    await _clearCollection(_firebase.datingRequestsCollection);
-    await _clearCollection(_firebase.matchesCollection);
+    // 테스트 데이터만 삭제 (권한 문제 방지)
+    await _clearTestDataFromCollection(_firebase.datingRequestsCollection, TestDataPrefix.like);
+    await _clearTestDataFromCollection(_firebase.matchesCollection, TestDataPrefix.match);
   }
   
   Future<void> clearBreedingPosts() async {
-    await _clearCollection(_firebase.breedingPostsCollection);
+    // 테스트 데이터만 삭제 (권한 문제 방지)
+    await _clearTestDataFromCollection(_firebase.breedingPostsCollection, TestDataPrefix.breeding);
   }
   
   // ===== 헬퍼 메서드 =====
+  
+  /// 테스트 사용자 문서 생성 (users 컬렉션에 가상 사용자 추가)
+  Future<void> seedTestUsers() async {
+    print('👤 테스트 사용자 생성 중...');
+    
+    final testUsers = [
+      {'id': 'test_user_001', 'email': 'test1@mingrr.com', 'nickname': '테스트유저1', 'address': '경기도 용인시'},
+      {'id': 'test_user_002', 'email': 'test2@mingrr.com', 'nickname': '테스트유저2', 'address': '서울시 강남구'},
+      {'id': 'test_user_003', 'email': 'test3@mingrr.com', 'nickname': '테스트유저3', 'address': '부산시 해운대구'},
+      {'id': 'test_user_004', 'email': 'test4@mingrr.com', 'nickname': '테스트유저4', 'address': '대전광역시 서구'},
+      {'id': 'test_user_005', 'email': 'test5@mingrr.com', 'nickname': '테스트유저5', 'address': '대구광역시 중구'},
+    ];
+    
+    // 대한민국 주요 도시 위치
+    final locations = [
+      {'lat': 37.2346, 'lng': 127.2090}, // 용인
+      {'lat': 37.5172, 'lng': 127.0473}, // 강남
+      {'lat': 35.1796, 'lng': 129.0756}, // 해운대
+      {'lat': 36.3504, 'lng': 127.3845}, // 대전
+      {'lat': 35.8714, 'lng': 128.6014}, // 대구
+    ];
+    
+    for (int i = 0; i < testUsers.length; i++) {
+      final user = testUsers[i];
+      final loc = locations[i];
+      
+      await _firebase.usersCollection.doc(user['id'] as String).set({
+        'email': user['email'],
+        'nickname': user['nickname'],
+        'address': user['address'],
+        'homeLocation': GeoPoint(loc['lat'] as double, loc['lng'] as double),
+        'profileImageUrl': null,
+        'createdAt': Timestamp.now(),
+        'updatedAt': Timestamp.now(),
+      }, SetOptions(merge: true));
+    }
+    
+    print('✅ 테스트 사용자 ${testUsers.length}명 생성 완료');
+  }
   
   Future<List<String>> _getExistingUserIds() async {
     final snapshot = await _firebase.usersCollection.limit(10).get();
@@ -1362,8 +1353,18 @@ class SeedData {
   Future<void> seedRatings() async {
     print('🌱 꼬순내 평가 데이터 생성 중...');
     
-    final userIds = ['user_001', 'user_002', 'user_003', 'user_004', 'user_005', 
-                     'user_006', 'user_007', 'user_008', 'user_009', 'user_010'];
+    // 실제 사용자 ID 가져오기
+    final userIds = await _getExistingUserIds();
+    if (userIds.isEmpty) {
+      throw Exception('사용자 데이터가 없습니다. 먼저 사용자를 생성해주세요.');
+    }
+    
+    // 최소 2명 이상 필요
+    if (userIds.length < 2) {
+      print('⚠️ 평가 데이터 생성을 위해 최소 2명의 사용자가 필요합니다.');
+      return;
+    }
+    
     final now = DateTime.now();
     
     final positiveTags = ['친절해요', '시간 약속을 잘 지켜요', '반려동물을 잘 돌봐요', '매너가 좋아요', '응답이 빨라요', '다시 만나고 싶어요'];
@@ -1399,7 +1400,7 @@ class SeedData {
         final result = score >= 3 ? ActivityResult.completed : ActivityResult.cancelled;
         
         final rating = RatingModel(
-          id: 'rating_${ratingIndex.toString().padLeft(3, '0')}',
+          id: '${TestDataPrefix.rating}${ratingIndex.toString().padLeft(3, '0')}',
           raterId: raterId,
           targetId: targetId,
           type: ratingType,
@@ -1416,10 +1417,10 @@ class SeedData {
       }
     }
     
-    // 거래 상태 데이터도 생성
+    // 거래 상태 데이터도 생성 (실제 사용자 ID 사용)
     await _seedTransactionStatuses(userIds);
     
-    print('✅ 꼬순내 평가 ${ratingIndex}개 생성 완료');
+    print('✅ 꼬순내 평가 ${ratingIndex}개 생성 완료 (사용자 ${userIds.length}명 기준)');
   }
   
   Future<void> _seedTransactionStatuses(List<String> userIds) async {
@@ -1432,7 +1433,7 @@ class SeedData {
       final buyerId = userIds[(i + 1) % userIds.length];
       
       final status = TransactionStatusModel(
-        id: 'txn_status_$i',
+        id: '${TestDataPrefix.rating}txn_status_$i',
         chatRoomId: 'chat_$i',
         type: types[i % types.length],
         sellerId: sellerId,
@@ -1450,8 +1451,9 @@ class SeedData {
   
   Future<void> clearRatings() async {
     print('🗑️ 꼬순내 평가 데이터 삭제 중...');
-    await _clearCollection(_firebase.ratingsCollection);
-    await _clearCollection(_firebase.firestore.collection('transactionStatuses'));
+    // 테스트 데이터만 삭제
+    await _clearTestDataFromCollection(_firebase.ratingsCollection, TestDataPrefix.rating);
+    await _clearTestDataFromCollection(_firebase.firestore.collection('transactionStatuses'), TestDataPrefix.rating);
     print('✅ 꼬순내 평가 데이터 삭제 완료');
   }
   
@@ -1582,13 +1584,12 @@ class SeedData {
     print('  ✓ 커뮤니티 댓글 ${commentDataList.length}개 생성 완료');
   }
   
-  /// 커뮤니티 게시글 데이터 삭제
+  /// 커뮤니티 게시글 데이터 삭제 (테스트 데이터만)
   Future<void> clearCommunityPosts() async {
     print('🗑️ 커뮤니티 게시글 데이터 삭제 중...');
-    await _clearCollection(_firebase.feedPostsCollection);
-    await _clearCollection(_firebase.firestore.collection('communityComments'));
-    await _clearCollection(_firebase.firestore.collection('communityLikes'));
-    await _clearCollection(_firebase.firestore.collection('communityCommentLikes'));
+    // 테스트 데이터만 삭제
+    await _clearTestDataFromCollection(_firebase.feedPostsCollection, TestDataPrefix.feedPost);
+    await _clearTestDataFromCollection(_firebase.firestore.collection('communityComments'), TestDataPrefix.comment);
     print('✅ 커뮤니티 게시글 데이터 삭제 완료');
   }
   
@@ -1664,10 +1665,11 @@ class SeedData {
     print('  ✓ 소모임 일정 ${scheduleDataList.length}개 생성 완료');
   }
   
-  /// 소모임 일정 데이터 삭제
+  /// 소모임 일정 데이터 삭제 (테스트 데이터만)
   Future<void> clearGroupSchedules() async {
     print('🗑️ 소모임 일정 데이터 삭제 중...');
-    await _clearCollection(_firebase.firestore.collection('schedules'));
+    // 테스트 데이터만 삭제
+    await _clearTestDataFromCollection(_firebase.firestore.collection('schedules'), TestDataPrefix.schedule);
     print('✅ 소모임 일정 데이터 삭제 완료');
   }
 }

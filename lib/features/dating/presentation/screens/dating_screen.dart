@@ -251,6 +251,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
     bool isBreeding = false,
     double? distanceMeters,
     int? matchScore,
+    String? breedingPostId,
   }) {
     Navigator.push(
       context,
@@ -260,6 +261,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
           isBreeding: isBreeding,
           cachedDistanceMeters: distanceMeters,
           cachedMatchScore: matchScore,
+          breedingPostId: breedingPostId,
         ),
       ),
     );
@@ -567,6 +569,11 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
   Widget _buildBreedingPetCard(BuildContext context, WidgetRef ref, PetWithDistance petWithDistance) {
     final pet = petWithDistance.pet;
     
+    // 조건 태그 구성 (크기, 같은 품종만 — 품종은 상단 텍스트에 표시)
+    final conditionTags = <String>[];
+    if (pet.sizeString != null) conditionTags.add(pet.sizeString!);
+    if (petWithDistance.sameBreedOnly) conditionTags.add('같은 품종만');
+    
     return DatingBreedingCard(
       name: pet.name,
       breed: pet.breed,
@@ -574,14 +581,17 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
       sizeString: pet.sizeString,
       isMale: pet.gender == PetGender.male,
       distanceString: petWithDistance.distanceString,
+      breedingTitle: petWithDistance.breedingTitle,
       description: petWithDistance.breedingDescription,
       hasPedigree: pet.hasPedigree,
+      conditionTags: conditionTags,
       imageUrl: pet.displayImageUrl,
       onTap: () => _navigateToDetail(
         context, 
         pet.id, 
         isBreeding: true,
         distanceMeters: petWithDistance.distanceMeters,
+        breedingPostId: petWithDistance.breedingPostId,
       ),
       onBreedingRequest: () => _showBreedingRequestSheet(context, ref, pet.id),
     );

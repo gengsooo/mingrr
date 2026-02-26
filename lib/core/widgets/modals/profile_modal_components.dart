@@ -3,6 +3,7 @@ import '../../constants/app_sizes.dart';
 import '../../services/bottom_sheet_stack_manager.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_text_styles.dart';
+import '../image/mingrr_image.dart';
 import '../sheets/mingrr_bottom_sheet.dart';
 import '../../utils/responsive_utils.dart';
 
@@ -365,32 +366,11 @@ class ProfileModalAvatar extends StatelessWidget {
         imageUrl!.isNotEmpty && 
         !imageUrl!.startsWith('default_avatar:');
 
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: bgColor,
-        shape: BoxShape.circle,
-      ),
-      child: hasValidImage
-          ? ClipOval(
-              child: Image.network(
-                imageUrl!,
-                width: size,
-                height: size,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Icon(
-                  fallbackIcon,
-                  size: size * 0.5,
-                  color: fgColor,
-                ),
-              ),
-            )
-          : Icon(
-              fallbackIcon,
-              size: size * 0.5,
-              color: fgColor,
-            ),
+    return MingrrImage.avatar(
+      imageUrl: hasValidImage ? imageUrl : null,
+      size: size,
+      icon: fallbackIcon,
+      backgroundColor: bgColor,
     );
   }
 }
@@ -475,6 +455,7 @@ class ProfileModalActivityItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final int count;
+  final String unit;
   final Color? iconColor;
 
   const ProfileModalActivityItem({
@@ -482,6 +463,7 @@ class ProfileModalActivityItem extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.count,
+    this.unit = '회',
     this.iconColor,
   });
 
@@ -496,7 +478,7 @@ class ProfileModalActivityItem extends StatelessWidget {
         ),
         const SizedBox(height: AppSizes.gapXS),
         Text(
-          '$count회',
+          '$count$unit',
           style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600),
         ),
         Text(

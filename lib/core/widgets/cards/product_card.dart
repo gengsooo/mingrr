@@ -7,7 +7,6 @@ import '../../constants/location_constants.dart';
 import '../../../models/marketplace_model.dart';
 import '../common_widgets.dart';
 import '../mingrr_image.dart';
-import '../badges/distance_badge.dart';
 
 /// ============================================================
 /// 상품 카드 컴포넌트
@@ -254,15 +253,7 @@ class JobCard extends StatelessWidget {
       width: 100,
       height: 100,
       radius: AppSizes.radiusM,
-      placeholder: Container(
-        decoration: BoxDecoration(
-          color: context.features.marketContainer,
-          borderRadius: BorderRadius.circular(AppSizes.radiusM),
-        ),
-        child: Center(
-          child: Icon(AppIcons.image, size: 40, color: context.features.market),
-        ),
-      ),
+      accentColor: context.features.market,
       child: Stack(
         children: [
           // 좌상단: 모집중 배지

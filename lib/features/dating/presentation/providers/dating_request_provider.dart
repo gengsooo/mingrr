@@ -12,9 +12,7 @@ import '../../../../models/dating_model.dart';
 /// Firebase 실시간 연동 + 채팅방 자동 생성
 /// ============================================================
 
-final _chatService = ChatService();
 final _firebaseService = FirebaseService();
-final _notificationService = NotificationService();
 
 /// 받은 데이팅 신청 목록 (Firebase Stream)
 /// Firestore 필드: toUserId (dating_model.dart 기준)
@@ -203,6 +201,57 @@ class DatingRequestActionService {
     });
   }
 
+  /// 신청 취소 (발신자가 직접 취소)
+  /// [request]: 취소할 신청 모델
+  /// Transaction을 사용하여 동시성 문제 방지
+  static Future<bool> cancelRequest(DatingRequestModel request) async {
+    try {
+      final myUserId = _firebase.currentUserId;
+      if (myUserId == null) return false;
+      
+      final isBreeding = request.type == DatingRequestType.breeding;
+      final collection = isBreeding 
+          ? _firebase.firestore.collection('breeding_requests')
+          : _firebase.datingRequestsCollection;
+      
+      // Transaction으로 안전하게 상태 변경 + 권한 체크
+      await _firebase.firestore.runTransaction((transaction) async {
+        final docRef = collection.doc(request.id);
+        final snapshot = await transaction.get(docRef);
+        
+        if (!snapshot.exists) {
+          throw Exception('신청을 찾을 수 없습니다');
+        }
+        
+        final data = snapshot.data()!;
+        
+        // 발신자 권한 체크 (Firestore에서 직접 확인)
+        final fromUserId = isBreeding 
+            ? data['senderId'] as String?
+            : data['fromUserId'] as String?;
+        if (fromUserId != myUserId) {
+          throw Exception('신청 취소 권한이 없습니다');
+        }
+        
+        // 상태 체크
+        final currentStatus = data['status'] as String?;
+        if (currentStatus != DatingRequestStatus.pending.name) {
+          throw Exception('이미 처리된 신청입니다');
+        }
+        
+        transaction.update(docRef, {
+          'status': DatingRequestStatus.cancelled.name,
+          'respondedAt': Timestamp.fromDate(DateTime.now()),
+        });
+      });
+      
+      return true;
+    } catch (e) {
+      AppLogger.error('DatingRequestAction', '신청 취소 오류', e);
+      return false;
+    }
+  }
+
   /// 신청 삭제
   /// [request]: 삭제할 신청 모델
   static Future<void> deleteRequest(DatingRequestModel request) async {
@@ -212,5 +261,54 @@ class DatingRequestActionService {
         : _firebase.datingRequestsCollection;
     
     await collection.doc(request.id).delete();
+  }
+  
+  /// 만료된 신청 자동 처리
+  /// 7일 이상 경과한 pending 신청을 expired로 변경
+  static Future<int> expireOldRequests() async {
+    try {
+      final expirationDate = DateTime.now().subtract(const Duration(days: 7));
+      final expirationTimestamp = Timestamp.fromDate(expirationDate);
+      
+      int expiredCount = 0;
+      
+      // 데이팅 신청 만료 처리
+      final datingSnapshot = await _firebase.datingRequestsCollection
+          .where('status', isEqualTo: DatingRequestStatus.pending.name)
+          .where('createdAt', isLessThan: expirationTimestamp)
+          .get();
+      
+      for (final doc in datingSnapshot.docs) {
+        await doc.reference.update({
+          'status': DatingRequestStatus.expired.name,
+          'respondedAt': Timestamp.fromDate(DateTime.now()),
+        });
+        expiredCount++;
+      }
+      
+      // 교배 신청 만료 처리
+      final breedingSnapshot = await _firebase.firestore
+          .collection('breeding_requests')
+          .where('status', isEqualTo: DatingRequestStatus.pending.name)
+          .where('createdAt', isLessThan: expirationTimestamp)
+          .get();
+      
+      for (final doc in breedingSnapshot.docs) {
+        await doc.reference.update({
+          'status': DatingRequestStatus.expired.name,
+          'respondedAt': Timestamp.fromDate(DateTime.now()),
+        });
+        expiredCount++;
+      }
+      
+      if (expiredCount > 0) {
+        AppLogger.info('DatingRequestAction', '$expiredCount개의 신청이 만료 처리됨');
+      }
+      
+      return expiredCount;
+    } catch (e) {
+      AppLogger.error('DatingRequestAction', '신청 만료 처리 오류', e);
+      return 0;
+    }
   }
 }

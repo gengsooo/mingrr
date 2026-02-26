@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../constants/app_icons.dart';
+import '../constants/rating_constants.dart';
 import '../services/bottom_sheet_stack_manager.dart';
 import '../services/rating_service.dart';
 import '../theme/app_text_styles.dart';
@@ -14,6 +15,7 @@ import 'sheets/mingrr_bottom_sheet.dart';
 import 'dialogs/action_prompt_dialog.dart';
 import '../utils/responsive_utils.dart';
 import '../utils/error_handler.dart';
+import '../utils/format_utils.dart';
 
 /// ============================================================
 /// 꼬순내지수 평가 시스템 통합 위젯
@@ -35,15 +37,24 @@ import '../utils/error_handler.dart';
 // ============================================================
 
 /// 평가 모달 표시 함수
+/// 
+/// [relatedId]는 필수입니다. 활동 기반 평가만 허용합니다.
+/// relatedId가 없으면 평가 모달이 표시되지 않습니다.
 void showRatingModal(
   BuildContext context, {
   required String targetUserId,
   required String targetName,
+  required String relatedId,
   String? targetImageUrl,
   RatingType ratingType = RatingType.dating,
-  String? relatedId,
   VoidCallback? onComplete,
 }) {
+  // relatedId 검증 - 활동 기반 평가만 허용
+  if (relatedId.isEmpty) {
+    MingrrSnackBar.warning(context, '평가할 수 있는 활동이 없어요');
+    return;
+  }
+
   final stackManager = BottomSheetStackManager();
   final sheetId = BottomSheetStackManager.createSheetId(BottomSheetType.rating, targetName);
   
@@ -84,7 +95,7 @@ class RatingModal extends StatefulWidget {
   final String targetName;
   final String? targetImageUrl;
   final RatingType ratingType;
-  final String? relatedId;
+  final String relatedId;
   final VoidCallback? onComplete;
 
   const RatingModal({
@@ -93,7 +104,7 @@ class RatingModal extends StatefulWidget {
     required this.targetName,
     this.targetImageUrl,
     this.ratingType = RatingType.dating,
-    this.relatedId,
+    required this.relatedId,
     this.onComplete,
   });
 
@@ -108,38 +119,11 @@ class _RatingModalState extends State<RatingModal> {
   bool _isSubmitting = false;
   final _ratingService = RatingService();
 
-  List<String> get _positiveTags {
-    switch (widget.ratingType) {
-      case RatingType.marketplace:
-        return PositiveRatingTags.marketplace;
-      case RatingType.breeding:
-        return PositiveRatingTags.breeding;
-      default:
-        return PositiveRatingTags.dating;
-    }
-  }
+  List<String> get _positiveTags => widget.ratingType.positiveTags;
 
-  List<String> get _negativeTags {
-    switch (widget.ratingType) {
-      case RatingType.marketplace:
-        return NegativeRatingTags.marketplace;
-      case RatingType.breeding:
-        return NegativeRatingTags.breeding;
-      default:
-        return NegativeRatingTags.dating;
-    }
-  }
+  List<String> get _negativeTags => widget.ratingType.negativeTags;
 
-  String get _typeLabel {
-    switch (widget.ratingType) {
-      case RatingType.dating:
-        return '만남';
-      case RatingType.marketplace:
-        return '거래';
-      case RatingType.breeding:
-        return '교배';
-    }
-  }
+  String get _typeLabel => widget.ratingType.activityLabel;
 
   Color get _themeColor {
     switch (widget.ratingType) {
@@ -438,6 +422,8 @@ class _RatingModalState extends State<RatingModal> {
         throw Exception('로그인이 필요합니다');
       }
       
+      // RatingService.createRating에서 중복 체크 및 쿨다운 체크를 수행
+      // RatingException이 발생하면 catch에서 처리
       await _ratingService.createRating(
         raterId: currentUser.uid,
         targetId: widget.targetUserId,
@@ -452,6 +438,12 @@ class _RatingModalState extends State<RatingModal> {
         Navigator.pop(context);
         showRatingCompleteDialog(context);
         widget.onComplete?.call();
+      }
+    } on RatingException catch (e) {
+      // 평가 불가 사유 표시 (중복 평가, 쿨다운 등)
+      if (mounted) {
+        Navigator.pop(context);
+        MingrrSnackBar.warning(context, e.message);
       }
     } catch (e) {
       if (mounted) {
@@ -470,17 +462,24 @@ class _RatingModalState extends State<RatingModal> {
 // ============================================================
 
 /// 활동 완료 후 평가 유도 팝업 표시
+/// 
+/// [relatedId]는 필수입니다. 활동 기반 평가만 허용합니다.
 void showActivityCompleteDialog(
   BuildContext context, {
   required String activityType,
   required String partnerName,
   required String partnerUserId,
+  required String relatedId,
   String? partnerImageUrl,
-  String? relatedId,
   VoidCallback? onRateLater,
 }) {
-  final typeLabel = _getActivityTypeLabel(activityType);
-  final ratingType = _getRatingType(activityType);
+  // relatedId 검증
+  if (relatedId.isEmpty) {
+    return;
+  }
+
+  final ratingType = RatingType.fromActivityType(activityType);
+  final typeLabel = ratingType.activityLabel;
   
   showActionPromptDialog(
     context,
@@ -496,9 +495,9 @@ void showActivityCompleteDialog(
         context,
         targetUserId: partnerUserId,
         targetName: partnerName,
+        relatedId: relatedId,
         targetImageUrl: partnerImageUrl,
         ratingType: ratingType,
-        relatedId: relatedId,
       );
     },
     secondaryButtonText: '나중에 하기',
@@ -506,36 +505,6 @@ void showActivityCompleteDialog(
   );
 }
 
-String _getActivityTypeLabel(String type) {
-  switch (type) {
-    case 'dating':
-      return '만남';
-    case 'marketplace':
-    case 'market':
-      return '거래';
-    case 'breeding':
-      return '교배';
-    case 'community':
-      return '소모임';
-    default:
-      return '활동';
-  }
-}
-
-RatingType _getRatingType(String type) {
-  switch (type) {
-    case 'dating':
-      return RatingType.dating;
-    case 'marketplace':
-    case 'market':
-      return RatingType.marketplace;
-    case 'breeding':
-      return RatingType.breeding;
-    // 소모임(community/group)은 평가 기능 없음
-    default:
-      return RatingType.dating;
-  }
-}
 
 // ============================================================
 // 3. 평가 완료 피드백 다이얼로그 (RatingCompleteDialog)
@@ -813,6 +782,347 @@ class TransactionCompleteDialog extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ============================================================
+// 7. 평가 카드 (RatingCard)
+// ============================================================
+
+/// 평가 카드 위젯
+/// 
+/// 평가 대기 목록, 평가 이력 조회 화면에서 사용
+class RatingCard extends StatelessWidget {
+  final String targetName;
+  final String? targetImageUrl;
+  final RatingType ratingType;
+  final DateTime createdAt;
+  final int? score;
+  final List<String>? tags;
+  final bool isPending;
+  final VoidCallback? onTap;
+  final VoidCallback? onRate;
+
+  const RatingCard({
+    super.key,
+    required this.targetName,
+    this.targetImageUrl,
+    required this.ratingType,
+    required this.createdAt,
+    this.score,
+    this.tags,
+    this.isPending = false,
+    this.onTap,
+    this.onRate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final accentColor = _getAccentColor(context);
+    
+    return GestureDetector(
+      onTap: onTap ?? onRate,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppSizes.gapM),
+        padding: const EdgeInsets.all(AppSizes.paddingM),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
+          border: isPending 
+              ? Border.all(color: Colors.amber.withValues(alpha: 0.5), width: 1)
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            // 프로필 이미지
+            MingrrImage.avatar(
+              imageUrl: targetImageUrl,
+              size: 56,
+              icon: AppIcons.profile,
+            ),
+            const SizedBox(width: AppSizes.gapM),
+            
+            // 정보
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 이름 + 타입 배지
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          targetName,
+                          style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSizes.paddingS,
+                          vertical: AppSizes.paddingXXS,
+                        ),
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                        ),
+                        child: Text(
+                          ratingType.activityLabel,
+                          style: AppTextStyles.captionSmall(context).copyWith(
+                            color: accentColor,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSizes.gapXXS),
+                  
+                  // 날짜
+                  Text(
+                    formatRelativeDate(createdAt),
+                    style: AppTextStyles.caption(context).copyWith(
+                      color: colorScheme.outline,
+                    ),
+                  ),
+                  
+                  // 별점 (평가 완료 시)
+                  if (score != null && score! > 0) ...[
+                    const SizedBox(height: AppSizes.gapS),
+                    Row(
+                      children: List.generate(5, (index) {
+                        final isSelected = index < score!;
+                        return Icon(
+                          isSelected ? AppIcons.star : AppIcons.starOutlined,
+                          size: 16,
+                          color: isSelected ? Colors.amber : colorScheme.outline,
+                        );
+                      }),
+                    ),
+                  ],
+                  
+                  // 태그 (평가 완료 시)
+                  if (tags != null && tags!.isNotEmpty) ...[
+                    const SizedBox(height: AppSizes.gapS),
+                    Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: tags!.take(RatingConstants.maxDisplayTags).map((tag) => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSizes.paddingS,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colorScheme.surfaceContainerLow,
+                          borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                        ),
+                        child: Text(
+                          tag,
+                          style: AppTextStyles.captionSmall(context).copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      )).toList(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            
+            // 평가하기 버튼 (대기 중일 때)
+            if (isPending && onRate != null) ...[
+              const SizedBox(width: AppSizes.gapS),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.paddingM,
+                  vertical: AppSizes.paddingS,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                ),
+                child: Text(
+                  '평가하기',
+                  style: AppTextStyles.labelMedium(context).copyWith(
+                    color: Colors.amber.shade700,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Color _getAccentColor(BuildContext context) {
+    switch (ratingType) {
+      case RatingType.dating:
+        return context.features.dating;
+      case RatingType.marketplace:
+        return context.features.market;
+      case RatingType.breeding:
+        return context.features.dating;
+    }
+  }
+  
+}
+
+// ============================================================
+// 8. 평가 카드 스켈레톤 (RatingCardSkeleton)
+// ============================================================
+
+/// 평가 카드 로딩 스켈레톤
+/// 
+/// 사용자 정보 비동기 로딩 중 표시되는 공통 스켈레톤 위젯
+class RatingCardSkeleton extends StatelessWidget {
+  const RatingCardSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
+      padding: const EdgeInsets.all(AppSizes.paddingM),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppSizes.radiusL),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerLow,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: AppSizes.gapM),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 100,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                  ),
+                ),
+                const SizedBox(height: AppSizes.gapXS),
+                Container(
+                  width: 60,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================
+// 9. 비동기 평가 카드 (AsyncRatingCard)
+// ============================================================
+
+/// 비동기 로딩을 지원하는 평가 카드
+/// 
+/// 사용자 정보를 비동기로 로드해야 하는 경우 사용
+class AsyncRatingCard extends StatefulWidget {
+  final String targetUserId;
+  final RatingType ratingType;
+  final DateTime createdAt;
+  final int? score;
+  final List<String>? tags;
+  final bool isPending;
+  final Future<Map<String, dynamic>?> Function(String userId) loadUserInfo;
+  final VoidCallback? onTap;
+  final VoidCallback? onRate;
+
+  const AsyncRatingCard({
+    super.key,
+    required this.targetUserId,
+    required this.ratingType,
+    required this.createdAt,
+    this.score,
+    this.tags,
+    this.isPending = false,
+    required this.loadUserInfo,
+    this.onTap,
+    this.onRate,
+  });
+
+  @override
+  State<AsyncRatingCard> createState() => _AsyncRatingCardState();
+}
+
+class _AsyncRatingCardState extends State<AsyncRatingCard> {
+  Map<String, dynamic>? _userInfo;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    try {
+      final info = await widget.loadUserInfo(widget.targetUserId);
+      if (mounted) {
+        setState(() {
+          _userInfo = info;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const RatingCardSkeleton();
+    }
+    
+    return RatingCard(
+      targetName: _userInfo?['name'] as String? ?? '알 수 없음',
+      targetImageUrl: _userInfo?['imageUrl'] as String?,
+      ratingType: widget.ratingType,
+      createdAt: widget.createdAt,
+      score: widget.score,
+      tags: widget.tags,
+      isPending: widget.isPending,
+      onTap: widget.onTap,
+      onRate: widget.onRate,
     );
   }
 }

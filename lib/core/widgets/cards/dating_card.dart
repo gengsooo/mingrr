@@ -367,13 +367,14 @@ class DatingNearbyCard extends StatelessWidget {
 /// 사용처: 데이팅 > 교배찾기 탭
 /// 
 /// [name]: 반려동물 이름
-/// [breed]: 품종
+/// [breed]: 품종 (상단 텍스트에 표시)
 /// [ageString]: 나이 문자열
 /// [sizeString]: 크기 문자열 (초소형/소형/중형/대형/초대형)
 /// [isMale]: 성별
 /// [distanceString]: 거리 문자열
 /// [description]: 교배 글 상세 내용
 /// [hasPedigree]: 혈통서 보유 여부
+/// [conditionTags]: 교배 조건 태그 (크기/같은 품종만 등)
 /// [imageUrl]: 대표 이미지 URL
 /// [onTap]: 탭 콜백
 /// [onBreedingRequest]: 교배 신청 버튼 콜백
@@ -385,8 +386,10 @@ class DatingBreedingCard extends StatelessWidget {
   final String? sizeString;
   final bool isMale;
   final String distanceString;
+  final String? breedingTitle;    // 교배글 제목
   final String? description;
   final bool hasPedigree;
+  final List<String> conditionTags; // 교배 조건 태그
   final String? imageUrl;
   final VoidCallback? onTap;
   final VoidCallback? onBreedingRequest;
@@ -399,8 +402,10 @@ class DatingBreedingCard extends StatelessWidget {
     this.sizeString,
     required this.isMale,
     required this.distanceString,
+    this.breedingTitle,
     this.description,
     this.hasPedigree = false,
+    this.conditionTags = const [],
     this.imageUrl,
     this.onTap,
     this.onBreedingRequest,
@@ -414,7 +419,7 @@ class DatingBreedingCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: AppSizes.gapM),
-        height: 130, // 고정 높이 (버튼 제거 후 조정)
+        height: 145,
         decoration: BoxDecoration(
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
@@ -425,75 +430,103 @@ class DatingBreedingCard extends StatelessWidget {
           children: [
             // 이미지 영역
             _buildImageSection(context),
-              // 정보 영역
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSizes.paddingM),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // 상단: 이름, 거리, 품종/나이
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  name,
-                                  style: AppTextStyles.headlineSmall(context),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(LocationConstants.distanceIcon, size: 12, color: colorScheme.onSurfaceVariant),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    distanceString,
-                                    style: AppTextStyles.captionSmall(context),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: AppSizes.gapXS),
-                          // 품종
+            // 정보 영역
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSizes.paddingM),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // 상단: 교배글 제목, 반려동물 정보
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // 교배글 제목 (있는 경우)
+                        if (breedingTitle != null && breedingTitle!.isNotEmpty) ...[
                           Text(
-                            breed ?? '품종 미상',
-                            style: AppTextStyles.bodySmall(context),
+                            breedingTitle!,
+                            style: AppTextStyles.titleMedium(context).copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: AppSizes.gapXXS),
-                          // 크기 · 나이
-                          Text(
-                            '${sizeString ?? '크기 미상'} · $ageString',
-                            style: AppTextStyles.captionSmall(context),
-                          ),
-                          // 상세 내용 (최대 2줄)
-                          if (description != null && description!.isNotEmpty) ...[
-                            const SizedBox(height: AppSizes.gapS),
-                            Text(
-                              description!,
-                              style: AppTextStyles.bodySmall(context).copyWith(
-                                color: colorScheme.onSurfaceVariant,
+                          const SizedBox(height: AppSizes.gapXS),
+                        ],
+                        // 품종 · 나이 + 거리
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                '${breed ?? '품종 미상'} · $ageString',
+                                style: AppTextStyles.bodySmall(context).copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(LocationConstants.distanceIcon, size: 12, color: colorScheme.onSurfaceVariant),
+                                const SizedBox(width: 2),
+                                Text(
+                                  distanceString,
+                                  style: AppTextStyles.captionSmall(context),
+                                ),
+                              ],
                             ),
                           ],
+                        ),
+                        // 상세 내용 (최대 2줄)
+                        if (description != null && description!.isNotEmpty) ...[
+                          const SizedBox(height: AppSizes.gapXS),
+                          Text(
+                            description!,
+                            style: AppTextStyles.bodySmall(context).copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ],
-                      ),
-                      // 하단: 교배 조건 태그 (혈통서만 표시)
-                      PedigreeBadge(hasPedigree: hasPedigree, size: InfoBadgeSize.small),
-                    ],
-                  ),
+                      ],
+                    ),
+                    // 하단: 조건 태그 + 혈통서
+                    Row(
+                      children: [
+                        // 조건 태그 미리보기
+                        if (conditionTags.isNotEmpty)
+                          Expanded(
+                            child: Wrap(
+                              spacing: 4,
+                              runSpacing: 4,
+                              children: conditionTags.take(3).map((tag) => Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: context.features.dating.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                                ),
+                                child: Text(
+                                  tag,
+                                  style: AppTextStyles.captionSmall(context).copyWith(
+                                    color: context.features.dating,
+                                  ),
+                                ),
+                              )).toList(),
+                            ),
+                          ),
+                        if (conditionTags.isEmpty) const Spacer(),
+                        PedigreeBadge(hasPedigree: hasPedigree, size: InfoBadgeSize.small),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
+          ],
         ),
       ),
     );

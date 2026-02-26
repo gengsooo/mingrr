@@ -56,6 +56,13 @@ enum PetSize {
     if (weight < 45) return PetSize.large;
     return PetSize.giant;
   }
+
+  /// enum name(영문)으로 한글 라벨 반환
+  /// Firestore에 영문으로 저장된 크기 값을 UI에 표시할 때 사용
+  static String labelFromName(String name) {
+    final size = PetSize.values.where((e) => e.name == name).firstOrNull;
+    return size?.label ?? name;
+  }
 }
 
 /// 반려동물 성별
@@ -140,6 +147,13 @@ enum PetTrait {
   final PetTraitCategory category;
 
   const PetTrait(this.label, this.description, this.category);
+
+  /// enum name(영문)으로 한글 라벨 반환
+  /// Firestore에 영문으로 저장된 특성 값을 UI에 표시할 때 사용
+  static String labelFromName(String name) {
+    final trait = PetTrait.values.where((e) => e.name == name).firstOrNull;
+    return trait?.label ?? name;
+  }
 }
 
 /// 특성 카테고리

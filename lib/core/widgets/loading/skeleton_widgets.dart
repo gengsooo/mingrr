@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_sizes.dart';
-import '../../theme/feature_colors.dart';
 
 /// ============================================================
 /// 스켈레톤 로딩 위젯

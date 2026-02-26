@@ -5,7 +5,6 @@ import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/app_theme.dart';
-import '../../utils/image_utils.dart';
 import '../dividers/app_dividers.dart';
 import '../mingrr_image.dart';
 import '../mingrr_app_bar.dart';
@@ -783,10 +782,10 @@ class MingrrVideoPicker extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(AppSizes.radiusS),
           child: existingThumbnailUrl != null
-              ? Image.network(
-                  existingThumbnailUrl!,
+              ? MingrrImage(
+                  imageUrl: existingThumbnailUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _buildVideoPlaceholder(colorScheme),
+                  errorWidget: _buildVideoPlaceholder(colorScheme),
                 )
               : _buildVideoPlaceholder(colorScheme),
         ),
@@ -1028,10 +1027,10 @@ class MingrrMediaPicker extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(AppSizes.radiusM),
             child: existingVideoThumbnailUrl != null
-                ? Image.network(
-                    existingVideoThumbnailUrl!,
+                ? MingrrImage(
+                    imageUrl: existingVideoThumbnailUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildVideoIcon(colorScheme),
+                    errorWidget: _buildVideoIcon(colorScheme),
                   )
                 : _buildVideoIcon(colorScheme),
           ),
@@ -1100,7 +1099,7 @@ class _MediaTile extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(AppSizes.radiusM),
             child: imageUrl != null
-                ? Image.network(imageUrl!, width: 80, height: 80, fit: BoxFit.cover)
+                ? MingrrImage.thumbnail(imageUrl: imageUrl, width: 80, height: 80)
                 : Image.file(file!, width: 80, height: 80, fit: BoxFit.cover),
           ),
           Positioned(

@@ -5,7 +5,6 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/constants/location_constants.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
@@ -28,7 +27,7 @@ import '../../../../core/providers/refresh_notifier.dart';
 import '../../../../core/mixins/distance_calculator_mixin.dart';
 import '../../../../core/services/share_service.dart';
 import '../../../../core/widgets/buttons/wishlist_button.dart';
-import '../../../chat/presentation/screens/chat_detail_screen.dart';
+import 'package:go_router/go_router.dart';
 import 'product_write_screen.dart';
 
 /// ============================================================
@@ -213,11 +212,9 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
       expandedHeight: 300,
       onShare: () => ShareService.shareProduct(context, product),
       onMore: () => _showMoreOptions(context, product),
-      placeholder: Container(
-        color: context.features.marketContainer,
-        child: Center(
-          child: Icon(AppIcons.image, size: 80, color: context.features.market),
-        ),
+      placeholder: MingrrImage(
+        accentColor: context.features.market,
+        placeholderIcon: AppIcons.image,
       ),
     );
   }
@@ -234,29 +231,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
 
   /// 판매자 프로필 모달 표시
   void _showSellerProfile(BuildContext context, ProductModel product) {
-    showGuardianProfileModal(
+    showGuardianProfileFromFirestore(
       context,
-      guardianId: product.sellerId,
-      guardianName: _sellerNickname ?? '판매자',
-      kkosunnaeScore: 50.0,
-      isIdentityVerified: true,
-      isPetVerified: true,
-      isLocationVerified: false,
-      pets: [
-        GuardianPetInfo(
-          id: 'pet_1',
-          name: '뽀삐',
-          breed: '골든 리트리버',
-          ageString: '3살',
-          likeCount: 42,
-        ),
-      ],
-      activityInfo: const GuardianActivityInfo(
-        walkCount: 65,
-        datingCount: 8,
-        marketCount: 12,
-        groupCount: 5,
-      ),
+      userId: product.sellerId,
+      fallbackName: _sellerNickname ?? '판매자',
     );
   }
 
@@ -638,17 +616,8 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
       );
 
       if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatDetailScreen(
-              chatRoomId: chatRoom.id,
-              otherUserName: sellerInfo.nickname,
-              otherUserImageUrl: sellerInfo.profileImageUrl,
-              chatType: 'marketplace',
-            ),
-          ),
-        );
+        // go_router를 사용하여 채팅 탭으로 이동 (하단 메뉴 동기화)
+        context.go('/chat/${chatRoom.id}');
       }
     } catch (e) {
       if (mounted) {

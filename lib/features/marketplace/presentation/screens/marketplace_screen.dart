@@ -22,6 +22,7 @@ import 'product_detail_screen.dart';
 import 'product_write_screen.dart';
 import 'job_detail_screen.dart';
 import '../../../../core/utils/responsive_utils.dart';
+import '../../../../core/utils/format_utils.dart';
 
 /// ============================================================
 /// 마켓플레이스 화면
@@ -480,10 +481,6 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
     _selectedType = MarketWriteType.values[widget.initialType.clamp(0, 2)];
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.month}/${date.day}';
-  }
-
   Future<void> _selectDate(bool isStart) async {
     final now = DateTime.now();
     final initialDate = isStart 
@@ -762,7 +759,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                       ),
                       const SizedBox(width: AppSizes.gapS),
                       Text(
-                        _startDate != null ? _formatDate(_startDate!) : '시작일',
+                        _startDate != null ? formatShortDate(_startDate!) : '시작일',
                         style: TextStyle(
                           color: _startDate != null 
                               ? Theme.of(context).colorScheme.onSurface 
@@ -802,7 +799,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                       ),
                       const SizedBox(width: AppSizes.gapS),
                       Text(
-                        _endDate != null ? _formatDate(_endDate!) : '종료일',
+                        _endDate != null ? formatShortDate(_endDate!) : '종료일',
                         style: TextStyle(
                           color: _endDate != null 
                               ? Theme.of(context).colorScheme.onSurface 

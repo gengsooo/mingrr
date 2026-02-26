@@ -7,8 +7,6 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
-import '../../../../core/widgets/loading/loading_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/sheets/report_sheet.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
@@ -225,7 +223,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
             const SizedBox(height: AppSizes.gapL),
             MingrrImageGallery(
               imageUrls: post.imageUrls,
-              height: 200,
+              height: 250,
               enableViewer: true,
             ),
           ],
@@ -850,79 +848,23 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
   }
 
   /// 게시글 작성자 프로필 바텀시트 표시
-  Future<void> _showAuthorProfile(BuildContext context, CommunityPostModel post) async {
-    await _showUserProfile(context, post.authorId, post.authorName, post.authorProfileUrl);
+  void _showAuthorProfile(BuildContext context, CommunityPostModel post) {
+    _showUserProfile(context, post.authorId, post.authorName, post.authorProfileUrl);
   }
 
   /// 댓글 작성자 프로필 바텀시트 표시
-  Future<void> _showCommentAuthorProfile(BuildContext context, CommunityCommentModel comment) async {
-    await _showUserProfile(context, comment.authorId, comment.authorName, comment.authorProfileUrl);
+  void _showCommentAuthorProfile(BuildContext context, CommunityCommentModel comment) {
+    _showUserProfile(context, comment.authorId, comment.authorName, comment.authorProfileUrl);
   }
 
   /// 사용자 프로필 바텀시트 표시 (공통)
-  Future<void> _showUserProfile(BuildContext context, String userId, String userName, String? profileUrl) async {
-    try {
-      final userDoc = await FirebaseService().usersCollection.doc(userId).get();
-      final userData = userDoc.data();
-      
-      final kkosunnaeScore = (userData?['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0;
-      final isIdentityVerified = userData?['isIdentityVerified'] as bool? ?? false;
-      final isPetVerified = userData?['isPetVerified'] as bool? ?? false;
-      final isLocationVerified = userData?['isLocationVerified'] as bool? ?? false;
-      final genderStr = userData?['gender'] as String?;
-      final age = userData?['age'] as int?;
-      
-      GuardianGender gender = GuardianGender.unknown;
-      if (genderStr == 'male') gender = GuardianGender.male;
-      if (genderStr == 'female') gender = GuardianGender.female;
-      
-      // 반려동물 정보 조회
-      List<GuardianPetInfo> pets = [];
-      final petsSnapshot = await FirebaseService().petsCollection
-          .where('ownerId', isEqualTo: userId)
-          .get();
-      
-      for (final petDoc in petsSnapshot.docs) {
-        final petData = petDoc.data();
-        pets.add(GuardianPetInfo(
-          id: petDoc.id,
-          name: petData['name'] ?? '반려동물',
-          breed: petData['breed'],
-          ageString: petData['age'] != null ? '${petData['age']}살' : null,
-          introduction: petData['introduction'],
-          traits: List<String>.from(petData['traits'] ?? []),
-          photoUrls: List<String>.from(petData['photoUrls'] ?? []),
-          profileImageUrl: petData['profileImageUrl'],
-          likeCount: petData['likeCount'] ?? 0,
-        ));
-      }
-      
-      if (!mounted) return;
-      
-      showGuardianProfileModal(
-        context,
-        guardianId: userId,
-        guardianName: userName,
-        kkosunnaeScore: kkosunnaeScore,
-        profileImageUrl: profileUrl ?? userData?['profileImageUrl'],
-        gender: gender,
-        age: age,
-        isIdentityVerified: isIdentityVerified,
-        isPetVerified: isPetVerified,
-        isLocationVerified: isLocationVerified,
-        pets: pets,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      showGuardianProfileModal(
-        context,
-        guardianId: userId,
-        guardianName: userName,
-        kkosunnaeScore: 50.0,
-        profileImageUrl: profileUrl,
-        pets: [],
-      );
-    }
+  void _showUserProfile(BuildContext context, String userId, String userName, String? profileUrl) {
+    showGuardianProfileFromFirestore(
+      context,
+      userId: userId,
+      fallbackName: userName,
+      fallbackImageUrl: profileUrl,
+    );
   }
 
 }

@@ -234,14 +234,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           shape: BoxShape.circle,
           border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
         ),
-        child: ClipOval(
-          child: Image.network(
-            _profileImageUrl!,
-            width: 120,
-            height: 120,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _buildDefaultProfileImage(),
-          ),
+        child: MingrrImage.avatar(
+          imageUrl: _profileImageUrl,
+          size: 120,
+          icon: AppIcons.profile,
         ),
       );
     }

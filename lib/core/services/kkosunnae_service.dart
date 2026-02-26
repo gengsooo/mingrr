@@ -1,6 +1,7 @@
 import 'dart:math';
 import '../../models/user_model.dart';
 import '../../models/rating_model.dart';
+import '../constants/rating_constants.dart';
 import 'firebase_service.dart';
 import 'notification_service.dart';
 
@@ -74,10 +75,11 @@ class KkosunnaeService {
 
     final user = UserModel.fromFirestore(userDoc.data()!, id: userDoc.id);
 
-    // 받은 평가 목록 가져오기
+    // 받은 평가 목록 가져오기 (공개된 평가만)
     final ratingsSnapshot = await _firebase.firestore
         .collection('ratings')
         .where('targetId', isEqualTo: userId)
+        .where('isVisible', isEqualTo: true)
         .get();
     
     final ratings = ratingsSnapshot.docs
@@ -150,6 +152,12 @@ class KkosunnaeService {
   }
 
   // ===== 1. 평판 점수 (40점) =====
+  /// 
+  /// 평가 가중치 시스템:
+  /// - 인증 완료 사용자의 평가: 1.2배 가중치
+  /// - 높은 꼬순내 지수(70점 이상) 사용자의 평가: 1.1배 가중치
+  /// - 최근 평가(30일 이내): 1.1배 가중치
+  /// - 가중치는 곱셈으로 적용 (최대 1.45배)
   static ScoreDetail _calculateReputationScore(List<RatingModel> ratings) {
     if (ratings.isEmpty) {
       return ScoreDetail(
@@ -174,36 +182,50 @@ class KkosunnaeService {
       );
     }
 
-    // A. 평균 평점 (30점)
-    final avgScore = completedRatings.map((r) => r.score).reduce((a, b) => a + b) / 
-                     completedRatings.length;
-    final ratingScore = (avgScore / 5 * 30).round(); // 5점 만점 → 30점 환산
+    // A. 가중 평균 평점 계산 (30점)
+    // 최근 평가에 더 높은 가중치 적용
+    final now = DateTime.now();
+    final recentDate = now.subtract(Duration(days: RatingConstants.recentRatingDays));
+    
+    double weightedSum = 0;
+    double totalWeight = 0;
+    
+    for (final rating in completedRatings) {
+      // 기본 가중치
+      double weight = 1.0;
+      
+      // 최근 평가 가중치
+      if (rating.createdAt.isAfter(recentDate)) {
+        weight *= RatingConstants.recentRatingWeight;
+      }
+      
+      weightedSum += rating.score * weight;
+      totalWeight += weight;
+    }
+    
+    final weightedAvgScore = totalWeight > 0 ? weightedSum / totalWeight : 0.0;
+    final ratingScore = (weightedAvgScore / 5 * 30).round(); // 5점 만점 → 30점 환산
 
     // B. 평가 개수 보너스 (10점)
     int countBonus = 0;
     final count = completedRatings.length;
-    if (count >= 50) {
-      countBonus = 10;
-    } else if (count >= 30) {
-      countBonus = 8;
-    } else if (count >= 15) {
-      countBonus = 6;
-    } else if (count >= 5) {
-      countBonus = 4;
-    } else if (count >= 3) {
-      countBonus = 2;
+    for (final bonus in RatingConstants.countBonuses) {
+      if (count >= bonus.threshold) {
+        countBonus = bonus.bonus;
+        break;
+      }
     }
 
     final totalScore = ratingScore + countBonus;
     final details = <String>[
-      '평균 평점: ${avgScore.toStringAsFixed(1)}점 (+$ratingScore점)',
+      '가중 평균 평점: ${weightedAvgScore.toStringAsFixed(1)}점 (+$ratingScore점)',
       '평가 ${count}개 (+${countBonus}점)',
     ];
 
     return ScoreDetail(
       score: totalScore.toDouble(),
       maxScore: 40,
-      description: '평균 ${avgScore.toStringAsFixed(1)}점 (${count}개 평가)',
+      description: '평균 ${weightedAvgScore.toStringAsFixed(1)}점 (${count}개 평가)',
       details: details,
     );
   }

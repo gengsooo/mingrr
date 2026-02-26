@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_icons.dart';
 import '../constants/app_sizes.dart';
-import '../theme/app_theme.dart';
 
 /// ============================================================
 /// MINGRR 공통 AppBar 컴포넌트

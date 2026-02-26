@@ -10,16 +10,13 @@ import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/rating_service.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
-import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
-import '../../../../core/widgets/loading/loading_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/mingrr_image_viewer.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/services/image_service.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/rating_widgets.dart';
 import '../../../../core/widgets/modals/guardian_profile_modal.dart';
 import '../../../../core/widgets/modals/pet_profile_modal.dart';
@@ -385,7 +382,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       } else if (normalizedType == 'marketplace' || normalizedType == 'market') {
         AppLogger.debug('ChatDetail', '-> _showGuardianProfile 호출 (마켓)');
         // 마켓: 보호자 프로필 모달
-        await _showGuardianProfile(context, participant);
+        _showGuardianProfile(context, participant);
       } else if (normalizedType == 'community' || normalizedType == 'group') {
         AppLogger.debug('ChatDetail', '-> _showGroupProfile 호출');
         // 소모임: 소모임 정보 모달
@@ -393,7 +390,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       } else {
         AppLogger.debug('ChatDetail', '-> _showGuardianProfile 호출 (기본)');
         // 기본: 보호자 프로필 모달
-        await _showGuardianProfile(context, participant);
+        _showGuardianProfile(context, participant);
       }
     } finally {
       _isShowingProfile = false;
@@ -431,28 +428,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       final isIdentityVerified = userData?['isIdentityVerified'] as bool? ?? false;
       final isPetVerified = userData?['isPetVerified'] as bool? ?? false;
       final isLocationVerified = userData?['isLocationVerified'] as bool? ?? false;
-      final genderStr = userData?['gender'] as String?;
+      final guardianGender = GuardianGender.fromString(userData?['gender'] as String?);
       final userAge = userData?['age'] as int?;
-      
-      GuardianGender guardianGender = GuardianGender.unknown;
-      if (genderStr == 'male') guardianGender = GuardianGender.male;
-      if (genderStr == 'female') guardianGender = GuardianGender.female;
       
       // 모든 반려동물 정보 수집 (보호자 정보 바텀시트에서 사용)
       List<GuardianPetInfo> allPets = [];
       for (final doc in petsSnapshot.docs) {
-        final data = doc.data();
-        allPets.add(GuardianPetInfo(
-          id: doc.id,
-          name: data['name'] ?? '반려동물',
-          breed: data['breed'],
-          ageString: data['age'] != null ? '${data['age']}살' : null,
-          introduction: data['introduction'],
-          traits: List<String>.from(data['traits'] ?? []),
-          photoUrls: List<String>.from(data['photoUrls'] ?? []),
-          profileImageUrl: data['profileImageUrl'],
-          likeCount: data['likeCount'] ?? 0,
-        ));
+        allPets.add(GuardianPetInfo.fromFirestoreDoc(doc));
       }
       
       // petName과 일치하는 반려동물 또는 첫 번째 반려동물
@@ -474,7 +456,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         gender: petData['gender'],
         weight: (petData['weight'] as num?)?.toDouble(),
         introduction: petData['introduction'],
-        traits: List<String>.from(petData['traits'] ?? []),
+        traits: (petData['traits'] as List?)?.map((t) => PetTrait.labelFromName(t.toString())).toList() ?? [],
         photoUrls: List<String>.from(petData['photoUrls'] ?? []),
         profileImageUrl: petData['profileImageUrl'],
         likeCount: petData['likeCount'] ?? 0,
@@ -491,6 +473,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           isPetVerified: isPetVerified,
           isLocationVerified: isLocationVerified,
           pets: allPets,
+          activityInfo: GuardianActivityInfo.fromMap(userData),
         ),
       );
     } catch (e) {
@@ -587,86 +570,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   }
 
   /// 보호자 프로필 모달 표시 (Firebase에서 상세 정보 조회)
-  Future<void> _showGuardianProfile(BuildContext context, ChatParticipant? participant) async {
+  void _showGuardianProfile(BuildContext context, ChatParticipant? participant) {
     if (participant == null) return;
-    
-    // Firebase에서 보호자 상세 정보 조회
-    try {
-      final userDoc = await _firebaseService.firestore
-          .collection('users')
-          .doc(participant.id)
-          .get();
-      
-      final userData = userDoc.data();
-      final kkosunnaeScore = (userData?['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0;
-      final isIdentityVerified = userData?['isIdentityVerified'] as bool? ?? false;
-      final isPetVerified = userData?['isPetVerified'] as bool? ?? false;
-      final isLocationVerified = userData?['isLocationVerified'] as bool? ?? false;
-      final genderStr = userData?['gender'] as String?;
-      final age = userData?['age'] as int?;
-      
-      // 성별 변환
-      GuardianGender gender = GuardianGender.unknown;
-      if (genderStr == 'male') gender = GuardianGender.male;
-      if (genderStr == 'female') gender = GuardianGender.female;
-      
-      // 반려동물 정보 조회
-      List<GuardianPetInfo> pets = [];
-      final petsSnapshot = await _firebaseService.firestore
-          .collection('pets')
-          .where('ownerId', isEqualTo: participant.id)
-          .get();
-      
-      for (final petDoc in petsSnapshot.docs) {
-        final petData = petDoc.data();
-        pets.add(GuardianPetInfo(
-          id: petDoc.id,
-          name: petData['name'] ?? '반려동물',
-          breed: petData['breed'],
-          ageString: petData['age'] != null ? '${petData['age']}살' : null,
-          introduction: petData['introduction'],
-          traits: List<String>.from(petData['traits'] ?? []),
-          photoUrls: List<String>.from(petData['photoUrls'] ?? []),
-          profileImageUrl: petData['profileImageUrl'],
-          likeCount: petData['likeCount'] ?? 0,
-        ));
-      }
-      
-      if (!mounted) return;
-      
-      showGuardianProfileModal(
-        context,
-        guardianId: participant.id,
-        guardianName: participant.nickname,
-        kkosunnaeScore: kkosunnaeScore,
-        profileImageUrl: participant.profileImageUrl,
-        gender: gender,
-        age: age,
-        isIdentityVerified: isIdentityVerified,
-        isPetVerified: isPetVerified,
-        isLocationVerified: isLocationVerified,
-        pets: pets,
-      );
-    } catch (e) {
-      // 에러 시 기본 정보로 표시
-      if (!mounted) return;
-      showGuardianProfileModal(
-        context,
-        guardianId: participant.id,
-        guardianName: participant.nickname,
-        kkosunnaeScore: 50.0,
-        profileImageUrl: participant.profileImageUrl,
-        pets: participant.petName != null
-            ? [
-                GuardianPetInfo(
-                  id: participant.id,
-                  name: participant.petName!,
-                  profileImageUrl: participant.petImageUrl,
-                ),
-              ]
-            : [],
-      );
-    }
+    showGuardianProfileFromFirestore(
+      context,
+      userId: participant.id,
+      fallbackName: participant.nickname,
+      fallbackImageUrl: participant.profileImageUrl,
+    );
   }
 
   /// 클릭 가능한 프로필 아바타
@@ -803,11 +714,17 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       case MessageType.image:
         return GestureDetector(
           onTap: () => _showFullScreenImage(context, message.imageUrl!),
-          child: MingrrImage.thumbnail(
-            imageUrl: message.imageUrl,
-            width: 200,
-            height: 150,
-            radius: AppSizes.radiusS,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 200, maxHeight: 250),
+              child: MingrrImage(
+                imageUrl: message.imageUrl,
+                fit: BoxFit.cover,
+                shape: ImageShape.rounded,
+                borderRadius: AppSizes.radiusS,
+              ),
+            ),
           ),
         );
       case MessageType.location:
@@ -1162,7 +1079,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
       // 완료된 경우 활동 통계 증가
       if (result == ActivityResult.completed) {
-        final ratingType = _getRatingType(chatType);
+        final ratingType = RatingType.fromActivityType(chatType);
         await _ratingService.incrementActivityCount(myUserId, ratingType);
         if (otherParticipant != null) {
           await _ratingService.incrementActivityCount(otherParticipant.id, ratingType);
@@ -1195,7 +1112,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       targetUserId: otherParticipant.id,
       targetName: otherParticipant.petName ?? otherParticipant.nickname,
       targetImageUrl: otherParticipant.petImageUrl ?? otherParticipant.profileImageUrl,
-      ratingType: _getRatingType(chatType),
+      ratingType: RatingType.fromActivityType(chatType),
       relatedId: widget.chatRoomId,
       onComplete: () async {
         // 평가 완료 표시
@@ -1208,17 +1125,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
   }
 
-  RatingType _getRatingType(String chatType) {
-    switch (chatType) {
-      case 'marketplace':
-        return RatingType.marketplace;
-      case 'breeding':
-        return RatingType.breeding;
-      // 소모임(group/community)은 평가 기능 없음 - hasCompleteAction에서 제외됨
-      default:
-        return RatingType.dating;
-    }
-  }
 
   void _showReportDialog() async {
     final myUserId = ref.read(authStateProvider).valueOrNull?.uid ?? '';

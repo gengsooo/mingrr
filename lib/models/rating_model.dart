@@ -15,6 +15,66 @@ enum RatingType {
 
   final String label;
   const RatingType(this.label);
+  
+  /// 채팅/활동 타입 문자열에서 RatingType으로 변환
+  /// 
+  /// 사용 예시:
+  /// ```dart
+  /// final ratingType = RatingType.fromActivityType('marketplace');
+  /// ```
+  static RatingType fromActivityType(String type) {
+    switch (type) {
+      case 'marketplace':
+      case 'market':
+        return RatingType.marketplace;
+      case 'breeding':
+        return RatingType.breeding;
+      case 'dating':
+      default:
+        return RatingType.dating;
+    }
+  }
+  
+  /// 활동 타입 라벨 (한글)
+  /// 
+  /// 사용 예시:
+  /// ```dart
+  /// final label = RatingType.dating.activityLabel; // '만남'
+  /// ```
+  String get activityLabel {
+    switch (this) {
+      case RatingType.dating:
+        return '만남';
+      case RatingType.marketplace:
+        return '거래';
+      case RatingType.breeding:
+        return '교배';
+    }
+  }
+  
+  /// 긍정 평가 태그 목록
+  List<String> get positiveTags {
+    switch (this) {
+      case RatingType.dating:
+        return PositiveRatingTags.dating;
+      case RatingType.marketplace:
+        return PositiveRatingTags.marketplace;
+      case RatingType.breeding:
+        return PositiveRatingTags.breeding;
+    }
+  }
+  
+  /// 부정 평가 태그 목록
+  List<String> get negativeTags {
+    switch (this) {
+      case RatingType.dating:
+        return NegativeRatingTags.dating;
+      case RatingType.marketplace:
+        return NegativeRatingTags.marketplace;
+      case RatingType.breeding:
+        return NegativeRatingTags.breeding;
+    }
+  }
 }
 
 /// 거래/활동 결과
@@ -62,6 +122,11 @@ class RatingModel extends Equatable {
   
   /// 수정 시간
   final DateTime? updatedAt;
+  
+  /// 상호 평가 공개 여부
+  /// - false: 상대방이 아직 평가하지 않음 (비공개)
+  /// - true: 양쪽 모두 평가 완료 또는 만료 기간 경과 (공개)
+  final bool isVisible;
 
   const RatingModel({
     required this.id,
@@ -75,6 +140,7 @@ class RatingModel extends Equatable {
     this.comment,
     required this.createdAt,
     this.updatedAt,
+    this.isVisible = false,
   });
 
   factory RatingModel.fromFirestore(Map<String, dynamic> data, {String? id}) {
@@ -100,6 +166,7 @@ class RatingModel extends Equatable {
       updatedAt: data['updatedAt'] != null
           ? (data['updatedAt'] as Timestamp).toDate()
           : null,
+      isVisible: data['isVisible'] ?? false,
     );
   }
 
@@ -115,6 +182,7 @@ class RatingModel extends Equatable {
       'comment': comment,
       'createdAt': Timestamp.fromDate(createdAt),
       'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : null,
+      'isVisible': isVisible,
     };
   }
 
@@ -131,6 +199,7 @@ class RatingModel extends Equatable {
         comment,
         createdAt,
         updatedAt,
+        isVisible,
       ];
 }
 
@@ -186,6 +255,39 @@ class NegativeRatingTags {
     '연락이 안 돼요',
     '노쇼했어요',
   ];
+}
+
+/// 평가 가능 여부 결과
+class RatingEligibility {
+  /// 평가 가능 여부
+  final bool canRate;
+  
+  /// 불가능한 경우 사유
+  final String? reason;
+
+  const RatingEligibility._({
+    required this.canRate,
+    this.reason,
+  });
+
+  /// 평가 가능
+  factory RatingEligibility.allowed() => const RatingEligibility._(canRate: true);
+
+  /// 평가 불가능
+  factory RatingEligibility.notAllowed(String reason) => RatingEligibility._(
+    canRate: false,
+    reason: reason,
+  );
+}
+
+/// 평가 예외
+class RatingException implements Exception {
+  final String message;
+  
+  const RatingException(this.message);
+  
+  @override
+  String toString() => message;
 }
 
 /// 거래/활동 상태 모델 (채팅방에 연결)

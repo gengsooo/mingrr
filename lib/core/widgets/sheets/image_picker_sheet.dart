@@ -374,14 +374,10 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
       );
     } else if (widget.currentImageUrl != null) {
       // 기존 이미지 표시
-      content = ClipOval(
-        child: Image.network(
-          widget.currentImageUrl!,
-          width: 100,
-          height: 100,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _buildDefaultPreview(),
-        ),
+      content = MingrrImage.avatar(
+        imageUrl: widget.currentImageUrl,
+        size: 100,
+        icon: AppIcons.profile,
       );
     } else if (widget.currentDefaultAvatar != null) {
       // 기존 대표 아이콘 표시

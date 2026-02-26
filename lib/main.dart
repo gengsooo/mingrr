@@ -10,7 +10,9 @@ import 'core/config/api_config.dart';
 import 'core/services/kkosunnae_service.dart';
 import 'core/services/network_service.dart';
 import 'core/services/firebase_service.dart';
+import 'core/services/rating_service.dart';
 import 'core/utils/app_logger.dart';
+import 'features/dating/presentation/providers/dating_request_provider.dart';
 // import 'core/services/notification_service.dart';
 
 /// ============================================================
@@ -86,6 +88,14 @@ void main() async {
     AppLogger.error('Main', '꼬순내지수 등급 구간 로드 실패', e);
   }
   
+  // 만료된 비공개 평가 자동 공개 (상호 평가 대기 기간 경과)
+  try {
+    await RatingService().revealExpiredRatings();
+    AppLogger.info('Main', '만료된 평가 공개 처리 완료');
+  } catch (e) {
+    AppLogger.error('Main', '만료된 평가 공개 처리 실패', e);
+  }
+  
   // 네트워크 서비스 초기화
   try {
     await NetworkService().initialize();
@@ -94,10 +104,26 @@ void main() async {
     AppLogger.error('Main', '네트워크 서비스 초기화 실패', e);
   }
   
+  // 만료된 신청 자동 처리 (백그라운드)
+  // 로그인 상태와 무관하게 앱 시작 시 실행
+  _processExpiredRequests();
+  
   // 앱 실행
   runApp(
     const ProviderScope(
       child: MingrrApp(),
     ),
   );
+}
+
+/// 만료된 신청 자동 처리 (백그라운드)
+Future<void> _processExpiredRequests() async {
+  try {
+    final count = await DatingRequestActionService.expireOldRequests();
+    if (count > 0) {
+      AppLogger.info('Main', '$count개의 만료된 신청 처리 완료');
+    }
+  } catch (e) {
+    AppLogger.warning('Main', '만료 신청 처리 중 오류 (무시됨)');
+  }
 }

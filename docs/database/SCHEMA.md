@@ -231,7 +231,7 @@ class PetModel extends Equatable {
 | `fromPetId` | string | ✅ | 신청자 반려동물 ID | `"pet1"` |
 | `toUserId` | string | ✅ | 수신자 ID | `"user2"` |
 | `toPetId` | string | ✅ | 수신자 반려동물 ID | `"pet2"` |
-| `status` | string | ✅ | 상태 | `"pending"`, `"accepted"`, `"rejected"` |
+| `status` | string | ✅ | 상태 | `"pending"`, `"accepted"`, `"rejected"`, `"cancelled"`, `"expired"` |
 | `isSuperRequest` | boolean | ❌ | 슈퍼 신청 여부 | `false` |
 | `message` | string | ❌ | 신청 메시지 | |
 | `createdAt` | timestamp | ✅ | 생성일 | |
@@ -272,7 +272,7 @@ class DatingRequestModel extends Equatable {
 | `receiverId` | string | ✅ | 수신자 ID | `"user2"` |
 | `receiverPetId` | string | ✅ | 수신자 반려동물 ID | `"pet2"` |
 | `type` | string | ✅ | 타입 | `"breeding"` |
-| `status` | string | ✅ | 상태 | `"pending"`, `"accepted"`, `"rejected"` |
+| `status` | string | ✅ | 상태 | `"pending"`, `"accepted"`, `"rejected"`, `"cancelled"`, `"expired"` |
 | `message` | string | ❌ | 신청 메시지 | |
 | `createdAt` | timestamp | ✅ | 생성일 | |
 | `respondedAt` | timestamp | ❌ | 응답일 | |
@@ -654,17 +654,30 @@ class DatingRequestModel extends Equatable {
 ### 문서 ID
 - **형식**: UUID v4 또는 자동 생성
 
+### 평가 정책
+- **활동 기반 평가만 허용**: `relatedId` 필수 (채팅방 ID, 거래 ID 등)
+- **동일 활동 1회 평가**: `raterId` + `relatedId` 조합으로 중복 방지
+- **쿨다운 30일**: 동일 대상에게 동일 타입으로 30일 내 재평가 불가
+- **평가 만료 14일**: 활동 완료 후 14일 이내에만 평가 가능
+- **이상 탐지**: 1시간 내 최대 5개, 하루 최대 20개 평가 제한
+- **평가 가중치**: 최근 30일 이내 평가에 1.2배 가중치 적용
+- **상호 평가**: 양쪽 모두 평가 완료 시 공개 (`isVisible` 필드)
+
 ### 필드 정의
 
 | 필드명 | 타입 | 필수 | 설명 |
 |--------|------|------|------|
 | `raterId` | string | ✅ | 평가자 ID |
 | `targetId` | string | ✅ | 평가 대상 ID |
-| `targetType` | string | ✅ | 대상 타입 (`user`/`transaction`) |
+| `type` | string | ✅ | 평가 타입 (`dating`/`breeding`/`marketplace`) |
+| `relatedId` | string | ✅ | 관련 활동 ID (채팅방 ID, 거래 ID 등) |
+| `result` | string | ✅ | 활동 결과 (`completed`/`noShow`/`cancelled`/`failed`) |
 | `score` | number | ✅ | 점수 (1-5) |
+| `tags` | array | ❌ | 평가 태그 목록 |
 | `comment` | string | ❌ | 코멘트 |
-| `transactionId` | string | ❌ | 거래 ID |
+| `isVisible` | boolean | ✅ | 상호 평가 공개 여부 (양쪽 모두 평가 완료 시 true) |
 | `createdAt` | timestamp | ✅ | 생성일 |
+| `updatedAt` | timestamp | ❌ | 수정일 |
 
 ---
 

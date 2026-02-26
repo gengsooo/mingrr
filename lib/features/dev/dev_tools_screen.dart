@@ -36,35 +36,45 @@ final collectionCountsProvider = StreamProvider.autoDispose<Map<DataCategory, in
   return Stream.periodic(const Duration(seconds: 2)).asyncMap((_) async {
     final counts = <DataCategory, int>{};
     
-    counts[DataCategory.pets] = (await _firebaseService.petsCollection.get()).docs.length;
-    counts[DataCategory.products] = (await _firebaseService.productsCollection.get()).docs.length;
-    counts[DataCategory.groups] = (await _firebaseService.groupsCollection.get()).docs.length;
-    counts[DataCategory.jobs] = (await _firebaseService.jobsCollection.get()).docs.length;
-    counts[DataCategory.breeding] = (await _firebaseService.breedingPostsCollection.get()).docs.length;
+    // 안전한 컬렉션 조회 헬퍼 (권한 오류 시 0 반환)
+    Future<int> safeCount(Future<dynamic> query) async {
+      try {
+        final snapshot = await query;
+        return snapshot.docs.length as int;
+      } catch (e) {
+        return 0; // 권한 오류 시 0 반환
+      }
+    }
     
-    final likesCount = (await _firebaseService.datingRequestsCollection.get()).docs.length;
-    final matchesCount = (await _firebaseService.matchesCollection.get()).docs.length;
+    counts[DataCategory.pets] = await safeCount(_firebaseService.petsCollection.get());
+    counts[DataCategory.products] = await safeCount(_firebaseService.productsCollection.get());
+    counts[DataCategory.groups] = await safeCount(_firebaseService.groupsCollection.get());
+    counts[DataCategory.jobs] = await safeCount(_firebaseService.jobsCollection.get());
+    counts[DataCategory.breeding] = await safeCount(_firebaseService.breedingPostsCollection.get());
+    
+    final likesCount = await safeCount(_firebaseService.datingRequestsCollection.get());
+    final matchesCount = await safeCount(_firebaseService.matchesCollection.get());
     counts[DataCategory.likesMatches] = likesCount + matchesCount;
     
-    counts[DataCategory.chats] = (await _firebaseService.chatRoomsCollection.get()).docs.length;
+    counts[DataCategory.chats] = await safeCount(_firebaseService.chatRoomsCollection.get());
     
     // 커뮤니티 게시글 데이터 개수
-    counts[DataCategory.communityPosts] = (await _firebaseService.feedPostsCollection.get()).docs.length;
+    counts[DataCategory.communityPosts] = await safeCount(_firebaseService.feedPostsCollection.get());
     
     // 소모임 일정 데이터 개수
-    counts[DataCategory.groupSchedules] = (await _firebaseService.firestore.collection('schedules').get()).docs.length;
+    counts[DataCategory.groupSchedules] = await safeCount(_firebaseService.firestore.collection('schedules').get());
     
     // 꼬순내 평가 데이터 개수
-    counts[DataCategory.ratings] = (await _firebaseService.ratingsCollection.get()).docs.length;
+    counts[DataCategory.ratings] = await safeCount(_firebaseService.ratingsCollection.get());
     
     // 건강수첩 데이터 개수 (여러 컴렉션 합산)
     int healthCount = 0;
-    healthCount += (await _firebaseService.firestore.collection('weightRecords').get()).docs.length;
-    healthCount += (await _firebaseService.firestore.collection('walkRecords').get()).docs.length;
-    healthCount += (await _firebaseService.firestore.collection('groomingRecords').get()).docs.length;
-    healthCount += (await _firebaseService.firestore.collection('vaccinationRecords').get()).docs.length;
-    healthCount += (await _firebaseService.firestore.collection('checkupRecords').get()).docs.length;
-    healthCount += (await _firebaseService.firestore.collection('medicationRecords').get()).docs.length;
+    healthCount += await safeCount(_firebaseService.firestore.collection('weightRecords').get());
+    healthCount += await safeCount(_firebaseService.firestore.collection('walkRecords').get());
+    healthCount += await safeCount(_firebaseService.firestore.collection('groomingRecords').get());
+    healthCount += await safeCount(_firebaseService.firestore.collection('vaccinationRecords').get());
+    healthCount += await safeCount(_firebaseService.firestore.collection('checkupRecords').get());
+    healthCount += await safeCount(_firebaseService.firestore.collection('medicationRecords').get());
     counts[DataCategory.healthRecords] = healthCount;
     
     return counts;

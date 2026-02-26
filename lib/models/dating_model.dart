@@ -12,9 +12,11 @@ import 'package:equatable/equatable.dart';
 
 /// 데이팅 신청 상태
 enum DatingRequestStatus {
-  pending,  // 대기 중
-  accepted, // 수락됨
-  rejected, // 거절됨
+  pending,   // 대기 중
+  accepted,  // 수락됨
+  rejected,  // 거절됨
+  cancelled, // 취소됨 (발신자가 취소)
+  expired,   // 만료됨 (7일 후 자동 만료)
 }
 
 /// 신청 타입
@@ -181,7 +183,17 @@ class DatingRequestModel extends Equatable {
         return '수락됨';
       case DatingRequestStatus.rejected:
         return '거절됨';
+      case DatingRequestStatus.cancelled:
+        return '취소됨';
+      case DatingRequestStatus.expired:
+        return '만료됨';
     }
+  }
+  
+  /// 만료 여부 확인 (7일 경과)
+  bool get isExpired {
+    if (status != DatingRequestStatus.pending) return false;
+    return DateTime.now().difference(createdAt).inDays >= 7;
   }
 
   /// 레거시 호환: senderId getter

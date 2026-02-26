@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants/app_icons.dart';
 import '../constants/app_sizes.dart';
@@ -10,7 +9,6 @@ import '../theme/app_theme.dart';
 import '../theme/app_text_styles.dart';
 import '../providers/network_provider.dart';
 import 'sheets/mingrr_bottom_sheet.dart';
-import 'badges/svg_icons.dart';
 import 'loading/loading_widgets.dart' show MingrrLoadingType, MingrrLoadingIndicator;
 import 'dividers/app_dividers.dart';
 import '../utils/responsive_utils.dart';

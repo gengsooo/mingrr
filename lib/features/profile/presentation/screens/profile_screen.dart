@@ -38,6 +38,7 @@ import '../../../../models/pet_model.dart';
 import '../../../../core/utils/error_handler.dart';
 import 'my_activity_screen.dart';
 import 'liked_list_screen.dart';
+import 'rating_history_screen.dart';
 import 'pet_edit_screen.dart';
 import 'profile_edit_screen.dart';
 import 'settings/notification_settings_screen.dart';
@@ -257,7 +258,7 @@ class ProfileScreen extends ConsumerWidget {
               
               // 꼬순내지수 (개선된 디자인)
               currentUser.when(
-                data: (user) => _buildKkosunnaeScore(context, user?.kkosunnaeScore ?? 50.0),
+                data: (user) => _buildKkosunnaeScore(context, ref, user?.kkosunnaeScore ?? 50.0),
                 loading: () => const SizedBox(),
                 error: (_, __) => const SizedBox(),
               ),
@@ -602,6 +603,12 @@ class ProfileScreen extends ConsumerWidget {
         'label': '내 활동',
         'badge': null,
         'screen': const MyActivityScreen(),
+      },
+      {
+        'icon': AppIcons.starOutlined,
+        'label': '평가 이력',
+        'badge': null,
+        'screen': const RatingHistoryScreen(),
       },
       {
         'icon': AppIcons.likeOutlined,
@@ -1138,10 +1145,13 @@ class ProfileScreen extends ConsumerWidget {
   }
   
   /// 꼬순내지수 디자인 (공통 위젯 사용)
-  Widget _buildKkosunnaeScore(BuildContext context, double score) {
+  Widget _buildKkosunnaeScore(BuildContext context, WidgetRef ref, double score) {
     return KkosunnaeScoreMedium(
       score: score,
-      onTap: () => showKkosunnaeDetailSheet(context),
+      onTap: () async {
+        await showKkosunnaeDetailSheet(context);
+        ref.invalidate(currentUserProvider);
+      },
     );
   }
   

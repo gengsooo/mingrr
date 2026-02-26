@@ -52,26 +52,8 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     final unreadCount = ref.watch(unreadNotificationCountProvider);
 
     return Scaffold(
-      appBar: MingrrAppBar.mainTab(
-        titleWidget: Row(
-          children: [
-            const Text('알림'),
-            if (unreadCount > 0) ...[
-              const SizedBox(width: AppSizes.gapS),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                ),
-                child: Text(
-                  unreadCount > 99 ? '99+' : '$unreadCount',
-                  style: AppTextStyles.labelLarge(context).withWeight(FontWeight.w600).withColor(Colors.white),
-                ),
-              ),
-            ],
-          ],
-        ),
+      appBar: MingrrAppBar(
+        title: '알림',
         actions: [
           if (unreadCount > 0)
             TextButton(

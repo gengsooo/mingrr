@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'firebase_service.dart';
 import '../widgets/common_widgets.dart';
+import '../../models/rating_model.dart';
 import '../../../app.dart' show rootNavigatorKey;
 
 /// ============================================================
@@ -158,7 +159,7 @@ class NotificationService {
       case 'marketInquiry':
         final chatRoomId = data['chatRoomId'] as String?;
         if (chatRoomId != null) {
-          context.push('/chat/detail/$chatRoomId');
+          context.push('/chat/$chatRoomId');
         } else {
           context.go('/chat');
         }
@@ -617,7 +618,7 @@ class NotificationService {
     required String activityType,
     required String relatedId,
   }) async {
-    final typeLabel = _getActivityTypeLabel(activityType);
+    final typeLabel = RatingType.fromActivityType(activityType).activityLabel;
     await _saveNotification(
       recipientId: recipientId,
       type: NotificationType.ratingReminder,
@@ -629,22 +630,6 @@ class NotificationService {
         'relatedId': relatedId,
       },
     );
-  }
-
-  String _getActivityTypeLabel(String type) {
-    switch (type) {
-      case 'dating':
-        return '만남';
-      case 'marketplace':
-      case 'market':
-        return '거래';
-      case 'breeding':
-        return '교배';
-      case 'community':
-        return '소모임';
-      default:
-        return '활동';
-    }
   }
 
   /// 꼬순내지수 등급 변동 알림

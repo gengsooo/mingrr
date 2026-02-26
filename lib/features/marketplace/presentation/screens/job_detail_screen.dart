@@ -12,7 +12,6 @@ import '../../../../core/widgets/sheets/request_sheet.dart';
 import '../../../../core/widgets/cards/profile_cards.dart';
 import '../../../../core/widgets/sheets/report_sheet.dart';
 import '../../../../core/widgets/modals/guardian_profile_modal.dart';
-import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/mixins/distance_calculator_mixin.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/share_service.dart';
@@ -22,7 +21,8 @@ import '../../../../models/chat_model.dart';
 import '../../../../models/job_application_model.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/utils/error_handler.dart';
-import '../../../chat/presentation/screens/chat_detail_screen.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/widgets/image/mingrr_image.dart';
 import '../providers/marketplace_provider.dart';
 import '../providers/job_application_provider.dart';
 
@@ -172,15 +172,9 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       expandedHeight: 200,
       onShare: () => _shareJob(job),
       onMore: () => _showMoreOptions(context, job),
-      placeholder: Container(
-        color: context.features.marketContainer,
-        child: Center(
-          child: Icon(
-            AppIcons.image,
-            size: 80,
-            color: context.features.market,
-          ),
-        ),
+      placeholder: MingrrImage(
+        accentColor: context.features.market,
+        placeholderIcon: AppIcons.image,
       ),
     );
   }
@@ -280,29 +274,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   }
   
   void _showUserProfile(BuildContext context, JobModel job) {
-    showGuardianProfileModal(
+    showGuardianProfileFromFirestore(
       context,
-      guardianId: job.userId,
-      guardianName: '등록자',
-      kkosunnaeScore: 50.0,
-      isIdentityVerified: true,
-      isPetVerified: true,
-      isLocationVerified: false,
-      pets: [
-        GuardianPetInfo(
-          id: 'pet_1',
-          name: '뿐삐',
-          breed: '골든 리트리버',
-          ageString: '3살',
-          likeCount: 42,
-        ),
-      ],
-      activityInfo: const GuardianActivityInfo(
-        walkCount: 65,
-        datingCount: 8,
-        marketCount: 12,
-        groupCount: 5,
-      ),
+      userId: job.userId,
+      fallbackName: '등록자',
     );
   }
 
@@ -343,7 +318,6 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         MingrrImageGallery(
           imageUrls: job.imageUrls,
           height: 120,
-          itemWidth: 120,
           enableViewer: true,
         ),
       ],
@@ -492,17 +466,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     final posterData = posterDoc.data();
     
     if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ChatDetailScreen(
-            chatRoomId: chatRoomId,
-            otherUserName: posterData?['nickname'] ?? '등록자',
-            otherUserImageUrl: posterData?['profileImageUrl'],
-            chatType: 'job',
-          ),
-        ),
-      );
+      // go_router를 사용하여 채팅 탭으로 이동 (하단 메뉴 동기화)
+      context.go('/chat/$chatRoomId');
     }
   }
 
@@ -620,17 +585,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       );
 
       if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatDetailScreen(
-              chatRoomId: chatRoom.id,
-              otherUserName: posterInfo.nickname,
-              otherUserImageUrl: posterInfo.profileImageUrl,
-              chatType: 'marketplace',
-            ),
-          ),
-        );
+        // go_router를 사용하여 채팅 탭으로 이동 (하단 메뉴 동기화)
+        context.go('/chat/${chatRoom.id}');
       }
     } catch (e) {
       if (mounted) {

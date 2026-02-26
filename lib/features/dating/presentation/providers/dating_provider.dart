@@ -27,7 +27,10 @@ class PetWithDistance extends ItemWithDistance<PetModel> {
   final String ownerAddress;
   final int matchScore;
   final String matchGrade;
-  final String? breedingDescription; // 교배찾기 글 상세 내용
+  final String? breedingPostId;       // 교배글 ID
+  final String? breedingTitle;        // 교배글 제목
+  final String? breedingDescription;  // 교배글 상세 내용
+  final bool sameBreedOnly;           // 같은 품종만 허용
   
   PetWithDistance({
     required PetModel pet,
@@ -35,7 +38,10 @@ class PetWithDistance extends ItemWithDistance<PetModel> {
     this.ownerAddress = '',
     this.matchScore = 0,
     this.matchGrade = '',
+    this.breedingPostId,
+    this.breedingTitle,
     this.breedingDescription,
+    this.sameBreedOnly = false,
   }) : super(item: pet, distanceMeters: distanceMeters);
   
   /// 기존 코드 호환성을 위한 접근자
@@ -467,9 +473,9 @@ final paginatedBreedingPetsProvider = StateNotifierProvider
         }
       }
       
-      // 교배찾기 글에서 description 가져오기
+      // 교배찾기 글에서 정보 가져오기 (id, title, description)
       final petIds = otherPets.map((p) => p.id).toSet();
-      final breedingDescriptions = <String, String>{};
+      final breedingPosts = <String, Map<String, String>>{};
       
       for (final petId in petIds) {
         final breedingQuery = await _firebase.breedingPostsCollection
@@ -478,13 +484,23 @@ final paginatedBreedingPetsProvider = StateNotifierProvider
             .limit(1)
             .get();
         if (breedingQuery.docs.isNotEmpty) {
-          final data = breedingQuery.docs.first.data();
-          breedingDescriptions[petId] = data['description'] as String? ?? '';
+          final doc = breedingQuery.docs.first;
+          final data = doc.data();
+          breedingPosts[petId] = {
+            'id': doc.id,
+            'title': data['title'] as String? ?? '',
+            'description': data['description'] as String? ?? '',
+            'sameBreedOnly': (data['sameBreedOnly'] == true).toString(),
+          };
         }
       }
       
       final result = <PetWithDistance>[];
       for (final pet in otherPets) {
+        // 교배글이 있는 펫만 표시 (교배글 없으면 스킵)
+        final postInfo = breedingPosts[pet.id];
+        if (postInfo == null) continue;
+        
         final ownerLocation = ownerLocations[pet.ownerId];
         double distance = double.infinity;
         
@@ -495,12 +511,16 @@ final paginatedBreedingPetsProvider = StateNotifierProvider
           );
         }
         
-        // 거리 필터 적용
-        if (distance <= radiusKm * 1000) {
+        // 거리 필터 적용 (위치 정보 없으면 거리 무관하게 표시)
+        final hasLocationInfo = ownerLocation != null && userLocation != null;
+        if (!hasLocationInfo || distance <= radiusKm * 1000) {
           result.add(PetWithDistance(
             pet: pet,
-            distanceMeters: distance,
-            breedingDescription: breedingDescriptions[pet.id],
+            distanceMeters: hasLocationInfo ? distance : 0,
+            breedingPostId: postInfo['id'],
+            breedingTitle: postInfo['title'],
+            breedingDescription: postInfo['description'],
+            sameBreedOnly: postInfo['sameBreedOnly'] == 'true',
           ));
         }
       }

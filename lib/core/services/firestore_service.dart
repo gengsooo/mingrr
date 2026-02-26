@@ -448,6 +448,50 @@ class FirestoreService {
     }
   }
   
+  /// 일정 수정
+  Future<void> updateSchedule(GroupScheduleModel schedule) async {
+    try {
+      await _firebase.schedulesCollection.doc(schedule.id).update(schedule.toFirestore());
+    } catch (e) {
+      AppLogger.dbError('FirestoreService', 'updateSchedule (scheduleId: ${schedule.id})', e);
+      rethrow;
+    }
+  }
+  
+  /// 일정 삭제
+  Future<void> deleteSchedule(String scheduleId) async {
+    try {
+      await _firebase.schedulesCollection.doc(scheduleId).delete();
+    } catch (e) {
+      AppLogger.dbError('FirestoreService', 'deleteSchedule (scheduleId: $scheduleId)', e);
+      rethrow;
+    }
+  }
+  
+  /// 일정 참여
+  Future<void> joinSchedule(String scheduleId, String userId) async {
+    try {
+      await _firebase.schedulesCollection.doc(scheduleId).update({
+        'participantIds': FieldValue.arrayUnion([userId]),
+      });
+    } catch (e) {
+      AppLogger.dbError('FirestoreService', 'joinSchedule (scheduleId: $scheduleId, userId: $userId)', e);
+      rethrow;
+    }
+  }
+  
+  /// 일정 참여 취소
+  Future<void> leaveSchedule(String scheduleId, String userId) async {
+    try {
+      await _firebase.schedulesCollection.doc(scheduleId).update({
+        'participantIds': FieldValue.arrayRemove([userId]),
+      });
+    } catch (e) {
+      AppLogger.dbError('FirestoreService', 'leaveSchedule (scheduleId: $scheduleId, userId: $userId)', e);
+      rethrow;
+    }
+  }
+  
   Future<void> incrementProductViewCount(String productId) async {
     try {
       await _firebase.productsCollection.doc(productId).update({
@@ -760,6 +804,30 @@ class FirestoreService {
     }
   }
   
+  /// 마켓 통합 검색 (상품 + 알바)
+  /// 상품과 알바를 병렬로 검색하여 최신순으로 정렬된 결과 반환
+  Future<List<dynamic>> searchMarketAll(String query) async {
+    try {
+      // 상품과 알바를 병렬로 검색
+      final results = await Future.wait([
+        searchProducts(query),
+        searchJobs(query),
+      ]);
+      
+      final products = results[0] as List<ProductModel>;
+      final jobs = results[1] as List<JobModel>;
+      
+      // 통합 후 최신순 정렬
+      final combined = <dynamic>[...products, ...jobs];
+      combined.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      
+      return combined;
+    } catch (e) {
+      AppLogger.dbError('FirestoreService', 'searchMarketAll (query: $query)', e);
+      rethrow;
+    }
+  }
+  
   // ===== 교배 글 관련 =====
   
   /// 교배 글 생성
@@ -856,6 +924,7 @@ class FirestoreService {
       return snapshot.docs
           .map((doc) => CommunityPostModel.fromFirestore(doc.data()!, id: doc.id))
           .where((p) => 
+              p.title.toLowerCase().contains(lowerQuery) ||
               p.content.toLowerCase().contains(lowerQuery) ||
               p.tags.any((t) => t.toLowerCase().contains(lowerQuery)))
           .toList();

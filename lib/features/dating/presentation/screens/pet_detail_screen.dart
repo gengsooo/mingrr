@@ -30,9 +30,11 @@ import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../models/user_model.dart';
+import '../../../../models/breeding_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import '../providers/dating_provider.dart';
+import 'breeding_write_screen.dart';
 
 /// ============================================================
 /// 반려동물 상세 화면
@@ -49,6 +51,7 @@ class PetDetailScreen extends ConsumerStatefulWidget {
   final bool isBreeding; // true: 교배찾기, false: 데이팅
   final double? cachedDistanceMeters; // 리스트에서 전달받은 거리 (캐시)
   final int? cachedMatchScore; // 리스트에서 전달받은 궁합 점수 (캐시)
+  final String? breedingPostId; // 교배글 ID (교배찾기에서 전달)
 
   const PetDetailScreen({
     super.key,
@@ -56,6 +59,7 @@ class PetDetailScreen extends ConsumerStatefulWidget {
     this.isBreeding = false,
     this.cachedDistanceMeters,
     this.cachedMatchScore,
+    this.breedingPostId,
   });
 
   @override
@@ -471,6 +475,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         isIdentityVerified: owner?.isIdentityVerified ?? false,
         isPetVerified: owner?.isVerified ?? false,
         isLocationVerified: owner?.isLocationVerified ?? false,
+        activityInfo: owner != null ? GuardianActivityInfo.fromUser(owner) : null,
         pets: [
           GuardianPetInfo(
             id: pet.id,
@@ -494,56 +499,230 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
     return TraitSection(traits: traits);
   }
 
-  /// 교배찾기 상세 내용
+  /// 교배찾기 글 정보 섹션 (제목, 조건, 설명, 수정/삭제 버튼)
   Widget _buildBreedingDescription(PetModel pet) {
-    return FutureBuilder<String?>(
-      future: _getBreedingDescription(pet.id),
+    return FutureBuilder<BreedingPostModel?>(
+      future: _getBreedingPost(pet.id),
       builder: (context, snapshot) {
-        final description = snapshot.data;
-        if (description == null || description.isEmpty) {
+        final post = snapshot.data;
+        if (post == null) {
           return const SizedBox.shrink();
         }
+        
+        final colorScheme = Theme.of(context).colorScheme;
+        final accentColor = context.features.dating;
+        final isMyPost = post.authorId == _firebase.currentUserId;
         
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '교배 상세 내용',
-              style: AppTextStyles.headlineSmall(context),
-            ),
-            const SizedBox(height: AppSizes.gapM),
+            // '교배 글' 라벨 배지
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSizes.paddingL),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
-                color: context.sectionBackground,
-                borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                color: accentColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
               ),
               child: Text(
-                description,
-                style: AppTextStyles.bodyMedium(context).copyWith(height: 1.6),
+                '교배 글',
+                style: AppTextStyles.labelLarge(context).copyWith(color: accentColor),
               ),
             ),
+            const SizedBox(height: AppSizes.gapS),
+            // 헤더: 제목 + 수정/삭제 버튼
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    post.title,
+                    style: AppTextStyles.headlineMedium(context),
+                  ),
+                ),
+                if (isMyPost) ...[
+                  IconButton(
+                    onPressed: () => _editBreedingPost(post),
+                    icon: Icon(AppIcons.edit, size: 20, color: colorScheme.onSurfaceVariant),
+                    tooltip: '수정',
+                  ),
+                  IconButton(
+                    onPressed: () => _deleteBreedingPost(post),
+                    icon: Icon(AppIcons.delete, size: 20, color: colorScheme.error),
+                    tooltip: '삭제',
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: AppSizes.gapM),
+            
+            // 교배 조건
+            _buildBreedingConditions(post),
+            const SizedBox(height: AppSizes.gapL),
+            
+            // 상세 설명
+            if (post.description.isNotEmpty) ...[
+              Text(
+                '상세 내용',
+                style: AppTextStyles.labelLarge(context),
+              ),
+              const SizedBox(height: AppSizes.gapS),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppSizes.paddingL),
+                decoration: BoxDecoration(
+                  color: context.sectionBackground,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                ),
+                child: Text(
+                  post.description,
+                  style: AppTextStyles.bodyMedium(context).copyWith(height: 1.6),
+                ),
+              ),
+            ],
           ],
         );
       },
     );
   }
+  
+  /// 교배 조건 표시
+  Widget _buildBreedingConditions(BreedingPostModel post) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    final conditions = <String>[];
+    
+    // 성별 조건
+    if (post.preferredGender != null) {
+      conditions.add(post.preferredGender == 'male' ? '남아 선호' : '여아 선호');
+    }
+    
+    // 품종 조건
+    if (post.sameBreedOnly) {
+      conditions.add('같은 품종만');
+    }
+    
+    // 크기 조건
+    if (post.preferredSizes.isNotEmpty) {
+      conditions.add(post.preferredSizes.map((s) => PetSize.labelFromName(s)).join(', '));
+    }
+    
+    // 나이 조건
+    if (post.minAge != null || post.maxAge != null) {
+      if (post.minAge != null && post.maxAge != null) {
+        conditions.add('${post.minAge}~${post.maxAge}살');
+      } else if (post.minAge != null) {
+        conditions.add('${post.minAge}살 이상');
+      } else if (post.maxAge != null) {
+        conditions.add('${post.maxAge}살 이하');
+      }
+    }
+    
+    if (conditions.isEmpty) {
+      conditions.add('조건 없음');
+    }
+    
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSizes.paddingM),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
+        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '원하는 조건',
+            style: AppTextStyles.labelMedium(context).copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppSizes.gapS),
+          Wrap(
+            spacing: AppSizes.gapS,
+            runSpacing: AppSizes.gapS,
+            children: conditions.map((condition) => Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.paddingS,
+                vertical: AppSizes.paddingXS,
+              ),
+              decoration: BoxDecoration(
+                color: context.features.dating.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+              ),
+              child: Text(
+                condition,
+                style: AppTextStyles.labelSmall(context).copyWith(
+                  color: context.features.dating,
+                ),
+              ),
+            )).toList(),
+          ),
+        ],
+      ),
+    );
+  }
 
-  /// 교배찾기 글에서 description 가져오기
-  Future<String?> _getBreedingDescription(String petId) async {
+  /// 교배찾기 글 가져오기
+  Future<BreedingPostModel?> _getBreedingPost(String petId) async {
     try {
+      // breedingPostId가 전달된 경우 해당 글 직접 조회
+      if (widget.breedingPostId != null) {
+        return await _firestoreService.getBreedingPost(widget.breedingPostId!);
+      }
+      
+      // 없으면 petId로 검색
       final query = await _firebase.breedingPostsCollection
           .where('petId', isEqualTo: petId)
           .where('status', isEqualTo: 'active')
           .limit(1)
           .get();
       if (query.docs.isNotEmpty) {
-        return query.docs.first.data()['description'] as String?;
+        return BreedingPostModel.fromFirestore(
+          query.docs.first.data(),
+          id: query.docs.first.id,
+        );
       }
       return null;
     } catch (e) {
       return null;
+    }
+  }
+  
+  /// 교배글 수정
+  void _editBreedingPost(BreedingPostModel post) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BreedingWriteScreen(post: post),
+      ),
+    ).then((_) {
+      // 수정 후 화면 갱신
+      setState(() {});
+    });
+  }
+  
+  /// 교배글 삭제
+  Future<void> _deleteBreedingPost(BreedingPostModel post) async {
+    final confirmed = await showConfirmSheetWithResult(
+      context,
+      type: ConfirmSheetType.generalDelete,
+      title: '교배글 삭제',
+      message: '정말 이 교배글을 삭제하시겠습니까?\n삭제된 글은 복구할 수 없습니다.',
+    );
+    
+    if (confirmed == true) {
+      try {
+        await _firestoreService.deleteBreedingPost(post.id);
+        if (mounted) {
+          MingrrSnackBar.success(context, '교배글이 삭제되었습니다');
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ErrorHandler.showError(context, e, tag: 'Breeding', operation: '교배글 삭제');
+        }
+      }
     }
   }
 
@@ -714,8 +893,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
 
   /// 보호자 프로필 모달 표시
   void _showGuardianProfile(BuildContext context, PetModel pet, UserModel? owner) {
-    final genderEnum = owner?.gender;
-    final gender = genderEnum == UserGender.male ? GuardianGender.male : GuardianGender.female;
+    final gender = GuardianGender.fromUserGender(owner?.gender);
     final age = _calculateUserAge(owner?.birthDate);
     
     showGuardianProfileModal(
@@ -742,11 +920,9 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
           introduction: pet.bio,
         ),
       ],
-      activityInfo: const GuardianActivityInfo(
-        walkCount: 0,
-        datingCount: 0,
-        marketCount: 0,
-        groupCount: 0,
+      activityInfo: owner != null
+        ? GuardianActivityInfo.fromUser(owner)
+        : const GuardianActivityInfo(
       ),
     );
   }
