@@ -245,7 +245,7 @@ class _CompatibilityGuideContent extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingS),
       decoration: BoxDecoration(
         color: features.dating.withValues(alpha: AppOpacity.o05),
-        borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -256,14 +256,14 @@ class _CompatibilityGuideContent extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
             decoration: BoxDecoration(
               color: features.dating.withValues(alpha: AppOpacity.o15),
-              borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Text(
               '${factor.percentage}%',
               style: AppTextStyles.labelMedium(context).withWeight(FontWeight.w700).withColor(features.dating),
             ),
           ),
-          const SizedBox(width: AppSizes.gapMS),
+          const SizedBox(width: AppSizes.gapM),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

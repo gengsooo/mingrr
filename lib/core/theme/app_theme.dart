@@ -8,7 +8,7 @@ import 'feature_colors.dart';
 /// 
 /// 색상 사용법:
 /// - 기본 색상: Theme.of(context).colorScheme.xxx
-/// - 기능별 색상: Theme.of(context).extension<FeatureColors>()!.xxx
+/// - 기능별 색상: `Theme.of(context).extension<FeatureColors>()!.xxx`
 /// - 또는 확장 메서드: context.colors.xxx, context.features.xxx
 /// 
 /// 화면 배경색 사용법:
@@ -95,7 +95,7 @@ class AppTheme {
       
       // ===== 카드 테마 =====
       cardTheme: CardThemeData(
-        elevation: AppSizes.cardElevation,
+        elevation: AppSizes.elevationS,
         color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
@@ -238,7 +238,7 @@ class AppTheme {
         backgroundColor: Colors.white,
         elevation: AppSizes.elevationM,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
         ),
         titleTextStyle: const TextStyle(
           fontFamily: 'Pretendard',
@@ -259,7 +259,7 @@ class AppTheme {
         elevation: AppSizes.elevationM,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppSizes.radiusXL),
+            top: Radius.circular(AppSizes.radiusL),
           ),
         ),
       ),
@@ -564,7 +564,7 @@ class AppTheme {
         elevation: AppSizes.elevationM,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppSizes.radiusXL),
+            top: Radius.circular(AppSizes.radiusL),
           ),
         ),
       ),
@@ -575,7 +575,7 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         elevation: AppSizes.elevationM,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
         ),
         titleTextStyle: const TextStyle(
           fontFamily: 'Pretendard',

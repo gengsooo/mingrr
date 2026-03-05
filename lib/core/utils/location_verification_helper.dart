@@ -128,7 +128,9 @@ class _LocationVerificationDialogState extends State<LocationVerificationDialog>
           position = lastPosition;
         } else {
           position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.medium,
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.medium,
+            ),
           ).timeout(const Duration(seconds: 8));
         }
       } catch (e) {
@@ -252,7 +254,7 @@ class _LocationVerificationDialogState extends State<LocationVerificationDialog>
             ),
           ),
         ),
-        const SizedBox(height: AppSizes.gapLL),
+        const SizedBox(height: AppSizes.gapL),
         Text(
           '현재 위치 확인 중',
           style: AppTextStyles.headlineSmall(context),
@@ -280,7 +282,7 @@ class _LocationVerificationDialogState extends State<LocationVerificationDialog>
           ),
           child: const Icon(AppIcons.locationOff, size: 28, color: Colors.red),
         ),
-        const SizedBox(height: AppSizes.gapLL),
+        const SizedBox(height: AppSizes.gapL),
         Text(
           '위치 확인 실패',
           style: AppTextStyles.headlineSmall(context),
@@ -291,7 +293,7 @@ class _LocationVerificationDialogState extends State<LocationVerificationDialog>
           textAlign: TextAlign.center,
           style: AppTextStyles.bodyMedium(context).copyWith(color: colorScheme.onSurfaceVariant, height: 1.5),
         ),
-        const SizedBox(height: AppSizes.gapLL),
+        const SizedBox(height: AppSizes.gapL),
         MingrrButton(
           text: '확인',
           onPressed: () => Navigator.pop(context, false),
@@ -414,7 +416,7 @@ class _LocationVerificationDialogState extends State<LocationVerificationDialog>
               ],
             ),
           ),
-        const SizedBox(height: AppSizes.gapLL),
+        const SizedBox(height: AppSizes.gapL),
         
         // 버튼
         if (isTooFar)

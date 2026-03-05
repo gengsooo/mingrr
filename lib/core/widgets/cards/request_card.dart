@@ -5,7 +5,6 @@ import '../../theme/app_text_styles.dart';
 import '../../theme/feature_colors.dart';
 import '../badges/request_status_badge.dart';
 import '../common_widgets.dart';
-import '../mingrr_image.dart';
 
 /// ============================================================
 /// 신청 카드 공통 컴포넌트
@@ -427,7 +426,7 @@ class _AsyncRequestCardState extends State<AsyncRequestCard> {
                     height: 16,
                     decoration: BoxDecoration(
                       color: colorScheme.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     ),
                   ),
                   const SizedBox(height: AppSizes.gapXS),
@@ -436,7 +435,7 @@ class _AsyncRequestCardState extends State<AsyncRequestCard> {
                     height: 12,
                     decoration: BoxDecoration(
                       color: colorScheme.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     ),
                   ),
                 ],

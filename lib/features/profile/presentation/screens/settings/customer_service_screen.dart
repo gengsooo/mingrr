@@ -229,8 +229,8 @@ class CustomerServiceScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
               margin: const EdgeInsets.only(right: AppSizes.paddingS),
               decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                color: Theme.of(context).colorScheme.error,
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
                 'NEW',

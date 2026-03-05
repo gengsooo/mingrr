@@ -7,7 +7,6 @@ import '../../../../core/utils/app_logger.dart';
 import '../../../../models/chat_model.dart';
 import '../../../../models/job_application_model.dart';
 import '../../../../models/marketplace_model.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// ============================================================
 /// 알바 지원 Provider
@@ -17,8 +16,6 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 /// ============================================================
 
 final _firebase = FirebaseService();
-final _chatService = ChatService();
-final _notificationService = NotificationService();
 
 /// 받은 알바 지원 목록 (알바 등록자용 - Firebase Stream)
 final receivedJobApplicationsProvider = StreamProvider.autoDispose<List<JobApplicationModel>>((ref) {

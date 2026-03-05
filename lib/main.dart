@@ -55,15 +55,40 @@ void main() async {
   // 푸시 알림 서비스 초기화
   // await NotificationService().initialize();
   
-  // Firebase Remote Config 초기화 (API 키 로드)
+  // ── 병렬 초기화 그룹 ──
+  // Firebase 초기화 완료 후 독립적인 서비스들을 동시에 실행하여 앱 시작 시간 단축
+  await Future.wait([
+    // 1) ApiConfig → 카카오맵 SDK (순차 의존)
+    _initApiConfigAndKakaoMap(),
+    // 2) 꼬순내지수 등급 구간 (Firestore config 컬렉션만 의존)
+    _initKkosunnae(),
+    // 3) 만료된 비공개 평가 공개 (Firestore만 의존)
+    _initRevealExpiredRatings(),
+    // 4) 네트워크 서비스 (완전 독립)
+    _initNetworkService(),
+  ]);
+  
+  // 만료된 신청 자동 처리 (백그라운드 fire-and-forget)
+  _processExpiredRequests();
+  
+  // 앱 실행
+  runApp(
+    const ProviderScope(
+      child: MingrrApp(),
+    ),
+  );
+}
+
+/// ApiConfig 초기화 → 카카오맵 SDK 초기화 (순차 의존)
+Future<void> _initApiConfigAndKakaoMap() async {
   try {
     await ApiConfig.initialize();
     AppLogger.info('Main', 'API Config 초기화 완료');
   } catch (e) {
     AppLogger.error('Main', 'API Config 초기화 실패', e);
+    return;
   }
-  
-  // 카카오 지도 SDK 초기화 (API 키가 설정된 경우에만)
+
   if (ApiConfig.hasKakaoMapKey) {
     try {
       AppLogger.debug('Main', '카카오맵 SDK 초기화 시작...');
@@ -79,41 +104,36 @@ void main() async {
     AppLogger.warning('Main', '카카오맵 API 키가 설정되지 않음 (Firebase Remote Config에서 kakao_map_key 설정 필요)');
     ApiConfig.setKakaoMapSdkInitialized(false);
   }
-  
-  // 꼬순내지수 등급 구간 로드 (하이브리드 방식)
+}
+
+/// 꼬순내지수 등급 구간 로드
+Future<void> _initKkosunnae() async {
   try {
     await KkosunnaeService.loadGradeThresholds();
     AppLogger.info('Main', '꼬순내지수 등급 구간 로드 완료');
   } catch (e) {
     AppLogger.error('Main', '꼬순내지수 등급 구간 로드 실패', e);
   }
-  
-  // 만료된 비공개 평가 자동 공개 (상호 평가 대기 기간 경과)
+}
+
+/// 만료된 비공개 평가 공개 처리
+Future<void> _initRevealExpiredRatings() async {
   try {
     await RatingService().revealExpiredRatings();
     AppLogger.info('Main', '만료된 평가 공개 처리 완료');
   } catch (e) {
     AppLogger.error('Main', '만료된 평가 공개 처리 실패', e);
   }
-  
-  // 네트워크 서비스 초기화
+}
+
+/// 네트워크 서비스 초기화
+Future<void> _initNetworkService() async {
   try {
     await NetworkService().initialize();
     AppLogger.info('Main', '네트워크 서비스 초기화 완료');
   } catch (e) {
     AppLogger.error('Main', '네트워크 서비스 초기화 실패', e);
   }
-  
-  // 만료된 신청 자동 처리 (백그라운드)
-  // 로그인 상태와 무관하게 앱 시작 시 실행
-  _processExpiredRequests();
-  
-  // 앱 실행
-  runApp(
-    const ProviderScope(
-      child: MingrrApp(),
-    ),
-  );
 }
 
 /// 만료된 신청 자동 처리 (백그라운드)

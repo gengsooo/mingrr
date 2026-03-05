@@ -86,7 +86,7 @@ class MingrrMainTabBar extends StatelessWidget {
         padding: const EdgeInsets.all(AppSizes.paddingXS),
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerHighest.withValues(alpha: AppOpacity.o50),
-          borderRadius: BorderRadius.circular(AppSizes.radiusXXL),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
         ),
         child: Row(
           children: List.generate(tabs.length, (index) {
@@ -101,7 +101,7 @@ class MingrrMainTabBar extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
                   decoration: BoxDecoration(
                     color: isSelected ? tab.color : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     boxShadow: isSelected ? AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark) : null,
                   ),
                   child: Row(
@@ -119,7 +119,7 @@ class MingrrMainTabBar extends StatelessWidget {
                           size: 18,
                           color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
                         ),
-                      const SizedBox(width: AppSizes.gapSM),
+                      const SizedBox(width: AppSizes.gapS),
                       // 라벨
                       Text(
                         tab.label,
@@ -300,7 +300,7 @@ class LocationDistanceBar extends ConsumerWidget {
                     size: 18,
                     color: isLocationVerified ? accentColor : colorScheme.outline,
                   ),
-                  const SizedBox(width: AppSizes.gapSM),
+                  const SizedBox(width: AppSizes.gapS),
                   // 위치 라벨
                   Expanded(
                     child: Text(
@@ -315,7 +315,7 @@ class LocationDistanceBar extends ConsumerWidget {
               ),
             ),
           ),
-          const SizedBox(width: AppSizes.gapMS),
+          const SizedBox(width: AppSizes.gapM),
           
           // 거리 선택 버튼
           GestureDetector(
@@ -610,7 +610,7 @@ class LocationRegionBar extends StatelessWidget {
           Row(
             children: [
               Icon(LocationConstants.distanceIcon, size: 18, color: accentColor),
-              const SizedBox(width: AppSizes.gapSM),
+              const SizedBox(width: AppSizes.gapS),
               GestureDetector(
                 onTap: onTap,
                 child: Container(

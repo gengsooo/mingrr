@@ -68,7 +68,6 @@ class GuardianProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = accentColor ?? Theme.of(context).colorScheme.primary;
     final avatarSize = compact ? 40.0 : 48.0;
-    final nameSize = compact ? 14.0 : 15.0;
     
     return GestureDetector(
       onTap: onTap,
@@ -100,7 +99,7 @@ class GuardianProfileCard extends StatelessWidget {
                       _buildGenderIcon(),
                     ],
                     if (_hasVerification) ...[
-                      const SizedBox(width: AppSizes.gapSM),
+                      const SizedBox(width: AppSizes.gapS),
                       _buildVerificationBadges(),
                     ],
                   ],
@@ -233,7 +232,6 @@ class PetProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = accentColor ?? context.features.dating;
     final avatarSize = compact ? 40.0 : 48.0;
-    final nameSize = compact ? 14.0 : 15.0;
     
     return GestureDetector(
       onTap: onTap,
@@ -280,7 +278,7 @@ class PetProfileCard extends StatelessWidget {
                 
                 // 성격 태그
                 if (showTraits && traits.isNotEmpty) ...[
-                  const SizedBox(height: AppSizes.gapSM),
+                  const SizedBox(height: AppSizes.gapS),
                   _buildTraits(context, color),
                 ],
               ],
@@ -348,7 +346,7 @@ class PetProfileCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
           decoration: BoxDecoration(
             color: color.withValues(alpha: AppOpacity.o10),
-            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
           child: Text(
             trait,

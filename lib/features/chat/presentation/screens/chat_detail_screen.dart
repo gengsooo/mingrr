@@ -283,7 +283,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     borderSide: BorderSide.none,
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
@@ -302,7 +302,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   timeout: AppSizes.loadingTimeout,
                   onRetry: () => ref.invalidate(chatMessagesProvider(widget.chatRoomId)),
                 ),
-                error: (_, __) => MingrrErrorState(
+                error: (_, _) => MingrrErrorState(
                   onRetry: () => ref.invalidate(chatMessagesProvider(widget.chatRoomId)),
                 ),
                 data: (messages) {
@@ -413,7 +413,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       
       if (petsSnapshot.docs.isEmpty) {
         AppLogger.debug('ChatDetail', '반려동물 없음 - 스낵바 표시');
-        if (!mounted) return;
+        if (!context.mounted) return;
         MingrrSnackBar.info(context, '반려동물 정보가 없어요!');
         return;
       }
@@ -444,7 +444,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       final petDoc = matchingDocs.isNotEmpty ? matchingDocs.first : petsSnapshot.docs.first;
       final petData = petDoc.data();
       
-      if (!mounted) return;
+      if (!context.mounted) return;
       
       // 추천친구-상세와 동일한 내용을 표시하기 위해 guardianInfo 전달
       showPetProfileModal(
@@ -478,7 +478,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       );
     } catch (e) {
       AppLogger.error('ChatDetail', '_showPetProfile 에러', e);
-      if (!mounted) return;
+      if (!context.mounted) return;
       ErrorHandler.showError(context, e, tag: 'ChatDetail', operation: '반려동물 정보 로드');
     }
   }
@@ -491,14 +491,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     
     if (_chatRoom == null) {
       AppLogger.debug('ChatDetail', '_chatRoom이 null - 스낵바 표시');
-      if (!mounted) return;
+      if (!context.mounted) return;
       MingrrSnackBar.info(context, '채팅방 정보를 불러오는 중입니다');
       return;
     }
     
     if (_chatRoom!.relatedId == null) {
       AppLogger.debug('ChatDetail', 'relatedId가 null - 스낵바 표시');
-      if (!mounted) return;
+      if (!context.mounted) return;
       MingrrSnackBar.info(context, '소모임 정보가 연결되지 않았습니다');
       return;
     }
@@ -512,7 +512,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       
       if (!groupDoc.exists) {
         AppLogger.warning('ChatDetail', '소모임 문서가 존재하지 않음');
-        if (!mounted) return;
+        if (!context.mounted) return;
         MingrrSnackBar.info(context, '소모임 정보를 불러오는데 실패했습니다!');
         return;
       }
@@ -546,7 +546,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         return 0;
       });
       
-      if (!mounted) return;
+      if (!context.mounted) return;
       
       showGroupProfileModal(
         context,
@@ -564,7 +564,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         members: members,
       );
     } catch (e) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       ErrorHandler.showError(context, e, tag: 'ChatDetail', operation: '소모임 정보 로드');
     }
   }
@@ -591,17 +591,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       size: size,
       borderColor: themeColor.withValues(alpha: AppOpacity.o30),
       borderWidth: 1,
-    );
-  }
-
-  /// 아바타 플레이스홀더
-  Widget _buildAvatarPlaceholder(String name, double size, Color color) {
-    return Center(
-      child: Icon(
-        AppIcons.pet,
-        size: size * 0.5,
-        color: color,
-      ),
     );
   }
 
@@ -683,7 +672,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 _buildTimeText(message.sentAt),
               ],
             ),
-            const SizedBox(width: AppSizes.gapSM),
+            const SizedBox(width: AppSizes.gapS),
           ],
           
           // 메시지 버블 + 꼬리
@@ -702,7 +691,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             ),
           ),
           
-          if (!isMe && showTime) const SizedBox(width: AppSizes.gapSM),
+          if (!isMe && showTime) const SizedBox(width: AppSizes.gapS),
           if (!isMe && showTime) _buildTimeText(message.sentAt),
         ],
       ),
@@ -732,7 +721,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(AppIcons.location, color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface, size: 18),
-            const SizedBox(width: AppSizes.gapSM),
+            const SizedBox(width: AppSizes.gapS),
             Flexible(
               child: Text(
                 message.content,
@@ -1020,14 +1009,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       onConfirm: () async {
         try {
           await _firestoreService.blockUser(myUserId, otherParticipant.id);
-          if (mounted) {
-            MingrrSnackBar.success(context, '${otherParticipant.nickname}님을 차단했습니다');
-            Navigator.pop(context); // 채팅 상세 화면 닫기
-          }
+          if (!context.mounted) return;
+          MingrrSnackBar.success(context, '${otherParticipant.nickname}님을 차단했습니다');
+          Navigator.pop(context); // 채팅 상세 화면 닫기
         } catch (e) {
-          if (mounted) {
-            ErrorHandler.showError(context, e, tag: 'ChatDetail', operation: '사용자 차단');
-          }
+          if (!context.mounted) return;
+          ErrorHandler.showError(context, e, tag: 'ChatDetail', operation: '사용자 차단');
         }
       },
     );
@@ -1138,7 +1125,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       subtitle: '신고 사유를 선택해주세요',
       options: ['욕설/비방', '사기/허위정보', '노쇼', '부적절한 행동', '기타'],
       confirmText: '신고',
-      confirmColor: Colors.red,
+      confirmColor: Theme.of(context).colorScheme.error,
       icon: AppIcons.report,
     );
 
@@ -1164,7 +1151,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         final userId = ref.read(authStateProvider).valueOrNull?.uid;
         if (userId != null) {
           await _chatService.leaveChatRoom(widget.chatRoomId, userId);
-          if (mounted) Navigator.pop(context);
+          if (context.mounted) Navigator.pop(context);
         }
       },
     );

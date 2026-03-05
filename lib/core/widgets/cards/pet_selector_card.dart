@@ -5,7 +5,6 @@ import '../../theme/feature_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../../../models/pet_model.dart';
 import '../common_widgets.dart';
-import '../mingrr_image.dart';
 import '../sheets/mingrr_bottom_sheet.dart';
 import '../badges/info_badge.dart' show LikeCountText, InfoBadgeSize, PedigreeBadge;
 import '../../utils/responsive_utils.dart';
@@ -134,7 +133,7 @@ class _PetSelectorSheetState extends State<PetSelectorSheet> {
       ),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXL)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusL)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -178,7 +177,7 @@ class _PetSelectorSheetState extends State<PetSelectorSheet> {
                 : ListView.separated(
                     shrinkWrap: true,
                     itemCount: widget.pets.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: AppSizes.gapS),
+                    separatorBuilder: (_, _) => const SizedBox(height: AppSizes.gapS),
                     itemBuilder: (context, index) {
                       final pet = widget.pets[index];
                       return PetSelectorCard(

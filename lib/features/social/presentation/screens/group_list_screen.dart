@@ -5,10 +5,7 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
-import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
-import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/forms/location_selector.dart';
 import '../../../../core/widgets/badges/info_badge.dart';
@@ -231,7 +228,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
               return _buildMyGroupsSection(context, ref, myGroups);
             },
             loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
           ),
           const SizedBox(height: AppSizes.gapXL),
 
@@ -415,7 +412,7 @@ class _MyGroupCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
               child: SizedBox(
                 width: 36,
                 height: 36,
@@ -503,7 +500,7 @@ class _GroupCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 3),
                         decoration: BoxDecoration(
                           color: accentColor.withValues(alpha: AppOpacity.o10),
-                          borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Text(
                           group.typeString,

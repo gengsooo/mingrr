@@ -501,7 +501,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
               onSurface: Colors.black87,
               surfaceContainerHighest: Colors.white,
             ),
-            dialogBackgroundColor: Colors.white,
+            dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );
@@ -528,7 +528,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
       height: ResponsiveUtils.heightPercent(context, 0.9),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXL)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusL)),
       ),
       child: Column(
         children: [
@@ -591,7 +591,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                                   size: 18,
                                   color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
-                                const SizedBox(width: AppSizes.gapSM),
+                                const SizedBox(width: AppSizes.gapS),
                                 Text(
                                   type.label,
                                   style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600).withColor(
@@ -896,7 +896,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
                   decoration: BoxDecoration(
                     color: isSelected ? context.features.market.withValues(alpha: AppOpacity.o10) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     border: Border.all(
                       color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
                     ),

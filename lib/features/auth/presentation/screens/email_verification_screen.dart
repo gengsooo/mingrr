@@ -136,7 +136,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
               // 재발송 버튼
               MingrrButton(
                 text: _resendCooldown > 0 
-                    ? '재발송 (${_resendCooldown}초)' 
+                    ? '재발송 ($_resendCooldown초)' 
                     : '인증 메일 재발송',
                 isLoading: _isResending,
                 isOutlined: true,

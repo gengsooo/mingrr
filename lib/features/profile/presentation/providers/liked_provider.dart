@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/models/paginated_state.dart';
 import '../../../../core/providers/paginated_provider.dart';
@@ -32,12 +31,7 @@ final _favoriteService = FavoriteService();
 // ============================================================
 
 void _logError(String source, Object error, [StackTrace? stackTrace]) {
-  if (kDebugMode) {
-    debugPrint('[LikedProvider] $source error: $error');
-    if (stackTrace != null) {
-      debugPrint(stackTrace.toString());
-    }
-  }
+  AppLogger.error('LikedProvider', source, error);
 }
 
 // ============================================================

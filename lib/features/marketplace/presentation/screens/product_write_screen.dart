@@ -109,7 +109,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
 
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: MingrrFormAppBar(
+      appBar: MingrrAppBar.form(
         title: _isEditMode ? ScreenTitles.productEdit : ScreenTitles.productWrite,
         onClose: () => Navigator.pop(context),
       ),
@@ -286,7 +286,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 18, color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant),
-              const SizedBox(width: AppSizes.gapSM),
+              const SizedBox(width: AppSizes.gapS),
               Text(
                 label,
                 style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600).withColor(
@@ -466,7 +466,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
         );
       },
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.market, message: '카테고리를 불러오고 있어요'),
-      error: (_, __) => const Text('일시적인 오류가 발생했어요'),
+      error: (_, _) => const Text('일시적인 오류가 발생했어요'),
     );
   }
 
@@ -498,7 +498,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
               padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
               decoration: BoxDecoration(
                 color: isSelected ? context.features.market.withValues(alpha: AppOpacity.o10) : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 border: Border.all(
                   color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
                 ),

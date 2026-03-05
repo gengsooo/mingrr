@@ -616,8 +616,4 @@ class PetBreeds {
         .where((breed) => breed.toLowerCase().contains(lowerQuery))
         .toList();
   }
-
-  /// @deprecated [dogPopular]를 대신 사용하세요
-  @Deprecated('dogPopular를 대신 사용하세요')
-  static const List<String> popular = dogPopular;
 }

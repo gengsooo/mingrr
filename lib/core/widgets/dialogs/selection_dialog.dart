@@ -128,15 +128,19 @@ class _MingrrSelectionDialogState extends State<MingrrSelectionDialog> {
             const SizedBox(height: AppSizes.gapM),
             
             // 옵션 리스트
-            ...widget.options.map((option) => RadioListTile<String>(
-              title: Text(option),
-              value: option,
+            RadioGroup<String>(
               groupValue: _selectedOption,
               onChanged: (value) => setState(() => _selectedOption = value),
-              contentPadding: EdgeInsets.zero,
-              visualDensity: VisualDensity.compact,
-              activeColor: confirmColor,
-            )),
+              child: Column(
+                children: widget.options.map((option) => RadioListTile<String>(
+                  title: Text(option),
+                  value: option,
+                  contentPadding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                  activeColor: confirmColor,
+                )).toList(),
+              ),
+            ),
             
             const SizedBox(height: AppSizes.gapM),
             

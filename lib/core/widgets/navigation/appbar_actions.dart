@@ -19,9 +19,9 @@ import '../mingrr_image.dart';
 /// ============================================================
 
 class AppBarActionButton extends StatelessWidget {
+  static const double _kSize = 40;
   final Widget child;
   final VoidCallback? onTap;
-  final double size;
   final EdgeInsets padding;
   final _ActionType _type;
 
@@ -29,7 +29,6 @@ class AppBarActionButton extends StatelessWidget {
     super.key,
     required this.child,
     this.onTap,
-    this.size = 40,
     this.padding = EdgeInsets.zero,
     required _ActionType type,
   }) : _type = type;
@@ -84,8 +83,8 @@ class AppBarActionButton extends StatelessWidget {
         onTap: () => _handleTap(context),
         behavior: HitTestBehavior.opaque,
         child: SizedBox(
-          width: size,
-          height: size,
+          width: _kSize,
+          height: _kSize,
           child: Center(child: child),
         ),
       ),

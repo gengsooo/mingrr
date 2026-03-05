@@ -17,12 +17,9 @@ import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/share_service.dart';
 import '../../../../core/widgets/buttons/wishlist_button.dart';
 import '../../../../models/marketplace_model.dart';
-import '../../../../models/chat_model.dart';
 import '../../../../models/job_application_model.dart';
-import '../../../../core/services/chat_service.dart';
 import '../../../../core/utils/error_handler.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/widgets/image/mingrr_image.dart';
 import '../providers/marketplace_provider.dart';
 import '../providers/job_application_provider.dart';
 
@@ -111,7 +108,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
           type: MingrrLoadingType.market,
         ),
       ),
-      error: (_, __) => Scaffold(
+      error: (_, _) => Scaffold(
         appBar: const MingrrAppBar(title: '알바'),
         body: MingrrErrorState(
           onRetry: () => ref.invalidate(jobDetailProvider(widget.jobId)),
@@ -179,21 +176,6 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     );
   }
   
-  IconData _getJobIcon(JobType type) {
-    switch (type) {
-      case JobType.care:
-        return AppIcons.pet;
-      case JobType.walk:
-        return AppIcons.walk;
-      case JobType.bath:
-        return AppIcons.shower;
-      case JobType.training:
-        return AppIcons.school;
-      case JobType.other:
-        return AppIcons.work;
-    }
-  }
-
   /// 알바 정보 (상품 정보와 동일한 구조)
   Widget _buildJobInfo(JobModel job) {
     return Column(
@@ -206,19 +188,19 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
                 color: _getTypeColor(job.type).withValues(alpha: AppOpacity.o10),
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
                 job.typeString,
                 style: AppTextStyles.labelLarge(context).copyWith(color: _getTypeColor(job.type)),
               ),
             ),
-            const SizedBox(width: AppSizes.gapSM),
+            const SizedBox(width: AppSizes.gapS),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
                 color: _getStatusColor(job.status).withValues(alpha: AppOpacity.o10),
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
                 _getStatusText(job.status),
@@ -362,7 +344,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
           ],
         ),
       ),
-      error: (_, __) => _buildActionButton(context, job, null, isLiked),
+      error: (_, _) => _buildActionButton(context, job, null, isLiked),
     );
   }
 
@@ -461,10 +443,6 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       return;
     }
     
-    final firebaseService = FirebaseService();
-    final posterDoc = await firebaseService.usersCollection.doc(job.userId).get();
-    final posterData = posterDoc.data();
-    
     if (mounted) {
       // go_router를 사용하여 채팅 탭으로 이동 (하단 메뉴 동기화)
       context.go('/chat/$chatRoomId');
@@ -491,11 +469,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       case JobStatus.recruiting:
         return context.features.success;
       case JobStatus.reserved:
-        return Colors.orange;
+        return Theme.of(context).colorScheme.tertiary;
       case JobStatus.completed:
         return Theme.of(context).colorScheme.onSurfaceVariant;
       case JobStatus.cancelled:
-        return Colors.red;
+        return Theme.of(context).colorScheme.error;
     }
   }
 
@@ -539,59 +517,4 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     );
   }
 
-  Future<void> _startChat(JobModel job) async {
-    final firebaseService = FirebaseService();
-    final myUserId = firebaseService.currentUserId;
-    
-    if (myUserId == null) {
-      MingrrSnackBar.warning(context, '로그인이 필요합니다');
-      return;
-    }
-
-    // 본인 글이면 채팅 불가
-    if (job.userId == myUserId) return;
-
-    try {
-      final chatService = ChatService();
-      
-      // 내 정보 가져오기
-      final myUserDoc = await firebaseService.usersCollection.doc(myUserId).get();
-      final myUserData = myUserDoc.data();
-      
-      // 등록자 정보 가져오기
-      final posterDoc = await firebaseService.usersCollection.doc(job.userId).get();
-      final posterData = posterDoc.data();
-
-      final myInfo = ChatParticipant(
-        id: myUserId,
-        nickname: myUserData?['nickname'] ?? '사용자',
-        profileImageUrl: myUserData?['profileImageUrl'],
-      );
-
-      final posterInfo = ChatParticipant(
-        id: job.userId,
-        nickname: posterData?['nickname'] ?? '등록자',
-        profileImageUrl: posterData?['profileImageUrl'],
-      );
-
-      // 채팅방 생성 또는 기존 채팅방 찾기
-      final chatRoom = await chatService.getOrCreateChatRoom(
-        myUserId: myUserId,
-        otherUserId: job.userId,
-        type: 'job',
-        myInfo: myInfo,
-        otherInfo: posterInfo,
-        relatedId: job.id,
-      );
-
-      if (mounted) {
-        // go_router를 사용하여 채팅 탭으로 이동 (하단 메뉴 동기화)
-        context.go('/chat/${chatRoom.id}');
-      }
-    } catch (e) {
-      if (mounted) {
-        ErrorHandler.showError(context, e, tag: 'JobDetail', operation: '채팅 시작');
-      }
-    }
-  }
 }

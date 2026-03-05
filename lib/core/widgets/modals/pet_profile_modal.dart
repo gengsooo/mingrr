@@ -209,6 +209,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
       );
       
       // 스낵바 표시
+      if (!mounted) return;
       final messenger = widget.rootScaffoldMessenger ?? ScaffoldMessenger.of(context);
       messenger.showSnackBar(
         SnackBar(
@@ -218,6 +219,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
       );
     } catch (e) {
       // 실패 시 롤백
+      if (!mounted) return;
       setState(() {
         _isLiked = wasLiked;
         _currentLikeCount += wasLiked ? 1 : -1;

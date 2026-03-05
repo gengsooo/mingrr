@@ -35,7 +35,7 @@ class WishlistButton extends StatelessWidget {
     return GestureDetector(
       onTap: isLoading ? null : onTap,
       behavior: HitTestBehavior.opaque,
-      child: Container(
+      child: SizedBox(
         width: 56,
         height: 56,
         child: isLoading

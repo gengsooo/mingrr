@@ -1,6 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../utils/app_logger.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'firebase_service.dart';
@@ -56,23 +56,17 @@ class NotificationService {
       provisional: false,
     );
 
-    if (kDebugMode) {
-      print('FCM 권한 상태: ${settings.authorizationStatus}');
-    }
+    AppLogger.debug('NotificationService', 'FCM 권한 상태: ${settings.authorizationStatus}');
   }
 
   /// FCM 토큰 가져오기
   Future<String?> _getToken() async {
     try {
       _fcmToken = await _messaging.getToken();
-      if (kDebugMode) {
-        print('FCM Token: $_fcmToken');
-      }
+      AppLogger.debug('NotificationService', 'FCM Token: $_fcmToken');
       return _fcmToken;
     } catch (e) {
-      if (kDebugMode) {
-        print('FCM 토큰 가져오기 실패: $e');
-      }
+      AppLogger.error('NotificationService', 'FCM 토큰 가져오기 실패', e);
       return null;
     }
   }
@@ -81,9 +75,7 @@ class NotificationService {
   void _onTokenRefresh(String token) {
     _fcmToken = token;
     _saveTokenToFirestore(token);
-    if (kDebugMode) {
-      print('FCM Token 갱신: $token');
-    }
+    AppLogger.debug('NotificationService', 'FCM Token 갱신: $token');
   }
 
   /// 데이터베이스에 토큰 저장
@@ -119,9 +111,7 @@ class NotificationService {
 
   /// 포그라운드 메시지 수신
   void _onForegroundMessage(RemoteMessage message) {
-    if (kDebugMode) {
-      print('포그라운드 메시지 수신: ${message.notification?.title}');
-    }
+    AppLogger.info('NotificationService', '포그라운드 메시지 수신: ${message.notification?.title}');
 
     // 인앱 알림 표시 (SnackBar, 배너 등)
     _showInAppNotification(message);
@@ -129,9 +119,7 @@ class NotificationService {
 
   /// 백그라운드에서 알림 클릭
   void _onMessageOpenedApp(RemoteMessage message) {
-    if (kDebugMode) {
-      print('알림 클릭으로 앱 열림: ${message.data}');
-    }
+    AppLogger.info('NotificationService', '알림 클릭으로 앱 열림: ${message.data}');
     _handleNotificationTap(message);
   }
 
@@ -140,9 +128,7 @@ class NotificationService {
     final data = message.data;
     final type = data['type'] as String?;
 
-    if (kDebugMode) {
-      print('알림 탭 처리: type=$type, data=$data');
-    }
+    AppLogger.debug('NotificationService', '알림 탭 처리: type=$type, data=$data');
 
     // 네비게이션 처리
     _navigateToScreen(type, data);
@@ -258,17 +244,13 @@ class NotificationService {
   /// 특정 토픽 구독
   Future<void> subscribeToTopic(String topic) async {
     await _messaging.subscribeToTopic(topic);
-    if (kDebugMode) {
-      print('토픽 구독: $topic');
-    }
+    AppLogger.info('NotificationService', '토픽 구독: $topic');
   }
 
   /// 토픽 구독 해제
   Future<void> unsubscribeFromTopic(String topic) async {
     await _messaging.unsubscribeFromTopic(topic);
-    if (kDebugMode) {
-      print('토픽 구독 해제: $topic');
-    }
+    AppLogger.info('NotificationService', '토픽 구독 해제: $topic');
   }
 
   // ===== 알림 전송 (Firestore 트리거용 데이터 저장) =====
@@ -818,7 +800,5 @@ class NotificationModel {
 /// 백그라운드 메시지 핸들러 (main.dart에서 등록)
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  if (kDebugMode) {
-    print('백그라운드 메시지 수신: ${message.notification?.title}');
-  }
+  AppLogger.info('NotificationService', '백그라운드 메시지 수신: ${message.notification?.title}');
 }

@@ -6,7 +6,6 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../models/pet_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
@@ -29,8 +28,6 @@ class HealthScreen extends ConsumerStatefulWidget {
 }
 
 class _HealthScreenState extends ConsumerState<HealthScreen> {
-  bool _initialized = false;
-
   @override
   void initState() {
     super.initState();
@@ -38,10 +35,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
     if (widget.initialPetId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(selectedPetIdProvider.notifier).state = widget.initialPetId;
-        _initialized = true;
       });
-    } else {
-      _initialized = true;
     }
   }
 
@@ -57,7 +51,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
       appBar: const MingrrAppBar(title: '건강수첩'),
       body: petsAsync.when(
         loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-        error: (_, __) => MingrrErrorState(
+        error: (_, _) => MingrrErrorState(
           onRetry: () => ref.invalidate(userPetsProvider),
         ),
         data: (pets) {
@@ -172,7 +166,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
                       borderColor: isSelected ? context.features.health : Theme.of(context).colorScheme.outline,
                       borderWidth: isSelected ? 3 : 1,
                     ),
-                    const SizedBox(height: AppSizes.gapSM),
+                    const SizedBox(height: AppSizes.gapS),
                     // 이름
                     Text(
                       pet.name,
@@ -208,7 +202,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
                 decoration: BoxDecoration(
                   color: isSelected ? context.features.health : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusL),
                   border: Border.all(
                     color: isSelected ? context.features.health : Theme.of(context).colorScheme.outline,
                   ),
@@ -217,7 +211,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(category.icon, size: 18, color: isSelected ? Colors.white : context.features.health),
-                    const SizedBox(width: AppSizes.gapSM),
+                    const SizedBox(width: AppSizes.gapS),
                     Text(
                       category.label,
                       style: AppTextStyles.bodyMedium(context)
@@ -242,7 +236,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
         children: [
           // 요약 카드
           _buildSummaryCard(context, ref, category, pet),
-          const SizedBox(height: AppSizes.gapLL),
+          const SizedBox(height: AppSizes.gapL),
           
           // 최근 기록
           Text(
@@ -316,7 +310,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(weightRecordsProvider(pet.id)),
       ),
       data: (records) {
@@ -352,7 +346,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(walkRecordsProvider(pet.id)),
       ),
       data: (records) {
@@ -375,7 +369,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
           children: [
             _buildSummaryItem(context, '이번 주', '${thisWeekRecords.length}회', context.features.health),
             _buildSummaryItem(context, '총 거리', '${(totalDistance / 1000).toStringAsFixed(1)}km', context.features.walk),
-            _buildSummaryItem(context, '총 시간', '${totalMinutes}분', context.features.success),
+            _buildSummaryItem(context, '총 시간', '$totalMinutes분', context.features.success),
           ],
         );
       },
@@ -433,7 +427,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(weightRecordsProvider(pet.id)),
       ),
       data: (records) {
@@ -461,7 +455,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(walkRecordsProvider(pet.id)),
       ),
       data: (records) {
@@ -497,7 +491,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(groomingRecordsProvider(pet.id)),
       ),
       data: (records) {
@@ -523,7 +517,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(vaccinationRecordsProvider(pet.id)),
       ),
       data: (records) {
@@ -549,7 +543,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(checkupRecordsProvider(pet.id)),
       ),
       data: (records) {
@@ -575,7 +569,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
     
     return recordsAsync.when(
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(medicationRecordsProvider(pet.id)),
       ),
       data: (records) {

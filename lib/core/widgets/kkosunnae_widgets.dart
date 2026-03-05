@@ -120,7 +120,7 @@ class KkosunnaeScoreMedium extends StatelessWidget {
           children: [
             // 발바닥 게이지 아이콘
             _buildPawIcon(score, 20),
-            const SizedBox(width: AppSizes.gapSM),
+            const SizedBox(width: AppSizes.gapS),
             // 꼬순내지수 라벨
             Text(
               '꼬순내지수',
@@ -196,7 +196,7 @@ class KkosunnaeScoreLarge extends StatelessWidget {
             Container(
               height: 8,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 gradient: const LinearGradient(
                   colors: [
                     Colors.blue,
@@ -215,7 +215,7 @@ class KkosunnaeScoreLarge extends StatelessWidget {
                       height: 8,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
                       ),
                     ),
@@ -446,7 +446,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
                 // 점수 상세 섹션
                 _buildScoreDetailSection(breakdown),
                 
-                const SizedBox(height: AppSizes.gapLL),
+                const SizedBox(height: AppSizes.gapL),
                 
                 // 등급 안내 섹션
                 _buildGradeGuideSection(score),
@@ -485,7 +485,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildPawIcon(score.toDouble(), 36),
-              const SizedBox(width: AppSizes.gapMS),
+              const SizedBox(width: AppSizes.gapM),
               Text(
                 '${score.toInt()}점',
                 style: AppTextStyles.displayMedium(context).withColor(scoreColor),
@@ -503,7 +503,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
                 ),
               ),
               if (showBadge) ...[
-                const SizedBox(width: AppSizes.gapSM),
+                const SizedBox(width: AppSizes.gapS),
                 _KkosunaeMasterBadgeSmall(size: 18),
               ],
             ],
@@ -574,7 +574,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
             padding: const EdgeInsets.all(AppSizes.paddingS),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Row(
               children: [
@@ -643,7 +643,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
               decoration: BoxDecoration(
                 color: color,
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
                 '현재',
@@ -717,9 +717,9 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
               ),
             ],
           ),
-          const SizedBox(height: AppSizes.gapSM),
+          const SizedBox(height: AppSizes.gapS),
           ClipRRect(
-            borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
             child: LinearProgressIndicator(
               value: percentage.clamp(0.0, 1.0),
               backgroundColor: theme.colorScheme.surfaceContainerHighest,

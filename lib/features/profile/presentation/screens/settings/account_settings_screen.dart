@@ -25,8 +25,6 @@ class AccountSettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
-  bool _isLoading = false;
-
   @override
   Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider).valueOrNull;
@@ -181,8 +179,6 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       return;
     }
     
-    setState(() => _isLoading = true);
-    
     try {
       await ref.read(authNotifierProvider.notifier).sendPasswordResetEmail(email);
       
@@ -192,10 +188,6 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     } catch (e) {
       if (mounted) {
         ErrorHandler.showError(context, e, tag: 'Account', operation: '비밀번호 재설정 이메일 발송');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
       }
     }
   }
@@ -211,8 +203,6 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
   }
 
   Future<void> _deleteAccount() async {
-    setState(() => _isLoading = true);
-    
     try {
       // 논리 삭제: isDeleted 플래그 설정 및 deletedAt 타임스탬프 저장
       // 실제 데이터는 30일 후 배치 작업으로 물리 삭제
@@ -225,7 +215,6 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     } catch (e) {
       if (mounted) {
         ErrorHandler.showError(context, e, tag: 'Account', operation: '회원 탈퇴');
-        setState(() => _isLoading = false);
       }
     }
   }

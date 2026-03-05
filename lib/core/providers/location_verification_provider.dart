@@ -517,7 +517,6 @@ class AppStartLocationChecker {
   AppStartLocationChecker._();
   
   static bool _hasCheckedOnAppStart = false;
-  static ProviderContainer? _container;
   
   /// 앱 시작 시 위치 체크 (한 번만 실행)
   /// 
@@ -550,6 +549,5 @@ class AppStartLocationChecker {
   /// 앱 재시작 시 체크 상태 초기화
   static void reset() {
     _hasCheckedOnAppStart = false;
-    _container = null;
   }
 }

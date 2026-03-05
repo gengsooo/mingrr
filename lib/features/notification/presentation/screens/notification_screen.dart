@@ -6,7 +6,6 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../models/notification_model.dart';
@@ -111,7 +110,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
           type: MingrrLoadingType.primary,
           message: '알림을 불러오고 있어요',
         ),
-        error: (_, __) => MingrrErrorState(
+        error: (_, _) => MingrrErrorState(
           title: '일시적인 오류가 발생했어요',
           subtitle: '잠시 후 다시 시도해주세요',
           buttonText: '다시 시도',
@@ -223,8 +222,8 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.error,
                             shape: BoxShape.circle,
                           ),
                         ),

@@ -227,8 +227,6 @@ class MingrrFilterRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSizes.paddingM,

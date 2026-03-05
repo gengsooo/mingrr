@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode, debugPrint;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/pet_model.dart';
 import '../../models/marketplace_model.dart';
@@ -41,7 +42,8 @@ class SeedData {
   ];
   
   Future<void> seedAll() async {
-    print('🌱 더미 데이터 생성 시작...');
+    assert(kDebugMode, 'SeedData는 debug 빌드에서만 사용 가능합니다');
+    debugPrint('🌱 더미 데이터 생성 시작...');
     
     try {
       // 테스트 사용자 먼저 생성 (다른 사용자 펫 표시를 위해 필수)
@@ -52,31 +54,31 @@ class SeedData {
       if (userIds.isEmpty) {
         throw Exception('사용자 데이터가 없습니다. 먼저 회원가입을 해주세요.');
       }
-      print('✅ 사용자 ${userIds.length}명 확인');
+      debugPrint('✅ 사용자 ${userIds.length}명 확인');
       
       // 사용자 위치 정보 업데이트 (거리 기반 기능에 필수)
       await seedUserLocations();
-      print('✅ 사용자 위치 정보 생성 완료');
+      debugPrint('✅ 사용자 위치 정보 생성 완료');
       
       await _seedPets(userIds);
-      print('✅ 반려동물 데이터 생성 완료');
+      debugPrint('✅ 반려동물 데이터 생성 완료');
       
       // 교배글 생성 (펫 데이터 생성 후 호출해야 함)
       await _seedBreedingPosts(userIds);
-      print('✅ 교배글 데이터 생성 완료');
+      debugPrint('✅ 교배글 데이터 생성 완료');
       
       await _seedProducts(userIds);
-      print('✅ 상품 데이터 생성 완료');
+      debugPrint('✅ 상품 데이터 생성 완료');
       
       await _seedGroups(userIds);
-      print('✅ 모임 데이터 생성 완료');
+      debugPrint('✅ 모임 데이터 생성 완료');
       
       await _seedJobs(userIds);
-      print('✅ 알바 데이터 생성 완료');
+      debugPrint('✅ 알바 데이터 생성 완료');
       
-      print('🎉 모든 더미 데이터 생성 완료!');
+      debugPrint('🎉 모든 더미 데이터 생성 완료!');
     } catch (e) {
-      print('❌ 더미 데이터 생성 실패: $e');
+      debugPrint('❌ 더미 데이터 생성 실패: $e');
       rethrow;
     }
   }
@@ -166,7 +168,7 @@ class SeedData {
       
       await _firebase.petsCollection.doc(pet.id).set(pet.toFirestore());
     }
-    print('  ✓ 반려동물 ${petDataList.length}마리 생성 완료');
+    debugPrint('  ✓ 반려동물 ${petDataList.length}마리 생성 완료');
   }
   
   Future<void> _seedProducts(List<String> userIds) async {
@@ -216,7 +218,7 @@ class SeedData {
       
       await _firebase.productsCollection.doc(product.id).set(product.toFirestore());
     }
-    print('  ✓ 상품 ${productDataList.length}개 생성 완료');
+    debugPrint('  ✓ 상품 ${productDataList.length}개 생성 완료');
   }
   
   Future<void> _seedGroups(List<String> userIds) async {
@@ -274,10 +276,11 @@ class SeedData {
       
       await _firebase.groupsCollection.doc(group.id).set(group.toFirestore());
     }
-    print('  ✓ 소모임 ${groupDataList.length}개 생성 완료');
+    debugPrint('  ✓ 소모임 ${groupDataList.length}개 생성 완료');
   }
   Future<void> clearAllData() async {
-    print('🗑️  모든 데이터 삭제 시작...');
+    assert(kDebugMode, 'SeedData는 debug 빌드에서만 사용 가능합니다');
+    debugPrint('🗑️  모든 데이터 삭제 시작...');
     
     try {
       // 데이터베이스 데이터 삭제 (사용자 컨렉션은 제외 - 로그인 세션 유지를 위해)
@@ -293,16 +296,17 @@ class SeedData {
       await _clearCollection(_firebase.ratingsCollection);
       await _clearCollection(_firebase.firestore.collection('transactionStatuses'));
       
-      print('✅ 모든 Firestore 데이터 삭제 완료 (users 컬렉션 제외)');
+      debugPrint('✅ 모든 Firestore 데이터 삭제 완료 (users 컬렉션 제외)');
     } catch (e) {
-      print('❌ 데이터 삭제 실패: $e');
+      debugPrint('❌ 데이터 삭제 실패: $e');
       rethrow;
     }
   }
   
   /// 테스트 데이터만 삭제 (test_ 접두사로 시작하는 문서만 삭제)
   Future<void> clearTestDataOnly() async {
-    print('🧹 테스트 데이터만 삭제 시작...');
+    assert(kDebugMode, 'SeedData는 debug 빌드에서만 사용 가능합니다');
+    debugPrint('🧹 테스트 데이터만 삭제 시작...');
     
     try {
       int deletedCount = 0;
@@ -351,9 +355,9 @@ class SeedData {
       deletedCount += await _clearTestDataFromCollection(_firebase.firestore.collection('checkupRecords'), 'checkup_${TestDataPrefix.pet}');
       deletedCount += await _clearTestDataFromCollection(_firebase.firestore.collection('medicationRecords'), 'med_${TestDataPrefix.pet}');
       
-      print('✅ 테스트 데이터 $deletedCount개 삭제 완료');
+      debugPrint('✅ 테스트 데이터 $deletedCount개 삭제 완료');
     } catch (e) {
-      print('❌ 테스트 데이터 삭제 실패: $e');
+      debugPrint('❌ 테스트 데이터 삭제 실패: $e');
       rethrow;
     }
   }
@@ -425,11 +429,11 @@ class SeedData {
   
   /// 기존 사용자들에게 다양한 위치 정보 부여
   Future<void> seedUserLocations() async {
-    print('📍 사용자 위치 정보 생성 시작...');
+    debugPrint('📍 사용자 위치 정보 생성 시작...');
     
     final userIds = await _getExistingUserIds();
     if (userIds.isEmpty) {
-      print('❌ 사용자 데이터가 없습니다.');
+      debugPrint('❌ 사용자 데이터가 없습니다.');
       return;
     }
     
@@ -506,7 +510,7 @@ class SeedData {
       }, SetOptions(merge: true));
     }
     
-    print('✅ ${userIds.length}명의 사용자에게 위치 정보 부여 완료');
+    debugPrint('✅ ${userIds.length}명의 사용자에게 위치 정보 부여 완료');
   }
   
   /// 반려동물 데이터만 생성
@@ -557,11 +561,11 @@ class SeedData {
   /// 채팅 데이터만 생성 (현재 로그인 사용자 기준 테스트 채팅 포함)
   /// 메시지는 chatRooms/{chatRoomId}/messages 서브컬렉션에 저장
   Future<void> seedChats() async {
-    print('🌱 채팅 테스트 데이터 생성 중...');
+    debugPrint('🌱 채팅 테스트 데이터 생성 중...');
     
     final currentUserId = _firebase.currentUserId;
     if (currentUserId == null) {
-      print('❌ 로그인된 사용자가 없습니다');
+      debugPrint('❌ 로그인된 사용자가 없습니다');
       return;
     }
     
@@ -614,7 +618,7 @@ class SeedData {
       }, SetOptions(merge: true));
       
       if (user['petName'] != null) {
-        await _firebase.petsCollection.doc('${TestDataPrefix.pet}${userId}').set({
+        await _firebase.petsCollection.doc('${TestDataPrefix.pet}$userId').set({
           'ownerId': userId,
           'name': user['petName'],
           'breed': user['petBreed'] ?? '포메라니안',
@@ -788,16 +792,16 @@ class SeedData {
       });
     }
     
-    print('✅ 채팅 테스트 데이터 생성 완료');
-    print('   - 데이팅 채팅 (초코): $chatId1 (메시지 ${messages1.length}개)');
-    print('   - 데이팅 채팅 (시바): $chatId2 (메시지 ${messages2.length}개)');
-    print('   - 마켓 채팅: $chatId3 (메시지 ${messages3.length}개)');
-    print('   - 소모임 채팅: $chatId4 (메시지 ${messages4.length}개)');
+    debugPrint('✅ 채팅 테스트 데이터 생성 완료');
+    debugPrint('   - 데이팅 채팅 (초코): $chatId1 (메시지 ${messages1.length}개)');
+    debugPrint('   - 데이팅 채팅 (시바): $chatId2 (메시지 ${messages2.length}개)');
+    debugPrint('   - 마켓 채팅: $chatId3 (메시지 ${messages3.length}개)');
+    debugPrint('   - 소모임 채팅: $chatId4 (메시지 ${messages4.length}개)');
   }
   
   /// 채팅 테스트 데이터 삭제
   Future<void> clearChats() async {
-    print('🗑️ 채팅 테스트 데이터 삭제 중...');
+    debugPrint('🗑️ 채팅 테스트 데이터 삭제 중...');
     
     final testChatIds = [
       '${TestDataPrefix.chat}dating_001',
@@ -843,7 +847,7 @@ class SeedData {
     await _firebase.groupsCollection.doc('${TestDataPrefix.group}chat_001').delete();
     await _firebase.firestore.collection('groups').doc('group_test_001').delete();
     
-    print('✅ 채팅 테스트 데이터 삭제 완료');
+    debugPrint('✅ 채팅 테스트 데이터 삭제 완료');
   }
   
   /// 교배 글 데이터만 생성
@@ -874,11 +878,11 @@ class SeedData {
     }).toList();
     
     if (petInfoList.isEmpty) {
-      print('  ⚠️ 반려동물 데이터가 없어서 교배 글을 생성할 수 없습니다.');
+      debugPrint('  ⚠️ 반려동물 데이터가 없어서 교배 글을 생성할 수 없습니다.');
       return;
     }
     
-    print('  📋 교배 가능한 펫 ${petInfoList.length}마리 발견');
+    debugPrint('  📋 교배 가능한 펫 ${petInfoList.length}마리 발견');
     
     // 대한민국 주요 도시 위치 정보 (교배글용)
     final koreaLocations = [
@@ -940,7 +944,7 @@ class SeedData {
       await _firebase.breedingPostsCollection.doc(post.id).set(post.toFirestore());
     }
     
-    print('  ✓ 교배 글 $postCount개 생성 완료');
+    debugPrint('  ✓ 교배 글 $postCount개 생성 완료');
   }
   
   // ===== 항목별 삭제 메서드 =====
@@ -984,7 +988,7 @@ class SeedData {
   
   /// 테스트 사용자 문서 생성 (users 컬렉션에 가상 사용자 추가)
   Future<void> seedTestUsers() async {
-    print('👤 테스트 사용자 생성 중...');
+    debugPrint('👤 테스트 사용자 생성 중...');
     
     final testUsers = [
       {'id': 'test_user_001', 'email': 'test1@mingrr.com', 'nickname': '테스트유저1', 'address': '경기도 용인시'},
@@ -1018,7 +1022,7 @@ class SeedData {
       }, SetOptions(merge: true));
     }
     
-    print('✅ 테스트 사용자 ${testUsers.length}명 생성 완료');
+    debugPrint('✅ 테스트 사용자 ${testUsers.length}명 생성 완료');
   }
   
   Future<List<String>> _getExistingUserIds() async {
@@ -1071,7 +1075,7 @@ class SeedData {
       
       await _firebase.jobsCollection.doc(job.id).set(job.toFirestore());
     }
-    print('  ✓ 알바 ${jobDataList.length}개 생성 완료');
+    debugPrint('  ✓ 알바 ${jobDataList.length}개 생성 완료');
   }
   
   Future<void> _seedLikesAndMatches(List<String> userIds) async {
@@ -1131,7 +1135,7 @@ class SeedData {
   // ===== 건강수첩 데이터 생성 =====
   
   Future<void> seedHealthRecords() async {
-    print('🏥 건강수첩 데이터 생성 시작...');
+    debugPrint('🏥 건강수첩 데이터 생성 시작...');
     
     try {
       // 기존 펫 ID 가져오기
@@ -1139,31 +1143,31 @@ class SeedData {
       final petIds = petsSnapshot.docs.map((doc) => doc.id).toList();
       
       if (petIds.isEmpty) {
-        print('❌ 반려동물 데이터가 없습니다. 먼저 반려동물을 생성해주세요.');
+        debugPrint('❌ 반려동물 데이터가 없습니다. 먼저 반려동물을 생성해주세요.');
         return;
       }
       
       await _seedWeightRecords(petIds);
-      print('  ✓ 체중 기록 생성 완료');
+      debugPrint('  ✓ 체중 기록 생성 완료');
       
       await _seedWalkRecords(petIds);
-      print('  ✓ 산책 기록 생성 완료');
+      debugPrint('  ✓ 산책 기록 생성 완료');
       
       await _seedGroomingRecords(petIds);
-      print('  ✓ 그루밍 기록 생성 완료');
+      debugPrint('  ✓ 그루밍 기록 생성 완료');
       
       await _seedVaccinationRecords(petIds);
-      print('  ✓ 예방접종 기록 생성 완료');
+      debugPrint('  ✓ 예방접종 기록 생성 완료');
       
       await _seedCheckupRecords(petIds);
-      print('  ✓ 검진 기록 생성 완료');
+      debugPrint('  ✓ 검진 기록 생성 완료');
       
       await _seedMedicationRecords(petIds);
-      print('  ✓ 약 복용 기록 생성 완료');
+      debugPrint('  ✓ 약 복용 기록 생성 완료');
       
-      print('✅ 건강수첩 데이터 생성 완료!');
+      debugPrint('✅ 건강수첩 데이터 생성 완료!');
     } catch (e) {
-      print('❌ 건강수첩 데이터 생성 실패: $e');
+      debugPrint('❌ 건강수첩 데이터 생성 실패: $e');
       rethrow;
     }
   }
@@ -1338,20 +1342,20 @@ class SeedData {
   }
   
   Future<void> clearHealthRecords() async {
-    print('🗑️ 건강수첩 데이터 삭제 중...');
+    debugPrint('🗑️ 건강수첩 데이터 삭제 중...');
     await _clearCollection(_firebase.firestore.collection('weightRecords'));
     await _clearCollection(_firebase.firestore.collection('walkRecords'));
     await _clearCollection(_firebase.firestore.collection('groomingRecords'));
     await _clearCollection(_firebase.firestore.collection('vaccinationRecords'));
     await _clearCollection(_firebase.firestore.collection('checkupRecords'));
     await _clearCollection(_firebase.firestore.collection('medicationRecords'));
-    print('✅ 건강수첩 데이터 삭제 완료');
+    debugPrint('✅ 건강수첩 데이터 삭제 완료');
   }
   
   // ===== 꼬순내 평가 데이터 =====
   
   Future<void> seedRatings() async {
-    print('🌱 꼬순내 평가 데이터 생성 중...');
+    debugPrint('🌱 꼬순내 평가 데이터 생성 중...');
     
     // 실제 사용자 ID 가져오기
     final userIds = await _getExistingUserIds();
@@ -1361,7 +1365,7 @@ class SeedData {
     
     // 최소 2명 이상 필요
     if (userIds.length < 2) {
-      print('⚠️ 평가 데이터 생성을 위해 최소 2명의 사용자가 필요합니다.');
+      debugPrint('⚠️ 평가 데이터 생성을 위해 최소 2명의 사용자가 필요합니다.');
       return;
     }
     
@@ -1420,7 +1424,7 @@ class SeedData {
     // 거래 상태 데이터도 생성 (실제 사용자 ID 사용)
     await _seedTransactionStatuses(userIds);
     
-    print('✅ 꼬순내 평가 ${ratingIndex}개 생성 완료 (사용자 ${userIds.length}명 기준)');
+    debugPrint('✅ 꼬순내 평가 $ratingIndex개 생성 완료 (사용자 ${userIds.length}명 기준)');
   }
   
   Future<void> _seedTransactionStatuses(List<String> userIds) async {
@@ -1450,18 +1454,18 @@ class SeedData {
   }
   
   Future<void> clearRatings() async {
-    print('🗑️ 꼬순내 평가 데이터 삭제 중...');
+    debugPrint('🗑️ 꼬순내 평가 데이터 삭제 중...');
     // 테스트 데이터만 삭제
     await _clearTestDataFromCollection(_firebase.ratingsCollection, TestDataPrefix.rating);
     await _clearTestDataFromCollection(_firebase.firestore.collection('transactionStatuses'), TestDataPrefix.rating);
-    print('✅ 꼬순내 평가 데이터 삭제 완료');
+    debugPrint('✅ 꼬순내 평가 데이터 삭제 완료');
   }
   
   // ===== 커뮤니티 게시글 데이터 =====
   
   /// 커뮤니티 게시글 데이터 생성
   Future<void> seedCommunityPosts() async {
-    print('🌱 커뮤니티 게시글 데이터 생성 중...');
+    debugPrint('🌱 커뮤니티 게시글 데이터 생성 중...');
     
     final userIds = await _getExistingUserIds();
     if (userIds.isEmpty) {
@@ -1476,7 +1480,7 @@ class SeedData {
     }
     
     await _seedCommunityPosts(userIds, userNicknames);
-    print('✅ 커뮤니티 게시글 데이터 생성 완료');
+    debugPrint('✅ 커뮤니티 게시글 데이터 생성 완료');
   }
   
   Future<void> _seedCommunityPosts(List<String> userIds, Map<String, String> userNicknames) async {
@@ -1542,7 +1546,7 @@ class SeedData {
     // 댓글도 일부 생성
     await _seedCommunityComments(userIds, userNicknames);
     
-    print('  ✓ 커뮤니티 게시글 ${postDataList.length}개 생성 완료');
+    debugPrint('  ✓ 커뮤니티 게시글 ${postDataList.length}개 생성 완료');
   }
   
   Future<void> _seedCommunityComments(List<String> userIds, Map<String, String> userNicknames) async {
@@ -1581,23 +1585,23 @@ class SeedData {
       await commentsCollection.doc(comment.id).set(comment.toFirestore());
     }
     
-    print('  ✓ 커뮤니티 댓글 ${commentDataList.length}개 생성 완료');
+    debugPrint('  ✓ 커뮤니티 댓글 ${commentDataList.length}개 생성 완료');
   }
   
   /// 커뮤니티 게시글 데이터 삭제 (테스트 데이터만)
   Future<void> clearCommunityPosts() async {
-    print('🗑️ 커뮤니티 게시글 데이터 삭제 중...');
+    debugPrint('🗑️ 커뮤니티 게시글 데이터 삭제 중...');
     // 테스트 데이터만 삭제
     await _clearTestDataFromCollection(_firebase.feedPostsCollection, TestDataPrefix.feedPost);
     await _clearTestDataFromCollection(_firebase.firestore.collection('communityComments'), TestDataPrefix.comment);
-    print('✅ 커뮤니티 게시글 데이터 삭제 완료');
+    debugPrint('✅ 커뮤니티 게시글 데이터 삭제 완료');
   }
   
   // ===== 소모임 일정 데이터 =====
   
   /// 소모임 일정 데이터 생성
   Future<void> seedGroupSchedules() async {
-    print('🌱 소모임 일정 데이터 생성 중...');
+    debugPrint('🌱 소모임 일정 데이터 생성 중...');
     
     final userIds = await _getExistingUserIds();
     if (userIds.isEmpty) {
@@ -1609,12 +1613,12 @@ class SeedData {
     final groupIds = groupsSnapshot.docs.map((doc) => doc.id).toList();
     
     if (groupIds.isEmpty) {
-      print('❌ 소모임 데이터가 없습니다. 먼저 소모임을 생성해주세요.');
+      debugPrint('❌ 소모임 데이터가 없습니다. 먼저 소모임을 생성해주세요.');
       return;
     }
     
     await _seedGroupSchedules(userIds, groupIds);
-    print('✅ 소모임 일정 데이터 생성 완료');
+    debugPrint('✅ 소모임 일정 데이터 생성 완료');
   }
   
   Future<void> _seedGroupSchedules(List<String> userIds, List<String> groupIds) async {
@@ -1662,14 +1666,14 @@ class SeedData {
       await schedulesCollection.doc(schedule.id).set(schedule.toFirestore());
     }
     
-    print('  ✓ 소모임 일정 ${scheduleDataList.length}개 생성 완료');
+    debugPrint('  ✓ 소모임 일정 ${scheduleDataList.length}개 생성 완료');
   }
   
   /// 소모임 일정 데이터 삭제 (테스트 데이터만)
   Future<void> clearGroupSchedules() async {
-    print('🗑️ 소모임 일정 데이터 삭제 중...');
+    debugPrint('🗑️ 소모임 일정 데이터 삭제 중...');
     // 테스트 데이터만 삭제
     await _clearTestDataFromCollection(_firebase.firestore.collection('schedules'), TestDataPrefix.schedule);
-    print('✅ 소모임 일정 데이터 삭제 완료');
+    debugPrint('✅ 소모임 일정 데이터 삭제 완료');
   }
 }

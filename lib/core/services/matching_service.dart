@@ -92,9 +92,13 @@ class MatchingService {
         score += 12;
       } else {
         final sizeDiff = (mySize.index - otherSize.index).abs();
-        if (sizeDiff == 1) score += 8;
-        else if (sizeDiff == 2) score += 4;
-        else score += 2;
+        if (sizeDiff == 1) {
+          score += 8;
+        } else if (sizeDiff == 2) {
+          score += 4;
+        } else {
+          score += 2;
+        }
       }
     } else {
       score += 6; // 정보 없으면 중간 점수
@@ -103,10 +107,15 @@ class MatchingService {
     // B. 체중 차이 (8%)
     if (myPet.weight != null && otherPet.weight != null) {
       final weightDiff = (myPet.weight! - otherPet.weight!).abs();
-      if (weightDiff <= 1) score += 8;
-      else if (weightDiff <= 2) score += 6;
-      else if (weightDiff <= 3) score += 4;
-      else if (weightDiff <= 5) score += 2;
+      if (weightDiff <= 1) {
+        score += 8;
+      } else if (weightDiff <= 2) {
+        score += 6;
+      } else if (weightDiff <= 3) {
+        score += 4;
+      } else if (weightDiff <= 5) {
+        score += 2;
+      }
     } else {
       score += 4; // 정보 없으면 중간 점수
     }
@@ -123,20 +132,30 @@ class MatchingService {
     // A. 나이 차이 (3%)
     if (myAge != null && otherAge != null) {
       final ageDiff = (myAge - otherAge).abs();
-      if (ageDiff == 0) score += 3;
-      else if (ageDiff == 1) score += 2.5;
-      else if (ageDiff == 2) score += 2;
-      else if (ageDiff == 3) score += 1;
-      else score += 0.5;
+      if (ageDiff == 0) {
+        score += 3;
+      } else if (ageDiff == 1) {
+        score += 2.5;
+      } else if (ageDiff == 2) {
+        score += 2;
+      } else if (ageDiff == 3) {
+        score += 1;
+      } else {
+        score += 0.5;
+      }
 
       // B. 생애 단계 매칭 (2%)
       final myStage = _getLifeStage(myAge);
       final otherStage = _getLifeStage(otherAge);
       final stageDiff = (myStage - otherStage).abs();
       
-      if (stageDiff == 0) score += 2;
-      else if (stageDiff == 1) score += 1;
-      else score += 0.5;
+      if (stageDiff == 0) {
+        score += 2;
+      } else if (stageDiff == 1) {
+        score += 1;
+      } else {
+        score += 0.5;
+      }
     } else {
       score += 2.5; // 정보 없으면 중간 점수
     }
@@ -246,7 +265,7 @@ class MatchingService {
     if (user.isVerified) score += 2;          // 동물등록 인증
     
     // B. 꼬순내 지수 (6%) - 실제 점수 직접 사용
-    final kkosunnaeScore = user.kkosunnaeScore ?? 50;
+    final kkosunnaeScore = user.kkosunnaeScore;
     score += (kkosunnaeScore / 100) * 6;
     
     return min(15, score);
@@ -308,13 +327,21 @@ class MatchingService {
     final daysActive = DateTime.now().difference(pet.createdAt).inDays + 1;
     final likesPerDay = likes / daysActive;
     
-    if (likesPerDay >= 3) score += 7;
-    else if (likesPerDay >= 2) score += 6;
-    else if (likesPerDay >= 1) score += 5;
-    else if (likesPerDay >= 0.5) score += 4;
-    else if (likesPerDay >= 0.2) score += 3;
-    else if (likes >= 1) score += 2;
-    else score += 1;
+    if (likesPerDay >= 3) {
+      score += 7;
+    } else if (likesPerDay >= 2) {
+      score += 6;
+    } else if (likesPerDay >= 1) {
+      score += 5;
+    } else if (likesPerDay >= 0.5) {
+      score += 4;
+    } else if (likesPerDay >= 0.2) {
+      score += 3;
+    } else if (likes >= 1) {
+      score += 2;
+    } else {
+      score += 1;
+    }
     
     // B. 신규 가입자 부스트 (3%) - 가입 30일 이내
     if (daysActive <= 30) {

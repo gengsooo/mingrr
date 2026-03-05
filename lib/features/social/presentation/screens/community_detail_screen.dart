@@ -132,7 +132,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
           timeout: AppSizes.loadingTimeout,
           onRetry: () => ref.invalidate(communityPostDetailProvider(widget.postId)),
         ),
-        error: (_, __) => MingrrErrorState(
+        error: (_, _) => MingrrErrorState(
           onRetry: () => ref.invalidate(communityPostDetailProvider(widget.postId)),
         ),
       ),
@@ -175,7 +175,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 3),
                           decoration: BoxDecoration(
                             color: accentColor.withValues(alpha: AppOpacity.o10),
-                            borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                            borderRadius: BorderRadius.circular(AppSizes.radiusS),
                           ),
                           child: Text(
                             post.category.label,
@@ -195,7 +195,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               ],
             ),
           ),
-          const SizedBox(height: AppSizes.gapLL),
+          const SizedBox(height: AppSizes.gapL),
 
           // 제목
           if (post.title.isNotEmpty) ...[
@@ -241,7 +241,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
             ),
           ],
 
-          const SizedBox(height: AppSizes.gapLL),
+          const SizedBox(height: AppSizes.gapL),
           const MingrrDivider(),
           const SizedBox(height: AppSizes.gapM),
 
@@ -331,7 +331,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: AppOpacity.o70),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -390,7 +390,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
       child: Row(
         children: [
           Icon(icon, size: 22, color: color),
-          const SizedBox(width: AppSizes.gapSM),
+          const SizedBox(width: AppSizes.gapS),
           Text(label, style: AppTextStyles.bodyMedium(context).copyWith(color: color)),
         ],
       ),
@@ -447,7 +447,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               );
             },
             loading: () => const Center(child: MingrrLoadingIndicator()),
-            error: (_, __) => MingrrErrorState(
+            error: (_, _) => MingrrErrorState(
               onRetry: () => ref.invalidate(communityCommentsProvider(widget.postId)),
             ),
           ),
@@ -497,12 +497,12 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                           style: AppTextStyles.titleSmall(context),
                         ),
                         if (comment.authorId == post.authorId) ...[
-                          const SizedBox(width: AppSizes.gapSM),
+                          const SizedBox(width: AppSizes.gapS),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                             decoration: BoxDecoration(
                               color: accentColor.withValues(alpha: AppOpacity.o10),
-                              borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                              borderRadius: BorderRadius.circular(AppSizes.radiusS),
                             ),
                             child: Text(
                               '작성자',
@@ -517,7 +517,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppSizes.gapSM),
+                    const SizedBox(height: AppSizes.gapS),
                     Text(
                       comment.content,
                       style: AppTextStyles.bodyMedium(context).copyWith(height: 1.4),
@@ -600,7 +600,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS, vertical: AppSizes.paddingXXS),
                         decoration: BoxDecoration(
                           color: accentColor.withValues(alpha: AppOpacity.o10),
-                          borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Text(
                           '작성자',
@@ -621,7 +621,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                   style: AppTextStyles.bodySmall(context).copyWith(height: 1.4),
                 ),
                 if (isMyComment) ...[
-                  const SizedBox(height: AppSizes.gapSM),
+                  const SizedBox(height: AppSizes.gapS),
                   GestureDetector(
                     onTap: () => _deleteComment(reply, post.id),
                     child: Text(
@@ -656,7 +656,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
               decoration: BoxDecoration(
                 color: accentColor.withValues(alpha: AppOpacity.o10),
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Row(
                 children: [
@@ -684,7 +684,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                   padding: const EdgeInsets.all(AppSizes.paddingS),
                   decoration: BoxDecoration(
                     color: _isAnonymousComment ? accentColor.withValues(alpha: AppOpacity.o10) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     border: Border.all(
                       color: _isAnonymousComment ? accentColor : colorScheme.outline.withValues(alpha: AppOpacity.o30),
                     ),
@@ -703,7 +703,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusL),
                   ),
                   child: TextField(
                     controller: _commentController,

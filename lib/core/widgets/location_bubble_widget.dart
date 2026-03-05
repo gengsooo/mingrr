@@ -89,7 +89,7 @@ class LocationBubbleWidget extends StatelessWidget {
               
               // 저장된 주소 표시
               if (savedAddress != null && savedAddress!.isNotEmpty) ...[
-                const SizedBox(height: AppSizes.gapSM),
+                const SizedBox(height: AppSizes.gapS),
                 Text(
                   '저장된 위치: $savedAddress',
                   style: AppTextStyles.caption(context),
@@ -318,7 +318,7 @@ class LocationMismatchBanner extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: AppSizes.gapSM),
+          const SizedBox(width: AppSizes.gapS),
           // 닫기 버튼
           GestureDetector(
             onTap: onDismiss,

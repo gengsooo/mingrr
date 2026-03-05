@@ -185,11 +185,11 @@ class _MingrrInputDialogState extends State<MingrrInputDialog> {
                 ),
                 errorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppSizes.radiusM),
-                  borderSide: const BorderSide(color: Colors.red, width: 1),
+                  borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: 1),
                 ),
                 focusedErrorBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppSizes.radiusM),
-                  borderSide: const BorderSide(color: Colors.red, width: 1.5),
+                  borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: 1.5),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: AppSizes.paddingM,

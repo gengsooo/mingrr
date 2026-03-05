@@ -360,7 +360,6 @@ class ProfileModalAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final bgColor = backgroundColor ?? 
         Theme.of(context).colorScheme.primary.withValues(alpha: AppOpacity.o10);
-    final fgColor = iconColor ?? Theme.of(context).colorScheme.primary;
     
     final hasValidImage = imageUrl != null && 
         imageUrl!.isNotEmpty && 

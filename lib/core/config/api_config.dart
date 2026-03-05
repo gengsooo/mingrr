@@ -61,10 +61,10 @@ class ApiConfig {
       await _remoteConfig.fetchAndActivate();
       
       AppLogger.info('ApiConfig', 'Remote Config 초기화 완료');
-      AppLogger.debug('ApiConfig', '카카오맵 키 설정됨: ${hasKakaoMapKey}');
+      AppLogger.debug('ApiConfig', '카카오맵 키 설정됨: $hasKakaoMapKey');
       AppLogger.debug('ApiConfig', '카카오맵 키 값: ${kakaoMapKey.substring(0, 8)}...');
-      AppLogger.debug('ApiConfig', '카카오 REST API 키 설정됨: ${hasKakaoRestApiKey}');
-      AppLogger.debug('ApiConfig', '동물등록 API 키 설정됨: ${hasAnimalRegistrationApiKey}');
+      AppLogger.debug('ApiConfig', '카카오 REST API 키 설정됨: $hasKakaoRestApiKey');
+      AppLogger.debug('ApiConfig', '동물등록 API 키 설정됨: $hasAnimalRegistrationApiKey');
     } catch (e) {
       AppLogger.error('ApiConfig', 'Remote Config 초기화 실패', e);
       // 실패해도 fallback 값이 기본값으로 설정되어 있으므로 작동함

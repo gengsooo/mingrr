@@ -121,27 +121,27 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
   String _getCategoryDescription(DataCategory category, int count) {
     switch (category) {
       case DataCategory.pets:
-        return '반려동물 ${count}마리';
+        return '반려동물 $count마리';
       case DataCategory.products:
-        return '판매/나눔 상품 ${count}개';
+        return '판매/나눔 상품 $count개';
       case DataCategory.groups:
-        return '모임 ${count}개';
+        return '모임 $count개';
       case DataCategory.groupSchedules:
-        return '소모임 일정 ${count}개';
+        return '소모임 일정 $count개';
       case DataCategory.jobs:
-        return '알바 ${count}개';
+        return '알바 $count개';
       case DataCategory.breeding:
-        return '교배 글 ${count}개';
+        return '교배 글 $count개';
       case DataCategory.likesMatches:
-        return '좋아요/매칭 ${count}개';
+        return '좋아요/매칭 $count개';
       case DataCategory.chats:
-        return '채팅방 ${count}개';
+        return '채팅방 $count개';
       case DataCategory.communityPosts:
-        return '커뮤니티 게시글 ${count}개';
+        return '커뮤니티 게시글 $count개';
       case DataCategory.ratings:
-        return '꼬순내 평가 ${count}개';
+        return '꼼순내 평가 $count개';
       case DataCategory.healthRecords:
-        return '건강수첩 기록 ${count}개';
+        return '건강수첩 기록 $count개';
     }
   }
 
@@ -585,7 +585,7 @@ class _DevToolsScreenState extends ConsumerState<DevToolsScreen> {
                           : _message.startsWith('⚠️')
                               ? Colors.orange.shade50
                               : Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                      borderRadius: BorderRadius.circular(AppSizes.radiusS),
                       border: Border.all(
                         color: _message.startsWith('✅')
                             ? Colors.green

@@ -163,7 +163,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           color: _currentPage == index
                               ? Theme.of(context).colorScheme.primary
                               : Theme.of(context).colorScheme.outline,
-                          borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                       ),
                     ),

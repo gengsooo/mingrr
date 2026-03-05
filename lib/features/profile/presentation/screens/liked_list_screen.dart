@@ -7,10 +7,8 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../models/community_post_model.dart';
-import '../../../../models/group_model.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../../models/pet_model.dart';
 import '../providers/liked_provider.dart';
@@ -95,7 +93,7 @@ class _LikedProductsTab extends ConsumerWidget {
         type: MingrrLoadingType.market,
         message: '찜한 상품을 불러오고 있어요',
       ),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(likedProductsProvider),
       ),
     );
@@ -140,7 +138,7 @@ class _LikedPetsTab extends ConsumerWidget {
         type: MingrrLoadingType.dating,
         message: '좋아요한 친구를 불러오고 있어요',
       ),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(likedPetsProvider),
       ),
     );
@@ -184,7 +182,7 @@ class _LikedCommunityTab extends ConsumerWidget {
         type: MingrrLoadingType.community,
         message: '좋아요한 글을 불러오고 있어요',
       ),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(likedCommunityPostsProvider),
       ),
     );
@@ -229,7 +227,7 @@ class _LikedGroupsTab extends ConsumerWidget {
         type: MingrrLoadingType.community,
         message: '좋아요한 소모임을 불러오고 있어요',
       ),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(likedGroupsProvider),
       ),
     );
@@ -312,7 +310,7 @@ class _LikedItemCard extends StatelessWidget {
               ),
               decoration: BoxDecoration(
                 color: (badgeColor ?? iconColor).withValues(alpha: AppOpacity.o10),
-                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
                 badge!,
@@ -326,17 +324,6 @@ class _LikedItemCard extends StatelessWidget {
     );
   }
   
-  Widget _buildIconContainer(BuildContext context) {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        color: iconColor.withValues(alpha: AppOpacity.o10),
-        borderRadius: BorderRadius.circular(AppSizes.radiusS),
-      ),
-      child: Icon(icon, color: iconColor, size: 28),
-    );
-  }
 }
 
 /// 반려동물 좋아요 카드 (좋아요 해제 버튼 포함)
@@ -406,7 +393,7 @@ class _LikedPetCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: context.features.datingContainer,
-                        borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
                       ),
                       child: Text(
                         trait.label,

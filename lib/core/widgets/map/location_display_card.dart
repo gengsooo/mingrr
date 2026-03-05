@@ -148,7 +148,7 @@ class LocationDisplayCard extends StatelessWidget {
                 height: miniMapHeight,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: AppOpacity.o10),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Stack(
                   children: [

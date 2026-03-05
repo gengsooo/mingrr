@@ -8,6 +8,7 @@ import '../../theme/app_text_styles.dart';
 import '../../services/image_service.dart';
 import '../dialogs/dialog_buttons.dart';
 import '../common_widgets.dart';
+import '../image/local_image_preview.dart';
 import 'mingrr_bottom_sheet.dart';
 import '../../utils/responsive_utils.dart';
 import '../../utils/error_handler.dart';
@@ -282,7 +283,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
               ),
             ],
           ),
-          const SizedBox(height: AppSizes.gapLL),
+          const SizedBox(height: AppSizes.gapL),
           
           // 대표 아이콘 선택
           Text(
@@ -342,20 +343,9 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
     
     if (_selectedImage != null) {
       // 선택한 이미지 표시
-      content = ClipOval(
-        child: kIsWeb
-            ? Image.network(
-                _selectedImage!.path,
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-              )
-            : Image.file(
-                File(_selectedImage!.path),
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-              ),
+      content = LocalImagePreview.circle(
+        path: _selectedImage!.path,
+        size: 100,
       );
     } else if (_selectedDefaultAvatar != null) {
       // 선택한 대표 아이콘 표시
@@ -538,6 +528,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
 
     // 크롭 기능 활성화 & 모바일인 경우만 크롭 적용
     if (widget.enableCrop && !kIsWeb) {
+      if (!mounted) return;
       final result = await ImageService.instance.crop(
         context: context,
         imagePath: image.path,

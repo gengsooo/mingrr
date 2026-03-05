@@ -64,9 +64,9 @@ enum DialogType {
       case DialogType.success:
         return features.success;
       case DialogType.warning:
-        return Colors.orange;
+        return Theme.of(context).colorScheme.tertiary;
       case DialogType.error:
-        return Colors.red;
+        return Theme.of(context).colorScheme.error;
       case DialogType.location:
         return Theme.of(context).colorScheme.primary;
       case DialogType.walk:

@@ -105,7 +105,7 @@ class VerificationBadgeMedium extends StatelessWidget {
               size: 24,
               color: isVerified ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
             ),
-            const SizedBox(height: AppSizes.gapSM),
+            const SizedBox(height: AppSizes.gapS),
             Text(
               type.label,
               style: AppTextStyles.caption(context).withWeight(FontWeight.w500).withColor(
@@ -176,7 +176,7 @@ class VerificationBadgeLarge extends StatelessWidget {
                     : Theme.of(context).brightness == Brightness.dark
                         ? Theme.of(context).colorScheme.surfaceContainerHighest
                         : Theme.of(context).colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
                 isVerified ? '완료' : '미인증',

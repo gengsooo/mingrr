@@ -80,7 +80,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
 
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: MingrrFormAppBar(
+      appBar: MingrrAppBar.form(
         title: _isEditMode ? ScreenTitles.breedingEdit : ScreenTitles.breedingWrite,
         onClose: () => Navigator.pop(context),
       ),
@@ -205,7 +205,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
         );
       },
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.dating, message: '반려동물 정보를 불러오고 있어요'),
-      error: (_, __) => const Text('일시적인 오류가 발생했어요'),
+      error: (_, _) => const Text('일시적인 오류가 발생했어요'),
     );
   }
 

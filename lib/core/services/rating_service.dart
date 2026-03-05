@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/rating_model.dart';
 import '../constants/rating_constants.dart';
+import '../utils/app_logger.dart';
 import 'firebase_service.dart';
 import 'kkosunnae_service.dart';
 import 'notification_service.dart';
@@ -91,7 +92,7 @@ class RatingService {
     final now = DateTime.now();
     
     if (now.isAfter(expirationDate)) {
-      return RatingEligibility.notAllowed('평가 기간이 만료되었어요 (활동 후 ${expirationDays}일 이내)');
+      return RatingEligibility.notAllowed('평가 기간이 만료되었어요 (활동 후 $expirationDays일 이내)');
     }
     
     return RatingEligibility.allowed();
@@ -120,7 +121,7 @@ class RatingService {
       );
       final daysRemaining = cooldownDays - DateTime.now().difference(lastRating.createdAt).inDays;
       return RatingEligibility.notAllowed(
-        '${daysRemaining}일 후에 다시 평가할 수 있어요',
+        '$daysRemaining일 후에 다시 평가할 수 있어요',
       );
     }
 
@@ -323,7 +324,7 @@ class RatingService {
       );
     } catch (e) {
       // 알림 실패는 무시 (평가 자체는 성공)
-      print('평가 알림 발송 실패: $e');
+      AppLogger.warning('RatingService', '평가 알림 발송 실패: $e');
     }
   }
 

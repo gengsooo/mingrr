@@ -8,11 +8,24 @@ class StorageService {
   final FirebaseService _firebase = FirebaseService();
   
   FirebaseStorage get _storage => _firebase.storage;
+
+  /// 파일 확장자에 따른 이미지 contentType 결정
+  SettableMetadata _imageMetadata(File file) {
+    final ext = file.path.split('.').last.toLowerCase();
+    final contentType = switch (ext) {
+      'png' => 'image/png',
+      'heic' => 'image/heic',
+      'heif' => 'image/heif',
+      'webp' => 'image/webp',
+      _ => 'image/jpeg',
+    };
+    return SettableMetadata(contentType: contentType);
+  }
   
   Future<String> uploadUserProfileImage(String userId, File imageFile) async {
     try {
       final ref = _firebase.userProfileImageRef(userId);
-      final uploadTask = ref.putFile(imageFile);
+      final uploadTask = ref.putFile(imageFile, _imageMetadata(imageFile));
       final snapshot = await uploadTask;
       return await snapshot.ref.getDownloadURL();
     } catch (e) {
@@ -24,7 +37,7 @@ class StorageService {
   Future<String> uploadDogImage(String dogId, String fileName, File imageFile) async {
     try {
       final ref = _firebase.petImageRef(dogId, fileName);
-      final uploadTask = ref.putFile(imageFile);
+      final uploadTask = ref.putFile(imageFile, _imageMetadata(imageFile));
       final snapshot = await uploadTask;
       return await snapshot.ref.getDownloadURL();
     } catch (e) {
@@ -85,7 +98,7 @@ class StorageService {
   Future<String> uploadProductImage(String productId, String fileName, File imageFile) async {
     try {
       final ref = _firebase.productImageRef(productId, fileName);
-      final uploadTask = ref.putFile(imageFile);
+      final uploadTask = ref.putFile(imageFile, _imageMetadata(imageFile));
       final snapshot = await uploadTask;
       return await snapshot.ref.getDownloadURL();
     } catch (e) {
@@ -120,7 +133,7 @@ class StorageService {
   Future<String> uploadChatImage(String chatRoomId, String fileName, File imageFile) async {
     try {
       final ref = _firebase.chatImageRef(chatRoomId, fileName);
-      final uploadTask = ref.putFile(imageFile);
+      final uploadTask = ref.putFile(imageFile, _imageMetadata(imageFile));
       final snapshot = await uploadTask;
       return await snapshot.ref.getDownloadURL();
     } catch (e) {
@@ -132,7 +145,7 @@ class StorageService {
   Future<String> uploadGroupImage(String groupId, File imageFile) async {
     try {
       final ref = _firebase.groupImageRef(groupId);
-      final uploadTask = ref.putFile(imageFile);
+      final uploadTask = ref.putFile(imageFile, _imageMetadata(imageFile));
       final snapshot = await uploadTask;
       return await snapshot.ref.getDownloadURL();
     } catch (e) {

@@ -203,13 +203,6 @@ class ShareService {
     return mins > 0 ? '$hours시간 $mins분' : '$hours시간';
   }
   
-  /// 거리 포맷팅 (m → km)
-  static String _formatDistance(double meters) {
-    if (meters >= 1000) {
-      return '${(meters / 1000).toStringAsFixed(1)}km';
-    }
-    return '${meters.toInt()}m';
-  }
 }
 
 /// 공유 바텀시트

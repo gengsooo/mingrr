@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/models/paginated_state.dart';
 import '../../../../core/providers/paginated_provider.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../models/community_post_model.dart';
 import '../../../../models/dating_model.dart';
 import '../../../../models/group_model.dart';
@@ -58,12 +58,7 @@ final currentUserPetIdsProvider = FutureProvider<Set<String>>((ref) async {
 // ============================================================
 
 void _logError(String source, Object error, [StackTrace? stackTrace]) {
-  if (kDebugMode) {
-    debugPrint('[ActivityProvider] $source error: $error');
-    if (stackTrace != null) {
-      debugPrint(stackTrace.toString());
-    }
-  }
+  AppLogger.error('ActivityProvider', source, error);
 }
 
 // ============================================================

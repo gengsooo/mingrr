@@ -108,7 +108,7 @@ class _ReceivedRatingsTab extends ConsumerWidget {
         type: MingrrLoadingType.primary,
         message: '받은 평가를 불러오고 있어요',
       ),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(receivedRatingsProvider),
       ),
     );
@@ -147,7 +147,7 @@ class _GivenRatingsTab extends ConsumerWidget {
         type: MingrrLoadingType.primary,
         message: '보낸 평가를 불러오고 있어요',
       ),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(givenRatingsProvider),
       ),
     );

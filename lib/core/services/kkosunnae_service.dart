@@ -219,13 +219,13 @@ class KkosunnaeService {
     final totalScore = ratingScore + countBonus;
     final details = <String>[
       '가중 평균 평점: ${weightedAvgScore.toStringAsFixed(1)}점 (+$ratingScore점)',
-      '평가 ${count}개 (+${countBonus}점)',
+      '평가 $count개 (+$countBonus점)',
     ];
 
     return ScoreDetail(
       score: totalScore.toDouble(),
       maxScore: 40,
-      description: '평균 ${weightedAvgScore.toStringAsFixed(1)}점 (${count}개 평가)',
+      description: '평균 ${weightedAvgScore.toStringAsFixed(1)}점 ($count개 평가)',
       details: details,
     );
   }
@@ -452,7 +452,7 @@ class KkosunnaeService {
     return ScoreDetail(
       score: score,
       maxScore: 10,
-      description: daysSinceActive <= 1 ? '활발히 활동 중' : '${daysSinceActive}일 전 활동',
+      description: daysSinceActive <= 1 ? '활발히 활동 중' : '$daysSinceActive일 전 활동',
       details: details,
     );
   }
@@ -535,7 +535,7 @@ class KkosunnaeService {
       penalty += reportPenalty;
       
       if (reportPenalty > 0) {
-        details.add('신고 ${reportCount}회 (-${reportPenalty.toStringAsFixed(1)}점)');
+        details.add('신고 $reportCount회 (-${reportPenalty.toStringAsFixed(1)}점)');
         if (decayRate < 1.0) {
           details.add('  └ 시간 경과로 ${((1 - decayRate) * 100).toInt()}% 감쇠');
         }
@@ -578,13 +578,13 @@ class KkosunnaeService {
     
     if (noShowRatings.isNotEmpty) {
       if (recentNoShows > 0) {
-        details.add('최근 노쇼 ${recentNoShows}회 (-${recentNoShowPenalty.toStringAsFixed(0)}점)');
+        details.add('최근 노쇼 $recentNoShows회 (-${recentNoShowPenalty.toStringAsFixed(0)}점)');
       }
       if (midNoShows > 0) {
-        details.add('과거 노쇼 ${midNoShows}회 (-${midNoShowPenalty.toStringAsFixed(0)}점, 50% 감쇠)');
+        details.add('과거 노쇼 $midNoShows회 (-${midNoShowPenalty.toStringAsFixed(0)}점, 50% 감쇠)');
       }
       if (expiredNoShows > 0) {
-        details.add('만료된 노쇼 ${expiredNoShows}회 (6개월 경과, 반영 안 함)');
+        details.add('만료된 노쇼 $expiredNoShows회 (6개월 경과, 반영 안 함)');
       }
     }
 
@@ -614,7 +614,7 @@ class KkosunnaeService {
       
       if (actualOffset > 0) {
         penalty -= actualOffset;
-        details.add('긍정 평가 ${recentPositiveRatings}개로 +${actualOffset.toStringAsFixed(1)}점 회복');
+        details.add('긍정 평가 $recentPositiveRatings개로 +${actualOffset.toStringAsFixed(1)}점 회복');
       }
     }
 

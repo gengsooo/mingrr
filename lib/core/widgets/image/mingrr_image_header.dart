@@ -4,10 +4,7 @@ import '../../constants/app_sizes.dart';
 import '../../constants/location_constants.dart';
 import '../../theme/app_text_styles.dart';
 import '../common_widgets.dart';
-import '../badges/info_badge.dart';
 import '../../utils/responsive_utils.dart';
-import 'mingrr_image.dart';
-import '../mingrr_app_bar.dart';
 
 /// ============================================================
 /// 상세 화면 이미지 헤더 (SliverAppBar 통합)
@@ -277,52 +274,3 @@ class ImageHeaderDistanceBadge extends StatelessWidget {
   }
 }
 
-/// 좋아요 버튼 배지 (deprecated - LikeOverlayBadge 사용 권장)
-/// info_badge.dart의 LikeOverlayBadge로 통합됨
-/// 하위 호환성을 위해 유지
-typedef LikeBadge = LikeOverlayBadge;
-
-/// 이미지 헤더용 궁합점수 배지
-/// 
-/// @deprecated info_badge.dart의 MatchScoreBadge 사용 권장
-/// MatchScoreBadge(score: score, style: MatchBadgeStyle.filled, showInfoIcon: true, onTap: onTap)
-@Deprecated('Use MatchScoreBadge from info_badge.dart instead')
-class ImageHeaderMatchBadge extends StatelessWidget {
-  final int score;
-  final VoidCallback? onTap;
-
-  const ImageHeaderMatchBadge({
-    super.key,
-    required this.score,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingXS),
-        decoration: BoxDecoration(
-          color: score >= 90 
-              ? const Color(0xFF4CAF50)  // 성공 색상 (90% 이상)
-              : const Color(0xFFFF8A80), // 데이팅 색상 (핑크/코랄)
-          borderRadius: BorderRadius.circular(AppSizes.radiusL),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(AppIcons.autoAwesome, size: 14, color: Colors.white),
-            const SizedBox(width: AppSizes.gapXS),
-            Text(
-              '궁합 $score%',
-              style: AppTextStyles.bodyMedium(context).withWeight(FontWeight.w600).withColor(Colors.white),
-            ),
-            const SizedBox(width: AppSizes.gapXS),
-            const Icon(AppIcons.info, size: 12, color: Colors.white70),
-          ],
-        ),
-      ),
-    );
-  }
-}

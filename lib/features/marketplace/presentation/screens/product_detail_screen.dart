@@ -248,7 +248,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
           padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
           decoration: BoxDecoration(
             color: context.features.market.withValues(alpha: AppOpacity.o10),
-            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -499,14 +499,12 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
       onConfirm: () async {
         try {
           await _firestoreService.blockUser(currentUserId, sellerId);
-          if (mounted) {
-            MingrrSnackBar.success(context, '판매자를 차단했습니다');
-            Navigator.pop(context); // 상세 화면 닫기
-          }
+          if (!context.mounted) return;
+          MingrrSnackBar.success(context, '판매자를 차단했습니다');
+          Navigator.pop(context); // 상세 화면 닫기
         } catch (e) {
-          if (mounted) {
-            ErrorHandler.showError(context, e, tag: 'ProductDetail', operation: '판매자 차단');
-          }
+          if (!context.mounted) return;
+          ErrorHandler.showError(context, e, tag: 'ProductDetail', operation: '판매자 차단');
         }
       },
     );

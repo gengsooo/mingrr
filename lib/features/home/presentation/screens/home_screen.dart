@@ -10,7 +10,6 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/constants/location_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/navigation/appbar_actions.dart';
 import '../../../../core/widgets/home_reminder_banner.dart';
@@ -26,7 +25,6 @@ import '../../../dating/presentation/screens/pet_detail_screen.dart';
 import '../../../../core/widgets/location_bubble_widget.dart';
 import '../../../../core/providers/location_verification_provider.dart';
 import '../../../../core/utils/responsive_utils.dart';
-import '../../../../core/utils/format_utils.dart';
 import '../../../health/presentation/providers/health_provider.dart';
 
 /// ============================================================
@@ -106,7 +104,7 @@ class HomeScreen extends ConsumerWidget {
                   recommendedPetsAsync.when(
                     data: (recommendedPets) => _buildAiRecommendSection(context, recommendedPets),
                     loading: () => _buildLoadingAiSection(),
-                    error: (_, __) => const SizedBox(),
+                    error: (_, _) => const SizedBox(),
                   ),
                   const SizedBox(height: AppSizes.gapXL),
                   
@@ -132,9 +130,6 @@ class HomeScreen extends ConsumerWidget {
   /// 앱바
   Widget _buildAppBar(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    
-    final features = Theme.of(context).extension<FeatureColors>()!;
     
     return SliverAppBar(
       floating: true,
@@ -591,7 +586,6 @@ class HomeScreen extends ConsumerWidget {
         const SizedBox(height: AppSizes.gapS),
         Builder(
           builder: (ctx) {
-            final cs = Theme.of(ctx).colorScheme;
             return Text(
               value,
               style: AppTextStyles.titleLarge(ctx).withWeight(FontWeight.w700),
@@ -600,7 +594,6 @@ class HomeScreen extends ConsumerWidget {
         ),
         Builder(
           builder: (ctx) {
-            final cs = Theme.of(ctx).colorScheme;
             return Text(
               label,
               style: AppTextStyles.captionSmall(ctx),
@@ -641,7 +634,7 @@ class HomeScreen extends ConsumerWidget {
             value: '...',
             color: color,
           ),
-          error: (_, __) => _buildHealthItem(
+          error: (_, _) => _buildHealthItem(
             icon: category.icon,
             label: category.label,
             value: '-',
@@ -663,7 +656,7 @@ class HomeScreen extends ConsumerWidget {
             return _buildHealthItem(
               icon: category.icon,
               label: category.label,
-              value: '${todayWalks}회',
+              value: '$todayWalks회',
               color: color,
             );
           },
@@ -673,7 +666,7 @@ class HomeScreen extends ConsumerWidget {
             value: '...',
             color: color,
           ),
-          error: (_, __) => _buildHealthItem(
+          error: (_, _) => _buildHealthItem(
             icon: category.icon,
             label: category.label,
             value: '-',
@@ -710,7 +703,7 @@ class HomeScreen extends ConsumerWidget {
             value: '...',
             color: color,
           ),
-          error: (_, __) => _buildHealthItem(
+          error: (_, _) => _buildHealthItem(
             icon: category.icon,
             label: category.label,
             value: '-',
@@ -730,7 +723,7 @@ class HomeScreen extends ConsumerWidget {
             return _buildHealthItem(
               icon: category.icon,
               label: category.label,
-              value: '${activeCount}개',
+              value: '$activeCount개',
               color: color,
             );
           },
@@ -740,7 +733,7 @@ class HomeScreen extends ConsumerWidget {
             value: '...',
             color: color,
           ),
-          error: (_, __) => _buildHealthItem(
+          error: (_, _) => _buildHealthItem(
             icon: category.icon,
             label: category.label,
             value: '-',
@@ -780,7 +773,7 @@ class HomeScreen extends ConsumerWidget {
             value: '...',
             color: color,
           ),
-          error: (_, __) => _buildHealthItem(
+          error: (_, _) => _buildHealthItem(
             icon: category.icon,
             label: category.label,
             value: '-',
@@ -817,7 +810,7 @@ class HomeScreen extends ConsumerWidget {
             value: '...',
             color: color,
           ),
-          error: (_, __) => _buildHealthItem(
+          error: (_, _) => _buildHealthItem(
             icon: category.icon,
             label: category.label,
             value: '-',
@@ -842,7 +835,7 @@ class HomeScreen extends ConsumerWidget {
             value: '...',
             color: color,
           ),
-          error: (_, __) => _buildHealthItem(
+          error: (_, _) => _buildHealthItem(
             icon: category.icon,
             label: category.label,
             value: '-',
@@ -850,11 +843,6 @@ class HomeScreen extends ConsumerWidget {
           ),
         );
     }
-  }
-
-  /// 카테고리별 색상 (건강수첩과 동일하게 health 색상 통일)
-  Color _getCategoryColor(BuildContext context, HealthCategory category) {
-    return context.features.health;
   }
 
   /// 추천친구 섹션 (사각형 카드) - 실제 궁합 점수 사용
@@ -967,14 +955,6 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  /// 반려동물 프로필 이미지 (원형, 내 반려동물 선택기용)
-  Widget _buildPetProfileImage(PetModel pet, double size) {
-    return MingrrImage.petAvatar(
-      imageUrl: pet.profileImageUrl ?? pet.displayImageUrl,
-      size: size,
-    );
-  }
-
   String _calculateAge(DateTime? birthDate) {
     if (birthDate == null) return '나이 미상';
     
@@ -983,11 +963,11 @@ class HomeScreen extends ConsumerWidget {
     final months = now.month - birthDate.month;
     
     if (age == 0) {
-      return '${months}개월';
+      return '$months개월';
     } else if (months < 0) {
       return '${age - 1}살';
     }
-    return '${age}살';
+    return '$age살';
   }
 
   /// 인기 소모임 섹션 (Firebase 연동)
@@ -1021,7 +1001,7 @@ class HomeScreen extends ConsumerWidget {
               child: MingrrLoadingIndicator(),
             ),
           ),
-          error: (_, __) => MingrrErrorState(
+          error: (_, _) => MingrrErrorState(
             onRetry: () => ref.invalidate(popularGroupsProvider),
           ),
         );
@@ -1057,7 +1037,7 @@ class HomeScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                       decoration: BoxDecoration(
                         color: features.social.withValues(alpha: AppOpacity.o10),
-                        borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
                       ),
                       child: Text(
                         group.category,

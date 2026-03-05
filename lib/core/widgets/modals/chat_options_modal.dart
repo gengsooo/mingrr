@@ -124,7 +124,7 @@ class ChatOptionsModal extends StatelessWidget {
               context,
               icon: AppIcons.report,
               label: '신고하기',
-              color: Colors.red,
+              color: Theme.of(context).colorScheme.error,
               onTap: () {
                 Navigator.pop(context);
                 onReport?.call();
@@ -135,7 +135,7 @@ class ChatOptionsModal extends StatelessWidget {
               context,
               icon: AppIcons.logout,
               label: '채팅방 나가기',
-              color: Colors.red,
+              color: Theme.of(context).colorScheme.error,
               onTap: () {
                 Navigator.pop(context);
                 onLeave?.call();

@@ -4,9 +4,8 @@ import '../../theme/feature_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../constants/app_sizes.dart';
 import '../../../models/pet_model.dart';
-import '../dialogs/dialog_buttons.dart';
-import '../common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
+import '../dialogs/dialog_buttons.dart';
 import '../cards/pet_selector_card.dart';
 import '../../utils/responsive_utils.dart';
 
@@ -80,7 +79,7 @@ class _RequestSheetState extends State<RequestSheet> {
       ),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXL)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusL)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -156,7 +155,7 @@ class _RequestSheetState extends State<RequestSheet> {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: widget.myPets!.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: AppSizes.gapS),
+                          separatorBuilder: (_, _) => const SizedBox(height: AppSizes.gapS),
                           itemBuilder: (context, index) {
                             final pet = widget.myPets![index];
                             return PetSelectorCard(

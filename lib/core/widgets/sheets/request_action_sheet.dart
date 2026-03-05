@@ -4,7 +4,6 @@ import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/feature_colors.dart';
 import '../common_widgets.dart';
-import '../mingrr_image.dart';
 
 /// ============================================================
 /// 신청 수락/거절 액션 시트 공통 컴포넌트
@@ -163,7 +162,7 @@ class RequestActionSheet extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surface,
         borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppSizes.radiusXL),
+          top: Radius.circular(AppSizes.radiusL),
         ),
       ),
       child: SafeArea(

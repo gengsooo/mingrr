@@ -34,7 +34,7 @@ class NotificationSettingsScreen extends ConsumerWidget {
           type: MingrrLoadingType.primary,
           message: '알림 설정을 불러오고 있어요',
         ),
-        error: (_, __) => MingrrErrorState(
+        error: (_, _) => MingrrErrorState(
           onRetry: () => ref.invalidate(notificationSettingsProvider),
         ),
       ),
@@ -268,7 +268,7 @@ class _NotificationToggleTile extends StatelessWidget {
               Switch.adaptive(
                 value: value && enabled,
                 onChanged: enabled ? onChanged : null,
-                activeColor: colorScheme.primary,
+                activeTrackColor: colorScheme.primary,
               ),
             ],
           ),

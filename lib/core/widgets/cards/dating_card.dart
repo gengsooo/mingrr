@@ -68,11 +68,11 @@ class DatingRecommendCard extends StatelessWidget {
         height: 280,
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
           boxShadow: AppShadows.shadowM(Theme.of(context).brightness == Brightness.dark),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -507,7 +507,7 @@ class DatingBreedingCard extends StatelessWidget {
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: context.features.dating.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                                 ),
                                 child: Text(
                                   tag,

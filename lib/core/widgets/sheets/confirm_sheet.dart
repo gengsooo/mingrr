@@ -112,7 +112,7 @@ enum ConfirmSheetType {
       case ConfirmSheetType.accountDelete:
       case ConfirmSheetType.userBlock:
       case ConfirmSheetType.sellerBlock:
-        return Colors.red;
+        return Theme.of(context).colorScheme.error;
       case ConfirmSheetType.dateReject:
         return features.dating;
       default:

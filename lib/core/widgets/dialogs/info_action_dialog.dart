@@ -144,7 +144,7 @@ class MingrrInfoActionDialog extends StatelessWidget {
               )),
             ],
             
-            const SizedBox(height: AppSizes.gapLL),
+            const SizedBox(height: AppSizes.gapL),
             
             // 버튼
             MingrrDialogButtons(

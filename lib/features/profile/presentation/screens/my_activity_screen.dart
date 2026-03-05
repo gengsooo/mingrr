@@ -6,7 +6,6 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../core/widgets/sheets/confirm_sheet.dart';
 import '../../../../core/utils/format_utils.dart';
@@ -93,7 +92,7 @@ class _WalkHistoryTab extends ConsumerWidget {
         type: MingrrLoadingType.walk,
         message: '산책 기록을 불러오고 있어요',
       ),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(userWalkRecordsProvider),
       ),
     );
@@ -131,7 +130,7 @@ class _MatchHistoryTab extends ConsumerWidget {
         type: MingrrLoadingType.dating,
         message: '매칭 내역을 불러오고 있어요',
       ),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(userMatchActivitiesProvider),
       ),
     );
@@ -307,7 +306,7 @@ class _TransactionHistoryTab extends ConsumerWidget {
         type: MingrrLoadingType.market,
         message: '거래 내역을 불러오고 있어요',
       ),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(userTransactionsWithDetailsProvider),
       ),
     );
@@ -356,7 +355,7 @@ class _CommunityHistoryTab extends ConsumerWidget {
         type: MingrrLoadingType.community,
         message: '커뮤니티 활동을 불러오고 있어요',
       ),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(userCommunityActivitiesProvider),
       ),
     );
@@ -403,7 +402,7 @@ class _GroupHistoryTab extends ConsumerWidget {
         type: MingrrLoadingType.community,
         message: '소모임 활동을 불러오고 있어요',
       ),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(userGroupsWithSchedulesProvider),
       ),
     );
@@ -481,7 +480,7 @@ class _ActivityCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: (badgeColor ?? iconColor).withValues(alpha: AppOpacity.o10),
-                          borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Text(
                           badge!,
@@ -513,17 +512,6 @@ class _ActivityCard extends StatelessWidget {
     );
   }
   
-  Widget _buildIconContainer(BuildContext context) {
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        color: iconColor.withValues(alpha: AppOpacity.o10),
-        borderRadius: BorderRadius.circular(AppSizes.radiusS),
-      ),
-      child: Icon(icon, color: iconColor, size: 28),
-    );
-  }
 }
 
 /// 모임 활동 카드 (일정 포함)

@@ -25,7 +25,7 @@ final favoritePetIdsProvider = StreamProvider.autoDispose<List<String>>((ref) {
       return ref.watch(favoriteServiceProvider).watchFavoritePetIds();
     },
     loading: () => const Stream.empty(),
-    error: (_, __) => Stream.value(<String>[]),
+    error: (_, _) => Stream.value(<String>[]),
   );
 });
 
@@ -39,7 +39,7 @@ final favoriteProductIdsProvider = StreamProvider.autoDispose<List<String>>((ref
       return ref.watch(favoriteServiceProvider).watchFavoriteProductIds();
     },
     loading: () => const Stream.empty(),
-    error: (_, __) => Stream.value(<String>[]),
+    error: (_, _) => Stream.value(<String>[]),
   );
 });
 
@@ -53,7 +53,7 @@ final favoriteGroupIdsProvider = StreamProvider.autoDispose<List<String>>((ref) 
       return ref.watch(favoriteServiceProvider).watchFavoriteGroupIds();
     },
     loading: () => const Stream.empty(),
-    error: (_, __) => Stream.value(<String>[]),
+    error: (_, _) => Stream.value(<String>[]),
   );
 });
 

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/constants/app_icons.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../core/theme/feature_colors.dart';
@@ -20,13 +19,10 @@ import '../../../../core/widgets/modals/guardian_profile_modal.dart';
 import '../../../../core/widgets/modals/pet_profile_modal.dart';
 import '../../../../core/widgets/badges/trait_badge.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/sheets/confirm_sheet.dart';
 import '../../../../core/widgets/compatibility_widgets.dart';
-import '../../../../core/widgets/badges/info_badge.dart' show LikeButton, InfoBadgeSize, EmptyInfoBadge, PedigreeBadge, MatchScoreBadge, MatchBadgeStyle, PetGenderBadge, GenderBadgeStyle;
-import '../../../../core/widgets/mingrr_image_header.dart' show ImageHeaderDistanceBadge, LikeBadge;
-import '../../../../core/widgets/badges/svg_icons.dart';
+import '../../../../core/widgets/badges/info_badge.dart' show LikeButton, LikeOverlayBadge, InfoBadgeSize, EmptyInfoBadge, PedigreeBadge, MatchScoreBadge, MatchBadgeStyle, PetGenderBadge, GenderBadgeStyle;
 import '../../../../core/utils/error_handler.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../models/user_model.dart';
@@ -237,7 +233,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
           type: MingrrLoadingType.dating,
         ),
       ),
-      error: (_, __) => Scaffold(
+      error: (_, _) => Scaffold(
         appBar: const MingrrAppBar(title: '반려동물 정보'),
         body: MingrrErrorState(
           onRetry: () => ref.invalidate(petByIdProvider(widget.petId)),
@@ -293,11 +289,6 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       // 하단 고정 버튼
       bottomNavigationBar: _buildBottomButton(context),
     );
-  }
-
-  /// 대표사진 URL 가져오기 (추가사진 > null)
-  String? _getPrimaryPhotoUrl(PetModel pet) {
-    return pet.displayImageUrl;
   }
 
   /// 나이 계산
@@ -368,7 +359,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
               : null,
       // 거리 정보 (ImageHeaderDistanceBadge가 0일 때 자동으로 "위치정보 없음" 표시)
       bottomLeftOverlay: ImageHeaderDistanceBadge(distanceKm: distanceKm),
-      bottomRightOverlay: LikeBadge(
+      bottomRightOverlay: LikeOverlayBadge(
         count: _likeCount,
         isLiked: _isLiked,
         onTap: _toggleLike,
@@ -429,7 +420,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                '${pet.breed ?? '품종 미상'} · ${age}살 · ${pet.weight ?? 0}kg ($sizeStr)',
+                '${pet.breed ?? '품종 미상'} · $age살 · ${pet.weight ?? 0}kg ($sizeStr)',
                 style: AppTextStyles.bodyLarge(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
@@ -481,7 +472,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
             id: pet.id,
             name: pet.name,
             breed: pet.breed ?? '품종 미상',
-            ageString: '${age}살',
+            ageString: '$age살',
             likeCount: _likeCount,
             profileImageUrl: pet.profileImageUrl,
             photoUrls: pet.photoUrls,
@@ -521,7 +512,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
                 color: accentColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
                 '교배 글',
@@ -648,7 +639,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
               ),
               decoration: BoxDecoration(
                 color: context.features.dating.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
                 condition,
@@ -769,9 +760,6 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       builder: (context, snapshot) {
         final owner = snapshot.data;
         final nickname = owner?.nickname ?? '보호자';
-        final genderEnum = owner?.gender;
-        final gender = genderEnum == UserGender.male ? '남성' : '여성';
-        final age = _calculateUserAge(owner?.birthDate);
         final kkosunnaeScore = owner?.kkosunnaeScore ?? 50.0;
         
         return Column(
@@ -1044,11 +1032,10 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       );
       
       // 성공 스낵바 먼저 표시 및 상태 갱신
-      if (mounted) {
-        MingrrSnackBar.success(context, '${myPet.name}(으)로 데이트 신청을 보냈어요! 💕');
-        // State 기반 신청 상태 갱신
-        setState(() => _hasPendingRequest = true);
-      }
+      if (!context.mounted) return;
+      MingrrSnackBar.success(context, '${myPet.name}(으)로 데이트 신청을 보냈어요! 💕');
+      // State 기반 신청 상태 갱신
+      setState(() => _hasPendingRequest = true);
       
       // 좋아요 수 증가 (이미 좋아요 안 했으면) - 실패해도 무시
       if (!_isLiked) {
@@ -1059,13 +1046,12 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         }
       }
     } catch (e) {
-      if (mounted) {
-        final errorMessage = e.toString();
-        if (errorMessage.contains('이미 데이팅 신청')) {
-          MingrrSnackBar.info(context, '이미 데이트 신청을 보냈어요! 상대방의 응답을 기다려주세요 💕');
-        } else {
-          MingrrSnackBar.error(context, '데이트 신청에 실패했어요. 다시 시도해주세요.');
-        }
+      if (!context.mounted) return;
+      final errorMessage = e.toString();
+      if (errorMessage.contains('이미 데이팅 신청')) {
+        MingrrSnackBar.info(context, '이미 데이트 신청을 보냈어요! 상대방의 응답을 기다려주세요 💕');
+      } else {
+        MingrrSnackBar.error(context, '데이트 신청에 실패했어요. 다시 시도해주세요.');
       }
     } finally {
       if (mounted) {
@@ -1100,19 +1086,17 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         message: message,
       );
       
-      if (mounted) {
-        MingrrSnackBar.success(context, '${myPet.name}(으)로 교배 신청을 보냈어요! 🐶');
-        // State 기반 신청 상태 갱신
-        setState(() => _hasPendingRequest = true);
-      }
+      if (!context.mounted) return;
+      MingrrSnackBar.success(context, '${myPet.name}(으)로 교배 신청을 보냈어요! 🐶');
+      // State 기반 신청 상태 갱신
+      setState(() => _hasPendingRequest = true);
     } catch (e) {
-      if (mounted) {
-        final errorMessage = e.toString();
-        if (errorMessage.contains('이미') && errorMessage.contains('신청')) {
-          MingrrSnackBar.info(context, '이미 교배 신청을 보냈어요! 상대방의 응답을 기다려주세요 🐶');
-        } else {
-          ErrorHandler.showError(context, e, tag: 'PetDetail', operation: '교배 신청');
-        }
+      if (!context.mounted) return;
+      final errorMessage = e.toString();
+      if (errorMessage.contains('이미') && errorMessage.contains('신청')) {
+        MingrrSnackBar.info(context, '이미 교배 신청을 보냈어요! 상대방의 응답을 기다려주세요 🐶');
+      } else {
+        ErrorHandler.showError(context, e, tag: 'PetDetail', operation: '교배 신청');
       }
     } finally {
       if (mounted) {
@@ -1163,14 +1147,12 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       onConfirm: () async {
         try {
           await _firestoreService.blockUser(currentUserId, targetUserId);
-          if (mounted) {
-            MingrrSnackBar.success(context, '사용자를 차단했습니다');
-            Navigator.pop(context); // 상세 화면 닫기
-          }
+          if (!context.mounted) return;
+          MingrrSnackBar.success(context, '사용자를 차단했습니다');
+          Navigator.pop(context); // 상세 화면 닫기
         } catch (e) {
-          if (mounted) {
-            ErrorHandler.showError(context, e, tag: 'PetDetail', operation: '사용자 차단');
-          }
+          if (!context.mounted) return;
+          ErrorHandler.showError(context, e, tag: 'PetDetail', operation: '사용자 차단');
         }
       },
     );

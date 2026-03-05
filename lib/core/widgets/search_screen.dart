@@ -7,7 +7,6 @@ import '../theme/app_text_styles.dart';
 import '../constants/app_sizes.dart';
 import '../services/firestore_service.dart';
 import 'common_widgets.dart';
-import 'mingrr_image.dart';
 import 'badges/info_badge.dart';
 import 'forms/search_bar.dart';
 import '../utils/format_utils.dart';
@@ -166,7 +165,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               imageUrl: product.imageUrls.isNotEmpty ? product.imageUrls.first : null,
               width: 60,
               height: 60,
-              radius: AppSizes.radiusXS,
+              radius: AppSizes.radiusS,
               accentColor: context.features.market,
             ),
             // 타입 배지
@@ -178,8 +177,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 decoration: BoxDecoration(
                   color: badgeColor,
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(AppSizes.radiusXS),
-                    bottomRight: Radius.circular(AppSizes.radiusXS),
+                    topLeft: Radius.circular(AppSizes.radiusS),
+                    bottomRight: Radius.circular(AppSizes.radiusS),
                   ),
                 ),
                 child: Text(
@@ -221,7 +220,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               imageUrl: job.imageUrls.isNotEmpty ? job.imageUrls.first : null,
               width: 60,
               height: 60,
-              radius: AppSizes.radiusXS,
+              radius: AppSizes.radiusS,
               accentColor: context.features.market,
             ),
             // 타입 배지
@@ -233,8 +232,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                 decoration: BoxDecoration(
                   color: context.features.market,
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(AppSizes.radiusXS),
-                    bottomRight: Radius.circular(AppSizes.radiusXS),
+                    topLeft: Radius.circular(AppSizes.radiusS),
+                    bottomRight: Radius.circular(AppSizes.radiusS),
                   ),
                 ),
                 child: const Text(
@@ -262,38 +261,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     );
   }
 
-  /// 상품 아이템 (기존 - job 전용 검색용)
-  Widget _buildProductItem(ProductModel product) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
-      child: ListTile(
-        leading: MingrrImage.thumbnail(
-          imageUrl: product.imageUrls.isNotEmpty ? product.imageUrls.first : null,
-          width: 60,
-          height: 60,
-          radius: AppSizes.radiusXS,
-          accentColor: context.features.market,
-        ),
-        title: Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-        subtitle: Text(
-          product.priceString,
-          style: TextStyle(
-            color: product.type == ProductType.share ? context.features.walk : Theme.of(context).colorScheme.onSurface,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        trailing: Text(
-          formatRelativeTime(product.createdAt),
-          style: AppTextStyles.captionSmall(context),
-        ),
-        onTap: () {
-          Navigator.pop(context);
-          context.push('/market/product/${product.id}');
-        },
-      ),
-    );
-  }
-
   Widget _buildGroupItem(GroupModel group) {
     return Card(
       margin: const EdgeInsets.only(bottom: AppSizes.gapM),
@@ -302,7 +269,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           imageUrl: group.imageUrl,
           width: 60,
           height: 60,
-          radius: AppSizes.radiusXS,
+          radius: AppSizes.radiusS,
           accentColor: context.features.social,
         ),
         title: Text(group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -331,7 +298,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           imageUrl: job.imageUrls.isNotEmpty ? job.imageUrls.first : null,
           width: 60,
           height: 60,
-          radius: AppSizes.radiusXS,
+          radius: AppSizes.radiusS,
           accentColor: context.features.market,
         ),
         title: Text(job.title, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -359,7 +326,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           imageUrl: breeding.imageUrls != null && breeding.imageUrls.isNotEmpty ? breeding.imageUrls.first : null,
           width: 60,
           height: 60,
-          radius: AppSizes.radiusXS,
+          radius: AppSizes.radiusS,
           accentColor: context.features.dating,
         ),
         title: Text(breeding.title ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -384,7 +351,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           imageUrl: post.imageUrls.isNotEmpty ? post.imageUrls.first : null,
           width: 60,
           height: 60,
-          radius: AppSizes.radiusXS,
+          radius: AppSizes.radiusS,
           accentColor: context.features.social,
         ),
         title: Text(
@@ -398,7 +365,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
               decoration: BoxDecoration(
                 color: context.features.social.withValues(alpha: AppOpacity.o10),
-                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
                 post.category.label,
@@ -422,21 +389,6 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         },
       ),
     );
-  }
-
-  IconData _getJobIcon(JobType type) {
-    switch (type) {
-      case JobType.care:
-        return AppIcons.pet;
-      case JobType.walk:
-        return AppIcons.walk;
-      case JobType.bath:
-        return AppIcons.bath;
-      case JobType.training:
-        return AppIcons.training;
-      case JobType.other:
-        return AppIcons.work;
-    }
   }
 
   Future<void> _onSearch(String query) async {

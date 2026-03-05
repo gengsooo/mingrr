@@ -13,7 +13,6 @@ import '../../services/geocoding_service.dart';
 import '../../services/location_helper.dart';
 import '../common_widgets.dart';
 import '../dialogs/dialogs.dart';
-import '../loading/loading_widgets.dart';
 import '../../utils/app_logger.dart';
 import 'map_loading_widget.dart';
 
@@ -86,15 +85,9 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     _initializePosition();
   }
 
-  /// 지도 dispose 진행 중 플래그 (크래시 방지)
-  bool _isDisposing = false;
-  
   @override
   void dispose() {
-    // 1. dispose 진행 중 플래그 설정 (비동기 작업에서 참조)
-    _isDisposing = true;
-    
-    // 2. 타이머 취소
+    // 1. 타이머 취소
     _addressDebounceTimer?.cancel();
     _addressDebounceTimer = null;
     

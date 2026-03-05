@@ -267,7 +267,7 @@ class MingrrAppBar extends StatelessWidget implements PreferredSizeWidget {
 /// AppBar 외부에서 독립적으로 사용할 수 있는 네비게이션 버튼입니다.
 /// 예: CustomScrollView의 Stack 위에 배치, 이미지 위 오버레이 등
 /// 
-/// [MingrrBackButton]을 대체합니다.
+/// 기존 뒤로가기 버튼의 통합 대체 컴포넌트입니다.
 class MingrrLeadingButton extends StatelessWidget {
   /// 버튼 타입 (back/close)
   final LeadingType type;

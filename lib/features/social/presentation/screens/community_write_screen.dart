@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/form_strings.dart';
 import '../../../../core/services/firebase_service.dart';
@@ -84,7 +83,7 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: MingrrFormAppBar(
+      appBar: MingrrAppBar.form(
         title: _isEditMode ? ScreenTitles.communityEdit : ScreenTitles.communityWrite,
         onClose: () => Navigator.pop(context),
       ),

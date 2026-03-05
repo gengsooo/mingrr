@@ -22,7 +22,7 @@ import '../../../pet/presentation/providers/pet_provider.dart';
 
 final _firebase = FirebaseService();
 
-/// 펫 + 거리 + 궁합 정보 (ItemWithDistance<PetModel> 확장)
+/// 펫 + 거리 + 궁합 정보 (`ItemWithDistance<PetModel>` 확장)
 class PetWithDistance extends ItemWithDistance<PetModel> {
   final String ownerAddress;
   final int matchScore;
@@ -34,7 +34,7 @@ class PetWithDistance extends ItemWithDistance<PetModel> {
   
   PetWithDistance({
     required PetModel pet,
-    required double distanceMeters,
+    required super.distanceMeters,
     this.ownerAddress = '',
     this.matchScore = 0,
     this.matchGrade = '',
@@ -42,7 +42,7 @@ class PetWithDistance extends ItemWithDistance<PetModel> {
     this.breedingTitle,
     this.breedingDescription,
     this.sameBreedOnly = false,
-  }) : super(item: pet, distanceMeters: distanceMeters);
+  }) : super(item: pet);
   
   /// 기존 코드 호환성을 위한 접근자
   PetModel get pet => item;

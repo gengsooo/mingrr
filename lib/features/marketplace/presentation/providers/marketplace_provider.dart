@@ -15,23 +15,23 @@ import '../../../../models/marketplace_model.dart';
 /// Firebase Firestore와 연동하여 상품 데이터 관리
 /// ============================================================
 
-/// 상품 + 거리 정보 (ItemWithDistance<ProductModel> 확장)
+/// 상품 + 거리 정보 (`ItemWithDistance<ProductModel>` 확장)
 class ProductWithDistance extends ItemWithDistance<ProductModel> {
   ProductWithDistance({
     required ProductModel product,
-    required double distanceMeters,
-  }) : super(item: product, distanceMeters: distanceMeters);
+    required super.distanceMeters,
+  }) : super(item: product);
   
   /// 기존 코드 호환성을 위한 접근자
   ProductModel get product => item;
 }
 
-/// 알바 + 거리 정보 (ItemWithDistance<JobModel> 확장)
+/// 알바 + 거리 정보 (`ItemWithDistance<JobModel>` 확장)
 class JobWithDistance extends ItemWithDistance<JobModel> {
   JobWithDistance({
     required JobModel job,
-    required double distanceMeters,
-  }) : super(item: job, distanceMeters: distanceMeters);
+    required super.distanceMeters,
+  }) : super(item: job);
   
   /// 기존 코드 호환성을 위한 접근자
   JobModel get job => item;
@@ -231,10 +231,9 @@ final isJobLikedProvider = FutureProvider.autoDispose.family<bool, String>((ref,
 
 /// 마켓플레이스 Notifier (찜 토글 등 액션 처리)
 class MarketplaceNotifier extends StateNotifier<AsyncValue<void>> {
-  final Ref _ref;
   final FirebaseService _firebase = FirebaseService();
 
-  MarketplaceNotifier(this._ref) : super(const AsyncValue.data(null));
+  MarketplaceNotifier(Ref ref) : super(const AsyncValue.data(null));
 
   /// 상품 찜 토글
   Future<bool> toggleProductLike(String productId) async {

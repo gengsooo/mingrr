@@ -322,7 +322,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
           },
           accentColor: accentColor,
         ),
-        const SizedBox(width: AppSizes.gapSM),
+        const SizedBox(width: AppSizes.gapS),
         MingrrFilterChip(
           label: '여아',
           icon: AppIcons.female,
@@ -354,7 +354,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
           onTap: () => ref.read(_breedingSameBreedFilterProvider.notifier).state = null,
           accentColor: accentColor,
         ),
-        const SizedBox(width: AppSizes.gapSM),
+        const SizedBox(width: AppSizes.gapS),
         MingrrFilterChip(
           label: '같은 품종만',
           isSelected: sameBreedFilter == true,
@@ -471,7 +471,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
           onTap: () => ref.read(_breedingPedigreeFilterProvider.notifier).state = null,
           accentColor: accentColor,
         ),
-        const SizedBox(width: AppSizes.gapSM),
+        const SizedBox(width: AppSizes.gapS),
         MingrrFilterChip(
           label: '혈통서 보유',
           icon: AppIcons.verified,
@@ -571,7 +571,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
     
     // 조건 태그 구성 (크기, 같은 품종만 — 품종은 상단 텍스트에 표시)
     final conditionTags = <String>[];
-    if (pet.sizeString != null) conditionTags.add(pet.sizeString!);
+    if (pet.sizeString.isNotEmpty) conditionTags.add(pet.sizeString);
     if (petWithDistance.sameBreedOnly) conditionTags.add('같은 품종만');
     
     return DatingBreedingCard(

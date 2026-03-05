@@ -102,9 +102,9 @@ enum UnifiedRequestStatus {
     final colorScheme = Theme.of(context).colorScheme;
     switch (this) {
       case UnifiedRequestStatus.pending:
-        return Colors.orange;
+        return colorScheme.tertiary;
       case UnifiedRequestStatus.accepted:
-        return Colors.green;
+        return colorScheme.primary;
       case UnifiedRequestStatus.rejected:
         return colorScheme.error;
       case UnifiedRequestStatus.cancelled:
@@ -222,7 +222,7 @@ class RequestStatusBadge extends StatelessWidget {
       padding: size.padding,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(

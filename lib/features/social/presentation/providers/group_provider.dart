@@ -21,15 +21,15 @@ import '../../../../models/group_model.dart';
 /// - 일정 관리
 /// ============================================================
 
-/// 소모임 + 거리 정보 + 추천 점수 (ItemWithDistance<GroupModel> 확장)
+/// 소모임 + 거리 정보 + 추천 점수 (`ItemWithDistance<GroupModel>` 확장)
 class GroupWithDistance extends ItemWithDistance<GroupModel> {
   final double recommendScore;
 
   GroupWithDistance({
     required GroupModel group,
-    required double distanceMeters,
+    required super.distanceMeters,
     this.recommendScore = 0,
-  }) : super(item: group, distanceMeters: distanceMeters);
+  }) : super(item: group);
 
   /// 기존 코드 호환성을 위한 접근자
   GroupModel get group => item;

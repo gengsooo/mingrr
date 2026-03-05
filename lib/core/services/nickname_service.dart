@@ -66,11 +66,11 @@ class NicknameService {
     }
     
     if (trimmed.length < minLength) {
-      return '닉네임은 ${minLength}자 이상이어야 합니다';
+      return '닉네임은 $minLength자 이상이어야 합니다';
     }
     
     if (trimmed.length > maxLength) {
-      return '닉네임은 ${maxLength}자 이하여야 합니다';
+      return '닉네임은 $maxLength자 이하여야 합니다';
     }
     
     if (!_allowedPattern.hasMatch(trimmed)) {

@@ -95,7 +95,6 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   Widget build(BuildContext context) {
     final groupAsync = ref.watch(groupDetailProvider(widget.groupId));
     final isLikedAsync = ref.watch(isGroupLikedProvider(widget.groupId));
-    final colorScheme = Theme.of(context).colorScheme;
     final accentColor = context.features.social;
 
     return Scaffold(
@@ -144,7 +143,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
           type: MingrrLoadingType.community,
           message: '모임 정보를 불러오고 있어요',
         ),
-        error: (_, __) => MingrrErrorState(
+        error: (_, _) => MingrrErrorState(
           onRetry: () => ref.invalidate(groupDetailProvider(widget.groupId)),
         ),
       ),
@@ -228,7 +227,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                 decoration: BoxDecoration(
                   color: accentColor.withValues(alpha: AppOpacity.o10),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Text(
                   group.typeString,
@@ -241,7 +240,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                   padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                   decoration: BoxDecoration(
                     color: context.features.dating.withValues(alpha: AppOpacity.o10),
-                    borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -261,7 +260,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                   padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                   decoration: BoxDecoration(
                     color: accentColor,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   ),
                   child: Text(
                     '가입됨',
@@ -511,9 +510,9 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                             value: member.isAdmin ? 'remove_admin' : 'make_admin',
                             child: Text(member.isAdmin ? '운영진 해제' : '운영진 지정'),
                           ),
-                        const PopupMenuItem(
+                        PopupMenuItem(
                           value: 'kick',
-                          child: Text('강퇴하기', style: TextStyle(color: Colors.red)),
+                          child: Text('강퇴하기', style: TextStyle(color: Theme.of(context).colorScheme.error)),
                         ),
                       ],
                     ),
@@ -542,7 +541,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
       decoration: BoxDecoration(
         color: color.withValues(alpha: AppOpacity.o10),
-        borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Text(
         label,
@@ -677,7 +676,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                             color: isPast
                                 ? colorScheme.surfaceContainerLow
                                 : accentColor.withValues(alpha: AppOpacity.o10),
-                            borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                            borderRadius: BorderRadius.circular(AppSizes.radiusS),
                           ),
                           child: Text(
                             isPast ? '종료' : '예정',
@@ -713,7 +712,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                     Row(
                       children: [
                         Icon(AppIcons.calendar, size: 14, color: colorScheme.onSurfaceVariant),
-                        const SizedBox(width: AppSizes.gapSM),
+                        const SizedBox(width: AppSizes.gapS),
                         Text(
                           _formatScheduleDate(schedule.startTime),
                           style: AppTextStyles.bodySmall(context),
@@ -721,11 +720,11 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                       ],
                     ),
                     if (schedule.place != null) ...[
-                      const SizedBox(height: AppSizes.gapSM),
+                      const SizedBox(height: AppSizes.gapS),
                       Row(
                         children: [
                           Icon(AppIcons.locationOutlined, size: 14, color: colorScheme.onSurfaceVariant),
-                          const SizedBox(width: AppSizes.gapSM),
+                          const SizedBox(width: AppSizes.gapS),
                           Expanded(
                             child: Text(
                               schedule.place!,
@@ -811,7 +810,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
             ? null
             : isCreator ? () => _showCreatorOptions(context, group) : () => _leaveGroup(group),
         isLoading: _isJoining,
-        backgroundColor: isCreator ? accentColor : Colors.red,
+        backgroundColor: isCreator ? accentColor : Theme.of(context).colorScheme.error,
         textColor: Colors.white,
         height: 56,
       );
@@ -1132,14 +1131,12 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         relatedId: group.id,
       );
 
-      if (mounted) {
-        // go_router를 사용하여 채팅 탭으로 이동 (하단 메뉴 동기화)
-        context.go('/chat/${chatRoom.id}');
-      }
+      if (!context.mounted) return;
+      // go_router를 사용하여 채팅 탭으로 이동 (하단 메뉴 동기화)
+      context.go('/chat/${chatRoom.id}');
     } catch (e) {
-      if (mounted) {
-        ErrorHandler.showError(context, e, tag: 'GroupDetail', operation: '채팅 시작');
-      }
+      if (!context.mounted) return;
+      ErrorHandler.showError(context, e, tag: 'GroupDetail', operation: '채팅 시작');
     }
   }
 

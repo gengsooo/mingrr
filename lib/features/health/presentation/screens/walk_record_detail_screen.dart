@@ -46,9 +46,6 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
   bool _isMapReady = false;
   bool _isDeleting = false;
   
-  /// 지도 dispose 진행 중 플래그 (크래시 방지)
-  bool _isDisposing = false;
-  
   /// LatLng 생성 헬퍼
   LatLng _createLatLng(double lat, double lng) => LatLng(lat, lng);
   
@@ -57,10 +54,7 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
 
   @override
   void dispose() {
-    // 1. dispose 진행 중 플래그 설정 (비동기 작업에서 참조)
-    _isDisposing = true;
-    
-    // 2. 지도 컨트롤러 안전하게 정리 (크래시 방지 핵심)
+    // 1. 지도 컨트롤러 안전하게 정리 (크래시 방지 핵심)
     // SurfaceView가 dispose된 후 접근하는 것을 방지
     _mapController = null;
     
@@ -340,7 +334,7 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
             ],
           ),
           
-          const SizedBox(height: AppSizes.gapLL),
+          const SizedBox(height: AppSizes.gapL),
           const MingrrDivider(),
           const SizedBox(height: AppSizes.gapL),
           
@@ -639,21 +633,6 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
     }
   }
 
-  String _formatDuration(int minutes) {
-    if (minutes < 60) {
-      return '$minutes분';
-    }
-    final hours = minutes ~/ 60;
-    final mins = minutes % 60;
-    return mins > 0 ? '$hours시간 $mins분' : '$hours시간';
-  }
-
-  String _formatDistance(double meters) {
-    if (meters >= 1000) {
-      return '${(meters / 1000).toStringAsFixed(2)}km';
-    }
-    return '${meters.toInt()}m';
-  }
 }
 
 

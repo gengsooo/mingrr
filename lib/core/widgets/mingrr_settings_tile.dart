@@ -205,9 +205,9 @@ class MingrrSettingsTile extends StatelessWidget {
     final Color effectiveTitleColor;
     
     if (isDestructive) {
-      effectiveIconColor = Colors.red;
-      effectiveIconBgColor = Colors.red.withValues(alpha: AppOpacity.o10);
-      effectiveTitleColor = Colors.red;
+      effectiveIconColor = colorScheme.error;
+      effectiveIconBgColor = colorScheme.error.withValues(alpha: AppOpacity.o10);
+      effectiveTitleColor = colorScheme.error;
     } else if (isDisabled) {
       effectiveIconColor = colorScheme.outlineVariant;
       effectiveIconBgColor = colorScheme.outlineVariant.withValues(alpha: AppOpacity.o10);

@@ -177,7 +177,7 @@ class ChatListScreen extends ConsumerWidget {
             type: MingrrLoadingType.chat,
             message: '채팅 목록을 불러오고 있어요',
           ),
-          error: (_, __) => MingrrErrorState(
+          error: (_, _) => MingrrErrorState(
             onRetry: () => ref.invalidate(userChatRoomsProvider),
           ),
         );
@@ -245,7 +245,7 @@ class ChatListScreen extends ConsumerWidget {
               child: MingrrLoadingIndicator.medium(type: MingrrLoadingType.chat),
             ),
           ),
-          error: (_, __) => Center(
+          error: (_, _) => Center(
             child: MingrrEmptyState(
               icon: AppIcons.error,
               title: '데이터를 불러올 수 없어요',
@@ -321,7 +321,7 @@ class ChatListScreen extends ConsumerWidget {
               child: MingrrLoadingIndicator.medium(type: MingrrLoadingType.chat),
             ),
           ),
-          error: (_, __) => Center(
+          error: (_, _) => Center(
             child: MingrrEmptyState(
               icon: AppIcons.error,
               title: '데이터를 불러올 수 없어요',
@@ -774,12 +774,12 @@ class ChatListScreen extends ConsumerWidget {
                           ),
                           // 교배 배지
                           if (isBreeding) ...[
-                            const SizedBox(width: AppSizes.gapSM),
+                            const SizedBox(width: AppSizes.gapS),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                               decoration: BoxDecoration(
                                 color: context.features.breeding,
-                                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                               ),
                               child: Text(
                                 '교배',
@@ -850,190 +850,6 @@ class ChatListScreen extends ConsumerWidget {
         return '소모임에 가입하면\n채팅이 시작됩니다';
       case ChatType.market:
         return '마켓에서 거래를 시작하면\n채팅이 생성됩니다';
-    }
-  }
-
-  // ignore: unused_element - 데모/테스트용 데이터
-  /// 데모 채팅 데이터
-  List<Map<String, dynamic>> _getDemoChats(ChatType type) {
-    switch (type) {
-      case ChatType.dating:
-        return [
-          {'id': '1', 'name': '뽀삐', 'owner': '김철수', 'lastMessage': '안녕하세요! 산책 같이 하실래요?', 'time': '방금', 'unread': 2, 'isOnline': true, 'isBreeding': false},
-          {'id': '2', 'name': '초코', 'owner': '이영희', 'lastMessage': '네, 내일 오후에 만나요!', 'time': '10분 전', 'unread': 0, 'isOnline': true, 'isBreeding': false},
-          {'id': '3', 'name': '몽이', 'owner': '최지현', 'lastMessage': '교배 관련해서 문의드려요', 'time': '2시간 전', 'unread': 0, 'isOnline': false, 'isBreeding': true},
-          {'id': '4', 'name': '코코', 'owner': '박민수', 'lastMessage': '우리 아이 사진 보내드릴게요~', 'time': '어제', 'unread': 0, 'isOnline': false, 'isBreeding': false},
-        ];
-      case ChatType.breeding:
-        return [
-          {'id': '3', 'name': '몽이', 'owner': '최지현', 'lastMessage': '교배 관련해서 문의드려요', 'time': '2시간 전', 'unread': 0, 'isOnline': false, 'isBreeding': true},
-        ];
-      case ChatType.group:
-        return [
-          {'id': '5', 'name': '한강 산책 모임', 'owner': '', 'lastMessage': '이번 주 토요일 모임 확정입니다!', 'time': '3시간 전', 'unread': 5, 'memberCount': 28},
-          {'id': '6', 'name': '강남 댕댕이 모임', 'owner': '', 'lastMessage': '다음 모임 장소 투표해주세요~', 'time': '5시간 전', 'unread': 12, 'memberCount': 45},
-          {'id': '7', 'name': '수제 간식 클럽', 'owner': '', 'lastMessage': '오늘 만든 간식 레시피 공유합니다', 'time': '어제', 'unread': 0, 'memberCount': 32},
-        ];
-      case ChatType.market:
-        return [
-          {'id': '8', 'name': '콩이', 'owner': '박민수', 'lastMessage': '간식 아직 있나요?', 'time': '1시간 전', 'unread': 1, 'productName': '수제 간식 세트'},
-          {'id': '9', 'name': '두부', 'owner': '정수진', 'lastMessage': '네, 직거래 가능해요', 'time': '3시간 전', 'unread': 0, 'productName': '반려동물 옷 (M사이즈)'},
-        ];
-    }
-  }
-
-  // ignore: unused_element - 데모/테스트용 위젯
-  /// 채팅 아이템
-  Widget _buildChatItem(BuildContext context, Map<String, dynamic> chat, ChatType type) {
-    final hasUnread = (chat['unread'] as int) > 0;
-    final isGroup = type == ChatType.group;
-
-    return MingrrCard(
-      margin: const EdgeInsets.only(bottom: AppSizes.gapS),
-      onTap: () => context.push('/chat/${chat['id']}'),
-      child: Row(
-        children: [
-          // 프로필 이미지
-          Stack(
-            children: [
-              MingrrImage.avatar(
-                size: 55,
-                icon: isGroup ? AppIcons.group : AppIcons.pet,
-              ),
-              // 온라인 상태 (데이팅만)
-              if (type == ChatType.dating && chat['isOnline'] == true)
-                Positioned(
-                  bottom: 2,
-                  right: 2,
-                  child: Container(
-                    width: 14,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: context.features.success,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                  ),
-                ),
-              // 채팅 타입 배지
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: _getTabColor(context, type),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child: Icon(
-                    _getChatTypeIcon(type),
-                    size: 10,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: AppSizes.gapM),
-          
-          // 채팅 정보
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              chat['name'] as String,
-                              style: AppTextStyles.titleLarge(context).withWeight(hasUnread ? FontWeight.w700 : FontWeight.w500),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          // 교배 배지
-                          if (chat['isBreeding'] == true) ...[
-                            const SizedBox(width: AppSizes.gapSM),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
-                              decoration: BoxDecoration(
-                                color: context.features.breeding,
-                                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
-                              ),
-                              child: Text(
-                                '교배',
-                                style: AppTextStyles.captionSmall(context),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    Text(
-                      chat['time'] as String,
-                      style: AppTextStyles.caption(context).withColor(hasUnread ? context.features.chat : Theme.of(context).colorScheme.outlineVariant),
-                    ),
-                  ],
-                ),
-                // 부가 정보
-                if (_getSubtitle(chat, type).isNotEmpty) ...[
-                  const SizedBox(height: AppSizes.gapXXS),
-                  Text(
-                    _getSubtitle(chat, type),
-                    style: AppTextStyles.captionSmall(context),
-                  ),
-                ],
-                const SizedBox(height: AppSizes.gapXS),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        chat['lastMessage'] as String,
-                        style: AppTextStyles.bodyMedium(context)
-                            .withWeight(hasUnread ? FontWeight.w500 : FontWeight.w400)
-                            .withColor(hasUnread ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurfaceVariant),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (hasUnread)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
-                        decoration: BoxDecoration(
-                          color: _getTabColor(context, type),
-                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                        ),
-                        child: Text(
-                          '${chat['unread']}',
-                          style: AppTextStyles.labelMedium(context).withWeight(FontWeight.w600).withColor(Colors.white),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 부가 정보 텍스트
-  String _getSubtitle(Map<String, dynamic> chat, ChatType type) {
-    switch (type) {
-      case ChatType.dating:
-      case ChatType.breeding:
-        return chat['owner'] as String? ?? '';
-      case ChatType.group:
-        final memberCount = chat['memberCount'] as int?;
-        return memberCount != null ? '멤버 $memberCount명' : '';
-      case ChatType.market:
-        return chat['productName'] as String? ?? '';
     }
   }
 

@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/services/firebase_service.dart';
+import '../../../core/utils/app_logger.dart';
 import '../../../models/user_model.dart';
 
 /// ============================================================
@@ -222,7 +222,7 @@ class AuthRepository {
       return false;
     } catch (e) {
       // 에러 발생 시 false 반환 (가입 시도 시 Firebase Auth에서 최종 검증)
-      debugPrint('checkEmailExists error: $e');
+      AppLogger.error('AuthRepository', 'checkEmailExists', e);
       return false;
     }
   }

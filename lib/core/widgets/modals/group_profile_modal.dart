@@ -180,7 +180,7 @@ class GroupProfileModal extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS, vertical: AppSizes.paddingXXS),
       decoration: BoxDecoration(
         color: context.features.social,
-        borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Text(
         '모임장',
@@ -218,7 +218,7 @@ class GroupProfileModal extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
       decoration: BoxDecoration(
         color: context.features.social.withValues(alpha: AppOpacity.o10),
-        borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Text(
         category!,

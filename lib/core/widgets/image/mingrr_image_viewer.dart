@@ -6,7 +6,6 @@ import '../../constants/app_icons.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../constants/app_sizes.dart';
 import '../common_widgets.dart';
-import 'mingrr_image.dart';
 import '../../utils/error_handler.dart';
 
 /// ============================================================

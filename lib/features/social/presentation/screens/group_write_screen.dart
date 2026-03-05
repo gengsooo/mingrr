@@ -93,7 +93,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
 
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: MingrrFormAppBar(
+      appBar: MingrrAppBar.form(
         title: _isEditMode ? ScreenTitles.groupEdit : ScreenTitles.groupWrite,
         onClose: () => Navigator.pop(context),
       ),

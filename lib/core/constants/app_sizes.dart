@@ -107,36 +107,6 @@ class AppSizes {
   static const double bottomSheetButtonPaddingH = 16.0;
   static const double bottomSheetButtonPaddingV = 12.0;
 
-  // ===== Deprecated (하위 호환성) =====
-  @Deprecated('Use paddingS instead')
-  static const double paddingSM = 6.0;
-  @Deprecated('Use paddingM instead')
-  static const double paddingMS = 10.0;
-  @Deprecated('Use gapS instead')
-  static const double gapSM = 6.0;
-  @Deprecated('Use gapM instead')
-  static const double gapMS = 10.0;
-  @Deprecated('Use gapL instead')
-  static const double gapLL = 20.0;
-  @Deprecated('Use iconS instead')
-  static const double iconSM = 18.0;
-  @Deprecated('Use iconL instead')
-  static const double iconML = 22.0;
-  @Deprecated('Use iconXXL instead')
-  static const double iconHuge = 64.0;
-  @Deprecated('Use radiusS instead')
-  static const double radiusXXS = 4.0;
-  @Deprecated('Use radiusS instead')
-  static const double radiusXS = 8.0;
-  @Deprecated('Use radiusL instead')
-  static const double radiusXL = 24.0;
-  @Deprecated('Use radiusL instead')
-  static const double radiusXXL = 32.0;
-  @Deprecated('Use borderWidthM instead')
-  static const double inputBorderWidth = 1.5;
-  @Deprecated('Use elevationS instead')
-  static const double cardElevation = 2.0;
-
   // ===== 로딩 타임아웃 =====
   static const Duration loadingTimeout = Duration(seconds: 15);
   static const Duration loadingTimeoutShort = Duration(seconds: 10);

@@ -71,7 +71,7 @@ class PendingRatingsScreen extends ConsumerWidget {
           type: MingrrLoadingType.primary,
           message: '평가 대기 목록을 불러오고 있어요',
         ),
-        error: (_, __) => MingrrErrorState(
+        error: (_, _) => MingrrErrorState(
           onRetry: () => ref.invalidate(pendingRatingsProvider),
         ),
       ),

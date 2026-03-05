@@ -111,7 +111,7 @@ class MingrrRecordTile extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 color: color.withValues(alpha: AppOpacity.o10),
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Icon(icon, size: 22, color: color),
             ),

@@ -6,7 +6,6 @@ import '../../constants/pet_constants.dart';
 import '../../services/bottom_sheet_stack_manager.dart';
 import '../../services/firebase_service.dart';
 import '../../services/firestore_service.dart';
-import '../sheets/mingrr_bottom_sheet.dart';
 import '../kkosunnae_widgets.dart';
 import '../badges/verification_badge.dart';
 import '../common_widgets.dart';

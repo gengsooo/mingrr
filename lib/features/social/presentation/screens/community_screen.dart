@@ -6,9 +6,6 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
-import '../../../../core/widgets/badges/svg_icons.dart';
-import '../../../../core/widgets/badges/info_badge.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../models/community_post_model.dart';
@@ -273,7 +270,7 @@ class _CommunityPostCard extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                               decoration: BoxDecoration(
                                 color: accentColor.withValues(alpha: AppOpacity.o10),
-                                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                               ),
                               child: Text(
                                 post.category.label,
@@ -308,7 +305,7 @@ class _CommunityPostCard extends StatelessWidget {
                       ],
                     ),
                     
-                    const SizedBox(height: AppSizes.gapSM),
+                    const SizedBox(height: AppSizes.gapS),
                     
                     // 작성자 · 시간
                     Text(
@@ -334,7 +331,7 @@ class _CommunityPostCard extends StatelessWidget {
                           imageUrl: post.hasVideo ? post.videoThumbnailUrl : post.firstImage,
                           width: _thumbnailSize,
                           height: _thumbnailSize,
-                          radius: AppSizes.radiusXS,
+                          radius: AppSizes.radiusS,
                           accentColor: accentColor,
                         ),
                         if (post.hasVideo)
@@ -342,7 +339,7 @@ class _CommunityPostCard extends StatelessWidget {
                             child: Container(
                               decoration: BoxDecoration(
                                 color: Colors.black26,
-                                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                               ),
                               child: const Icon(AppIcons.play, color: Colors.white, size: 24),
                             ),

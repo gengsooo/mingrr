@@ -11,9 +11,9 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/storage_service.dart';
-import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/nickname_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/image/local_image_preview.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/forms/form_components.dart';
 import '../../../../core/widgets/sheets/image_picker_sheet.dart';
@@ -52,7 +52,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   
   // 프로필 이미지 관련
   final StorageService _storageService = StorageService();
-  final FirestoreService _firestoreService = FirestoreService();
   XFile? _selectedProfileImage;
   String? _profileImageUrl;
   DefaultAvatar? _selectedDefaultAvatar;
@@ -74,8 +73,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     final currentUser = ref.read(currentUserProvider).valueOrNull;
     if (currentUser == null) return;
     
-    _nicknameController.text = currentUser.nickname ?? '';
-    _originalNickname = currentUser.nickname ?? '';
+    _nicknameController.text = currentUser.nickname;
+    _originalNickname = currentUser.nickname;
     _bioController.text = currentUser.bio ?? '';
     _selectedGender = currentUser.gender;
     _birthDate = currentUser.birthDate;
@@ -106,7 +105,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: MingrrFormAppBar(
+      appBar: MingrrAppBar.form(
         title: '프로필 수정',
         onClose: () => Navigator.pop(context),
       ),
@@ -189,20 +188,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           shape: BoxShape.circle,
           border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
         ),
-        child: ClipOval(
-          child: kIsWeb
-              ? Image.network(
-                  _selectedProfileImage!.path,
-                  width: 120,
-                  height: 120,
-                  fit: BoxFit.cover,
-                )
-              : Image.file(
-                  File(_selectedProfileImage!.path),
-                  width: 120,
-                  height: 120,
-                  fit: BoxFit.cover,
-                ),
+        child: LocalImagePreview.circle(
+          path: _selectedProfileImage!.path,
+          size: 120,
         ),
       );
     }
