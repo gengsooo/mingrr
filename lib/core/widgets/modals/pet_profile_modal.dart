@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../constants/app_icons.dart';
 import '../../services/bottom_sheet_stack_manager.dart';
+import '../../services/firebase_service.dart';
+import '../../services/transaction_service.dart';
 import '../../theme/feature_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_text_styles.dart';
@@ -79,6 +81,7 @@ class GuardianInfo {
   final bool isPetVerified;
   final bool isLocationVerified;
   final List<GuardianPetInfo> pets;
+  final GuardianActivityInfo? activityInfo;
 
   const GuardianInfo({
     required this.id,
@@ -91,6 +94,7 @@ class GuardianInfo {
     this.isPetVerified = false,
     this.isLocationVerified = false,
     this.pets = const [],
+    this.activityInfo,
   });
 }
 
@@ -156,11 +160,10 @@ class _PetProfileModalState extends State<PetProfileModal> {
         return;
       }
 
+      final firebase = FirebaseService();
+      
       // 반려동물의 좋아요 수 조회
-      final petDoc = await FirebaseFirestore.instance
-          .collection('pets')
-          .doc(widget.petId)
-          .get();
+      final petDoc = await firebase.petsCollection.doc(widget.petId).get();
       if (petDoc.exists) {
         final data = petDoc.data();
         setState(() {
@@ -169,7 +172,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
       }
 
       // 내가 좋아요 했는지 확인
-      final likeDoc = await FirebaseFirestore.instance
+      final likeDoc = await firebase.firestore
           .collection('likes')
           .doc('${currentUser.uid}_${widget.petId}')
           .get();
@@ -182,7 +185,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
     }
   }
 
-  /// 좋아요 토글
+  /// 좋아요 토글 (TransactionService 사용)
   Future<void> _toggleLike() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) {
@@ -190,7 +193,6 @@ class _PetProfileModalState extends State<PetProfileModal> {
       return;
     }
 
-    final likeDocId = '${currentUser.uid}_${widget.petId}';
     final wasLiked = _isLiked;
 
     // 낙관적 업데이트
@@ -200,25 +202,14 @@ class _PetProfileModalState extends State<PetProfileModal> {
     });
 
     try {
-      if (wasLiked) {
-        // 좋아요 취소
-        await FirebaseFirestore.instance.collection('likes').doc(likeDocId).delete();
-        await FirebaseFirestore.instance.collection('pets').doc(widget.petId).update({
-          'likeCount': FieldValue.increment(-1),
-        });
-      } else {
-        // 좋아요 추가
-        await FirebaseFirestore.instance.collection('likes').doc(likeDocId).set({
-          'userId': currentUser.uid,
-          'petId': widget.petId,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        await FirebaseFirestore.instance.collection('pets').doc(widget.petId).update({
-          'likeCount': FieldValue.increment(1),
-        });
-      }
+      await TransactionService.togglePetLike(
+        petId: widget.petId,
+        userId: currentUser.uid,
+        ownerId: widget.guardianInfo?.id,
+      );
       
-      // 스낵바 표시 (rootScaffoldMessenger 사용하여 바텀시트에서도 표시)
+      // 스낵바 표시
+      if (!mounted) return;
       final messenger = widget.rootScaffoldMessenger ?? ScaffoldMessenger.of(context);
       messenger.showSnackBar(
         SnackBar(
@@ -228,6 +219,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
       );
     } catch (e) {
       // 실패 시 롤백
+      if (!mounted) return;
       setState(() {
         _isLiked = wasLiked;
         _currentLikeCount += wasLiked ? 1 : -1;
@@ -282,7 +274,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
       return ProfileModalSection(
         title: '사진',
         content: const MingrrEmptySection(
-          icon: Icons.photo_library_outlined,
+          icon: AppIcons.photoOutlined,
           message: '등록된 사진이 없어요',
         ),
       );
@@ -294,7 +286,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
       content: MingrrImageGallery(
         imageUrls: widget.photoUrls,
         height: 80,
-        itemWidth: 80,
+        fullWidthSingle: false,
         borderRadius: 12,
         enableViewer: true,
       ),
@@ -308,11 +300,15 @@ class _PetProfileModalState extends State<PetProfileModal> {
     return ProfileModalHeader(
       avatar: ProfileModalAvatar(
         imageUrl: widget.profileImageUrl,
-        fallbackIcon: Icons.pets,
+        fallbackIcon: AppIcons.pet,
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       ),
       name: widget.petName,
-      badge: _buildGenderBadge(isMale),
+      badge: PetGenderBadge(
+        isMale: isMale,
+        size: InfoBadgeSize.medium,
+        style: GenderBadgeStyle.tinted,
+      ),
       subtitle: Text(
         [
           if (widget.breed != null) widget.breed,
@@ -322,33 +318,6 @@ class _PetProfileModalState extends State<PetProfileModal> {
         style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
       ),
       trailing: _buildLikeButton(),
-    );
-  }
-
-  /// 성별 배지
-  Widget _buildGenderBadge(bool isMale) {
-    final genderText = isMale ? '남아' : '여아';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 3),
-      decoration: BoxDecoration(
-        color: isMale ? Colors.blue.withValues(alpha: AppOpacity.o15) : Colors.pink.withValues(alpha: AppOpacity.o15),
-        borderRadius: BorderRadius.circular(AppSizes.radiusS),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            isMale ? Icons.male : Icons.female,
-            size: 14,
-            color: isMale ? Colors.blue : Colors.pink,
-          ),
-          const SizedBox(width: 3),
-          Text(
-            genderText,
-            style: AppTextStyles.bodySmall(context).withWeight(FontWeight.w500).withColor(isMale ? Colors.blue : Colors.pink),
-          ),
-        ],
-      ),
     );
   }
 
@@ -368,8 +337,8 @@ class _PetProfileModalState extends State<PetProfileModal> {
     if (widget.introduction == null || widget.introduction!.isEmpty) {
       return ProfileModalSection(
         title: '소개',
-        content: const MingrrEmptySection(
-          icon: Icons.description_outlined,
+        content: MingrrEmptySection(
+          icon: AppIcons.description,
           message: '등록된 소개가 없어요',
           height: 60,
         ),
@@ -407,6 +376,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
               isPetVerified: guardian.isPetVerified,
               isLocationVerified: guardian.isLocationVerified,
               pets: guardian.pets,
+              activityInfo: guardian.activityInfo,
             );
           },
           child: Container(
@@ -426,7 +396,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
                         color: Theme.of(context).colorScheme.primary.withValues(alpha: AppOpacity.o10),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.person, size: 22, color: Theme.of(context).colorScheme.primary),
+                      child: Icon(AppIcons.profile, size: 22, color: Theme.of(context).colorScheme.primary),
                     ),
                     const SizedBox(width: AppSizes.gapM),
                     Expanded(
@@ -442,7 +412,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
                         ],
                       ),
                     ),
-                    Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+                    Icon(AppIcons.chevronRight, color: Theme.of(context).colorScheme.outlineVariant),
                   ],
                 ),
                 // 인증 배지 (소형)
@@ -453,17 +423,17 @@ class _PetProfileModalState extends State<PetProfileModal> {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _buildSmallVerificationBadge(
-                      icon: Icons.verified_user_outlined,
+                      icon: AppIcons.verified,
                       label: '본인인증',
                       isVerified: guardian.isIdentityVerified,
                     ),
                     _buildSmallVerificationBadge(
-                      icon: Icons.pets_outlined,
+                      icon: AppIcons.petOutlined,
                       label: '동물등록',
                       isVerified: guardian.isPetVerified,
                     ),
                     _buildSmallVerificationBadge(
-                      icon: Icons.location_on_outlined,
+                      icon: AppIcons.locationOutlined,
                       label: '위치인증',
                       isVerified: guardian.isLocationVerified,
                     ),
@@ -498,7 +468,7 @@ class _PetProfileModalState extends State<PetProfileModal> {
           ),
         ),
         if (!isVerified)
-          Icon(Icons.close, size: 10, color: Theme.of(context).colorScheme.outlineVariant),
+          Icon(AppIcons.close, size: 10, color: Theme.of(context).colorScheme.outlineVariant),
       ],
     );
   }

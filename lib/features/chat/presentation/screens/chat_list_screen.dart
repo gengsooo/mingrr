@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
+import '../../../../core/widgets/dialogs/dialog_buttons.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../core/widgets/navigation/appbar_actions.dart';
 import '../../../../core/widgets/modals/guardian_profile_modal.dart';
-import '../../../../core/widgets/refresh_wrapper.dart';
-import '../../../../core/services/firebase_service.dart';
+import '../../../../core/widgets/cards/request_card.dart';
+import '../../../../core/widgets/badges/request_status_badge.dart';
 import '../../../../models/chat_model.dart';
-import '../../../../models/dating_request_model.dart';
+import '../../../../models/dating_model.dart';
+import '../../../../models/job_application_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../dating/presentation/providers/dating_request_provider.dart';
+import '../../../dating/presentation/providers/dating_request_provider.dart' show receivedRequestsProvider, receivedDatingRequestsProvider, receivedBreedingRequestsProvider, DatingRequestActionService;
+import '../../../marketplace/presentation/providers/job_application_provider.dart';
 import '../providers/chat_provider.dart';
-import 'chat_detail_screen.dart';
 import '../../../../core/utils/responsive_utils.dart';
 
 /// ============================================================
@@ -48,9 +50,9 @@ class ChatListScreen extends ConsumerWidget {
     // 탭 정의 (아이콘 사용 - 선택 시 흰색으로 변경됨)
     // 순서: 데이팅 → 마켓 → 소모임
     final tabs = [
-      MingrrTabItem(label: '데이팅', icon: Icons.favorite, color: features.dating),
-      MingrrTabItem(label: '마켓', icon: Icons.store, color: features.market),
-      MingrrTabItem(label: '소모임', icon: Icons.groups, color: features.social),
+      MingrrTabItem(label: '데이팅', icon: AppIcons.dating, color: features.dating),
+      MingrrTabItem(label: '마켓', icon: AppIcons.market, color: features.market),
+      MingrrTabItem(label: '소모임', icon: AppIcons.group, color: features.social),
     ];
 
     // 탭별 배경색 (채팅 목록은 각 탭의 테마색 유지)
@@ -62,8 +64,8 @@ class ChatListScreen extends ConsumerWidget {
     
     return Scaffold(
       backgroundColor: isDark ? colorScheme.surface : backgroundColor,
-      appBar: AppBar(
-        title: const Text('채팅'),
+      appBar: MingrrAppBar.mainTab(
+        title: '채팅',
         actions: [
           AppBarActionButton.notification(),
           AppBarActionButton.profile(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
@@ -131,6 +133,11 @@ class ChatListScreen extends ConsumerWidget {
       return _buildDatingTabContent(context);
     }
     
+    // 마켓 탭인 경우 받은 지원 목록도 함께 표시
+    if (type == ChatType.market) {
+      return _buildMarketTabContent(context);
+    }
+    
     return Consumer(
       builder: (context, ref, child) {
         final chatRoomsAsync = ref.watch(userChatRoomsProvider);
@@ -145,7 +152,7 @@ class ChatListScreen extends ConsumerWidget {
             
             if (filteredRooms.isEmpty) {
               return MingrrEmptyState(
-                icon: Icons.chat_bubble_outline,
+                icon: AppIcons.chatOutlined,
                 title: '아직 데이터가 없어요',
                 subtitle: _getEmptyStateMessage(type),
                 accentColor: _getTabColor(context, type),
@@ -170,8 +177,84 @@ class ChatListScreen extends ConsumerWidget {
             type: MingrrLoadingType.chat,
             message: '채팅 목록을 불러오고 있어요',
           ),
-          error: (_, __) => MingrrErrorState(
+          error: (_, _) => MingrrErrorState(
             onRetry: () => ref.invalidate(userChatRoomsProvider),
+          ),
+        );
+      },
+    );
+  }
+
+  /// 마켓 탭 콘텐츠 (받은 지원 목록 + 채팅 목록) - 데이팅 탭과 동일 구조
+  Widget _buildMarketTabContent(BuildContext context) {
+    return Consumer(
+      builder: (context, ref, child) {
+        final receivedApplications = ref.watch(receivedJobApplicationsProvider);
+        final pendingApplications = receivedApplications.valueOrNull
+            ?.where((a) => a.status == JobApplicationStatus.pending).toList() ?? [];
+        final chatRoomsAsync = ref.watch(userChatRoomsProvider);
+        final currentUserId = ref.watch(authStateProvider).valueOrNull?.uid;
+
+        return chatRoomsAsync.when(
+          data: (allChatRooms) {
+            final filteredRooms = allChatRooms.where((room) {
+              return room.type == 'marketplace' || room.type == 'market' || room.type == 'job';
+            }).toList();
+            
+            // 지원도 없고 채팅도 없으면 빈 화면 표시
+            if (filteredRooms.isEmpty && pendingApplications.isEmpty) {
+              return MingrrEmptyState(
+                icon: AppIcons.chatOutlined,
+                title: '아직 데이터가 없어요',
+                subtitle: _getEmptyStateMessage(ChatType.market),
+                accentColor: context.features.market,
+                onRefresh: () async {
+                  ref.invalidate(userChatRoomsProvider);
+                  ref.invalidate(receivedJobApplicationsProvider);
+                },
+              );
+            }
+            
+            // 데이터가 있으면 리스트 표시
+            return ListView(
+              padding: const EdgeInsets.all(AppSizes.paddingM),
+              children: [
+                // 대기 중인 지원이 있으면 표시
+                if (pendingApplications.isNotEmpty) ...[
+                  _buildJobApplicationsSection(context, ref, pendingApplications),
+                  const SizedBox(height: AppSizes.gapL),
+                ],
+                
+                // 채팅 목록
+                if (filteredRooms.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSizes.gapS),
+                    child: Text(
+                      '채팅',
+                      style: AppTextStyles.titleMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+                  ...filteredRooms.map((room) => _buildChatRoomItem(context, ref, room, ChatType.market, currentUserId ?? '')),
+                ],
+              ],
+            );
+          },
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(AppSizes.paddingXL),
+              child: MingrrLoadingIndicator.medium(type: MingrrLoadingType.chat),
+            ),
+          ),
+          error: (_, _) => Center(
+            child: MingrrEmptyState(
+              icon: AppIcons.error,
+              title: '데이터를 불러올 수 없어요',
+              subtitle: '잠시 후 다시 시도해주세요',
+              accentColor: context.features.market,
+              onRefresh: () async {
+                ref.invalidate(userChatRoomsProvider);
+              },
+            ),
           ),
         );
       },
@@ -187,62 +270,234 @@ class ChatListScreen extends ConsumerWidget {
         final chatRoomsAsync = ref.watch(userChatRoomsProvider);
         final currentUserId = ref.watch(authStateProvider).valueOrNull?.uid;
 
-        return ListView(
-            padding: const EdgeInsets.all(AppSizes.paddingM),
-            children: [
-              // 대기 중인 신청이 있으면 표시
-              if (pendingRequests.isNotEmpty) ...[
-                _buildRequestsSection(context, ref, pendingRequests),
-                const SizedBox(height: AppSizes.gapL),
+        return chatRoomsAsync.when(
+          data: (allChatRooms) {
+            final filteredRooms = allChatRooms.where((room) {
+              return room.type == 'dating' || room.type == 'breeding';
+            }).toList();
+            
+            // 신청도 없고 채팅도 없으면 빈 화면 표시
+            if (filteredRooms.isEmpty && pendingRequests.isEmpty) {
+              return MingrrEmptyState(
+                icon: AppIcons.chatOutlined,
+                title: '아직 데이터가 없어요',
+                subtitle: _getEmptyStateMessage(ChatType.dating),
+                accentColor: context.features.dating,
+                onRefresh: () async {
+                  ref.invalidate(userChatRoomsProvider);
+                  ref.invalidate(receivedDatingRequestsProvider);
+                  ref.invalidate(receivedBreedingRequestsProvider);
+                },
+              );
+            }
+            
+            // 데이터가 있으면 리스트 표시
+            return ListView(
+              padding: const EdgeInsets.all(AppSizes.paddingM),
+              children: [
+                // 대기 중인 신청이 있으면 표시
+                if (pendingRequests.isNotEmpty) ...[
+                  _buildRequestsSection(context, ref, pendingRequests),
+                  const SizedBox(height: AppSizes.gapL),
+                ],
+                
+                // 채팅 목록
+                if (filteredRooms.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSizes.gapS),
+                    child: Text(
+                      '채팅',
+                      style: AppTextStyles.titleMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    ),
+                  ),
+                  ...filteredRooms.map((room) => _buildChatRoomItem(context, ref, room, ChatType.dating, currentUserId ?? '')),
+                ],
               ],
-              
-              // 채팅 목록
-              chatRoomsAsync.when(
-              data: (allChatRooms) {
-                final filteredRooms = allChatRooms.where((room) {
-                  return room.type == 'dating' || room.type == 'breeding';
-                }).toList();
-                
-                if (filteredRooms.isEmpty && pendingRequests.isEmpty) {
-                  return MingrrEmptyState(
-                    icon: Icons.chat_bubble_outline,
-                    title: '아직 데이터가 없어요',
-                    subtitle: _getEmptyStateMessage(ChatType.dating),
-                    accentColor: context.features.dating,
-                    onRefresh: () async {
-                      ref.invalidate(userChatRoomsProvider);
-                      ref.invalidate(receivedRequestsProvider);
-                    },
-                  );
-                }
-                
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (filteredRooms.isNotEmpty) ...[
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: AppSizes.gapS),
-                        child: Text(
-                          '채팅',
-                          style: AppTextStyles.titleMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        ),
-                      ),
-                      ...filteredRooms.map((room) => _buildChatRoomItem(context, ref, room, ChatType.dating, currentUserId ?? '')),
-                    ],
-                  ],
-                );
-              },
-              loading: () => const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(AppSizes.paddingXL),
-                  child: MingrrLoadingIndicator.medium(type: MingrrLoadingType.chat),
-                ),
-              ),
-              error: (_, __) => const SizedBox.shrink(),
+            );
+          },
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(AppSizes.paddingXL),
+              child: MingrrLoadingIndicator.medium(type: MingrrLoadingType.chat),
             ),
-            ],
+          ),
+          error: (_, _) => Center(
+            child: MingrrEmptyState(
+              icon: AppIcons.error,
+              title: '데이터를 불러올 수 없어요',
+              subtitle: '잠시 후 다시 시도해주세요',
+              accentColor: context.features.dating,
+              onRefresh: () async {
+                ref.invalidate(userChatRoomsProvider);
+              },
+            ),
+          ),
         );
       },
+    );
+  }
+
+  /// 알바 지원 목록 섹션 (마켓 탭)
+  Widget _buildJobApplicationsSection(BuildContext context, WidgetRef ref, List<JobApplicationModel> applications) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              '받은 지원',
+              style: AppTextStyles.titleMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(width: AppSizes.gapS),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
+              decoration: BoxDecoration(
+                color: context.features.market,
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
+              ),
+              child: Text(
+                '${applications.length}',
+                style: AppTextStyles.labelLarge(context).copyWith(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSizes.gapS),
+        ...applications.map((application) => _buildJobApplicationItem(context, ref, application)),
+      ],
+    );
+  }
+
+  /// 알바 지원 아이템 - RequestCard 공통 컴포넌트 사용
+  Widget _buildJobApplicationItem(BuildContext context, WidgetRef ref, JobApplicationModel application) {
+    return RequestCard(
+      type: RequestCardType.jobApply,
+      senderName: application.applicantName,
+      senderImageUrl: application.applicantImageUrl,
+      senderSubtitle: '${application.jobTypeLabel} · ${application.jobTitle}',
+      status: UnifiedRequestStatus.fromJob(application.status),
+      message: application.message,
+      requestedAt: application.createdAt,
+      onTap: () => _showApplicantGuardianProfile(context, application),
+      onAccept: () => _showJobAcceptConfirmation(context, ref, application),
+      onReject: () => _showJobRejectConfirmation(context, ref, application),
+    );
+  }
+
+  /// 알바 지원 수락 확인 다이얼로그
+  void _showJobAcceptConfirmation(BuildContext context, WidgetRef ref, JobApplicationModel application) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
+        decoration: BoxDecoration(
+          color: Theme.of(ctx).colorScheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const BottomSheetHandle(),
+            const SizedBox(height: AppSizes.gapL),
+            Icon(
+              AppIcons.market,
+              size: 48,
+              color: context.features.market,
+            ),
+            const SizedBox(height: AppSizes.gapL),
+            Text(
+              '알바 지원 수락',
+              style: AppTextStyles.headlineMedium(context),
+            ),
+            const SizedBox(height: AppSizes.gapS),
+            Text(
+              '${application.applicantName}님의 지원을 수락할까요?\n채팅이 시작됩니다.',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodyMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: AppSizes.gapXL),
+            MingrrDialogButtons(
+              cancelText: '취소',
+              confirmText: '수락하기',
+              onCancel: () => Navigator.pop(ctx),
+              onConfirm: () async {
+                Navigator.pop(ctx);
+                final chatRoomId = await JobApplicationActionService.acceptApplication(application);
+                if (context.mounted) {
+                  if (chatRoomId != null) {
+                    MingrrSnackBar.success(context, '${application.applicantName}님의 지원을 수락했어요! 💼');
+                  } else {
+                    MingrrSnackBar.warning(context, '수락 처리 중 문제가 발생했어요. 다시 시도해주세요.');
+                  }
+                }
+              },
+              confirmColor: context.features.market,
+            ),
+            SizedBox(height: ResponsiveUtils.bottomSafeArea(ctx)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 알바 지원 거절 확인 다이얼로그
+  void _showJobRejectConfirmation(BuildContext context, WidgetRef ref, JobApplicationModel application) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL),
+        decoration: BoxDecoration(
+          color: Theme.of(ctx).colorScheme.surface,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const BottomSheetHandle(),
+            const SizedBox(height: AppSizes.gapL),
+            Icon(AppIcons.close, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
+            const SizedBox(height: AppSizes.gapL),
+            Text(
+              '알바 지원 거절',
+              style: AppTextStyles.headlineMedium(context),
+            ),
+            const SizedBox(height: AppSizes.gapS),
+            Text(
+              '${application.applicantName}님의 지원을 거절할까요?',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodyMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: AppSizes.gapXL),
+            MingrrDialogButtons(
+              cancelText: '취소',
+              confirmText: '거절하기',
+              onCancel: () => Navigator.pop(ctx),
+              onConfirm: () async {
+                Navigator.pop(ctx);
+                await JobApplicationActionService.rejectApplication(application);
+                if (context.mounted) {
+                  MingrrSnackBar.info(context, '지원을 거절했어요');
+                }
+              },
+              confirmColor: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+            SizedBox(height: ResponsiveUtils.bottomSafeArea(ctx)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 지원자 보호자 프로필 바텀시트 표시
+  void _showApplicantGuardianProfile(BuildContext context, JobApplicationModel application) {
+    showGuardianProfileFromFirestore(
+      context,
+      userId: application.applicantId,
+      fallbackName: application.applicantName,
+      fallbackImageUrl: application.applicantImageUrl,
+      fallbackScore: application.applicantKkosunnaeScore,
     );
   }
 
@@ -277,131 +532,22 @@ class ChatListScreen extends ConsumerWidget {
     );
   }
 
-  /// 신청 아이템
+  /// 신청 아이템 - RequestCard 공통 컴포넌트 사용
   Widget _buildRequestItem(BuildContext context, WidgetRef ref, DatingRequestModel request) {
     final isBreeding = request.type == DatingRequestType.breeding;
-    // 데이트/교배 모두 동일한 색상 사용
-    final accentColor = context.features.dating;
     
-    return MingrrCard(
-      margin: const EdgeInsets.only(bottom: AppSizes.gapS),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.paddingM),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                // 프로필 이미지 (클릭 시 보호자 정보 바텀시트)
-                GestureDetector(
-                  onTap: () => _showSenderGuardianProfile(context, request),
-                  child: MingrrPetAvatar(
-                    imageUrl: request.senderPetImageUrl,
-                    size: 44,
-                    borderColor: accentColor.withValues(alpha: AppOpacity.o30),
-                    borderWidth: 1,
-                  ),
-                ),
-                const SizedBox(width: AppSizes.gapM),
-                // 정보
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
-                            decoration: BoxDecoration(
-                              color: accentColor.withValues(alpha: AppOpacity.o10),
-                              borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
-                            ),
-                            child: Text(
-                              isBreeding ? '교배' : '데이트',
-                              style: AppTextStyles.captionSmall(context).copyWith(color: accentColor),
-                            ),
-                          ),
-                          const SizedBox(width: AppSizes.gapS),
-                          Expanded(
-                            child: Text(
-                              '${request.senderPetName} · ${request.senderName}',
-                              style: AppTextStyles.titleMedium(context),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: AppSizes.gapS),
-                          Text(
-                            _formatRequestTime(request.createdAt),
-                            style: AppTextStyles.captionSmall(context),
-                          ),
-                        ],
-                      ),
-                      if (request.message != null && request.message!.isNotEmpty) ...[
-                        const SizedBox(height: AppSizes.gapSM),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.dark
-                                ? Theme.of(context).colorScheme.surfaceContainerHighest
-                                : Theme.of(context).colorScheme.primaryContainer.withValues(alpha: AppOpacity.o30),
-                            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
-                          ),
-                          child: Text(
-                            request.message!,
-                            style: AppTextStyles.bodySmall(context),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSizes.gapM),
-            // 수락/거절 버튼
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 36,
-                    child: OutlinedButton(
-                      onPressed: () => _showRejectConfirmation(context, ref, request),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                        side: BorderSide(color: Theme.of(context).colorScheme.outline),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusXS)),
-                      ),
-                      child: Text('거절', style: AppTextStyles.bodyMedium(context)),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: MingrrButton(
-                    text: '수락',
-                    onPressed: () => _showAcceptConfirmation(context, ref, request),
-                    backgroundColor: accentColor,
-                    textColor: Colors.white,
-                    height: 36,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+    return RequestCard(
+      type: isBreeding ? RequestCardType.breeding : RequestCardType.dating,
+      senderName: request.senderPetName ?? '알 수 없음',
+      senderImageUrl: request.senderPetImageUrl,
+      senderSubtitle: request.senderName,
+      status: UnifiedRequestStatus.fromDating(request.status),
+      message: request.message,
+      requestedAt: request.createdAt,
+      onTap: () => _showSenderGuardianProfile(context, request),
+      onAccept: () => _showAcceptConfirmation(context, ref, request),
+      onReject: () => _showRejectConfirmation(context, ref, request),
     );
-  }
-
-  /// 신청 시간 포맷
-  String _formatRequestTime(DateTime time) {
-    final now = DateTime.now();
-    final diff = now.difference(time);
-    if (diff.inMinutes < 1) return '방금';
-    if (diff.inHours < 1) return '${diff.inMinutes}분 전';
-    if (diff.inDays < 1) return '${diff.inHours}시간 전';
-    return '${diff.inDays}일 전';
   }
 
   /// 수락 확인 다이얼로그
@@ -422,7 +568,7 @@ class ChatListScreen extends ConsumerWidget {
             const BottomSheetHandle(),
             const SizedBox(height: AppSizes.gapL),
             Icon(
-              isBreeding ? Icons.family_restroom : Icons.favorite,
+              isBreeding ? AppIcons.breeding : AppIcons.dating,
               size: 48,
               color: context.features.dating,
             ),
@@ -438,34 +584,22 @@ class ChatListScreen extends ConsumerWidget {
               style: AppTextStyles.bodyMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSizes.gapXL),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
-                      side: BorderSide(color: Theme.of(context).colorScheme.outline),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusS)),
-                    ),
-                    child: const Text('취소'),
-                  ),
-                ),
-                const SizedBox(width: AppSizes.gapM),
-                Expanded(
-                  child: MingrrButton(
-                    text: '수락하기',
-                    onPressed: () {
-                      ref.read(receivedRequestsProvider.notifier).acceptRequest(request.id);
-                      Navigator.pop(ctx);
-                      MingrrSnackBar.success(context, '${request.senderPetName}의 ${request.typeLabel}을 수락했어요! 💕');
-                    },
-                    backgroundColor: context.features.dating,
-                    textColor: Colors.white,
-                    height: 48,
-                  ),
-                ),
-              ],
+            MingrrDialogButtons(
+              cancelText: '취소',
+              confirmText: '수락하기',
+              onCancel: () => Navigator.pop(ctx),
+              onConfirm: () async {
+                Navigator.pop(ctx);
+                final chatRoomId = await DatingRequestActionService.acceptRequest(request);
+                if (context.mounted) {
+                  if (chatRoomId != null) {
+                    MingrrSnackBar.success(context, '${request.senderPetName}의 ${request.typeLabel}을 수락했어요! 💕');
+                  } else {
+                    MingrrSnackBar.warning(context, '수락 처리 중 문제가 발생했어요. 다시 시도해주세요.');
+                  }
+                }
+              },
+              confirmColor: context.features.dating,
             ),
             SizedBox(height: ResponsiveUtils.bottomSafeArea(ctx)),
           ],
@@ -490,7 +624,7 @@ class ChatListScreen extends ConsumerWidget {
           children: [
             const BottomSheetHandle(),
             const SizedBox(height: AppSizes.gapL),
-            Icon(Icons.close, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(AppIcons.close, size: 48, color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(height: AppSizes.gapL),
             Text(
               '${request.typeLabel} 거절',
@@ -503,34 +637,18 @@ class ChatListScreen extends ConsumerWidget {
               style: AppTextStyles.bodyMedium(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSizes.gapXL),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
-                      side: BorderSide(color: Theme.of(context).colorScheme.outline),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusS)),
-                    ),
-                    child: const Text('취소'),
-                  ),
-                ),
-                const SizedBox(width: AppSizes.gapM),
-                Expanded(
-                  child: MingrrButton(
-                    text: '거절하기',
-                    onPressed: () {
-                      ref.read(receivedRequestsProvider.notifier).rejectRequest(request.id);
-                      Navigator.pop(ctx);
-                      MingrrSnackBar.info(context, '신청을 거절했어요');
-                    },
-                    backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
-                    textColor: Colors.white,
-                    height: 48,
-                  ),
-                ),
-              ],
+            MingrrDialogButtons(
+              cancelText: '취소',
+              confirmText: '거절하기',
+              onCancel: () => Navigator.pop(ctx),
+              onConfirm: () async {
+                Navigator.pop(ctx);
+                await DatingRequestActionService.rejectRequest(request);
+                if (context.mounted) {
+                  MingrrSnackBar.info(context, '신청을 거절했어요');
+                }
+              },
+              confirmColor: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             SizedBox(height: ResponsiveUtils.bottomSafeArea(ctx)),
           ],
@@ -569,19 +687,19 @@ class ChatListScreen extends ConsumerWidget {
       displayName = otherParticipant?.petName ?? otherParticipant?.nickname ?? '알 수 없음';
       displayImage = otherParticipant?.petImageUrl ?? otherParticipant?.profileImageUrl;
       subtitle = otherParticipant?.nickname != null ? '보호자: ${otherParticipant!.nickname}' : null;
-      placeholderIcon = Icons.pets;
+      placeholderIcon = AppIcons.pet;
     } else if (isMarket) {
       // 마켓: 보호자 중심
       displayName = otherParticipant?.nickname ?? '알 수 없음';
       displayImage = otherParticipant?.profileImageUrl;
       subtitle = null; // 마켓은 상품명 대신 마지막 메시지로 충분
-      placeholderIcon = Icons.person;
+      placeholderIcon = AppIcons.profile;
     } else {
       // 소모임: 모임명 표시 (소모임 이름 우선)
       displayName = groupName ?? '소모임';
       displayImage = null; // 소모임은 아이콘 사용
       subtitle = null;
-      placeholderIcon = Icons.groups;
+      placeholderIcon = AppIcons.group;
     }
     
     // 시간 포맷팅
@@ -602,28 +720,16 @@ class ChatListScreen extends ConsumerWidget {
 
     return MingrrCard(
       margin: const EdgeInsets.only(bottom: AppSizes.gapS),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatDetailScreen(
-              chatRoomId: room.id,
-              otherUserName: displayName,
-              otherUserImageUrl: displayImage,
-              chatType: room.type,
-            ),
-          ),
-        );
-      },
+      onTap: () => context.push('/chat/${room.id}'),
       child: Row(
         children: [
           // 프로필 이미지
           Stack(
             children: [
-              MingrrAvatar(
+              MingrrImage.avatar(
                 size: 55,
                 imageUrl: displayImage,
-                placeholderIcon: placeholderIcon,
+                icon: placeholderIcon,
               ),
               // 채팅 타입 배지
               Positioned(
@@ -668,12 +774,12 @@ class ChatListScreen extends ConsumerWidget {
                           ),
                           // 교배 배지
                           if (isBreeding) ...[
-                            const SizedBox(width: AppSizes.gapSM),
+                            const SizedBox(width: AppSizes.gapS),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                               decoration: BoxDecoration(
                                 color: context.features.breeding,
-                                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                               ),
                               child: Text(
                                 '교배',
@@ -747,293 +853,27 @@ class ChatListScreen extends ConsumerWidget {
     }
   }
 
-  // ignore: unused_element - 데모/테스트용 데이터
-  /// 데모 채팅 데이터
-  List<Map<String, dynamic>> _getDemoChats(ChatType type) {
-    switch (type) {
-      case ChatType.dating:
-        return [
-          {'id': '1', 'name': '뽀삐', 'owner': '김철수', 'lastMessage': '안녕하세요! 산책 같이 하실래요?', 'time': '방금', 'unread': 2, 'isOnline': true, 'isBreeding': false},
-          {'id': '2', 'name': '초코', 'owner': '이영희', 'lastMessage': '네, 내일 오후에 만나요!', 'time': '10분 전', 'unread': 0, 'isOnline': true, 'isBreeding': false},
-          {'id': '3', 'name': '몽이', 'owner': '최지현', 'lastMessage': '교배 관련해서 문의드려요', 'time': '2시간 전', 'unread': 0, 'isOnline': false, 'isBreeding': true},
-          {'id': '4', 'name': '코코', 'owner': '박민수', 'lastMessage': '우리 아이 사진 보내드릴게요~', 'time': '어제', 'unread': 0, 'isOnline': false, 'isBreeding': false},
-        ];
-      case ChatType.breeding:
-        return [
-          {'id': '3', 'name': '몽이', 'owner': '최지현', 'lastMessage': '교배 관련해서 문의드려요', 'time': '2시간 전', 'unread': 0, 'isOnline': false, 'isBreeding': true},
-        ];
-      case ChatType.group:
-        return [
-          {'id': '5', 'name': '한강 산책 모임', 'owner': '', 'lastMessage': '이번 주 토요일 모임 확정입니다!', 'time': '3시간 전', 'unread': 5, 'memberCount': 28},
-          {'id': '6', 'name': '강남 댕댕이 모임', 'owner': '', 'lastMessage': '다음 모임 장소 투표해주세요~', 'time': '5시간 전', 'unread': 12, 'memberCount': 45},
-          {'id': '7', 'name': '수제 간식 클럽', 'owner': '', 'lastMessage': '오늘 만든 간식 레시피 공유합니다', 'time': '어제', 'unread': 0, 'memberCount': 32},
-        ];
-      case ChatType.market:
-        return [
-          {'id': '8', 'name': '콩이', 'owner': '박민수', 'lastMessage': '간식 아직 있나요?', 'time': '1시간 전', 'unread': 1, 'productName': '수제 간식 세트'},
-          {'id': '9', 'name': '두부', 'owner': '정수진', 'lastMessage': '네, 직거래 가능해요', 'time': '3시간 전', 'unread': 0, 'productName': '반려동물 옷 (M사이즈)'},
-        ];
-    }
-  }
-
-  // ignore: unused_element - 데모/테스트용 위젯
-  /// 채팅 아이템
-  Widget _buildChatItem(BuildContext context, Map<String, dynamic> chat, ChatType type) {
-    final hasUnread = (chat['unread'] as int) > 0;
-    final isGroup = type == ChatType.group;
-
-    return MingrrCard(
-      margin: const EdgeInsets.only(bottom: AppSizes.gapS),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatDetailScreen(
-              chatRoomId: chat['id'] as String,
-              otherUserName: chat['name'] as String,
-              chatType: type == ChatType.dating ? 'dating' : type == ChatType.group ? 'group' : 'marketplace',
-            ),
-          ),
-        );
-      },
-      child: Row(
-        children: [
-          // 프로필 이미지
-          Stack(
-            children: [
-              MingrrAvatar(
-                size: 55,
-                placeholderIcon: isGroup ? Icons.groups : Icons.pets,
-              ),
-              // 온라인 상태 (데이팅만)
-              if (type == ChatType.dating && chat['isOnline'] == true)
-                Positioned(
-                  bottom: 2,
-                  right: 2,
-                  child: Container(
-                    width: 14,
-                    height: 14,
-                    decoration: BoxDecoration(
-                      color: context.features.success,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
-                    ),
-                  ),
-                ),
-              // 채팅 타입 배지
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  width: 18,
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: _getTabColor(context, type),
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child: Icon(
-                    _getChatTypeIcon(type),
-                    size: 10,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: AppSizes.gapM),
-          
-          // 채팅 정보
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              chat['name'] as String,
-                              style: AppTextStyles.titleLarge(context).withWeight(hasUnread ? FontWeight.w700 : FontWeight.w500),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          // 교배 배지
-                          if (chat['isBreeding'] == true) ...[
-                            const SizedBox(width: AppSizes.gapSM),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
-                              decoration: BoxDecoration(
-                                color: context.features.breeding,
-                                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
-                              ),
-                              child: Text(
-                                '교배',
-                                style: AppTextStyles.captionSmall(context),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    Text(
-                      chat['time'] as String,
-                      style: AppTextStyles.caption(context).withColor(hasUnread ? context.features.chat : Theme.of(context).colorScheme.outlineVariant),
-                    ),
-                  ],
-                ),
-                // 부가 정보
-                if (_getSubtitle(chat, type).isNotEmpty) ...[
-                  const SizedBox(height: AppSizes.gapXXS),
-                  Text(
-                    _getSubtitle(chat, type),
-                    style: AppTextStyles.captionSmall(context),
-                  ),
-                ],
-                const SizedBox(height: AppSizes.gapXS),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        chat['lastMessage'] as String,
-                        style: AppTextStyles.bodyMedium(context)
-                            .withWeight(hasUnread ? FontWeight.w500 : FontWeight.w400)
-                            .withColor(hasUnread ? Theme.of(context).colorScheme.onSurface : Theme.of(context).colorScheme.onSurfaceVariant),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (hasUnread)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
-                        decoration: BoxDecoration(
-                          color: _getTabColor(context, type),
-                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                        ),
-                        child: Text(
-                          '${chat['unread']}',
-                          style: AppTextStyles.labelMedium(context).withWeight(FontWeight.w600).withColor(Colors.white),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 부가 정보 텍스트
-  String _getSubtitle(Map<String, dynamic> chat, ChatType type) {
-    switch (type) {
-      case ChatType.dating:
-      case ChatType.breeding:
-        return chat['owner'] as String? ?? '';
-      case ChatType.group:
-        final memberCount = chat['memberCount'] as int?;
-        return memberCount != null ? '멤버 $memberCount명' : '';
-      case ChatType.market:
-        return chat['productName'] as String? ?? '';
-    }
-  }
-
   /// 채팅 타입별 아이콘
   IconData _getChatTypeIcon(ChatType type) {
     switch (type) {
       case ChatType.dating:
-        return Icons.favorite;
+        return AppIcons.dating;
       case ChatType.breeding:
-        return Icons.pets;
+        return AppIcons.pet;
       case ChatType.group:
-        return Icons.groups;
+        return AppIcons.group;
       case ChatType.market:
-        return Icons.store;
+        return AppIcons.market;
     }
   }
 
   /// 신청자 보호자 프로필 바텀시트 표시
-  Future<void> _showSenderGuardianProfile(BuildContext context, DatingRequestModel request) async {
-    final firebaseService = FirebaseService();
-    
-    try {
-      // Firebase에서 보호자 상세 정보 조회
-      final userDoc = await firebaseService.firestore
-          .collection('users')
-          .doc(request.senderId)
-          .get();
-      
-      final userData = userDoc.data();
-      final kkosunnaeScore = (userData?['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0;
-      final isIdentityVerified = userData?['isIdentityVerified'] as bool? ?? false;
-      final isPetVerified = userData?['isPetVerified'] as bool? ?? false;
-      final isLocationVerified = userData?['isLocationVerified'] as bool? ?? false;
-      final genderStr = userData?['gender'] as String?;
-      final age = userData?['age'] as int?;
-      
-      // 성별 변환
-      GuardianGender gender = GuardianGender.unknown;
-      if (genderStr == 'male') gender = GuardianGender.male;
-      if (genderStr == 'female') gender = GuardianGender.female;
-      
-      // 반려동물 정보 조회
-      List<GuardianPetInfo> pets = [];
-      final petsSnapshot = await firebaseService.firestore
-          .collection('pets')
-          .where('ownerId', isEqualTo: request.senderId)
-          .get();
-      
-      for (final petDoc in petsSnapshot.docs) {
-        final petData = petDoc.data();
-        pets.add(GuardianPetInfo(
-          id: petDoc.id,
-          name: petData['name'] ?? '반려동물',
-          breed: petData['breed'],
-          ageString: petData['age'] != null ? '${petData['age']}살' : null,
-          introduction: petData['introduction'],
-          traits: List<String>.from(petData['traits'] ?? []),
-          photoUrls: List<String>.from(petData['photoUrls'] ?? []),
-          profileImageUrl: petData['profileImageUrl'],
-          likeCount: petData['likeCount'] ?? 0,
-        ));
-      }
-      
-      if (!context.mounted) return;
-      
-      showGuardianProfileModal(
-        context,
-        guardianId: request.senderId,
-        guardianName: request.senderName,
-        kkosunnaeScore: kkosunnaeScore,
-        profileImageUrl: userData?['profileImageUrl'],
-        gender: gender,
-        age: age,
-        isIdentityVerified: isIdentityVerified,
-        isPetVerified: isPetVerified,
-        isLocationVerified: isLocationVerified,
-        pets: pets,
-      );
-    } catch (e) {
-      // 에러 시 기본 정보로 표시
-      if (!context.mounted) return;
-      showGuardianProfileModal(
-        context,
-        guardianId: request.senderId,
-        guardianName: request.senderName,
-        kkosunnaeScore: 50.0,
-        pets: [
-          GuardianPetInfo(
-            id: request.senderPetId,
-            name: request.senderPetName,
-            profileImageUrl: request.senderPetImageUrl,
-          ),
-        ],
-      );
-    }
+  void _showSenderGuardianProfile(BuildContext context, DatingRequestModel request) {
+    showGuardianProfileFromFirestore(
+      context,
+      userId: request.senderId,
+      fallbackName: request.senderName ?? '사용자',
+    );
   }
 }
 

@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
+import '../../../../core/config/api_config.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -17,6 +19,8 @@ import '../../../../core/widgets/map/map_loading_widget.dart';
 import '../../../../core/services/share_service.dart';
 import '../../../../models/health_model.dart';
 import '../providers/health_provider.dart';
+import '../../../../core/utils/error_handler.dart';
+import '../../../../core/utils/format_utils.dart';
 
 /// ============================================================
 /// 산책 기록 상세 화면
@@ -49,6 +53,15 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
   List<String> get petNames => widget.petNames;
 
   @override
+  void dispose() {
+    // 1. 지도 컨트롤러 안전하게 정리 (크래시 방지 핵심)
+    // SurfaceView가 dispose된 후 접근하는 것을 방지
+    _mapController = null;
+    
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
@@ -59,17 +72,14 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
             expandedHeight: 300,
             pinned: true,
             backgroundColor: context.features.walk,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-              onPressed: () => Navigator.pop(context),
-            ),
+            leading: const MingrrLeadingButtonOverlay.back(),
             actions: [
               IconButton(
-                icon: const Icon(Icons.share_outlined, color: Colors.white),
+                icon: const Icon(AppIcons.share, color: Colors.white),
                 onPressed: () => _shareRecord(context),
               ),
               IconButton(
-                icon: const Icon(Icons.more_vert, color: Colors.white),
+                icon: const Icon(AppIcons.moreVert, color: Colors.white),
                 onPressed: () => _showMoreOptions(context),
               ),
             ],
@@ -121,6 +131,11 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
   
   /// 카카오맵에 경로 표시
   Widget _buildKakaoMapWithRoute() {
+    // 카카오맵 SDK 초기화 체크 (안전장치)
+    if (!ApiConfig.isKakaoMapSdkInitialized) {
+      return _buildMapPlaceholder(context);
+    }
+    
     final firstPoint = record.routePoints.first;
     
     return Stack(
@@ -209,7 +224,7 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.map_outlined, size: 60, color: context.features.walk.withValues(alpha: AppOpacity.o50)),
+                      Icon(AppIcons.mapOutlined, size: 60, color: context.features.walk.withValues(alpha: AppOpacity.o50)),
                       const SizedBox(height: AppSizes.gapS),
                       Text(
                         '경로 정보가 없습니다',
@@ -270,7 +285,7 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
           ),
         ),
         const SizedBox(height: AppSizes.gapXS),
-        Icon(Icons.location_on, color: color, size: 24),
+        Icon(AppIcons.location, color: color, size: 24),
       ],
     );
   }
@@ -296,7 +311,7 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
                   color: context.features.walk.withValues(alpha: AppOpacity.o10),
                   borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
-                child: Icon(Icons.pets, color: context.features.walk, size: 24),
+                child: Icon(AppIcons.pet, color: context.features.walk, size: 24),
               ),
               const SizedBox(width: AppSizes.gapM),
               Expanded(
@@ -304,13 +319,13 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _formatDate(record.startTime),
+                      formatDateWithWeekday(record.startTime),
                       style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600),
                     ),
                     Text(
                       record.endTime != null
-                          ? '${_formatTime(record.startTime)} ~ ${_formatTime(record.endTime!)}'
-                          : '${_formatTime(record.startTime)} (진행 중)',
+                          ? formatTimeRange(record.startTime, record.endTime)
+                          : formatTimeRange(record.startTime, null),
                       style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ],
@@ -319,7 +334,7 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
             ],
           ),
           
-          const SizedBox(height: AppSizes.gapLL),
+          const SizedBox(height: AppSizes.gapL),
           const MingrrDivider(),
           const SizedBox(height: AppSizes.gapL),
           
@@ -328,19 +343,19 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildStatItem(
-                icon: Icons.timer_outlined,
+                icon: AppIcons.timer,
                 value: record.durationString,
                 label: '시간',
                 color: context.features.walk,
               ),
               _buildStatItem(
-                icon: Icons.straighten,
+                icon: AppIcons.distance,
                 value: record.distanceString,
                 label: '거리',
                 color: Theme.of(context).colorScheme.primary,
               ),
               _buildStatItem(
-                icon: Icons.local_fire_department_outlined,
+                icon: AppIcons.fire,
                 value: '${record.calories?.toInt() ?? 0}',
                 label: 'kcal',
                 color: Colors.red,
@@ -400,9 +415,9 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
               '평균 속도',
               '${((record.distance / 1000) / (record.durationMinutes / 60)).toStringAsFixed(1)} km/h',
             ),
-          _buildDetailRow('시작 시간', _formatTime(record.startTime)),
+          _buildDetailRow('시작 시간', formatTime(record.startTime)),
           if (record.endTime != null)
-            _buildDetailRow('종료 시간', _formatTime(record.endTime!)),
+            _buildDetailRow('종료 시간', formatTime(record.endTime!)),
         ],
       ),
     );
@@ -516,7 +531,7 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
         children: [
           Row(
             children: [
-              Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              Icon(AppIcons.note, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: AppSizes.gapS),
               Text(
                 '메모',
@@ -558,7 +573,6 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
           MingrrImageGallery(
             imageUrls: record.photoUrls,
             height: 100,
-            itemWidth: 100,
             enableViewer: true,
           ),
         ],
@@ -575,7 +589,7 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
       context: context,
       options: [
         MingrrOptionItem(
-          icon: Icons.delete_outline,
+          icon: AppIcons.deleteOutlined,
           label: '삭제',
           isDestructive: true,
           onTap: () => _confirmDelete(context),
@@ -610,7 +624,7 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '삭제 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'WalkRecord', operation: '산책 기록 삭제');
       }
     } finally {
       if (mounted) {
@@ -619,30 +633,6 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
     }
   }
 
-  String _formatDate(DateTime date) {
-    final weekdays = ['월', '화', '수', '목', '금', '토', '일'];
-    return '${date.year}년 ${date.month}월 ${date.day}일 (${weekdays[date.weekday - 1]})';
-  }
-
-  String _formatTime(DateTime time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-  }
-
-  String _formatDuration(int minutes) {
-    if (minutes < 60) {
-      return '$minutes분';
-    }
-    final hours = minutes ~/ 60;
-    final mins = minutes % 60;
-    return mins > 0 ? '$hours시간 $mins분' : '$hours시간';
-  }
-
-  String _formatDistance(double meters) {
-    if (meters >= 1000) {
-      return '${(meters / 1000).toStringAsFixed(2)}km';
-    }
-    return '${meters.toInt()}m';
-  }
 }
 
 

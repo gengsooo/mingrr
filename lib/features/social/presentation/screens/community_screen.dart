@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
-import '../../../../core/widgets/badges/svg_icons.dart';
-import '../../../../core/widgets/badges/info_badge.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../models/community_post_model.dart';
@@ -121,7 +119,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
     // 빈 상태
     if (paginatedState.isEmpty) {
       return MingrrEmptyState(
-        icon: Icons.article_outlined,
+        icon: AppIcons.communityOutlined,
         title: '아직 데이터가 없어요',
         subtitle: '첫 번째 글을 작성해보세요',
         buttonText: '글 작성하기',
@@ -272,7 +270,7 @@ class _CommunityPostCard extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                               decoration: BoxDecoration(
                                 color: accentColor.withValues(alpha: AppOpacity.o10),
-                                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                               ),
                               child: Text(
                                 post.category.label,
@@ -281,7 +279,7 @@ class _CommunityPostCard extends StatelessWidget {
                             ),
                             if (post.isAnonymous) ...[
                               const SizedBox(width: AppSizes.gapXS),
-                              Icon(Icons.visibility_off, size: 10, color: colorScheme.outlineVariant),
+                              Icon(AppIcons.visibilityOff, size: 10, color: colorScheme.outlineVariant),
                             ],
                           ],
                         ),
@@ -307,7 +305,7 @@ class _CommunityPostCard extends StatelessWidget {
                       ],
                     ),
                     
-                    const SizedBox(height: AppSizes.gapSM),
+                    const SizedBox(height: AppSizes.gapS),
                     
                     // 작성자 · 시간
                     Text(
@@ -329,20 +327,21 @@ class _CommunityPostCard extends StatelessWidget {
                   if (hasMedia)
                     Stack(
                       children: [
-                        MingrrThumbnail(
+                        MingrrImage.thumbnail(
                           imageUrl: post.hasVideo ? post.videoThumbnailUrl : post.firstImage,
                           width: _thumbnailSize,
                           height: _thumbnailSize,
-                          borderRadius: AppSizes.radiusXS,
+                          radius: AppSizes.radiusS,
+                          accentColor: accentColor,
                         ),
                         if (post.hasVideo)
                           Positioned.fill(
                             child: Container(
                               decoration: BoxDecoration(
                                 color: Colors.black26,
-                                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                               ),
-                              child: const Icon(Icons.play_circle_outline, color: Colors.white, size: 24),
+                              child: const Icon(AppIcons.play, color: Colors.white, size: 24),
                             ),
                           ),
                       ],
@@ -354,15 +353,15 @@ class _CommunityPostCard extends StatelessWidget {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.chat_bubble_outline, size: 10, color: colorScheme.outlineVariant),
+                      Icon(AppIcons.chatOutlined, size: 10, color: colorScheme.outlineVariant),
                       const SizedBox(width: 2),
                       Text('${post.commentCount}', style: AppTextStyles.captionSmall(context).copyWith(color: colorScheme.outlineVariant)),
                       _dot(context, colorScheme),
-                      Icon(Icons.favorite_border, size: 10, color: colorScheme.outlineVariant),
+                      Icon(AppIcons.likeOutlined, size: 10, color: colorScheme.outlineVariant),
                       const SizedBox(width: 2),
                       Text('${post.likeCount}', style: AppTextStyles.captionSmall(context).copyWith(color: colorScheme.outlineVariant)),
                       _dot(context, colorScheme),
-                      Icon(Icons.visibility_outlined, size: 10, color: colorScheme.outlineVariant),
+                      Icon(AppIcons.visibility, size: 10, color: colorScheme.outlineVariant),
                       const SizedBox(width: 2),
                       Text('${post.viewCount}', style: AppTextStyles.captionSmall(context).copyWith(color: colorScheme.outlineVariant)),
                     ],

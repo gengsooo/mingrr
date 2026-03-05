@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
-import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
-import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/forms/location_selector.dart';
 import '../../../../core/widgets/badges/info_badge.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/widgets/navigation/top_navigation.dart';
+import '../../../../core/widgets/empty_states/location_required_empty_state.dart';
 import '../../../../core/constants/location_constants.dart';
 import '../../../../core/providers/refresh_notifier.dart';
+import '../../../../core/providers/location_verification_provider.dart';
 import '../providers/group_provider.dart';
 import 'group_detail_screen.dart';
 import 'group_write_screen.dart';
@@ -97,7 +97,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
 
           // 모임 목록
           Expanded(
-            child: _buildGroupList(context, ref, selectedLocations),
+            child: _buildContent(context, ref, selectedLocations),
           ),
         ],
       ),
@@ -168,6 +168,24 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
     );
   }
 
+  /// 컨텐츠 (위치 인증 상태 확인)
+  Widget _buildContent(BuildContext context, WidgetRef ref, List<String> locationFilter) {
+    // 위치 인증 상태 확인
+    final userAsync = ref.watch(currentUserStreamProvider);
+    final user = userAsync.valueOrNull;
+    final isLocationVerified = user?.isLocationVerified ?? false;
+    
+    // 위치 미인증 시 빈 화면 표시
+    if (!isLocationVerified) {
+      return LocationRequiredEmptyState(
+        type: LocationRequiredType.group,
+        accentColor: context.features.social,
+      );
+    }
+    
+    return _buildGroupList(context, ref, locationFilter);
+  }
+
   Widget _buildGroupList(BuildContext context, WidgetRef ref, List<String> locationFilter) {
     final paginatedState = ref.watch(paginatedGroupsProvider);
     final myGroupsAsync = ref.watch(userGroupsProvider);
@@ -210,7 +228,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
               return _buildMyGroupsSection(context, ref, myGroups);
             },
             loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
           ),
           const SizedBox(height: AppSizes.gapXL),
 
@@ -221,7 +239,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
           // 모임 카드들
           if (filteredGroups.isEmpty)
             MingrrEmptyState(
-              icon: Icons.groups_outlined,
+              icon: AppIcons.group,
               title: '아직 데이터가 없어요',
               subtitle: '새로운 모임을 만들어보세요',
               buttonText: '모임 만들기',
@@ -278,7 +296,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
           ),
           child: Column(
             children: [
-              Icon(Icons.groups_outlined, size: 48, color: colorScheme.outlineVariant),
+              Icon(AppIcons.group, size: 48, color: colorScheme.outlineVariant),
               const SizedBox(height: AppSizes.gapL),
               Text(
                 '가입한 모임이 없어요',
@@ -324,6 +342,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
               return _MyGroupCard(
                 name: group.name,
                 memberCount: group.memberCount,
+                imageUrl: group.imageUrl,
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => GroupDetailScreen(groupId: group.id)),
@@ -362,11 +381,13 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
 class _MyGroupCard extends StatelessWidget {
   final String name;
   final int memberCount;
+  final String? imageUrl;
   final VoidCallback onTap;
 
   const _MyGroupCard({
     required this.name,
     required this.memberCount,
+    this.imageUrl,
     required this.onTap,
   });
 
@@ -390,14 +411,25 @@ class _MyGroupCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: AppOpacity.o10),
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
+              child: SizedBox(
+                width: 36,
+                height: 36,
+                child: imageUrl != null && imageUrl!.isNotEmpty
+                    ? MingrrImage(
+                        imageUrl: imageUrl,
+                        fit: BoxFit.cover,
+                        accentColor: accentColor,
+                        placeholderIcon: AppIcons.group,
+                      )
+                    : Container(
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: AppOpacity.o10),
+                        ),
+                        child: Icon(AppIcons.group, size: 20, color: accentColor),
+                      ),
               ),
-              child: Icon(Icons.groups, size: 20, color: accentColor),
             ),
             const SizedBox(height: AppSizes.gapS),
             Text(
@@ -449,14 +481,10 @@ class _GroupCard extends StatelessWidget {
             // 이미지
             ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusL)),
-              child: MingrrBackgroundImage(
+              child: MingrrImage.background(
                 imageUrl: group.imageUrl,
                 height: group.imageUrl != null ? 120 : 80,
-                placeholder: Container(
-                  height: group.imageUrl != null ? 120 : 80,
-                  color: accentColor.withValues(alpha: AppOpacity.o10),
-                  child: Center(child: Icon(Icons.groups, size: 40, color: accentColor)),
-                ),
+                accentColor: accentColor,
               ),
             ),
 
@@ -472,7 +500,7 @@ class _GroupCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 3),
                         decoration: BoxDecoration(
                           color: accentColor.withValues(alpha: AppOpacity.o10),
-                          borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Text(
                           group.typeString,
@@ -515,7 +543,7 @@ class _GroupCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: AppSizes.gapM),
-                      Icon(Icons.people_outline, size: 14, color: colorScheme.onSurfaceVariant),
+                      Icon(AppIcons.people, size: 14, color: colorScheme.onSurfaceVariant),
                       const SizedBox(width: AppSizes.gapXS),
                       Text(
                         '${group.memberCount}명',

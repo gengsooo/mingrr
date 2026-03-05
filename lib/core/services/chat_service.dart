@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../../models/chat_model.dart';
 import '../../models/user_model.dart';
 import '../../models/pet_model.dart';
+import '../utils/input_sanitizer.dart';
 import 'firebase_service.dart';
 
 /// ============================================================
@@ -216,6 +217,14 @@ class ChatService {
     String? imageUrl,
     GeoPoint? location,
   }) async {
+    // 입력 정화 (XSS/Injection 방지)
+    final sanitizedContent = InputSanitizer.sanitizeMessage(content);
+    
+    // 빈 메시지 체크
+    if (sanitizedContent.isEmpty && type == MessageType.text) {
+      throw Exception('메시지 내용이 비어있습니다');
+    }
+    
     final messageId = _uuid.v4();
     final now = DateTime.now();
 
@@ -224,7 +233,7 @@ class ChatService {
       chatRoomId: chatRoomId,
       senderId: senderId,
       type: type,
-      content: content,
+      content: sanitizedContent,
       imageUrl: imageUrl,
       location: location,
       sentAt: now,

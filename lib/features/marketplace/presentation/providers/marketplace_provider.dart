@@ -4,7 +4,10 @@ import '../../../../core/providers/firebase_providers.dart';
 import '../../../../core/providers/location_provider.dart';
 import '../../../../core/providers/block_provider.dart';
 import '../../../../core/providers/paginated_provider.dart';
+import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/location_service.dart';
+import '../../../../core/services/transaction_service.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../models/marketplace_model.dart';
 
 /// ============================================================
@@ -12,23 +15,23 @@ import '../../../../models/marketplace_model.dart';
 /// Firebase Firestore와 연동하여 상품 데이터 관리
 /// ============================================================
 
-/// 상품 + 거리 정보 (ItemWithDistance<ProductModel> 확장)
+/// 상품 + 거리 정보 (`ItemWithDistance<ProductModel>` 확장)
 class ProductWithDistance extends ItemWithDistance<ProductModel> {
   ProductWithDistance({
     required ProductModel product,
-    required double distanceMeters,
-  }) : super(item: product, distanceMeters: distanceMeters);
+    required super.distanceMeters,
+  }) : super(item: product);
   
   /// 기존 코드 호환성을 위한 접근자
   ProductModel get product => item;
 }
 
-/// 알바 + 거리 정보 (ItemWithDistance<JobModel> 확장)
+/// 알바 + 거리 정보 (`ItemWithDistance<JobModel>` 확장)
 class JobWithDistance extends ItemWithDistance<JobModel> {
   JobWithDistance({
     required JobModel job,
-    required double distanceMeters,
-  }) : super(item: job, distanceMeters: distanceMeters);
+    required super.distanceMeters,
+  }) : super(item: job);
   
   /// 기존 코드 호환성을 위한 접근자
   JobModel get job => item;
@@ -48,9 +51,10 @@ final _allProductsWithDistanceProvider = FutureProvider.autoDispose<List<Product
   final filteredProducts = products.where((p) => !blockedUserIds.contains(p.sellerId)).toList();
   
   if (userLocation == null) {
+    // 사용자 위치 없음 - 모든 상품 거리를 infinity로 설정 (위치 정보 없음 표시)
     return filteredProducts.map((p) => ProductWithDistance(
       product: p,
-      distanceMeters: 0,
+      distanceMeters: double.infinity,
     )).toList();
   }
   
@@ -177,26 +181,98 @@ final paginatedProductsProvider = StateNotifierProvider
       final filteredProducts = products.where((p) => !blockedUserIds.contains(p.sellerId)).toList();
       
       final result = <ProductWithDistance>[];
+      final isAllDistance = params.radiusKm == 0; // 0 = 전체 (거리 제한 없음)
+      
       for (final product in filteredProducts) {
-        double distance = 0; // 위치 정보 없으면 0으로 처리 (리스트에 표시)
+        double distance = double.infinity; // 위치 정보 없으면 infinity (가장 나중에 표시)
         if (product.location != null && userLocation != null) {
           distance = LocationService.calculateDistanceFromGeoPoints(
             userLocation,
             product.location!,
           );
-          // 거리 필터 적용 (위치 정보가 있는 경우에만)
-          if (distance > params.radiusKm * 1000) {
+          // 거리 필터 적용 (전체가 아닌 경우에만)
+          if (!isAllDistance && distance > params.radiusKm * 1000) {
             continue; // 거리 초과 시 제외
           }
         }
         result.add(ProductWithDistance(product: product, distanceMeters: distance));
       }
       
-      // 거리순 정렬 (위치 없는 상품은 맨 앞에 표시)
+      // 거리순 정렬 (위치 없는 상품은 가장 나중에 표시)
       result.sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
       return result;
     },
   );
+});
+
+// ===== 찜(좋아요) 관련 Provider =====
+
+/// 상품 찜 여부 확인
+final isProductLikedProvider = FutureProvider.autoDispose.family<bool, String>((ref, productId) async {
+  final firebase = FirebaseService();
+  final userId = firebase.currentUserId;
+  if (userId == null) return false;
+
+  final likeId = '${userId}_$productId';
+  final doc = await firebase.productLikesCollection.doc(likeId).get();
+  return doc.exists;
+});
+
+/// 알바 찜 여부 확인
+final isJobLikedProvider = FutureProvider.autoDispose.family<bool, String>((ref, jobId) async {
+  final firebase = FirebaseService();
+  final userId = firebase.currentUserId;
+  if (userId == null) return false;
+
+  final likeId = '${userId}_$jobId';
+  final doc = await firebase.jobLikesCollection.doc(likeId).get();
+  return doc.exists;
+});
+
+/// 마켓플레이스 Notifier (찜 토글 등 액션 처리)
+class MarketplaceNotifier extends StateNotifier<AsyncValue<void>> {
+  final FirebaseService _firebase = FirebaseService();
+
+  MarketplaceNotifier(Ref ref) : super(const AsyncValue.data(null));
+
+  /// 상품 찜 토글
+  Future<bool> toggleProductLike(String productId) async {
+    try {
+      final userId = _firebase.currentUserId;
+      if (userId == null) return false;
+
+      final result = await TransactionService.toggleProductLike(
+        productId: productId,
+        userId: userId,
+      );
+      return result;
+    } catch (e) {
+      AppLogger.error('MarketplaceNotifier', '상품 찜 토글 오류', e);
+      return false;
+    }
+  }
+
+  /// 알바 찜 토글
+  Future<bool> toggleJobLike(String jobId) async {
+    try {
+      final userId = _firebase.currentUserId;
+      if (userId == null) return false;
+
+      final result = await TransactionService.toggleJobLike(
+        jobId: jobId,
+        userId: userId,
+      );
+      return result;
+    } catch (e) {
+      AppLogger.error('MarketplaceNotifier', '알바 찜 토글 오류', e);
+      return false;
+    }
+  }
+}
+
+/// 마켓플레이스 Notifier Provider
+final marketplaceNotifierProvider = StateNotifierProvider<MarketplaceNotifier, AsyncValue<void>>((ref) {
+  return MarketplaceNotifier(ref);
 });
 
 /// 페이지네이션 알바 목록 Provider (거리 정보 포함)
@@ -221,7 +297,7 @@ final paginatedJobsProvider = StateNotifierProvider<
       
       final result = <JobWithDistance>[];
       for (final job in filteredJobs) {
-        double distance = 0; // 위치 정보 없으면 0으로 처리
+        double distance = double.infinity; // 위치 정보 없으면 infinity (가장 나중에 표시)
         if (job.location != null && userLocation != null) {
           distance = LocationService.calculateDistanceFromGeoPoints(
             userLocation,
@@ -231,7 +307,7 @@ final paginatedJobsProvider = StateNotifierProvider<
         result.add(JobWithDistance(job: job, distanceMeters: distance));
       }
       
-      // 거리순 정렬
+      // 거리순 정렬 (위치 없는 알바는 가장 나중에 표시)
       result.sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
       return result;
     },

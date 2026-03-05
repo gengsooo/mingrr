@@ -1,8 +1,8 @@
-/// ============================================================
-/// Validators - 공통 입력 유효성 검사 유틸리티
-/// 
-/// 이메일, 전화번호, 비밀번호 등 공통 검증 로직 제공
-/// ============================================================
+// ============================================================
+// Validators - 공통 입력 유효성 검사 유틸리티
+// 
+// 이메일, 전화번호, 비밀번호 등 공통 검증 로직 제공
+// ============================================================
 
 class Validators {
   /// 이메일 유효성 검사
@@ -41,47 +41,48 @@ class Validators {
     return ValidationResult.valid();
   }
   
-  /// 비밀번호 유효성 검사
-  static ValidationResult password(String? value, {int minLength = 6}) {
-    if (value == null || value.isEmpty) {
-      return ValidationResult.invalid('비밀번호를 입력해주세요');
-    }
-    
-    if (value.length < minLength) {
-      return ValidationResult.invalid('비밀번호는 $minLength자 이상이어야 합니다');
-    }
-    
-    return ValidationResult.valid();
-  }
-  
-  /// 비밀번호 강도 검사 (선택적)
-  static ValidationResult passwordStrength(String? value) {
+  /// 비밀번호 유효성 검사 (8~16자, 영문+숫자+특수문자 조합)
+  /// 개인정보보호법 안전성 확보조치 기준 준수
+  static ValidationResult password(String? value) {
     if (value == null || value.isEmpty) {
       return ValidationResult.invalid('비밀번호를 입력해주세요');
     }
     
     if (value.length < 8) {
-      return ValidationResult.invalid('비밀번호는 8자 이상이어야 합니다');
+      return ValidationResult.invalid('8~16자 영문, 숫자, 특수문자를 사용해주세요');
     }
     
-    final hasUppercase = value.contains(RegExp(r'[A-Z]'));
-    final hasLowercase = value.contains(RegExp(r'[a-z]'));
+    if (value.length > 16) {
+      return ValidationResult.invalid('비밀번호는 16자 이하여야 합니다');
+    }
+    
+    // 영문, 숫자, 특수문자 모두 포함 검사
+    final hasLetter = value.contains(RegExp(r'[a-zA-Z]'));
     final hasDigit = value.contains(RegExp(r'[0-9]'));
-    final hasSpecial = value.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+    final hasSpecial = value.contains(RegExp(r'[!@#$%^&*(),.?:{}|<>\[\]\-_=+;~`]'));
     
-    if (!hasUppercase || !hasLowercase) {
-      return ValidationResult.invalid('대문자와 소문자를 포함해야 합니다');
-    }
-    
-    if (!hasDigit) {
-      return ValidationResult.invalid('숫자를 포함해야 합니다');
-    }
-    
-    if (!hasSpecial) {
-      return ValidationResult.invalid('특수문자를 포함해야 합니다');
+    if (!hasLetter || !hasDigit || !hasSpecial) {
+      return ValidationResult.invalid('영문, 숫자, 특수문자를 모두 포함해주세요');
     }
     
     return ValidationResult.valid();
+  }
+  
+  /// 비밀번호 강도 표시 (UI용)
+  static PasswordStrength getPasswordStrength(String? value) {
+    if (value == null || value.isEmpty) return PasswordStrength.none;
+    if (value.length < 8 || value.length > 16) return PasswordStrength.weak;
+    
+    final hasLetter = value.contains(RegExp(r'[a-zA-Z]'));
+    final hasDigit = value.contains(RegExp(r'[0-9]'));
+    final hasSpecial = value.contains(RegExp(r'[!@#$%^&*(),.?:{}|<>\[\]\-_=+;~`]'));
+    
+    final typeCount = [hasLetter, hasDigit, hasSpecial].where((e) => e).length;
+    
+    if (typeCount < 3) return PasswordStrength.weak;
+    if (value.length < 12) return PasswordStrength.medium;
+    
+    return PasswordStrength.strong;
   }
   
   /// 비밀번호 확인 일치 검사
@@ -191,6 +192,19 @@ class ValidationResult {
   String? get formError => isValid ? null : errorMessage;
 }
 
+/// 비밀번호 강도 enum
+enum PasswordStrength {
+  none('', null),
+  weak('약함', 0xFF_E57373),
+  medium('보통', 0xFF_FFB74D),
+  strong('강함', 0xFF_81C784);
+  
+  final String label;
+  final int? colorValue;
+  
+  const PasswordStrength(this.label, this.colorValue);
+}
+
 /// Form 필드용 validator 헬퍼
 /// 
 /// MingrrTextField와 함께 사용하여 실시간 검증 가능
@@ -212,8 +226,8 @@ class FormValidators {
     return (value) => Validators.phone(value).formError;
   }
   
-  static String? Function(String?) password({int minLength = 6}) {
-    return (value) => Validators.password(value, minLength: minLength).formError;
+  static String? Function(String?) password() {
+    return (value) => Validators.password(value).formError;
   }
   
   static String? Function(String?) required({String? fieldName}) {

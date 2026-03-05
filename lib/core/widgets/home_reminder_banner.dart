@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_icons.dart';
 import '../constants/app_sizes.dart';
 import '../theme/app_text_styles.dart';
 
@@ -49,37 +50,37 @@ class _BannerConfig {
 /// 배너 타입별 설정
 final Map<ReminderBannerType, _BannerConfig> _bannerConfigs = {
   ReminderBannerType.rating: _BannerConfig(
-    icon: Icons.rate_review_outlined,
+    icon: AppIcons.edit,
     title: '평가하지 않은 활동이 있어요',
     subtitle: (count) => '$count건의 평가가 기다리고 있어요',
   ),
   ReminderBannerType.groupSchedule: _BannerConfig(
-    icon: Icons.event_outlined,
+    icon: AppIcons.event,
     title: '오늘 소모임 일정이 있어요',
     subtitle: (count) => '$count개의 일정을 확인해보세요',
   ),
   ReminderBannerType.petLike: _BannerConfig(
-    icon: Icons.pets_outlined,
+    icon: AppIcons.pet,
     title: '내 반려동물이 관심을 받았어요',
     subtitle: (count) => '$count명이 좋아요를 눌렀어요',
   ),
   ReminderBannerType.receivedRating: _BannerConfig(
-    icon: Icons.star_outline,
+    icon: AppIcons.starOutlined,
     title: '새로운 평가를 받았어요',
     subtitle: (count) => '$count건의 새 평가가 있어요',
   ),
   ReminderBannerType.verification: _BannerConfig(
-    icon: Icons.verified_outlined,
+    icon: AppIcons.verified,
     title: '프로필 인증을 완료해보세요',
     subtitle: (count) => '$count개의 인증이 남았어요',
   ),
   ReminderBannerType.groupJoinRequest: _BannerConfig(
-    icon: Icons.group_add_outlined,
+    icon: AppIcons.groupAdd,
     title: '가입 승인 대기 중인 신청이 있어요',
     subtitle: (count) => '$count건의 신청을 확인해보세요',
   ),
   ReminderBannerType.healthRecord: _BannerConfig(
-    icon: Icons.medical_services_outlined,
+    icon: AppIcons.healthOutlined,
     title: '건강 기록을 확인해보세요',
     subtitle: (count) => '$count개의 일정이 다가오고 있어요',
   ),
@@ -162,7 +163,7 @@ class HomeReminderBanner extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(AppSizes.paddingXS),
                   child: Icon(
-                    Icons.close,
+                    AppIcons.close,
                     size: 18,
                     color: colorScheme.onSurfaceVariant,
                   ),
@@ -170,7 +171,7 @@ class HomeReminderBanner extends StatelessWidget {
               )
             else
               Icon(
-                Icons.chevron_right,
+                AppIcons.chevronRight,
                 size: 20,
                 color: colorScheme.onSurfaceVariant,
               ),
@@ -356,7 +357,7 @@ class _BannerCard extends StatelessWidget {
             ),
             // 화살표
             Icon(
-              Icons.chevron_right,
+              AppIcons.chevronRight,
               size: 20,
               color: colorScheme.onSurfaceVariant,
             ),

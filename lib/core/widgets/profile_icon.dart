@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import '../constants/app_sizes.dart';
+import '../constants/app_icons.dart';
 import 'mingrr_image.dart';
 
 /// ============================================================
@@ -30,10 +29,10 @@ class ProfileButton extends StatelessWidget {
         shape: BoxShape.circle,
         border: Border.all(color: Theme.of(context).colorScheme.outline, width: 1),
       ),
-      child: MingrrAvatar(
+      child: MingrrImage.avatar(
         imageUrl: imageUrl,
         size: size,
-        placeholderIcon: Icons.person,
+        icon: AppIcons.profile,
       ),
     );
   }

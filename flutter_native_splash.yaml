@@ -1,10 +1,15 @@
 flutter_native_splash:
-  color: "#FFC107"
-  image: assets/images/app_icon.png
+  # 배경색 (앰버/골드)
+  color: "#FFD54F"
   
+  # 스플래시 로고 이미지 (고해상도 1152x1152)
+  image: assets/images/splash_logo.png
+  
+  # Android 12+ (Splash Screen API)
   android_12:
-    color: "#FFC107"
-    image: assets/images/app_icon.png
+    color: "#FFD54F"
+    image: assets/images/splash_logo.png
+    icon_background_color: "#FFD54F"
   
   ios: true
   web: false

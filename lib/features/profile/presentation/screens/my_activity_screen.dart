@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/navigation/top_navigation.dart';
+import '../../../../core/widgets/sheets/confirm_sheet.dart';
+import '../../../../core/utils/format_utils.dart';
 import '../../../../models/community_post_model.dart';
 import '../../../../models/marketplace_model.dart';
+import '../../../../models/dating_model.dart';
+import '../../../dating/presentation/providers/dating_request_provider.dart';
 import '../providers/activity_provider.dart';
 
 /// ============================================================
@@ -24,9 +28,7 @@ class MyActivityScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('내 활동'),
-      ),
+      appBar: const MingrrAppBar(title: '내 활동'),
       body: DefaultTabController(
         length: 5,
         child: Column(
@@ -65,7 +67,7 @@ class _WalkHistoryTab extends ConsumerWidget {
       data: (walks) {
         if (walks.isEmpty) {
           return MingrrEmptyState(
-            icon: Icons.directions_walk,
+            icon: AppIcons.walk,
             title: '산책 기록이 없어요',
             subtitle: '반려동물과 함께 산책을 시작해보세요',
           );
@@ -77,11 +79,11 @@ class _WalkHistoryTab extends ConsumerWidget {
             final walk = walks[index];
             return _ActivityCard(
               onTap: () => context.push('/health/walk/${walk.id}'),
-              icon: Icons.directions_walk,
+              icon: AppIcons.walk,
               iconColor: context.features.walk,
               title: '${walk.durationMinutes}분 산책',
               subtitle: walk.distanceString,
-              trailing: _formatDate(walk.startTime),
+              trailing: formatRelativeDate(walk.startTime),
             );
           },
         );
@@ -90,7 +92,7 @@ class _WalkHistoryTab extends ConsumerWidget {
         type: MingrrLoadingType.walk,
         message: '산책 기록을 불러오고 있어요',
       ),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(userWalkRecordsProvider),
       ),
     );
@@ -110,7 +112,7 @@ class _MatchHistoryTab extends ConsumerWidget {
       data: (activities) {
         if (activities.isEmpty) {
           return MingrrEmptyState(
-            icon: Icons.favorite_border,
+            icon: AppIcons.likeOutlined,
             title: '매칭 내역이 없어요',
             subtitle: '데이팅에서 새로운 친구를 만나보세요',
           );
@@ -128,7 +130,7 @@ class _MatchHistoryTab extends ConsumerWidget {
         type: MingrrLoadingType.dating,
         message: '매칭 내역을 불러오고 있어요',
       ),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(userMatchActivitiesProvider),
       ),
     );
@@ -136,28 +138,43 @@ class _MatchHistoryTab extends ConsumerWidget {
 }
 
 /// 매칭 활동 카드 (보낸 신청, 받은 신청, 성사된 매칭)
-class _MatchActivityCard extends StatelessWidget {
+class _MatchActivityCard extends ConsumerStatefulWidget {
   final MatchActivity activity;
 
   const _MatchActivityCard({required this.activity});
 
   @override
+  ConsumerState<_MatchActivityCard> createState() => _MatchActivityCardState();
+}
+
+class _MatchActivityCardState extends ConsumerState<_MatchActivityCard> {
+  bool _isCancelling = false;
+
+  MatchActivity get activity => widget.activity;
+
+  @override
   Widget build(BuildContext context) {
     final (icon, label, color) = _getActivityStyle(context);
     final statusBadge = _getStatusBadge(context);
+    final canCancel = activity.type == MatchActivityType.sent && 
+                      activity.status == 'pending' && 
+                      !_isCancelling;
     
-    return _ActivityCard(
-      onTap: activity.chatRoomId != null 
-          ? () => context.push('/chat/${activity.chatRoomId}')
-          : null,
-      imageUrl: activity.partnerPetImageUrl,
-      icon: icon,
-      iconColor: color,
-      title: activity.partnerPetName,
-      subtitle: '${activity.partnerPetBreed ?? '반려동물'} · $label',
-      trailing: _formatDate(activity.createdAt),
-      badge: statusBadge?.label,
-      badgeColor: statusBadge?.color,
+    return GestureDetector(
+      onLongPress: canCancel ? () => _showCancelDialog(context) : null,
+      child: _ActivityCard(
+        onTap: activity.chatRoomId != null 
+            ? () => context.push('/chat/${activity.chatRoomId}')
+            : canCancel ? () => _showCancelDialog(context) : null,
+        imageUrl: activity.partnerPetImageUrl,
+        icon: icon,
+        iconColor: color,
+        title: activity.partnerPetName,
+        subtitle: '${activity.partnerPetBreed ?? '반려동물'} · $label',
+        trailing: _isCancelling ? '취소 중...' : formatRelativeDate(activity.createdAt),
+        badge: statusBadge?.label,
+        badgeColor: statusBadge?.color,
+      ),
     );
   }
 
@@ -165,11 +182,11 @@ class _MatchActivityCard extends StatelessWidget {
     final typeLabel = activity.isBreeding ? '교배' : '데이팅';
     switch (activity.type) {
       case MatchActivityType.sent:
-        return (activity.isBreeding ? Icons.family_restroom : Icons.send, '보낸 $typeLabel 신청', context.features.dating);
+        return (activity.isBreeding ? AppIcons.breeding : AppIcons.send, '보낸 $typeLabel 신청', context.features.dating);
       case MatchActivityType.received:
-        return (activity.isBreeding ? Icons.family_restroom : Icons.inbox, '받은 $typeLabel 신청', context.features.dating);
+        return (activity.isBreeding ? AppIcons.breeding : AppIcons.empty, '받은 $typeLabel 신청', context.features.dating);
       case MatchActivityType.matched:
-        return (activity.isBreeding ? Icons.family_restroom : Icons.favorite, '$typeLabel 매칭 성사', context.features.success);
+        return (activity.isBreeding ? AppIcons.breeding : AppIcons.dating, '$typeLabel 매칭 성사', context.features.success);
     }
   }
 
@@ -183,8 +200,64 @@ class _MatchActivityCard extends StatelessWidget {
         return (label: '수락됨', color: context.features.success);
       case 'rejected':
         return (label: '거절됨', color: Theme.of(context).colorScheme.error);
+      case 'cancelled':
+        return (label: '취소됨', color: Theme.of(context).colorScheme.onSurfaceVariant);
+      case 'expired':
+        return (label: '만료됨', color: Theme.of(context).colorScheme.outline);
       default:
         return null;
+    }
+  }
+
+  Future<void> _showCancelDialog(BuildContext context) async {
+    final type = activity.isBreeding 
+        ? ConfirmSheetType.breedingCancel 
+        : ConfirmSheetType.dateCancel;
+    
+    final confirmed = await showConfirmSheetWithResult(
+      context,
+      type: type,
+      message: '${activity.partnerPetName}에게 보낸 신청을 취소하시겠어요?',
+    );
+    
+    if (confirmed == true && mounted) {
+      await _cancelRequest();
+    }
+  }
+
+  Future<void> _cancelRequest() async {
+    setState(() => _isCancelling = true);
+    
+    try {
+      final request = DatingRequestModel(
+        id: activity.id,
+        fromUserId: '', // 서비스에서 현재 사용자 ID 체크
+        toUserId: '',
+        fromPetId: '',
+        toPetId: '',
+        status: DatingRequestStatus.pending,
+        type: activity.isBreeding ? DatingRequestType.breeding : DatingRequestType.date,
+        createdAt: activity.createdAt,
+      );
+      
+      final success = await DatingRequestActionService.cancelRequest(request);
+      
+      if (mounted) {
+        if (success) {
+          MingrrSnackBar.success(context, '신청이 취소되었습니다');
+          ref.invalidate(userMatchActivitiesProvider);
+        } else {
+          MingrrSnackBar.error(context, '신청 취소에 실패했습니다');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        MingrrSnackBar.error(context, '오류가 발생했습니다');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isCancelling = false);
+      }
     }
   }
 }
@@ -202,7 +275,7 @@ class _TransactionHistoryTab extends ConsumerWidget {
       data: (transactions) {
         if (transactions.isEmpty) {
           return MingrrEmptyState(
-            icon: Icons.receipt_long_outlined,
+            icon: AppIcons.history,
             title: '거래 내역이 없어요',
             subtitle: '마켓에서 거래해보세요',
           );
@@ -216,11 +289,11 @@ class _TransactionHistoryTab extends ConsumerWidget {
             return _ActivityCard(
               onTap: () => context.push('/market/product/${tx.product.id}'),
               imageUrl: tx.product.imageUrls.isNotEmpty ? tx.product.imageUrls.first : null,
-              icon: isSell ? Icons.sell : Icons.shopping_bag,
+              icon: isSell ? AppIcons.sell : AppIcons.shoppingBag,
               iconColor: context.features.market,
               title: tx.product.title,
               subtitle: '${tx.product.priceString} · ${isSell ? "판매" : "구매"}',
-              trailing: _formatDate(tx.product.createdAt),
+              trailing: formatRelativeDate(tx.product.createdAt),
               badge: tx.product.status.label,
               badgeColor: tx.product.status == ProductStatus.completed 
                   ? context.features.success 
@@ -233,7 +306,7 @@ class _TransactionHistoryTab extends ConsumerWidget {
         type: MingrrLoadingType.market,
         message: '거래 내역을 불러오고 있어요',
       ),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(userTransactionsWithDetailsProvider),
       ),
     );
@@ -253,7 +326,7 @@ class _CommunityHistoryTab extends ConsumerWidget {
       data: (activities) {
         if (activities.isEmpty) {
           return MingrrEmptyState(
-            icon: Icons.article_outlined,
+            icon: AppIcons.communityOutlined,
             title: '커뮤니티 활동이 없어요',
             subtitle: '커뮤니티에서 글을 작성해보세요',
           );
@@ -267,13 +340,13 @@ class _CommunityHistoryTab extends ConsumerWidget {
             
             return _ActivityCard(
               onTap: () => context.push('/social/community/${isPost ? activity.id : activity.postId}'),
-              icon: isPost ? Icons.article : Icons.comment,
+              icon: isPost ? AppIcons.community : AppIcons.chatOutlined,
               iconColor: context.features.social,
               title: isPost ? activity.title : '댓글: ${activity.title}',
               subtitle: isPost 
                   ? '${activity.category?.label ?? ""} · 💬 ${activity.commentCount} · ❤️ ${activity.likeCount}'
                   : '원글: ${activity.postTitle ?? "삭제된 글"}',
-              trailing: _formatDate(activity.createdAt),
+              trailing: formatRelativeDate(activity.createdAt),
             );
           },
         );
@@ -282,7 +355,7 @@ class _CommunityHistoryTab extends ConsumerWidget {
         type: MingrrLoadingType.community,
         message: '커뮤니티 활동을 불러오고 있어요',
       ),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(userCommunityActivitiesProvider),
       ),
     );
@@ -302,7 +375,7 @@ class _GroupHistoryTab extends ConsumerWidget {
       data: (groups) {
         if (groups.isEmpty) {
           return MingrrEmptyState(
-            icon: Icons.groups_outlined,
+            icon: AppIcons.group,
             title: '소모임 활동이 없어요',
             subtitle: '소모임에 참여해보세요',
           );
@@ -329,7 +402,7 @@ class _GroupHistoryTab extends ConsumerWidget {
         type: MingrrLoadingType.community,
         message: '소모임 활동을 불러오고 있어요',
       ),
-      error: (_, __) => MingrrErrorState(
+      error: (_, _) => MingrrErrorState(
         onRetry: () => ref.invalidate(userGroupsWithSchedulesProvider),
       ),
     );
@@ -374,16 +447,13 @@ class _ActivityCard extends StatelessWidget {
       child: Row(
         children: [
           // 이미지 또는 아이콘
-          if (imageUrl != null)
-            MingrrThumbnail(
-              imageUrl: imageUrl,
-              width: 56,
-              height: 56,
-              borderRadius: AppSizes.radiusS,
-              errorWidget: _buildIconContainer(context),
-            )
-          else
-            _buildIconContainer(context),
+          MingrrImage.thumbnail(
+            imageUrl: imageUrl,
+            width: 56,
+            height: 56,
+            radius: AppSizes.radiusS,
+            accentColor: iconColor,
+          ),
           const SizedBox(width: AppSizes.gapM),
           
           // 정보
@@ -410,7 +480,7 @@ class _ActivityCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: (badgeColor ?? iconColor).withValues(alpha: AppOpacity.o10),
-                          borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Text(
                           badge!,
@@ -442,17 +512,6 @@ class _ActivityCard extends StatelessWidget {
     );
   }
   
-  Widget _buildIconContainer(BuildContext context) {
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        color: iconColor.withValues(alpha: AppOpacity.o10),
-        borderRadius: BorderRadius.circular(AppSizes.radiusS),
-      ),
-      child: Icon(icon, color: iconColor, size: 28),
-    );
-  }
 }
 
 /// 모임 활동 카드 (일정 포함)
@@ -484,11 +543,11 @@ class _GroupActivityCard extends StatelessWidget {
           Row(
             children: [
               // 이미지
-              MingrrThumbnail(
+              MingrrImage.thumbnail(
                 imageUrl: imageUrl,
                 width: 56,
                 height: 56,
-                borderRadius: AppSizes.radiusS,
+                radius: AppSizes.radiusS,
                 errorWidget: _buildDefaultImage(context),
               ),
               const SizedBox(width: AppSizes.gapM),
@@ -513,7 +572,7 @@ class _GroupActivityCard extends StatelessWidget {
                 ),
               ),
               
-              Icon(Icons.chevron_right, color: colorScheme.outlineVariant),
+              Icon(AppIcons.chevronRight, color: colorScheme.outlineVariant),
             ],
           ),
           
@@ -528,7 +587,7 @@ class _GroupActivityCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.event, size: 16, color: context.features.social),
+                  Icon(AppIcons.event, size: 16, color: context.features.social),
                   const SizedBox(width: AppSizes.gapS),
                   Expanded(
                     child: Text(
@@ -555,7 +614,7 @@ class _GroupActivityCard extends StatelessWidget {
         color: context.features.socialContainer,
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
-      child: Icon(Icons.groups, color: context.features.social, size: 28),
+      child: Icon(AppIcons.group, color: context.features.social, size: 28),
     );
   }
   
@@ -564,17 +623,4 @@ class _GroupActivityCard extends StatelessWidget {
   }
 }
 
-// ============================================================
-// 유틸리티
-// ============================================================
-
-String _formatDate(DateTime date) {
-  final now = DateTime.now();
-  final diff = now.difference(date);
-  
-  if (diff.inDays == 0) return '오늘';
-  if (diff.inDays == 1) return '어제';
-  if (diff.inDays < 7) return '${diff.inDays}일 전';
-  return '${date.month}/${date.day}';
-}
 

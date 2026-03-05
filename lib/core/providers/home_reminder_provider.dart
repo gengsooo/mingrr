@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/firebase_service.dart';
+import '../services/rating_service.dart';
 import '../widgets/home_reminder_banner.dart';
 import '../../features/dating/presentation/providers/dating_provider.dart';
 import '../../models/dating_model.dart';
@@ -11,19 +12,17 @@ import '../../models/dating_model.dart';
 /// ============================================================
 
 final _firebase = FirebaseService();
+final _ratingService = RatingService();
 
 /// 평가 대기 개수 Provider
+/// transactions 컬렉션에서 완료되었지만 아직 평가하지 않은 거래 조회
 final pendingRatingsCountProvider = FutureProvider.autoDispose<int>((ref) async {
   final userId = _firebase.currentUserId;
   if (userId == null) return 0;
   
-  // ratings 컬렉션에서 평가 대기 중인 항목 조회
-  final snapshot = await _firebase.ratingsCollection
-      .where('raterId', isEqualTo: userId)
-      .where('isCompleted', isEqualTo: false)
-      .get();
-  
-  return snapshot.docs.length;
+  // RatingService를 통해 평가 대기 목록 조회
+  final pendingRatings = await _ratingService.getPendingRatings(userId);
+  return pendingRatings.length;
 });
 
 /// 오늘 소모임 일정 개수 Provider
@@ -87,14 +86,18 @@ final recentPetLikesCountProvider = FutureProvider.autoDispose<int>((ref) async 
   return count;
 });
 
-/// 받은 평가 개수 Provider (읽지 않은)
+/// 받은 평가 개수 Provider (최근 7일 내)
+/// 읽지 않은 평가 대신 최근 받은 평가 개수를 표시
 final unreadReceivedRatingsCountProvider = FutureProvider.autoDispose<int>((ref) async {
   final userId = _firebase.currentUserId;
   if (userId == null) return 0;
   
+  final weekAgo = DateTime.now().subtract(const Duration(days: 7));
+  
   final snapshot = await _firebase.ratingsCollection
-      .where('targetUserId', isEqualTo: userId)
-      .where('isRead', isEqualTo: false)
+      .where('targetId', isEqualTo: userId)
+      .where('isVisible', isEqualTo: true)
+      .where('createdAt', isGreaterThan: weekAgo)
       .get();
   
   return snapshot.docs.length;
@@ -136,7 +139,7 @@ final pendingGroupJoinRequestsCountProvider = FutureProvider.autoDispose<int>((r
   // 대기 중인 가입 신청 조회
   int count = 0;
   for (final groupId in groupIds) {
-    final requestsSnapshot = await _firebase.joinRequestsCollection
+    final requestsSnapshot = await _firebase.groupJoinRequestsCollection
         .where('groupId', isEqualTo: groupId)
         .where('status', isEqualTo: 'pending')
         .get();

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/feature_colors.dart';
+import '../constants/app_icons.dart';
 import '../theme/app_text_styles.dart';
 import '../constants/app_sizes.dart';
 
@@ -78,7 +78,7 @@ class LocationBubbleWidget extends StatelessWidget {
               // 제목
               Row(
                 children: [
-                  Icon(Icons.location_on, size: 16, color: color),
+                  Icon(AppIcons.location, size: 16, color: color),
                   const SizedBox(width: AppSizes.gapXS),
                   Text(
                     '현재 위치가 맞나요?',
@@ -89,7 +89,7 @@ class LocationBubbleWidget extends StatelessWidget {
               
               // 저장된 주소 표시
               if (savedAddress != null && savedAddress!.isNotEmpty) ...[
-                const SizedBox(height: AppSizes.gapSM),
+                const SizedBox(height: AppSizes.gapS),
                 Text(
                   '저장된 위치: $savedAddress',
                   style: AppTextStyles.caption(context),
@@ -106,7 +106,7 @@ class LocationBubbleWidget extends StatelessWidget {
                   _buildActionButton(
                     context,
                     label: '위치 변경',
-                    icon: Icons.my_location,
+                    icon: AppIcons.myLocation,
                     color: color,
                     isPrimary: true,
                     onTap: onUpdateLocation,
@@ -116,7 +116,7 @@ class LocationBubbleWidget extends StatelessWidget {
                   _buildActionButton(
                     context,
                     label: '맞아요',
-                    icon: Icons.check,
+                    icon: AppIcons.check,
                     color: colorScheme.outline,
                     isPrimary: false,
                     onTap: onDismiss,
@@ -279,7 +279,7 @@ class LocationMismatchBanner extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.location_on,
+              AppIcons.location,
               size: 18,
               color: colorScheme.primary,
             ),
@@ -318,12 +318,12 @@ class LocationMismatchBanner extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: AppSizes.gapSM),
+          const SizedBox(width: AppSizes.gapS),
           // 닫기 버튼
           GestureDetector(
             onTap: onDismiss,
             child: Icon(
-              Icons.close,
+              AppIcons.close,
               size: 18,
               color: colorScheme.onSurfaceVariant,
             ),

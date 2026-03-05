@@ -71,7 +71,7 @@ class MingrrLoadingDialog extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: AppSizes.gapLL),
+          const SizedBox(height: AppSizes.gapL),
           Text(
             title,
             style: AppTextStyles.titleLarge(context),
@@ -192,12 +192,12 @@ class MingrrLoadingOverlay extends StatelessWidget {
               ),
             ),
             if (message != null) ...[
-              const SizedBox(height: AppSizes.gapLL),
+              const SizedBox(height: AppSizes.gapL),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXL, vertical: AppSizes.paddingM),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusL),
                   boxShadow: AppShadows.shadowM(Theme.of(context).brightness == Brightness.dark),
                 ),
                 child: Row(

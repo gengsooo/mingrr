@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -11,6 +11,7 @@ import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/dating_service.dart';
 import '../../../../core/services/share_service.dart';
+import '../../../../core/services/transaction_service.dart';
 import '../../../../core/widgets/sheets/report_sheet.dart';
 import '../../../../core/widgets/sheets/request_sheet.dart';
 import '../../../../core/widgets/kkosunnae_widgets.dart';
@@ -18,18 +19,18 @@ import '../../../../core/widgets/modals/guardian_profile_modal.dart';
 import '../../../../core/widgets/modals/pet_profile_modal.dart';
 import '../../../../core/widgets/badges/trait_badge.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/sheets/confirm_sheet.dart';
 import '../../../../core/widgets/compatibility_widgets.dart';
-import '../../../../core/widgets/badges/info_badge.dart' show LikeButton, InfoBadgeSize, EmptyInfoBadge, PedigreeBadge, MatchScoreBadge, MatchBadgeStyle;
-import '../../../../core/widgets/mingrr_image_header.dart' show ImageHeaderDistanceBadge, LikeBadge;
-import '../../../../core/widgets/badges/svg_icons.dart';
+import '../../../../core/widgets/badges/info_badge.dart' show LikeButton, LikeOverlayBadge, InfoBadgeSize, EmptyInfoBadge, PedigreeBadge, MatchScoreBadge, MatchBadgeStyle, PetGenderBadge, GenderBadgeStyle;
+import '../../../../core/utils/error_handler.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../models/user_model.dart';
+import '../../../../models/breeding_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import '../providers/dating_provider.dart';
+import 'breeding_write_screen.dart';
 
 /// ============================================================
 /// 반려동물 상세 화면
@@ -46,6 +47,7 @@ class PetDetailScreen extends ConsumerStatefulWidget {
   final bool isBreeding; // true: 교배찾기, false: 데이팅
   final double? cachedDistanceMeters; // 리스트에서 전달받은 거리 (캐시)
   final int? cachedMatchScore; // 리스트에서 전달받은 궁합 점수 (캐시)
+  final String? breedingPostId; // 교배글 ID (교배찾기에서 전달)
 
   const PetDetailScreen({
     super.key,
@@ -53,6 +55,7 @@ class PetDetailScreen extends ConsumerStatefulWidget {
     this.isBreeding = false,
     this.cachedDistanceMeters,
     this.cachedMatchScore,
+    this.breedingPostId,
   });
 
   @override
@@ -65,6 +68,11 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
   bool _isSending = false;
   // ignore: unused_field - 향후 로딩 상태 표시용
   bool _likeLoaded = false;
+  
+  // 신청 상태 (State 기반 - 깜빡임 방지)
+  bool _hasPendingRequest = false;
+  bool _requestStatusLoaded = false;
+  
   final FirebaseService _firebase = FirebaseService();
   final FirestoreService _firestoreService = FirestoreService();
   final DatingService _datingService = DatingService();
@@ -73,6 +81,54 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
   void initState() {
     super.initState();
     _loadLikeStatus();
+    _loadRequestStatus();
+  }
+  
+  /// 신청 상태 로드 (State 기반 - 깜빡임 방지)
+  Future<void> _loadRequestStatus() async {
+    try {
+      final userId = _firebase.currentUserId;
+      if (userId == null) {
+        setState(() => _requestStatusLoaded = true);
+        return;
+      }
+      
+      final myPets = ref.read(userPetsProvider).valueOrNull ?? [];
+      if (myPets.isEmpty) {
+        setState(() => _requestStatusLoaded = true);
+        return;
+      }
+      
+      // 내 반려동물 중 하나라도 해당 반려동물에게 pending 신청을 보냈는지 확인
+      bool hasPending = false;
+      final collectionName = widget.isBreeding ? 'breeding_requests' : 'dating_requests';
+      
+      for (final myPet in myPets) {
+        final snapshot = await _firebase.firestore.collection(collectionName)
+            .where('fromPetId', isEqualTo: myPet.id)
+            .where('toPetId', isEqualTo: widget.petId)
+            .where('status', isEqualTo: 'pending')
+            .limit(1)
+            .get();
+        
+        if (snapshot.docs.isNotEmpty) {
+          hasPending = true;
+          break;
+        }
+      }
+      
+      if (mounted) {
+        setState(() {
+          _hasPendingRequest = hasPending;
+          _requestStatusLoaded = true;
+        });
+      }
+    } catch (e) {
+      AppLogger.error('PetDetail', '신청 상태 로드 오류', e);
+      if (mounted) {
+        setState(() => _requestStatusLoaded = true);
+      }
+    }
   }
 
   /// Firebase에서 좋아요 상태 로드
@@ -114,7 +170,6 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       return;
     }
 
-    final likeDocId = '${currentUser.uid}_${widget.petId}';
     final wasLiked = _isLiked;
 
     // 낙관적 업데이트
@@ -124,26 +179,22 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
     });
 
     try {
-      if (wasLiked) {
-        // 좋아요 취소
-        await _firebase.firestore.collection('likes').doc(likeDocId).delete();
-        await _firebase.petsCollection.doc(widget.petId).update({
-          'likeCount': FieldValue.increment(-1),
+      // 트랜잭션으로 Race Condition 방지
+      final isNowLiked = await TransactionService.togglePetLike(
+        petId: widget.petId,
+        userId: currentUser.uid,
+      );
+      
+      // 실제 결과와 UI 동기화
+      if (mounted && isNowLiked != _isLiked) {
+        setState(() {
+          _isLiked = isNowLiked;
+          _likeCount += isNowLiked ? 1 : -1;
         });
-      } else {
-        // 좋아요 추가
-        await _firebase.firestore.collection('likes').doc(likeDocId).set({
-          'userId': currentUser.uid,
-          'petId': widget.petId,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        await _firebase.petsCollection.doc(widget.petId).update({
-          'likeCount': FieldValue.increment(1),
-        });
-        
-        if (mounted) {
-          MingrrSnackBar.success(context, '좋아요를 보냈어요! 💕');
-        }
+      }
+      
+      if (mounted && isNowLiked && !wasLiked) {
+        MingrrSnackBar.success(context, '좋아요를 보냈어요! 💕');
       }
     } catch (e) {
       // 실패 시 롤백
@@ -166,9 +217,9 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       data: (pet) {
         if (pet == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('반려동물 정보')),
+            appBar: const MingrrAppBar(title: '반려동물 정보'),
             body: const MingrrEmptyState(
-              icon: Icons.pets,
+              icon: AppIcons.pet,
               title: '아직 데이터가 없어요',
               subtitle: '반려동물 정보를 찾을 수 없습니다',
             ),
@@ -182,8 +233,8 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
           type: MingrrLoadingType.dating,
         ),
       ),
-      error: (_, __) => Scaffold(
-        appBar: AppBar(title: const Text('반려동물 정보')),
+      error: (_, _) => Scaffold(
+        appBar: const MingrrAppBar(title: '반려동물 정보'),
         body: MingrrErrorState(
           onRetry: () => ref.invalidate(petByIdProvider(widget.petId)),
         ),
@@ -240,11 +291,6 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
     );
   }
 
-  /// 대표사진 URL 가져오기 (추가사진 > null)
-  String? _getPrimaryPhotoUrl(PetModel pet) {
-    return pet.displayImageUrl;
-  }
-
   /// 나이 계산
   int _calculateAge(DateTime? birthDate) {
     if (birthDate == null) return 0;
@@ -291,7 +337,11 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       onMore: () => _showMoreOptions(context),
       // 이미지 없을 때 빈 상태 UI
       emptyStateWidget: _buildEmptyImageState(context),
-      topLeftOverlay: GenderBadge(isMale: isMale),
+      topLeftOverlay: PetGenderBadge(
+        isMale: isMale,
+        size: InfoBadgeSize.large,
+        style: GenderBadgeStyle.tinted,
+      ),
       // 궁합 정보: 있으면 점수 표시, 없으면 안내 배지
       topRightOverlay: hasMatchScore
           ? MatchScoreBadge(
@@ -303,13 +353,13 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
             )
           : !widget.isBreeding
               ? const EmptyInfoBadge(
-                  icon: Icons.auto_awesome_outlined,
+                  icon: AppIcons.autoAwesome,
                   text: '궁합 정보 없음',
                 )
               : null,
       // 거리 정보 (ImageHeaderDistanceBadge가 0일 때 자동으로 "위치정보 없음" 표시)
       bottomLeftOverlay: ImageHeaderDistanceBadge(distanceKm: distanceKm),
-      bottomRightOverlay: LikeBadge(
+      bottomRightOverlay: LikeOverlayBadge(
         count: _likeCount,
         isLiked: _isLiked,
         onTap: _toggleLike,
@@ -317,20 +367,16 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
     );
   }
 
-  /// 이미지 없을 때 빈 상태 UI
+  /// 이미지 없을 때 빈 상태 UI (발바닥 아이콘만 표시)
   Widget _buildEmptyImageState(BuildContext context) {
     return Container(
       color: context.features.datingContainer,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          DefaultPetIcon(size: 80),
-          const SizedBox(height: AppSizes.gapM),
-          Text(
-            '사진이 없어요',
-            style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
-          ),
-        ],
+      child: Center(
+        child: Icon(
+          AppIcons.pet,
+          size: 80,
+          color: context.features.dating,
+        ),
       ),
     );
   }
@@ -346,7 +392,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         // 반려동물 프로필 이미지 (클릭 시 모달 열기)
         GestureDetector(
           onTap: () => _openPetProfileModal(pet),
-          child: MingrrPetAvatar(
+          child: MingrrImage.petAvatar(
             imageUrl: pet.displayImageUrl,
             size: 56,
             borderColor: context.features.dating.withValues(alpha: AppOpacity.o30),
@@ -374,7 +420,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                '${pet.breed ?? '품종 미상'} · ${age}살 · ${pet.weight ?? 0}kg ($sizeStr)',
+                '${pet.breed ?? '품종 미상'} · $age살 · ${pet.weight ?? 0}kg ($sizeStr)',
                 style: AppTextStyles.bodyLarge(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ],
@@ -420,12 +466,13 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         isIdentityVerified: owner?.isIdentityVerified ?? false,
         isPetVerified: owner?.isVerified ?? false,
         isLocationVerified: owner?.isLocationVerified ?? false,
+        activityInfo: owner != null ? GuardianActivityInfo.fromUser(owner) : null,
         pets: [
           GuardianPetInfo(
             id: pet.id,
             name: pet.name,
             breed: pet.breed ?? '품종 미상',
-            ageString: '${age}살',
+            ageString: '$age살',
             likeCount: _likeCount,
             profileImageUrl: pet.profileImageUrl,
             photoUrls: pet.photoUrls,
@@ -443,56 +490,230 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
     return TraitSection(traits: traits);
   }
 
-  /// 교배찾기 상세 내용
+  /// 교배찾기 글 정보 섹션 (제목, 조건, 설명, 수정/삭제 버튼)
   Widget _buildBreedingDescription(PetModel pet) {
-    return FutureBuilder<String?>(
-      future: _getBreedingDescription(pet.id),
+    return FutureBuilder<BreedingPostModel?>(
+      future: _getBreedingPost(pet.id),
       builder: (context, snapshot) {
-        final description = snapshot.data;
-        if (description == null || description.isEmpty) {
+        final post = snapshot.data;
+        if (post == null) {
           return const SizedBox.shrink();
         }
+        
+        final colorScheme = Theme.of(context).colorScheme;
+        final accentColor = context.features.dating;
+        final isMyPost = post.authorId == _firebase.currentUserId;
         
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '교배 상세 내용',
-              style: AppTextStyles.headlineSmall(context),
-            ),
-            const SizedBox(height: AppSizes.gapM),
+            // '교배 글' 라벨 배지
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(AppSizes.paddingL),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
-                color: context.sectionBackground,
+                color: accentColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
-                description,
-                style: AppTextStyles.bodyMedium(context).copyWith(height: 1.6),
+                '교배 글',
+                style: AppTextStyles.labelLarge(context).copyWith(color: accentColor),
               ),
             ),
+            const SizedBox(height: AppSizes.gapS),
+            // 헤더: 제목 + 수정/삭제 버튼
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    post.title,
+                    style: AppTextStyles.headlineMedium(context),
+                  ),
+                ),
+                if (isMyPost) ...[
+                  IconButton(
+                    onPressed: () => _editBreedingPost(post),
+                    icon: Icon(AppIcons.edit, size: 20, color: colorScheme.onSurfaceVariant),
+                    tooltip: '수정',
+                  ),
+                  IconButton(
+                    onPressed: () => _deleteBreedingPost(post),
+                    icon: Icon(AppIcons.delete, size: 20, color: colorScheme.error),
+                    tooltip: '삭제',
+                  ),
+                ],
+              ],
+            ),
+            const SizedBox(height: AppSizes.gapM),
+            
+            // 교배 조건
+            _buildBreedingConditions(post),
+            const SizedBox(height: AppSizes.gapL),
+            
+            // 상세 설명
+            if (post.description.isNotEmpty) ...[
+              Text(
+                '상세 내용',
+                style: AppTextStyles.labelLarge(context),
+              ),
+              const SizedBox(height: AppSizes.gapS),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(AppSizes.paddingL),
+                decoration: BoxDecoration(
+                  color: context.sectionBackground,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                ),
+                child: Text(
+                  post.description,
+                  style: AppTextStyles.bodyMedium(context).copyWith(height: 1.6),
+                ),
+              ),
+            ],
           ],
         );
       },
     );
   }
+  
+  /// 교배 조건 표시
+  Widget _buildBreedingConditions(BreedingPostModel post) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    final conditions = <String>[];
+    
+    // 성별 조건
+    if (post.preferredGender != null) {
+      conditions.add(post.preferredGender == 'male' ? '남아 선호' : '여아 선호');
+    }
+    
+    // 품종 조건
+    if (post.sameBreedOnly) {
+      conditions.add('같은 품종만');
+    }
+    
+    // 크기 조건
+    if (post.preferredSizes.isNotEmpty) {
+      conditions.add(post.preferredSizes.map((s) => PetSize.labelFromName(s)).join(', '));
+    }
+    
+    // 나이 조건
+    if (post.minAge != null || post.maxAge != null) {
+      if (post.minAge != null && post.maxAge != null) {
+        conditions.add('${post.minAge}~${post.maxAge}살');
+      } else if (post.minAge != null) {
+        conditions.add('${post.minAge}살 이상');
+      } else if (post.maxAge != null) {
+        conditions.add('${post.maxAge}살 이하');
+      }
+    }
+    
+    if (conditions.isEmpty) {
+      conditions.add('조건 없음');
+    }
+    
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSizes.paddingM),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
+        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '원하는 조건',
+            style: AppTextStyles.labelMedium(context).copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppSizes.gapS),
+          Wrap(
+            spacing: AppSizes.gapS,
+            runSpacing: AppSizes.gapS,
+            children: conditions.map((condition) => Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.paddingS,
+                vertical: AppSizes.paddingXS,
+              ),
+              decoration: BoxDecoration(
+                color: context.features.dating.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
+              ),
+              child: Text(
+                condition,
+                style: AppTextStyles.labelSmall(context).copyWith(
+                  color: context.features.dating,
+                ),
+              ),
+            )).toList(),
+          ),
+        ],
+      ),
+    );
+  }
 
-  /// 교배찾기 글에서 description 가져오기
-  Future<String?> _getBreedingDescription(String petId) async {
+  /// 교배찾기 글 가져오기
+  Future<BreedingPostModel?> _getBreedingPost(String petId) async {
     try {
+      // breedingPostId가 전달된 경우 해당 글 직접 조회
+      if (widget.breedingPostId != null) {
+        return await _firestoreService.getBreedingPost(widget.breedingPostId!);
+      }
+      
+      // 없으면 petId로 검색
       final query = await _firebase.breedingPostsCollection
           .where('petId', isEqualTo: petId)
           .where('status', isEqualTo: 'active')
           .limit(1)
           .get();
       if (query.docs.isNotEmpty) {
-        return query.docs.first.data()['description'] as String?;
+        return BreedingPostModel.fromFirestore(
+          query.docs.first.data(),
+          id: query.docs.first.id,
+        );
       }
       return null;
     } catch (e) {
       return null;
+    }
+  }
+  
+  /// 교배글 수정
+  void _editBreedingPost(BreedingPostModel post) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => BreedingWriteScreen(post: post),
+      ),
+    ).then((_) {
+      // 수정 후 화면 갱신
+      setState(() {});
+    });
+  }
+  
+  /// 교배글 삭제
+  Future<void> _deleteBreedingPost(BreedingPostModel post) async {
+    final confirmed = await showConfirmSheetWithResult(
+      context,
+      type: ConfirmSheetType.generalDelete,
+      title: '교배글 삭제',
+      message: '정말 이 교배글을 삭제하시겠습니까?\n삭제된 글은 복구할 수 없습니다.',
+    );
+    
+    if (confirmed == true) {
+      try {
+        await _firestoreService.deleteBreedingPost(post.id);
+        if (mounted) {
+          MingrrSnackBar.success(context, '교배글이 삭제되었습니다');
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ErrorHandler.showError(context, e, tag: 'Breeding', operation: '교배글 삭제');
+        }
+      }
     }
   }
 
@@ -539,9 +760,6 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       builder: (context, snapshot) {
         final owner = snapshot.data;
         final nickname = owner?.nickname ?? '보호자';
-        final genderEnum = owner?.gender;
-        final gender = genderEnum == UserGender.male ? '남성' : '여성';
-        final age = _calculateUserAge(owner?.birthDate);
         final kkosunnaeScore = owner?.kkosunnaeScore ?? 50.0;
         
         return Column(
@@ -565,10 +783,10 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                     Row(
                       children: [
                         // 아이콘
-                        MingrrAvatar(
+                        MingrrImage.avatar(
                           imageUrl: owner?.profileImageUrl,
                           size: 50,
-                          placeholderIcon: Icons.person,
+                          icon: AppIcons.profile,
                         ),
                         const SizedBox(width: AppSizes.gapM),
                         // 닉네임 + 꼬순내지수 (성별/나이 제거 - 개인정보 보호)
@@ -586,7 +804,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                           ),
                         ),
                         // 화살표
-                        Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+                        Icon(AppIcons.chevronRight, color: Theme.of(context).colorScheme.outlineVariant),
                       ],
                     ),
                     // 인증 배지 (소형)
@@ -597,17 +815,17 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _buildSmallVerificationBadge(
-                          icon: Icons.verified_user_outlined,
+                          icon: AppIcons.badgeIdentity,
                           label: '본인인증',
                           isVerified: owner?.isIdentityVerified ?? false,
                         ),
                         _buildSmallVerificationBadge(
-                          icon: Icons.pets_outlined,
+                          icon: AppIcons.petOutlined,
                           label: '동물등록',
                           isVerified: owner?.isVerified ?? false,
                         ),
                         _buildSmallVerificationBadge(
-                          icon: Icons.location_on_outlined,
+                          icon: AppIcons.badgeLocation,
                           label: '위치인증',
                           isVerified: owner?.isLocationVerified ?? false,
                         ),
@@ -644,7 +862,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
           ),
         ),
         if (!isVerified)
-          Icon(Icons.close, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
+          Icon(AppIcons.close, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
       ],
     );
   }
@@ -663,8 +881,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
 
   /// 보호자 프로필 모달 표시
   void _showGuardianProfile(BuildContext context, PetModel pet, UserModel? owner) {
-    final genderEnum = owner?.gender;
-    final gender = genderEnum == UserGender.male ? GuardianGender.male : GuardianGender.female;
+    final gender = GuardianGender.fromUserGender(owner?.gender);
     final age = _calculateUserAge(owner?.birthDate);
     
     showGuardianProfileModal(
@@ -691,11 +908,9 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
           introduction: pet.bio,
         ),
       ],
-      activityInfo: const GuardianActivityInfo(
-        walkCount: 0,
-        datingCount: 0,
-        marketCount: 0,
-        groupCount: 0,
+      activityInfo: owner != null
+        ? GuardianActivityInfo.fromUser(owner)
+        : const GuardianActivityInfo(
       ),
     );
   }
@@ -716,18 +931,46 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
             ),
           ),
           const SizedBox(width: AppSizes.gapM),
-          // 신청 버튼
+          // 신청 버튼 (State 기반 - 깜빡임 방지)
           Expanded(
-            child: MingrrButton(
-              text: widget.isBreeding ? '교배 신청하기' : '데이트 신청하기',
-              onPressed: () => _showRequestConfirmation(context),
-              backgroundColor: context.features.dating,
-              textColor: Colors.white,
-              height: 56,
-            ),
+            child: _buildRequestButton(context),
           ),
         ],
       ),
+    );
+  }
+  
+  /// 신청 버튼 빌드 (State 기반 - 깜빡임 방지)
+  Widget _buildRequestButton(BuildContext context) {
+    // 로딩 중이면 비활성화된 버튼 표시 (텍스트는 기본값)
+    if (!_requestStatusLoaded) {
+      return MingrrButton(
+        text: widget.isBreeding ? '교배 신청하기' : '데이트 신청하기',
+        onPressed: null,
+        backgroundColor: context.features.dating,
+        textColor: Colors.white,
+        height: 56,
+      );
+    }
+    
+    // 이미 신청한 경우 비활성화
+    if (_hasPendingRequest) {
+      return MingrrButton(
+        text: '신청 대기 중',
+        onPressed: null,
+        backgroundColor: Theme.of(context).colorScheme.outlineVariant,
+        textColor: Colors.white,
+        height: 56,
+      );
+    }
+    
+    // 신청 가능
+    return MingrrButton(
+      text: widget.isBreeding ? '교배 신청하기' : '데이트 신청하기',
+      onPressed: () => _showRequestConfirmation(context),
+      backgroundColor: context.features.dating,
+      textColor: Colors.white,
+      height: 56,
     );
   }
 
@@ -788,17 +1031,27 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         message: message,
       );
       
-      // 좋아요 수 증가 (이미 좋아요 안 했으면)
-      if (!_isLiked) {
-        await _toggleLike();
-      }
+      // 성공 스낵바 먼저 표시 및 상태 갱신
+      if (!context.mounted) return;
+      MingrrSnackBar.success(context, '${myPet.name}(으)로 데이트 신청을 보냈어요! 💕');
+      // State 기반 신청 상태 갱신
+      setState(() => _hasPendingRequest = true);
       
-      if (mounted) {
-        MingrrSnackBar.success(context, '${myPet.name}(으)로 데이트 신청을 보냈어요! 💕');
+      // 좋아요 수 증가 (이미 좋아요 안 했으면) - 실패해도 무시
+      if (!_isLiked) {
+        try {
+          await _toggleLike();
+        } catch (_) {
+          // 좋아요 실패는 무시 (신청은 이미 성공)
+        }
       }
     } catch (e) {
-      if (mounted) {
-        MingrrSnackBar.error(context, '신청 실패: $e');
+      if (!context.mounted) return;
+      final errorMessage = e.toString();
+      if (errorMessage.contains('이미 데이팅 신청')) {
+        MingrrSnackBar.info(context, '이미 데이트 신청을 보냈어요! 상대방의 응답을 기다려주세요 💕');
+      } else {
+        MingrrSnackBar.error(context, '데이트 신청에 실패했어요. 다시 시도해주세요.');
       }
     } finally {
       if (mounted) {
@@ -833,12 +1086,17 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
         message: message,
       );
       
-      if (mounted) {
-        MingrrSnackBar.success(context, '${myPet.name}(으)로 교배 신청을 보냈어요! 🐶');
-      }
+      if (!context.mounted) return;
+      MingrrSnackBar.success(context, '${myPet.name}(으)로 교배 신청을 보냈어요! 🐶');
+      // State 기반 신청 상태 갱신
+      setState(() => _hasPendingRequest = true);
     } catch (e) {
-      if (mounted) {
-        MingrrSnackBar.error(context, '신청 실패: $e');
+      if (!context.mounted) return;
+      final errorMessage = e.toString();
+      if (errorMessage.contains('이미') && errorMessage.contains('신청')) {
+        MingrrSnackBar.info(context, '이미 교배 신청을 보냈어요! 상대방의 응답을 기다려주세요 🐶');
+      } else {
+        ErrorHandler.showError(context, e, tag: 'PetDetail', operation: '교배 신청');
       }
     } finally {
       if (mounted) {
@@ -889,14 +1147,12 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       onConfirm: () async {
         try {
           await _firestoreService.blockUser(currentUserId, targetUserId);
-          if (mounted) {
-            MingrrSnackBar.success(context, '사용자를 차단했습니다');
-            Navigator.pop(context); // 상세 화면 닫기
-          }
+          if (!context.mounted) return;
+          MingrrSnackBar.success(context, '사용자를 차단했습니다');
+          Navigator.pop(context); // 상세 화면 닫기
         } catch (e) {
-          if (mounted) {
-            MingrrSnackBar.error(context, '차단 실패: $e');
-          }
+          if (!context.mounted) return;
+          ErrorHandler.showError(context, e, tag: 'PetDetail', operation: '사용자 차단');
         }
       },
     );

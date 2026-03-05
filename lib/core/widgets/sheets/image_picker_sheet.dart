@@ -2,12 +2,16 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../services/image_service.dart';
+import '../dialogs/dialog_buttons.dart';
 import '../common_widgets.dart';
+import '../image/local_image_preview.dart';
 import 'mingrr_bottom_sheet.dart';
 import '../../utils/responsive_utils.dart';
+import '../../utils/error_handler.dart';
 
 /// ============================================================
 /// 이미지 선택 바텀시트
@@ -43,49 +47,49 @@ class DefaultAvatar {
 final List<DefaultAvatar> petDefaultAvatars = [
   DefaultAvatar(
     id: 'dog_1',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
     backgroundColor: const Color(0xFFFFE0B2),
     iconColor: const Color(0xFFFF9800),
   ),
   DefaultAvatar(
     id: 'dog_2',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
     backgroundColor: const Color(0xFFBBDEFB),
     iconColor: const Color(0xFF2196F3),
   ),
   DefaultAvatar(
     id: 'dog_3',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
     backgroundColor: const Color(0xFFC8E6C9),
     iconColor: const Color(0xFF4CAF50),
   ),
   DefaultAvatar(
     id: 'dog_4',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
     backgroundColor: const Color(0xFFFFCDD2),
     iconColor: const Color(0xFFF44336),
   ),
   DefaultAvatar(
     id: 'dog_5',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
     backgroundColor: const Color(0xFFE1BEE7),
     iconColor: const Color(0xFF9C27B0),
   ),
   DefaultAvatar(
     id: 'dog_6',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
     backgroundColor: const Color(0xFFB2EBF2),
     iconColor: const Color(0xFF00BCD4),
   ),
   DefaultAvatar(
     id: 'dog_7',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
     backgroundColor: const Color(0xFFFFF9C4),
     iconColor: const Color(0xFFFFC107),
   ),
   DefaultAvatar(
     id: 'dog_8',
-    icon: Icons.pets,
+    icon: AppIcons.pet,
     backgroundColor: const Color(0xFFD7CCC8),
     iconColor: const Color(0xFF795548),
   ),
@@ -95,49 +99,49 @@ final List<DefaultAvatar> petDefaultAvatars = [
 final List<DefaultAvatar> personDefaultAvatars = [
   DefaultAvatar(
     id: 'person_1',
-    icon: Icons.person,
+    icon: AppIcons.profile,
     backgroundColor: const Color(0xFFFFE0B2),
     iconColor: const Color(0xFFFF9800),
   ),
   DefaultAvatar(
     id: 'person_2',
-    icon: Icons.person,
+    icon: AppIcons.profile,
     backgroundColor: const Color(0xFFBBDEFB),
     iconColor: const Color(0xFF2196F3),
   ),
   DefaultAvatar(
     id: 'person_3',
-    icon: Icons.person,
+    icon: AppIcons.profile,
     backgroundColor: const Color(0xFFC8E6C9),
     iconColor: const Color(0xFF4CAF50),
   ),
   DefaultAvatar(
     id: 'person_4',
-    icon: Icons.person,
+    icon: AppIcons.profile,
     backgroundColor: const Color(0xFFFFCDD2),
     iconColor: const Color(0xFFF44336),
   ),
   DefaultAvatar(
     id: 'person_5',
-    icon: Icons.person,
+    icon: AppIcons.profile,
     backgroundColor: const Color(0xFFE1BEE7),
     iconColor: const Color(0xFF9C27B0),
   ),
   DefaultAvatar(
     id: 'person_6',
-    icon: Icons.person,
+    icon: AppIcons.profile,
     backgroundColor: const Color(0xFFB2EBF2),
     iconColor: const Color(0xFF00BCD4),
   ),
   DefaultAvatar(
     id: 'person_7',
-    icon: Icons.person,
+    icon: AppIcons.profile,
     backgroundColor: const Color(0xFFFFF9C4),
     iconColor: const Color(0xFFFFC107),
   ),
   DefaultAvatar(
     id: 'person_8',
-    icon: Icons.person,
+    icon: AppIcons.profile,
     backgroundColor: const Color(0xFFD7CCC8),
     iconColor: const Color(0xFF795548),
   ),
@@ -264,7 +268,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
             children: [
               Expanded(
                 child: _buildActionButton(
-                  icon: Icons.camera_alt,
+                  icon: AppIcons.camera,
                   label: '카메라',
                   onTap: _pickFromCamera,
                 ),
@@ -272,14 +276,14 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
               const SizedBox(width: AppSizes.gapM),
               Expanded(
                 child: _buildActionButton(
-                  icon: Icons.photo_library,
+                  icon: AppIcons.gallery,
                   label: '갤러리',
                   onTap: _pickFromGallery,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: AppSizes.gapLL),
+          const SizedBox(height: AppSizes.gapL),
           
           // 대표 아이콘 선택
           Text(
@@ -301,19 +305,11 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
             children: [
               if (widget.allowClear && (widget.currentImageUrl != null || widget.currentDefaultAvatar != null))
                 Expanded(
-                  child: OutlinedButton(
+                  child: MingrrDialogButton.destructiveOutlined(
+                    text: '삭제',
                     onPressed: () {
                       Navigator.pop(context, const ImagePickerResult(cleared: true));
                     },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      side: const BorderSide(color: Colors.red),
-                      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                      ),
-                    ),
-                    child: const Text('삭제'),
                   ),
                 ),
               if (widget.allowClear && (widget.currentImageUrl != null || widget.currentDefaultAvatar != null))
@@ -347,20 +343,9 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
     
     if (_selectedImage != null) {
       // 선택한 이미지 표시
-      content = ClipOval(
-        child: kIsWeb
-            ? Image.network(
-                _selectedImage!.path,
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-              )
-            : Image.file(
-                File(_selectedImage!.path),
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-              ),
+      content = LocalImagePreview.circle(
+        path: _selectedImage!.path,
+        size: 100,
       );
     } else if (_selectedDefaultAvatar != null) {
       // 선택한 대표 아이콘 표시
@@ -379,14 +364,10 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
       );
     } else if (widget.currentImageUrl != null) {
       // 기존 이미지 표시
-      content = ClipOval(
-        child: Image.network(
-          widget.currentImageUrl!,
-          width: 100,
-          height: 100,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _buildDefaultPreview(),
-        ),
+      content = MingrrImage.avatar(
+        imageUrl: widget.currentImageUrl,
+        size: 100,
+        icon: AppIcons.profile,
       );
     } else if (widget.currentDefaultAvatar != null) {
       // 기존 대표 아이콘 표시
@@ -425,7 +406,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
         shape: BoxShape.circle,
       ),
       child: Icon(
-        widget.avatarType == DefaultAvatarType.pet ? Icons.pets : Icons.person,
+        widget.avatarType == DefaultAvatarType.pet ? AppIcons.pet : AppIcons.profile,
         size: 50,
         color: Theme.of(context).colorScheme.outlineVariant,
       ),
@@ -504,7 +485,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '카메라 접근 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'ImagePicker', operation: '카메라 접근');
       }
     }
   }
@@ -523,7 +504,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '갤러리 접근 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'ImagePicker', operation: '갤러리 접근');
       }
     }
   }
@@ -547,6 +528,7 @@ class _ImagePickerSheetState extends State<ImagePickerSheet> {
 
     // 크롭 기능 활성화 & 모바일인 경우만 크롭 적용
     if (widget.enableCrop && !kIsWeb) {
+      if (!mounted) return;
       final result = await ImageService.instance.crop(
         context: context,
         imagePath: image.path,

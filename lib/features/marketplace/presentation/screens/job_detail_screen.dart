@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -7,15 +8,20 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
+import '../../../../core/widgets/sheets/request_sheet.dart';
 import '../../../../core/widgets/cards/profile_cards.dart';
 import '../../../../core/widgets/sheets/report_sheet.dart';
 import '../../../../core/widgets/modals/guardian_profile_modal.dart';
-import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/mixins/distance_calculator_mixin.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/share_service.dart';
+import '../../../../core/widgets/buttons/wishlist_button.dart';
 import '../../../../models/marketplace_model.dart';
+import '../../../../models/job_application_model.dart';
+import '../../../../core/utils/error_handler.dart';
+import 'package:go_router/go_router.dart';
 import '../providers/marketplace_provider.dart';
+import '../providers/job_application_provider.dart';
 
 /// ============================================================
 /// 알바 상세 화면
@@ -40,6 +46,37 @@ class JobDetailScreen extends ConsumerStatefulWidget {
 
 class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     with DistanceCalculatorMixin {
+  final FirebaseService _firebase = FirebaseService();
+  bool _isWishlistLoading = false;
+  
+  /// 찜하기 토글 (Provider 기반)
+  Future<void> _toggleWishlist(JobModel job) async {
+    final userId = _firebase.currentUserId;
+    if (userId == null) {
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
+      return;
+    }
+    if (_isWishlistLoading) return;
+
+    setState(() => _isWishlistLoading = true);
+
+    try {
+      final isNowLiked = await ref.read(marketplaceNotifierProvider.notifier).toggleJobLike(job.id);
+      if (mounted) {
+        setState(() => _isWishlistLoading = false);
+        MingrrSnackBar.success(context, isNowLiked ? '찜 목록에 추가했어요' : '찜 목록에서 제거했어요');
+        // Provider 새로고침으로 최신 데이터 반영
+        ref.invalidate(jobDetailProvider(widget.jobId));
+        ref.invalidate(isJobLikedProvider(widget.jobId));
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isWishlistLoading = false);
+        ErrorHandler.showError(context, e, tag: 'JobDetail', operation: '찜하기');
+      }
+    }
+  }
+  
   /// 거리 문자열 계산 (Mixin 활용)
   String _getDistanceString(JobModel job) {
     return getDistanceFromLocation(job.location, job.address);
@@ -48,20 +85,22 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   @override
   Widget build(BuildContext context) {
     final jobAsync = ref.watch(jobByIdProvider(widget.jobId));
+    final isLikedAsync = ref.watch(isJobLikedProvider(widget.jobId));
 
     return jobAsync.when(
       data: (job) {
         if (job == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('알바')),
+            appBar: const MingrrAppBar(title: '알바'),
             body: const MingrrEmptyState(
-              icon: Icons.work_outline,
+              icon: AppIcons.work,
               title: '아직 데이터가 없어요',
               subtitle: '알바 정보를 찾을 수 없습니다',
             ),
           );
         }
-        return _buildContent(context, job);
+        final isLiked = isLikedAsync.valueOrNull ?? false;
+        return _buildContent(context, job, isLiked);
       },
       loading: () => Scaffold(
         body: MingrrFullScreenLoading(
@@ -69,8 +108,8 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
           type: MingrrLoadingType.market,
         ),
       ),
-      error: (_, __) => Scaffold(
-        appBar: AppBar(title: const Text('알바')),
+      error: (_, _) => Scaffold(
+        appBar: const MingrrAppBar(title: '알바'),
         body: MingrrErrorState(
           onRetry: () => ref.invalidate(jobDetailProvider(widget.jobId)),
         ),
@@ -78,7 +117,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     );
   }
 
-  Widget _buildContent(BuildContext context, JobModel job) {
+  Widget _buildContent(BuildContext context, JobModel job, bool isLiked) {
     return Scaffold(
       backgroundColor: context.detailBackground,
       body: CustomScrollView(
@@ -119,7 +158,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         ],
       ),
       // 하단 고정 버튼
-      bottomNavigationBar: _buildBottomBar(context, job),
+      bottomNavigationBar: _buildBottomBar(context, job, isLiked),
     );
   }
 
@@ -130,34 +169,13 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       expandedHeight: 200,
       onShare: () => _shareJob(job),
       onMore: () => _showMoreOptions(context, job),
-      placeholder: Container(
-        color: context.features.marketContainer,
-        child: Center(
-          child: Icon(
-            _getJobIcon(job.type),
-            size: 80,
-            color: context.features.market,
-          ),
-        ),
+      placeholder: MingrrImage(
+        accentColor: context.features.market,
+        placeholderIcon: AppIcons.image,
       ),
     );
   }
   
-  IconData _getJobIcon(JobType type) {
-    switch (type) {
-      case JobType.care:
-        return Icons.pets;
-      case JobType.walk:
-        return Icons.directions_walk;
-      case JobType.bath:
-        return Icons.bathtub_outlined;
-      case JobType.training:
-        return Icons.school_outlined;
-      case JobType.other:
-        return Icons.work_outline;
-    }
-  }
-
   /// 알바 정보 (상품 정보와 동일한 구조)
   Widget _buildJobInfo(JobModel job) {
     return Column(
@@ -170,19 +188,19 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
                 color: _getTypeColor(job.type).withValues(alpha: AppOpacity.o10),
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
                 job.typeString,
                 style: AppTextStyles.labelLarge(context).copyWith(color: _getTypeColor(job.type)),
               ),
             ),
-            const SizedBox(width: AppSizes.gapSM),
+            const SizedBox(width: AppSizes.gapS),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
                 color: _getStatusColor(job.status).withValues(alpha: AppOpacity.o10),
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
                 _getStatusText(job.status),
@@ -202,7 +220,7 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         if (job.fullPeriodString.isNotEmpty) ...[
           Row(
             children: [
-              Icon(Icons.calendar_today, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+              Icon(AppIcons.calendar, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
               const SizedBox(width: AppSizes.gapXS),
               Expanded(
                 child: Text(
@@ -238,29 +256,10 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
   }
   
   void _showUserProfile(BuildContext context, JobModel job) {
-    showGuardianProfileModal(
+    showGuardianProfileFromFirestore(
       context,
-      guardianId: job.userId,
-      guardianName: '등록자',
-      kkosunnaeScore: 50.0,
-      isIdentityVerified: true,
-      isPetVerified: true,
-      isLocationVerified: false,
-      pets: [
-        GuardianPetInfo(
-          id: 'pet_1',
-          name: '뿐삐',
-          breed: '골든 리트리버',
-          ageString: '3살',
-          likeCount: 42,
-        ),
-      ],
-      activityInfo: const GuardianActivityInfo(
-        walkCount: 65,
-        datingCount: 8,
-        marketCount: 12,
-        groupCount: 5,
-      ),
+      userId: job.userId,
+      fallbackName: '등록자',
     );
   }
 
@@ -301,39 +300,153 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
         MingrrImageGallery(
           imageUrls: job.imageUrls,
           height: 120,
-          itemWidth: 120,
           enableViewer: true,
         ),
       ],
     );
   }
 
-  Widget _buildBottomBar(BuildContext context, JobModel job) {
+  Widget _buildBottomBar(BuildContext context, JobModel job, bool isLiked) {
+    // 본인 글이면 버튼 없음
+    if (_isOwner(job)) {
+      return MingrrBottomButtonBar(
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                '${formatPrice(job.price)}원/${job.priceUnit}',
+                style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 내 지원 상태 확인
+    final myApplicationAsync = ref.watch(myJobApplicationProvider(job.id));
+    
+    return myApplicationAsync.when(
+      data: (myApplication) => _buildActionButton(context, job, myApplication, isLiked),
+      loading: () => MingrrBottomButtonBar(
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                '${formatPrice(job.price)}원/${job.priceUnit}',
+                style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w700),
+              ),
+            ),
+            const SizedBox(width: AppSizes.gapM),
+            const Expanded(
+              child: Center(child: MingrrLoadingIndicator.small()),
+            ),
+          ],
+        ),
+      ),
+      error: (_, _) => _buildActionButton(context, job, null, isLiked),
+    );
+  }
+
+  /// 지원 상태에 따른 버튼 표시
+  Widget _buildActionButton(BuildContext context, JobModel job, JobApplicationModel? myApplication, bool isLiked) {
+    String buttonText;
+    VoidCallback? onPressed;
+    Color buttonColor = context.features.market;
+    
+    if (myApplication == null) {
+      // 미지원 상태
+      buttonText = '지원하기';
+      onPressed = job.status == JobStatus.recruiting ? () => _showApplySheet(job) : null;
+    } else {
+      switch (myApplication.status) {
+        case JobApplicationStatus.pending:
+          buttonText = '지원 완료';
+          onPressed = null; // 비활성화
+          buttonColor = Theme.of(context).colorScheme.outlineVariant;
+          break;
+        case JobApplicationStatus.accepted:
+          buttonText = '채팅하기';
+          onPressed = () => _openChat(myApplication.chatRoomId, job);
+          break;
+        case JobApplicationStatus.rejected:
+          buttonText = '거절됨';
+          onPressed = null;
+          buttonColor = Theme.of(context).colorScheme.outlineVariant;
+          break;
+        case JobApplicationStatus.cancelled:
+          buttonText = '지원하기';
+          onPressed = job.status == JobStatus.recruiting ? () => _showApplySheet(job) : null;
+          break;
+      }
+    }
+    
     return MingrrBottomButtonBar(
       child: Row(
-        mainAxisSize: MainAxisSize.max,
         children: [
-          // 가격 표시
+          // 찜 버튼 (공통 컴포넌트)
+          WishlistButton(
+            isWishlisted: isLiked,
+            isLoading: _isWishlistLoading,
+            count: job.likeCount,
+            onTap: () => _toggleWishlist(job),
+            activeColor: context.features.market,
+          ),
+          const SizedBox(width: AppSizes.gapM),
           Expanded(
             child: Text(
               '${formatPrice(job.price)}원/${job.priceUnit}',
               style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w700),
             ),
           ),
-          // 채팅하기 버튼
-          MingrrButton(
-            text: '채팅하기',
-            onPressed: job.status == JobStatus.recruiting
-                ? () => _startChat(job)
-                : null,
-            backgroundColor: context.features.market,
-            textColor: Colors.white,
-            height: 48,
-            width: 100,
+          const SizedBox(width: AppSizes.gapM),
+          Expanded(
+            child: MingrrButton(
+              text: buttonText,
+              onPressed: onPressed,
+              backgroundColor: buttonColor,
+              textColor: Colors.white,
+              height: 48,
+            ),
           ),
         ],
       ),
     );
+  }
+
+  /// 지원하기 바텀시트 표시
+  void _showApplySheet(JobModel job) {
+    showJobApplySheet(
+      context,
+      jobTitle: job.title,
+      onConfirm: (message) async {
+        final applicationId = await JobApplicationActionService.applyForJob(
+          job: job,
+          message: message,
+        );
+        if (mounted) {
+          if (applicationId != null) {
+            MingrrSnackBar.success(context, '지원이 완료되었어요! 💼');
+            ref.invalidate(myJobApplicationProvider(job.id));
+          } else {
+            MingrrSnackBar.warning(context, '지원 처리 중 문제가 발생했어요. 다시 시도해주세요.');
+          }
+        }
+      },
+    );
+  }
+
+  /// 채팅방 열기
+  Future<void> _openChat(String? chatRoomId, JobModel job) async {
+    if (chatRoomId == null) {
+      MingrrSnackBar.warning(context, '채팅방을 찾을 수 없어요');
+      return;
+    }
+    
+    if (mounted) {
+      // go_router를 사용하여 채팅 탭으로 이동 (하단 메뉴 동기화)
+      context.go('/chat/$chatRoomId');
+    }
   }
 
   Color _getTypeColor(JobType type) {
@@ -356,11 +469,11 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
       case JobStatus.recruiting:
         return context.features.success;
       case JobStatus.reserved:
-        return Colors.orange;
+        return Theme.of(context).colorScheme.tertiary;
       case JobStatus.completed:
         return Theme.of(context).colorScheme.onSurfaceVariant;
       case JobStatus.cancelled:
-        return Colors.red;
+        return Theme.of(context).colorScheme.error;
     }
   }
 
@@ -404,8 +517,4 @@ class _JobDetailScreenState extends ConsumerState<JobDetailScreen>
     );
   }
 
-  void _startChat(JobModel job) {
-    // 채팅 시작
-    MingrrSnackBar.info(context, '채팅방을 생성합니다...');
-  }
 }

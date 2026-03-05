@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/feature_colors.dart';
@@ -75,7 +76,7 @@ class MingrrRecordTile extends StatelessWidget {
   }) {
     return MingrrRecordTile(
       key: key,
-      icon: Icons.medication,
+      icon: AppIcons.medication,
       iconColor: iconColor,
       title: title,
       subtitle: subtitle,
@@ -110,7 +111,7 @@ class MingrrRecordTile extends StatelessWidget {
               height: 40,
               decoration: BoxDecoration(
                 color: color.withValues(alpha: AppOpacity.o10),
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Icon(icon, size: 22, color: color),
             ),
@@ -139,7 +140,7 @@ class MingrrRecordTile extends StatelessWidget {
             // 화살표
             if (showChevron)
               Icon(
-                Icons.chevron_right,
+                AppIcons.chevronRight,
                 color: Theme.of(context).colorScheme.outlineVariant,
               ),
           ],

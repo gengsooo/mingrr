@@ -6,6 +6,8 @@ import '../../../../core/providers/location_provider.dart';
 import '../../../../core/providers/paginated_provider.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/location_service.dart';
+import '../../../../core/services/transaction_service.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../models/group_model.dart';
 
 /// ============================================================
@@ -19,15 +21,15 @@ import '../../../../models/group_model.dart';
 /// - 일정 관리
 /// ============================================================
 
-/// 소모임 + 거리 정보 + 추천 점수 (ItemWithDistance<GroupModel> 확장)
+/// 소모임 + 거리 정보 + 추천 점수 (`ItemWithDistance<GroupModel>` 확장)
 class GroupWithDistance extends ItemWithDistance<GroupModel> {
   final double recommendScore;
 
   GroupWithDistance({
     required GroupModel group,
-    required double distanceMeters,
+    required super.distanceMeters,
     this.recommendScore = 0,
-  }) : super(item: group, distanceMeters: distanceMeters);
+  }) : super(item: group);
 
   /// 기존 코드 호환성을 위한 접근자
   GroupModel get group => item;
@@ -237,9 +239,26 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
 
       final group = GroupModel.fromFirestore(groupDoc.data()!, id: groupDoc.id);
 
+      // 이미 멤버인지 확인
+      if (group.memberIds.contains(userId)) {
+        throw Exception('이미 가입된 모임입니다');
+      }
+
       if (group.requireApproval) {
+        // 중복 신청 확인
+        final existingRequest = await _firebase.groupJoinRequestsCollection
+            .where('groupId', isEqualTo: groupId)
+            .where('userId', isEqualTo: userId)
+            .where('status', isEqualTo: 'pending')
+            .limit(1)
+            .get();
+        
+        if (existingRequest.docs.isNotEmpty) {
+          throw Exception('이미 가입 신청 중입니다');
+        }
+
         // 가입 승인 필요 - 신청서 저장
-        await _firebase.joinRequestsCollection.add({
+        await _firebase.groupJoinRequestsCollection.add({
           'groupId': groupId,
           'userId': userId,
           'message': message,
@@ -247,27 +266,23 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
           'createdAt': FieldValue.serverTimestamp(),
         });
       } else {
-        // 바로 가입
-        await _firebase.groupsCollection.doc(groupId).update({
-          'memberIds': FieldValue.arrayUnion([userId]),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-        
-        // 사용자 소모임 카운터 증가
-        await _firebase.usersCollection.doc(userId).update({
-          'groupCount': FieldValue.increment(1),
-        });
+        // 바로 가입 (트랜잭션으로 Race Condition 방지)
+        await TransactionService.joinGroup(
+          groupId: groupId,
+          userId: userId,
+        );
       }
 
       state = const AsyncValue.data(null);
       return true;
     } catch (e, st) {
+      AppLogger.error('GroupProvider', '소모임 가입 오류', e);
       state = AsyncValue.error(e, st);
       return false;
     }
   }
 
-  /// 소모임 탈퇴
+  /// 소모임 탈퇴 (트랜잭션으로 Race Condition 방지)
   Future<bool> leaveGroup(String groupId) async {
     state = const AsyncValue.loading();
 
@@ -275,20 +290,14 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
       final userId = _firebase.currentUserId;
       if (userId == null) throw Exception('로그인이 필요합니다');
 
-      await _firebase.groupsCollection.doc(groupId).update({
-        'memberIds': FieldValue.arrayRemove([userId]),
-        'adminIds': FieldValue.arrayRemove([userId]),
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-      
-      // 사용자 소모임 카운터 감소
-      await _firebase.usersCollection.doc(userId).update({
-        'groupCount': FieldValue.increment(-1),
-      });
-
+      await TransactionService.leaveGroup(
+        groupId: groupId,
+        userId: userId,
+      );
       state = const AsyncValue.data(null);
       return true;
     } catch (e, st) {
+      AppLogger.error('GroupProvider', '소모임 탈퇴 오류', e);
       state = AsyncValue.error(e, st);
       return false;
     }
@@ -313,12 +322,18 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
       await _firebase.groupsCollection.doc(groupId).update({
         'memberIds': FieldValue.arrayRemove([memberId]),
         'adminIds': FieldValue.arrayRemove([memberId]),
-        'updatedAt': FieldValue.serverTimestamp(),
+        'memberCount': FieldValue.increment(-1),
+      });
+      
+      // 강퇴된 사용자의 소모임 카운터 감소
+      await _firebase.usersCollection.doc(memberId).update({
+        'groupCount': FieldValue.increment(-1),
       });
 
       state = const AsyncValue.data(null);
       return true;
     } catch (e, st) {
+      AppLogger.error('GroupProvider', '멤버 강퇴 오류', e);
       state = AsyncValue.error(e, st);
       return false;
     }
@@ -351,33 +366,18 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
 
-  /// 좋아요 토글
+  /// 좋아요 토글 (트랜잭션으로 Race Condition 방지)
   Future<bool> toggleLike(String groupId) async {
     try {
       final userId = _firebase.currentUserId;
       if (userId == null) return false;
 
-      final likeId = '${userId}_$groupId';
-      final likeDoc = await _firebase.groupLikesCollection.doc(likeId).get();
-
-      if (likeDoc.exists) {
-        await _firebase.groupLikesCollection.doc(likeId).delete();
-        await _firebase.groupsCollection.doc(groupId).update({
-          'likeCount': FieldValue.increment(-1),
-        });
-        return false;
-      } else {
-        await _firebase.groupLikesCollection.doc(likeId).set({
-          'userId': userId,
-          'groupId': groupId,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        await _firebase.groupsCollection.doc(groupId).update({
-          'likeCount': FieldValue.increment(1),
-        });
-        return true;
-      }
+      return await TransactionService.toggleGroupLike(
+        groupId: groupId,
+        userId: userId,
+      );
     } catch (e) {
+      AppLogger.error('GroupProvider', '좋아요 토글 오류', e);
       return false;
     }
   }
@@ -385,7 +385,7 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
   /// 가입 신청 승인
   Future<bool> approveJoinRequest(String requestId, String groupId, String userId) async {
     try {
-      await _firebase.joinRequestsCollection.doc(requestId).update({
+      await _firebase.groupJoinRequestsCollection.doc(requestId).update({
         'status': 'approved',
         'respondedAt': FieldValue.serverTimestamp(),
         'respondedBy': _firebase.currentUserId,
@@ -393,7 +393,7 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
 
       await _firebase.groupsCollection.doc(groupId).update({
         'memberIds': FieldValue.arrayUnion([userId]),
-        'updatedAt': FieldValue.serverTimestamp(),
+        'memberCount': FieldValue.increment(1),
       });
       
       // 사용자 소모임 카운터 증가
@@ -403,6 +403,7 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
 
       return true;
     } catch (e) {
+      AppLogger.error('GroupProvider', '가입 신청 승인 오류', e);
       return false;
     }
   }
@@ -410,13 +411,14 @@ class GroupNotifier extends StateNotifier<AsyncValue<void>> {
   /// 가입 신청 거절
   Future<bool> rejectJoinRequest(String requestId) async {
     try {
-      await _firebase.joinRequestsCollection.doc(requestId).update({
+      await _firebase.groupJoinRequestsCollection.doc(requestId).update({
         'status': 'rejected',
         'respondedAt': FieldValue.serverTimestamp(),
         'respondedBy': _firebase.currentUserId,
       });
       return true;
     } catch (e) {
+      AppLogger.error('GroupProvider', '가입 신청 거절 오류', e);
       return false;
     }
   }
@@ -438,10 +440,26 @@ final isGroupLikedProvider = FutureProvider.autoDispose.family<bool, String>((re
   return doc.exists;
 });
 
+/// 현재 사용자의 소모임 가입 신청 상태 확인
+final myJoinRequestStatusProvider = FutureProvider.autoDispose.family<bool, String>((ref, groupId) async {
+  final firebase = FirebaseService();
+  final userId = firebase.currentUserId;
+  if (userId == null) return false;
+
+  final snapshot = await firebase.groupJoinRequestsCollection
+      .where('groupId', isEqualTo: groupId)
+      .where('userId', isEqualTo: userId)
+      .where('status', isEqualTo: 'pending')
+      .limit(1)
+      .get();
+  
+  return snapshot.docs.isNotEmpty;
+});
+
 /// 소모임 가입 신청 목록 (관리자용)
 final groupJoinRequestsProvider = FutureProvider.autoDispose.family<List<GroupJoinRequestModel>, String>((ref, groupId) async {
   final firebase = FirebaseService();
-  final snapshot = await firebase.joinRequestsCollection
+  final snapshot = await firebase.groupJoinRequestsCollection
       .where('groupId', isEqualTo: groupId)
       .where('status', isEqualTo: 'pending')
       .orderBy('createdAt', descending: true)

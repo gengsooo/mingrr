@@ -15,8 +15,8 @@ class SvgAssets {
   SvgAssets._();
   
   // 아이콘
-  static const String logo = 'assets/icons/logo.svg';
-  static const String logoText = 'assets/icons/logo_text.svg';
+  static const String logo = 'assets/icons/mingrr_logo.svg';
+  static const String logoText = 'assets/icons/mingrr_logo.svg';
   static const String mingrrLogo = 'assets/icons/mingrr_logo.svg';
   static const String appIcon = 'assets/icons/app_icon.svg';
   static const String defaultPet = 'assets/icons/default_pet.svg';
@@ -99,7 +99,7 @@ class _MingrrSvgIconState extends State<MingrrSvgIcon> {
       
       if (widget.color != null) {
         // 색상 치환
-        final colorHex = '#${widget.color!.value.toRadixString(16).substring(2).toUpperCase()}';
+        final colorHex = '#${widget.color!.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
         final lightColorHex = _getLighterColor(widget.color!);
         final darkColorHex = _getDarkerColor(widget.color!);
         
@@ -125,13 +125,13 @@ class _MingrrSvgIconState extends State<MingrrSvgIcon> {
   String _getLighterColor(Color color) {
     final hsl = HSLColor.fromColor(color);
     final lighter = hsl.withLightness((hsl.lightness + 0.2).clamp(0.0, 1.0));
-    return '#${lighter.toColor().value.toRadixString(16).substring(2).toUpperCase()}';
+    return '#${lighter.toColor().toARGB32().toRadixString(16).substring(2).toUpperCase()}';
   }
 
   String _getDarkerColor(Color color) {
     final hsl = HSLColor.fromColor(color);
     final darker = hsl.withLightness((hsl.lightness - 0.15).clamp(0.0, 1.0));
-    return '#${darker.toColor().value.toRadixString(16).substring(2).toUpperCase()}';
+    return '#${darker.toColor().toARGB32().toRadixString(16).substring(2).toUpperCase()}';
   }
 
   @override

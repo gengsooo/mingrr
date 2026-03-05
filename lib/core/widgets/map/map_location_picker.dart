@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
+import '../../config/api_config.dart';
+import '../../constants/app_icons.dart';
 import '../../theme/feature_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../constants/app_sizes.dart';
@@ -11,7 +13,6 @@ import '../../services/geocoding_service.dart';
 import '../../services/location_helper.dart';
 import '../common_widgets.dart';
 import '../dialogs/dialogs.dart';
-import '../loading/loading_widgets.dart';
 import '../../utils/app_logger.dart';
 import 'map_loading_widget.dart';
 
@@ -86,8 +87,17 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
 
   @override
   void dispose() {
+    // 1. 타이머 취소
     _addressDebounceTimer?.cancel();
+    _addressDebounceTimer = null;
+    
+    // 3. 지도 컨트롤러 안전하게 정리 (크래시 방지 핵심)
+    // SurfaceView가 dispose된 후 접근하는 것을 방지
+    _mapController = null;
+    
+    // 4. ValueNotifier dispose
     _addressState.dispose();
+    
     super.dispose();
   }
 
@@ -309,7 +319,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
 
   void _showError(String message) {
     if (mounted) {
-      MingrrSnackBar.error(context, message);
+      MingrrSnackBar.warning(context, message);
     }
   }
 
@@ -317,14 +327,10 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
-      appBar: AppBar(
-        title: Text(widget.title),
+      appBar: MingrrAppBar.form(
+        title: widget.title,
+        onClose: () => Navigator.pop(context),
         backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: AppSizes.elevationNone,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: _isInitializing
           ? _buildLoadingView()
@@ -368,6 +374,12 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
       return _buildWebPlaceholder();
     }
     
+    // 카카오맵 SDK 초기화 체크 (안전장치)
+    if (!ApiConfig.isKakaoMapSdkInitialized) {
+      AppLogger.warning('MapLocationPicker', '카카오맵 SDK 미초기화, 대체 UI 표시');
+      return _buildMapUnavailableView();
+    }
+    
     // 위치 정보가 없으면 오류 표시
     if (_initialMapPosition == null) {
       AppLogger.warning('MapLocationPicker', '위치 없음, 오류 화면 표시');
@@ -391,6 +403,44 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
     );
   }
   
+  /// 지도 사용 불가 화면 (SDK 미초기화 시)
+  Widget _buildMapUnavailableView() {
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              AppIcons.mapOutlined,
+              size: 64,
+              color: _accentColor.withValues(alpha: AppOpacity.o50),
+            ),
+            const SizedBox(height: AppSizes.gapL),
+            Text(
+              '지도를 불러올 수 없습니다',
+              style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: AppSizes.gapS),
+            Text(
+              '앱을 다시 시작해주세요',
+              style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: AppSizes.gapL),
+            TextButton.icon(
+              onPressed: () => Navigator.pop(context),
+              icon: Icon(AppIcons.close),
+              label: const Text('돌아가기'),
+              style: TextButton.styleFrom(
+                foregroundColor: _accentColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
   Widget _buildLocationErrorView() {
     return Container(
       color: Theme.of(context).colorScheme.surfaceContainerLow,
@@ -399,7 +449,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.location_off_outlined,
+              AppIcons.locationOff,
               size: 64,
               color: _accentColor.withValues(alpha: AppOpacity.o50),
             ),
@@ -414,7 +464,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                 setState(() => _isInitializing = true);
                 _initializePosition();
               },
-              icon: const Icon(Icons.refresh),
+              icon: Icon(AppIcons.refresh),
               label: const Text('다시 시도'),
               style: TextButton.styleFrom(
                 foregroundColor: _accentColor,
@@ -434,7 +484,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.location_on,
+              AppIcons.location,
               size: 48,
               color: _accentColor,
             ),
@@ -462,7 +512,7 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
         elevation: AppSizes.elevationM,
         onPressed: _goToMyLocation,
         child: Icon(
-          Icons.my_location,
+          AppIcons.myLocation,
           color: _accentColor,
         ),
       ),
@@ -546,7 +596,7 @@ class _AddressPanel extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            Icons.location_on_outlined,
+            AppIcons.locationOutlined,
             size: 20,
             color: accentColor,
           ),

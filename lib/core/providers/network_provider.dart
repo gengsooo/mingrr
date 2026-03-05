@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,7 +15,7 @@ final isConnectedProvider = Provider<bool>((ref) {
   return connectivity.when(
     data: (results) => !results.contains(ConnectivityResult.none),
     loading: () => true, // 로딩 중에는 연결된 것으로 간주
-    error: (_, __) => true, // 에러 시에도 연결된 것으로 간주
+    error: (_, _) => true, // 에러 시에도 연결된 것으로 간주
   );
 });
 

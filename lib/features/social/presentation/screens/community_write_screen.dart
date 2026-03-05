@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/form_strings.dart';
 import '../../../../core/services/firebase_service.dart';
@@ -18,6 +17,7 @@ import '../../../../core/widgets/forms/tag_input.dart';
 import '../../../../models/community_post_model.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 import '../providers/community_provider.dart';
+import '../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 커뮤니티(Community) 게시글 작성 화면
@@ -83,7 +83,7 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: MingrrFormAppBar(
+      appBar: MingrrAppBar.form(
         title: _isEditMode ? ScreenTitles.communityEdit : ScreenTitles.communityWrite,
         onClose: () => Navigator.pop(context),
       ),
@@ -339,7 +339,7 @@ class _CommunityWriteScreenState extends ConsumerState<CommunityWriteScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '${FormStrings.errorGeneral}: $e');
+        ErrorHandler.showError(context, e, tag: 'CommunityWrite', operation: '게시글 등록');
       }
     } finally {
       if (mounted) {

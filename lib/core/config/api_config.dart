@@ -22,6 +22,23 @@ class ApiConfig {
   
   static final FirebaseRemoteConfig _remoteConfig = FirebaseRemoteConfig.instance;
   
+  // ===== Fallback 값 (Remote Config 실패 시 사용) =====
+  // 네이티브 설정(AndroidManifest, Info.plist)과 동일한 값
+  // 클라이언트 SDK 키는 앱 번들에 이미 포함되므로 하드코딩해도 보안상 문제 없음
+  static const String _fallbackKakaoMapKey = 'e80e09aa4db6c1f3d1eedb1be73ee8c6';
+  
+  // SDK 초기화 상태 추적
+  static bool _isKakaoMapSdkInitialized = false;
+  
+  /// 카카오맵 SDK 초기화 여부
+  static bool get isKakaoMapSdkInitialized => _isKakaoMapSdkInitialized;
+  
+  /// 카카오맵 SDK 초기화 상태 설정 (main.dart에서 호출)
+  static void setKakaoMapSdkInitialized(bool value) {
+    _isKakaoMapSdkInitialized = value;
+    AppLogger.debug('ApiConfig', '카카오맵 SDK 초기화 상태: $value');
+  }
+  
   // ===== 초기화 =====
   
   /// Remote Config 초기화 (main.dart에서 호출)
@@ -33,9 +50,9 @@ class ApiConfig {
         minimumFetchInterval: const Duration(hours: 1),
       ));
       
-      // 기본값 설정 (Remote Config에서 가져오기 전 사용)
+      // 기본값 설정 - Fallback 값 사용 (Remote Config 실패 시에도 작동)
       await _remoteConfig.setDefaults(const {
-        'kakao_map_key': '',
+        'kakao_map_key': _fallbackKakaoMapKey,
         'kakao_rest_api_key': '',
         'animal_registration_api_key': '',
       });
@@ -44,11 +61,13 @@ class ApiConfig {
       await _remoteConfig.fetchAndActivate();
       
       AppLogger.info('ApiConfig', 'Remote Config 초기화 완료');
-      AppLogger.debug('ApiConfig', '카카오맵 키 설정됨: ${hasKakaoMapKey}');
-      AppLogger.debug('ApiConfig', '카카오 REST API 키 설정됨: ${hasKakaoRestApiKey}');
-      AppLogger.debug('ApiConfig', '동물등록 API 키 설정됨: ${hasAnimalRegistrationApiKey}');
+      AppLogger.debug('ApiConfig', '카카오맵 키 설정됨: $hasKakaoMapKey');
+      AppLogger.debug('ApiConfig', '카카오맵 키 값: ${kakaoMapKey.substring(0, 8)}...');
+      AppLogger.debug('ApiConfig', '카카오 REST API 키 설정됨: $hasKakaoRestApiKey');
+      AppLogger.debug('ApiConfig', '동물등록 API 키 설정됨: $hasAnimalRegistrationApiKey');
     } catch (e) {
       AppLogger.error('ApiConfig', 'Remote Config 초기화 실패', e);
+      // 실패해도 fallback 값이 기본값으로 설정되어 있으므로 작동함
     }
   }
   

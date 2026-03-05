@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:video_player/video_player.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
-import '../../../../core/widgets/loading/loading_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/sheets/report_sheet.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
@@ -72,11 +71,11 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
 
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: const Text('게시글'),
+      appBar: MingrrAppBar(
+        title: '게시글',
         actions: [
           IconButton(
-            icon: const Icon(Icons.more_vert),
+            icon: const Icon(AppIcons.moreVert),
             onPressed: () => _showMoreOptions(context, postAsync.valueOrNull),
           ),
         ],
@@ -85,7 +84,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
         data: (post) {
           if (post == null) {
             return const MingrrEmptyState(
-              icon: Icons.article_outlined,
+              icon: AppIcons.communityOutlined,
               title: '아직 데이터가 없어요',
               subtitle: '게시글을 찾을 수 없습니다',
             );
@@ -133,7 +132,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
           timeout: AppSizes.loadingTimeout,
           onRetry: () => ref.invalidate(communityPostDetailProvider(widget.postId)),
         ),
-        error: (_, __) => MingrrErrorState(
+        error: (_, _) => MingrrErrorState(
           onRetry: () => ref.invalidate(communityPostDetailProvider(widget.postId)),
         ),
       ),
@@ -155,10 +154,10 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
             onTap: post.isAnonymous ? null : () => _showAuthorProfile(context, post),
             child: Row(
               children: [
-                MingrrAvatar(
+                MingrrImage.avatar(
                   size: 48,
                   imageUrl: post.isAnonymous ? null : post.authorProfileUrl,
-                  placeholderIcon: Icons.person,
+                  icon: AppIcons.profile,
                 ),
                 const SizedBox(width: AppSizes.gapM),
                 Expanded(
@@ -176,7 +175,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: 3),
                           decoration: BoxDecoration(
                             color: accentColor.withValues(alpha: AppOpacity.o10),
-                            borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                            borderRadius: BorderRadius.circular(AppSizes.radiusS),
                           ),
                           child: Text(
                             post.category.label,
@@ -196,7 +195,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               ],
             ),
           ),
-          const SizedBox(height: AppSizes.gapLL),
+          const SizedBox(height: AppSizes.gapL),
 
           // 제목
           if (post.title.isNotEmpty) ...[
@@ -224,7 +223,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
             const SizedBox(height: AppSizes.gapL),
             MingrrImageGallery(
               imageUrls: post.imageUrls,
-              height: 200,
+              height: 250,
               enableViewer: true,
             ),
           ],
@@ -242,7 +241,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
             ),
           ],
 
-          const SizedBox(height: AppSizes.gapLL),
+          const SizedBox(height: AppSizes.gapL),
           const MingrrDivider(),
           const SizedBox(height: AppSizes.gapM),
 
@@ -263,7 +262,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               const SizedBox(width: 24),
               // 댓글
               _buildActionButton(
-                icon: Icons.chat_bubble_outline,
+                icon: AppIcons.chatOutlined,
                 label: '댓글 ${post.commentCount}',
                 color: colorScheme.onSurfaceVariant,
                 onTap: () {
@@ -277,7 +276,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               const Spacer(),
               // 공유
               IconButton(
-                icon: Icon(Icons.share_outlined, color: colorScheme.onSurfaceVariant),
+                icon: Icon(AppIcons.share, color: colorScheme.onSurfaceVariant),
                 onPressed: () => ShareService.sharePost(context, post),
               ),
             ],
@@ -303,9 +302,9 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
           fit: StackFit.expand,
           children: [
             // 썸네일
-            MingrrBackgroundImage(
+            MingrrImage.background(
               imageUrl: thumbnailUrl,
-              borderRadius: AppSizes.radiusS,
+              radius: AppSizes.radiusS,
               placeholder: _buildVideoPlaceholder(colorScheme),
             ),
             // 재생 버튼 오버레이
@@ -318,7 +317,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
-                  Icons.play_arrow,
+                  AppIcons.play,
                   color: Colors.white,
                   size: 40,
                 ),
@@ -332,12 +331,12 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: AppOpacity.o70),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.videocam, color: Colors.white, size: 16),
+                    const Icon(AppIcons.video, color: Colors.white, size: 16),
                     const SizedBox(width: AppSizes.gapXS),
                     Text(
                       '동영상',
@@ -361,7 +360,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
       ),
       child: Center(
         child: Icon(
-          Icons.videocam,
+          AppIcons.video,
           size: 48,
           color: colorScheme.outlineVariant,
         ),
@@ -391,7 +390,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
       child: Row(
         children: [
           Icon(icon, size: 22, color: color),
-          const SizedBox(width: AppSizes.gapSM),
+          const SizedBox(width: AppSizes.gapS),
           Text(label, style: AppTextStyles.bodyMedium(context).copyWith(color: color)),
         ],
       ),
@@ -425,7 +424,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                   child: Center(
                     child: Column(
                       children: [
-                        Icon(Icons.chat_bubble_outline, size: 40, color: colorScheme.outlineVariant),
+                        Icon(AppIcons.chatOutlined, size: 40, color: colorScheme.outlineVariant),
                         const SizedBox(height: AppSizes.gapS),
                         Text(
                           '첫 번째 댓글을 남겨보세요!',
@@ -448,7 +447,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               );
             },
             loading: () => const Center(child: MingrrLoadingIndicator()),
-            error: (_, __) => MingrrErrorState(
+            error: (_, _) => MingrrErrorState(
               onRetry: () => ref.invalidate(communityCommentsProvider(widget.postId)),
             ),
           ),
@@ -480,10 +479,10 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
             children: [
               GestureDetector(
                 onTap: comment.isAnonymous ? null : () => _showCommentAuthorProfile(context, comment),
-                child: MingrrAvatar(
+                child: MingrrImage.avatar(
                   size: 36,
                   imageUrl: comment.isAnonymous ? null : comment.authorProfileUrl,
-                  placeholderIcon: Icons.person,
+                  icon: AppIcons.profile,
                 ),
               ),
               const SizedBox(width: 10),
@@ -498,12 +497,12 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                           style: AppTextStyles.titleSmall(context),
                         ),
                         if (comment.authorId == post.authorId) ...[
-                          const SizedBox(width: AppSizes.gapSM),
+                          const SizedBox(width: AppSizes.gapS),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                             decoration: BoxDecoration(
                               color: accentColor.withValues(alpha: AppOpacity.o10),
-                              borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                              borderRadius: BorderRadius.circular(AppSizes.radiusS),
                             ),
                             child: Text(
                               '작성자',
@@ -518,7 +517,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppSizes.gapSM),
+                    const SizedBox(height: AppSizes.gapS),
                     Text(
                       comment.content,
                       style: AppTextStyles.bodyMedium(context).copyWith(height: 1.4),
@@ -578,10 +577,10 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
         children: [
           GestureDetector(
             onTap: reply.isAnonymous ? null : () => _showCommentAuthorProfile(context, reply),
-            child: MingrrAvatar(
+            child: MingrrImage.avatar(
               size: 28,
               imageUrl: reply.isAnonymous ? null : reply.authorProfileUrl,
-              placeholderIcon: Icons.person,
+              icon: AppIcons.profile,
             ),
           ),
           const SizedBox(width: AppSizes.gapS),
@@ -601,7 +600,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS, vertical: AppSizes.paddingXXS),
                         decoration: BoxDecoration(
                           color: accentColor.withValues(alpha: AppOpacity.o10),
-                          borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Text(
                           '작성자',
@@ -622,7 +621,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                   style: AppTextStyles.bodySmall(context).copyWith(height: 1.4),
                 ),
                 if (isMyComment) ...[
-                  const SizedBox(height: AppSizes.gapSM),
+                  const SizedBox(height: AppSizes.gapS),
                   GestureDetector(
                     onTap: () => _deleteComment(reply, post.id),
                     child: Text(
@@ -657,7 +656,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
               decoration: BoxDecoration(
                 color: accentColor.withValues(alpha: AppOpacity.o10),
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Row(
                 children: [
@@ -668,7 +667,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                   const Spacer(),
                   GestureDetector(
                     onTap: _cancelReply,
-                    child: Icon(Icons.close, size: 16, color: accentColor),
+                    child: Icon(AppIcons.close, size: 16, color: accentColor),
                   ),
                 ],
               ),
@@ -685,13 +684,13 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                   padding: const EdgeInsets.all(AppSizes.paddingS),
                   decoration: BoxDecoration(
                     color: _isAnonymousComment ? accentColor.withValues(alpha: AppOpacity.o10) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     border: Border.all(
                       color: _isAnonymousComment ? accentColor : colorScheme.outline.withValues(alpha: AppOpacity.o30),
                     ),
                   ),
                   child: Icon(
-                    Icons.person_off_outlined,
+                    AppIcons.profileOutlined,
                     size: 20,
                     color: _isAnonymousComment ? accentColor : colorScheme.onSurfaceVariant,
                   ),
@@ -704,7 +703,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusL),
                   ),
                   child: TextField(
                     controller: _commentController,
@@ -729,7 +728,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                     color: accentColor,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.send, size: 20, color: Colors.white),
+                  child: const Icon(AppIcons.send, size: 20, color: Colors.white),
                 ),
               ),
             ],
@@ -769,6 +768,13 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
       _cancelReply();
       ref.invalidate(communityCommentsProvider(widget.postId));
       ref.invalidate(communityPostDetailProvider(widget.postId));
+      if (mounted) {
+        MingrrSnackBar.success(context, '댓글이 등록되었습니다');
+      }
+    } else {
+      if (mounted) {
+        MingrrSnackBar.warning(context, '댓글 등록에 실패했습니다. 다시 시도해주세요.');
+      }
     }
   }
 
@@ -842,79 +848,23 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
   }
 
   /// 게시글 작성자 프로필 바텀시트 표시
-  Future<void> _showAuthorProfile(BuildContext context, CommunityPostModel post) async {
-    await _showUserProfile(context, post.authorId, post.authorName, post.authorProfileUrl);
+  void _showAuthorProfile(BuildContext context, CommunityPostModel post) {
+    _showUserProfile(context, post.authorId, post.authorName, post.authorProfileUrl);
   }
 
   /// 댓글 작성자 프로필 바텀시트 표시
-  Future<void> _showCommentAuthorProfile(BuildContext context, CommunityCommentModel comment) async {
-    await _showUserProfile(context, comment.authorId, comment.authorName, comment.authorProfileUrl);
+  void _showCommentAuthorProfile(BuildContext context, CommunityCommentModel comment) {
+    _showUserProfile(context, comment.authorId, comment.authorName, comment.authorProfileUrl);
   }
 
   /// 사용자 프로필 바텀시트 표시 (공통)
-  Future<void> _showUserProfile(BuildContext context, String userId, String userName, String? profileUrl) async {
-    try {
-      final userDoc = await FirebaseService().usersCollection.doc(userId).get();
-      final userData = userDoc.data();
-      
-      final kkosunnaeScore = (userData?['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0;
-      final isIdentityVerified = userData?['isIdentityVerified'] as bool? ?? false;
-      final isPetVerified = userData?['isPetVerified'] as bool? ?? false;
-      final isLocationVerified = userData?['isLocationVerified'] as bool? ?? false;
-      final genderStr = userData?['gender'] as String?;
-      final age = userData?['age'] as int?;
-      
-      GuardianGender gender = GuardianGender.unknown;
-      if (genderStr == 'male') gender = GuardianGender.male;
-      if (genderStr == 'female') gender = GuardianGender.female;
-      
-      // 반려동물 정보 조회
-      List<GuardianPetInfo> pets = [];
-      final petsSnapshot = await FirebaseService().petsCollection
-          .where('ownerId', isEqualTo: userId)
-          .get();
-      
-      for (final petDoc in petsSnapshot.docs) {
-        final petData = petDoc.data();
-        pets.add(GuardianPetInfo(
-          id: petDoc.id,
-          name: petData['name'] ?? '반려동물',
-          breed: petData['breed'],
-          ageString: petData['age'] != null ? '${petData['age']}살' : null,
-          introduction: petData['introduction'],
-          traits: List<String>.from(petData['traits'] ?? []),
-          photoUrls: List<String>.from(petData['photoUrls'] ?? []),
-          profileImageUrl: petData['profileImageUrl'],
-          likeCount: petData['likeCount'] ?? 0,
-        ));
-      }
-      
-      if (!mounted) return;
-      
-      showGuardianProfileModal(
-        context,
-        guardianId: userId,
-        guardianName: userName,
-        kkosunnaeScore: kkosunnaeScore,
-        profileImageUrl: profileUrl ?? userData?['profileImageUrl'],
-        gender: gender,
-        age: age,
-        isIdentityVerified: isIdentityVerified,
-        isPetVerified: isPetVerified,
-        isLocationVerified: isLocationVerified,
-        pets: pets,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      showGuardianProfileModal(
-        context,
-        guardianId: userId,
-        guardianName: userName,
-        kkosunnaeScore: 50.0,
-        profileImageUrl: profileUrl,
-        pets: [],
-      );
-    }
+  void _showUserProfile(BuildContext context, String userId, String userName, String? profileUrl) {
+    showGuardianProfileFromFirestore(
+      context,
+      userId: userId,
+      fallbackName: userName,
+      fallbackImageUrl: profileUrl,
+    );
   }
 
 }
@@ -979,10 +929,8 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        iconTheme: const IconThemeData(color: Colors.white),
-        title: const Text('동영상', style: TextStyle(color: Colors.white)),
+      appBar: const MingrrAppBar.dark(
+        title: '동영상',
       ),
       body: _hasError
           ? _buildErrorState()
@@ -1003,7 +951,7 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline, color: Colors.white54, size: 64),
+          const Icon(AppIcons.error, color: Colors.white54, size: 64),
           const SizedBox(height: AppSizes.gapL),
           Text(
             '동영상을 재생할 수 없습니다',
@@ -1058,7 +1006,7 @@ class _VideoPlayerScreenState extends State<_VideoPlayerScreen> {
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                  _controller.value.isPlaying ? AppIcons.play : AppIcons.play,
                   color: Colors.white,
                   size: 40,
                 ),

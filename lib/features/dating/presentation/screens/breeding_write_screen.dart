@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -16,6 +17,7 @@ import '../../../../models/breeding_model.dart';
 import '../../../../models/pet_model.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
+import '../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 교배 등록 화면
@@ -78,7 +80,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
 
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: MingrrFormAppBar(
+      appBar: MingrrAppBar.form(
         title: _isEditMode ? ScreenTitles.breedingEdit : ScreenTitles.breedingWrite,
         onClose: () => Navigator.pop(context),
       ),
@@ -192,18 +194,18 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.pets, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
+                      Icon(AppIcons.pet, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
                       const SizedBox(width: AppSizes.gapM),
                       Text('반려동물을 선택해주세요', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
                       const Spacer(),
-                      Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+                      Icon(AppIcons.chevronRight, color: Theme.of(context).colorScheme.outlineVariant),
                     ],
                   ),
                 ),
         );
       },
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.dating, message: '반려동물 정보를 불러오고 있어요'),
-      error: (_, __) => const Text('일시적인 오류가 발생했어요'),
+      error: (_, _) => const Text('일시적인 오류가 발생했어요'),
     );
   }
 
@@ -224,8 +226,8 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
   Widget _buildGenderSelector() {
     final genders = [
       (value: null as String?, label: '무관', icon: null as IconData?),
-      (value: 'male' as String?, label: '남아', icon: Icons.male as IconData?),
-      (value: 'female' as String?, label: '여아', icon: Icons.female as IconData?),
+      (value: 'male' as String?, label: '남아', icon: AppIcons.male as IconData?),
+      (value: 'female' as String?, label: '여아', icon: AppIcons.female as IconData?),
     ];
 
     return MingrrChipSelector<({String? value, String label, IconData? icon})>(
@@ -306,7 +308,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
           child: Row(
             children: [
               Icon(
-                hasPedigree ? Icons.verified : Icons.info_outline,
+                hasPedigree ? AppIcons.verified : AppIcons.info,
                 size: 20,
                 color: hasPedigree ? context.features.dating : colorScheme.onSurfaceVariant,
               ),
@@ -359,7 +361,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
 
       final post = BreedingPostModel(
         id: _isEditMode ? widget.post!.id : const Uuid().v4(),
-        userId: currentUser.uid,
+        authorId: currentUser.uid,
         petId: _selectedPet!.id,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
@@ -390,7 +392,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '${FormStrings.errorGeneral}: $e');
+        ErrorHandler.showError(context, e, tag: 'BreedingWrite', operation: '교배 등록');
       }
     } finally {
       if (mounted) {

@@ -1,14 +1,18 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
+import '../../constants/pet_constants.dart';
 import '../../services/bottom_sheet_stack_manager.dart';
-import '../sheets/mingrr_bottom_sheet.dart';
+import '../../services/firebase_service.dart';
+import '../../services/firestore_service.dart';
 import '../kkosunnae_widgets.dart';
 import '../badges/verification_badge.dart';
+import '../common_widgets.dart';
 import 'pet_profile_modal.dart';
-import '../rating_widgets.dart';
 import 'profile_modal_components.dart';
 import '../badges/info_badge.dart';
-import '../common_widgets.dart';
+import '../../../models/user_model.dart';
 /// ============================================================
 /// 보호자 프로필 모달 (공통 위젯)
 /// 
@@ -34,6 +38,24 @@ enum GuardianGender {
 
   final String label;
   const GuardianGender(this.label);
+
+  /// 문자열에서 GuardianGender 변환
+  static GuardianGender fromString(String? value) {
+    switch (value) {
+      case 'male': return GuardianGender.male;
+      case 'female': return GuardianGender.female;
+      default: return GuardianGender.unknown;
+    }
+  }
+
+  /// UserGender에서 GuardianGender 변환
+  static GuardianGender fromUserGender(UserGender? userGender) {
+    if (userGender == null) return GuardianGender.unknown;
+    switch (userGender) {
+      case UserGender.male: return GuardianGender.male;
+      case UserGender.female: return GuardianGender.female;
+    }
+  }
 }
 
 /// 보호자 프로필 모달 표시 함수
@@ -71,6 +93,205 @@ void showGuardianProfileModal(
   );
 }
 
+/// 보호자 프로필 데이터 (Firestore에서 로드한 전체 데이터)
+class GuardianProfileData {
+  final UserModel user;
+  final List<GuardianPetInfo> pets;
+  final GuardianActivityInfo activityInfo;
+  final GuardianGender gender;
+
+  const GuardianProfileData({
+    required this.user,
+    required this.pets,
+    required this.activityInfo,
+    required this.gender,
+  });
+}
+
+/// Firestore에서 보호자 프로필 데이터를 로드하고 모달을 표시하는 헬퍼 함수
+///
+/// 탭 즉시 로딩 모달을 표시하고, 데이터 로드 완료 후 콘텐츠로 전환합니다.
+/// 에러 발생 시 fallbackName으로 기본 정보를 표시합니다.
+void showGuardianProfileFromFirestore(
+  BuildContext context, {
+  required String userId,
+  String? fallbackName,
+  String? fallbackImageUrl,
+  double fallbackScore = 50.0,
+}) {
+  showStackedProfileModal(
+    context: context,
+    type: BottomSheetType.guardian,
+    id: userId,
+    builder: (sheetContext) => _AsyncGuardianProfileModal(
+      userId: userId,
+      fallbackName: fallbackName ?? '사용자',
+      fallbackImageUrl: fallbackImageUrl,
+      fallbackScore: fallbackScore,
+    ),
+  );
+}
+
+/// 보호자 프로필 메모리 캐시 (TTL 5분)
+class _GuardianProfileCache {
+  static final _GuardianProfileCache _instance = _GuardianProfileCache._();
+  factory _GuardianProfileCache() => _instance;
+  _GuardianProfileCache._();
+
+  static const _ttl = Duration(minutes: 5);
+  final Map<String, _CachedProfile> _cache = {};
+
+  _CachedProfile? get(String userId) {
+    final cached = _cache[userId];
+    if (cached == null) return null;
+    if (DateTime.now().difference(cached.timestamp) > _ttl) {
+      _cache.remove(userId);
+      return null;
+    }
+    return cached;
+  }
+
+  void set(String userId, _CachedProfile profile) {
+    _cache[userId] = profile;
+  }
+}
+
+class _CachedProfile {
+  final UserModel user;
+  final List<GuardianPetInfo> pets;
+  final DateTime timestamp;
+
+  _CachedProfile({
+    required this.user,
+    required this.pets,
+  }) : timestamp = DateTime.now();
+}
+
+/// 비동기 로딩을 지원하는 보호자 프로필 모달
+class _AsyncGuardianProfileModal extends StatefulWidget {
+  final String userId;
+  final String fallbackName;
+  final String? fallbackImageUrl;
+  final double fallbackScore;
+
+  const _AsyncGuardianProfileModal({
+    required this.userId,
+    required this.fallbackName,
+    this.fallbackImageUrl,
+    required this.fallbackScore,
+  });
+
+  @override
+  State<_AsyncGuardianProfileModal> createState() => _AsyncGuardianProfileModalState();
+}
+
+class _AsyncGuardianProfileModalState extends State<_AsyncGuardianProfileModal> {
+  bool _isLoading = true;
+  String _guardianName = '';
+  double _kkosunnaeScore = 50.0;
+  String? _profileImageUrl;
+  GuardianGender _gender = GuardianGender.unknown;
+  int? _age;
+  bool _isIdentityVerified = false;
+  bool _isPetVerified = false;
+  bool _isLocationVerified = false;
+  List<GuardianPetInfo> _pets = [];
+  GuardianActivityInfo? _activityInfo;
+
+  @override
+  void initState() {
+    super.initState();
+    _guardianName = widget.fallbackName;
+    _kkosunnaeScore = widget.fallbackScore;
+    _profileImageUrl = widget.fallbackImageUrl;
+    _loadData();
+  }
+
+  void _applyUserData(UserModel user, List<GuardianPetInfo> pets) {
+    setState(() {
+      _guardianName = user.nickname;
+      _kkosunnaeScore = user.kkosunnaeScore;
+      _profileImageUrl = user.profileImageUrl;
+      _gender = GuardianGender.fromUserGender(user.gender);
+      _age = user.age;
+      _isIdentityVerified = user.isIdentityVerified;
+      _isPetVerified = user.isVerified;
+      _isLocationVerified = user.isLocationVerified;
+      _pets = pets;
+      _activityInfo = GuardianActivityInfo.fromUser(user);
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _loadData() async {
+    try {
+      // 캐시 우선 조회
+      final cached = _GuardianProfileCache().get(widget.userId);
+      if (cached != null && mounted) {
+        _applyUserData(cached.user, cached.pets);
+        return;
+      }
+
+      final user = await FirestoreService().getUser(widget.userId);
+      if (!mounted || user == null) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+
+      final petsSnapshot = await FirebaseService().petsCollection
+          .where('ownerId', isEqualTo: widget.userId)
+          .get();
+
+      final pets = petsSnapshot.docs
+          .map((doc) => GuardianPetInfo.fromFirestoreDoc(doc))
+          .toList();
+
+      // 캐시 저장
+      _GuardianProfileCache().set(widget.userId, _CachedProfile(
+        user: user,
+        pets: pets,
+      ));
+
+      if (!mounted) return;
+      _applyUserData(user, pets);
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return ProfileModalContainer(
+        title: '보호자 정보',
+        body: SizedBox(
+          height: 200,
+          child: Center(
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return GuardianProfileModal(
+      guardianId: widget.userId,
+      guardianName: _guardianName,
+      kkosunnaeScore: _kkosunnaeScore,
+      profileImageUrl: _profileImageUrl,
+      gender: _gender,
+      age: _age,
+      isIdentityVerified: _isIdentityVerified,
+      isPetVerified: _isPetVerified,
+      isLocationVerified: _isLocationVerified,
+      pets: _pets,
+      activityInfo: _activityInfo,
+    );
+  }
+}
+
 /// 보호자의 반려동물 정보
 class GuardianPetInfo {
   final String id;
@@ -94,21 +315,58 @@ class GuardianPetInfo {
     this.introduction,
     this.likeCount = 0,
   });
+
+  /// Firestore 문서에서 GuardianPetInfo 생성
+  factory GuardianPetInfo.fromFirestoreDoc(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return GuardianPetInfo(
+      id: doc.id,
+      name: data['name'] ?? '반려동물',
+      breed: data['breed'],
+      ageString: data['age'] != null ? '${data['age']}살' : null,
+      introduction: data['introduction'],
+      traits: (data['traits'] as List?)?.map((t) => PetTrait.labelFromName(t.toString())).toList() ?? [],
+      photoUrls: List<String>.from(data['photoUrls'] ?? []),
+      profileImageUrl: data['profileImageUrl'],
+      likeCount: data['likeCount'] ?? 0,
+    );
+  }
 }
 
 /// 보호자 활동 정보
 class GuardianActivityInfo {
-  final int walkCount;
-  final int datingCount;
-  final int marketCount;
-  final int groupCount;
+  final int matchCount;      // 데이팅 매칭 성사
+  final int transactionCount; // 거래 완료
+  final int communityCount;   // 커뮤니티 게시글
+  final int groupCount;       // 소모임 참여
 
   const GuardianActivityInfo({
-    this.walkCount = 0,
-    this.datingCount = 0,
-    this.marketCount = 0,
+    this.matchCount = 0,
+    this.transactionCount = 0,
+    this.communityCount = 0,
     this.groupCount = 0,
   });
+
+  /// UserModel에서 활동 정보 생성
+  factory GuardianActivityInfo.fromUser(UserModel user) {
+    return GuardianActivityInfo(
+      matchCount: user.matchCount,
+      transactionCount: user.transactionCount,
+      communityCount: user.postCount,
+      groupCount: user.groupCount,
+    );
+  }
+
+  /// Firestore raw Map에서 활동 정보 생성
+  factory GuardianActivityInfo.fromMap(Map<String, dynamic>? data) {
+    if (data == null) return const GuardianActivityInfo();
+    return GuardianActivityInfo(
+      matchCount: (data['matchCount'] as num?)?.toInt() ?? 0,
+      transactionCount: (data['transactionCount'] as num?)?.toInt() ?? 0,
+      communityCount: (data['postCount'] as num?)?.toInt() ?? 0,
+      groupCount: (data['groupCount'] as num?)?.toInt() ?? 0,
+    );
+  }
 }
 
 /// 보호자 프로필 모달 위젯
@@ -144,7 +402,7 @@ class GuardianProfileModal extends StatelessWidget {
   Widget build(BuildContext context) {
     return ProfileModalContainer(
       title: '보호자 정보',
-      bottomButton: _buildRatingButton(context),
+      // 평가 버튼 제거 - 활동 기반 평가만 허용 (채팅 상세에서 평가)
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -168,32 +426,12 @@ class GuardianProfileModal extends StatelessWidget {
     );
   }
 
-  /// 꼬순내지수 평가 버튼
-  Widget _buildRatingButton(BuildContext context) {
-    return MingrrBottomButtonBar(
-      child: MingrrButton(
-        text: '꼬순내지수 평가하기',
-        icon: Icons.pets,
-        onPressed: () {
-          showRatingModal(
-            context,
-            targetUserId: guardianId,
-            targetName: guardianName,
-          );
-        },
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        textColor: Colors.white,
-        height: 50,
-      ),
-    );
-  }
-
   /// 보호자 기본 정보
   Widget _buildGuardianInfo(BuildContext context) {
     return ProfileModalHeader(
       avatar: ProfileModalAvatar(
         imageUrl: profileImageUrl,
-        fallbackIcon: Icons.person,
+        fallbackIcon: AppIcons.profile,
       ),
       name: guardianName,
       subtitle: KkosunnaeScoreSmall(score: kkosunnaeScore),
@@ -232,7 +470,7 @@ class GuardianProfileModal extends StatelessWidget {
       return ProfileModalSection(
         title: '반려동물',
         content: const MingrrEmptySection(
-          icon: Icons.pets_outlined,
+          icon: AppIcons.petOutlined,
           message: '등록된 반려동물이 없어요',
         ),
       );
@@ -256,7 +494,7 @@ class GuardianProfileModal extends StatelessWidget {
       avatar: ProfileModalAvatar(
         size: 50,
         imageUrl: pet.profileImageUrl,
-        fallbackIcon: Icons.pets,
+        fallbackIcon: AppIcons.pet,
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       ),
       title: pet.name,
@@ -289,6 +527,7 @@ class GuardianProfileModal extends StatelessWidget {
         isPetVerified: isPetVerified,
         isLocationVerified: isLocationVerified,
         pets: pets,
+        activityInfo: activityInfo,
       ),
     );
   }
@@ -303,10 +542,10 @@ class GuardianProfileModal extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              ProfileModalActivityItem(icon: Icons.directions_walk, label: '산책', count: info.walkCount),
-              ProfileModalActivityItem(icon: Icons.favorite, label: '데이팅', count: info.datingCount),
-              ProfileModalActivityItem(icon: Icons.shopping_bag, label: '거래', count: info.marketCount),
-              ProfileModalActivityItem(icon: Icons.groups, label: '소모임', count: info.groupCount),
+              ProfileModalActivityItem(icon: AppIcons.like, label: '데이팅', count: info.matchCount),
+              ProfileModalActivityItem(icon: AppIcons.shoppingBag, label: '거래', count: info.transactionCount),
+              ProfileModalActivityItem(icon: AppIcons.article, label: '커뮤니티', count: info.communityCount),
+              ProfileModalActivityItem(icon: AppIcons.group, label: '소모임', count: info.groupCount, unit: '개'),
             ],
           ),
         ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -7,6 +8,9 @@ import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/badges/svg_icons.dart';
 import '../providers/auth_provider.dart';
+import '../../../../core/utils/error_handler.dart';
+import 'consent_screen.dart';
+import 'sign_up_screen.dart';
 
 /// ============================================================
 /// 로그인 화면
@@ -45,7 +49,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // 에러 메시지 표시
     ref.listen<AuthState>(authNotifierProvider, (previous, next) {
       if (next.error != null) {
-        MingrrSnackBar.error(context, next.error!);
+        // AuthState.error는 이미 사용자 친화적 메시지로 변환됨
+        MingrrSnackBar.error(context, ErrorHandler.getMessage(next.error!));
         authNotifier.clearError();
       }
     });
@@ -188,7 +193,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         MingrrTextField(
           controller: _phoneController,
           hintText: '010-1234-5678',
-          prefixIcon: Icons.phone_android,
+          prefixIcon: AppIcons.phone,
           keyboardType: TextInputType.phone,
           enabled: !_isCodeSent,
         ),
@@ -199,7 +204,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           MingrrTextField(
             controller: _codeController,
             hintText: '인증번호 6자리',
-            prefixIcon: Icons.lock_outline,
+            prefixIcon: AppIcons.lock,
             keyboardType: TextInputType.number,
           ),
         ],
@@ -249,7 +254,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           key: const ValueKey('email_field'),
           controller: _emailController,
           hintText: 'test@mingrr.com',
-          prefixIcon: Icons.email_outlined,
+          prefixIcon: AppIcons.email,
           keyboardType: TextInputType.emailAddress,
         ),
         const SizedBox(height: AppSizes.gapM),
@@ -259,7 +264,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           key: const ValueKey('password_field'),
           controller: _passwordController,
           hintText: '비밀번호',
-          prefixIcon: Icons.lock_outline,
+          prefixIcon: AppIcons.lock,
           obscureText: true,
         ),
         const SizedBox(height: AppSizes.gapL),
@@ -309,7 +314,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         SocialLoginButton.kakao(
           onPressed: authState.isLoading
               ? null
-              : () => authNotifier.signInWithKakao(),
+              : () => _navigateToConsentForSocial('kakao'),
         ),
         const SizedBox(height: AppSizes.gapM),
         
@@ -317,7 +322,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         SocialLoginButton.naver(
           onPressed: authState.isLoading
               ? null
-              : () => authNotifier.signInWithNaver(),
+              : () => _navigateToConsentForSocial('naver'),
         ),
         const SizedBox(height: AppSizes.gapM),
         
@@ -325,7 +330,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         SocialLoginButton.google(
           onPressed: authState.isLoading
               ? null
-              : () => authNotifier.signInWithGoogle(),
+              : () => _navigateToConsentForSocial('google'),
         ),
       ],
     );
@@ -349,7 +354,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final phone = _phoneController.text;
     final validation = Validators.phone(phone);
     if (!validation.isValid) {
-      MingrrSnackBar.error(context, validation.errorMessage!);
+      MingrrSnackBar.warning(context, validation.errorMessage!);
       return;
     }
 
@@ -368,7 +373,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _verifyCode(AuthNotifier authNotifier) {
     final code = _codeController.text.trim();
     if (code.isEmpty || code.length != 6) {
-      MingrrSnackBar.error(context, '6자리 인증번호를 입력해주세요.');
+      MingrrSnackBar.warning(context, '6자리 인증번호를 입력해주세요.');
       return;
     }
 
@@ -376,42 +381,48 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   /// 이메일 로그인
+  /// 로그인 시에는 비밀번호 규칙 검사를 하지 않음 (기존 계정 호환)
+  /// 비밀번호 규칙은 회원가입 시에만 적용
   void _signInWithEmail(AuthNotifier authNotifier) async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     
     final emailValidation = Validators.email(email);
     if (!emailValidation.isValid) {
-      MingrrSnackBar.error(context, emailValidation.errorMessage!);
+      MingrrSnackBar.warning(context, emailValidation.errorMessage!);
       return;
     }
     
-    final passwordValidation = Validators.password(password);
-    if (!passwordValidation.isValid) {
-      MingrrSnackBar.error(context, passwordValidation.errorMessage!);
+    // 로그인 시에는 비밀번호 입력 여부만 확인 (규칙 검사 X)
+    if (password.isEmpty) {
+      MingrrSnackBar.warning(context, '비밀번호를 입력해주세요');
       return;
     }
     
     authNotifier.signInWithEmail(email, password);
   }
 
-  /// 이메일 회원가입
-  void _signUpWithEmail(AuthNotifier authNotifier) async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-    
-    final emailValidation = Validators.email(email);
-    if (!emailValidation.isValid) {
-      MingrrSnackBar.error(context, emailValidation.errorMessage!);
-      return;
+  /// 이메일 회원가입 - 회원가입 화면으로 이동
+  void _signUpWithEmail(AuthNotifier authNotifier) {
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const SignUpScreen(),
+        ),
+      );
     }
-    
-    final passwordValidation = Validators.password(password);
-    if (!passwordValidation.isValid) {
-      MingrrSnackBar.error(context, passwordValidation.errorMessage!);
-      return;
-    }
-    
-    authNotifier.signUpWithEmail(email, password);
+  }
+  
+  /// 소셜 로그인 - 동의 화면으로 이동
+  void _navigateToConsentForSocial(String provider) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ConsentScreen(
+          socialProvider: provider,
+        ),
+      ),
+    );
   }
 }

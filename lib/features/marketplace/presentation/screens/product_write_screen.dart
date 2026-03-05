@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -52,7 +53,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
   final _descriptionController = TextEditingController();
   
   late ProductType _selectedType;
-  ProductCategory? _selectedCategory;
+  ProductCategory? _selectedCategory = ProductCategory.food;
   final List<XFile> _selectedImages = [];
   final List<String> _existingImageUrls = [];
   bool _isLoading = false;
@@ -108,7 +109,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
 
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: MingrrFormAppBar(
+      appBar: MingrrAppBar.form(
         title: _isEditMode ? ScreenTitles.productEdit : ScreenTitles.productWrite,
         onClose: () => Navigator.pop(context),
       ),
@@ -123,11 +124,11 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
               const MingrrSectionLabel(FormStrings.labelType),
               Row(
                 children: [
-                  _buildTypeButton(ProductType.sell, '판매', Icons.sell),
+                  _buildTypeButton(ProductType.sell, '판매', AppIcons.sell),
                   const SizedBox(width: AppSizes.gapS),
-                  _buildTypeButton(ProductType.share, '나눔', Icons.volunteer_activism),
+                  _buildTypeButton(ProductType.share, '나눔', AppIcons.gift),
                   const SizedBox(width: AppSizes.gapS),
-                  _buildTypeButton(ProductType.job, '알바', Icons.work_outline),
+                  _buildTypeButton(ProductType.job, '알바', AppIcons.work),
                 ],
               ),
               const SizedBox(height: AppSizes.gapXL),
@@ -285,7 +286,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 18, color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant),
-              const SizedBox(width: AppSizes.gapSM),
+              const SizedBox(width: AppSizes.gapS),
               Text(
                 label,
                 style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600).withColor(
@@ -429,11 +430,11 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.pets, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
+                      Icon(AppIcons.pet, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
                       const SizedBox(width: AppSizes.gapM),
                       Text('반려동물 추가', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
                       const Spacer(),
-                      Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+                      Icon(AppIcons.chevronRight, color: Theme.of(context).colorScheme.outlineVariant),
                     ],
                   ),
                 ),
@@ -454,18 +455,18 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.pets, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
+                Icon(AppIcons.pet, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
                 const SizedBox(width: AppSizes.gapM),
                 Text('반려동물을 선택해주세요', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
                 const Spacer(),
-                Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+                Icon(AppIcons.chevronRight, color: Theme.of(context).colorScheme.outlineVariant),
               ],
             ),
           ),
         );
       },
       loading: () => const MingrrLoadingState(type: MingrrLoadingType.market, message: '카테고리를 불러오고 있어요'),
-      error: (_, __) => const Text('일시적인 오류가 발생했어요'),
+      error: (_, _) => const Text('일시적인 오류가 발생했어요'),
     );
   }
 
@@ -497,7 +498,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
               padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
               decoration: BoxDecoration(
                 color: isSelected ? context.features.market.withValues(alpha: AppOpacity.o10) : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 border: Border.all(
                   color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
                 ),

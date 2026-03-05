@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 import '../models/location_model.dart';
 import '../utils/app_logger.dart';
@@ -54,7 +53,7 @@ class LocationHelper {
     
     AppLogger.debug('Location', '========================================');
     AppLogger.debug('Location', 'getCurrentLocation 시작 (호출 #$callId)');
-    AppLogger.debug('Location', '용도: $purpose, 캐시 유효시간: ${cacheMinutes}분');
+    AppLogger.debug('Location', '용도: $purpose, 캐시 유효시간: $cacheMinutes분');
     AppLogger.debug('Location', '시작 시간: $startTime');
     AppLogger.debug('Location', '========================================');
     
@@ -153,7 +152,7 @@ class LocationHelper {
       
       // 4. [2단계] medium 정확도로 GPS 요청
       onProgress?.call(LocationProgress.gettingGpsMedium);
-      AppLogger.debug('Location', ' [#$callId] [2단계] medium 정확도 GPS 요청 (타임아웃: ${_mediumTimeoutSeconds}초)...');
+      AppLogger.debug('Location', ' [#$callId] [2단계] medium 정확도 GPS 요청 (타임아웃: $_mediumTimeoutSeconds초)...');
       
       final mediumResult = await _requestPosition(
         callId: callId,
@@ -170,7 +169,7 @@ class LocationHelper {
       
       // 5. [3단계] low 정확도로 GPS 요청 (네트워크 기반)
       onProgress?.call(LocationProgress.gettingGpsLow);
-      AppLogger.debug('Location', ' [#$callId] [3단계] low 정확도 GPS 요청 (타임아웃: ${_lowTimeoutSeconds}초)...');
+      AppLogger.debug('Location', ' [#$callId] [3단계] low 정확도 GPS 요청 (타임아웃: $_lowTimeoutSeconds초)...');
       
       final lowResult = await _requestPosition(
         callId: callId,

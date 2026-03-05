@@ -5,6 +5,9 @@ import '../../../../core/providers/block_provider.dart';
 import '../../../../core/providers/paginated_provider.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/kkosunnae_service.dart';
+import '../../../../core/services/transaction_service.dart';
+import '../../../../core/utils/app_logger.dart';
+import '../../../../core/utils/input_sanitizer.dart';
 import '../../../../models/community_post_model.dart';
 
 /// ============================================================
@@ -117,14 +120,18 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
       final now = DateTime.now();
       final docRef = _firebase.feedPostsCollection.doc();
       
+      // 입력 정화 (XSS/Injection 방지)
+      final sanitizedTitle = InputSanitizer.sanitizePostTitle(title);
+      final sanitizedContent = InputSanitizer.sanitizePostContent(content);
+      
       final post = CommunityPostModel(
         id: docRef.id,
         authorId: userId,
         authorName: userData?['nickname'] ?? '사용자',
         authorProfileUrl: userData?['profileImageUrl'],
         category: category,
-        title: title,
-        content: content,
+        title: sanitizedTitle,
+        content: sanitizedContent,
         imageUrls: imageUrls,
         videoUrl: videoUrl,
         videoThumbnailUrl: videoThumbnailUrl,
@@ -167,9 +174,13 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
     state = const AsyncValue.loading();
     
     try {
+      // 입력 정화 (XSS/Injection 방지)
+      final sanitizedTitle = InputSanitizer.sanitizePostTitle(title);
+      final sanitizedContent = InputSanitizer.sanitizePostContent(content);
+      
       final updateData = <String, dynamic>{
-        'title': title,
-        'content': content,
+        'title': sanitizedTitle,
+        'content': sanitizedContent,
         'updatedAt': Timestamp.now(),
       };
       
@@ -229,35 +240,18 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
     }
   }
   
-  /// 좋아요 토글
+  /// 좋아요 토글 (트랜잭션으로 Race Condition 방지)
   Future<bool> toggleLike(String postId) async {
     try {
       final userId = _firebase.currentUserId;
       if (userId == null) return false;
       
-      final likeId = '${userId}_$postId';
-      final likeDoc = await _firebase.feedLikesCollection.doc(likeId).get();
-      
-      if (likeDoc.exists) {
-        // 좋아요 취소
-        await _firebase.feedLikesCollection.doc(likeId).delete();
-        await _firebase.feedPostsCollection.doc(postId).update({
-          'likeCount': FieldValue.increment(-1),
-        });
-        return false;
-      } else {
-        // 좋아요 추가
-        await _firebase.feedLikesCollection.doc(likeId).set({
-          'userId': userId,
-          'postId': postId,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-        await _firebase.feedPostsCollection.doc(postId).update({
-          'likeCount': FieldValue.increment(1),
-        });
-        return true;
-      }
+      return await TransactionService.togglePostLike(
+        postId: postId,
+        userId: userId,
+      );
     } catch (e) {
+      AppLogger.error('CommunityProvider', '좋아요 토글 오류', e);
       return false;
     }
   }
@@ -271,7 +265,7 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
     } catch (_) {}
   }
   
-  /// 댓글 작성
+  /// 댓글 작성 (트랜잭션으로 원자적 처리)
   Future<String?> createComment({
     required String postId,
     required String content,
@@ -285,48 +279,37 @@ class CommunityNotifier extends StateNotifier<AsyncValue<void>> {
       final userDoc = await _firebase.usersCollection.doc(userId).get();
       final userData = userDoc.data();
       
-      final docRef = _firebase.feedCommentsCollection.doc();
-      
-      final comment = CommunityCommentModel(
-        id: docRef.id,
+      // TransactionService로 댓글 생성 + 카운터 증가 원자적 처리
+      final commentId = await TransactionService.addComment(
         postId: postId,
         authorId: userId,
-        authorName: userData?['nickname'] ?? '사용자',
-        authorProfileUrl: userData?['profileImageUrl'],
         content: content,
+        authorName: userData?['nickname'],
+        authorProfileUrl: userData?['profileImageUrl'],
         parentId: parentId,
         isAnonymous: isAnonymous,
-        createdAt: DateTime.now(),
       );
-      
-      await docRef.set(comment.toFirestore());
-      
-      // 게시글 댓글 수 증가
-      await _firebase.feedPostsCollection.doc(postId).update({
-        'commentCount': FieldValue.increment(1),
-      });
       
       // 꼬순내 점수 업데이트 (커뮤니티 활동 반영)
       KkosunnaeService.updateScore(userId);
       
-      return docRef.id;
+      return commentId;
     } catch (e) {
+      AppLogger.error('CommunityProvider', '댓글 작성 오류', e);
       return null;
     }
   }
   
-  /// 댓글 삭제
+  /// 댓글 삭제 (트랜잭션으로 Race Condition 방지)
   Future<bool> deleteComment(String commentId, String postId) async {
     try {
-      await _firebase.feedCommentsCollection.doc(commentId).delete();
-      
-      // 게시글 댓글 수 감소
-      await _firebase.feedPostsCollection.doc(postId).update({
-        'commentCount': FieldValue.increment(-1),
-      });
-      
+      await TransactionService.deleteComment(
+        commentId: commentId,
+        postId: postId,
+      );
       return true;
     } catch (e) {
+      AppLogger.error('CommunityProvider', '댓글 삭제 오류', e);
       return false;
     }
   }

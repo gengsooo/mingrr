@@ -1,142 +1,18 @@
-<svg width="300" height="300" viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- 밍그르르 스플래시 로고 - 여러 강아지와 사람들이 함께 산책하는 모습 -->
-  <defs>
-    <linearGradient id="splashBgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#FFE082"/>
-      <stop offset="50%" style="stop-color:#FFD54F"/>
-      <stop offset="100%" style="stop-color:#FFC107"/>
-    </linearGradient>
-    <!-- 원 밖으로 나가는 부분 클리핑 -->
-    <clipPath id="circleClip">
-      <circle cx="150" cy="150" r="145"/>
-    </clipPath>
-  </defs>
+<svg width="1152" height="1152" viewBox="0 0 1152 1152" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 
+    밍그르르 스플래시 로고 - 심플하고 선명한 디자인
+    발바닥 아이콘만 (원래 디자인)
+  -->
   
-  <!-- 배경 원 -->
-  <circle cx="150" cy="150" r="145" fill="url(#splashBgGradient)"/>
-  
-  <!-- 클리핑 적용된 콘텐츠 그룹 -->
-  <g clip-path="url(#circleClip)">
+  <!-- 발바닥 아이콘 (중앙 배치) -->
+  <g transform="translate(576, 576)">
+    <!-- 메인 패드 (하트 모양) -->
+    <path d="M0 240 Q-170 140 -170 0 Q-170 -85 -85 -85 Q0 -85 0 0 Q0 -85 85 -85 Q170 -85 170 0 Q170 140 0 240 Z" fill="white"/>
     
-    <!-- 장식 요소들 (구름) -->
-    <ellipse cx="70" cy="50" rx="18" ry="10" fill="white" opacity="0.4"/>
-    <ellipse cx="85" cy="45" rx="14" ry="8" fill="white" opacity="0.4"/>
-    <ellipse cx="220" cy="55" rx="16" ry="9" fill="white" opacity="0.4"/>
-    <ellipse cx="235" cy="50" rx="12" ry="7" fill="white" opacity="0.4"/>
-    
-    <!-- 하트들 (사람과 강아지 사이 유대감) -->
-    <path d="M150 65 C145 60 140 65 145 73 L150 80 L155 73 C160 65 155 60 150 65 Z" fill="white" opacity="0.6"/>
-    <path d="M90 80 C87 77 84 80 87 85 L90 89 L93 85 C96 80 93 77 90 80 Z" fill="white" opacity="0.4"/>
-    <path d="M210 75 C207 72 204 75 207 80 L210 84 L213 80 C216 75 213 72 210 75 Z" fill="white" opacity="0.4"/>
-    
-    <!-- 바닥 (잔디/길) -->
-    <ellipse cx="150" cy="235" rx="100" ry="15" fill="white" opacity="0.25"/>
-    
-    <!-- ===== 사람 1 (왼쪽) ===== -->
-    <g transform="translate(55, 100) scale(0.5)">
-      <circle cx="100" cy="115" r="18" fill="white"/>
-      <path d="M87 131 Q85 150 87 172 L113 172 Q115 150 113 131 Z" fill="white"/>
-      <path d="M87 140 Q75 148 72 160" stroke="white" stroke-width="7" stroke-linecap="round" fill="none"/>
-      <path d="M113 140 Q125 148 128 160" stroke="white" stroke-width="7" stroke-linecap="round" fill="none"/>
-      <path d="M92 172 Q90 185 87 198" stroke="white" stroke-width="9" stroke-linecap="round" fill="none"/>
-      <path d="M108 172 Q110 185 113 198" stroke="white" stroke-width="9" stroke-linecap="round" fill="none"/>
-      <circle cx="94" cy="112" r="2" fill="#FFD54F"/>
-      <circle cx="106" cy="112" r="2" fill="#FFD54F"/>
-      <path d="M96 119 Q100 123 104 119" stroke="#FFD54F" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-    </g>
-    
-    <!-- ===== 강아지 1 (왼쪽, 작은 강아지) ===== -->
-    <g transform="translate(35, 145) scale(0.35)">
-      <ellipse cx="200" cy="185" rx="26" ry="18" fill="white"/>
-      <circle cx="213" cy="165" r="16" fill="white"/>
-      <path d="M200 155 Q198 143 204 150 Q207 146 207 155 Z" fill="white"/>
-      <path d="M224 152 Q228 140 232 147 Q235 143 228 155 Z" fill="white"/>
-      <path d="M174 180 Q166 172 168 163" stroke="white" stroke-width="6" stroke-linecap="round" fill="none"/>
-      <path d="M188 198 Q186 208 184 216" stroke="white" stroke-width="6" stroke-linecap="round" fill="none"/>
-      <path d="M198 200 Q198 210 198 218" stroke="white" stroke-width="6" stroke-linecap="round" fill="none"/>
-      <path d="M210 200 Q210 210 209 218" stroke="white" stroke-width="6" stroke-linecap="round" fill="none"/>
-      <path d="M220 196 Q226 206 229 214" stroke="white" stroke-width="6" stroke-linecap="round" fill="none"/>
-      <circle cx="207" cy="162" r="2" fill="#FFD54F"/>
-      <circle cx="218" cy="162" r="2" fill="#FFD54F"/>
-      <ellipse cx="213" cy="170" rx="3" ry="2.5" fill="#FFD54F"/>
-    </g>
-    
-    <!-- ===== 사람 2 (중앙) - 메인 ===== -->
-    <g transform="translate(100, 90) scale(0.6)">
-      <circle cx="100" cy="115" r="20" fill="white"/>
-      <path d="M80 108 Q84 97 100 92 Q116 97 120 108 Q112 102 100 100 Q88 102 80 108 Z" fill="white" opacity="0.8"/>
-      <path d="M86 133 Q82 155 86 182 L114 182 Q118 155 114 133 Z" fill="white"/>
-      <path d="M86 142 Q73 150 70 165" stroke="white" stroke-width="9" stroke-linecap="round" fill="none"/>
-      <path d="M114 142 Q127 150 130 165" stroke="white" stroke-width="9" stroke-linecap="round" fill="none"/>
-      <path d="M91 182 Q88 198 85 215" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
-      <path d="M109 182 Q112 198 115 215" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
-      <circle cx="93" cy="112" r="2.5" fill="#FFD54F"/>
-      <circle cx="107" cy="112" r="2.5" fill="#FFD54F"/>
-      <path d="M95 120 Q100 125 105 120" stroke="#FFD54F" stroke-width="2" fill="none" stroke-linecap="round"/>
-    </g>
-    
-    <!-- ===== 강아지 2 (중앙, 큰 강아지) ===== -->
-    <g transform="translate(130, 115) scale(0.5)">
-      <ellipse cx="200" cy="185" rx="30" ry="22" fill="white"/>
-      <circle cx="216" cy="160" r="20" fill="white"/>
-      <path d="M200 148 Q197 132 205 140 Q209 135 209 148 Z" fill="white"/>
-      <path d="M230 145 Q235 130 240 138 Q244 133 238 148 Z" fill="white"/>
-      <path d="M170 180 Q158 168 161 156" stroke="white" stroke-width="8" stroke-linecap="round" fill="none"/>
-      <path d="M186 200 Q182 213 178 224" stroke="white" stroke-width="8" stroke-linecap="round" fill="none"/>
-      <path d="M198 202 Q198 215 198 226" stroke="white" stroke-width="8" stroke-linecap="round" fill="none"/>
-      <path d="M212 202 Q212 215 210 226" stroke="white" stroke-width="8" stroke-linecap="round" fill="none"/>
-      <path d="M224 198 Q232 211 236 222" stroke="white" stroke-width="8" stroke-linecap="round" fill="none"/>
-      <circle cx="209" cy="156" r="2.5" fill="#FFD54F"/>
-      <circle cx="222" cy="156" r="2.5" fill="#FFD54F"/>
-      <ellipse cx="216" cy="167" rx="4" ry="3" fill="#FFD54F"/>
-      <path d="M210 173 Q216 178 222 173" stroke="#FFD54F" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-      <ellipse cx="216" cy="178" rx="3" ry="3.5" fill="#FFAB91" opacity="0.8"/>
-    </g>
-    
-    <!-- ===== 사람 3 (오른쪽) ===== -->
-    <g transform="translate(175, 105) scale(0.5)">
-      <circle cx="100" cy="115" r="18" fill="white"/>
-      <path d="M87 131 Q85 150 87 172 L113 172 Q115 150 113 131 Z" fill="white"/>
-      <path d="M87 140 Q75 148 72 160" stroke="white" stroke-width="7" stroke-linecap="round" fill="none"/>
-      <path d="M113 140 Q125 148 128 160" stroke="white" stroke-width="7" stroke-linecap="round" fill="none"/>
-      <path d="M92 172 Q90 185 87 198" stroke="white" stroke-width="9" stroke-linecap="round" fill="none"/>
-      <path d="M108 172 Q110 185 113 198" stroke="white" stroke-width="9" stroke-linecap="round" fill="none"/>
-      <circle cx="94" cy="112" r="2" fill="#FFD54F"/>
-      <circle cx="106" cy="112" r="2" fill="#FFD54F"/>
-      <path d="M96 119 Q100 123 104 119" stroke="#FFD54F" stroke-width="1.8" fill="none" stroke-linecap="round"/>
-    </g>
-    
-    <!-- ===== 강아지 3 (오른쪽, 작은 강아지) ===== -->
-    <g transform="translate(195, 150) scale(0.35)">
-      <ellipse cx="200" cy="185" rx="26" ry="18" fill="white"/>
-      <circle cx="213" cy="165" r="16" fill="white"/>
-      <path d="M200 155 Q198 143 204 150 Q207 146 207 155 Z" fill="white"/>
-      <path d="M224 152 Q228 140 232 147 Q235 143 228 155 Z" fill="white"/>
-      <path d="M174 180 Q166 172 168 163" stroke="white" stroke-width="6" stroke-linecap="round" fill="none"/>
-      <path d="M188 198 Q186 208 184 216" stroke="white" stroke-width="6" stroke-linecap="round" fill="none"/>
-      <path d="M198 200 Q198 210 198 218" stroke="white" stroke-width="6" stroke-linecap="round" fill="none"/>
-      <path d="M210 200 Q210 210 209 218" stroke="white" stroke-width="6" stroke-linecap="round" fill="none"/>
-      <path d="M220 196 Q226 206 229 214" stroke="white" stroke-width="6" stroke-linecap="round" fill="none"/>
-      <circle cx="207" cy="162" r="2" fill="#FFD54F"/>
-      <circle cx="218" cy="162" r="2" fill="#FFD54F"/>
-      <ellipse cx="213" cy="170" rx="3" ry="2.5" fill="#FFD54F"/>
-    </g>
-    
-    <!-- 리드줄들 (점선) -->
-    <path d="M100 165 Q90 175 80 180" stroke="white" stroke-width="2" fill="none" stroke-dasharray="4,3" opacity="0.6"/>
-    <path d="M175 175 Q190 185 200 180" stroke="white" stroke-width="2" fill="none" stroke-dasharray="4,3" opacity="0.6"/>
-    <path d="M230 170 Q240 180 250 175" stroke="white" stroke-width="2" fill="none" stroke-dasharray="4,3" opacity="0.6"/>
-    
-    <!-- 발자국들 (걸어온 길) -->
-    <ellipse cx="55" cy="235" rx="4" ry="2.5" fill="white" opacity="0.25"/>
-    <circle cx="52" cy="232" r="1.2" fill="white" opacity="0.25"/>
-    <circle cx="55" cy="230" r="1.2" fill="white" opacity="0.25"/>
-    <circle cx="58" cy="232" r="1.2" fill="white" opacity="0.25"/>
-    
-    <ellipse cx="245" cy="235" rx="4" ry="2.5" fill="white" opacity="0.25"/>
-    <circle cx="242" cy="232" r="1.2" fill="white" opacity="0.25"/>
-    <circle cx="245" cy="230" r="1.2" fill="white" opacity="0.25"/>
-    <circle cx="248" cy="232" r="1.2" fill="white" opacity="0.25"/>
-    
+    <!-- 발가락 패드들 -->
+    <ellipse cx="-235" cy="-125" rx="75" ry="85" fill="white"/>
+    <ellipse cx="-85" cy="-225" rx="75" ry="85" fill="white"/>
+    <ellipse cx="85" cy="-225" rx="75" ry="85" fill="white"/>
+    <ellipse cx="235" cy="-125" rx="75" ry="85" fill="white"/>
   </g>
 </svg>

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/location_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/cards/product_card.dart';
@@ -11,13 +13,16 @@ import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../core/widgets/navigation/appbar_actions.dart';
 import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
+import '../../../../core/widgets/empty_states/location_required_empty_state.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../../core/providers/refresh_notifier.dart';
+import '../../../../core/providers/location_verification_provider.dart';
 import '../providers/marketplace_provider.dart';
 import 'product_detail_screen.dart';
 import 'product_write_screen.dart';
 import 'job_detail_screen.dart';
 import '../../../../core/utils/responsive_utils.dart';
+import '../../../../core/utils/format_utils.dart';
 
 /// ============================================================
 /// 마켓플레이스 화면
@@ -35,8 +40,8 @@ final _selectedTabProvider = StateProvider<int>((ref) => 0);
 /// 선택된 카테고리 인덱스
 final _selectedCategoryProvider = StateProvider<int>((ref) => 0);
 
-/// 거리 필터
-final _distanceFilterProvider = StateProvider<double>((ref) => 3.0);
+/// 거리 필터 - 기본값 5km
+final _distanceFilterProvider = StateProvider<double>((ref) => LocationConstants.defaultRadiusKm);
 
 class MarketplaceScreen extends ConsumerStatefulWidget {
   const MarketplaceScreen({super.key});
@@ -99,9 +104,9 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
 
     // 탭 정의 (판매 / 나눔 / 알바)
     final tabs = [
-      MingrrTabItem(label: '판매', icon: Icons.sell, color: context.features.market),
-      MingrrTabItem(label: '나눔', icon: Icons.volunteer_activism, color: context.features.market),
-      MingrrTabItem(label: '알바', icon: Icons.work_outline, color: context.features.market),
+      MingrrTabItem(label: '판매', icon: AppIcons.sell, color: context.features.market),
+      MingrrTabItem(label: '나눔', icon: AppIcons.gift, color: context.features.market),
+      MingrrTabItem(label: '알바', icon: AppIcons.work, color: context.features.market),
     ];
 
     // 카테고리 정의 (탭에 따라 다름)
@@ -131,8 +136,8 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     
     return Scaffold(
       backgroundColor: isDark ? colorScheme.surface : context.features.marketContainer,
-      appBar: AppBar(
-        title: const Text('마켓'),
+      appBar: MingrrAppBar.mainTab(
+        title: '마켓',
         actions: [
           AppBarActionButton.search(
             onTap: () {
@@ -169,6 +174,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
           LocationDistanceBar(
             accentColor: context.features.market,
             currentDistance: distanceFilter,
+            distanceOptions: LocationConstants.marketDistanceOptions,
             onDistanceChanged: (distance) {
               ref.read(_distanceFilterProvider.notifier).state = distance;
             },
@@ -187,9 +193,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
           
           // 상품/알바 목록
           Expanded(
-            child: selectedTab == 2
-                ? _buildJobList(context)
-                : _buildProductList(context, selectedTab == 0 ? ProductType.sell : ProductType.share),
+            child: _buildContent(context, selectedTab, distanceFilter),
           ),
         ],
       ),
@@ -199,6 +203,29 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
         tooltip: '상품/알바 등록',
       ),
     );
+  }
+
+  /// 탭별 컨텐츠 (위치 인증 상태 확인)
+  Widget _buildContent(BuildContext context, int selectedTab, double distanceFilter) {
+    // 위치 인증 상태 확인
+    final userAsync = ref.watch(currentUserStreamProvider);
+    final user = userAsync.valueOrNull;
+    final isLocationVerified = user?.isLocationVerified ?? false;
+    
+    // 위치 미인증 시 빈 화면 표시
+    if (!isLocationVerified) {
+      return LocationRequiredEmptyState(
+        type: LocationRequiredType.market,
+        accentColor: context.features.market,
+      );
+    }
+    
+    // 탭별 컨텐츠
+    if (selectedTab == 2) {
+      return _buildJobList(context);
+    } else {
+      return _buildProductList(context, selectedTab == 0 ? ProductType.sell : ProductType.share);
+    }
   }
 
   /// 상품 목록 (Firebase 연동 + 거리 필터링 + 페이지네이션)
@@ -228,7 +255,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     // 빈 상태
     if (paginatedState.isEmpty) {
       return MingrrEmptyState(
-        icon: type == ProductType.sell ? Icons.sell : Icons.volunteer_activism,
+        icon: type == ProductType.sell ? AppIcons.sell : AppIcons.gift,
         title: '아직 데이터가 없어요',
         subtitle: '거리를 늘리거나 다른 카테고리를 확인해보세요',
         accentColor: context.features.market,
@@ -348,7 +375,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     // 빈 상태
     if (paginatedState.isEmpty) {
       return MingrrEmptyState(
-        icon: Icons.work_outline,
+        icon: AppIcons.work,
         title: '아직 데이터가 없어요',
         subtitle: '새로운 알바를 등록해보세요',
         accentColor: context.features.market,
@@ -411,9 +438,9 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
 
 /// 마켓 글쓰기 종류
 enum MarketWriteType {
-  sell('판매', Icons.sell),
-  share('나눔', Icons.volunteer_activism),
-  job('알바', Icons.work_outline);
+  sell('판매', AppIcons.sell),
+  share('나눔', AppIcons.gift),
+  job('알바', AppIcons.work);
 
   final String label;
   final IconData icon;
@@ -454,10 +481,6 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
     _selectedType = MarketWriteType.values[widget.initialType.clamp(0, 2)];
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.month}/${date.day}';
-  }
-
   Future<void> _selectDate(bool isStart) async {
     final now = DateTime.now();
     final initialDate = isStart 
@@ -478,7 +501,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
               onSurface: Colors.black87,
               surfaceContainerHighest: Colors.white,
             ),
-            dialogBackgroundColor: Colors.white,
+            dialogTheme: const DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );
@@ -505,7 +528,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
       height: ResponsiveUtils.heightPercent(context, 0.9),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusXL)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusL)),
       ),
       child: Column(
         children: [
@@ -516,7 +539,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
             child: Row(
               children: [
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: const Icon(AppIcons.close),
                   onPressed: () => Navigator.pop(context),
                 ),
                 Expanded(
@@ -568,7 +591,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                                   size: 18,
                                   color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
-                                const SizedBox(width: AppSizes.gapSM),
+                                const SizedBox(width: AppSizes.gapS),
                                 Text(
                                   type.label,
                                   style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600).withColor(
@@ -624,7 +647,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.camera_alt, color: Theme.of(context).colorScheme.outlineVariant),
+                    Icon(AppIcons.camera, color: Theme.of(context).colorScheme.outlineVariant),
                     const SizedBox(height: AppSizes.gapXS),
                     Text('0/10', style: AppTextStyles.captionSmall(context)),
                   ],
@@ -647,7 +670,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
           const MingrrTextField(
             labelText: '가격',
             hintText: '가격을 입력해주세요',
-            prefixIcon: Icons.attach_money,
+            prefixIcon: AppIcons.sell,
             keyboardType: TextInputType.number,
           ),
           const SizedBox(height: AppSizes.gapL),
@@ -728,7 +751,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   child: Row(
                     children: [
                       Icon(
-                        Icons.calendar_today, 
+                        AppIcons.calendar, 
                         size: 18, 
                         color: _startDate != null 
                             ? context.features.market 
@@ -736,7 +759,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                       ),
                       const SizedBox(width: AppSizes.gapS),
                       Text(
-                        _startDate != null ? _formatDate(_startDate!) : '시작일',
+                        _startDate != null ? formatShortDate(_startDate!) : '시작일',
                         style: TextStyle(
                           color: _startDate != null 
                               ? Theme.of(context).colorScheme.onSurface 
@@ -768,7 +791,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   child: Row(
                     children: [
                       Icon(
-                        Icons.calendar_today, 
+                        AppIcons.calendar, 
                         size: 18, 
                         color: _endDate != null 
                             ? context.features.market 
@@ -776,7 +799,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                       ),
                       const SizedBox(width: AppSizes.gapS),
                       Text(
-                        _endDate != null ? _formatDate(_endDate!) : '종료일',
+                        _endDate != null ? formatShortDate(_endDate!) : '종료일',
                         style: TextStyle(
                           color: _endDate != null 
                               ? Theme.of(context).colorScheme.onSurface 
@@ -808,7 +831,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.pets, size: 20, color: context.features.market),
+                  Icon(AppIcons.pet, size: 20, color: context.features.market),
                   const SizedBox(width: AppSizes.gapS),
                   Expanded(
                     child: Column(
@@ -827,7 +850,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   ),
                   GestureDetector(
                     onTap: () => setState(() => _selectedPets.removeAt(index)),
-                    child: Icon(Icons.close, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
+                    child: Icon(AppIcons.close, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
                   ),
                 ],
               ),
@@ -846,7 +869,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.add, size: 20, color: context.features.market),
+                Icon(AppIcons.add, size: 20, color: context.features.market),
                 const SizedBox(width: AppSizes.gapS),
                 Text(
                   '반려동물 추가',
@@ -873,7 +896,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
                   decoration: BoxDecoration(
                     color: isSelected ? context.features.market.withValues(alpha: AppOpacity.o10) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                     border: Border.all(
                       color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
                     ),
@@ -898,7 +921,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
               : _payType == JobPayType.hourly 
                   ? '시급을 입력해주세요'
                   : '일급을 입력해주세요',
-          prefixIcon: Icons.attach_money,
+          prefixIcon: AppIcons.sell,
           keyboardType: TextInputType.number,
         ),
         const SizedBox(height: AppSizes.gapL),
@@ -982,7 +1005,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                           color: Theme.of(context).colorScheme.outline,
                           borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
-                        child: Icon(Icons.pets, color: Theme.of(context).colorScheme.outlineVariant),
+                        child: Icon(AppIcons.pet, color: Theme.of(context).colorScheme.outlineVariant),
                       ),
                       const SizedBox(width: AppSizes.gapM),
                       Expanded(
@@ -1011,7 +1034,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                         ),
                       ),
                       if (isAlreadySelected)
-                        Icon(Icons.check_circle, color: context.features.market, size: 20),
+                        Icon(AppIcons.success, color: context.features.market, size: 20),
                     ],
                   ),
                 ),

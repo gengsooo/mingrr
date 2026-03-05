@@ -2,10 +2,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../providers/auth_provider.dart';
+import '../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 이메일 인증 대기 화면
@@ -52,12 +54,9 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('이메일 인증'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: _showLogoutConfirm,
-        ),
+      appBar: MingrrAppBar(
+        title: '이메일 인증',
+        onLeadingPressed: _showLogoutConfirm,
       ),
       body: SafeArea(
         child: Padding(
@@ -75,7 +74,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.mark_email_unread_outlined,
+                  AppIcons.email,
                   size: 50,
                   color: colorScheme.primary,
                 ),
@@ -111,7 +110,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.email_outlined, color: colorScheme.primary),
+                    Icon(AppIcons.email, color: colorScheme.primary),
                     const SizedBox(width: AppSizes.gapS),
                     Flexible(
                       child: Text(
@@ -137,7 +136,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
               // 재발송 버튼
               MingrrButton(
                 text: _resendCooldown > 0 
-                    ? '재발송 (${_resendCooldown}초)' 
+                    ? '재발송 ($_resendCooldown초)' 
                     : '인증 메일 재발송',
                 isLoading: _isResending,
                 isOutlined: true,
@@ -191,7 +190,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
       }
     } catch (e) {
       if (!silent && mounted) {
-        MingrrSnackBar.error(context, '인증 확인 중 오류가 발생했습니다');
+        ErrorHandler.showError(context, e, tag: 'EmailVerification', operation: '인증 확인');
       }
     } finally {
       if (mounted) {
@@ -216,7 +215,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, e.toString().replaceAll('Exception: ', ''));
+        ErrorHandler.showError(context, e, tag: 'EmailVerification', operation: '인증 메일 재발송');
       }
     } finally {
       if (mounted) {

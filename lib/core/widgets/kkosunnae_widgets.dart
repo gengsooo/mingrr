@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../constants/app_icons.dart';
+import '../services/firebase_service.dart';
 import '../services/kkosunnae_service.dart';
 import '../constants/app_sizes.dart';
 import '../theme/app_text_styles.dart';
@@ -78,7 +80,7 @@ class _KkosunaeMasterBadgeSmall extends StatelessWidget {
       ),
       child: Center(
         child: Icon(
-          Icons.pets,
+          AppIcons.pet,
           size: size * 0.6,
           color: Colors.white,
         ),
@@ -118,7 +120,7 @@ class KkosunnaeScoreMedium extends StatelessWidget {
           children: [
             // 발바닥 게이지 아이콘
             _buildPawIcon(score, 20),
-            const SizedBox(width: AppSizes.gapSM),
+            const SizedBox(width: AppSizes.gapS),
             // 꼬순내지수 라벨
             Text(
               '꼬순내지수',
@@ -139,7 +141,7 @@ class KkosunnaeScoreMedium extends StatelessWidget {
             const SizedBox(width: AppSizes.gapXS),
             // 클릭 가능 표시 아이콘
             Icon(
-              Icons.help_outline,
+              AppIcons.help,
               size: 14,
               color: Theme.of(context).colorScheme.outlineVariant,
             ),
@@ -194,7 +196,7 @@ class KkosunnaeScoreLarge extends StatelessWidget {
             Container(
               height: 8,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 gradient: const LinearGradient(
                   colors: [
                     Colors.blue,
@@ -213,7 +215,7 @@ class KkosunnaeScoreLarge extends StatelessWidget {
                       height: 8,
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
                       ),
                     ),
@@ -245,7 +247,7 @@ Widget _buildPawIcon(double score, double size) {
       children: [
         // 배경 (회색 발바닥)
         Icon(
-          Icons.pets,
+          AppIcons.pet,
           size: size,
           color: Colors.grey.withValues(alpha: AppOpacity.o30),
         ),
@@ -253,7 +255,7 @@ Widget _buildPawIcon(double score, double size) {
         ClipRect(
           clipper: _PawClipper(fillPercent),
           child: Icon(
-            Icons.pets,
+            AppIcons.pet,
             size: size,
             color: color,
           ),
@@ -298,8 +300,8 @@ String _getScoreDescription(double score) {
 // ============================================================
 
 /// 꼬순내지수 상세 바텀시트 표시
-void showKkosunnaeDetailSheet(BuildContext context, {String? userId}) {
-  showModalBottomSheet(
+Future<void> showKkosunnaeDetailSheet(BuildContext context, {String? userId}) {
+  return showModalBottomSheet(
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
@@ -373,6 +375,15 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
         _result = result;
         _isLoading = false;
       });
+
+      // Firestore 캐시 갱신 (Write-through) - 본인 점수만 갱신
+      // Security Rules 보호: 다른 사용자 문서는 write 불가
+      final currentUid = FirebaseAuth.instance.currentUser?.uid;
+      if (currentUid != null && targetUserId == currentUid) {
+        FirebaseService().usersCollection.doc(targetUserId).update({
+          'kkosunnaeScore': result.totalScore.toDouble(),
+        }).catchError((_) {});
+      }
     } catch (e) {
       setState(() {
         _error = '점수를 불러올 수 없습니다';
@@ -435,7 +446,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
                 // 점수 상세 섹션
                 _buildScoreDetailSection(breakdown),
                 
-                const SizedBox(height: AppSizes.gapLL),
+                const SizedBox(height: AppSizes.gapL),
                 
                 // 등급 안내 섹션
                 _buildGradeGuideSection(score),
@@ -474,7 +485,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _buildPawIcon(score.toDouble(), 36),
-              const SizedBox(width: AppSizes.gapMS),
+              const SizedBox(width: AppSizes.gapM),
               Text(
                 '${score.toInt()}점',
                 style: AppTextStyles.displayMedium(context).withColor(scoreColor),
@@ -492,7 +503,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
                 ),
               ),
               if (showBadge) ...[
-                const SizedBox(width: AppSizes.gapSM),
+                const SizedBox(width: AppSizes.gapS),
                 _KkosunaeMasterBadgeSmall(size: 18),
               ],
             ],
@@ -563,12 +574,12 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
             padding: const EdgeInsets.all(AppSizes.paddingS),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+              borderRadius: BorderRadius.circular(AppSizes.radiusS),
             ),
             child: Row(
               children: [
                 Icon(
-                  Icons.info_outline,
+                  AppIcons.info,
                   size: 14,
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
@@ -608,7 +619,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
       ),
       child: Row(
         children: [
-          Icon(Icons.pets, size: 16, color: color),
+          Icon(AppIcons.pet, size: 16, color: color),
           const SizedBox(width: AppSizes.gapS),
           SizedBox(
             width: 65,
@@ -632,7 +643,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
               decoration: BoxDecoration(
                 color: color,
-                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
                 '현재',
@@ -706,9 +717,9 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
               ),
             ],
           ),
-          const SizedBox(height: AppSizes.gapSM),
+          const SizedBox(height: AppSizes.gapS),
           ClipRRect(
-            borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
             child: LinearProgressIndicator(
               value: percentage.clamp(0.0, 1.0),
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
@@ -722,7 +733,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
-                  Icons.lightbulb_outline,
+                  AppIcons.lightbulb,
                   size: 12,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),

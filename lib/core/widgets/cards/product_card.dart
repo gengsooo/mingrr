@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../theme/feature_colors.dart';
 import '../../theme/app_text_styles.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/location_constants.dart';
 import '../../../models/marketplace_model.dart';
 import '../common_widgets.dart';
-import '../mingrr_image.dart';
-import '../badges/distance_badge.dart';
 
 /// ============================================================
 /// 상품 카드 컴포넌트
@@ -57,7 +56,7 @@ class ProductCard extends StatelessWidget {
                       : '${product.address ?? LocationConstants.noLocationText} · ${_formatTime(product.createdAt)}',
                   style: AppTextStyles.captionSmall(context),
                 ),
-                const SizedBox(height: AppSizes.gapSM),
+                const SizedBox(height: AppSizes.gapS),
                 Text(
                   product.priceString,
                   style: AppTextStyles.titleLarge(context).copyWith(
@@ -75,20 +74,12 @@ class ProductCard extends StatelessWidget {
   }
 
   Widget _buildImage(BuildContext context) {
-    return MingrrBackgroundImage(
+    return MingrrImage.background(
       imageUrl: product.imageUrls.isNotEmpty ? product.imageUrls.first : null,
       width: 100,
       height: 100,
-      borderRadius: AppSizes.radiusM,
-      placeholder: Container(
-        decoration: BoxDecoration(
-          color: context.features.marketContainer,
-          borderRadius: BorderRadius.circular(AppSizes.radiusM),
-        ),
-        child: Center(
-          child: Icon(Icons.image, size: 40, color: context.features.market),
-        ),
-      ),
+      radius: AppSizes.radiusM,
+      accentColor: context.features.market,
       child: Stack(
         children: [
           if (product.status == ProductStatus.reserved)
@@ -99,7 +90,7 @@ class ProductCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Text(
                   '예약중',
@@ -115,7 +106,7 @@ class ProductCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Text(
                   '거래완료',
@@ -135,7 +126,7 @@ class ProductCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
           decoration: BoxDecoration(
             color: context.features.market.withValues(alpha: AppOpacity.o10),
-            borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -152,12 +143,12 @@ class ProductCard extends StatelessWidget {
         const Spacer(),
         Row(
           children: [
-            Icon(Icons.bookmark_border, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(AppIcons.bookmarkOutlined, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(width: 2),
             Text('${product.likeCount}',
                 style: AppTextStyles.captionSmall(context)),
             const SizedBox(width: AppSizes.gapS),
-            Icon(Icons.chat_bubble_outline, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(AppIcons.chatBubbleOutlined, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(width: 2),
             Text('${product.chatCount}',
                 style: AppTextStyles.captionSmall(context)),
@@ -224,12 +215,12 @@ class JobCard extends StatelessWidget {
                       : '${job.address ?? '위치 미설정'} · ${_formatTime(job.createdAt)}',
                   style: AppTextStyles.captionSmall(context),
                 ),
-                const SizedBox(height: AppSizes.gapSM),
+                const SizedBox(height: AppSizes.gapS),
 
                 // 3줄: 기간 (없으면 '기간 정보 없음')
                 Row(
                   children: [
-                    Icon(Icons.calendar_today, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                    Icon(AppIcons.calendar, size: 14, color: Theme.of(context).colorScheme.onSurfaceVariant),
                     const SizedBox(width: AppSizes.gapXS),
                     Expanded(
                       child: Text(
@@ -242,7 +233,7 @@ class JobCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppSizes.gapSM),
+                const SizedBox(height: AppSizes.gapS),
 
                 // 4줄: 가격 + 카테고리 + 채팅
                 _buildFooter(context),
@@ -256,20 +247,12 @@ class JobCard extends StatelessWidget {
 
   /// 좌측 이미지 영역 (썸네일 이미지 + 상태 배지)
   Widget _buildImage(BuildContext context) {
-    return MingrrBackgroundImage(
+    return MingrrImage.background(
       imageUrl: job.imageUrls.isNotEmpty ? job.imageUrls.first : null,
       width: 100,
       height: 100,
-      borderRadius: AppSizes.radiusM,
-      placeholder: Container(
-        decoration: BoxDecoration(
-          color: context.features.marketContainer,
-          borderRadius: BorderRadius.circular(AppSizes.radiusM),
-        ),
-        child: Center(
-          child: Icon(Icons.image, size: 40, color: context.features.market),
-        ),
-      ),
+      radius: AppSizes.radiusM,
+      accentColor: context.features.market,
       child: Stack(
         children: [
           // 좌상단: 모집중 배지
@@ -281,7 +264,7 @@ class JobCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                 decoration: BoxDecoration(
                   color: context.features.success,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Text(
                   '모집중',
@@ -301,7 +284,7 @@ class JobCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Text(
                   '예약중',
@@ -318,7 +301,7 @@ class JobCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Text(
                   '완료',
@@ -340,7 +323,7 @@ class JobCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
           decoration: BoxDecoration(
             color: context.features.market.withValues(alpha: AppOpacity.o10),
-            borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -364,7 +347,7 @@ class JobCard extends StatelessWidget {
         // 채팅수
         Row(
           children: [
-            Icon(Icons.chat_bubble_outline, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(AppIcons.chatBubbleOutlined, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(width: 2),
             Text('${job.chatCount}', style: AppTextStyles.captionSmall(context)),
           ],
@@ -383,17 +366,3 @@ class JobCard extends StatelessWidget {
   }
 }
 
-/// 알바 카드 가격 표시 위젯 (별도 줄)
-class _JobPriceRow extends StatelessWidget {
-  final JobModel job;
-  
-  const _JobPriceRow({required this.job});
-  
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      job.priceString,
-      style: AppTextStyles.titleLarge(context).copyWith(color: context.features.market),
-    );
-  }
-}

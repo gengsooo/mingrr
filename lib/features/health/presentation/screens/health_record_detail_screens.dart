@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
+import '../../../../core/utils/format_utils.dart';
 
 /// ============================================================
 /// 건강수첩 상세 화면 모음
@@ -21,15 +23,15 @@ class WeightRecordDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: const Text('체중 기록'),
+      appBar: MingrrAppBar(
+        title: '체중 기록',
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_outlined),
+            icon: const Icon(AppIcons.editOutlined),
             onPressed: () => _showEditDialog(context),
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            icon: Icon(AppIcons.deleteOutlined, color: Theme.of(context).colorScheme.error),
             onPressed: () => _confirmDelete(context),
           ),
         ],
@@ -67,7 +69,7 @@ class WeightRecordDetailScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppSizes.gapLL),
+                  const SizedBox(height: AppSizes.gapL),
                   
                   // 변화량
                   Row(
@@ -75,12 +77,12 @@ class WeightRecordDetailScreen extends StatelessWidget {
                     children: [
                       Icon(
                         record.change > 0
-                            ? Icons.arrow_upward
+                            ? AppIcons.arrowUp
                             : record.change < 0
-                                ? Icons.arrow_downward
-                                : Icons.remove,
+                                ? AppIcons.arrowDown
+                                : AppIcons.more,
                         color: record.change > 0
-                            ? Colors.red
+                            ? Theme.of(context).colorScheme.error
                             : record.change < 0
                                 ? context.features.success
                                 : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -91,7 +93,7 @@ class WeightRecordDetailScreen extends StatelessWidget {
                         '${record.change > 0 ? '+' : ''}${record.change}kg',
                         style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600).withColor(
                           record.change > 0
-                              ? Colors.red
+                              ? Theme.of(context).colorScheme.error
                               : record.change < 0
                                   ? context.features.success
                                   : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -106,13 +108,13 @@ class WeightRecordDetailScreen extends StatelessWidget {
                     ],
                   ),
                   
-                  const SizedBox(height: AppSizes.gapLL),
+                  const SizedBox(height: AppSizes.gapL),
                   const MingrrDivider(),
                   const SizedBox(height: AppSizes.gapM),
                   
                   // 날짜/시간
-                  _buildInfoRow(context, '측정일', _formatDate(record.date)),
-                  _buildInfoRow(context, '측정 시간', _formatTime(record.date)),
+                  _buildInfoRow(context, '측정일', formatDateKorean(record.date)),
+                  _buildInfoRow(context, '측정 시간', formatTime(record.date)),
                   _buildInfoRow(context, '반려동물', record.petName),
                 ],
               ),
@@ -186,7 +188,7 @@ class WeightRecordDetailScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        Icon(AppIcons.note, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppSizes.gapS),
                         Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
@@ -224,14 +226,6 @@ class WeightRecordDetailScreen extends StatelessWidget {
     final diff = (record.weight - record.targetWeight).abs();
     if (diff < 0.5) return 1.0;
     return (1 - diff / 5).clamp(0.0, 1.0);
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.year}년 ${date.month}월 ${date.day}일';
-  }
-
-  String _formatTime(DateTime date) {
-    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
   void _showEditDialog(BuildContext context) {
@@ -272,153 +266,6 @@ class WeightRecord {
   });
 }
 
-// ===== 그루밍 기록 상세 화면 =====
-class GroomingRecordDetailScreen extends StatelessWidget {
-  final GroomingRecord record;
-
-  const GroomingRecordDetailScreen({super.key, required this.record});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: const Text('그루밍 기록'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
-            onPressed: () => _confirmDelete(context),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSizes.paddingL),
-        child: Column(
-          children: [
-            MingrrCard(
-              margin: EdgeInsets.zero,
-              child: Column(
-                children: [
-                  // 그루밍 타입 아이콘
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: context.features.health.withValues(alpha: AppOpacity.o10),
-                      borderRadius: BorderRadius.circular(AppSizes.radiusL),
-                    ),
-                    child: Icon(record.type.icon, size: 40, color: context.features.health),
-                  ),
-                  const SizedBox(height: AppSizes.gapL),
-                  Text(
-                    record.type.label,
-                    style: AppTextStyles.headlineMedium(context).copyWith(fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: AppSizes.gapLL),
-                  const MingrrDivider(),
-                  const SizedBox(height: AppSizes.gapM),
-                  _buildInfoRow(context, '날짜', _formatDate(record.date)),
-                  _buildInfoRow(context, '장소', record.location),
-                  _buildInfoRow(context, '반려동물', record.petName),
-                  if (record.cost != null)
-                    _buildInfoRow(context, '비용', '${record.cost!.toStringAsFixed(0)}원'),
-                ],
-              ),
-            ),
-            
-            if (record.memo != null && record.memo!.isNotEmpty) ...[
-              const SizedBox(height: AppSizes.gapL),
-              MingrrCard(
-                margin: EdgeInsets.zero,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
-                        const SizedBox(width: AppSizes.gapS),
-                        Text('메모', style: AppTextStyles.headlineSmall(context)),
-                      ],
-                    ),
-                    const SizedBox(height: AppSizes.gapM),
-                    Text(record.memo!, style: AppTextStyles.bodyMedium(context).copyWith(height: 1.5)),
-                  ],
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(BuildContext context, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingXS),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: AppTextStyles.bodySmall(context)),
-          Text(value, style: AppTextStyles.labelLarge(context)),
-        ],
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.year}년 ${date.month}월 ${date.day}일';
-  }
-
-  void _confirmDelete(BuildContext context) {
-    showConfirmSheet(
-      context,
-      type: ConfirmSheetType.healthRecordDelete,
-      message: '이 그루밍 기록을 삭제하시겠습니까?\n삭제된 기록은 복구할 수 없습니다.',
-      onConfirm: () {
-        Navigator.pop(context);
-        MingrrSnackBar.success(context, '기록이 삭제되었습니다');
-      },
-    );
-  }
-}
-
-/// 그루밍 타입
-enum _LocalGroomingType {
-  shower('샤워', Icons.shower_outlined),
-  brushing('빗질', Icons.brush_outlined),
-  nailTrim('발톱정리', Icons.content_cut),
-  haircut('이발', Icons.cut_outlined),
-  earCleaning('귀청소', Icons.hearing_outlined),
-  tearStain('눈물자국', Icons.visibility_outlined),
-  analGland('항문낭', Icons.circle_outlined),
-  pawCare('발바닥', Icons.pets);
-
-  final String label;
-  final IconData icon;
-  const _LocalGroomingType(this.label, this.icon);
-}
-
-/// 그루밍 기록 모델
-class GroomingRecord {
-  final String id;
-  final DateTime date;
-  final _LocalGroomingType type;
-  final String location;
-  final String petName;
-  final double? cost;
-  final String? memo;
-
-  const GroomingRecord({
-    required this.id,
-    required this.date,
-    required this.type,
-    required this.location,
-    required this.petName,
-    this.cost,
-    this.memo,
-  });
-}
-
 // ===== 예방접종 기록 상세 화면 =====
 class VaccinationRecordDetailScreen extends StatelessWidget {
   final VaccinationRecord record;
@@ -429,11 +276,11 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: const Text('예방접종 기록'),
+      appBar: MingrrAppBar(
+        title: '예방접종 기록',
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            icon: Icon(AppIcons.deleteOutlined, color: Theme.of(context).colorScheme.error),
             onPressed: () => _confirmDelete(context),
           ),
         ],
@@ -453,7 +300,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                       color: context.features.health.withValues(alpha: AppOpacity.o10),
                       borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     ),
-                    child: Icon(Icons.vaccines_outlined, size: 40, color: context.features.health),
+                    child: Icon(AppIcons.vaccination, size: 40, color: context.features.health),
                   ),
                   const SizedBox(height: AppSizes.gapL),
                   Text(
@@ -476,15 +323,15 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: AppSizes.gapLL),
+                  const SizedBox(height: AppSizes.gapL),
                   const MingrrDivider(),
                   const SizedBox(height: AppSizes.gapM),
-                  _buildInfoRow(context, '접종일', _formatDate(record.date)),
+                  _buildInfoRow(context, '접종일', formatDateKorean(record.date)),
                   _buildInfoRow(context, '병원', record.hospital),
                   _buildInfoRow(context, '담당 수의사', record.veterinarian ?? '-'),
                   _buildInfoRow(context, '반려동물', record.petName),
                   if (record.nextDate != null)
-                    _buildInfoRow(context, '다음 접종일', _formatDate(record.nextDate!)),
+                    _buildInfoRow(context, '다음 접종일', formatDateKorean(record.nextDate!)),
                 ],
               ),
             ),
@@ -504,7 +351,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppSizes.radiusS),
                       ),
                       child: const Center(
-                        child: Icon(Icons.notifications_outlined, color: Colors.orange),
+                        child: Icon(AppIcons.notification, color: Colors.orange),
                       ),
                     ),
                     const SizedBox(width: AppSizes.gapM),
@@ -525,12 +372,15 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                     ),
                     Switch(
                       value: true,
-                      onChanged: (value) {},
-                      activeColor: Colors.white,
+                      onChanged: (value) {
+                        // TODO: 알림 기능 구현 시 연동
+                      },
+                      activeThumbColor: Colors.white,
                       activeTrackColor: context.features.health,
-                      inactiveThumbColor: Colors.white,
-                      inactiveTrackColor: Theme.of(context).colorScheme.outlineVariant,
-                      trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+                      // 다크모드에서 OFF 상태 thumb이 track과 구분되도록 설정
+                      inactiveThumbColor: Theme.of(context).colorScheme.outline,
+                      inactiveTrackColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                      trackOutlineColor: WidgetStateProperty.all(Theme.of(context).colorScheme.outline),
                     ),
                   ],
                 ),
@@ -546,7 +396,7 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        Icon(AppIcons.note, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppSizes.gapS),
                         Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
@@ -574,10 +424,6 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.year}년 ${date.month}월 ${date.day}일';
   }
 
   String _getRemainingDays(DateTime date) {
@@ -635,11 +481,11 @@ class CheckupRecordDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: const Text('검진 기록'),
+      appBar: MingrrAppBar(
+        title: '검진 기록',
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            icon: Icon(AppIcons.deleteOutlined, color: Theme.of(context).colorScheme.error),
             onPressed: () => _confirmDelete(context),
           ),
         ],
@@ -659,17 +505,17 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                       color: context.features.health.withValues(alpha: AppOpacity.o10),
                       borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     ),
-                    child: Icon(Icons.local_hospital_outlined, size: 40, color: context.features.health),
+                    child: Icon(AppIcons.checkup, size: 40, color: context.features.health),
                   ),
                   const SizedBox(height: AppSizes.gapL),
                   Text(
                     record.checkupType,
                     style: AppTextStyles.headlineMedium(context).copyWith(fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: AppSizes.gapLL),
+                  const SizedBox(height: AppSizes.gapL),
                   const MingrrDivider(),
                   const SizedBox(height: AppSizes.gapM),
-                  _buildInfoRow(context, '검진일', _formatDate(record.date)),
+                  _buildInfoRow(context, '검진일', formatDateKorean(record.date)),
                   _buildInfoRow(context, '병원', record.hospital),
                   _buildInfoRow(context, '담당 수의사', record.veterinarian ?? '-'),
                   _buildInfoRow(context, '반려동물', record.petName),
@@ -734,7 +580,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingXS),
                       child: Row(
                         children: [
-                          Icon(Icons.check_circle, color: context.features.success, size: 18),
+                          Icon(AppIcons.success, color: context.features.success, size: 18),
                           const SizedBox(width: AppSizes.gapS),
                           Text(item, style: AppTextStyles.bodyMedium(context)),
                         ],
@@ -754,7 +600,7 @@ class CheckupRecordDetailScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        Icon(AppIcons.note, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppSizes.gapS),
                         Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
@@ -784,20 +630,16 @@ class CheckupRecordDetailScreen extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.year}년 ${date.month}월 ${date.day}일';
-  }
-
   Color _getResultColor(BuildContext context, String result) {
     if (result.contains('정상') || result.contains('양호')) return context.features.success;
-    if (result.contains('주의') || result.contains('관찰')) return Colors.orange;
-    return Colors.red;
+    if (result.contains('주의') || result.contains('관찰')) return Theme.of(context).colorScheme.tertiary;
+    return Theme.of(context).colorScheme.error;
   }
 
   IconData _getResultIcon(String result) {
-    if (result.contains('정상') || result.contains('양호')) return Icons.check_circle;
-    if (result.contains('주의') || result.contains('관찰')) return Icons.warning;
-    return Icons.error;
+    if (result.contains('정상') || result.contains('양호')) return AppIcons.checkCircle;
+    if (result.contains('주의') || result.contains('관찰')) return AppIcons.warning;
+    return AppIcons.error;
   }
 
   void _confirmDelete(BuildContext context) {
@@ -850,11 +692,11 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: const Text('치아 관리 기록'),
+      appBar: MingrrAppBar(
+        title: '치아 관리 기록',
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            icon: Icon(AppIcons.deleteOutlined, color: Theme.of(context).colorScheme.error),
             onPressed: () => _confirmDelete(context),
           ),
         ],
@@ -874,17 +716,17 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
                       color: context.features.health.withValues(alpha: AppOpacity.o10),
                       borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     ),
-                    child: Icon(Icons.clean_hands_outlined, size: 40, color: context.features.health),
+                    child: Icon(AppIcons.teethBrushing, size: 40, color: context.features.health),
                   ),
                   const SizedBox(height: AppSizes.gapL),
                   Text(
                     record.careType,
                     style: AppTextStyles.headlineMedium(context).copyWith(fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: AppSizes.gapLL),
+                  const SizedBox(height: AppSizes.gapL),
                   const MingrrDivider(),
                   const SizedBox(height: AppSizes.gapM),
-                  _buildInfoRow(context, '날짜', _formatDate(record.date)),
+                  _buildInfoRow(context, '날짜', formatDateKorean(record.date)),
                   _buildInfoRow(context, '장소', record.location),
                   _buildInfoRow(context, '반려동물', record.petName),
                   if (record.cost != null)
@@ -923,7 +765,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.note_outlined, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                        Icon(AppIcons.description, size: 20, color: Theme.of(context).colorScheme.onSurfaceVariant),
                         const SizedBox(width: AppSizes.gapS),
                         Text('메모', style: AppTextStyles.headlineSmall(context)),
                       ],
@@ -954,7 +796,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
   }
 
   Widget _buildConditionBar(BuildContext context, String label, int level) {
-    final colors = [context.features.success, context.features.success, Colors.orange, Colors.orange, Colors.red];
+    final colors = [context.features.success, context.features.success, Theme.of(context).colorScheme.tertiary, Theme.of(context).colorScheme.tertiary, Theme.of(context).colorScheme.error];
     final labels = ['매우 좋음', '좋음', '보통', '주의', '나쁨'];
     
     return Row(
@@ -972,7 +814,7 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
                   margin: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXXS),
                   decoration: BoxDecoration(
                     color: index < level ? colors[level - 1] : Theme.of(context).colorScheme.outline,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   ),
                 ),
               );
@@ -986,10 +828,6 @@ class TeethCareRecordDetailScreen extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.year}년 ${date.month}월 ${date.day}일';
   }
 
   void _confirmDelete(BuildContext context) {
@@ -1042,11 +880,11 @@ class SpecialRecordDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: AppBar(
-        title: const Text('특이사항 기록'),
+      appBar: MingrrAppBar(
+        title: '특이사항 기록',
         actions: [
           IconButton(
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            icon: Icon(AppIcons.deleteOutlined, color: Theme.of(context).colorScheme.error),
             onPressed: () => _confirmDelete(context),
           ),
         ],
@@ -1089,7 +927,7 @@ class SpecialRecordDetailScreen extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
                               decoration: BoxDecoration(
                                 color: _getCategoryColor(context, record.category).withValues(alpha: AppOpacity.o10),
-                                borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                                borderRadius: BorderRadius.circular(AppSizes.radiusS),
                               ),
                               child: Text(
                                 record.category,
@@ -1103,10 +941,10 @@ class SpecialRecordDetailScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSizes.gapLL),
+                  const SizedBox(height: AppSizes.gapL),
                   const MingrrDivider(),
                   const SizedBox(height: AppSizes.gapM),
-                  _buildInfoRow(context, '날짜', _formatDate(record.date)),
+                  _buildInfoRow(context, '날짜', formatDateKorean(record.date)),
                   _buildInfoRow(context, '반려동물', record.petName),
                   if (record.severity != null)
                     _buildInfoRow(context, '심각도', record.severity!),
@@ -1144,7 +982,7 @@ class SpecialRecordDetailScreen extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.medical_services_outlined, size: 20, color: context.features.health),
+                        Icon(AppIcons.healthOutlined, size: 20, color: context.features.health),
                         const SizedBox(width: AppSizes.gapS),
                         Text('조치 사항', style: AppTextStyles.headlineSmall(context)),
                       ],
@@ -1177,14 +1015,10 @@ class SpecialRecordDetailScreen extends StatelessWidget {
     );
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.year}년 ${date.month}월 ${date.day}일';
-  }
-
   Color _getCategoryColor(BuildContext context, String category) {
     switch (category) {
-      case '증상': return Colors.red;
-      case '행동': return Colors.orange;
+      case '증상': return Theme.of(context).colorScheme.error;
+      case '행동': return Theme.of(context).colorScheme.tertiary;
       case '식이': return context.features.success;
       case '기타': return Theme.of(context).colorScheme.onSurfaceVariant;
       default: return context.features.health;
@@ -1193,11 +1027,11 @@ class SpecialRecordDetailScreen extends StatelessWidget {
 
   IconData _getCategoryIcon(String category) {
     switch (category) {
-      case '증상': return Icons.sick_outlined;
-      case '행동': return Icons.pets;
-      case '식이': return Icons.restaurant_outlined;
-      case '기타': return Icons.note_alt_outlined;
-      default: return Icons.star_outline;
+      case '증상': return AppIcons.health;
+      case '행동': return AppIcons.pet;
+      case '식이': return AppIcons.food;
+      case '기타': return AppIcons.special;
+      default: return AppIcons.starOutlined;
     }
   }
 

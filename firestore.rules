@@ -36,17 +36,55 @@ service cloud.firestore {
     }
     
     // ============================================================
+    // 데이터 크기 제한 함수들
+    // ============================================================
+    
+    
+    // 텍스트 길이 제한
+    function isValidTextLength(field, maxLength) {
+      return !incomingData().keys().hasAny([field]) || incomingData()[field].size() <= maxLength;
+    }
+    
+    // 메시지 길이 제한 (1000자)
+    function isValidMessageLength() {
+      return incomingData().content.size() <= 1000;
+    }
+    
+    // 게시글 내용 길이 제한 (5000자)
+    function isValidPostContentLength() {
+      return incomingData().content.size() <= 5000;
+    }
+    
+    // ============================================================
     // users Collection - 사용자(보호자) 정보
     // ============================================================
     match /users/{userId} {
-      // 읽기: 로그인한 사용자는 모든 사용자 정보 조회 가능 (관리자는 무조건 가능)
+      // 읽기: 
+      // - 로그인한 사용자는 모든 사용자 정보 조회 가능
+      // - 이메일 중복 검사용: 인증 없이 이메일 필드 쿼리 허용 (limit 1)
       allow read: if isAdmin() || isSignedIn();
+      
+      // 이메일 중복 검사용 리스트 쿼리 (회원가입 시 인증 전 상태에서 사용)
+      allow list: if request.query.limit <= 1;
       
       // 생성: 본인 계정만 생성 가능 (또는 관리자)
       allow create: if isOwner(userId) || isAdmin();
       
       // 수정: 본인 계정만 수정 가능 (또는 관리자)
-      allow update: if isOwner(userId) || isAdmin();
+      // 예외: 카운터 필드만 변경하는 경우 허용
+      // - groupCount: 소모임 가입/탈퇴
+      // - postCount: 게시글 작성/삭제
+      // - walkCount: 산책 기록 추가/삭제
+      // - matchCount: 매칭 성공
+      // - transactionCount: 거래 완료
+      // - reportCount: 신고 접수
+      // - locationMismatchCount: 위치 불일치
+      // - ratingCount: 평가 횟수
+      // - averageRating: 평균 평점
+      // - noShowCount: 노쇼 횟수
+      // - kkosunnaeScore: 꼬순내 지수
+      allow update: if isAdmin() || isOwner(userId) || 
+        (isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['groupCount', 'postCount', 'walkCount', 'matchCount', 'transactionCount', 'reportCount', 'locationMismatchCount', 'ratingCount', 'averageRating', 'noShowCount', 'kkosunnaeScore']));
       
       // 삭제: 본인 계정만 삭제 가능 (또는 관리자)
       allow delete: if isOwner(userId) || isAdmin();
@@ -62,8 +100,11 @@ service cloud.firestore {
       // 생성: 본인 소유의 반려동물만 생성 가능 (또는 관리자)
       allow create: if isAdmin() || (isSignedIn() && incomingData().ownerId == request.auth.uid);
       
-      // 수정: 본인 소유의 반려동물만 수정 가능 (또는 관리자)
-      allow update: if isAdmin() || (isSignedIn() && existingData().ownerId == request.auth.uid);
+      // 수정: 본인 소유 또는 likeCount만 변경하는 경우 허용 (좋아요 기능)
+      allow update: if isAdmin() || (isSignedIn() && (
+        existingData().ownerId == request.auth.uid ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount'])
+      ));
       
       // 삭제: 본인 소유의 반려동물만 삭제 가능 (또는 관리자)
       allow delete: if isAdmin() || (isSignedIn() && existingData().ownerId == request.auth.uid);
@@ -98,10 +139,11 @@ service cloud.firestore {
       allow read: if isAdmin() || (isSignedIn()
         && request.auth.uid in get(/databases/$(database)/documents/chatRooms/$(chatRoomId)).data.participantIds);
       
-      // 생성: 본인이 발신자인 메시지만 생성 가능 (또는 관리자)
+      // 생성: 본인이 발신자인 메시지만 생성 가능 + 크기 제한 (또는 관리자)
       allow create: if isAdmin() || (isSignedIn()
         && incomingData().senderId == request.auth.uid
-        && incomingData().chatRoomId == chatRoomId);
+        && incomingData().chatRoomId == chatRoomId
+        && isValidMessageLength());
       
       // 수정: 메시지 읽음 상태만 수정 가능 (또는 관리자)
       allow update: if isAdmin() || (isSignedIn()
@@ -113,25 +155,12 @@ service cloud.firestore {
     }
     
     // ============================================================
-    // likes Collection - 데이팅 좋아요
+    // likes Collection - 반려동물 좋아요 (데이팅 화면에서 사용)
+    // 문서 ID 형식: {userId}_{petId}
     // ============================================================
     match /likes/{likeId} {
-      // 읽기: 본인이 보냈거나 받은 좋아요 또는 관리자만 조회 가능
-      allow read: if isAdmin() || (isSignedIn()
-        && (request.auth.uid == resource.data.fromUserId 
-            || request.auth.uid == resource.data.toUserId));
-      
-      // 생성: 본인이 발신자인 좋아요만 생성 가능 (또는 관리자)
-      allow create: if isAdmin() || (isSignedIn()
-        && incomingData().fromUserId == request.auth.uid);
-      
-      // 수정: 받은 사람만 상태 변경 가능 (수락/거절) (또는 관리자)
-      allow update: if isAdmin() || (isSignedIn()
-        && existingData().toUserId == request.auth.uid);
-      
-      // 삭제: 본인이 보낸 좋아요 또는 관리자만 삭제 가능
-      allow delete: if isAdmin() || (isSignedIn()
-        && existingData().fromUserId == request.auth.uid);
+      // 읽기/쓰기: 로그인한 사용자는 모든 작업 가능 (디버깅용 임시 규칙)
+      allow read, write: if isAdmin() || isSignedIn();
     }
     
     // ============================================================
@@ -142,8 +171,9 @@ service cloud.firestore {
       allow read: if isAdmin() || (isSignedIn()
         && request.auth.uid in resource.data.userIds);
       
-      // 생성: 관리자만 생성 가능
-      allow create: if isAdmin();
+      // 생성: 매칭 참여자가 생성 가능 (데이팅 수락 시 매칭 생성)
+      allow create: if isAdmin() || (isSignedIn()
+        && request.auth.uid in incomingData().userIds);
       
       // 수정: 매칭 참여자만 수정 가능 (또는 관리자)
       allow update: if isAdmin() || (isSignedIn()
@@ -162,10 +192,16 @@ service cloud.firestore {
       allow read: if isAdmin() || isSignedIn();
       
       // 생성: 본인이 판매자인 상품만 생성 가능 (또는 관리자)
-      allow create: if isAdmin() || (isSignedIn() && incomingData().sellerId == request.auth.uid);
+      // 참고: Firestore는 문서당 1MB 제한이 있으므로 별도 크기 검증 불필요
+      allow create: if isAdmin() || (isSignedIn() 
+        && incomingData().sellerId == request.auth.uid);
       
       // 수정: 본인이 판매자인 상품만 수정 가능 (또는 관리자)
-      allow update: if isAdmin() || (isSignedIn() && existingData().sellerId == request.auth.uid);
+      // 예외: likeCount/viewCount만 변경하는 경우 허용 (찜하기/조회 기능)
+      allow update: if isAdmin() || (isSignedIn() && (
+        existingData().sellerId == request.auth.uid ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount', 'viewCount'])
+      ));
       
       // 삭제: 본인이 판매자인 상품만 삭제 가능 (또는 관리자)
       allow delete: if isAdmin() || (isSignedIn() && existingData().sellerId == request.auth.uid);
@@ -175,9 +211,8 @@ service cloud.firestore {
     // productLikes Collection - 상품 찜
     // ============================================================
     match /productLikes/{likeId} {
-      // 읽기: 본인이 찜한 상품 또는 관리자만 조회 가능
-      allow read: if isAdmin() || (isSignedIn()
-        && resource.data.userId == request.auth.uid);
+      // 읽기: 로그인한 사용자는 조회 가능 (트랜잭션에서 존재 여부 확인 필요)
+      allow read: if isAdmin() || isSignedIn();
       
       // 생성: 본인 계정으로만 찜 가능 (또는 관리자)
       allow create: if isAdmin() || (isSignedIn()
@@ -201,14 +236,21 @@ service cloud.firestore {
     // groups Collection - 소모임
     // ============================================================
     match /groups/{groupId} {
-      // 읽기: 공개 모임은 모두 조회 가능, 비공개는 멤버만 (관리자는 모두 조회)
-      allow read: if isAdmin() || (isSignedIn() && (resource.data.isPublic == true || request.auth.uid in resource.data.memberIds));
+      // 읽기: 로그인한 사용자는 모임 조회 가능 (creatorId 쿼리, 공개/비공개 모두)
+      allow read: if isAdmin() || isSignedIn();
       
       // 생성: 로그인한 사용자는 모임 생성 가능 (또는 관리자)
       allow create: if isAdmin() || (isSignedIn() && incomingData().creatorId == request.auth.uid);
       
-      // 수정: 관리자만 수정 가능 (또는 시스템 관리자)
-      allow update: if isAdmin() || (isSignedIn() && (request.auth.uid == existingData().creatorId || request.auth.uid in existingData().adminIds));
+      // 수정: 관리자/생성자 또는 멤버 가입/탈퇴 시 memberIds/memberCount만 변경 허용
+      // 예외: likeCount만 변경하는 경우도 허용 (좋아요 기능)
+      allow update: if isAdmin() || (isSignedIn() && (
+        // 관리자/생성자는 모든 필드 수정 가능
+        request.auth.uid == existingData().creatorId || 
+        (existingData().keys().hasAny(['adminIds']) && request.auth.uid in existingData().adminIds) ||
+        // 일반 사용자는 memberIds/memberCount/likeCount만 변경 가능 (가입/탈퇴/좋아요)
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'memberCount', 'likeCount'])
+      ));
       
       // 삭제: 생성자만 삭제 가능 (또는 시스템 관리자)
       allow delete: if isAdmin() || (isSignedIn() && existingData().creatorId == request.auth.uid);
@@ -232,7 +274,7 @@ service cloud.firestore {
     }
     
     // ============================================================
-    // joinRequests Collection - 모임 가입 신청
+    // joinRequests Collection - 모임 가입 신청 (레거시)
     // ============================================================
     match /joinRequests/{requestId} {
       // 읽기: 신청자 또는 모임 관리자 또는 시스템 관리자만 조회 가능
@@ -251,20 +293,61 @@ service cloud.firestore {
     }
     
     // ============================================================
+    // groupJoinRequests Collection - 소모임 가입 신청 (실제 사용)
+    // 코드에서 groupJoinRequestsCollection 사용
+    // ============================================================
+    match /groupJoinRequests/{requestId} {
+      // 읽기: 로그인한 사용자는 조회 가능
+      allow read: if isAdmin() || isSignedIn();
+      
+      // 생성: 본인 계정으로만 신청 가능 (또는 관리자)
+      allow create: if isAdmin() || (isSignedIn()
+        && incomingData().userId == request.auth.uid);
+      
+      // 수정: 로그인한 사용자는 승인/거절 가능 (모임 관리자 체크는 앱에서)
+      allow update: if isAdmin() || isSignedIn();
+      
+      // 삭제: 신청자 본인 또는 관리자만 삭제 가능
+      allow delete: if isAdmin() || (isSignedIn()
+        && existingData().userId == request.auth.uid);
+    }
+    
+    // ============================================================
     // jobs Collection - 알바 (펫시터/산책 등)
+    // 코드에서 userId 필드 사용
     // ============================================================
     match /jobs/{jobId} {
       // 읽기: 로그인한 사용자는 모든 알바 조회 가능 (관리자는 무조건 가능)
       allow read: if isAdmin() || isSignedIn();
       
       // 생성: 본인이 작성자인 알바만 생성 가능 (또는 관리자)
-      allow create: if isAdmin() || (isSignedIn() && incomingData().authorId == request.auth.uid);
+      allow create: if isAdmin() || (isSignedIn() && incomingData().userId == request.auth.uid);
       
       // 수정: 본인이 작성자인 알바만 수정 가능 (또는 관리자)
-      allow update: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
+      // 예외: likeCount만 변경하는 경우 허용 (찜하기 기능)
+      allow update: if isAdmin() || (isSignedIn() && (
+        existingData().userId == request.auth.uid ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likeCount'])
+      ));
       
       // 삭제: 본인이 작성자인 알바만 삭제 가능 (또는 관리자)
-      allow delete: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
+      allow delete: if isAdmin() || (isSignedIn() && existingData().userId == request.auth.uid);
+    }
+    
+    // ============================================================
+    // jobLikes Collection - 알바 찜
+    // ============================================================
+    match /jobLikes/{likeId} {
+      // 읽기: 로그인한 사용자는 조회 가능 (트랜잭션에서 존재 여부 확인 필요)
+      allow read: if isAdmin() || isSignedIn();
+      
+      // 생성: 본인 계정으로만 찜 가능 (또는 관리자)
+      allow create: if isAdmin() || (isSignedIn()
+        && incomingData().userId == request.auth.uid);
+      
+      // 삭제: 본인이 찜한 알바 또는 관리자만 삭제 가능
+      allow delete: if isAdmin() || (isSignedIn()
+        && existingData().userId == request.auth.uid);
     }
     
     // ============================================================
@@ -366,10 +449,16 @@ service cloud.firestore {
       allow read: if isAdmin() || isSignedIn();
       
       // 생성: 본인이 작성자인 게시글만 생성 가능
-      allow create: if isAdmin() || (isSignedIn() && incomingData().authorId == request.auth.uid);
+      allow create: if isAdmin() || (isSignedIn() 
+        && incomingData().authorId == request.auth.uid
+        && isValidPostContentLength());
       
       // 수정: 본인이 작성자인 게시글만 수정 가능
-      allow update: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
+      // 예외: commentCount/likeCount/viewCount만 변경하는 경우 허용 (댓글/좋아요/조회 시)
+      allow update: if isAdmin() || (isSignedIn() && (
+        existingData().authorId == request.auth.uid ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['commentCount', 'likeCount', 'viewCount'])
+      ));
       
       // 삭제: 본인이 작성자인 게시글만 삭제 가능
       allow delete: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
@@ -383,7 +472,9 @@ service cloud.firestore {
       allow read: if isAdmin() || isSignedIn();
       
       // 생성: 본인이 작성자인 댓글만 생성 가능
-      allow create: if isAdmin() || (isSignedIn() && incomingData().authorId == request.auth.uid);
+      allow create: if isAdmin() || (isSignedIn() 
+        && incomingData().authorId == request.auth.uid
+        && isValidTextLength('content', 1000));
       
       // 수정: 본인이 작성자인 댓글만 수정 가능
       allow update: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
@@ -410,10 +501,9 @@ service cloud.firestore {
     // dating_requests Collection - 데이팅 신청
     // ============================================================
     match /dating_requests/{requestId} {
-      // 읽기: 본인이 보냈거나 받은 신청만 조회 가능
-      allow read: if isAdmin() || (isSignedIn()
-        && (request.auth.uid == resource.data.fromUserId 
-            || request.auth.uid == resource.data.toUserId));
+      // 읽기: 본인이 보냈거나 받은 신청 조회 가능
+      // 중복 신청 체크를 위해 fromPetId/toPetId 쿼리도 허용
+      allow read: if isAdmin() || isSignedIn();
       
       // 생성: 본인이 발신자인 신청만 생성 가능
       allow create: if isAdmin() || (isSignedIn()
@@ -475,17 +565,31 @@ service cloud.firestore {
     }
     
     // ============================================================
+    // favorites Collection - 통합 찜 (반려동물/상품/소모임)
+    // FavoriteService에서 사용하는 통합 찜 컬렉션
+    // ============================================================
+    match /favorites/{favoriteId} {
+      // 읽기: 로그인한 사용자는 조회 가능 (targetId + createdAt 쿼리 허용)
+      allow read: if isAdmin() || isSignedIn();
+      // 생성: 본인 계정으로만 찜 가능
+      allow create: if isAdmin() || (isSignedIn() && incomingData().userId == request.auth.uid);
+      // 삭제: 본인이 찜한 항목만 삭제 가능
+      allow delete: if isAdmin() || (isSignedIn() && existingData().userId == request.auth.uid);
+    }
+    
+    // ============================================================
     // notifications Collection - 알림
+    // 코드에서 recipientId 필드 사용
     // ============================================================
     match /notifications/{notificationId} {
       // 읽기: 본인 알림만 조회 가능
-      allow read: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
-      // 생성: 서버(관리자)에서만 생성
-      allow create: if isAdmin();
+      allow read: if isAdmin() || (isSignedIn() && resource.data.recipientId == request.auth.uid);
+      // 생성: 로그인한 사용자는 알림 생성 가능 (앱에서 직접 생성)
+      allow create: if isAdmin() || isSignedIn();
       // 수정: 본인 알림만 수정 가능 (읽음 처리)
-      allow update: if isAdmin() || (isSignedIn() && existingData().userId == request.auth.uid);
+      allow update: if isAdmin() || (isSignedIn() && existingData().recipientId == request.auth.uid);
       // 삭제: 본인 알림만 삭제 가능
-      allow delete: if isAdmin() || (isSignedIn() && existingData().userId == request.auth.uid);
+      allow delete: if isAdmin() || (isSignedIn() && existingData().recipientId == request.auth.uid);
     }
     
     // ============================================================
@@ -515,11 +619,122 @@ service cloud.firestore {
     }
     
     // ============================================================
-    // kkosunnae_config Collection - 꼬순내지수 설정
+    // config Collection - 앱 설정 (앱 버전, 꼬순내 설정 등)
+    // ============================================================
+    match /config/{configId} {
+      // 읽기: 로그인한 사용자는 조회 가능
+      allow read: if isAdmin() || isSignedIn();
+      // 쓰기: 관리자만 가능
+      allow write: if isAdmin();
+    }
+    
+    // ============================================================
+    // kkosunnae_config Collection - 꼬순내지수 설정 (레거시, config로 통합 예정)
     // ============================================================
     match /kkosunnae_config/{configId} {
       allow read: if isAdmin() || isSignedIn();
       allow write: if isAdmin();
+    }
+    
+    // ============================================================
+    // transactions Collection - 거래 상태 (rating_service에서 사용)
+    // ============================================================
+    match /transactions/{transactionId} {
+      // 읽기: 거래 당사자만 조회 가능
+      allow read: if isAdmin() || (isSignedIn() 
+        && (request.auth.uid == resource.data.sellerId || request.auth.uid == resource.data.buyerId));
+      // 생성: 거래 당사자만 생성 가능
+      allow create: if isAdmin() || (isSignedIn() 
+        && (incomingData().sellerId == request.auth.uid || incomingData().buyerId == request.auth.uid));
+      // 수정: 거래 당사자만 수정 가능
+      allow update: if isAdmin() || (isSignedIn() 
+        && (existingData().sellerId == request.auth.uid || existingData().buyerId == request.auth.uid));
+      // 삭제: 관리자만
+      allow delete: if isAdmin();
+    }
+    
+    // ============================================================
+    // posts Collection - 커뮤니티 게시글 (꼬순내 점수 계산용)
+    // feedPosts와 별도로 존재하는 레거시 컬렉션
+    // ============================================================
+    match /posts/{postId} {
+      allow read: if isAdmin() || isSignedIn();
+      allow create: if isAdmin() || (isSignedIn() && incomingData().authorId == request.auth.uid);
+      allow update: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
+      allow delete: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
+    }
+    
+    // ============================================================
+    // comments Collection - 커뮤니티 댓글 (꼬순내 점수 계산용)
+    // feedComments와 별도로 존재하는 레거시 컬렉션
+    // ============================================================
+    match /comments/{commentId} {
+      allow read: if isAdmin() || isSignedIn();
+      allow create: if isAdmin() || (isSignedIn() && incomingData().authorId == request.auth.uid);
+      allow update: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
+      allow delete: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
+    }
+    
+    // ============================================================
+    // nicknames Collection - 닉네임 중복 체크용 인덱스
+    // 문서 ID = 정규화된 닉네임 (소문자)
+    // ============================================================
+    match /nicknames/{nickname} {
+      // 읽기: 로그인한 사용자는 닉네임 존재 여부 확인 가능
+      allow read: if isSignedIn();
+      
+      // 생성: 본인 userId로만 생성 가능
+      allow create: if isSignedIn() && incomingData().userId == request.auth.uid;
+      
+      // 수정: 본인 userId인 경우만 수정 가능
+      allow update: if isSignedIn() && existingData().userId == request.auth.uid;
+      
+      // 삭제: 본인 userId인 경우만 삭제 가능
+      allow delete: if isSignedIn() && existingData().userId == request.auth.uid;
+    }
+    
+    // ============================================================
+    // breeding_requests Collection - 교배 신청
+    // ============================================================
+    match /breeding_requests/{requestId} {
+      // 읽기: 본인이 보냈거나 받은 신청만 조회 가능
+      allow read: if isAdmin() || (isSignedIn()
+        && (request.auth.uid == resource.data.senderId 
+            || request.auth.uid == resource.data.receiverId));
+      
+      // 생성: 본인이 발신자인 신청만 생성 가능
+      allow create: if isAdmin() || (isSignedIn()
+        && incomingData().senderId == request.auth.uid);
+      
+      // 수정: 받은 사람만 상태 변경 가능 (수락/거절)
+      allow update: if isAdmin() || (isSignedIn()
+        && existingData().receiverId == request.auth.uid);
+      
+      // 삭제: 본인이 보낸 신청만 삭제 가능
+      allow delete: if isAdmin() || (isSignedIn()
+        && existingData().senderId == request.auth.uid);
+    }
+    
+    // ============================================================
+    // job_applications Collection - 알바 지원
+    // ============================================================
+    match /job_applications/{applicationId} {
+      // 읽기: 지원자 또는 알바 등록자만 조회 가능
+      allow read: if isAdmin() || (isSignedIn()
+        && (request.auth.uid == resource.data.applicantId 
+            || request.auth.uid == resource.data.employerId));
+      
+      // 생성: 본인이 지원자인 경우만 생성 가능
+      allow create: if isAdmin() || (isSignedIn()
+        && incomingData().applicantId == request.auth.uid);
+      
+      // 수정: 알바 등록자만 상태 변경 가능 (수락/거절)
+      allow update: if isAdmin() || (isSignedIn()
+        && existingData().employerId == request.auth.uid);
+      
+      // 삭제: 지원자 본인만 삭제 가능 (지원 취소)
+      allow delete: if isAdmin() || (isSignedIn()
+        && existingData().applicantId == request.auth.uid);
     }
   }
 }

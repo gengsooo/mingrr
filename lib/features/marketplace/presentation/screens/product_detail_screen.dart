@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
-import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/constants/location_constants.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
+import '../providers/marketplace_provider.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/widgets/common_widgets.dart';
@@ -25,7 +26,8 @@ import '../../../../models/chat_model.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 import '../../../../core/mixins/distance_calculator_mixin.dart';
 import '../../../../core/services/share_service.dart';
-import '../../../chat/presentation/screens/chat_detail_screen.dart';
+import '../../../../core/widgets/buttons/wishlist_button.dart';
+import 'package:go_router/go_router.dart';
 import 'product_write_screen.dart';
 
 /// ============================================================
@@ -59,60 +61,25 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
   final FirestoreService _firestoreService = FirestoreService();
   final FirebaseService _firebaseService = FirebaseService();
   
-  ProductModel? _product;
-  bool _isLoading = true;
   bool _isDeleting = false;
-  bool _isWishlisted = false;
   bool _isWishlistLoading = false;
   String? _sellerNickname;
 
   /// 거리 문자열 계산 (Mixin 활용)
-  String _getDistanceString() {
-    return getDistanceFromLocation(_product?.location, _product?.address);
+  String _getDistanceString(ProductModel? product) {
+    return getDistanceFromLocation(product?.location, product?.address);
   }
 
   @override
   void initState() {
     super.initState();
-    if (widget.product != null) {
-      _product = widget.product;
-      _isLoading = false;
-      _loadSellerNickname();
-      _loadWishlistStatus();
-    } else {
-      _loadProduct();
-    }
-  }
-
-  Future<void> _loadProduct() async {
-    try {
-      final product = await _firestoreService.getProduct(widget.productId);
-      if (mounted) {
-        setState(() {
-          _product = product;
-          _isLoading = false;
-        });
-        _loadSellerNickname();
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ErrorHandler.handle(
-          context,
-          error: e,
-          tag: 'ProductDetail',
-          operation: '상품 정보 로드',
-          themeColor: context.features.market,
-          onRetry: _loadProduct,
-        );
-      }
-    }
+    // 판매자 닉네임 로드는 별도로 처리
   }
   
-  Future<void> _loadSellerNickname() async {
-    if (_product?.sellerId == null) return;
+  Future<void> _loadSellerNickname(String? sellerId) async {
+    if (sellerId == null || _sellerNickname != null) return;
     try {
-      final user = await _firestoreService.getUser(_product!.sellerId);
+      final user = await _firestoreService.getUser(sellerId);
       if (mounted && user != null) {
         setState(() => _sellerNickname = user.nickname);
       }
@@ -121,89 +88,83 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
     }
   }
 
-  /// 찜 상태 로드
-  Future<void> _loadWishlistStatus() async {
-    final userId = _firebaseService.currentUserId;
-    if (userId == null || _product == null) return;
-    
-    try {
-      final isLiked = await _firestoreService.isProductLiked(_product!.id, userId);
-      if (mounted) {
-        setState(() => _isWishlisted = isLiked);
-      }
-    } catch (e) {
-      // 찜 상태 로드 실패 시 무시
-    }
-  }
-
-  bool get _isOwner {
+  bool _isOwner(ProductModel? product) {
     final currentUserId = _firebaseService.currentUserId;
-    return currentUserId != null && _product?.sellerId == currentUserId;
+    return currentUserId != null && product?.sellerId == currentUserId;
   }
 
-  /// 찜하기 토글 (백엔드 연동)
-  Future<void> _toggleWishlist() async {
+  /// 찜하기 토글 (Provider 기반)
+  Future<void> _toggleWishlist(ProductModel product) async {
     final userId = _firebaseService.currentUserId;
     if (userId == null) {
       MingrrSnackBar.warning(context, '로그인이 필요합니다');
       return;
     }
-    if (_product == null || _isWishlistLoading) return;
+    if (_isWishlistLoading) return;
 
-    // 낙관적 업데이트
-    final wasWishlisted = _isWishlisted;
-    setState(() {
-      _isWishlisted = !_isWishlisted;
-      _isWishlistLoading = true;
-    });
+    setState(() => _isWishlistLoading = true);
 
     try {
-      final isNowLiked = await _firestoreService.toggleProductLike(_product!.id, userId);
+      final isNowLiked = await ref.read(marketplaceNotifierProvider.notifier).toggleProductLike(product.id);
       if (mounted) {
-        setState(() {
-          _isWishlisted = isNowLiked;
-          _isWishlistLoading = false;
-        });
+        setState(() => _isWishlistLoading = false);
         MingrrSnackBar.success(context, isNowLiked ? '찜 목록에 추가했어요' : '찜 목록에서 제거했어요');
+        // Provider 새로고침으로 최신 데이터 반영
+        ref.invalidate(productDetailProvider(widget.productId));
+        ref.invalidate(isProductLikedProvider(widget.productId));
       }
     } catch (e) {
-      // 실패 시 롤백
       if (mounted) {
-        setState(() {
-          _isWishlisted = wasWishlisted;
-          _isWishlistLoading = false;
-        });
-        MingrrSnackBar.error(context, '찜하기 실패: $e');
+        setState(() => _isWishlistLoading = false);
+        ErrorHandler.showError(context, e, tag: 'ProductDetail', operation: '찜하기');
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(),
+    // Provider로 상품 데이터 조회
+    final productAsync = ref.watch(productDetailProvider(widget.productId));
+    final isLikedAsync = ref.watch(isProductLikedProvider(widget.productId));
+    
+    return productAsync.when(
+      data: (product) {
+        if (product == null) {
+          return Scaffold(
+            appBar: const MingrrAppBar(title: '상품'),
+            body: const MingrrEmptyState(
+              icon: AppIcons.market,
+              title: '상품을 찾을 수 없어요',
+              subtitle: '삭제되었거나 존재하지 않는 상품이에요',
+            ),
+          );
+        }
+        // 판매자 닉네임 로드
+        _loadSellerNickname(product.sellerId);
+        final isLiked = isLikedAsync.valueOrNull ?? false;
+        return _buildContent(context, product, isLiked);
+      },
+      loading: () => Scaffold(
+        appBar: const MingrrAppBar(title: '상품'),
         body: const MingrrLoadingState(type: MingrrLoadingType.market, message: '상품 정보를 불러오고 있어요'),
-      );
-    }
-
-    if (_product == null) {
-      return Scaffold(
-        appBar: AppBar(),
-        body: const MingrrEmptyState(
-          icon: Icons.shopping_bag_outlined,
-          title: '아직 데이터가 없어요',
-          subtitle: '상품을 찾을 수 없습니다',
+      ),
+      error: (e, _) => Scaffold(
+        appBar: const MingrrAppBar(title: '상품'),
+        body: MingrrErrorState(
+          onRetry: () => ref.invalidate(productDetailProvider(widget.productId)),
         ),
-      );
-    }
-
+      ),
+    );
+  }
+  
+  /// 상품 상세 컨텐츠 빌드
+  Widget _buildContent(BuildContext context, ProductModel product, bool isLiked) {
     return Scaffold(
       backgroundColor: context.detailBackground,
       body: CustomScrollView(
         slivers: [
           // 이미지 헤더
-          _buildImageHeader(context),
+          _buildImageHeader(context, product),
           
           // 본문 컨텐츠
           SliverToBoxAdapter(
@@ -213,20 +174,20 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 판매자 정보
-                  _buildSellerInfo(context),
+                  _buildSellerInfo(context, product),
                   const MingrrDivider.section(),
                   
                   // 상품 정보
-                  _buildProductInfo(),
+                  _buildProductInfo(product),
                   const SizedBox(height: AppSizes.gapXL),
                   
                   // 상품 설명
-                  _buildDescription(),
+                  _buildDescription(product),
                   
                   // 거래 희망 지역
-                  if (_product?.location != null) ...[
+                  if (product.location != null) ...[
                     const SizedBox(height: AppSizes.gapXL),
-                    _buildLocationSection(),
+                    _buildLocationSection(product),
                   ],
                   
                   // 하단 여백 (버튼 공간)
@@ -238,72 +199,47 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
         ],
       ),
       // 하단 고정 버튼
-      bottomNavigationBar: _buildBottomButton(context),
+      bottomNavigationBar: _buildBottomButton(context, product, isLiked),
     );
   }
 
-  bool get _isShare => _product?.type == ProductType.share;
+  bool _isShare(ProductModel product) => product.type == ProductType.share;
 
   /// 이미지 헤더
-  Widget _buildImageHeader(BuildContext context) {
+  Widget _buildImageHeader(BuildContext context, ProductModel product) {
     return MingrrImageHeader(
-      imageUrls: _product?.imageUrls ?? [],
+      imageUrls: product.imageUrls,
       expandedHeight: 300,
-      onShare: () {
-        if (_product != null) {
-          ShareService.shareProduct(context, _product!);
-        }
-      },
-      onMore: () => _showMoreOptions(context),
-      placeholder: Container(
-        color: context.features.marketContainer,
-        child: Center(
-          child: Icon(Icons.image, size: 80, color: context.features.market),
-        ),
+      onShare: () => ShareService.shareProduct(context, product),
+      onMore: () => _showMoreOptions(context, product),
+      placeholder: MingrrImage(
+        accentColor: context.features.market,
+        placeholderIcon: AppIcons.image,
       ),
     );
   }
 
   /// 판매자 정보
-  Widget _buildSellerInfo(BuildContext context) {
+  Widget _buildSellerInfo(BuildContext context, ProductModel product) {
     return GuardianProfileCard(
       name: _sellerNickname ?? '판매자',
       kkosunnaeScore: 50.0,
       accentColor: context.features.market,
-      onTap: () => _showSellerProfile(context),
+      onTap: () => _showSellerProfile(context, product),
     );
   }
 
   /// 판매자 프로필 모달 표시
-  void _showSellerProfile(BuildContext context) {
-    showGuardianProfileModal(
+  void _showSellerProfile(BuildContext context, ProductModel product) {
+    showGuardianProfileFromFirestore(
       context,
-      guardianId: _product?.sellerId ?? 'seller_1',
-      guardianName: _sellerNickname ?? '판매자',
-      kkosunnaeScore: 50.0,
-      isIdentityVerified: true,
-      isPetVerified: true,
-      isLocationVerified: false,
-      pets: [
-        GuardianPetInfo(
-          id: 'pet_1',
-          name: '뽀삐',
-          breed: '골든 리트리버',
-          ageString: '3살',
-          likeCount: 42,
-        ),
-      ],
-      activityInfo: const GuardianActivityInfo(
-        walkCount: 65,
-        datingCount: 8,
-        marketCount: 12,
-        groupCount: 5,
-      ),
+      userId: product.sellerId,
+      fallbackName: _sellerNickname ?? '판매자',
     );
   }
 
   /// 상품 정보
-  Widget _buildProductInfo() {
+  Widget _buildProductInfo(ProductModel product) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -312,15 +248,15 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
           padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
           decoration: BoxDecoration(
             color: context.features.market.withValues(alpha: AppOpacity.o10),
-            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(_product?.category.icon ?? Icons.more_horiz, size: 12, color: context.features.market),
+              Icon(product.category.icon, size: 12, color: context.features.market),
               const SizedBox(width: AppSizes.gapXS),
               Text(
-                _product?.category.label ?? '기타',
+                product.category.label,
                 style: AppTextStyles.labelLarge(context).copyWith(color: context.features.market),
               ),
             ],
@@ -329,21 +265,21 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
         const SizedBox(height: AppSizes.gapM),
         // 제목
         Text(
-          _product?.title ?? '',
+          product.title,
           style: AppTextStyles.headlineMedium(context),
         ),
         const SizedBox(height: AppSizes.gapS),
         // 시간, 조회수, 거리
         Text(
-          '${_getDistanceString()} · ${formatRelativeTime(_product?.createdAt ?? DateTime.now())} · 조회 ${_product?.viewCount ?? 0}',
+          '${_getDistanceString(product)} · ${formatRelativeTime(product.createdAt)} · 조회 ${product.viewCount}',
           style: AppTextStyles.bodySmall(context),
         ),
         const SizedBox(height: AppSizes.gapL),
         // 가격
         Text(
-          _isShare ? '무료나눔' : '${formatPrice(_product?.price ?? 0)}원',
+          _isShare(product) ? '무료나눔' : '${formatPrice(product.price)}원',
           style: AppTextStyles.displayMedium(context).withWeight(FontWeight.w700).withColor(
-            _isShare ? context.features.walk : Theme.of(context).colorScheme.onSurface,
+            _isShare(product) ? context.features.walk : Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ],
@@ -351,7 +287,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
   }
 
   /// 상품 설명
-  Widget _buildDescription() {
+  Widget _buildDescription(ProductModel product) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -368,7 +304,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
             borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
           child: Text(
-            _product?.description ?? '',
+            product.description,
             style: AppTextStyles.bodyMedium(context).copyWith(height: 1.6),
           ),
         ),
@@ -377,12 +313,12 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
   }
 
   /// 거래 희망 지역 섹션
-  Widget _buildLocationSection() {
-    final location = _product?.location;
+  Widget _buildLocationSection(ProductModel product) {
+    final location = product.location;
     if (location == null) return const SizedBox.shrink();
     
     // 주소가 없거나 GeoPoint 인스턴스 문자열인 경우 처리
-    String? displayAddress = _product?.address;
+    String? displayAddress = product.address;
     if (displayAddress == null || 
         displayAddress.isEmpty || 
         displayAddress.contains('Instance of') ||
@@ -445,7 +381,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close),
+                    icon: Icon(AppIcons.close),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ],
@@ -465,7 +401,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                 padding: const EdgeInsets.all(AppSizes.paddingL),
                 child: Row(
                   children: [
-                    Icon(Icons.location_on, color: context.features.market),
+                    Icon(AppIcons.location, color: context.features.market),
                     const SizedBox(width: AppSizes.gapS),
                     Expanded(
                       child: Text(
@@ -484,51 +420,40 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
   }
 
   /// 하단 고정 버튼
-  Widget _buildBottomButton(BuildContext context) {
+  Widget _buildBottomButton(BuildContext context, ProductModel product, bool isLiked) {
     return MingrrBottomButtonBar(
       child: Row(
-        mainAxisSize: MainAxisSize.max,
         children: [
-          // 찜하기 버튼
-          GestureDetector(
-            onTap: _toggleWishlist,
-            child: Container(
-              padding: const EdgeInsets.all(AppSizes.paddingS),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    _isWishlisted ? Icons.bookmark : Icons.bookmark_border,
-                    color: _isWishlisted ? context.features.market : Theme.of(context).colorScheme.onSurfaceVariant,
-                    size: 24,
-                  ),
-                  const SizedBox(height: AppSizes.gapXXS),
-                  Text(
-                    '${_product?.likeCount ?? 0}',
-                    style: AppTextStyles.caption(context),
-                  ),
-                ],
-              ),
-            ),
+          // 찜하기 버튼 (공통 컴포넌트)
+          WishlistButton(
+            isWishlisted: isLiked,
+            isLoading: _isWishlistLoading,
+            count: product.likeCount,
+            onTap: () => _toggleWishlist(product),
+            activeColor: context.features.market,
           ),
           const SizedBox(width: AppSizes.gapM),
           // 가격 표시
           Expanded(
             child: Text(
-              _isShare ? '무료나눔' : '${formatPrice(_product?.price ?? 0)}원',
+              _isShare(product) ? '무료나눔' : '${formatPrice(product.price)}원',
               style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w700).withColor(
-                _isShare ? context.features.walk : Theme.of(context).colorScheme.onSurface,
+                _isShare(product) ? context.features.walk : Theme.of(context).colorScheme.onSurface,
               ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
+          const SizedBox(width: AppSizes.gapM),
           // 채팅하기 버튼
-          MingrrButton(
-            text: '채팅하기',
-            onPressed: _isOwner ? null : () => _startChat(),
-            backgroundColor: context.features.market,
-            textColor: Colors.white,
-            width: 100,
-            height: 48,
+          Expanded(
+            child: MingrrButton(
+              text: '채팅하기',
+              onPressed: _isOwner(product) ? null : () => _startChat(product),
+              backgroundColor: context.features.market,
+              textColor: Colors.white,
+              height: 48,
+            ),
           ),
         ],
       ),
@@ -536,13 +461,13 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
   }
 
   /// 더보기 옵션 메뉴
-  void _showMoreOptions(BuildContext context) {
+  void _showMoreOptions(BuildContext context, ProductModel product) {
     showDetailOptionsSheet(
       context: context,
-      isOwner: _isOwner,
-      onEdit: _editProduct,
-      onDelete: _confirmDelete,
-      onBlock: () => _blockSeller(context),
+      isOwner: _isOwner(product),
+      onEdit: () => _editProduct(product),
+      onDelete: () => _confirmDelete(product),
+      onBlock: () => _blockSeller(context, product),
       blockLabel: '이 판매자 차단하기',
       onReport: () => showReportSheet(
         context,
@@ -554,15 +479,15 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
   }
 
   /// 판매자 차단
-  Future<void> _blockSeller(BuildContext context) async {
+  Future<void> _blockSeller(BuildContext context, ProductModel product) async {
     final currentUserId = _firebaseService.currentUserId;
     if (currentUserId == null) {
       MingrrSnackBar.warning(context, '로그인이 필요합니다');
       return;
     }
 
-    final sellerId = _product?.sellerId;
-    if (sellerId == null || sellerId == currentUserId) {
+    final sellerId = product.sellerId;
+    if (sellerId == currentUserId) {
       MingrrSnackBar.warning(context, '본인은 차단할 수 없습니다');
       return;
     }
@@ -574,58 +499,52 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
       onConfirm: () async {
         try {
           await _firestoreService.blockUser(currentUserId, sellerId);
-          if (mounted) {
-            MingrrSnackBar.success(context, '판매자를 차단했습니다');
-            Navigator.pop(context); // 상세 화면 닫기
-          }
+          if (!context.mounted) return;
+          MingrrSnackBar.success(context, '판매자를 차단했습니다');
+          Navigator.pop(context); // 상세 화면 닫기
         } catch (e) {
-          if (mounted) {
-            MingrrSnackBar.error(context, '차단 실패: $e');
-          }
+          if (!context.mounted) return;
+          ErrorHandler.showError(context, e, tag: 'ProductDetail', operation: '판매자 차단');
         }
       },
     );
   }
 
   /// 상품 수정
-  void _editProduct() async {
-    if (_product == null) return;
-    
+  void _editProduct(ProductModel product) async {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ProductWriteScreen(
-          product: _product,
-          initialType: _product!.type,
+          product: product,
+          initialType: product.type,
         ),
       ),
     );
     
     // 수정 성공 시 데이터 새로고침
     if (result == true) {
-      _loadProduct();
+      ref.invalidate(productDetailProvider(widget.productId));
     }
   }
 
   /// 삭제 확인 바텀시트
-  void _confirmDelete() {
+  void _confirmDelete(ProductModel product) {
     if (_isDeleting) return; // 이미 삭제 중이면 무시
     
     showConfirmSheet(
       context,
       type: ConfirmSheetType.productDelete,
-      onConfirm: _deleteProduct,
+      onConfirm: () => _deleteProduct(product),
     );
   }
 
   /// 상품 삭제
-  Future<void> _deleteProduct() async {
-    if (_product == null) return;
-    
+  Future<void> _deleteProduct(ProductModel product) async {
     setState(() => _isDeleting = true);
     
     try {
-      await _firestoreService.deleteProduct(_product!.id);
+      await _firestoreService.deleteProduct(product.id);
       
       if (mounted) {
         // 리스트 새로고침 트리거
@@ -651,9 +570,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
   }
 
   /// 판매자와 채팅 시작
-  Future<void> _startChat() async {
-    if (_product == null) return;
-    
+  Future<void> _startChat(ProductModel product) async {
     final myUserId = _firebaseService.currentUserId;
     if (myUserId == null) {
       MingrrSnackBar.warning(context, '로그인이 필요합니다');
@@ -661,7 +578,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
     }
 
     // 본인 상품이면 채팅 불가
-    if (_product!.sellerId == myUserId) return;
+    if (product.sellerId == myUserId) return;
 
     try {
       final chatService = ChatService();
@@ -671,7 +588,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
       final myUserData = myUserDoc.data();
       
       // 판매자 정보 가져오기
-      final sellerDoc = await _firebaseService.usersCollection.doc(_product!.sellerId).get();
+      final sellerDoc = await _firebaseService.usersCollection.doc(product.sellerId).get();
       final sellerData = sellerDoc.data();
 
       final myInfo = ChatParticipant(
@@ -681,7 +598,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
       );
 
       final sellerInfo = ChatParticipant(
-        id: _product!.sellerId,
+        id: product.sellerId,
         nickname: sellerData?['nickname'] ?? '판매자',
         profileImageUrl: sellerData?['profileImageUrl'],
       );
@@ -689,29 +606,20 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
       // 채팅방 생성 또는 기존 채팅방 찾기
       final chatRoom = await chatService.getOrCreateChatRoom(
         myUserId: myUserId,
-        otherUserId: _product!.sellerId,
+        otherUserId: product.sellerId,
         type: 'market',
         myInfo: myInfo,
         otherInfo: sellerInfo,
-        relatedId: _product!.id,
+        relatedId: product.id,
       );
 
       if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ChatDetailScreen(
-              chatRoomId: chatRoom.id,
-              otherUserName: sellerInfo.nickname,
-              otherUserImageUrl: sellerInfo.profileImageUrl,
-              chatType: 'marketplace',
-            ),
-          ),
-        );
+        // go_router를 사용하여 채팅 탭으로 이동 (하단 메뉴 동기화)
+        context.go('/chat/${chatRoom.id}');
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '채팅 시작 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'ProductDetail', operation: '채팅 시작');
       }
     }
   }

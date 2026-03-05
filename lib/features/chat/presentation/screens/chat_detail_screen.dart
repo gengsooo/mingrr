@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/feature_colors.dart';
@@ -9,16 +10,13 @@ import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/services/rating_service.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
-import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
-import '../../../../core/widgets/loading/loading_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
-import '../../../../core/widgets/mingrr_image_viewer.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/services/image_service.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/rating_widgets.dart';
 import '../../../../core/widgets/modals/guardian_profile_modal.dart';
 import '../../../../core/widgets/modals/pet_profile_modal.dart';
@@ -130,6 +128,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     final messagesAsync = ref.watch(chatMessagesProvider(widget.chatRoomId));
     final currentUser = ref.watch(authStateProvider).valueOrNull;
     final myUserId = currentUser?.uid ?? '';
+    
+    // 메시지가 변경될 때마다 읽음 처리 (채팅방 내에서 새 메시지 수신 시)
+    ref.listen(chatMessagesProvider(widget.chatRoomId), (previous, next) {
+      if (next.hasValue && myUserId.isNotEmpty) {
+        _chatService.markAsRead(widget.chatRoomId, myUserId);
+      }
+    });
 
     // 채팅 타입 (위젯 파라미터 우선, 없으면 _chatRoom에서, 그것도 없으면 기본값)
     final chatType = widget.chatType ?? _chatRoom?.type ?? 'dating';
@@ -185,10 +190,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             boxShadow: isDark ? null : AppShadows.shadowS(false),
           ),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const MingrrLeadingButton.back(showShadow: false),
         titleSpacing: 0,
         title: GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -233,7 +235,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                         ),
                       ),
                       const SizedBox(width: AppSizes.gapXS),
-                      Icon(Icons.chevron_right, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
+                      Icon(AppIcons.chevronRight, size: 18, color: Theme.of(context).colorScheme.outlineVariant),
                     ],
                   ),
                 ),
@@ -245,7 +247,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           // 검색 버튼
           IconButton(
             icon: Icon(
-              _isSearching ? Icons.close : Icons.search,
+              _isSearching ? AppIcons.close : AppIcons.search,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
             onPressed: () {
@@ -259,7 +261,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             },
           ),
           IconButton(
-            icon: Icon(Icons.more_vert, color: Theme.of(context).colorScheme.onSurfaceVariant),
+            icon: Icon(AppIcons.moreVert, color: Theme.of(context).colorScheme.onSurfaceVariant),
             onPressed: () => _showOptionsSheet(context),
           ),
         ],
@@ -277,11 +279,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 decoration: InputDecoration(
                   hintText: '메시지 검색...',
                   hintStyle: AppTextStyles.bodySmall(context).copyWith(color: Theme.of(context).colorScheme.outlineVariant),
-                  prefixIcon: Icon(Icons.search, color: Theme.of(context).colorScheme.outlineVariant),
+                  prefixIcon: Icon(AppIcons.search, color: Theme.of(context).colorScheme.outlineVariant),
                   filled: true,
                   fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     borderSide: BorderSide.none,
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
@@ -300,7 +302,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   timeout: AppSizes.loadingTimeout,
                   onRetry: () => ref.invalidate(chatMessagesProvider(widget.chatRoomId)),
                 ),
-                error: (_, __) => MingrrErrorState(
+                error: (_, _) => MingrrErrorState(
                   onRetry: () => ref.invalidate(chatMessagesProvider(widget.chatRoomId)),
                 ),
                 data: (messages) {
@@ -313,7 +315,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   
                   if (messages.isEmpty) {
                     return MingrrEmptyState(
-                      icon: Icons.chat_outlined,
+                      icon: AppIcons.chatOutlined,
                       title: '대화를 시작해보세요!',
                       subtitle: '반려동물 친구를 만들어보세요',
                     );
@@ -321,7 +323,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   
                   if (_searchQuery.isNotEmpty && filteredMessages.isEmpty) {
                     return MingrrEmptyState(
-                      icon: Icons.search_off,
+                      icon: AppIcons.searchOff,
                       title: '검색 결과가 없습니다',
                       subtitle: '"$_searchQuery"에 대한 메시지를 찾을 수 없습니다',
                     );
@@ -380,7 +382,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       } else if (normalizedType == 'marketplace' || normalizedType == 'market') {
         AppLogger.debug('ChatDetail', '-> _showGuardianProfile 호출 (마켓)');
         // 마켓: 보호자 프로필 모달
-        await _showGuardianProfile(context, participant);
+        _showGuardianProfile(context, participant);
       } else if (normalizedType == 'community' || normalizedType == 'group') {
         AppLogger.debug('ChatDetail', '-> _showGroupProfile 호출');
         // 소모임: 소모임 정보 모달
@@ -388,7 +390,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       } else {
         AppLogger.debug('ChatDetail', '-> _showGuardianProfile 호출 (기본)');
         // 기본: 보호자 프로필 모달
-        await _showGuardianProfile(context, participant);
+        _showGuardianProfile(context, participant);
       }
     } finally {
       _isShowingProfile = false;
@@ -411,7 +413,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       
       if (petsSnapshot.docs.isEmpty) {
         AppLogger.debug('ChatDetail', '반려동물 없음 - 스낵바 표시');
-        if (!mounted) return;
+        if (!context.mounted) return;
         MingrrSnackBar.info(context, '반려동물 정보가 없어요!');
         return;
       }
@@ -426,28 +428,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       final isIdentityVerified = userData?['isIdentityVerified'] as bool? ?? false;
       final isPetVerified = userData?['isPetVerified'] as bool? ?? false;
       final isLocationVerified = userData?['isLocationVerified'] as bool? ?? false;
-      final genderStr = userData?['gender'] as String?;
+      final guardianGender = GuardianGender.fromString(userData?['gender'] as String?);
       final userAge = userData?['age'] as int?;
-      
-      GuardianGender guardianGender = GuardianGender.unknown;
-      if (genderStr == 'male') guardianGender = GuardianGender.male;
-      if (genderStr == 'female') guardianGender = GuardianGender.female;
       
       // 모든 반려동물 정보 수집 (보호자 정보 바텀시트에서 사용)
       List<GuardianPetInfo> allPets = [];
       for (final doc in petsSnapshot.docs) {
-        final data = doc.data();
-        allPets.add(GuardianPetInfo(
-          id: doc.id,
-          name: data['name'] ?? '반려동물',
-          breed: data['breed'],
-          ageString: data['age'] != null ? '${data['age']}살' : null,
-          introduction: data['introduction'],
-          traits: List<String>.from(data['traits'] ?? []),
-          photoUrls: List<String>.from(data['photoUrls'] ?? []),
-          profileImageUrl: data['profileImageUrl'],
-          likeCount: data['likeCount'] ?? 0,
-        ));
+        allPets.add(GuardianPetInfo.fromFirestoreDoc(doc));
       }
       
       // petName과 일치하는 반려동물 또는 첫 번째 반려동물
@@ -457,7 +444,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       final petDoc = matchingDocs.isNotEmpty ? matchingDocs.first : petsSnapshot.docs.first;
       final petData = petDoc.data();
       
-      if (!mounted) return;
+      if (!context.mounted) return;
       
       // 추천친구-상세와 동일한 내용을 표시하기 위해 guardianInfo 전달
       showPetProfileModal(
@@ -469,7 +456,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         gender: petData['gender'],
         weight: (petData['weight'] as num?)?.toDouble(),
         introduction: petData['introduction'],
-        traits: List<String>.from(petData['traits'] ?? []),
+        traits: (petData['traits'] as List?)?.map((t) => PetTrait.labelFromName(t.toString())).toList() ?? [],
         photoUrls: List<String>.from(petData['photoUrls'] ?? []),
         profileImageUrl: petData['profileImageUrl'],
         likeCount: petData['likeCount'] ?? 0,
@@ -486,12 +473,13 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           isPetVerified: isPetVerified,
           isLocationVerified: isLocationVerified,
           pets: allPets,
+          activityInfo: GuardianActivityInfo.fromMap(userData),
         ),
       );
     } catch (e) {
       AppLogger.error('ChatDetail', '_showPetProfile 에러', e);
-      if (!mounted) return;
-      MingrrSnackBar.error(context, '반려동물 정보를 불러오는데 실패했습니다');
+      if (!context.mounted) return;
+      ErrorHandler.showError(context, e, tag: 'ChatDetail', operation: '반려동물 정보 로드');
     }
   }
 
@@ -503,14 +491,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     
     if (_chatRoom == null) {
       AppLogger.debug('ChatDetail', '_chatRoom이 null - 스낵바 표시');
-      if (!mounted) return;
+      if (!context.mounted) return;
       MingrrSnackBar.info(context, '채팅방 정보를 불러오는 중입니다');
       return;
     }
     
     if (_chatRoom!.relatedId == null) {
       AppLogger.debug('ChatDetail', 'relatedId가 null - 스낵바 표시');
-      if (!mounted) return;
+      if (!context.mounted) return;
       MingrrSnackBar.info(context, '소모임 정보가 연결되지 않았습니다');
       return;
     }
@@ -524,7 +512,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       
       if (!groupDoc.exists) {
         AppLogger.warning('ChatDetail', '소모임 문서가 존재하지 않음');
-        if (!mounted) return;
+        if (!context.mounted) return;
         MingrrSnackBar.info(context, '소모임 정보를 불러오는데 실패했습니다!');
         return;
       }
@@ -558,7 +546,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         return 0;
       });
       
-      if (!mounted) return;
+      if (!context.mounted) return;
       
       showGroupProfileModal(
         context,
@@ -576,92 +564,20 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         members: members,
       );
     } catch (e) {
-      if (!mounted) return;
-      MingrrSnackBar.error(context, '소모임 정보를 불러오는데 실패했습니다');
+      if (!context.mounted) return;
+      ErrorHandler.showError(context, e, tag: 'ChatDetail', operation: '소모임 정보 로드');
     }
   }
 
   /// 보호자 프로필 모달 표시 (Firebase에서 상세 정보 조회)
-  Future<void> _showGuardianProfile(BuildContext context, ChatParticipant? participant) async {
+  void _showGuardianProfile(BuildContext context, ChatParticipant? participant) {
     if (participant == null) return;
-    
-    // Firebase에서 보호자 상세 정보 조회
-    try {
-      final userDoc = await _firebaseService.firestore
-          .collection('users')
-          .doc(participant.id)
-          .get();
-      
-      final userData = userDoc.data();
-      final kkosunnaeScore = (userData?['kkosunnaeScore'] as num?)?.toDouble() ?? 50.0;
-      final isIdentityVerified = userData?['isIdentityVerified'] as bool? ?? false;
-      final isPetVerified = userData?['isPetVerified'] as bool? ?? false;
-      final isLocationVerified = userData?['isLocationVerified'] as bool? ?? false;
-      final genderStr = userData?['gender'] as String?;
-      final age = userData?['age'] as int?;
-      
-      // 성별 변환
-      GuardianGender gender = GuardianGender.unknown;
-      if (genderStr == 'male') gender = GuardianGender.male;
-      if (genderStr == 'female') gender = GuardianGender.female;
-      
-      // 반려동물 정보 조회
-      List<GuardianPetInfo> pets = [];
-      final petsSnapshot = await _firebaseService.firestore
-          .collection('pets')
-          .where('ownerId', isEqualTo: participant.id)
-          .get();
-      
-      for (final petDoc in petsSnapshot.docs) {
-        final petData = petDoc.data();
-        pets.add(GuardianPetInfo(
-          id: petDoc.id,
-          name: petData['name'] ?? '반려동물',
-          breed: petData['breed'],
-          ageString: petData['age'] != null ? '${petData['age']}살' : null,
-          introduction: petData['introduction'],
-          traits: List<String>.from(petData['traits'] ?? []),
-          photoUrls: List<String>.from(petData['photoUrls'] ?? []),
-          profileImageUrl: petData['profileImageUrl'],
-          likeCount: petData['likeCount'] ?? 0,
-        ));
-      }
-      
-      if (!mounted) return;
-      
-      showGuardianProfileModal(
-        context,
-        guardianId: participant.id,
-        guardianName: participant.nickname,
-        kkosunnaeScore: kkosunnaeScore,
-        profileImageUrl: participant.profileImageUrl,
-        gender: gender,
-        age: age,
-        isIdentityVerified: isIdentityVerified,
-        isPetVerified: isPetVerified,
-        isLocationVerified: isLocationVerified,
-        pets: pets,
-      );
-    } catch (e) {
-      // 에러 시 기본 정보로 표시
-      if (!mounted) return;
-      showGuardianProfileModal(
-        context,
-        guardianId: participant.id,
-        guardianName: participant.nickname,
-        kkosunnaeScore: 50.0,
-        profileImageUrl: participant.profileImageUrl,
-        pets: participant.petName != null
-            ? [
-                GuardianPetInfo(
-                  id: participant.id,
-                  name: participant.petName!,
-                  profileImageUrl: participant.petImageUrl,
-                ),
-              ]
-            : [],
-      );
-    }
+    showGuardianProfileFromFirestore(
+      context,
+      userId: participant.id,
+      fallbackName: participant.nickname,
+      fallbackImageUrl: participant.profileImageUrl,
+    );
   }
 
   /// 클릭 가능한 프로필 아바타
@@ -670,7 +586,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                           imageUrl.isNotEmpty && 
                           !imageUrl.startsWith('default_avatar:');
     
-    return MingrrPetAvatar(
+    return MingrrImage.petAvatar(
       imageUrl: hasValidImage ? imageUrl : null,
       size: size,
       borderColor: themeColor.withValues(alpha: AppOpacity.o30),
@@ -678,32 +594,21 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
   }
 
-  /// 아바타 플레이스홀더
-  Widget _buildAvatarPlaceholder(String name, double size, Color color) {
-    return Center(
-      child: Icon(
-        Icons.pets,
-        size: size * 0.5,
-        color: color,
-      ),
-    );
-  }
-
   /// 채팅 타입별 아이콘
   IconData _getChatTypeIcon(String type) {
     switch (type) {
       case 'dating':
-        return Icons.favorite;
+        return AppIcons.dating;
       case 'breeding':
-        return Icons.pets;
+        return AppIcons.pet;
       case 'marketplace':
       case 'market':
-        return Icons.store;
+        return AppIcons.market;
       case 'community':
       case 'group':
-        return Icons.groups;
+        return AppIcons.group;
       default:
-        return Icons.chat;
+        return AppIcons.chat;
     }
   }
 
@@ -767,58 +672,26 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                 _buildTimeText(message.sentAt),
               ],
             ),
-            const SizedBox(width: AppSizes.gapSM),
+            const SizedBox(width: AppSizes.gapS),
           ],
           
           // 메시지 버블 + 꼬리
           Flexible(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // 상대방 메시지 꼬리 (왼쪽)
-                if (!isMe)
-                  CustomPaint(
-                    size: const Size(8, 12),
-                    painter: _BubbleTailPainter(
-                      color: bubbleColor,
-                      isMe: false,
-                    ),
-                  ),
-                // 메시지 버블
-                Flexible(
-                  child: Container(
-                    constraints: BoxConstraints(maxWidth: ResponsiveUtils.widthPercent(context, 0.7)),
-                    padding: message.type == MessageType.image 
-                        ? const EdgeInsets.all(AppSizes.paddingXS) 
-                        : const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
-                    decoration: BoxDecoration(
-                      color: bubbleColor,
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(AppSizes.radiusL),
-                        topRight: const Radius.circular(AppSizes.radiusL),
-                        bottomLeft: Radius.circular(isMe ? AppSizes.radiusL : AppSizes.radiusS),
-                        bottomRight: Radius.circular(isMe ? AppSizes.radiusS : AppSizes.radiusL),
-                      ),
-                      boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
-                    ),
-                    child: _buildMessageContent(message, isMe, themeColor),
-                  ),
-                ),
-                // 내 메시지 꼬리 (오른쪽)
-                if (isMe)
-                  CustomPaint(
-                    size: const Size(8, 12),
-                    painter: _BubbleTailPainter(
-                      color: bubbleColor,
-                      isMe: true,
-                    ),
-                  ),
-              ],
+            child: Container(
+              constraints: BoxConstraints(maxWidth: ResponsiveUtils.widthPercent(context, 0.7)),
+              padding: message.type == MessageType.image 
+                  ? const EdgeInsets.all(AppSizes.paddingXS) 
+                  : const EdgeInsets.symmetric(horizontal: 14, vertical: AppSizes.paddingS),
+              decoration: BoxDecoration(
+                color: bubbleColor,
+                borderRadius: BorderRadius.circular(AppSizes.radiusL),
+                boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
+              ),
+              child: _buildMessageContent(message, isMe, themeColor),
             ),
           ),
           
-          if (!isMe && showTime) const SizedBox(width: AppSizes.gapSM),
+          if (!isMe && showTime) const SizedBox(width: AppSizes.gapS),
           if (!isMe && showTime) _buildTimeText(message.sentAt),
         ],
       ),
@@ -830,20 +703,25 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       case MessageType.image:
         return GestureDetector(
           onTap: () => _showFullScreenImage(context, message.imageUrl!),
-          child: MingrrNetworkImage(
-            imageUrl: message.imageUrl,
-            width: 200,
-            height: 150,
-            fit: BoxFit.cover,
+          child: ClipRRect(
             borderRadius: BorderRadius.circular(AppSizes.radiusS),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 200, maxHeight: 250),
+              child: MingrrImage(
+                imageUrl: message.imageUrl,
+                fit: BoxFit.cover,
+                shape: ImageShape.rounded,
+                borderRadius: AppSizes.radiusS,
+              ),
+            ),
           ),
         );
       case MessageType.location:
         return Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.location_on, color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface, size: 18),
-            const SizedBox(width: AppSizes.gapSM),
+            Icon(AppIcons.location, color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface, size: 18),
+            const SizedBox(width: AppSizes.gapS),
             Flexible(
               child: Text(
                 message.content,
@@ -905,11 +783,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                             strokeWidth: 2,
                             customColor: themeColor,
                           ),
-                          Icon(Icons.image, color: themeColor, size: 12),
+                          Icon(AppIcons.image, color: themeColor, size: 12),
                         ],
                       )
                     : IconButton(
-                        icon: Icon(Icons.add_photo_alternate_outlined, color: themeColor, size: 20),
+                        icon: Icon(AppIcons.addPhoto, color: themeColor, size: 20),
                         onPressed: _pickAndSendImage,
                         padding: EdgeInsets.zero,
                       ),
@@ -956,7 +834,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                               strokeWidth: 2,
                               customColor: Colors.white,
                             )
-                          : const Icon(Icons.send, color: Colors.white, size: 20),
+                          : const Icon(AppIcons.send, color: Colors.white, size: 20),
                     ),
                   ),
                 ),
@@ -1068,7 +946,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                                chatType == 'breeding';
     if (hasCompleteAction && (_transaction == null || _transaction!.status == 'pending')) {
       options.add(MingrrOptionItem(
-        icon: Icons.check_circle_outline,
+        icon: AppIcons.successOutlined,
         label: chatType == 'marketplace' ? '거래 완료하기' : '만남 완료하기',
         color: context.features.success,
         onTap: _showCompleteDialog,
@@ -1078,7 +956,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     // 평가하기 버튼
     if (canRate) {
       options.add(MingrrOptionItem(
-        icon: Icons.star_outline,
+        icon: AppIcons.starOutlined,
         label: '평가하기',
         color: Colors.amber,
         onTap: _showRatingSheet,
@@ -1087,24 +965,24 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     
     options.addAll([
       MingrrOptionItem(
-        icon: Icons.notifications_off_outlined,
+        icon: AppIcons.notificationsNone,
         label: '알림 끄기',
         onTap: () => MingrrSnackBar.success(context, '알림이 꺼졌습니다'),
       ),
       MingrrOptionItem(
-        icon: Icons.block_outlined,
+        icon: AppIcons.block,
         label: '차단하기',
         color: Colors.orange,
         onTap: () => _blockUser(context),
       ),
       MingrrOptionItem(
-        icon: Icons.report_outlined,
+        icon: AppIcons.report,
         label: '신고하기',
         color: Colors.orange,
         onTap: _showReportDialog,
       ),
       MingrrOptionItem(
-        icon: Icons.exit_to_app,
+        icon: AppIcons.exit,
         label: '채팅방 나가기',
         isDestructive: true,
         onTap: () => _leaveChatRoom(context),
@@ -1131,14 +1009,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       onConfirm: () async {
         try {
           await _firestoreService.blockUser(myUserId, otherParticipant.id);
-          if (mounted) {
-            MingrrSnackBar.success(context, '${otherParticipant.nickname}님을 차단했습니다');
-            Navigator.pop(context); // 채팅 상세 화면 닫기
-          }
+          if (!context.mounted) return;
+          MingrrSnackBar.success(context, '${otherParticipant.nickname}님을 차단했습니다');
+          Navigator.pop(context); // 채팅 상세 화면 닫기
         } catch (e) {
-          if (mounted) {
-            MingrrSnackBar.error(context, '차단 실패: $e');
-          }
+          if (!context.mounted) return;
+          ErrorHandler.showError(context, e, tag: 'ChatDetail', operation: '사용자 차단');
         }
       },
     );
@@ -1190,7 +1066,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
       // 완료된 경우 활동 통계 증가
       if (result == ActivityResult.completed) {
-        final ratingType = _getRatingType(chatType);
+        final ratingType = RatingType.fromActivityType(chatType);
         await _ratingService.incrementActivityCount(myUserId, ratingType);
         if (otherParticipant != null) {
           await _ratingService.incrementActivityCount(otherParticipant.id, ratingType);
@@ -1206,7 +1082,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '오류가 발생했습니다: $e');
+        ErrorHandler.showError(context, e, tag: 'ChatDetail', operation: '데이터 처리');
       }
     }
   }
@@ -1223,7 +1099,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       targetUserId: otherParticipant.id,
       targetName: otherParticipant.petName ?? otherParticipant.nickname,
       targetImageUrl: otherParticipant.petImageUrl ?? otherParticipant.profileImageUrl,
-      ratingType: _getRatingType(chatType),
+      ratingType: RatingType.fromActivityType(chatType),
       relatedId: widget.chatRoomId,
       onComplete: () async {
         // 평가 완료 표시
@@ -1236,17 +1112,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     );
   }
 
-  RatingType _getRatingType(String chatType) {
-    switch (chatType) {
-      case 'marketplace':
-        return RatingType.marketplace;
-      case 'breeding':
-        return RatingType.breeding;
-      // 소모임(group/community)은 평가 기능 없음 - hasCompleteAction에서 제외됨
-      default:
-        return RatingType.dating;
-    }
-  }
 
   void _showReportDialog() async {
     final myUserId = ref.read(authStateProvider).valueOrNull?.uid ?? '';
@@ -1260,8 +1125,8 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       subtitle: '신고 사유를 선택해주세요',
       options: ['욕설/비방', '사기/허위정보', '노쇼', '부적절한 행동', '기타'],
       confirmText: '신고',
-      confirmColor: Colors.red,
-      icon: Icons.report_outlined,
+      confirmColor: Theme.of(context).colorScheme.error,
+      icon: AppIcons.report,
     );
 
     if (reason != null && mounted) {
@@ -1286,7 +1151,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         final userId = ref.read(authStateProvider).valueOrNull?.uid;
         if (userId != null) {
           await _chatService.leaveChatRoom(widget.chatRoomId, userId);
-          if (mounted) Navigator.pop(context);
+          if (context.mounted) Navigator.pop(context);
         }
       },
     );
@@ -1333,40 +1198,4 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         return Theme.of(context).colorScheme.primary;
     }
   }
-}
-
-/// 메시지 버블 꼬리 페인터
-class _BubbleTailPainter extends CustomPainter {
-  final Color color;
-  final bool isMe;
-
-  _BubbleTailPainter({required this.color, required this.isMe});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-    
-    if (isMe) {
-      // 오른쪽 꼬리 (내 메시지)
-      path.moveTo(0, 0);
-      path.lineTo(size.width, size.height * 0.3);
-      path.lineTo(0, size.height);
-      path.close();
-    } else {
-      // 왼쪽 꼬리 (상대방 메시지)
-      path.moveTo(size.width, 0);
-      path.lineTo(0, size.height * 0.3);
-      path.lineTo(size.width, size.height);
-      path.close();
-    }
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

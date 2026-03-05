@@ -45,7 +45,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
     OnboardingPage(
       svgAsset: SvgAssets.onboarding4,
-      title: '밍그르와 함께 시작해요',
+      title: '밍그르르와 함께 시작해요',
       description: '우리 아이와 함께하는\n특별한 일상이 시작됩니다',
     ),
   ];
@@ -163,7 +163,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           color: _currentPage == index
                               ? Theme.of(context).colorScheme.primary
                               : Theme.of(context).colorScheme.outline,
-                          borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                       ),
                     ),

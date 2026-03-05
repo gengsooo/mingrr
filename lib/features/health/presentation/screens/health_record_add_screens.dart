@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_icons.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/utils/error_handler.dart';
@@ -453,7 +454,7 @@ class _AddMedicationRecordScreenState extends State<AddMedicationRecordScreen> {
                     ),
                   ),
                   child: Icon(
-                    Icons.medication,
+                    AppIcons.medication,
                     size: 26,
                     color: color,
                   ),

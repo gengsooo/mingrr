@@ -5,6 +5,7 @@ import '../../models/marketplace_model.dart';
 import '../../models/group_model.dart';
 import '../../models/notification_model.dart';
 import 'firebase_service.dart';
+import 'transaction_service.dart';
 
 /// ============================================================
 /// 찜(좋아요) 서비스
@@ -33,19 +34,11 @@ class FavoriteService {
     final userId = _firebase.currentUserId;
     if (userId == null) throw Exception('로그인이 필요합니다');
     
-    final favoriteId = '${userId}_pet_$petId';
-    
-    await _favoritesCollection.doc(favoriteId).set({
-      'userId': userId,
-      'targetId': petId,
-      'targetType': 'pet',
-      'createdAt': Timestamp.fromDate(DateTime.now()),
-    });
-    
-    // 펫 좋아요 수 증가
-    await _firebase.petsCollection.doc(petId).update({
-      'likeCount': FieldValue.increment(1),
-    });
+    // TransactionService로 좋아요 처리 (트랜잭션 보장)
+    await TransactionService.togglePetLike(
+      petId: petId,
+      userId: userId,
+    );
     
     // 반려동물 주인에게 알림 발송
     await _sendPetLikeNotification(petId, userId);
@@ -92,14 +85,11 @@ class FavoriteService {
     final userId = _firebase.currentUserId;
     if (userId == null) throw Exception('로그인이 필요합니다');
     
-    final favoriteId = '${userId}_pet_$petId';
-    
-    await _favoritesCollection.doc(favoriteId).delete();
-    
-    // 펫 좋아요 수 감소
-    await _firebase.petsCollection.doc(petId).update({
-      'likeCount': FieldValue.increment(-1),
-    });
+    // TransactionService로 좋아요 취소 처리 (트랜잭션 보장)
+    await TransactionService.togglePetLike(
+      petId: petId,
+      userId: userId,
+    );
   }
   
   /// 반려동물 좋아요 여부 확인
@@ -155,39 +145,37 @@ class FavoriteService {
   
   // ===== 상품 찜 =====
   
-  /// 상품 찜하기
+  /// 상품 찜 토글 (트랜잭션으로 Race Condition 방지)
+  Future<bool> toggleProductFavorite(String productId) async {
+    final userId = _firebase.currentUserId;
+    if (userId == null) throw Exception('로그인이 필요합니다');
+    
+    return await TransactionService.toggleProductLike(
+      productId: productId,
+      userId: userId,
+    );
+  }
+  
+  /// 상품 찜하기 (하위 호환성 유지)
   Future<void> favoriteProduct(String productId) async {
     final userId = _firebase.currentUserId;
     if (userId == null) throw Exception('로그인이 필요합니다');
     
-    final favoriteId = '${userId}_product_$productId';
-    
-    await _favoritesCollection.doc(favoriteId).set({
-      'userId': userId,
-      'targetId': productId,
-      'targetType': 'product',
-      'createdAt': Timestamp.fromDate(DateTime.now()),
-    });
-    
-    // 상품 좋아요 수 증가
-    await _firebase.productsCollection.doc(productId).update({
-      'likeCount': FieldValue.increment(1),
-    });
+    final isLiked = await isProductFavorited(productId);
+    if (!isLiked) {
+      await toggleProductFavorite(productId);
+    }
   }
   
-  /// 상품 찜 취소
+  /// 상품 찜 취소 (하위 호환성 유지)
   Future<void> unfavoriteProduct(String productId) async {
     final userId = _firebase.currentUserId;
     if (userId == null) throw Exception('로그인이 필요합니다');
     
-    final favoriteId = '${userId}_product_$productId';
-    
-    await _favoritesCollection.doc(favoriteId).delete();
-    
-    // 상품 좋아요 수 감소
-    await _firebase.productsCollection.doc(productId).update({
-      'likeCount': FieldValue.increment(-1),
-    });
+    final isLiked = await isProductFavorited(productId);
+    if (isLiked) {
+      await toggleProductFavorite(productId);
+    }
   }
   
   /// 상품 찜 여부 확인
@@ -242,39 +230,37 @@ class FavoriteService {
   
   // ===== 소모임 찜 =====
   
-  /// 소모임 찜하기
+  /// 소모임 찜 토글 (트랜잭션으로 Race Condition 방지)
+  Future<bool> toggleGroupFavorite(String groupId) async {
+    final userId = _firebase.currentUserId;
+    if (userId == null) throw Exception('로그인이 필요합니다');
+    
+    return await TransactionService.toggleGroupLike(
+      groupId: groupId,
+      userId: userId,
+    );
+  }
+  
+  /// 소모임 찜하기 (하위 호환성 유지)
   Future<void> favoriteGroup(String groupId) async {
     final userId = _firebase.currentUserId;
     if (userId == null) throw Exception('로그인이 필요합니다');
     
-    final favoriteId = '${userId}_group_$groupId';
-    
-    await _favoritesCollection.doc(favoriteId).set({
-      'userId': userId,
-      'targetId': groupId,
-      'targetType': 'group',
-      'createdAt': Timestamp.fromDate(DateTime.now()),
-    });
-    
-    // 소모임 좋아요 수 증가
-    await _firebase.groupsCollection.doc(groupId).update({
-      'likeCount': FieldValue.increment(1),
-    });
+    final isLiked = await isGroupFavorited(groupId);
+    if (!isLiked) {
+      await toggleGroupFavorite(groupId);
+    }
   }
   
-  /// 소모임 찜 취소
+  /// 소모임 찜 취소 (하위 호환성 유지)
   Future<void> unfavoriteGroup(String groupId) async {
     final userId = _firebase.currentUserId;
     if (userId == null) throw Exception('로그인이 필요합니다');
     
-    final favoriteId = '${userId}_group_$groupId';
-    
-    await _favoritesCollection.doc(favoriteId).delete();
-    
-    // 소모임 좋아요 수 감소
-    await _firebase.groupsCollection.doc(groupId).update({
-      'likeCount': FieldValue.increment(-1),
-    });
+    final isLiked = await isGroupFavorited(groupId);
+    if (isLiked) {
+      await toggleGroupFavorite(groupId);
+    }
   }
   
   /// 소모임 찜 여부 확인
@@ -331,37 +317,12 @@ class FavoriteService {
   
   /// 반려동물 좋아요 토글
   Future<bool> togglePetLike(String petId) async {
-    final isLiked = await isPetLiked(petId);
-    if (isLiked) {
-      await unlikePet(petId);
-      return false;
-    } else {
-      await likePet(petId);
-      return true;
-    }
-  }
-  
-  /// 상품 찜 토글
-  Future<bool> toggleProductFavorite(String productId) async {
-    final isFavorited = await isProductFavorited(productId);
-    if (isFavorited) {
-      await unfavoriteProduct(productId);
-      return false;
-    } else {
-      await favoriteProduct(productId);
-      return true;
-    }
-  }
-  
-  /// 소모임 찜 토글
-  Future<bool> toggleGroupFavorite(String groupId) async {
-    final isFavorited = await isGroupFavorited(groupId);
-    if (isFavorited) {
-      await unfavoriteGroup(groupId);
-      return false;
-    } else {
-      await favoriteGroup(groupId);
-      return true;
-    }
+    final userId = _firebase.currentUserId;
+    if (userId == null) throw Exception('로그인이 필요합니다');
+    
+    return await TransactionService.togglePetLike(
+      petId: petId,
+      userId: userId,
+    );
   }
 }

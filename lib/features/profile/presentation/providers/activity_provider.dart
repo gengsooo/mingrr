@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/models/paginated_state.dart';
 import '../../../../core/providers/paginated_provider.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
+import '../../../../core/utils/app_logger.dart';
 import '../../../../models/community_post_model.dart';
 import '../../../../models/dating_model.dart';
 import '../../../../models/group_model.dart';
@@ -58,12 +58,7 @@ final currentUserPetIdsProvider = FutureProvider<Set<String>>((ref) async {
 // ============================================================
 
 void _logError(String source, Object error, [StackTrace? stackTrace]) {
-  if (kDebugMode) {
-    debugPrint('[ActivityProvider] $source error: $error');
-    if (stackTrace != null) {
-      debugPrint(stackTrace.toString());
-    }
-  }
+  AppLogger.error('ActivityProvider', source, error);
 }
 
 // ============================================================
@@ -363,23 +358,24 @@ final userMatchActivitiesProvider = FutureProvider.autoDispose<List<MatchActivit
     
     // 2. 보낸 신청 조회
     final sentSnapshot = await _firebase.firestore
-        .collection('datingRequests')
-        .where('senderId', isEqualTo: userId)
+        .collection('dating_requests')
+        .where('fromUserId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .limit(50)
         .get();
     
     for (final doc in sentSnapshot.docs) {
       final data = doc.data();
-      final receiverPetId = data['receiverPetId'] as String?;
+      // dating_requests 컨렉션 필드명: toPetId (dating_model.dart 기준)
+      final toPetId = data['toPetId'] as String?;
       
       String petName = '상대방';
       String? petImageUrl;
       String? petBreed;
       
-      if (receiverPetId != null) {
+      if (toPetId != null) {
         try {
-          final petDoc = await _firebase.petsCollection.doc(receiverPetId).get();
+          final petDoc = await _firebase.petsCollection.doc(toPetId).get();
           if (petDoc.exists) {
             final petData = petDoc.data()!;
             petName = petData['name'] as String? ?? '상대방';
@@ -405,23 +401,24 @@ final userMatchActivitiesProvider = FutureProvider.autoDispose<List<MatchActivit
     
     // 3. 받은 데이팅 신청 조회
     final receivedSnapshot = await _firebase.firestore
-        .collection('datingRequests')
-        .where('receiverId', isEqualTo: userId)
+        .collection('dating_requests')
+        .where('toUserId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .limit(50)
         .get();
     
     for (final doc in receivedSnapshot.docs) {
       final data = doc.data();
-      final senderPetId = data['senderPetId'] as String?;
+      // dating_requests 컨렉션 필드명: fromPetId (dating_model.dart 기준)
+      final fromPetId = data['fromPetId'] as String?;
       
       String petName = '상대방';
       String? petImageUrl;
       String? petBreed;
       
-      if (senderPetId != null) {
+      if (fromPetId != null) {
         try {
-          final petDoc = await _firebase.petsCollection.doc(senderPetId).get();
+          final petDoc = await _firebase.petsCollection.doc(fromPetId).get();
           if (petDoc.exists) {
             final petData = petDoc.data()!;
             petName = petData['name'] as String? ?? '상대방';
@@ -445,17 +442,18 @@ final userMatchActivitiesProvider = FutureProvider.autoDispose<List<MatchActivit
       ));
     }
     
-    // 4. 보낸 교배 신청 조회
+    // 4. 보낸 교배 신청 조회 (Firestore 규칙/인덱스: senderId 사용)
     final sentBreedingSnapshot = await _firebase.firestore
         .collection('breeding_requests')
-        .where('fromUserId', isEqualTo: userId)
+        .where('senderId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .limit(50)
         .get();
     
     for (final doc in sentBreedingSnapshot.docs) {
       final data = doc.data();
-      final toPetId = data['toPetId'] as String?;
+      // Firestore 필드명: receiverPetId (이전: toPetId)
+      final toPetId = data['receiverPetId'] as String? ?? data['toPetId'] as String?;
       
       String petName = '상대방';
       String? petImageUrl;
@@ -487,17 +485,18 @@ final userMatchActivitiesProvider = FutureProvider.autoDispose<List<MatchActivit
       ));
     }
     
-    // 5. 받은 교배 신청 조회
+    // 5. 받은 교배 신청 조회 (Firestore 규칙/인덱스: receiverId 사용)
     final receivedBreedingSnapshot = await _firebase.firestore
         .collection('breeding_requests')
-        .where('toUserId', isEqualTo: userId)
+        .where('receiverId', isEqualTo: userId)
         .orderBy('createdAt', descending: true)
         .limit(50)
         .get();
     
     for (final doc in receivedBreedingSnapshot.docs) {
       final data = doc.data();
-      final fromPetId = data['fromPetId'] as String?;
+      // Firestore 필드명: senderPetId (이전: fromPetId)
+      final fromPetId = data['senderPetId'] as String? ?? data['fromPetId'] as String?;
       
       String petName = '상대방';
       String? petImageUrl;

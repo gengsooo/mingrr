@@ -56,7 +56,7 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
     required this.primaryGradient,
   });
 
-  // ===== 데이팅 (핑크/코랄) =====
+  // ===== 데이팅 (로즈 핑크) =====
   final Color dating;
   final Color datingContainer;
   final Color onDating;
@@ -105,9 +105,9 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
 
   // ===== 라이트 테마 색상 =====
   static const light = FeatureColors(
-    // 데이팅 - 핑크/코랄 계열
-    dating: Color(0xFFFF8A80),
-    datingContainer: Color(0xFFFFEBEE),
+    // 데이팅 - 로즈 핑크 계열
+    dating: Color(0xFFF48FB1),
+    datingContainer: Color(0xFFFCE4EC),
     onDating: Colors.white,
     // 마켓 - 인디고 계열
     market: Color(0xFF5C6BC0),
@@ -155,8 +155,8 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
 
   // ===== 다크 테마 색상 =====
   static const dark = FeatureColors(
-    // 데이팅 - 핑크/코랄 계열 (다크모드) - 버건디색 제거, 다른 메뉴와 통일
-    dating: Color(0xFFFF8A80),
+    // 데이팅 - 로즈 핑크 계열 (다크모드)
+    dating: Color(0xFFF8BBD9),
     datingContainer: Color(0xFF1E1E1E),  // 다크 서피스와 동일
     onDating: Colors.white,
     // 마켓 - 인디고 계열 (다크모드)

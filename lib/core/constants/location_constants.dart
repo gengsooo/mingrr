@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_icons.dart';
 
 /// ============================================================
 /// 위치 관련 상수
@@ -11,17 +12,23 @@ class LocationConstants {
   /// 집 반경 안전구역 (200m) - 산책 기능 비활성화
   static const double homeSafetyRadiusMeters = 200.0;
   
-  /// 마켓 기본 거리 필터 (1.5km)
-  static const double marketDefaultRadiusKm = 1.5;
-  
-  /// 마켓 최대 거리 필터 (10km)
-  static const double marketMaxRadiusKm = 10.0;
-  
-  /// 소모임 기본 거리 필터 (5km)
-  static const double communityDefaultRadiusKm = 5.0;
+  /// 기본 거리 필터 (5km)
+  static const double defaultRadiusKm = 5.0;
   
   /// 위치 인증 반경 (당근마켓 스타일)
   static const double locationVerificationRadiusKm = 6.0;
+  
+  // ===== 거리 필터 옵션 =====
+  
+  /// 데이팅 거리 필터 옵션 (2, 5, 10, 20, 30, 200km)
+  static const List<double> datingDistanceOptions = [2, 5, 10, 20, 30, 200];
+  
+  /// 마켓 거리 필터 옵션 (2, 5, 10, 20km, 전체)
+  /// 0 = 전체 (거리 제한 없음)
+  static const List<double> marketDistanceOptions = [2, 5, 10, 20, 0];
+  
+  /// 소모임 거리 필터 옵션 (2, 5, 10, 20, 30km)
+  static const List<double> groupDistanceOptions = [2, 5, 10, 20, 30];
   
   // ===== 위치 인증 시스템 상수 =====
   
@@ -55,5 +62,39 @@ class LocationConstants {
   static const String noLocationText = '위치 정보 없음';
   
   /// 거리 표시 아이콘
-  static const IconData distanceIcon = Icons.location_on_outlined;
+  static const IconData distanceIcon = AppIcons.locationOutlined;
+}
+
+/// ============================================================
+/// 위치 인증 필요 화면 타입
+/// 
+/// 위치 인증이 필요한 기능에서 빈 화면 메시지 정의
+/// 사용처: LocationRequiredEmptyState 컴포넌트
+/// ============================================================
+enum LocationRequiredType {
+  dating(
+    title: '주변 친구를 찾으려면\n위치 인증이 필요해요',
+    description: '위치 인증 후 내 주변의\n반려동물 친구를 만나보세요!',
+    hint: '위치 정보는 주변 검색에만 사용됩니다',
+  ),
+  market(
+    title: '주변 상품을 보려면\n위치 인증이 필요해요',
+    description: '위치 인증 후 내 주변의\n상품을 거래해보세요!',
+    hint: '위치 정보는 주변 검색에만 사용됩니다',
+  ),
+  group(
+    title: '주변 모임을 찾으려면\n위치 인증이 필요해요',
+    description: '위치 인증 후 내 주변의\n소모임에 참여해보세요!',
+    hint: '위치 정보는 주변 검색에만 사용됩니다',
+  );
+
+  final String title;
+  final String description;
+  final String hint;
+
+  const LocationRequiredType({
+    required this.title,
+    required this.description,
+    required this.hint,
+  });
 }

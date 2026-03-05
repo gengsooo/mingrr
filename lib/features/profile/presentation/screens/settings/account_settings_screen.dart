@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../../core/constants/app_icons.dart';
 import '../../../../../core/constants/app_sizes.dart';
 import '../../../../../core/widgets/common_widgets.dart';
 import '../../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 계정 관리 화면
@@ -23,8 +25,6 @@ class AccountSettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
-  bool _isLoading = false;
-
   @override
   Widget build(BuildContext context) {
     final currentUser = ref.watch(currentUserProvider).valueOrNull;
@@ -40,9 +40,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     final theme = Theme.of(context);
     
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('계정 관리'),
-      ),
+      appBar: const MingrrAppBar(title: '계정 관리'),
       body: ListView(
         padding: const EdgeInsets.all(AppSizes.paddingM),
         children: [
@@ -60,24 +58,24 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                   ),
                 ),
                 MingrrSettingsTile.connection(
-                  icon: Icons.email_outlined,
+                  icon: AppIcons.email,
                   title: '이메일',
                   isConnected: isEmailLogin,
                   connectedText: authUser?.email ?? '연동됨',
                 ),
                 MingrrSettingsTile.connection(
-                  icon: Icons.chat_bubble_outline,
+                  icon: AppIcons.chatOutlined,
                   title: '카카오',
                   isConnected: isKakaoLogin,
                   iconColor: const Color(0xFFFEE500),
                 ),
                 MingrrSettingsTile.connection(
-                  icon: Icons.apple,
+                  icon: AppIcons.apple,
                   title: 'Apple',
                   isConnected: isAppleLogin,
                 ),
                 MingrrSettingsTile.connection(
-                  icon: Icons.g_mobiledata,
+                  icon: AppIcons.google,
                   title: 'Google',
                   isConnected: isGoogleLogin,
                   iconColor: const Color(0xFF4285F4),
@@ -103,7 +101,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                     ),
                   ),
                   MingrrSettingsTile(
-                    icon: Icons.lock_outline,
+                    icon: AppIcons.lock,
                     title: '비밀번호 변경',
                     subtitle: '비밀번호 재설정 이메일을 발송합니다',
                     onTap: _sendPasswordResetEmail,
@@ -128,13 +126,13 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                   ),
                 ),
                 MingrrSettingsTile(
-                  icon: Icons.email_outlined,
+                  icon: AppIcons.email,
                   title: '이메일',
                   subtitle: authUser?.email ?? '등록되지 않음',
                   showChevron: false,
                 ),
                 MingrrSettingsTile(
-                  icon: Icons.phone_outlined,
+                  icon: AppIcons.phone,
                   title: '전화번호',
                   subtitle: currentUser?.phoneNumber ?? '등록되지 않음',
                   showChevron: false,
@@ -149,7 +147,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
           MingrrCard(
             margin: EdgeInsets.zero,
             child: MingrrSettingsTile.destructive(
-              icon: Icons.person_remove_outlined,
+              icon: AppIcons.personRemove,
               title: '회원 탈퇴',
               subtitle: '계정과 모든 데이터가 삭제됩니다',
               onTap: _showDeleteAccountDialog,
@@ -177,11 +175,9 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     final email = authUser?.email;
     
     if (email == null) {
-      MingrrSnackBar.error(context, '이메일 정보를 찾을 수 없습니다');
+      MingrrSnackBar.warning(context, '이메일 정보를 찾을 수 없습니다');
       return;
     }
-    
-    setState(() => _isLoading = true);
     
     try {
       await ref.read(authNotifierProvider.notifier).sendPasswordResetEmail(email);
@@ -191,11 +187,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '이메일 발송에 실패했습니다');
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
+        ErrorHandler.showError(context, e, tag: 'Account', operation: '비밀번호 재설정 이메일 발송');
       }
     }
   }
@@ -211,8 +203,6 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
   }
 
   Future<void> _deleteAccount() async {
-    setState(() => _isLoading = true);
-    
     try {
       // 논리 삭제: isDeleted 플래그 설정 및 deletedAt 타임스탬프 저장
       // 실제 데이터는 30일 후 배치 작업으로 물리 삭제
@@ -224,8 +214,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '회원 탈퇴 중 오류가 발생했습니다');
-        setState(() => _isLoading = false);
+        ErrorHandler.showError(context, e, tag: 'Account', operation: '회원 탈퇴');
       }
     }
   }

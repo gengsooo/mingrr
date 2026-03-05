@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../services/firebase_service.dart';
 import '../common_widgets.dart';
 import 'mingrr_bottom_sheet.dart';
 import '../../utils/responsive_utils.dart';
+import '../../utils/error_handler.dart';
 
 /// ============================================================
 /// 신고 기능 위젯
@@ -103,7 +105,7 @@ class _ReportSheetState extends State<ReportSheet> {
                   const SizedBox(height: AppSizes.gapM),
                   Row(
                     children: [
-                      const Icon(Icons.report_outlined, color: Colors.red),
+                      Icon(AppIcons.report, color: Theme.of(context).colorScheme.error),
                       const SizedBox(width: AppSizes.gapS),
                       Text(
                         '${widget.targetName} 신고하기',
@@ -116,7 +118,7 @@ class _ReportSheetState extends State<ReportSheet> {
                     '신고 사유를 선택해주세요. 허위 신고 시 제재를 받을 수 있습니다.',
                     style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
-                  const SizedBox(height: AppSizes.gapLL),
+                  const SizedBox(height: AppSizes.gapL),
 
                   // 신고 유형 선택
                   ...ReportType.values.map((type) {
@@ -127,24 +129,24 @@ class _ReportSheetState extends State<ReportSheet> {
                         margin: const EdgeInsets.only(bottom: AppSizes.paddingS),
                         padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingM),
                         decoration: BoxDecoration(
-                          color: isSelected ? Colors.red.withValues(alpha: AppOpacity.o10) : Colors.transparent,
+                          color: isSelected ? Theme.of(context).colorScheme.error.withValues(alpha: AppOpacity.o10) : Colors.transparent,
                           borderRadius: BorderRadius.circular(AppSizes.radiusS),
                           border: Border.all(
-                            color: isSelected ? Colors.red : Theme.of(context).colorScheme.outline,
+                            color: isSelected ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.outline,
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(
-                              isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
+                              isSelected ? AppIcons.checkCircle : AppIcons.circleOutlined,
                               size: 20,
-                              color: isSelected ? Colors.red : Theme.of(context).colorScheme.outlineVariant,
+                              color: isSelected ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.outlineVariant,
                             ),
                             const SizedBox(width: AppSizes.gapM),
                             Text(
                               type.label,
                               style: AppTextStyles.bodyLarge(context).withColor(
-                                isSelected ? Colors.red : Theme.of(context).colorScheme.onSurface,
+                                isSelected ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.onSurface,
                               ),
                             ),
                           ],
@@ -168,7 +170,7 @@ class _ReportSheetState extends State<ReportSheet> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                          borderSide: const BorderSide(color: Colors.red),
+                          borderSide: BorderSide(color: Theme.of(context).colorScheme.error),
                         ),
                       ),
                     ),
@@ -212,21 +214,19 @@ class _ReportSheetState extends State<ReportSheet> {
                           'createdAt': FieldValue.serverTimestamp(),
                         });
                         
-                        if (mounted) {
-                          Navigator.pop(context);
-                          widget.onSubmit?.call();
-                          MingrrSnackBar.success(context, '신고가 접수되었습니다. 검토 후 조치하겠습니다.');
-                        }
+                        if (!context.mounted) return;
+                        MingrrSnackBar.success(context, '신고가 접수되었습니다. 검토 후 조치하겠습니다.');
+                        Navigator.pop(context);
+                        widget.onSubmit?.call();
                       } catch (e) {
-                        if (mounted) {
-                          MingrrSnackBar.error(context, '신고 실패: $e');
-                        }
+                        if (!context.mounted) return;
+                        ErrorHandler.showError(context, e, tag: 'Report', operation: '신고 제출');
                       } finally {
-                        if (mounted) setState(() => _isSubmitting = false);
+                        if (context.mounted) setState(() => _isSubmitting = false);
                       }
                     }
                   : null,
-              backgroundColor: Colors.red,
+              backgroundColor: Theme.of(context).colorScheme.error,
               textColor: Colors.white,
               height: 52,
             ),

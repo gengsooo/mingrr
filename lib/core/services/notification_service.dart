@@ -1,10 +1,11 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import '../utils/app_logger.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import 'firebase_service.dart';
 import '../widgets/common_widgets.dart';
+import '../../models/rating_model.dart';
 import '../../../app.dart' show rootNavigatorKey;
 
 /// ============================================================
@@ -55,23 +56,17 @@ class NotificationService {
       provisional: false,
     );
 
-    if (kDebugMode) {
-      print('FCM 권한 상태: ${settings.authorizationStatus}');
-    }
+    AppLogger.debug('NotificationService', 'FCM 권한 상태: ${settings.authorizationStatus}');
   }
 
   /// FCM 토큰 가져오기
   Future<String?> _getToken() async {
     try {
       _fcmToken = await _messaging.getToken();
-      if (kDebugMode) {
-        print('FCM Token: $_fcmToken');
-      }
+      AppLogger.debug('NotificationService', 'FCM Token: $_fcmToken');
       return _fcmToken;
     } catch (e) {
-      if (kDebugMode) {
-        print('FCM 토큰 가져오기 실패: $e');
-      }
+      AppLogger.error('NotificationService', 'FCM 토큰 가져오기 실패', e);
       return null;
     }
   }
@@ -80,9 +75,7 @@ class NotificationService {
   void _onTokenRefresh(String token) {
     _fcmToken = token;
     _saveTokenToFirestore(token);
-    if (kDebugMode) {
-      print('FCM Token 갱신: $token');
-    }
+    AppLogger.debug('NotificationService', 'FCM Token 갱신: $token');
   }
 
   /// 데이터베이스에 토큰 저장
@@ -118,9 +111,7 @@ class NotificationService {
 
   /// 포그라운드 메시지 수신
   void _onForegroundMessage(RemoteMessage message) {
-    if (kDebugMode) {
-      print('포그라운드 메시지 수신: ${message.notification?.title}');
-    }
+    AppLogger.info('NotificationService', '포그라운드 메시지 수신: ${message.notification?.title}');
 
     // 인앱 알림 표시 (SnackBar, 배너 등)
     _showInAppNotification(message);
@@ -128,9 +119,7 @@ class NotificationService {
 
   /// 백그라운드에서 알림 클릭
   void _onMessageOpenedApp(RemoteMessage message) {
-    if (kDebugMode) {
-      print('알림 클릭으로 앱 열림: ${message.data}');
-    }
+    AppLogger.info('NotificationService', '알림 클릭으로 앱 열림: ${message.data}');
     _handleNotificationTap(message);
   }
 
@@ -139,9 +128,7 @@ class NotificationService {
     final data = message.data;
     final type = data['type'] as String?;
 
-    if (kDebugMode) {
-      print('알림 탭 처리: type=$type, data=$data');
-    }
+    AppLogger.debug('NotificationService', '알림 탭 처리: type=$type, data=$data');
 
     // 네비게이션 처리
     _navigateToScreen(type, data);
@@ -158,7 +145,7 @@ class NotificationService {
       case 'marketInquiry':
         final chatRoomId = data['chatRoomId'] as String?;
         if (chatRoomId != null) {
-          context.push('/chat/detail/$chatRoomId');
+          context.push('/chat/$chatRoomId');
         } else {
           context.go('/chat');
         }
@@ -257,17 +244,13 @@ class NotificationService {
   /// 특정 토픽 구독
   Future<void> subscribeToTopic(String topic) async {
     await _messaging.subscribeToTopic(topic);
-    if (kDebugMode) {
-      print('토픽 구독: $topic');
-    }
+    AppLogger.info('NotificationService', '토픽 구독: $topic');
   }
 
   /// 토픽 구독 해제
   Future<void> unsubscribeFromTopic(String topic) async {
     await _messaging.unsubscribeFromTopic(topic);
-    if (kDebugMode) {
-      print('토픽 구독 해제: $topic');
-    }
+    AppLogger.info('NotificationService', '토픽 구독 해제: $topic');
   }
 
   // ===== 알림 전송 (Firestore 트리거용 데이터 저장) =====
@@ -366,6 +349,44 @@ class NotificationService {
       data: {
         'type': 'groupJoinApproved',
         'groupId': groupId,
+      },
+    );
+  }
+
+  /// 알바 지원 알림 (알바 등록자에게)
+  Future<void> sendJobApplicationNotification({
+    required String recipientId,
+    required String applicantName,
+    required String jobTitle,
+    required String applicationId,
+  }) async {
+    await _saveNotification(
+      recipientId: recipientId,
+      type: NotificationType.jobApplication,
+      title: '새 알바 지원',
+      body: '$applicantName님이 "$jobTitle" 알바에 지원했어요 💼',
+      data: {
+        'type': 'jobApplication',
+        'applicationId': applicationId,
+      },
+    );
+  }
+
+  /// 알바 지원 수락 알림 (지원자에게)
+  Future<void> sendJobAcceptedNotification({
+    required String recipientId,
+    required String employerName,
+    required String jobTitle,
+    required String chatRoomId,
+  }) async {
+    await _saveNotification(
+      recipientId: recipientId,
+      type: NotificationType.jobAccepted,
+      title: '알바 지원 수락됨',
+      body: '$employerName님이 "$jobTitle" 지원을 수락했어요! 💼',
+      data: {
+        'type': 'jobAccepted',
+        'chatRoomId': chatRoomId,
       },
     );
   }
@@ -579,7 +600,7 @@ class NotificationService {
     required String activityType,
     required String relatedId,
   }) async {
-    final typeLabel = _getActivityTypeLabel(activityType);
+    final typeLabel = RatingType.fromActivityType(activityType).activityLabel;
     await _saveNotification(
       recipientId: recipientId,
       type: NotificationType.ratingReminder,
@@ -591,22 +612,6 @@ class NotificationService {
         'relatedId': relatedId,
       },
     );
-  }
-
-  String _getActivityTypeLabel(String type) {
-    switch (type) {
-      case 'dating':
-        return '만남';
-      case 'marketplace':
-      case 'market':
-        return '거래';
-      case 'breeding':
-        return '교배';
-      case 'community':
-        return '소모임';
-      default:
-        return '활동';
-    }
   }
 
   /// 꼬순내지수 등급 변동 알림
@@ -741,6 +746,8 @@ enum NotificationType {
   ratingReminder,   // 평가 리마인더 알림
   gradeChange,      // 꼬순내지수 등급 변동 알림
   scoreChange,      // 꼬순내지수 점수 변동 알림
+  jobApplication,   // 알바 지원 알림
+  jobAccepted,      // 알바 지원 수락 알림
   system,
 }
 
@@ -793,7 +800,5 @@ class NotificationModel {
 /// 백그라운드 메시지 핸들러 (main.dart에서 등록)
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  if (kDebugMode) {
-    print('백그라운드 메시지 수신: ${message.notification?.title}');
-  }
+  AppLogger.info('NotificationService', '백그라운드 메시지 수신: ${message.notification?.title}');
 }

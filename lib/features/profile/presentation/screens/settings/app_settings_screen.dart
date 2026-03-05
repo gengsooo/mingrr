@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import '../../../../../core/constants/app_icons.dart';
 import '../../../../../core/constants/app_sizes.dart';
 import '../../../../../core/providers/theme_provider.dart';
 import '../../../../../core/widgets/common_widgets.dart';
+import '../../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 앱 설정 화면
@@ -29,9 +31,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('앱 설정'),
-      ),
+      appBar: const MingrrAppBar(title: '앱 설정'),
       body: ListView(
         padding: const EdgeInsets.all(AppSizes.paddingM),
         children: [
@@ -74,7 +74,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> {
                   ),
                 ),
                 MingrrSettingsTile.destructive(
-                  icon: Icons.delete_outline,
+                  icon: AppIcons.delete,
                   title: '캐시 삭제',
                   subtitle: '이미지 캐시를 삭제하여 저장 공간을 확보합니다',
                   onTap: _isClearing ? null : _clearCache,
@@ -98,7 +98,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        MingrrSnackBar.error(context, '캐시 삭제 중 오류가 발생했습니다');
+        ErrorHandler.showError(context, e, tag: 'AppSettings', operation: '캐시 삭제');
       }
     } finally {
       if (mounted) {

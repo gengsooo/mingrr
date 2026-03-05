@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../common_widgets.dart';
@@ -111,13 +112,13 @@ class InfoDialog extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusXL)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.radiusL)),
       elevation: AppSizes.elevationM,
       backgroundColor: colorScheme.surface,
       child: Container(
         constraints: const BoxConstraints(maxWidth: 340),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -188,7 +189,7 @@ class InfoDialog extends StatelessWidget {
           
           // 부제목
           if (subtitle != null) ...[
-            const SizedBox(height: AppSizes.gapSM),
+            const SizedBox(height: AppSizes.gapS),
             Text(
               subtitle!,
               style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
@@ -303,7 +304,7 @@ class InfoDialog extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.lightbulb_outline, size: 16, color: accentColor),
+                  Icon(AppIcons.lightbulb, size: 16, color: accentColor),
                   const SizedBox(width: AppSizes.gapS),
                   Expanded(
                     child: Text(

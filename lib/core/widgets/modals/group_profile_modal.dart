@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../services/bottom_sheet_stack_manager.dart';
 import '../../theme/feature_colors.dart';
 import '../../theme/app_text_styles.dart';
@@ -148,7 +149,7 @@ class GroupProfileModal extends StatelessWidget {
         children: [
           ProfileModalAvatar(
             size: 50,
-            fallbackIcon: Icons.person,
+            fallbackIcon: AppIcons.profile,
           ),
           if (member.isOnline)
             Positioned(
@@ -179,7 +180,7 @@ class GroupProfileModal extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS, vertical: AppSizes.paddingXXS),
       decoration: BoxDecoration(
         color: context.features.social,
-        borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Text(
         '모임장',
@@ -190,30 +191,11 @@ class GroupProfileModal extends StatelessWidget {
 
   /// 멤버 프로필 모달 열기
   void _openMemberProfile(BuildContext context, GroupMember member) {
-    showGuardianProfileModal(
+    showGuardianProfileFromFirestore(
       context,
-      guardianId: member.id,
-      guardianName: member.nickname,
-      kkosunnaeScore: member.kkosunnaeScore,
-      gender: GuardianGender.unknown,
-      isIdentityVerified: true,
-      isPetVerified: true,
-      isLocationVerified: false,
-      pets: [
-        GuardianPetInfo(
-          id: 'pet_${member.id}',
-          name: '멍멍이',
-          breed: '골든 리트리버',
-          ageString: '3살',
-          likeCount: 42,
-        ),
-      ],
-      activityInfo: const GuardianActivityInfo(
-        walkCount: 85,
-        datingCount: 12,
-        marketCount: 5,
-        groupCount: 18,
-      ),
+      userId: member.id,
+      fallbackName: member.nickname,
+      fallbackScore: member.kkosunnaeScore,
     );
   }
 
@@ -221,7 +203,7 @@ class GroupProfileModal extends StatelessWidget {
   Widget _buildGroupInfo(BuildContext context) {
     return ProfileModalHeader(
       avatar: ProfileModalAvatar(
-        fallbackIcon: Icons.groups,
+        fallbackIcon: AppIcons.group,
         backgroundColor: context.features.social.withValues(alpha: AppOpacity.o10),
         iconColor: context.features.social,
       ),
@@ -236,7 +218,7 @@ class GroupProfileModal extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
       decoration: BoxDecoration(
         color: context.features.social.withValues(alpha: AppOpacity.o10),
-        borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+        borderRadius: BorderRadius.circular(AppSizes.radiusS),
       ),
       child: Text(
         category!,
@@ -282,14 +264,14 @@ class GroupProfileModal extends StatelessWidget {
       content: ProfileModalDetailsBox(
         children: [
           if (location != null)
-            ProfileModalDetailRow(icon: Icons.location_on, label: '활동 지역', value: location!),
+            ProfileModalDetailRow(icon: AppIcons.location, label: '활동 지역', value: location!),
           if (createdAt != null) ...[
             if (location != null) const MingrrDivider.section(),
-            ProfileModalDetailRow(icon: Icons.calendar_today, label: '개설일', value: createdAt!),
+            ProfileModalDetailRow(icon: AppIcons.calendar, label: '개설일', value: createdAt!),
           ],
           const MingrrDivider.section(),
           ProfileModalDetailRow(
-            icon: Icons.check_circle,
+            icon: AppIcons.checkCircle,
             label: '가입 상태',
             value: isJoined ? '가입됨' : '미가입',
           ),

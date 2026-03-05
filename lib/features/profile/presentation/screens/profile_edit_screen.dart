@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/constants/app_icons.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/form_strings.dart';
@@ -10,13 +11,15 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/storage_service.dart';
-import '../../../../core/services/firestore_service.dart';
+import '../../../../core/services/nickname_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
+import '../../../../core/widgets/image/local_image_preview.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/forms/form_components.dart';
 import '../../../../core/widgets/sheets/image_picker_sheet.dart';
 import '../../../../core/widgets/map/map_widgets.dart';
 import '../../../../core/models/location_model.dart';
+import '../../../../core/utils/error_handler.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
 /// ============================================================
@@ -49,7 +52,6 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   
   // 프로필 이미지 관련
   final StorageService _storageService = StorageService();
-  final FirestoreService _firestoreService = FirestoreService();
   XFile? _selectedProfileImage;
   String? _profileImageUrl;
   DefaultAvatar? _selectedDefaultAvatar;
@@ -71,8 +73,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     final currentUser = ref.read(currentUserProvider).valueOrNull;
     if (currentUser == null) return;
     
-    _nicknameController.text = currentUser.nickname ?? '';
-    _originalNickname = currentUser.nickname ?? '';
+    _nicknameController.text = currentUser.nickname;
+    _originalNickname = currentUser.nickname;
     _bioController.text = currentUser.bio ?? '';
     _selectedGender = currentUser.gender;
     _birthDate = currentUser.birthDate;
@@ -103,7 +105,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.detailBackground,
-      appBar: MingrrFormAppBar(
+      appBar: MingrrAppBar.form(
         title: '프로필 수정',
         onClose: () => Navigator.pop(context),
       ),
@@ -164,7 +166,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                   border: Border.all(color: Colors.white, width: 2),
                 ),
                 child: const Icon(
-                  Icons.camera_alt,
+                  AppIcons.camera,
                   size: 18,
                   color: Colors.white,
                 ),
@@ -186,20 +188,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           shape: BoxShape.circle,
           border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
         ),
-        child: ClipOval(
-          child: kIsWeb
-              ? Image.network(
-                  _selectedProfileImage!.path,
-                  width: 120,
-                  height: 120,
-                  fit: BoxFit.cover,
-                )
-              : Image.file(
-                  File(_selectedProfileImage!.path),
-                  width: 120,
-                  height: 120,
-                  fit: BoxFit.cover,
-                ),
+        child: LocalImagePreview.circle(
+          path: _selectedProfileImage!.path,
+          size: 120,
         ),
       );
     }
@@ -231,14 +222,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           shape: BoxShape.circle,
           border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
         ),
-        child: ClipOval(
-          child: Image.network(
-            _profileImageUrl!,
-            width: 120,
-            height: 120,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _buildDefaultProfileImage(),
-          ),
+        child: MingrrImage.avatar(
+          imageUrl: _profileImageUrl,
+          size: 120,
+          icon: AppIcons.profile,
         ),
       );
     }
@@ -256,7 +243,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         border: Border.all(color: Theme.of(context).colorScheme.primary, width: 3),
       ),
       child: Icon(
-        Icons.person,
+        AppIcons.profile,
         size: 60,
         color: Theme.of(context).colorScheme.primary,
       ),
@@ -387,7 +374,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         // 안내 텍스트
         Row(
           children: [
-            Icon(Icons.info_outline, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(AppIcons.info, size: 14, color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(width: AppSizes.gapXS),
             Expanded(
               child: Text(
@@ -430,20 +417,27 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         
         final newNickname = _nicknameController.text.trim();
         
-        // 닉네임 변경 시 중복 체크
+        // 닉네임 변경 시 중복 체크 및 트랜잭션 처리
         if (newNickname != _originalNickname) {
-          final isAvailable = await _firestoreService.isNicknameAvailable(
+          final isAvailable = await NicknameService.isAvailable(
             newNickname,
             excludeUserId: authUser.uid,
           );
           
           if (!isAvailable) {
             if (mounted) {
-              MingrrSnackBar.error(context, '이미 사용 중인 닉네임입니다');
+              MingrrSnackBar.warning(context, '이미 사용 중인 닉네임입니다');
             }
             setState(() => _isLoading = false);
             return;
           }
+          
+          // 닉네임 변경 (트랜잭션 처리 - nicknames 컬렉션 업데이트)
+          await NicknameService.change(
+            userId: authUser.uid,
+            oldNickname: _originalNickname,
+            newNickname: newNickname,
+          );
         }
         
         // 프로필 이미지 업로드
@@ -454,8 +448,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
           uploadedImageUrl = await _uploadProfileImage(authUser.uid);
         }
         
+        // 닉네임은 NicknameService.change()에서 이미 업데이트됨
         final updateData = <String, dynamic>{
-          'nickname': newNickname,
+          if (newNickname == _originalNickname) 'nickname': newNickname,
           'gender': _selectedGender?.name,
           'birthDate': _birthDate != null ? Timestamp.fromDate(_birthDate!) : null,
           'bio': _bioController.text.trim().isEmpty ? null : _bioController.text.trim(),
@@ -479,7 +474,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
         }
       } catch (e) {
         if (mounted) {
-          MingrrSnackBar.error(context, '저장 실패: $e');
+          ErrorHandler.showError(context, e, tag: 'ProfileEdit', operation: '프로필 저장');
         }
       } finally {
         if (mounted) setState(() => _isLoading = false);

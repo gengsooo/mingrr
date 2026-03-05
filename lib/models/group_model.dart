@@ -342,7 +342,9 @@ class GroupScheduleModel extends Equatable {
       groupId: data['groupId'] ?? '',
       title: data['title'] ?? '',
       description: data['description'],
-      startTime: (data['startTime'] as Timestamp).toDate(),
+      startTime: data['startTime'] != null
+          ? (data['startTime'] as Timestamp).toDate()
+          : DateTime.now(),
       endTime: data['endTime'] != null
           ? (data['endTime'] as Timestamp).toDate()
           : null,

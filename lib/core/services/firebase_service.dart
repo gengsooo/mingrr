@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -7,12 +8,20 @@ import '../utils/app_logger.dart';
 /// ============================================================
 /// Firebase 서비스
 /// Firebase 인스턴스들을 중앙에서 관리하는 싱글톤 서비스
+/// 
+/// Firestore 설정:
+/// - 오프라인 지속성 활성화 (모바일)
+/// - 캐시 크기 제한 (100MB)
+/// - 네트워크 타임아웃 설정
 /// ============================================================
 class FirebaseService {
   // 싱글톤 패턴
   static final FirebaseService _instance = FirebaseService._internal();
   factory FirebaseService() => _instance;
   FirebaseService._internal();
+  
+  // 초기화 상태
+  static bool _isInitialized = false;
 
   // ===== Firebase 인스턴스들 =====
   
@@ -24,6 +33,31 @@ class FirebaseService {
   
   /// Firebase Storage 인스턴스
   FirebaseStorage get storage => FirebaseStorage.instance;
+  
+  // ===== Firestore 초기화 =====
+  
+  /// Firestore 설정 초기화
+  /// main.dart에서 Firebase.initializeApp() 후 호출
+  static Future<void> initializeFirestore() async {
+    if (_isInitialized) return;
+    
+    try {
+      final firestore = FirebaseFirestore.instance;
+      
+      // Firestore 설정
+      firestore.settings = Settings(
+        // 오프라인 지속성 (모바일에서만, 웹은 기본 비활성화)
+        persistenceEnabled: !kIsWeb,
+        // 캐시 크기 제한 (100MB, 기본값은 무제한)
+        cacheSizeBytes: 100 * 1024 * 1024,
+      );
+      
+      _isInitialized = true;
+      AppLogger.info('FirebaseService', 'Firestore 설정 완료 (persistenceEnabled: ${!kIsWeb})');
+    } catch (e) {
+      AppLogger.error('FirebaseService', 'Firestore 설정 실패', e);
+    }
+  }
 
   // ===== Firestore 컬렉션 참조 =====
   
@@ -55,10 +89,6 @@ class FirebaseService {
   CollectionReference<Map<String, dynamic>> get productLikesCollection =>
       firestore.collection('productLikes');
   
-  /// 가입 신청 컬렉션
-  CollectionReference<Map<String, dynamic>> get joinRequestsCollection =>
-      firestore.collection('joinRequests');
-  
   /// 모임 컬렉션
   CollectionReference<Map<String, dynamic>> get groupsCollection =>
       firestore.collection('groups');
@@ -70,6 +100,10 @@ class FirebaseService {
   /// 알바 컬렉션
   CollectionReference<Map<String, dynamic>> get jobsCollection =>
       firestore.collection('jobs');
+  
+  /// 알바 찜 컬렉션
+  CollectionReference<Map<String, dynamic>> get jobLikesCollection =>
+      firestore.collection('jobLikes');
   
   /// 교배 글 컬렉션
   CollectionReference<Map<String, dynamic>> get breedingPostsCollection =>
@@ -110,6 +144,10 @@ class FirebaseService {
   /// 커뮤니티 게시판 좋아요 컨렉션 (Firestore: feedLikes)
   CollectionReference<Map<String, dynamic>> get feedLikesCollection =>
       firestore.collection('feedLikes');
+  
+  /// 알바 지원 컬렉션
+  CollectionReference<Map<String, dynamic>> get jobApplicationsCollection =>
+      firestore.collection('job_applications');
 
   // ===== 메시지 서브컬렉션 접근 =====
   
@@ -159,17 +197,54 @@ class FirebaseService {
   /// 이미지 파일 업로드 및 URL 반환
   Future<String> uploadImage(dynamic file, String path) async {
     try {
+      // ===== 디버깅: Auth 상태 확인 =====
+      final user = auth.currentUser;
+      AppLogger.info('FirebaseService', '🔍 [DEBUG] Auth 상태: uid=${user?.uid}, email=${user?.email}, isAnonymous=${user?.isAnonymous}');
+      if (user != null) {
+        try {
+          final token = await user.getIdTokenResult();
+          AppLogger.info('FirebaseService', '🔍 [DEBUG] Token 발급자: ${token.signInProvider}, 만료: ${token.expirationTime}');
+        } catch (tokenErr) {
+          AppLogger.error('FirebaseService', '🔍 [DEBUG] Token 조회 실패', tokenErr);
+        }
+      } else {
+        AppLogger.error('FirebaseService', '🔴 [DEBUG] 로그인되지 않은 상태에서 업로드 시도!');
+      }
+      
+      AppLogger.info('FirebaseService', '🔍 [DEBUG] 업로드 시작 - path: $path, bucket: ${storage.bucket}');
       final ref = storage.ref().child(path);
       
       // File 타입인 경우
       if (file is File) {
-        final snapshot = await ref.putFile(file);
-        return await snapshot.ref.getDownloadURL();
+        AppLogger.info('FirebaseService', '🔍 [DEBUG] 파일 크기: ${file.lengthSync()} bytes, 경로: ${file.path}');
+        final ext = file.path.split('.').last.toLowerCase();
+        final contentType = switch (ext) {
+          'png' => 'image/png',
+          'heic' => 'image/heic',
+          'heif' => 'image/heif',
+          'webp' => 'image/webp',
+          _ => 'image/jpeg',
+        };
+        AppLogger.info('FirebaseService', '🔍 [DEBUG] contentType: $contentType (ext: $ext)');
+        final metadata = SettableMetadata(contentType: contentType);
+        final snapshot = await ref.putFile(file, metadata);
+        final url = await snapshot.ref.getDownloadURL();
+        AppLogger.info('FirebaseService', '✅ 이미지 업로드 성공 - url: $url');
+        return url;
       }
       
       throw Exception('Invalid file type: ${file.runtimeType}');
-    } catch (e) {
-      AppLogger.error('FirebaseService', '이미지 업로드 오류', e);
+    } on FirebaseException catch (e, st) {
+      AppLogger.error('FirebaseService', 
+        '🔴 Storage FirebaseException\n'
+        '  code: ${e.code}\n'
+        '  message: ${e.message}\n'
+        '  plugin: ${e.plugin}\n'
+        '  bucket: ${storage.bucket}\n'
+        '  stackTrace: $st', e);
+      rethrow;
+    } catch (e, st) {
+      AppLogger.error('FirebaseService', '🔴 이미지 업로드 오류 (${e.runtimeType})\n  stackTrace: $st', e);
       rethrow;
     }
   }

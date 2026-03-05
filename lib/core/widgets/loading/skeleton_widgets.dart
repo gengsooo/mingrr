@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_sizes.dart';
-import '../../theme/feature_colors.dart';
 
 /// ============================================================
 /// 스켈레톤 로딩 위젯
@@ -130,7 +129,7 @@ class MingrrSkeletonBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         shape: isCircle ? BoxShape.circle : BoxShape.rectangle,
-        borderRadius: isCircle ? null : (borderRadius ?? BorderRadius.circular(AppSizes.radiusXXS)),
+        borderRadius: isCircle ? null : (borderRadius ?? BorderRadius.circular(AppSizes.radiusS)),
       ),
     );
   }
@@ -525,7 +524,7 @@ class MingrrSkeletonList extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       padding: effectivePadding,
       itemCount: itemCount,
-      separatorBuilder: (_, __) => SizedBox(height: effectiveSpacing),
+      separatorBuilder: (_, _) => SizedBox(height: effectiveSpacing),
       itemBuilder: (context, index) => itemBuilder(index),
     );
   }

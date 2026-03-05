@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../config/api_config.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../models/location_model.dart';
@@ -61,7 +63,7 @@ class MapViewWidget extends StatefulWidget {
     this.zoomLevel = 15,
     this.routeColor,
     this.routeWidth = 4,
-    this.markerIcon = Icons.pets,
+    this.markerIcon = AppIcons.pet,
     this.markerColor,
     this.onTap,
   });
@@ -81,6 +83,10 @@ class _MapViewWidgetState extends State<MapViewWidget> {
 
   @override
   void dispose() {
+    // 1. 지도 컨트롤러 안전하게 정리 (크래시 방지 핵심)
+    // SurfaceView가 dispose된 후 접근하는 것을 방지
+    _mapController = null;
+    
     super.dispose();
   }
 
@@ -121,7 +127,7 @@ class _MapViewWidgetState extends State<MapViewWidget> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.fullscreen, size: 16, color: accentColor),
+                      Icon(AppIcons.fullscreen, size: 16, color: accentColor),
                       const SizedBox(width: AppSizes.gapXS),
                       Text(
                         '크게 보기',
@@ -138,6 +144,11 @@ class _MapViewWidgetState extends State<MapViewWidget> {
   }
 
   Widget _buildKakaoMap() {
+    // 카카오맵 SDK 초기화 체크 (안전장치)
+    if (!ApiConfig.isKakaoMapSdkInitialized) {
+      return _buildPlaceholder('지도를 불러올 수 없습니다');
+    }
+    
     final center = _getMapCenter();
     
     return Stack(
@@ -256,7 +267,7 @@ class _MapViewWidgetState extends State<MapViewWidget> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
-                  Icons.map_outlined,
+                  AppIcons.mapOutlined,
                   size: 40,
                   color: accentColor.withValues(alpha: AppOpacity.o50),
                 ),

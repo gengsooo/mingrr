@@ -10,6 +10,7 @@ import '../services/geocoding_service.dart';
 import '../utils/app_logger.dart';
 import '../widgets/common_widgets.dart';
 import '../../models/user_model.dart';
+import '../utils/error_handler.dart';
 
 /// ============================================================
 /// 위치 인증 시스템 Provider
@@ -420,7 +421,7 @@ class LocationVerificationService {
       if (!serviceEnabled) {
         if (context.mounted) Navigator.pop(context);
         if (context.mounted) {
-          MingrrSnackBar.error(context, '위치 서비스를 켜주세요');
+          MingrrSnackBar.warning(context, '위치 서비스를 켜주세요');
         }
         return;
       }
@@ -434,7 +435,7 @@ class LocationVerificationService {
         if (permission == LocationPermission.denied) {
           if (context.mounted) Navigator.pop(context);
           if (context.mounted) {
-            MingrrSnackBar.error(context, '위치 권한이 필요합니다');
+            MingrrSnackBar.warning(context, '위치 권한이 필요합니다');
           }
           return;
         }
@@ -443,7 +444,7 @@ class LocationVerificationService {
       if (permission == LocationPermission.deniedForever) {
         if (context.mounted) Navigator.pop(context);
         if (context.mounted) {
-          MingrrSnackBar.error(context, '설정에서 위치 권한을 허용해주세요');
+          MingrrSnackBar.warning(context, '설정에서 위치 권한을 허용해주세요');
         }
         return;
       }
@@ -458,7 +459,7 @@ class LocationVerificationService {
         AppLogger.warning('LocationVerification', '위치 획득 실패: $e');
         if (context.mounted) Navigator.pop(context);
         if (context.mounted) {
-          MingrrSnackBar.error(context, 'GPS 신호를 찾을 수 없습니다.');
+          MingrrSnackBar.warning(context, 'GPS 신호를 찾을 수 없습니다.');
         }
         return;
       }
@@ -467,7 +468,7 @@ class LocationVerificationService {
       if (position == null) {
         if (context.mounted) Navigator.pop(context);
         if (context.mounted) {
-          MingrrSnackBar.error(context, '위치를 확인할 수 없습니다');
+          MingrrSnackBar.warning(context, '위치를 확인할 수 없습니다');
         }
         return;
       }
@@ -500,7 +501,7 @@ class LocationVerificationService {
     } catch (e) {
       if (context.mounted) Navigator.pop(context);
       if (context.mounted) {
-        MingrrSnackBar.error(context, '위치 업데이트 실패: $e');
+        ErrorHandler.showError(context, e, tag: 'Location', operation: '위치 업데이트');
       }
     }
   }
@@ -516,7 +517,6 @@ class AppStartLocationChecker {
   AppStartLocationChecker._();
   
   static bool _hasCheckedOnAppStart = false;
-  static ProviderContainer? _container;
   
   /// 앱 시작 시 위치 체크 (한 번만 실행)
   /// 
@@ -549,6 +549,5 @@ class AppStartLocationChecker {
   /// 앱 재시작 시 체크 상태 초기화
   static void reset() {
     _hasCheckedOnAppStart = false;
-    _container = null;
   }
 }

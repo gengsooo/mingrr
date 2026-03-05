@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../constants/location_constants.dart';
 import '../../theme/app_text_styles.dart';
 import '../sheets/mingrr_bottom_sheet.dart';
 import '../../providers/location_verification_provider.dart';
 import '../../utils/responsive_utils.dart';
+import '../../utils/location_verification_helper.dart';
 
 /// ============================================================
 /// 공통 탭 네비게이션 컴포넌트
@@ -84,7 +86,7 @@ class MingrrMainTabBar extends StatelessWidget {
         padding: const EdgeInsets.all(AppSizes.paddingXS),
         decoration: BoxDecoration(
           color: colorScheme.surfaceContainerHighest.withValues(alpha: AppOpacity.o50),
-          borderRadius: BorderRadius.circular(AppSizes.radiusXXL),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
         ),
         child: Row(
           children: List.generate(tabs.length, (index) {
@@ -99,7 +101,7 @@ class MingrrMainTabBar extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
                   decoration: BoxDecoration(
                     color: isSelected ? tab.color : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     boxShadow: isSelected ? AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark) : null,
                   ),
                   child: Row(
@@ -117,7 +119,7 @@ class MingrrMainTabBar extends StatelessWidget {
                           size: 18,
                           color: isSelected ? Colors.white : colorScheme.onSurfaceVariant,
                         ),
-                      const SizedBox(width: AppSizes.gapSM),
+                      const SizedBox(width: AppSizes.gapS),
                       // 라벨
                       Text(
                         tab.label,
@@ -241,9 +243,10 @@ class MingrrSubTabBarDelegate extends SliverPersistentHeaderDelegate {
 /// 내 동네 + 거리 선택 + 반경 표시
 /// 위치 인증 상태에 따라 UI 변경
 /// [accentColor]: 테마 색상
-/// [currentDistance]: 현재 거리 (km)
+/// [currentDistance]: 현재 거리 (km), 0 = 전체
 /// [onDistanceChanged]: 거리 변경 콜백
-/// [distanceOptions]: 거리 옵션 목록
+/// [distanceOptions]: 거리 옵션 목록 (0 = 전체)
+/// [showAllOption]: 전체 옵션 표시 여부 (마켓에서만 true)
 /// ------------------------------------------------------------
 class LocationDistanceBar extends ConsumerWidget {
   final Color accentColor;
@@ -257,7 +260,7 @@ class LocationDistanceBar extends ConsumerWidget {
     required this.accentColor,
     required this.currentDistance,
     required this.onDistanceChanged,
-    this.distanceOptions = const [1, 3, 5, 10, 20, 50],
+    this.distanceOptions = LocationConstants.datingDistanceOptions,
     this.locationLabel,
   });
 
@@ -280,55 +283,72 @@ class LocationDistanceBar extends ConsumerWidget {
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingXS),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(color: colorScheme.outline.withValues(alpha: AppOpacity.o30)),
-        ),
-      ),
+      color: colorScheme.surface,
       child: Row(
         children: [
-          // 위치 아이콘 (인증 상태에 따라 색상 변경)
-          Icon(
-            isLocationVerified ? Icons.location_on : Icons.location_off_outlined,
-            size: 18,
-            color: isLocationVerified ? accentColor : colorScheme.outline,
-          ),
-          const SizedBox(width: AppSizes.gapSM),
-          
-          // 위치 라벨
+          // 위치 아이콘 + 내 동네 영역 (위치 미인증 시 전체 클릭 가능)
           Expanded(
-            child: Text(
-              displayLabel,
-              style: AppTextStyles.titleMedium(context).withColor(
-                isLocationVerified ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+            child: GestureDetector(
+              onTap: isLocationVerified 
+                  ? null 
+                  : () => LocationVerificationHelper.showVerificationDialog(context, ref),
+              child: Row(
+                children: [
+                  // 위치 아이콘
+                  Icon(
+                    isLocationVerified ? AppIcons.location : AppIcons.locationOff,
+                    size: 18,
+                    color: isLocationVerified ? accentColor : colorScheme.outline,
+                  ),
+                  const SizedBox(width: AppSizes.gapS),
+                  // 위치 라벨
+                  Expanded(
+                    child: Text(
+                      displayLabel,
+                      style: AppTextStyles.titleMedium(context).withColor(
+                        isLocationVerified ? colorScheme.onSurface : colorScheme.onSurfaceVariant,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
-              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: AppSizes.gapMS),
+          const SizedBox(width: AppSizes.gapM),
           
           // 거리 선택 버튼
           GestureDetector(
-            onTap: () => _showDistanceSelector(context, ref),
+            onTap: () {
+              if (isLocationVerified) {
+                _showDistanceSelector(context, ref);
+              } else {
+                // 위치 미인증 시 위치 인증 다이얼로그 표시
+                LocationVerificationHelper.showVerificationDialog(context, ref);
+              }
+            },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: AppOpacity.o15),
+                color: isLocationVerified 
+                    ? accentColor.withValues(alpha: AppOpacity.o15)
+                    : colorScheme.outline.withValues(alpha: AppOpacity.o15),
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${currentDistance.toInt()}km',
-                    style: AppTextStyles.titleSmall(context).withWeight(FontWeight.w600).withColor(accentColor),
+                    _getDistanceLabel(currentDistance),
+                    style: AppTextStyles.titleSmall(context).withWeight(FontWeight.w600).withColor(
+                      isLocationVerified ? accentColor : colorScheme.outline,
+                    ),
                   ),
                   const SizedBox(width: AppSizes.gapXS),
                   Icon(
-                    Icons.keyboard_arrow_down,
+                    isLocationVerified ? AppIcons.chevronDown : AppIcons.chevronRight,
                     size: 18,
-                    color: accentColor,
+                    color: isLocationVerified ? accentColor : colorScheme.outline,
                   ),
                 ],
               ),
@@ -384,7 +404,7 @@ class LocationDistanceBar extends ConsumerWidget {
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.info_outline, size: 14, color: colorScheme.outline),
+                        Icon(AppIcons.info, size: 14, color: colorScheme.outline),
                         const SizedBox(width: AppSizes.gapXS),
                         Text(
                           '위치 인증 후 정확한 거리 필터링이 가능합니다',
@@ -409,11 +429,11 @@ class LocationDistanceBar extends ConsumerWidget {
                     contentPadding: EdgeInsets.zero,
                     dense: true,
                     leading: Icon(
-                      isSelected ? Icons.check_circle : Icons.circle_outlined,
+                      isSelected ? AppIcons.success : AppIcons.successOutlined,
                       color: isSelected ? accentColor : colorScheme.onSurfaceVariant,
                     ),
                     title: Text(
-                      '${distance.toInt()}km',
+                      _getDistanceLabel(distance),
                       style: AppTextStyles.titleLarge(context)
                           .withWeight(isSelected ? FontWeight.w600 : FontWeight.w400)
                           .withColor(isSelected ? accentColor : colorScheme.onSurface),
@@ -433,10 +453,16 @@ class LocationDistanceBar extends ConsumerWidget {
     );
   }
 
+  /// 거리 라벨 (전체 옵션 지원)
+  String _getDistanceLabel(double distance) {
+    if (distance == 0) return '전체';
+    return '${distance.toInt()}km';
+  }
+
   String _getDistanceDescription(double distance) {
-    if (distance <= 1) return '가까운 이웃';
-    if (distance <= 3) return '동네 범위';
-    if (distance <= 5) return '조금 넓은 범위';
+    if (distance == 0) return '거리 제한 없음';
+    if (distance <= 2) return '가까운 동네';
+    if (distance <= 5) return '동네 범위';
     if (distance <= 10) return '넓은 범위';
     if (distance <= 20) return '광역 범위';
     return '최대 범위';
@@ -506,7 +532,7 @@ class CategoryFilterChips extends StatelessWidget {
                       // 드롭다운 아이콘 (첫 번째 항목만)
                       if (showDropdownIcon && index == 0) ...[
                         Icon(
-                          Icons.keyboard_arrow_down,
+                          AppIcons.chevronDown,
                           size: 18,
                           color: isSelected ? accentColor : colorScheme.onSurfaceVariant,
                         ),
@@ -577,17 +603,14 @@ class LocationRegionBar extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingXS),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        border: Border(bottom: BorderSide(color: colorScheme.outline.withValues(alpha: AppOpacity.o30))),
-      ),
+      color: colorScheme.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Icon(LocationConstants.distanceIcon, size: 18, color: accentColor),
-              const SizedBox(width: AppSizes.gapSM),
+              const SizedBox(width: AppSizes.gapS),
               GestureDetector(
                 onTap: onTap,
                 child: Container(
@@ -604,7 +627,7 @@ class LocationRegionBar extends StatelessWidget {
                         style: AppTextStyles.titleSmall(context).copyWith(color: accentColor),
                       ),
                       const SizedBox(width: AppSizes.gapXS),
-                      Icon(Icons.keyboard_arrow_down, size: 18, color: accentColor),
+                      Icon(AppIcons.chevronDown, size: 18, color: accentColor),
                     ],
                   ),
                 ),
@@ -622,7 +645,7 @@ class LocationRegionBar extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.refresh, size: 14, color: colorScheme.onSurfaceVariant),
+                        Icon(AppIcons.refresh, size: 14, color: colorScheme.onSurfaceVariant),
                         const SizedBox(width: 2),
                         Text('초기화', style: AppTextStyles.captionSmall(context)),
                       ],
@@ -653,7 +676,7 @@ class LocationRegionBar extends StatelessWidget {
                           const SizedBox(width: AppSizes.gapXS),
                           GestureDetector(
                             onTap: () => onRemoveLocation(location),
-                            child: Icon(Icons.close, size: 14, color: accentColor),
+                            child: Icon(AppIcons.close, size: 14, color: accentColor),
                           ),
                         ],
                       ),

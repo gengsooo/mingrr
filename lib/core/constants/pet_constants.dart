@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'app_icons.dart';
 
 /// ============================================================
 /// MINGRR 반려동물 전용 앱 상수
@@ -19,8 +20,8 @@ import 'package:flutter/material.dart';
 /// 사용자(보호자) 성별
 /// - 안전한 만남을 위해 보호자 성별 정보 필수
 enum UserGender {
-  male('남성', Icons.male),
-  female('여성', Icons.female);
+  male('남성', AppIcons.male),
+  female('여성', AppIcons.female);
 
   final String label;
   final IconData icon;
@@ -55,13 +56,20 @@ enum PetSize {
     if (weight < 45) return PetSize.large;
     return PetSize.giant;
   }
+
+  /// enum name(영문)으로 한글 라벨 반환
+  /// Firestore에 영문으로 저장된 크기 값을 UI에 표시할 때 사용
+  static String labelFromName(String name) {
+    final size = PetSize.values.where((e) => e.name == name).firstOrNull;
+    return size?.label ?? name;
+  }
 }
 
 /// 반려동물 성별
 /// - 교배 매칭 시 필수 정보
 enum PetGender {
-  male('남아', Icons.male),
-  female('여아', Icons.female);
+  male('남아', AppIcons.male),
+  female('여아', AppIcons.female);
 
   final String label;
   final IconData icon;
@@ -139,6 +147,13 @@ enum PetTrait {
   final PetTraitCategory category;
 
   const PetTrait(this.label, this.description, this.category);
+
+  /// enum name(영문)으로 한글 라벨 반환
+  /// Firestore에 영문으로 저장된 특성 값을 UI에 표시할 때 사용
+  static String labelFromName(String name) {
+    final trait = PetTrait.values.where((e) => e.name == name).firstOrNull;
+    return trait?.label ?? name;
+  }
 }
 
 /// 특성 카테고리
@@ -163,13 +178,13 @@ enum PetTraitCategory {
 /// ============================================================
 enum HealthCategory {
   // ===== 건강수첩 카테고리 (건강수첩 화면과 동기화) =====
-  weight('체중', Icons.monitor_weight_outlined, '체중 변화를 기록해요', true),
-  walk('산책', Icons.directions_walk, '산책 시간과 거리를 기록해요', true),
-  grooming('그루밍', Icons.content_cut, '미용/위생 관리를 기록해요', true),
-  medication('약', Icons.medication_outlined, '복용 중인 약을 관리해요', true),
-  vaccination('예방접종', Icons.vaccines_outlined, '예방접종 일정을 관리해요', true),
-  checkup('정기검진', Icons.local_hospital_outlined, '정기검진 일정을 관리해요', true),
-  special('특이사항', Icons.note_alt_outlined, '기타 특이사항을 기록해요', true);
+  weight('체중', AppIcons.weight, '체중 변화를 기록해요', true),
+  walk('산책', AppIcons.walk, '산책 시간과 거리를 기록해요', true),
+  grooming('그루밍', AppIcons.grooming, '미용/위생 관리를 기록해요', true),
+  medication('약', AppIcons.medication, '복용 중인 약을 관리해요', true),
+  vaccination('예방접종', AppIcons.vaccination, '예방접종 일정을 관리해요', true),
+  checkup('정기검진', AppIcons.checkup, '정기검진 일정을 관리해요', true),
+  special('특이사항', AppIcons.special, '기타 특이사항을 기록해요', true);
 
   final String label;
   final IconData icon;
@@ -186,17 +201,17 @@ enum HealthCategory {
 /// 그루밍 세부 항목
 /// - 샤워, 빗질, 발톱정리, 이발, 귀청소 등
 enum GroomingType {
-  shower('샤워', Icons.shower_outlined, '목욕/샤워'),
-  brushing('빗질', Icons.brush_outlined, '털 빗질'),
-  nailTrim('발톱정리', Icons.content_cut, '발톱 깎기'),
-  haircut('이발', Icons.cut_outlined, '털 미용/커트'),
-  earCleaning('귀청소', Icons.hearing_outlined, '귀 청소'),
-  eyeCleaning('눈물자국', Icons.visibility_outlined, '눈물자국 닦기'),
-  analGland('항문낭', Icons.circle_outlined, '항문낭 짜기'),
-  pawCare('발바닥', Icons.pets, '발바닥 관리'),
-  teethBrushing('양치', Icons.clean_hands_outlined, '양치질'),
-  teethScaling('치석제거', Icons.auto_fix_high, '치석 제거/스케일링'),
-  other('기타', Icons.more_horiz, '기타 그루밍');
+  shower('샤워', AppIcons.shower, '목욕/샤워'),
+  brushing('빗질', AppIcons.brushing, '털 빗질'),
+  nailTrim('발톱정리', AppIcons.nailTrim, '발톱 깎기'),
+  haircut('이발', AppIcons.haircut, '털 미용/커트'),
+  earCleaning('귀청소', AppIcons.earCleaning, '귀 청소'),
+  eyeCleaning('눈물자국', AppIcons.eyeCleaning, '눈물자국 닦기'),
+  analGland('항문낭', AppIcons.analGland, '항문낭 짜기'),
+  pawCare('발바닥', AppIcons.pawCare, '발바닥 관리'),
+  teethBrushing('양치', AppIcons.teethBrushing, '양치질'),
+  teethScaling('치석제거', AppIcons.teethScaling, '치석 제거/스케일링'),
+  other('기타', AppIcons.more, '기타 그루밍');
 
   final String label;
   final IconData icon;
@@ -265,9 +280,9 @@ enum MedicationIconType {
 /// - 위치 인증 추가 (당근마켓 스타일)
 /// ============================================================
 enum BadgeType {
-  identity('본인인증', Icons.verified_user_outlined, '본인 인증을 완료했어요'),
-  location('위치인증', Icons.location_on_outlined, '동네 인증을 완료했어요'),
-  petRegistration('동물등록', Icons.pets, '동물등록 인증을 완료했어요');
+  identity('본인인증', AppIcons.badgeIdentity, '본인 인증을 완료했어요'),
+  location('위치인증', AppIcons.badgeLocation, '동네 인증을 완료했어요'),
+  petRegistration('동물등록', AppIcons.badgePet, '동물등록 인증을 완료했어요');
 
   final String label;
   final IconData icon;
@@ -280,13 +295,13 @@ enum BadgeType {
 /// 소모임 카테고리
 /// ============================================================
 enum GroupCategory {
-  walk('산책 모임', Icons.directions_walk_outlined, '함께 산책해요'),
-  play('놀이 모임', Icons.sports_tennis_outlined, '함께 놀아요'),
-  share('나눔 모임', Icons.card_giftcard_outlined, '물품을 나눠요'),
-  coffee('커피 모임', Icons.coffee_outlined, '보호자끼리 모여요'),
-  training('훈련 모임', Icons.school_outlined, '함께 훈련해요'),
-  health('건강 모임', Icons.fitness_center_outlined, '건강 정보를 나눠요'),
-  other('기타', Icons.more_horiz_outlined, '기타 모임이에요');
+  walk('산책 모임', AppIcons.groupWalk, '함께 산책해요'),
+  play('놀이 모임', AppIcons.groupPlay, '함께 놀아요'),
+  share('나눔 모임', AppIcons.groupShare, '물품을 나눠요'),
+  coffee('커피 모임', AppIcons.groupCoffee, '보호자끼리 모여요'),
+  training('훈련 모임', AppIcons.groupTraining, '함께 훈련해요'),
+  health('건강 모임', AppIcons.groupHealth, '건강 정보를 나눠요'),
+  other('기타', AppIcons.more, '기타 모임이에요');
 
   final String label;
   final IconData icon;
@@ -314,10 +329,10 @@ enum GroupRestriction {
 /// - 교배 채팅 타입 분리 (배지 표시용)
 /// ============================================================
 enum ChatType {
-  dating('데이팅', Icons.favorite, '친구 만들기 채팅'),
-  breeding('교배', Icons.family_restroom, '교배 상대 채팅'),
-  group('소모임', Icons.groups, '소모임 채팅'),
-  market('마켓', Icons.storefront, '중고거래 채팅');
+  dating('데이팅', AppIcons.dating, '친구 만들기 채팅'),
+  breeding('교배', AppIcons.breeding, '교배 상대 채팅'),
+  group('소모임', AppIcons.group, '소모임 채팅'),
+  market('마켓', AppIcons.market, '중고거래 채팅');
 
   final String label;
   final IconData icon;
@@ -365,32 +380,240 @@ class BreedingFilterOptions {
   static const List<double> weightMaxOptions = [4, 10, 25, 45, 100];
 }
 
-/// 인기 품종 목록 (한국 기준)
+/// ============================================================
+/// 반려동물 종류 (PetType)
+/// 
+/// 강아지, 고양이, 파충류, 소동물, 조류, 기타
+/// ============================================================
+enum PetType {
+  dog('강아지', '🐕'),
+  cat('고양이', '🐱'),
+  reptile('파충류', '🦎'),
+  smallPet('소동물', '🐹'),
+  bird('조류', '🐦'),
+  other('기타', '🐾');
+
+  final String label;
+  final String emoji;
+
+  const PetType(this.label, this.emoji);
+}
+
+/// ============================================================
+/// 품종 데이터 (PetBreeds)
+/// 
+/// - 대표 품종: 선택 칩에 표시 (한국에서 가장 많이 키우는 품종)
+/// - 전체 품종: 자동완성용 데이터
+/// ============================================================
 class PetBreeds {
   PetBreeds._();
+
+  // ===== 강아지 =====
   
-  static const List<String> popular = [
+  /// 강아지 대표 품종 TOP 10 (선택 칩용)
+  static const List<String> dogPopular = [
     '말티즈',
     '푸들',
     '포메라니안',
-    '치와와',
-    '시츄',
-    '요크셔테리어',
     '비숑 프리제',
+    '시츄',
     '골든 리트리버',
-    '래브라도 리트리버',
     '웰시코기',
-    '프렌치 불독',
-    '비글',
-    '슈나우저',
-    '코카스파니엘',
     '진돗개',
-    '시바견',
-    '사모예드',
-    '허스키',
-    '보더콜리',
-    '닥스훈트',
+    '치와와',
     '믹스견',
-    '기타',
   ];
+
+  /// 강아지 전체 품종 (자동완성용)
+  static const List<String> dogAll = [
+    // 대표 품종
+    '말티즈', '푸들', '포메라니안', '비숑 프리제', '시츄',
+    '골든 리트리버', '웰시코기', '진돗개', '치와와', '믹스견',
+    // 소형견
+    '요크셔 테리어', '파피용', '페키니즈', '미니어처 핀셔',
+    '미니어처 슈나우저', '잭 러셀 테리어', '보스턴 테리어',
+    '캐벌리어 킹 찰스 스패니얼', '미니어처 푸들', '토이 푸들',
+    '말티푸', '폼스키', '슈눌', '코카푸',
+    // 중형견
+    '비글', '코카 스파니엘', '스탠다드 슈나우저', '불독',
+    '프렌치 불독', '보더 콜리', '셰틀랜드 쉽독', '시바견',
+    '바셋 하운드', '휘핏', '아메리칸 코카 스파니엘',
+    // 대형견
+    '래브라도 리트리버', '저먼 셰퍼드', '사모예드', '시베리안 허스키',
+    '알래스칸 말라뮤트', '도베르만', '로트와일러', '복서',
+    '그레이트 데인', '버니즈 마운틴 독', '뉴펀들랜드',
+    '아이리시 세터', '달마시안', '아키타', '차우차우',
+    '풍산개', '삽살개', '동경이',
+    // 닥스훈트 종류
+    '닥스훈트', '미니어처 닥스훈트',
+    // 테리어 종류
+    '에어데일 테리어', '웨스트 하이랜드 화이트 테리어',
+    '스코티시 테리어', '불 테리어', '스태퍼드셔 불 테리어',
+    // 기타
+    '그레이하운드', '휘핏', '바센지', '샤페이',
+  ];
+
+  // ===== 고양이 =====
+  
+  /// 고양이 대표 품종 TOP 5 (선택 칩용)
+  static const List<String> catPopular = [
+    '코리안 숏헤어',
+    '러시안 블루',
+    '브리티시 숏헤어',
+    '페르시안',
+    '스코티시 폴드',
+  ];
+
+  /// 고양이 전체 품종 (자동완성용)
+  static const List<String> catAll = [
+    // 대표 품종
+    '코리안 숏헤어', '러시안 블루', '브리티시 숏헤어', '페르시안', '스코티시 폴드',
+    // 인기 품종
+    '먼치킨', '랙돌', '샴', '아비시니안', '메인쿤',
+    '노르웨이 숲', '터키시 앙고라', '벵갈', '버만', '아메리칸 숏헤어',
+    '엑조틱 숏헤어', '히말라얀', '데본 렉스', '스핑크스', '소말리',
+    '싱가푸라', '오리엔탈 숏헤어', '통키니즈', '버미즈', '샤트룩스',
+    '재패니즈 밥테일', '아메리칸 컬', '셀커크 렉스', '라팜',
+    // 기타
+    '믹스묘', '길고양이',
+  ];
+
+  // ===== 파충류 =====
+  
+  /// 파충류 대표 품종 (선택 칩용)
+  static const List<String> reptilePopular = [
+    '레오파드 게코',
+    '크레스티드 게코',
+    '비어디 드래곤',
+    '볼파이톤',
+    '콘스네이크',
+  ];
+
+  /// 파충류 전체 품종 (자동완성용)
+  static const List<String> reptileAll = [
+    // 도마뱀
+    '레오파드 게코', '크레스티드 게코', '비어디 드래곤', '블루텅 스킨크',
+    '그린 이구아나', '카멜레온', '아콜로틀', '프릴드 리자드',
+    '사바나 모니터', '테구', '우로마스틱스',
+    // 뱀
+    '볼파이톤', '콘스네이크', '킹스네이크', '밀크스네이크',
+    '카펫파이톤', '그린트리파이톤', '보아 컨스트릭터',
+    // 거북
+    '육지거북', '레오파드 육지거북', '설카타 육지거북',
+    '붉은귀 거북', '지도거북', '머스크 터틀',
+    // 기타
+    '기타 파충류',
+  ];
+
+  // ===== 소동물 =====
+  
+  /// 소동물 대표 품종 (선택 칩용)
+  static const List<String> smallPetPopular = [
+    '햄스터',
+    '토끼',
+    '기니피그',
+    '고슴도치',
+    '페럿',
+  ];
+
+  /// 소동물 전체 품종 (자동완성용)
+  static const List<String> smallPetAll = [
+    // 햄스터
+    '골든 햄스터', '드워프 햄스터', '로보로브스키 햄스터',
+    '캠벨 햄스터', '윈터화이트 햄스터', '햄스터',
+    // 토끼
+    '네덜란드 드워프', '홀랜드 롭', '미니 렉스', '라이온 헤드',
+    '앙고라', '플레미시 자이언트', '토끼',
+    // 기니피그
+    '아메리칸 기니피그', '아비시니안 기니피그', '페루비안 기니피그',
+    '텍셀 기니피그', '기니피그',
+    // 기타 소동물
+    '친칠라', '고슴도치', '페럿', '슈가글라이더', '다람쥐',
+    '데구', '저빌', '마우스', '랫', '기타 소동물',
+  ];
+
+  // ===== 조류 =====
+  
+  /// 조류 대표 품종 (선택 칩용)
+  static const List<String> birdPopular = [
+    '사랑앵무',
+    '코카틸',
+    '모란앵무',
+    '문조',
+    '십자매',
+  ];
+
+  /// 조류 전체 품종 (자동완성용)
+  static const List<String> birdAll = [
+    // 앵무새
+    '사랑앵무', '코카틸', '모란앵무', '왕관앵무', '유황앵무',
+    '회색앵무', '아마존 앵무', '금강앵무', '마코앵무',
+    '퀘이커 앵무', '세네갈 앵무', '카이크',
+    // 핀치류
+    '문조', '십자매', '금화조', '카나리아', '제브라 핀치',
+    // 기타
+    '비둘기', '닭', '오리', '거위', '메추리', '기타 조류',
+  ];
+
+  // ===== 유틸리티 메서드 =====
+
+  /// 반려동물 종류별 대표 품종 가져오기
+  static List<String> getPopularBreeds(PetType type) {
+    switch (type) {
+      case PetType.dog:
+        return dogPopular;
+      case PetType.cat:
+        return catPopular;
+      case PetType.reptile:
+        return reptilePopular;
+      case PetType.smallPet:
+        return smallPetPopular;
+      case PetType.bird:
+        return birdPopular;
+      case PetType.other:
+        return [];
+    }
+  }
+
+  /// 반려동물 종류별 전체 품종 가져오기 (자동완성용)
+  static List<String> getAllBreeds(PetType type) {
+    switch (type) {
+      case PetType.dog:
+        return dogAll;
+      case PetType.cat:
+        return catAll;
+      case PetType.reptile:
+        return reptileAll;
+      case PetType.smallPet:
+        return smallPetAll;
+      case PetType.bird:
+        return birdAll;
+      case PetType.other:
+        return [];
+    }
+  }
+
+  /// 모든 품종 검색 (자동완성용)
+  static List<String> searchBreeds(String query, {PetType? type}) {
+    if (query.isEmpty) return [];
+    
+    final lowerQuery = query.toLowerCase();
+    List<String> breeds;
+    
+    if (type != null) {
+      breeds = getAllBreeds(type);
+    } else {
+      breeds = [
+        ...dogAll,
+        ...catAll,
+        ...reptileAll,
+        ...smallPetAll,
+        ...birdAll,
+      ];
+    }
+    
+    return breeds
+        .where((breed) => breed.toLowerCase().contains(lowerQuery))
+        .toList();
+  }
 }

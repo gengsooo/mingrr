@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../models/notification_model.dart';
@@ -51,26 +51,8 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     final unreadCount = ref.watch(unreadNotificationCountProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            const Text('알림'),
-            if (unreadCount > 0) ...[
-              const SizedBox(width: AppSizes.gapS),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXXS),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                ),
-                child: Text(
-                  unreadCount > 99 ? '99+' : '$unreadCount',
-                  style: AppTextStyles.labelLarge(context).withWeight(FontWeight.w600).withColor(Colors.white),
-                ),
-              ),
-            ],
-          ],
-        ),
+      appBar: MingrrAppBar(
+        title: '알림',
         actions: [
           if (unreadCount > 0)
             TextButton(
@@ -81,14 +63,14 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
         bottom: MingrrSubTabBar(
           tabs: _tabLabels,
           controller: _tabController,
-          isScrollable: true,
+          isScrollable: false,
         ),
       ),
       body: notificationsAsync.when(
         data: (notifications) {
           if (notifications.isEmpty) {
             return const MingrrEmptyState(
-              icon: Icons.notifications_none,
+              icon: AppIcons.notificationsNone,
               title: '알림이 없어요',
               subtitle: '새로운 소식이 있으면 알려드릴게요',
             );
@@ -128,7 +110,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
           type: MingrrLoadingType.primary,
           message: '알림을 불러오고 있어요',
         ),
-        error: (_, __) => MingrrErrorState(
+        error: (_, _) => MingrrErrorState(
           title: '일시적인 오류가 발생했어요',
           subtitle: '잠시 후 다시 시도해주세요',
           buttonText: '다시 시도',
@@ -142,7 +124,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
   Widget _buildNotificationList(WidgetRef ref, List<NotificationModel> notifications) {
     if (notifications.isEmpty) {
       return const MingrrEmptyState(
-        icon: Icons.notifications_none,
+        icon: AppIcons.notificationsNone,
         title: '알림이 없어요',
         subtitle: '새로운 소식이 있으면 알려드릴게요',
       );
@@ -240,8 +222,8 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.error,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -272,25 +254,25 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen>
     switch (type) {
       case NotificationType.datingRequest:
       case NotificationType.datingAccepted:
-        return Icons.favorite;
+        return AppIcons.dating;
       case NotificationType.matchSuccess:
-        return Icons.celebration;
+        return AppIcons.celebration;
       case NotificationType.petLike:
-        return Icons.favorite;
+        return AppIcons.dating;
       case NotificationType.breedingRequest:
       case NotificationType.breedingAccepted:
-        return Icons.family_restroom;
+        return AppIcons.breeding;
       case NotificationType.newMessage:
-        return Icons.chat_bubble;
+        return AppIcons.chatBubble;
       case NotificationType.productInquiry:
       case NotificationType.productSold:
-        return Icons.store;
+        return AppIcons.market;
       case NotificationType.groupJoinRequest:
       case NotificationType.groupJoinAccepted:
       case NotificationType.groupNewSchedule:
-        return Icons.groups;
+        return AppIcons.group;
       case NotificationType.system:
-        return Icons.info;
+        return AppIcons.info;
     }
   }
 
@@ -418,7 +400,7 @@ class _ReceivedLikesNavigator extends StatelessWidget {
   Widget build(BuildContext context) {
     // 실제 받은 좋아요 화면 import 후 사용
     return Scaffold(
-      appBar: AppBar(title: const Text('받은 좋아요')),
+      appBar: const MingrrAppBar(title: '받은 좋아요'),
       body: const Center(child: Text('받은 좋아요 화면')),
     );
   }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../mingrr_image.dart';
@@ -18,9 +19,9 @@ import '../mingrr_image.dart';
 /// ============================================================
 
 class AppBarActionButton extends StatelessWidget {
+  static const double _kSize = 40;
   final Widget child;
   final VoidCallback? onTap;
-  final double size;
   final EdgeInsets padding;
   final _ActionType _type;
 
@@ -28,7 +29,6 @@ class AppBarActionButton extends StatelessWidget {
     super.key,
     required this.child,
     this.onTap,
-    this.size = 40,
     this.padding = EdgeInsets.zero,
     required _ActionType type,
   }) : _type = type;
@@ -42,7 +42,7 @@ class AppBarActionButton extends StatelessWidget {
       key: key,
       onTap: onTap,
       type: _ActionType.search,
-      child: const Icon(Icons.search, size: 24),
+      child: const Icon(AppIcons.search, size: 24),
     );
   }
 
@@ -83,8 +83,8 @@ class AppBarActionButton extends StatelessWidget {
         onTap: () => _handleTap(context),
         behavior: HitTestBehavior.opaque,
         child: SizedBox(
-          width: size,
-          height: size,
+          width: _kSize,
+          height: _kSize,
           child: Center(child: child),
         ),
       ),
@@ -121,7 +121,7 @@ class _NotificationIcon extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        const Icon(Icons.notifications_outlined, size: 24),
+        const Icon(AppIcons.notification, size: 24),
         if (badgeCount > 0)
           Positioned(
             top: -4,
@@ -168,10 +168,10 @@ class _ProfileIcon extends StatelessWidget {
           width: 1,
         ),
       ),
-      child: MingrrAvatar(
+      child: MingrrImage.avatar(
         imageUrl: imageUrl,
         size: 32,
-        placeholderIcon: Icons.person,
+        icon: AppIcons.profile,
       ),
     );
   }

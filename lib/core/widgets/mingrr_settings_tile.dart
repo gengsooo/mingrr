@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants/app_icons.dart';
 import '../constants/app_sizes.dart';
 import '../theme/app_text_styles.dart';
 
@@ -133,8 +134,8 @@ class MingrrSettingsTile extends StatelessWidget {
       title: title,
       onTap: onTap,
       trailing: isSelected
-          ? const Icon(Icons.check_circle, color: Colors.green, size: 22)
-          : const Icon(Icons.circle_outlined, color: Colors.grey, size: 22),
+          ? Icon(AppIcons.checkCircle, color: Colors.green, size: 22)
+          : Icon(AppIcons.circleOutlined, color: Colors.grey, size: 22),
       showChevron: false,
     );
   }
@@ -160,7 +161,7 @@ class MingrrSettingsTile extends StatelessWidget {
         children: [
           if (badgeText != null) _SettingsBadge(text: badgeText, color: badgeColor),
           const SizedBox(width: AppSizes.gapXS),
-          const Icon(Icons.chevron_right, color: Colors.grey),
+          Icon(AppIcons.chevronRight, color: Colors.grey),
         ],
       ),
       showChevron: false,
@@ -188,7 +189,7 @@ class MingrrSettingsTile extends StatelessWidget {
       iconColor: iconColor,
       onTap: onTap,
       trailing: isConnected
-          ? const Icon(Icons.check_circle, color: Colors.green, size: 20)
+          ? Icon(AppIcons.checkCircle, color: Colors.green, size: 20)
           : null,
     );
   }
@@ -204,9 +205,9 @@ class MingrrSettingsTile extends StatelessWidget {
     final Color effectiveTitleColor;
     
     if (isDestructive) {
-      effectiveIconColor = Colors.red;
-      effectiveIconBgColor = Colors.red.withValues(alpha: AppOpacity.o10);
-      effectiveTitleColor = Colors.red;
+      effectiveIconColor = colorScheme.error;
+      effectiveIconBgColor = colorScheme.error.withValues(alpha: AppOpacity.o10);
+      effectiveTitleColor = colorScheme.error;
     } else if (isDisabled) {
       effectiveIconColor = colorScheme.outlineVariant;
       effectiveIconBgColor = colorScheme.outlineVariant.withValues(alpha: AppOpacity.o10);
@@ -245,7 +246,7 @@ class MingrrSettingsTile extends StatelessWidget {
             )
           : null,
       trailing: trailing ?? (showChevron
-          ? Icon(Icons.chevron_right, color: colorScheme.onSurfaceVariant)
+          ? Icon(AppIcons.chevronRight, color: colorScheme.onSurfaceVariant)
           : null),
       onTap: isDisabled ? null : onTap,
     );

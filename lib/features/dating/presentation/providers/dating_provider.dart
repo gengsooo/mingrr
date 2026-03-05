@@ -22,21 +22,27 @@ import '../../../pet/presentation/providers/pet_provider.dart';
 
 final _firebase = FirebaseService();
 
-/// 펫 + 거리 + 궁합 정보 (ItemWithDistance<PetModel> 확장)
+/// 펫 + 거리 + 궁합 정보 (`ItemWithDistance<PetModel>` 확장)
 class PetWithDistance extends ItemWithDistance<PetModel> {
   final String ownerAddress;
   final int matchScore;
   final String matchGrade;
-  final String? breedingDescription; // 교배찾기 글 상세 내용
+  final String? breedingPostId;       // 교배글 ID
+  final String? breedingTitle;        // 교배글 제목
+  final String? breedingDescription;  // 교배글 상세 내용
+  final bool sameBreedOnly;           // 같은 품종만 허용
   
   PetWithDistance({
     required PetModel pet,
-    required double distanceMeters,
+    required super.distanceMeters,
     this.ownerAddress = '',
     this.matchScore = 0,
     this.matchGrade = '',
+    this.breedingPostId,
+    this.breedingTitle,
     this.breedingDescription,
-  }) : super(item: pet, distanceMeters: distanceMeters);
+    this.sameBreedOnly = false,
+  }) : super(item: pet);
   
   /// 기존 코드 호환성을 위한 접근자
   PetModel get pet => item;
@@ -49,6 +55,9 @@ final datingPetsProvider = FutureProvider.autoDispose<List<PetWithDistance>>((re
   final userLocation = ref.watch(currentUserLocationProvider);
   final blockedUserIds = ref.watch(blockedUserIdsProvider).valueOrNull ?? [];
   
+  // 홈 화면에서 선택한 반려동물 (궁합 계산 기준)
+  final selectedPet = ref.watch(selectedPetProvider);
+  
   final petRepository = ref.watch(petRepositoryProvider);
   final allPets = await petRepository.getAllPets();
   
@@ -57,13 +66,16 @@ final datingPetsProvider = FutureProvider.autoDispose<List<PetWithDistance>>((re
       ? allPets.where((pet) => pet.ownerId != userId && !blockedUserIds.contains(pet.ownerId)).toList()
       : allPets.where((pet) => !blockedUserIds.contains(pet.ownerId)).toList();
   
-  // 내 대표 반려동물 가져오기 (궁합 계산용)
-  PetModel? myPet;
+  // 내 정보 가져오기 (궁합 계산용)
+  PetModel? myPet = selectedPet;
   UserModel? myUser;
   if (userId != null) {
-    final myPets = await petRepository.getUserPetsOnce(userId);
-    if (myPets.isNotEmpty) {
-      myPet = myPets.firstWhere((p) => p.isPrimary, orElse: () => myPets.first);
+    // 선택된 반려동물이 없으면 첫번째 반려동물 사용
+    if (myPet == null) {
+      final myPets = await petRepository.getUserPetsOnce(userId);
+      if (myPets.isNotEmpty) {
+        myPet = myPets.first;
+      }
     }
     final myUserDoc = await _firebase.usersCollection.doc(userId).get();
     if (myUserDoc.exists) {
@@ -183,6 +195,53 @@ final receivedDatingRequestsCountProvider = Provider.autoDispose<int>((ref) {
   return requests.where((r) => r.status == DatingRequestStatus.pending).length;
 });
 
+/// 특정 반려동물에 대한 데이팅 신청 상태 확인
+/// 내가 해당 반려동물에게 pending 상태의 신청을 보냈는지 확인
+final myDatingRequestStatusProvider = FutureProvider.autoDispose.family<bool, String>((ref, toPetId) async {
+  final userId = _firebase.currentUserId;
+  if (userId == null) return false;
+  
+  // 내 반려동물 목록 가져오기
+  final myPets = ref.watch(userPetsProvider).valueOrNull ?? [];
+  if (myPets.isEmpty) return false;
+  
+  // 내 반려동물 중 하나라도 해당 반려동물에게 pending 신청을 보냈는지 확인
+  for (final myPet in myPets) {
+    final snapshot = await _firebase.datingRequestsCollection
+        .where('fromPetId', isEqualTo: myPet.id)
+        .where('toPetId', isEqualTo: toPetId)
+        .where('status', isEqualTo: DatingRequestStatus.pending.name)
+        .limit(1)
+        .get();
+    
+    if (snapshot.docs.isNotEmpty) return true;
+  }
+  
+  return false;
+});
+
+/// 특정 반려동물에 대한 교배 신청 상태 확인
+final myBreedingRequestStatusProvider = FutureProvider.autoDispose.family<bool, String>((ref, toPetId) async {
+  final userId = _firebase.currentUserId;
+  if (userId == null) return false;
+  
+  final myPets = ref.watch(userPetsProvider).valueOrNull ?? [];
+  if (myPets.isEmpty) return false;
+  
+  for (final myPet in myPets) {
+    final snapshot = await _firebase.firestore.collection('breeding_requests')
+        .where('fromPetId', isEqualTo: myPet.id)
+        .where('toPetId', isEqualTo: toPetId)
+        .where('status', isEqualTo: DatingRequestStatus.pending.name)
+        .limit(1)
+        .get();
+    
+    if (snapshot.docs.isNotEmpty) return true;
+  }
+  
+  return false;
+});
+
 // 교배 가능한 반려동물 목록 (isBreedingAvailable = true, 거리 정보 포함)
 final breedingPetsProvider = FutureProvider.autoDispose<List<PetWithDistance>>((ref) async {
   final authState = ref.watch(authStateProvider);
@@ -266,6 +325,9 @@ final recommendedPetsProvider = FutureProvider.autoDispose<List<RecommendedPet>>
   final userLocation = ref.watch(currentUserLocationProvider);
   final blockedUserIds = ref.watch(blockedUserIdsProvider).valueOrNull ?? [];
   
+  // 홈 화면에서 선택한 반려동물 (궁합 계산 기준)
+  final selectedPet = ref.watch(selectedPetProvider);
+  
   if (userId == null) return [];
   
   // 내 정보 가져오기
@@ -274,16 +336,14 @@ final recommendedPetsProvider = FutureProvider.autoDispose<List<RecommendedPet>>
       ? UserModel.fromFirestore(myUserDoc.data()!, id: myUserDoc.id)
       : null;
   
-  // 내 대표 반려동물 가져오기
+  // 선택된 반려동물 사용 (없으면 첫번째)
   final petRepository = ref.watch(petRepositoryProvider);
-  final myPets = await petRepository.getUserPetsOnce(userId);
-  if (myPets.isEmpty) return [];
-  
-  // 대표 반려동물 (isPrimary가 true인 것 또는 첫번째)
-  final myPet = myPets.firstWhere(
-    (p) => p.isPrimary,
-    orElse: () => myPets.first,
-  );
+  PetModel? myPet = selectedPet;
+  if (myPet == null) {
+    final myPets = await petRepository.getUserPetsOnce(userId);
+    if (myPets.isEmpty) return [];
+    myPet = myPets.first;
+  }
   
   // 다른 반려동물 목록 가져오기 (차단된 사용자 제외)
   final allPets = await petRepository.getAllPets();
@@ -413,9 +473,9 @@ final paginatedBreedingPetsProvider = StateNotifierProvider
         }
       }
       
-      // 교배찾기 글에서 description 가져오기
+      // 교배찾기 글에서 정보 가져오기 (id, title, description)
       final petIds = otherPets.map((p) => p.id).toSet();
-      final breedingDescriptions = <String, String>{};
+      final breedingPosts = <String, Map<String, String>>{};
       
       for (final petId in petIds) {
         final breedingQuery = await _firebase.breedingPostsCollection
@@ -424,13 +484,23 @@ final paginatedBreedingPetsProvider = StateNotifierProvider
             .limit(1)
             .get();
         if (breedingQuery.docs.isNotEmpty) {
-          final data = breedingQuery.docs.first.data();
-          breedingDescriptions[petId] = data['description'] as String? ?? '';
+          final doc = breedingQuery.docs.first;
+          final data = doc.data();
+          breedingPosts[petId] = {
+            'id': doc.id,
+            'title': data['title'] as String? ?? '',
+            'description': data['description'] as String? ?? '',
+            'sameBreedOnly': (data['sameBreedOnly'] == true).toString(),
+          };
         }
       }
       
       final result = <PetWithDistance>[];
       for (final pet in otherPets) {
+        // 교배글이 있는 펫만 표시 (교배글 없으면 스킵)
+        final postInfo = breedingPosts[pet.id];
+        if (postInfo == null) continue;
+        
         final ownerLocation = ownerLocations[pet.ownerId];
         double distance = double.infinity;
         
@@ -441,12 +511,16 @@ final paginatedBreedingPetsProvider = StateNotifierProvider
           );
         }
         
-        // 거리 필터 적용
-        if (distance <= radiusKm * 1000) {
+        // 거리 필터 적용 (위치 정보 없으면 거리 무관하게 표시)
+        final hasLocationInfo = ownerLocation != null && userLocation != null;
+        if (!hasLocationInfo || distance <= radiusKm * 1000) {
           result.add(PetWithDistance(
             pet: pet,
-            distanceMeters: distance,
-            breedingDescription: breedingDescriptions[pet.id],
+            distanceMeters: hasLocationInfo ? distance : 0,
+            breedingPostId: postInfo['id'],
+            breedingTitle: postInfo['title'],
+            breedingDescription: postInfo['description'],
+            sameBreedOnly: postInfo['sameBreedOnly'] == 'true',
           ));
         }
       }
@@ -481,13 +555,18 @@ final paginatedNearbyPetsProvider = StateNotifierProvider
           ? allPets.where((pet) => pet.ownerId != userId && !blockedUserIds.contains(pet.ownerId)).toList()
           : allPets.where((pet) => !blockedUserIds.contains(pet.ownerId)).toList();
       
-      // 내 대표 반려동물 가져오기 (궁합 계산용)
-      PetModel? myPet;
+      // 홈 화면에서 선택한 반려동물 (궁합 계산 기준)
+      final selectedPet = ref.read(selectedPetProvider);
+      
+      PetModel? myPet = selectedPet;
       UserModel? myUser;
       if (userId != null) {
-        final myPets = await petRepository.getUserPetsOnce(userId);
-        if (myPets.isNotEmpty) {
-          myPet = myPets.firstWhere((p) => p.isPrimary, orElse: () => myPets.first);
+        // 선택된 반려동물이 없으면 첫번째 반려동물 사용
+        if (myPet == null) {
+          final myPets = await petRepository.getUserPetsOnce(userId);
+          if (myPets.isNotEmpty) {
+            myPet = myPets.first;
+          }
         }
         final myUserDoc = await _firebase.usersCollection.doc(userId).get();
         if (myUserDoc.exists) {
@@ -576,11 +655,15 @@ final paginatedRecommendedPetsProvider = StateNotifierProvider<
       
       final petRepository = ref.read(petRepositoryProvider);
       
-      // 내 대표 반려동물 가져오기
-      final myPets = await petRepository.getUserPetsOnce(userId);
-      if (myPets.isEmpty) return [];
+      // 홈 화면에서 선택한 반려동물 (궁합 계산 기준)
+      final selectedPet = ref.read(selectedPetProvider);
       
-      final myPet = myPets.firstWhere((p) => p.isPrimary, orElse: () => myPets.first);
+      PetModel? myPet = selectedPet;
+      if (myPet == null) {
+        final myPets = await petRepository.getUserPetsOnce(userId);
+        if (myPets.isEmpty) return [];
+        myPet = myPets.first;
+      }
       
       // 내 사용자 정보
       final myUserDoc = await _firebase.usersCollection.doc(userId).get();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/feature_colors.dart';
@@ -148,7 +149,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
     final rawSvg = await rootBundle.loadString('assets/icons/walking_dog.svg');
     
     // accentColor를 HEX 문자열로 변환
-    final colorHex = '#${_accentColor.value.toRadixString(16).substring(2).toUpperCase()}';
+    final colorHex = '#${_accentColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
     final lightColorHex = _getLighterColor(_accentColor);
     final darkColorHex = _getDarkerColor(_accentColor);
     
@@ -167,14 +168,14 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
   String _getLighterColor(Color color) {
     final hsl = HSLColor.fromColor(color);
     final lighter = hsl.withLightness((hsl.lightness + 0.2).clamp(0.0, 1.0));
-    return '#${lighter.toColor().value.toRadixString(16).substring(2).toUpperCase()}';
+    return '#${lighter.toColor().toARGB32().toRadixString(16).substring(2).toUpperCase()}';
   }
   
   /// 어두운 색상 생성
   String _getDarkerColor(Color color) {
     final hsl = HSLColor.fromColor(color);
     final darker = hsl.withLightness((hsl.lightness - 0.15).clamp(0.0, 1.0));
-    return '#${darker.toColor().value.toRadixString(16).substring(2).toUpperCase()}';
+    return '#${darker.toColor().toARGB32().toRadixString(16).substring(2).toUpperCase()}';
   }
 
   @override
@@ -220,7 +221,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
                   child: Transform(
                     alignment: Alignment.center,
                     transform: Matrix4.identity()
-                      ..scale(isMovingRight ? 1.0 : -1.0, 1.0),
+                      ..scaleByDouble(isMovingRight ? 1.0 : -1.0, 1.0, 1.0, 1.0),
                     child: _buildWalkingPet(),
                   ),
                 );
@@ -238,7 +239,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXL, vertical: AppSizes.paddingM),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusL),
                   boxShadow: AppShadows.shadowM(Theme.of(context).brightness == Brightness.dark),
                 ),
                 child: Row(
@@ -320,7 +321,7 @@ class _MapLoadingWidgetState extends State<MapLoadingWidget>
               child: Opacity(
                 opacity: opacity,
                 child: Icon(
-                  Icons.pets,
+                  AppIcons.pet,
                   size: 16,
                   color: _accentColor.withValues(alpha: AppOpacity.o50),
                 ),

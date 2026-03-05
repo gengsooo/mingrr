@@ -205,7 +205,8 @@ class ImageService {
       return _createResult(pickedFile.path);
     }
 
-    // 3. 크롭 실행
+    // 3. 크롭 실행 (async gap 후 context 유효성 확인)
+    if (!context.mounted) return null;
     return await crop(
       context: context,
       imagePath: pickedFile.path,
@@ -297,6 +298,7 @@ class ImageService {
     // 각 이미지 크롭
     final results = <ImageResult>[];
     for (final file in pickedFiles) {
+      if (!context.mounted) break;
       final result = await crop(
         context: context,
         imagePath: file.path,

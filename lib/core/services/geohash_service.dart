@@ -30,7 +30,6 @@ class GeoHashService {
     double minLon = -180.0, maxLon = 180.0;
     
     final buffer = StringBuffer();
-    int bits = 0;
     int bitsTotal = 0;
     int hashValue = 0;
     bool isEven = true;
@@ -109,11 +108,6 @@ class GeoHashService {
     if (geohash.isEmpty) return [];
     
     final neighbors = <String>[];
-    final directions = [
-      [-1, -1], [-1, 0], [-1, 1],
-      [0, -1],           [0, 1],
-      [1, -1],  [1, 0],  [1, 1],
-    ];
     
     // 간단한 구현: 현재 해시의 prefix만 사용
     // 실제로는 더 복잡한 이웃 계산이 필요하지만,

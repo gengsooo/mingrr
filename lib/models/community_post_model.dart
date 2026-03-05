@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import '../core/constants/app_icons.dart';
 
 /// ============================================================
 /// 커뮤니티(Community) 게시판 모델
@@ -60,17 +61,17 @@ extension CommunityCategoryLabel on CommunityCategory {
   IconData get icon {
     switch (this) {
       case CommunityCategory.daily:
-        return Icons.wb_sunny_outlined;
+        return AppIcons.weather;
       case CommunityCategory.question:
-        return Icons.help_outline;
+        return AppIcons.help;
       case CommunityCategory.info:
-        return Icons.campaign_outlined;
+        return AppIcons.campaign;
       case CommunityCategory.review:
-        return Icons.star_outline;
+        return AppIcons.starOutlined;
       case CommunityCategory.event:
-        return Icons.celebration_outlined;
+        return AppIcons.celebration;
       case CommunityCategory.other:
-        return Icons.chat_bubble_outline;
+        return AppIcons.more;
     }
   }
 }

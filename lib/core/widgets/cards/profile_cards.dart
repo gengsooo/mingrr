@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/feature_colors.dart';
 import '../../constants/app_sizes.dart';
 import '../common_widgets.dart';
 import '../kkosunnae_widgets.dart';
 import '../badges/verification_badge.dart';
-import '../badges/info_badge.dart';
+import '../badges/info_badge.dart' show PetGenderBadge, GenderBadgeStyle, InfoBadgeSize, LikeCountText;
 
 /// ============================================================
 /// 프로필 카드 공통 위젯
@@ -67,7 +68,6 @@ class GuardianProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = accentColor ?? Theme.of(context).colorScheme.primary;
     final avatarSize = compact ? 40.0 : 48.0;
-    final nameSize = compact ? 14.0 : 15.0;
     
     return GestureDetector(
       onTap: onTap,
@@ -99,7 +99,7 @@ class GuardianProfileCard extends StatelessWidget {
                       _buildGenderIcon(),
                     ],
                     if (_hasVerification) ...[
-                      const SizedBox(width: AppSizes.gapSM),
+                      const SizedBox(width: AppSizes.gapS),
                       _buildVerificationBadges(),
                     ],
                   ],
@@ -124,7 +124,7 @@ class GuardianProfileCard extends StatelessWidget {
           if (trailing != null)
             trailing!
           else if (showArrow && onTap != null)
-            Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(AppIcons.chevronRight, color: Theme.of(context).colorScheme.outlineVariant),
         ],
       ),
     );
@@ -132,10 +132,10 @@ class GuardianProfileCard extends StatelessWidget {
 
   Widget _buildAvatar(Color color, double size) {
     if (profileImageUrl != null && profileImageUrl!.isNotEmpty) {
-      return MingrrAvatar(
+      return MingrrImage.avatar(
         imageUrl: profileImageUrl,
         size: size,
-        placeholderIcon: Icons.person,
+        icon: AppIcons.profile,
       );
     }
     
@@ -146,7 +146,7 @@ class GuardianProfileCard extends StatelessWidget {
         color: color.withValues(alpha: AppOpacity.o10),
         shape: BoxShape.circle,
       ),
-      child: Icon(Icons.person, size: size * 0.5, color: color),
+      child: Icon(AppIcons.profile, size: size * 0.5, color: color),
     );
   }
 
@@ -154,10 +154,11 @@ class GuardianProfileCard extends StatelessWidget {
 
   Widget _buildGenderIcon() {
     final isMale = gender == 'male' || gender == '남성';
-    return Icon(
-      isMale ? Icons.male : Icons.female,
-      size: 16,
-      color: isMale ? Colors.blue : Colors.pink,
+    return PetGenderBadge(
+      isMale: isMale,
+      showLabel: false,
+      size: InfoBadgeSize.small,
+      style: GenderBadgeStyle.tinted,
     );
   }
 
@@ -231,7 +232,6 @@ class PetProfileCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = accentColor ?? context.features.dating;
     final avatarSize = compact ? 40.0 : 48.0;
-    final nameSize = compact ? 14.0 : 15.0;
     
     return GestureDetector(
       onTap: onTap,
@@ -278,7 +278,7 @@ class PetProfileCard extends StatelessWidget {
                 
                 // 성격 태그
                 if (showTraits && traits.isNotEmpty) ...[
-                  const SizedBox(height: AppSizes.gapSM),
+                  const SizedBox(height: AppSizes.gapS),
                   _buildTraits(context, color),
                 ],
               ],
@@ -289,7 +289,7 @@ class PetProfileCard extends StatelessWidget {
           if (trailing != null)
             trailing!
           else if (showArrow && onTap != null)
-            Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(AppIcons.chevronRight, color: Theme.of(context).colorScheme.outlineVariant),
         ],
       ),
     );
@@ -297,10 +297,10 @@ class PetProfileCard extends StatelessWidget {
 
   Widget _buildAvatar(Color color, double size) {
     if (profileImageUrl != null && profileImageUrl!.isNotEmpty) {
-      return MingrrAvatar(
+      return MingrrImage.avatar(
         imageUrl: profileImageUrl,
         size: size,
-        placeholderIcon: Icons.pets,
+        icon: AppIcons.pet,
       );
     }
     
@@ -311,16 +311,17 @@ class PetProfileCard extends StatelessWidget {
         color: color.withValues(alpha: AppOpacity.o10),
         shape: BoxShape.circle,
       ),
-      child: Icon(Icons.pets, size: size * 0.5, color: color),
+      child: Icon(AppIcons.pet, size: size * 0.5, color: color),
     );
   }
 
   Widget _buildGenderIcon() {
     final isMale = gender == 'male';
-    return Icon(
-      isMale ? Icons.male : Icons.female,
-      size: 16,
-      color: isMale ? Colors.blue : Colors.pink,
+    return PetGenderBadge(
+      isMale: isMale,
+      showLabel: false,
+      size: InfoBadgeSize.small,
+      style: GenderBadgeStyle.tinted,
     );
   }
 
@@ -345,7 +346,7 @@ class PetProfileCard extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
           decoration: BoxDecoration(
             color: color.withValues(alpha: AppOpacity.o10),
-            borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+            borderRadius: BorderRadius.circular(AppSizes.radiusS),
           ),
           child: Text(
             trait,

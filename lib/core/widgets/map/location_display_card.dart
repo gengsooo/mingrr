@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../constants/app_icons.dart';
 import '../../constants/app_sizes.dart';
 import '../../models/location_model.dart';
 import '../../theme/app_theme.dart';
@@ -77,7 +78,7 @@ class LocationDisplayCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   ),
                   child: Icon(
-                    hasLocation ? Icons.location_on : Icons.location_on_outlined,
+                    hasLocation ? AppIcons.location : AppIcons.locationOutlined,
                     size: 22,
                     color: hasLocation ? color : Theme.of(context).colorScheme.outlineVariant,
                   ),
@@ -133,7 +134,7 @@ class LocationDisplayCard extends StatelessWidget {
                   )
                 else if (editable)
                   Icon(
-                    Icons.chevron_right,
+                    AppIcons.chevronRight,
                     color: Theme.of(context).colorScheme.outlineVariant,
                     size: 20,
                   ),
@@ -147,7 +148,7 @@ class LocationDisplayCard extends StatelessWidget {
                 height: miniMapHeight,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: AppOpacity.o10),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusXS),
+                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Stack(
                   children: [
@@ -159,7 +160,7 @@ class LocationDisplayCard extends StatelessWidget {
                     // 중앙 마커
                     Center(
                       child: Icon(
-                        Icons.location_on,
+                        AppIcons.location,
                         size: 32,
                         color: color,
                       ),
@@ -177,7 +178,7 @@ class LocationDisplayCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.fullscreen, size: 14, color: accentColor),
+                            Icon(AppIcons.fullscreen, size: 14, color: accentColor),
                             const SizedBox(width: AppSizes.gapXS),
                             Text(
                               '지도 보기',

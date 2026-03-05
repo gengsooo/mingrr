@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../../core/constants/app_icons.dart';
 import '../../../../../core/constants/app_sizes.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/widgets/common_widgets.dart';
 import '../../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../../core/utils/responsive_utils.dart';
+import '../../../../../core/utils/error_handler.dart';
 
 /// ============================================================
 /// 고객센터 화면
@@ -26,9 +28,7 @@ class CustomerServiceScreen extends StatelessWidget {
     final theme = Theme.of(context);
     
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('고객센터'),
-      ),
+      appBar: const MingrrAppBar(title: '고객센터'),
       body: ListView(
         padding: const EdgeInsets.all(AppSizes.paddingM),
         children: [
@@ -46,7 +46,7 @@ class CustomerServiceScreen extends StatelessWidget {
                   ),
                 ),
                 MingrrSettingsTile(
-                  icon: Icons.chat_bubble_outline,
+                  icon: AppIcons.chatBubbleOutlined,
                   title: '카카오톡 문의',
                   subtitle: '평일 10:00 ~ 18:00 (주말/공휴일 휴무)',
                   iconColor: const Color(0xFF3C1E1E),
@@ -54,7 +54,7 @@ class CustomerServiceScreen extends StatelessWidget {
                   onTap: () => _openKakaoChannel(context),
                 ),
                 MingrrSettingsTile(
-                  icon: Icons.email_outlined,
+                  icon: AppIcons.email,
                   title: '이메일 문의',
                   subtitle: 'support@mingrr.com',
                   onTap: () => _sendEmail(context),
@@ -129,7 +129,7 @@ class CustomerServiceScreen extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        MingrrSnackBar.error(context, '카카오톡을 열 수 없습니다');
+        ErrorHandler.showError(context, e, tag: 'CustomerService', operation: '카카오톡 열기');
       }
     }
   }
@@ -141,7 +141,7 @@ class CustomerServiceScreen extends StatelessWidget {
     final uri = Uri(
       scheme: 'mailto',
       path: email,
-      query: 'subject=[밍그르] 문의드립니다',
+      query: 'subject=[밍그르르] 문의드립니다',
     );
     
     try {
@@ -154,7 +154,7 @@ class CustomerServiceScreen extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        MingrrSnackBar.error(context, '이메일을 열 수 없습니다');
+        ErrorHandler.showError(context, e, tag: 'CustomerService', operation: '이메일 열기');
       }
     }
   }
@@ -204,7 +204,7 @@ class CustomerServiceScreen extends StatelessWidget {
     
     final notices = [
       {
-        'title': '[안내] 밍그르 서비스 오픈!',
+        'title': '[안내] 밍그르르 서비스 오픈!',
         'date': '2025.01.10',
         'isNew': true,
       },
@@ -229,8 +229,8 @@ class CustomerServiceScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
               margin: const EdgeInsets.only(right: AppSizes.paddingS),
               decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                color: Theme.of(context).colorScheme.error,
+                borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
                 'NEW',
@@ -298,7 +298,7 @@ class CustomerServiceScreen extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Text(
                   '공지사항 내용이 여기에 표시됩니다.\n\n'
-                  '밍그르를 이용해 주셔서 감사합니다.\n\n'
+                  '밍그르르를 이용해 주셔서 감사합니다.\n\n'
                   '더 좋은 서비스로 보답하겠습니다.',
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
                 ),

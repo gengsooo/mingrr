@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/services/nickname_service.dart';
 import '../../../../models/user_model.dart';
 import '../../data/auth_repository.dart';
+import '../../data/consent_data.dart';
 
 /// ============================================================
 /// 인증 상태 관리 Provider
@@ -135,7 +137,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   // ===== 구글 로그인 =====
   
-  Future<bool> signInWithGoogle() async {
+  Future<bool> signInWithGoogle({ConsentData? consentData}) async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -146,7 +148,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         return false;
       }
 
-      await _handleSignIn(userCredential, 'google');
+      await _handleSignIn(userCredential, 'google', consentData: consentData);
       return true;
     } catch (e) {
       state = state.copyWith(
@@ -195,7 +197,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  Future<bool> signUpWithEmail(String email, String password) async {
+  Future<bool> signUpWithEmail(String email, String password, {ConsentData? consentData}) async {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
@@ -211,7 +213,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         // 인증 메일 발송 실패해도 회원가입은 성공 처리
       }
       
-      await _handleSignIn(userCredential, 'email');
+      await _handleSignIn(userCredential, 'email', consentData: consentData);
       return true;
     } on FirebaseAuthException catch (e) {
       state = state.copyWith(
@@ -230,7 +232,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   // ===== 카카오 로그인 (추후 구현) =====
   
-  Future<bool> signInWithKakao() async {
+  Future<bool> signInWithKakao({ConsentData? consentData}) async {
     state = state.copyWith(
       error: '카카오 로그인은 준비 중입니다.',
     );
@@ -239,7 +241,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   // ===== 네이버 로그인 (추후 구현) =====
   
-  Future<bool> signInWithNaver() async {
+  Future<bool> signInWithNaver({ConsentData? consentData}) async {
     state = state.copyWith(
       error: '네이버 로그인은 준비 중입니다.',
     );
@@ -250,8 +252,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   
   Future<void> _handleSignIn(
     UserCredential userCredential,
-    String provider,
-  ) async {
+    String provider, {
+    ConsentData? consentData,
+  }) async {
     final user = userCredential.user;
     if (user == null) {
       state = state.copyWith(
@@ -265,14 +268,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
     final exists = await _authRepository.checkUserExists(user.uid);
     
     if (!exists) {
-      // 신규 사용자 - 프로필 생성 필요
+      // 신규 사용자 - 고유 닉네임 자동 생성
+      final uniqueNickname = await NicknameService.generateUnique();
+      
       final newUser = UserModel.empty(user.uid, provider).copyWith(
         email: user.email,
         phoneNumber: user.phoneNumber,
         profileImageUrl: user.photoURL,
-        nickname: user.displayName ?? '새로운 친구',
+        nickname: uniqueNickname,
+        // 동의 정보 저장
+        termsAgreedAt: consentData?.agreedAt,
+        privacyAgreedAt: consentData?.agreedAt,
+        locationConsentAt: consentData?.locationAgreed == true ? consentData?.agreedAt : null,
+        marketingConsentAt: consentData?.marketingAgreed == true ? consentData?.agreedAt : null,
       );
       await _authRepository.createUser(newUser);
+      
+      // nicknames 컬렉션에 등록
+      await NicknameService.register(user.uid, uniqueNickname);
       state = state.copyWith(
         isLoading: false,
         isNewUser: true,
@@ -362,6 +375,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// 이메일 중복 검사
+  /// 반환값: true = 이미 사용 중, false = 사용 가능
+  Future<bool> checkEmailExists(String email) async {
+    return await _authRepository.checkEmailExists(email);
+  }
+
   // ===== 회원 탈퇴 (논리 삭제) =====
   /// 회원 탈퇴 시 물리 삭제가 아닌 논리 삭제를 수행합니다.
   /// - isDeleted: true로 설정
@@ -416,7 +435,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       case 'invalid-email':
         return '올바른 이메일 형식이 아닙니다.';
       case 'weak-password':
-        return '비밀번호가 너무 약합니다. 6자 이상 입력해주세요.';
+        return '8~16자 영문, 숫자, 특수문자를 사용해주세요.';
       case 'too-many-requests':
         return '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
       case 'network-request-failed':

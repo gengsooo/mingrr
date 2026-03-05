@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -9,7 +10,6 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/constants/location_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/mingrr_image.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/navigation/appbar_actions.dart';
 import '../../../../core/widgets/home_reminder_banner.dart';
@@ -25,6 +25,7 @@ import '../../../dating/presentation/screens/pet_detail_screen.dart';
 import '../../../../core/widgets/location_bubble_widget.dart';
 import '../../../../core/providers/location_verification_provider.dart';
 import '../../../../core/utils/responsive_utils.dart';
+import '../../../health/presentation/providers/health_provider.dart';
 
 /// ============================================================
 /// 홈 화면 (V3 리팩토링 - 반려동물 전용)
@@ -97,13 +98,13 @@ class HomeScreen extends ConsumerWidget {
                   MingrrSectionHeader(
                     title: '추천친구',
                     actionText: '더보기',
-                    onActionTap: () => context.go('/dating'),
+                    onActionTap: () => context.go('/dating?tab=0'),
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   recommendedPetsAsync.when(
                     data: (recommendedPets) => _buildAiRecommendSection(context, recommendedPets),
                     loading: () => _buildLoadingAiSection(),
-                    error: (_, __) => const SizedBox(),
+                    error: (_, _) => const SizedBox(),
                   ),
                   const SizedBox(height: AppSizes.gapXL),
                   
@@ -111,7 +112,7 @@ class HomeScreen extends ConsumerWidget {
                   MingrrSectionHeader(
                     title: '인기 소모임',
                     actionText: '더보기',
-                    onActionTap: () => context.push('/social'),
+                    onActionTap: () => context.go('/social?tab=1'),
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   _buildPopularGroupsSection(context),
@@ -129,9 +130,6 @@ class HomeScreen extends ConsumerWidget {
   /// 앱바
   Widget _buildAppBar(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    
-    final features = Theme.of(context).extension<FeatureColors>()!;
     
     return SliverAppBar(
       floating: true,
@@ -168,7 +166,7 @@ class HomeScreen extends ConsumerWidget {
       margin: EdgeInsets.zero,
       child: Column(
         children: [
-          Icon(Icons.pets, size: 48, color: colorScheme.outlineVariant),
+          Icon(AppIcons.pet, size: 48, color: colorScheme.outlineVariant),
           const SizedBox(height: AppSizes.gapM),
           Text(
             '등록된 반려동물이 없습니다',
@@ -236,20 +234,10 @@ class HomeScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 섹션 헤더
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '내 반려동물',
-              style: AppTextStyles.headlineSmall(context),
-            ),
-            Builder(
-              builder: (context) => TextButton(
-                onPressed: () => context.push('/profile'),
-                child: Text('관리', style: AppTextStyles.bodySmall(context)),
-              ),
-            ),
-          ],
+        MingrrSectionHeader(
+          title: '내 반려동물',
+          actionText: '관리',
+          onActionTap: () => context.push('/profile'),
         ),
         const SizedBox(height: AppSizes.gapS),
         
@@ -268,15 +256,15 @@ class HomeScreen extends ConsumerWidget {
                   ref.read(selectedPetIndexProvider.notifier).state = index;
                 },
                 child: Container(
-                  width: 85,
-                  margin: const EdgeInsets.only(right: AppSizes.gapM),
+                  width: 70,
+                  margin: const EdgeInsets.only(right: AppSizes.gapS),
                   child: Column(
                     children: [
                       // 프로필 이미지 (프로필 이미지만 사용, 없으면 기본 아이콘)
                       Builder(
                         builder: (ctx) {
                           final cs = Theme.of(ctx).colorScheme;
-                          return MingrrPetAvatar(
+                          return MingrrImage.petAvatar(
                             imageUrl: pet.profileImageUrl,
                             size: 60,
                             borderColor: isSelected ? cs.primary : null,
@@ -321,20 +309,10 @@ class HomeScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 섹션 헤더
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '${selectedPet.name}의 건강 기록',
-              style: AppTextStyles.headlineSmall(context),
-            ),
-            Builder(
-              builder: (ctx) => TextButton(
-                onPressed: () => _showHealthCategorySettings(ctx, ref),
-                child: Text('설정', style: AppTextStyles.bodySmall(ctx)),
-              ),
-            ),
-          ],
+        MingrrSectionHeader(
+          title: '${selectedPet.name}의 건강 기록',
+          actionText: '설정',
+          onActionTap: () => _showHealthCategorySettings(context, ref),
         ),
         const SizedBox(height: AppSizes.gapM),
         
@@ -348,15 +326,15 @@ class HomeScreen extends ConsumerWidget {
           onTap: () => context.push('/health'),
           child: Column(
             children: [
-              // 선택된 카테고리들 표시
+              // 선택된 카테고리들 표시 (DB 연동)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: categories.map((category) {
-                  return _buildHealthItem(
-                    icon: category.icon,
-                    label: category.label,
-                    value: _getDemoValue(category),
-                    color: _getCategoryColor(context, category),
+                  return _buildHealthItemWithData(
+                    context: context,
+                    ref: ref,
+                    category: category,
+                    petId: selectedPet.id,
                   );
                 }).toList(),
               ),
@@ -371,14 +349,14 @@ class HomeScreen extends ConsumerWidget {
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.add_circle_outline, size: 18, color: cs.onSurfaceVariant),
+                      Icon(AppIcons.addCircle, size: 18, color: cs.onSurfaceVariant),
                       const SizedBox(width: AppSizes.gapS),
                       Text(
                         '건강수첩 열기',
                         style: AppTextStyles.titleMedium(ctx).withColor(cs.onSurfaceVariant),
                       ),
                       const SizedBox(width: AppSizes.gapXS),
-                      Icon(Icons.chevron_right, size: 18, color: cs.onSurfaceVariant),
+                      Icon(AppIcons.chevronRight, size: 18, color: cs.onSurfaceVariant),
                     ],
                   );
                 },
@@ -520,7 +498,7 @@ class HomeScreen extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(AppSizes.radiusM),
                   ),
                   child: const Center(
-                    child: Icon(Icons.directions_walk, size: 32, color: Colors.white),
+                    child: Icon(AppIcons.walk, size: 32, color: Colors.white),
                   ),
                 ),
                 const SizedBox(width: AppSizes.gapM),
@@ -549,8 +527,8 @@ class HomeScreen extends ConsumerWidget {
                     color: Colors.white.withValues(alpha: AppOpacity.o20),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
-                    Icons.arrow_forward_rounded,
+                  child: Icon(
+                    AppIcons.arrowForward,
                     color: Colors.white,
                     size: 22,
                   ),
@@ -567,7 +545,7 @@ class HomeScreen extends ConsumerWidget {
     final user = userAsync.valueOrNull;
     
     if (user == null) {
-      MingrrSnackBar.error(context, '로그인이 필요합니다');
+      MingrrSnackBar.warning(context, '로그인이 필요합니다');
       return;
     }
     
@@ -608,7 +586,6 @@ class HomeScreen extends ConsumerWidget {
         const SizedBox(height: AppSizes.gapS),
         Builder(
           builder: (ctx) {
-            final cs = Theme.of(ctx).colorScheme;
             return Text(
               value,
               style: AppTextStyles.titleLarge(ctx).withWeight(FontWeight.w700),
@@ -617,7 +594,6 @@ class HomeScreen extends ConsumerWidget {
         ),
         Builder(
           builder: (ctx) {
-            final cs = Theme.of(ctx).colorScheme;
             return Text(
               label,
               style: AppTextStyles.captionSmall(ctx),
@@ -628,25 +604,245 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  /// 데모용 값 반환
-  String _getDemoValue(HealthCategory category) {
+  /// DB 연동된 건강 아이템 위젯 (카테고리별 Provider 사용)
+  Widget _buildHealthItemWithData({
+    required BuildContext context,
+    required WidgetRef ref,
+    required HealthCategory category,
+    required String petId,
+  }) {
+    final color = context.features.health;
+    
     switch (category) {
       case HealthCategory.weight:
-        return '5.2kg';
+        final recordsAsync = ref.watch(weightRecordsProvider(petId));
+        return recordsAsync.when(
+          data: (records) {
+            final value = records.isNotEmpty 
+                ? '${records.first.weight.toStringAsFixed(1)}kg'
+                : '-';
+            return _buildHealthItem(
+              icon: category.icon,
+              label: category.label,
+              value: value,
+              color: color,
+            );
+          },
+          loading: () => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '...',
+            color: color,
+          ),
+          error: (_, _) => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '-',
+            color: color,
+          ),
+        );
+        
       case HealthCategory.walk:
-        return '1회';
+        final recordsAsync = ref.watch(walkRecordsProvider(petId));
+        return recordsAsync.when(
+          data: (records) {
+            // 오늘 산책 횟수 계산
+            final today = DateTime.now();
+            final todayWalks = records.where((r) => 
+              r.startTime.year == today.year &&
+              r.startTime.month == today.month &&
+              r.startTime.day == today.day
+            ).length;
+            return _buildHealthItem(
+              icon: category.icon,
+              label: category.label,
+              value: '$todayWalks회',
+              color: color,
+            );
+          },
+          loading: () => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '...',
+            color: color,
+          ),
+          error: (_, _) => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '-',
+            color: color,
+          ),
+        );
+        
       case HealthCategory.grooming:
-        return '3일 전';
+        final recordsAsync = ref.watch(groomingRecordsProvider(petId));
+        return recordsAsync.when(
+          data: (records) {
+            if (records.isEmpty) {
+              return _buildHealthItem(
+                icon: category.icon,
+                label: category.label,
+                value: '-',
+                color: color,
+              );
+            }
+            // 마지막 그루밍 날짜로부터 경과일
+            final lastDate = records.first.recordDate;
+            final daysAgo = DateTime.now().difference(lastDate).inDays;
+            final value = daysAgo == 0 ? '오늘' : '$daysAgo일 전';
+            return _buildHealthItem(
+              icon: category.icon,
+              label: category.label,
+              value: value,
+              color: color,
+            );
+          },
+          loading: () => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '...',
+            color: color,
+          ),
+          error: (_, _) => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '-',
+            color: color,
+          ),
+        );
+        
       case HealthCategory.medication:
-        return '1회';
-      default:
-        return '-';
+        final recordsAsync = ref.watch(medicationRecordsProvider(petId));
+        return recordsAsync.when(
+          data: (records) {
+            // 현재 복용 중인 약 개수
+            final now = DateTime.now();
+            final activeCount = records.where((r) => 
+              r.endDate == null || r.endDate!.isAfter(now)
+            ).length;
+            return _buildHealthItem(
+              icon: category.icon,
+              label: category.label,
+              value: '$activeCount개',
+              color: color,
+            );
+          },
+          loading: () => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '...',
+            color: color,
+          ),
+          error: (_, _) => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '-',
+            color: color,
+          ),
+        );
+        
+      case HealthCategory.vaccination:
+        final recordsAsync = ref.watch(vaccinationRecordsProvider(petId));
+        return recordsAsync.when(
+          data: (records) {
+            // 다음 접종까지 남은 일수 또는 총 접종 횟수
+            final now = DateTime.now();
+            final upcoming = records.where((r) => 
+              r.nextDueDate != null && r.nextDueDate!.isAfter(now)
+            ).toList();
+            if (upcoming.isNotEmpty) {
+              upcoming.sort((a, b) => a.nextDueDate!.compareTo(b.nextDueDate!));
+              final daysUntil = upcoming.first.nextDueDate!.difference(now).inDays;
+              return _buildHealthItem(
+                icon: category.icon,
+                label: category.label,
+                value: 'D-$daysUntil',
+                color: color,
+              );
+            }
+            return _buildHealthItem(
+              icon: category.icon,
+              label: category.label,
+              value: '${records.length}회',
+              color: color,
+            );
+          },
+          loading: () => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '...',
+            color: color,
+          ),
+          error: (_, _) => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '-',
+            color: color,
+          ),
+        );
+        
+      case HealthCategory.checkup:
+        final recordsAsync = ref.watch(checkupRecordsProvider(petId));
+        return recordsAsync.when(
+          data: (records) {
+            if (records.isEmpty) {
+              return _buildHealthItem(
+                icon: category.icon,
+                label: category.label,
+                value: '-',
+                color: color,
+              );
+            }
+            // 마지막 검진 날짜로부터 경과일
+            final lastDate = records.first.checkupDate;
+            final daysAgo = DateTime.now().difference(lastDate).inDays;
+            final value = daysAgo == 0 ? '오늘' : '$daysAgo일 전';
+            return _buildHealthItem(
+              icon: category.icon,
+              label: category.label,
+              value: value,
+              color: color,
+            );
+          },
+          loading: () => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '...',
+            color: color,
+          ),
+          error: (_, _) => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '-',
+            color: color,
+          ),
+        );
+        
+      case HealthCategory.special:
+        final recordsAsync = ref.watch(specialNotesProvider(petId));
+        return recordsAsync.when(
+          data: (records) {
+            return _buildHealthItem(
+              icon: category.icon,
+              label: category.label,
+              value: '${records.length}건',
+              color: color,
+            );
+          },
+          loading: () => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '...',
+            color: color,
+          ),
+          error: (_, _) => _buildHealthItem(
+            icon: category.icon,
+            label: category.label,
+            value: '-',
+            color: color,
+          ),
+        );
     }
-  }
-
-  /// 카테고리별 색상 (건강수첩과 동일하게 health 색상 통일)
-  Color _getCategoryColor(BuildContext context, HealthCategory category) {
-    return context.features.health;
   }
 
   /// 추천친구 섹션 (사각형 카드) - 실제 궁합 점수 사용
@@ -743,7 +939,7 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildPetSquareImage(PetModel pet, double height) {
     return ClipRRect(
       borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.radiusM)),
-      child: MingrrBackgroundImage(
+      child: MingrrImage.background(
         imageUrl: pet.displayImageUrl,
         height: height,
         placeholder: _buildDefaultPetIcon(height),
@@ -759,14 +955,6 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
-  /// 반려동물 프로필 이미지 (원형, 내 반려동물 선택기용)
-  Widget _buildPetProfileImage(PetModel pet, double size) {
-    return MingrrPetAvatar(
-      imageUrl: pet.profileImageUrl ?? pet.displayImageUrl,
-      size: size,
-    );
-  }
-
   String _calculateAge(DateTime? birthDate) {
     if (birthDate == null) return '나이 미상';
     
@@ -775,11 +963,11 @@ class HomeScreen extends ConsumerWidget {
     final months = now.month - birthDate.month;
     
     if (age == 0) {
-      return '${months}개월';
+      return '$months개월';
     } else if (months < 0) {
       return '${age - 1}살';
     }
-    return '${age}살';
+    return '$age살';
   }
 
   /// 인기 소모임 섹션 (Firebase 연동)
@@ -813,7 +1001,7 @@ class HomeScreen extends ConsumerWidget {
               child: MingrrLoadingIndicator(),
             ),
           ),
-          error: (_, __) => MingrrErrorState(
+          error: (_, _) => MingrrErrorState(
             onRetry: () => ref.invalidate(popularGroupsProvider),
           ),
         );
@@ -831,20 +1019,12 @@ class HomeScreen extends ConsumerWidget {
       onTap: () => context.push('/social/group/${group.id}'),
       child: Row(
         children: [
-          MingrrThumbnail(
+          MingrrImage.thumbnail(
             imageUrl: group.imageUrl,
             width: 50,
             height: 50,
-            borderRadius: AppSizes.radiusM,
-            errorWidget: Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: features.social.withValues(alpha: AppOpacity.o15),
-                borderRadius: BorderRadius.circular(AppSizes.radiusM),
-              ),
-              child: Icon(Icons.groups, color: features.social, size: 26),
-            ),
+            radius: AppSizes.radiusM,
+            accentColor: features.social,
           ),
           const SizedBox(width: AppSizes.gapM),
           Expanded(
@@ -857,7 +1037,7 @@ class HomeScreen extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                       decoration: BoxDecoration(
                         color: features.social.withValues(alpha: AppOpacity.o10),
-                        borderRadius: BorderRadius.circular(AppSizes.radiusXXS),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusS),
                       ),
                       child: Text(
                         group.category,
@@ -880,7 +1060,7 @@ class HomeScreen extends ConsumerWidget {
                       style: AppTextStyles.captionSmall(context),
                     ),
                     const SizedBox(width: AppSizes.gapS),
-                    Icon(Icons.people, size: 12, color: colorScheme.outlineVariant),
+                    Icon(AppIcons.people, size: 12, color: colorScheme.outlineVariant),
                     const SizedBox(width: 2),
                     Text(
                       '${group.memberCount}명',
@@ -891,7 +1071,7 @@ class HomeScreen extends ConsumerWidget {
               ],
             ),
           ),
-          Icon(Icons.chevron_right, color: colorScheme.outlineVariant),
+          Icon(AppIcons.chevronRight, color: colorScheme.outlineVariant),
         ],
       ),
     );
