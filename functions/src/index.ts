@@ -266,6 +266,355 @@ export const scheduledDeleteExpiredTransactions = functions
   });
 
 // ============================================================
+// 5. 푸시 알림 전송 (notifications 컬렉션 트리거)
+// ============================================================
+
+/**
+ * notifications 컬렉션에 문서가 생성되면 FCM 푸시 알림 전송
+ * 
+ * 트리거 흐름:
+ * 앱에서 _saveNotification() → Firestore 'notifications' 문서 생성
+ * → 이 Cloud Function 트리거
+ * → 수신자 fcmToken 조회 + 알림 설정 확인
+ * → FCM 메시지 발송
+ */
+export const onNotificationCreate = functions
+  .region("asia-northeast3")
+  .firestore.document("notifications/{notificationId}")
+  .onCreate(async (snap, context) => {
+    const notification = snap.data();
+    const recipientId = notification.recipientId as string;
+    const type = notification.type as string;
+    const title = notification.title as string;
+    const body = notification.body as string;
+    const data = notification.data as Record<string, string> || {};
+
+    console.log(`알림 전송 시작: type=${type}, recipientId=${recipientId}`);
+
+    try {
+      // 1. 수신자 정보 조회
+      const userDoc = await db.collection("users").doc(recipientId).get();
+      if (!userDoc.exists) {
+        console.log(`수신자를 찾을 수 없음: ${recipientId}`);
+        return null;
+      }
+
+      const userData = userDoc.data()!;
+      const fcmToken = userData.fcmToken as string | undefined;
+
+      if (!fcmToken) {
+        console.log(`FCM 토큰 없음: ${recipientId}`);
+        return null;
+      }
+
+      // 2. 알림 설정 확인
+      const settings = userData.notificationSettings as Record<string, boolean> | undefined;
+      if (settings) {
+        // 전체 알림 OFF
+        if (settings.allEnabled === false) {
+          console.log(`전체 알림 OFF: ${recipientId}`);
+          return null;
+        }
+
+        // 카테고리별 알림 설정 확인
+        const categoryMap: Record<string, string> = {
+          "chat": "chatEnabled",
+          "marketInquiry": "chatEnabled",
+          "datingRequest": "datingEnabled",
+          "datingAccepted": "datingEnabled",
+          "datingRejected": "datingEnabled",
+          "breedingRequest": "datingEnabled",
+          "breedingAccepted": "datingEnabled",
+          "petLike": "datingEnabled",
+          "marketSold": "marketEnabled",
+          "productLike": "marketEnabled",
+          "groupJoinRequest": "groupEnabled",
+          "groupJoinApproved": "groupEnabled",
+          "groupJoinRejected": "groupEnabled",
+          "groupSchedule": "groupEnabled",
+          "walkInvite": "communityEnabled",
+          "walkReminder": "communityEnabled",
+          "rating": "communityEnabled",
+          "ratingReminder": "communityEnabled",
+          "gradeChange": "communityEnabled",
+          "scoreChange": "communityEnabled",
+          "jobApplication": "marketEnabled",
+          "jobAccepted": "marketEnabled",
+        };
+
+        const settingKey = categoryMap[type];
+        if (settingKey && settings[settingKey] === false) {
+          console.log(`카테고리 알림 OFF: ${type} → ${settingKey}`);
+          return null;
+        }
+
+        // 야간 방해금지 확인
+        if (settings.nightModeEnabled === true) {
+          const now = new Date();
+          const kstOffset = 9 * 60; // KST = UTC+9
+          const kstMinutes = (now.getUTCHours() * 60 + now.getUTCMinutes() + kstOffset) % 1440;
+          
+          const startStr = (userData.notificationSettings?.nightModeStart as string) || "22:00";
+          const endStr = (userData.notificationSettings?.nightModeEnd as string) || "08:00";
+          const [startH, startM] = startStr.split(":").map(Number);
+          const [endH, endM] = endStr.split(":").map(Number);
+          const startMinutes = startH * 60 + startM;
+          const endMinutes = endH * 60 + endM;
+
+          let isNightMode = false;
+          if (startMinutes > endMinutes) {
+            // 예: 22:00 ~ 08:00 (자정 넘김)
+            isNightMode = kstMinutes >= startMinutes || kstMinutes < endMinutes;
+          } else {
+            isNightMode = kstMinutes >= startMinutes && kstMinutes < endMinutes;
+          }
+
+          if (isNightMode) {
+            console.log(`야간 방해금지 시간: ${recipientId}`);
+            return null;
+          }
+        }
+      }
+
+      // 3. FCM 메시지 전송
+      const message: admin.messaging.Message = {
+        token: fcmToken,
+        notification: {
+          title: title,
+          body: body,
+        },
+        data: {
+          ...data,
+          notificationId: context.params.notificationId,
+          click_action: "FLUTTER_NOTIFICATION_CLICK",
+        },
+        android: {
+          priority: "high",
+          notification: {
+            channelId: "mingrr_default",
+            sound: "default",
+          },
+        },
+        apns: {
+          payload: {
+            aps: {
+              sound: "default",
+              badge: 1,
+              contentAvailable: true,
+            },
+          },
+        },
+      };
+
+      const response = await admin.messaging().send(message);
+      console.log(`FCM 전송 성공: ${response}, recipientId=${recipientId}`);
+
+      return null;
+    } catch (error: unknown) {
+      // 토큰이 만료되었거나 유효하지 않은 경우 토큰 삭제
+      if (error instanceof Error && "code" in error) {
+        const fcmError = error as { code: string };
+        if (
+          fcmError.code === "messaging/invalid-registration-token" ||
+          fcmError.code === "messaging/registration-token-not-registered"
+        ) {
+          console.log(`만료된 FCM 토큰 삭제: ${recipientId}`);
+          await db.collection("users").doc(recipientId).update({
+            fcmToken: admin.firestore.FieldValue.delete(),
+          });
+          return null;
+        }
+      }
+      console.error(`FCM 전송 실패: ${recipientId}`, error);
+      return null;
+    }
+  });
+
+// ============================================================
+// 6. 카카오 소셜 로그인 - Custom Token 발급
+// ============================================================
+
+/**
+ * 카카오 액세스 토큰을 받아 Firebase Custom Token을 발급
+ * 
+ * 플로우:
+ * 1. Flutter에서 카카오 SDK로 로그인 → accessToken 획득
+ * 2. 이 함수 호출 (accessToken 전달)
+ * 3. 카카오 API로 사용자 정보 조회
+ * 4. Firebase Custom Token 생성 후 반환
+ */
+export const createCustomTokenForKakao = functions
+  .region("asia-northeast3")
+  .https.onCall(async (data, context) => {
+    const accessToken = data.accessToken as string;
+
+    if (!accessToken) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "카카오 액세스 토큰이 필요합니다."
+      );
+    }
+
+    try {
+      // 카카오 API로 사용자 정보 조회
+      const response = await fetch("https://kapi.kakao.com/v2/user/me", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
+          "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+        },
+      });
+
+      if (!response.ok) {
+        throw new functions.https.HttpsError(
+          "unauthenticated",
+          "카카오 인증에 실패했습니다."
+        );
+      }
+
+      const kakaoUser = await response.json() as {
+        id: number;
+        kakao_account?: {
+          profile?: { nickname?: string; profile_image_url?: string };
+          email?: string;
+        };
+      };
+
+      const kakaoId = kakaoUser.id.toString();
+      const uid = `kakao:${kakaoId}`;
+      const nickname = kakaoUser.kakao_account?.profile?.nickname || null;
+      const profileImage = kakaoUser.kakao_account?.profile?.profile_image_url || null;
+      const email = kakaoUser.kakao_account?.email || null;
+
+      // Firebase Auth에 사용자가 없으면 생성
+      try {
+        await auth.getUser(uid);
+      } catch {
+        await auth.createUser({
+          uid: uid,
+          displayName: nickname || undefined,
+          photoURL: profileImage || undefined,
+          email: email || undefined,
+        });
+      }
+
+      // Custom Token 생성
+      const customToken = await auth.createCustomToken(uid);
+
+      return {
+        customToken: customToken,
+        uid: uid,
+        nickname: nickname,
+        profileImage: profileImage,
+        email: email,
+      };
+    } catch (error) {
+      if (error instanceof functions.https.HttpsError) {
+        throw error;
+      }
+      console.error("카카오 Custom Token 생성 실패:", error);
+      throw new functions.https.HttpsError(
+        "internal",
+        "카카오 로그인 처리 중 오류가 발생했습니다."
+      );
+    }
+  });
+
+// ============================================================
+// 7. 네이버 소셜 로그인 - Custom Token 발급
+// ============================================================
+
+/**
+ * 네이버 액세스 토큰을 받아 Firebase Custom Token을 발급
+ */
+export const createCustomTokenForNaver = functions
+  .region("asia-northeast3")
+  .https.onCall(async (data, context) => {
+    const accessToken = data.accessToken as string;
+
+    if (!accessToken) {
+      throw new functions.https.HttpsError(
+        "invalid-argument",
+        "네이버 액세스 토큰이 필요합니다."
+      );
+    }
+
+    try {
+      // 네이버 API로 사용자 정보 조회
+      const response = await fetch("https://openapi.naver.com/v1/nid/me", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new functions.https.HttpsError(
+          "unauthenticated",
+          "네이버 인증에 실패했습니다."
+        );
+      }
+
+      const result = await response.json() as {
+        resultcode: string;
+        message: string;
+        response: {
+          id: string;
+          nickname?: string;
+          profile_image?: string;
+          email?: string;
+          name?: string;
+        };
+      };
+
+      if (result.resultcode !== "00") {
+        throw new functions.https.HttpsError(
+          "unauthenticated",
+          "네이버 사용자 정보 조회에 실패했습니다."
+        );
+      }
+
+      const naverUser = result.response;
+      const uid = `naver:${naverUser.id}`;
+      const nickname = naverUser.nickname || naverUser.name || null;
+      const profileImage = naverUser.profile_image || null;
+      const email = naverUser.email || null;
+
+      // Firebase Auth에 사용자가 없으면 생성
+      try {
+        await auth.getUser(uid);
+      } catch {
+        await auth.createUser({
+          uid: uid,
+          displayName: nickname || undefined,
+          photoURL: profileImage || undefined,
+          email: email || undefined,
+        });
+      }
+
+      // Custom Token 생성
+      const customToken = await auth.createCustomToken(uid);
+
+      return {
+        customToken: customToken,
+        uid: uid,
+        nickname: nickname,
+        profileImage: profileImage,
+        email: email,
+      };
+    } catch (error) {
+      if (error instanceof functions.https.HttpsError) {
+        throw error;
+      }
+      console.error("네이버 Custom Token 생성 실패:", error);
+      throw new functions.https.HttpsError(
+        "internal",
+        "네이버 로그인 처리 중 오류가 발생했습니다."
+      );
+    }
+  });
+
+// ============================================================
 // 유틸리티 함수
 // ============================================================
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
-// TODO: Personal Team 테스트 시 주석 처리 (Push Notifications 미지원)
-// import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:kakao_map_sdk/kakao_map_sdk.dart';
+import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart' as kakao_sdk;
 import 'firebase_options.dart';
 import 'app.dart';
 import 'core/config/api_config.dart';
@@ -13,7 +13,7 @@ import 'core/services/firebase_service.dart';
 import 'core/services/rating_service.dart';
 import 'core/utils/app_logger.dart';
 import 'features/dating/presentation/providers/dating_request_provider.dart';
-// import 'core/services/notification_service.dart';
+import 'core/services/notification_service.dart';
 
 /// ============================================================
 /// MINGRR - 반려동물 커뮤니티 앱
@@ -48,12 +48,14 @@ void main() async {
     AppLogger.error('Main', 'Firebase 초기화 실패', e);
   }
 
-  // TODO: Personal Team 테스트 시 주석 처리
+  // 카카오 SDK 초기화 (로그인용)
+  kakao_sdk.KakaoSdk.init(nativeAppKey: 'e80e09aa4db6c1f3d1eedb1be73ee8c6');
+
   // FCM 백그라운드 핸들러 등록
-  // FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   // 푸시 알림 서비스 초기화
-  // await NotificationService().initialize();
+  await NotificationService().initialize();
   
   // ── 병렬 초기화 그룹 ──
   // Firebase 초기화 완료 후 독립적인 서비스들을 동시에 실행하여 앱 시작 시간 단축

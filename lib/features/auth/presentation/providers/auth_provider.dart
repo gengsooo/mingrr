@@ -4,6 +4,7 @@ import '../../../../core/services/nickname_service.dart';
 import '../../../../models/user_model.dart';
 import '../../data/auth_repository.dart';
 import '../../data/consent_data.dart';
+import '../../../../core/services/notification_service.dart';
 
 /// ============================================================
 /// 인증 상태 관리 Provider
@@ -233,19 +234,49 @@ class AuthNotifier extends StateNotifier<AuthState> {
   // ===== 카카오 로그인 (추후 구현) =====
   
   Future<bool> signInWithKakao({ConsentData? consentData}) async {
-    state = state.copyWith(
-      error: '카카오 로그인은 준비 중입니다.',
-    );
-    return false;
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final userCredential = await _authRepository.signInWithKakao();
+      
+      if (userCredential == null) {
+        state = state.copyWith(isLoading: false);
+        return false;
+      }
+
+      await _handleSignIn(userCredential, 'kakao', consentData: consentData);
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: '카카오 로그인에 실패했습니다.',
+      );
+      return false;
+    }
   }
 
   // ===== 네이버 로그인 (추후 구현) =====
   
   Future<bool> signInWithNaver({ConsentData? consentData}) async {
-    state = state.copyWith(
-      error: '네이버 로그인은 준비 중입니다.',
-    );
-    return false;
+    state = state.copyWith(isLoading: true, error: null);
+
+    try {
+      final userCredential = await _authRepository.signInWithNaver();
+      
+      if (userCredential == null) {
+        state = state.copyWith(isLoading: false);
+        return false;
+      }
+
+      await _handleSignIn(userCredential, 'naver', consentData: consentData);
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: '네이버 로그인에 실패했습니다.',
+      );
+      return false;
+    }
   }
 
   // ===== 로그인 처리 공통 로직 =====
@@ -299,6 +330,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
     }
 
+    // FCM 토큰 저장 (푸시 알림용)
+    try {
+      await NotificationService().saveTokenForUser(user.uid);
+    } catch (_) {
+      // FCM 토큰 저장 실패해도 로그인은 성공 처리
+    }
+
     // 상태 관리 새로고침
     _ref.invalidate(currentUserProvider);
   }
@@ -308,6 +346,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> signOut() async {
     state = state.copyWith(isLoading: true);
     try {
+      // FCM 토큰 제거 (푸시 알림 중단)
+      final userId = _authRepository.currentUserId;
+      if (userId != null) {
+        try {
+          await NotificationService().removeTokenForUser(userId);
+        } catch (_) {}
+      }
       await _authRepository.signOut();
       // Firebase signOut이 완료되면 authStateChanges 스트림이 자동으로 null을 emit
       // 따라서 별도의 invalidate 불필요 (중복 처리 및 깜빡임 방지)
