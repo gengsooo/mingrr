@@ -1,5 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart' as kakao;
+import 'package:flutter_naver_login/flutter_naver_login.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import '../../../core/services/firebase_service.dart';
 import '../../../core/utils/app_logger.dart';
 import '../../../models/user_model.dart';
@@ -88,83 +91,75 @@ class AuthRepository {
   
   /// 카카오 계정으로 로그인
   /// 
-  /// 사용 방법:
-  /// 1. pubspec.yaml에서 kakao_flutter_sdk 패키지 주석 해제
-  /// 2. 카카오 개발자 콘솔에서 앱 등록
-  /// 3. Android: android/app/src/main/AndroidManifest.xml에 카카오 스키마 추가
-  /// 4. iOS: ios/Runner/Info.plist에 URL Scheme 추가
-  /// 5. main.dart에서 KakaoSdk.init() 호출
+  /// 플로우:
+  /// 1. 카카오 SDK로 로그인 (카카오톡 설치 시 앱, 미설치 시 웹)
+  /// 2. 카카오 accessToken을 Cloud Functions에 전달
+  /// 3. Cloud Functions에서 카카오 사용자 정보 조회 + Firebase Custom Token 생성
+  /// 4. Custom Token으로 Firebase Auth 로그인
   Future<UserCredential?> signInWithKakao() async {
-    // 카카오 SDK가 설정되지 않은 경우 안내 메시지 표시
-    // 실제 구현 시 아래 코드 사용:
-    //
-    // import 'package:kakao_flutter_sdk/kakao_flutter_sdk.dart';
-    //
-    // try {
-    //   // 카카오톡으로 로그인 (설치된 경우)
-    //   OAuthToken token;
-    //   if (await isKakaoTalkInstalled()) {
-    //     token = await UserApi.instance.loginWithKakaoTalk();
-    //   } else {
-    //     token = await UserApi.instance.loginWithKakaoAccount();
-    //   }
-    //   
-    //   // 카카오 사용자 정보 가져오기
-    //   final kakaoUser = await UserApi.instance.me();
-    //   
-    //   // Firebase Custom Token으로 로그인 (백엔드 필요)
-    //   // 또는 Firebase Auth의 createCustomToken 사용
-    //   
-    //   return userCredential;
-    // } catch (e) {
-    //   rethrow;
-    // }
-    
-    throw UnimplementedError(
-      '카카오 로그인을 사용하려면:\n'
-      '1. pubspec.yaml에서 kakao_flutter_sdk 패키지 주석 해제\n'
-      '2. 카카오 개발자 콘솔에서 앱 등록\n'
-      '3. 네이티브 설정 완료 후 이 메서드 구현',
-    );
+    try {
+      // 1. 카카오 SDK 로그인
+      kakao.OAuthToken token;
+      if (await kakao.isKakaoTalkInstalled()) {
+        token = await kakao.UserApi.instance.loginWithKakaoTalk();
+      } else {
+        token = await kakao.UserApi.instance.loginWithKakaoAccount();
+      }
+
+      // 2. Cloud Functions 호출하여 Custom Token 발급
+      final callable = FirebaseFunctions.instanceFor(region: 'asia-northeast3')
+          .httpsCallable('createCustomTokenForKakao');
+      final result = await callable.call({
+        'accessToken': token.accessToken,
+      });
+
+      final customToken = result.data['customToken'] as String;
+
+      // 3. Firebase Auth 로그인
+      return await _firebase.auth.signInWithCustomToken(customToken);
+    } catch (e) {
+      AppLogger.error('AuthRepository', '카카오 로그인 실패', e);
+      rethrow;
+    }
   }
 
   // ===== 네이버 로그인 =====
   
   /// 네이버 계정으로 로그인
   /// 
-  /// 사용 방법:
-  /// 1. pubspec.yaml에서 flutter_naver_login 패키지 주석 해제
-  /// 2. 네이버 개발자 센터에서 앱 등록
-  /// 3. Android: android/app/src/main/res/values/strings.xml에 키 추가
-  /// 4. iOS: ios/Runner/Info.plist에 URL Scheme 추가
+  /// 플로우:
+  /// 1. 네이버 SDK로 로그인
+  /// 2. 네이버 accessToken을 Cloud Functions에 전달
+  /// 3. Cloud Functions에서 네이버 사용자 정보 조회 + Firebase Custom Token 생성
+  /// 4. Custom Token으로 Firebase Auth 로그인
   Future<UserCredential?> signInWithNaver() async {
-    // 네이버 SDK가 설정되지 않은 경우 안내 메시지 표시
-    // 실제 구현 시 아래 코드 사용:
-    //
-    // import 'package:flutter_naver_login/flutter_naver_login.dart';
-    //
-    // try {
-    //   final result = await FlutterNaverLogin.logIn();
-    //   
-    //   if (result.status == NaverLoginStatus.loggedIn) {
-    //     final account = result.account;
-    //     
-    //     // Firebase Custom Token으로 로그인 (백엔드 필요)
-    //     // 또는 Firebase Auth의 createCustomToken 사용
-    //     
-    //     return userCredential;
-    //   }
-    //   return null;
-    // } catch (e) {
-    //   rethrow;
-    // }
-    
-    throw UnimplementedError(
-      '네이버 로그인을 사용하려면:\n'
-      '1. pubspec.yaml에서 flutter_naver_login 패키지 주석 해제\n'
-      '2. 네이버 개발자 센터에서 앱 등록\n'
-      '3. 네이티브 설정 완료 후 이 메서드 구현',
-    );
+    try {
+      // 1. 네이버 SDK 로그인
+      final result = await FlutterNaverLogin.logIn();
+      
+      if (result.status != NaverLoginStatus.loggedIn) {
+        return null;
+      }
+
+      // 2. 액세스 토큰 가져오기
+      final tokenResult = await FlutterNaverLogin.currentAccessToken;
+      final accessToken = tokenResult.accessToken;
+
+      // 3. Cloud Functions 호출하여 Custom Token 발급
+      final callable = FirebaseFunctions.instanceFor(region: 'asia-northeast3')
+          .httpsCallable('createCustomTokenForNaver');
+      final cfResult = await callable.call({
+        'accessToken': accessToken,
+      });
+
+      final customToken = cfResult.data['customToken'] as String;
+
+      // 4. Firebase Auth 로그인
+      return await _firebase.auth.signInWithCustomToken(customToken);
+    } catch (e) {
+      AppLogger.error('AuthRepository', '네이버 로그인 실패', e);
+      rethrow;
+    }
   }
 
   // ===== 이메일/비밀번호 로그인 =====
@@ -236,9 +231,17 @@ class AuthRepository {
       if (await _googleSignIn.isSignedIn()) {
         await _googleSignIn.signOut();
       }
-    } catch (_) {
-      // Google Sign-In이 설정되지 않은 경우 무시
-    }
+    } catch (_) {}
+    
+    // 카카오 로그아웃 시도
+    try {
+      await kakao.UserApi.instance.logout();
+    } catch (_) {}
+    
+    // 네이버 로그아웃 시도
+    try {
+      await FlutterNaverLogin.logOut();
+    } catch (_) {}
     
     // Firebase 로그아웃
     await _firebase.auth.signOut();

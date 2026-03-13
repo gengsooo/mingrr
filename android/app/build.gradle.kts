@@ -32,6 +32,9 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true  // Firebase 사용 시 필요
+        
+        // 카카오 로그인 OAuth redirect scheme
+        manifestPlaceholders["KAKAO_APP_KEY"] = "e80e09aa4db6c1f3d1eedb1be73ee8c6"
     }
 
     buildTypes {
