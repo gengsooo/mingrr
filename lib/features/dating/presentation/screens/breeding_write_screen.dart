@@ -9,6 +9,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/form_strings.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
+import '../../../../core/providers/firebase_providers.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
 import '../../../../core/widgets/forms/form_components.dart';
@@ -46,7 +47,7 @@ class _BreedingWriteScreenState extends ConsumerState<BreedingWriteScreen> {
   int? _maxAge;
   bool _isLoading = false;
 
-  final FirestoreService _firestoreService = FirestoreService();
+  FirestoreService get _firestoreService => ref.read(firestoreServiceProvider);
   final FirebaseService _firebaseService = FirebaseService();
 
   bool get _isEditMode => widget.post != null;

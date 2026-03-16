@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/dialogs/dialogs.dart';
 import '../utils/app_logger.dart';
 
@@ -100,7 +102,7 @@ class AppVersionService {
           confirmText: '업데이트',
           showCancel: false,
         );
-        // TODO: 스토어로 이동
+        await _openStore(versionInfo.updateUrl);
         return false;
       }
       
@@ -116,13 +118,47 @@ class AppVersionService {
       );
       
       if (result == true) {
-        // TODO: 스토어로 이동
+        await _openStore(versionInfo.updateUrl);
       }
       
       return true;
     } catch (e) {
       AppLogger.error('AppVersionService', '버전 체크 실패', e);
       return true; // 실패 시 통과
+    }
+  }
+
+  /// 앱 스토어/플레이 스토어 열기
+  static Future<void> _openStore(String? updateUrl) async {
+    try {
+      // Firestore에 설정된 URL이 있으면 우선 사용
+      if (updateUrl != null && updateUrl.isNotEmpty) {
+        final uri = Uri.parse(updateUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+          return;
+        }
+      }
+
+      // 플랫폼별 기본 스토어 URL
+      final packageInfo = await getPackageInfo();
+      final packageName = packageInfo.packageName;
+
+      final Uri storeUri;
+      if (Platform.isAndroid) {
+        storeUri = Uri.parse('https://play.google.com/store/apps/details?id=$packageName');
+      } else if (Platform.isIOS) {
+        // TODO: 실제 App Store ID로 변경 필요 (출시 후)
+        storeUri = Uri.parse('https://apps.apple.com/app/id000000000');
+      } else {
+        return;
+      }
+
+      if (await canLaunchUrl(storeUri)) {
+        await launchUrl(storeUri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      AppLogger.error('AppVersionService', '스토어 열기 실패', e);
     }
   }
 }

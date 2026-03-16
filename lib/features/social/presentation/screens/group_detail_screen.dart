@@ -9,6 +9,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/location_constants.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
+import '../../../../core/providers/firebase_providers.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/sheets/mingrr_bottom_sheet.dart';
@@ -70,7 +71,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
         return;
       }
       
-      final hasPending = await FirestoreService().hasUserRequestedJoin(widget.groupId, userId);
+      final hasPending = await ref.read(firestoreServiceProvider).hasUserRequestedJoin(widget.groupId, userId);
       
       if (mounted) {
         setState(() {
@@ -963,7 +964,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
   }
 
   void _showJoinRequests(BuildContext context, GroupModel group) {
-    final firestoreService = FirestoreService();
+    final firestoreService = ref.read(firestoreServiceProvider);
     final firebase = FirebaseService();
     final myUserId = firebase.currentUserId ?? '';
 

@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/services/firebase_service.dart';
-import '../../../../core/services/firestore_service.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../models/chat_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -13,9 +12,6 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 
 // ChatService Provider
 final chatServiceProvider = Provider<ChatService>((ref) => ChatService());
-
-// 데이터베이스 서비스 상태 관리
-final firestoreServiceProvider = Provider<FirestoreService>((ref) => FirestoreService());
 
 // 사용자의 채팅방 목록 (실시간 스트림)
 final userChatRoomsProvider = StreamProvider.autoDispose<List<ChatRoomModel>>((ref) {

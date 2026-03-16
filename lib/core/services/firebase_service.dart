@@ -197,26 +197,14 @@ class FirebaseService {
   /// 이미지 파일 업로드 및 URL 반환
   Future<String> uploadImage(dynamic file, String path) async {
     try {
-      // ===== 디버깅: Auth 상태 확인 =====
-      final user = auth.currentUser;
-      AppLogger.info('FirebaseService', '🔍 [DEBUG] Auth 상태: uid=${user?.uid}, email=${user?.email}, isAnonymous=${user?.isAnonymous}');
-      if (user != null) {
-        try {
-          final token = await user.getIdTokenResult();
-          AppLogger.info('FirebaseService', '🔍 [DEBUG] Token 발급자: ${token.signInProvider}, 만료: ${token.expirationTime}');
-        } catch (tokenErr) {
-          AppLogger.error('FirebaseService', '🔍 [DEBUG] Token 조회 실패', tokenErr);
-        }
-      } else {
-        AppLogger.error('FirebaseService', '🔴 [DEBUG] 로그인되지 않은 상태에서 업로드 시도!');
+      if (auth.currentUser == null) {
+        throw Exception('로그인이 필요합니다');
       }
       
-      AppLogger.info('FirebaseService', '🔍 [DEBUG] 업로드 시작 - path: $path, bucket: ${storage.bucket}');
       final ref = storage.ref().child(path);
       
       // File 타입인 경우
       if (file is File) {
-        AppLogger.info('FirebaseService', '🔍 [DEBUG] 파일 크기: ${file.lengthSync()} bytes, 경로: ${file.path}');
         final ext = file.path.split('.').last.toLowerCase();
         final contentType = switch (ext) {
           'png' => 'image/png',
@@ -225,26 +213,19 @@ class FirebaseService {
           'webp' => 'image/webp',
           _ => 'image/jpeg',
         };
-        AppLogger.info('FirebaseService', '🔍 [DEBUG] contentType: $contentType (ext: $ext)');
         final metadata = SettableMetadata(contentType: contentType);
         final snapshot = await ref.putFile(file, metadata);
         final url = await snapshot.ref.getDownloadURL();
-        AppLogger.info('FirebaseService', '✅ 이미지 업로드 성공 - url: $url');
+        AppLogger.debug('FirebaseService', '이미지 업로드 완료: $path');
         return url;
       }
       
       throw Exception('Invalid file type: ${file.runtimeType}');
-    } on FirebaseException catch (e, st) {
-      AppLogger.error('FirebaseService', 
-        '🔴 Storage FirebaseException\n'
-        '  code: ${e.code}\n'
-        '  message: ${e.message}\n'
-        '  plugin: ${e.plugin}\n'
-        '  bucket: ${storage.bucket}\n'
-        '  stackTrace: $st', e);
+    } on FirebaseException catch (e) {
+      AppLogger.error('FirebaseService', 'Storage 오류 (code: ${e.code})', e);
       rethrow;
-    } catch (e, st) {
-      AppLogger.error('FirebaseService', '🔴 이미지 업로드 오류 (${e.runtimeType})\n  stackTrace: $st', e);
+    } catch (e) {
+      AppLogger.error('FirebaseService', '이미지 업로드 오류', e);
       rethrow;
     }
   }

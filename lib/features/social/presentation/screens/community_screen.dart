@@ -10,6 +10,7 @@ import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../models/community_post_model.dart';
 import '../../../../core/providers/refresh_notifier.dart';
+import '../../../../core/models/sort_state.dart';
 import '../providers/community_provider.dart';
 import 'community_write_screen.dart';
 import 'community_detail_screen.dart';
@@ -74,6 +75,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         children: [
           // 카테고리 필터
           _buildCategoryFilter(context, ref, selectedCategory),
+          
+          // 정렬 옵션
+          _buildSortOptions(context, ref),
           
           // 피드 목록 (Provider 레벨 페이지네이션)
           Expanded(
@@ -149,16 +153,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
         itemBuilder: (context, index) {
           // 로딩 인디케이터
           if (index >= paginatedState.items.length) {
-            return const Padding(
-              padding: EdgeInsets.all(AppSizes.paddingL),
-              child: Center(
-                child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            );
+            return const MingrrPaginationLoader();
           }
 
           final post = paginatedState.items[index];
@@ -198,6 +193,32 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen> {
           ref.read(_selectedCommunityCategory.notifier).state = null;
         } else {
           ref.read(_selectedCommunityCategory.notifier).state = CommunityCategory.values[index - 1];
+        }
+      },
+      accentColor: accentColor,
+    );
+  }
+
+  Widget _buildSortOptions(BuildContext context, WidgetRef ref) {
+    final sortState = ref.watch(communitySortStateProvider);
+    final accentColor = context.features.social;
+    
+    final sortOptions = ['최신순', '인기순'];
+    final selectedIndex = CommunitySortOption.values.indexOf(sortState.option);
+    final isAscending = sortState.direction == SortDirection.ascending;
+
+    return MingrrSortChips(
+      title: '정렬',
+      options: sortOptions,
+      selectedIndex: selectedIndex,
+      isAscending: isAscending,
+      onSelected: (index) {
+        final notifier = ref.read(communitySortStateProvider.notifier);
+        final option = CommunitySortOption.values[index];
+        if (sortState.option == option) {
+          notifier.state = sortState.toggleDirection();
+        } else {
+          notifier.state = CommunitySortState(option: option, direction: SortDirection.descending);
         }
       },
       accentColor: accentColor,

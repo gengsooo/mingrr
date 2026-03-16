@@ -12,6 +12,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/firestore_service.dart';
+import '../../../../core/providers/firebase_providers.dart' show firestoreServiceProvider;
 import '../../../../core/services/nickname_service.dart';
 import '../../../../core/services/share_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
@@ -804,7 +805,7 @@ class ProfileScreen extends ConsumerWidget {
       return;
     }
 
-    final firestoreService = FirestoreService();
+    final firestoreService = ref.read(firestoreServiceProvider);
 
     try {
       switch (badgeType) {

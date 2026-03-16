@@ -8,6 +8,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/location_constants.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
+import '../../../../core/providers/firebase_providers.dart';
 import '../providers/marketplace_provider.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/utils/format_utils.dart';
@@ -58,8 +59,11 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
 
 class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
     with DistanceCalculatorMixin {
-  final FirestoreService _firestoreService = FirestoreService();
-  final FirebaseService _firebaseService = FirebaseService();
+  FirebaseService get _firebaseService => FirebaseService();
+  
+  /// Provider 기반 FirestoreService 접근
+  /// build 시점 이후에만 사용 가능
+  FirestoreService get _firestoreService => ref.read(firestoreServiceProvider);
   
   bool _isDeleting = false;
   bool _isWishlistLoading = false;

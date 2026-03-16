@@ -17,6 +17,7 @@ import '../../../../core/widgets/empty_states/location_required_empty_state.dart
 import '../../../../models/marketplace_model.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 import '../../../../core/providers/location_verification_provider.dart';
+import '../../../../core/models/sort_state.dart';
 import '../providers/marketplace_provider.dart';
 import 'product_detail_screen.dart';
 import 'product_write_screen.dart';
@@ -158,7 +159,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
       ),
       body: Column(
         children: [
-          // 2개 탭 (판매 / 나눠)
+          // 3개 탭 (판매 / 나눔 / 알바)
           Container(
             color: isDark ? colorScheme.surface : context.features.marketContainer,
             child: MingrrMainTabBar(
@@ -190,6 +191,9 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
             },
             accentColor: context.features.market,
           ),
+          
+          // 정렬 옵션
+          _buildSortOptions(context, ref),
           
           // 상품/알바 목록
           Expanded(
@@ -228,13 +232,26 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
     }
   }
 
-  /// 상품 목록 (Firebase 연동 + 거리 필터링 + 페이지네이션)
+  /// 상품 목록 (Firebase 연동 + 거리 필터링 + 카테고리 필터링 + 페이지네이션)
   Widget _buildProductList(BuildContext context, ProductType type) {
     final distanceFilter = ref.watch(_distanceFilterProvider);
-    final paginatedState = ref.watch(paginatedProductsProvider((type: type, radiusKm: distanceFilter)));
+    final selectedCategory = ref.watch(_selectedCategoryProvider);
+    final rawState = ref.watch(paginatedProductsProvider((type: type, radiusKm: distanceFilter)));
+    
+    // 카테고리 필터링 (클라이언트 사이드)
+    // 인덱스 0 = 전체, 1~6 = ProductCategory.values 순서 매핑
+    final paginatedState = selectedCategory == 0
+        ? rawState
+        : rawState.copyWith(
+            items: rawState.items.where((p) {
+              final catIndex = selectedCategory - 1;
+              if (catIndex < 0 || catIndex >= ProductCategory.values.length) return true;
+              return p.product.category == ProductCategory.values[catIndex];
+            }).toList(),
+          );
     
     // 초기 로딩 상태
-    if (paginatedState.isInitialLoading) {
+    if (rawState.isInitialLoading) {
       return MingrrLoadingState(
         type: MingrrLoadingType.market,
         message: '상품을 불러오고 있어요',
@@ -279,16 +296,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
         itemBuilder: (ctx, index) {
           // 로딩 인디케이터
           if (index >= paginatedState.items.length) {
-            return const Padding(
-              padding: EdgeInsets.all(AppSizes.paddingL),
-              child: Center(
-                child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            );
+            return const MingrrPaginationLoader();
           }
           return MingrrAnimatedListItem(
             index: index,
@@ -315,6 +323,33 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// 정렬 옵션 바
+  Widget _buildSortOptions(BuildContext context, WidgetRef ref) {
+    final sortState = ref.watch(marketSortStateProvider);
+    final accentColor = context.features.market;
+    
+    final sortOptions = ['거리순', '최신순', '인기순'];
+    final selectedIndex = MarketSortOption.values.indexOf(sortState.option);
+    final isAscending = sortState.direction == SortDirection.ascending;
+
+    return MingrrSortChips(
+      title: '정렬',
+      options: sortOptions,
+      selectedIndex: selectedIndex,
+      isAscending: isAscending,
+      onSelected: (index) {
+        final notifier = ref.read(marketSortStateProvider.notifier);
+        final option = MarketSortOption.values[index];
+        if (sortState.option == option) {
+          notifier.state = sortState.toggleDirection();
+        } else {
+          notifier.state = MarketSortState(option: option, direction: SortDirection.descending);
+        }
+      },
+      accentColor: accentColor,
     );
   }
 
@@ -399,16 +434,7 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
         itemBuilder: (ctx, index) {
           // 로딩 인디케이터
           if (index >= paginatedState.items.length) {
-            return const Padding(
-              padding: EdgeInsets.all(AppSizes.paddingL),
-              child: Center(
-                child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            );
+            return const MingrrPaginationLoader();
           }
           return MingrrAnimatedListItem(
             index: index,

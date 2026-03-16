@@ -9,6 +9,7 @@ import '../../../../core/services/transaction_service.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../core/utils/input_sanitizer.dart';
 import '../../../../models/community_post_model.dart';
+import '../../../../core/models/sort_state.dart';
 
 /// ============================================================
 /// 커뮤니티(Community) 게시판 Provider
@@ -19,6 +20,45 @@ import '../../../../models/community_post_model.dart';
 /// - 좋아요 토글
 /// - 조회수 증가
 /// ============================================================
+
+/// ============================================================
+/// 커뮤니티 정렬 옵션
+/// ============================================================
+
+/// 정렬 옵션
+enum CommunitySortOption {
+  latest,   // 최신순 (기본)
+  popular,  // 인기순 (좋아요)
+}
+
+/// 정렬 상태
+class CommunitySortState {
+  final CommunitySortOption option;
+  final SortDirection direction;
+
+  const CommunitySortState({
+    this.option = CommunitySortOption.latest,
+    this.direction = SortDirection.descending,
+  });
+
+  CommunitySortState copyWith({CommunitySortOption? option, SortDirection? direction}) {
+    return CommunitySortState(
+      option: option ?? this.option,
+      direction: direction ?? this.direction,
+    );
+  }
+
+  CommunitySortState toggleDirection() {
+    return copyWith(
+      direction: direction == SortDirection.descending
+          ? SortDirection.ascending
+          : SortDirection.descending,
+    );
+  }
+}
+
+/// 커뮤니티 정렬 상태 Provider
+final communitySortStateProvider = StateProvider<CommunitySortState>((ref) => const CommunitySortState());
 
 /// 커뮤니티 게시글 목록 (카테고리 필터, 차단된 사용자 제외)
 final communityPostsProvider = FutureProvider.autoDispose.family<List<CommunityPostModel>, CommunityCategory?>((ref, category) async {
@@ -351,6 +391,7 @@ final paginatedCommunityPostsProvider = StateNotifierProvider
   Future.delayed(const Duration(minutes: 5), () => link.close());
   
   final blockedUserIds = ref.watch(blockedUserIdsProvider).valueOrNull ?? [];
+  final sortState = ref.watch(communitySortStateProvider);
   
   return PaginatedNotifier<CommunityPostModel>(
     pageSize: _communityPageSize,
@@ -364,6 +405,8 @@ final paginatedCommunityPostsProvider = StateNotifierProvider
         query = query.where('category', isEqualTo: category.name);
       }
       
+      // 인기순일 때도 createdAt 기준 서버 정렬 유지 (Firestore 복합 인덱스 제한)
+      // 클라이언트 사이드에서 likeCount 기준 재정렬
       query = query.orderBy('createdAt', descending: true);
       
       if (lastDocument != null) {
@@ -379,6 +422,19 @@ final paginatedCommunityPostsProvider = StateNotifierProvider
           .map((doc) => CommunityPostModel.fromFirestore(doc.data(), id: doc.id))
           .where((post) => !blockedUserIds.contains(post.authorId))
           .toList();
+      
+      // 클라이언트 사이드 정렬 적용
+      final isAsc = sortState.direction == SortDirection.ascending;
+      switch (sortState.option) {
+        case CommunitySortOption.latest:
+          posts.sort((a, b) => isAsc
+              ? a.createdAt.compareTo(b.createdAt)
+              : b.createdAt.compareTo(a.createdAt));
+        case CommunitySortOption.popular:
+          posts.sort((a, b) => isAsc
+              ? a.likeCount.compareTo(b.likeCount)
+              : b.likeCount.compareTo(a.likeCount));
+      }
       
       return PaginatedResult<CommunityPostModel>(
         items: posts,

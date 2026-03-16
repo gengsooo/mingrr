@@ -9,6 +9,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
+import '../../../../core/providers/firebase_providers.dart' show firestoreServiceProvider;
 import '../../../../core/services/dating_service.dart';
 import '../../../../core/services/share_service.dart';
 import '../../../../core/services/transaction_service.dart';
@@ -74,7 +75,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
   bool _requestStatusLoaded = false;
   
   final FirebaseService _firebase = FirebaseService();
-  final FirestoreService _firestoreService = FirestoreService();
+  FirestoreService get _firestoreService => ref.read(firestoreServiceProvider);
   final DatingService _datingService = DatingService();
 
   @override

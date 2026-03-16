@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../constants/app_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,19 +6,25 @@ import 'package:go_router/go_router.dart';
 import '../theme/feature_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../constants/app_sizes.dart';
-import '../services/firestore_service.dart';
+import '../providers/firebase_providers.dart';
 import 'common_widgets.dart';
-import 'badges/info_badge.dart';
 import 'forms/search_bar.dart';
 import '../utils/format_utils.dart';
 import '../../models/marketplace_model.dart';
 import '../../models/group_model.dart';
 import '../../models/community_post_model.dart';
+import '../../models/breeding_model.dart';
 import '../utils/error_handler.dart';
 
 /// ============================================================
 /// 통합 검색 화면
-/// 마켓, 소모임(group), 커뮤니티(게시판), 알바 검색 지원
+/// 마켓, 소모임(group), 커뮤니티(게시판), 알바, 교배 검색 지원
+/// 
+/// 주요 기능:
+/// - debounce 실시간 검색 (300ms, 최소 2글자)
+/// - Enter 키 즉시 검색
+/// - 통일된 SearchResultTile UI
+/// - 결과 카운트 표시
 /// ============================================================
 
 enum SearchType {
@@ -44,16 +51,50 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _searchController = TextEditingController();
-  final _firestoreService = FirestoreService();
   
   List<dynamic> _results = [];
   bool _isLoading = false;
   String _lastQuery = '';
+  Timer? _debounceTimer;
+  int _searchVersion = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(_onTextChanged);
+  }
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
+    _searchController.removeListener(_onTextChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onTextChanged() {
+    setState(() {}); // clear 버튼 표시/숨김 갱신
+    
+    final query = _searchController.text.trim();
+    
+    // 빈 검색어 시 결과 초기화
+    if (query.isEmpty) {
+      _debounceTimer?.cancel();
+      setState(() {
+        _lastQuery = '';
+        _results = [];
+        _isLoading = false;
+      });
+      return;
+    }
+    
+    // 최소 2글자 이상일 때만 debounce 검색 실행
+    if (query.length >= 2) {
+      _debounceTimer?.cancel();
+      _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+        _executeSearch(query);
+      });
+    }
   }
 
   @override
@@ -70,6 +111,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   }
 
   Widget _buildSearchField() {
+    final hasText = _searchController.text.isNotEmpty;
+    
     return Padding(
       padding: const EdgeInsets.only(left: AppSizes.paddingL),
       child: MingrrSearchBar(
@@ -78,7 +121,22 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         accentColor: widget.accentColor,
         autofocus: true,
         backgroundColor: Theme.of(context).colorScheme.surface,
-        onSearch: _onSearch,
+        onSearch: (query) => _executeSearch(query.trim()),
+        suffix: hasText
+            ? GestureDetector(
+                onTap: () {
+                  _searchController.clear();
+                },
+                child: Padding(
+                  padding: const EdgeInsets.only(right: AppSizes.paddingS),
+                  child: Icon(
+                    AppIcons.close,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              )
+            : null,
       ),
     );
   }
@@ -107,328 +165,309 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       return const MingrrEmptyState(
         icon: AppIcons.search,
         title: '검색어를 입력해주세요',
+        subtitle: '2글자 이상 입력하면 자동으로 검색됩니다',
       );
     }
 
     if (_results.isEmpty) {
-      return const MingrrEmptyState(
+      return MingrrEmptyState(
         icon: AppIcons.searchOff,
         title: '검색 결과가 없습니다',
+        subtitle: '\'$_lastQuery\'에 대한 결과를 찾을 수 없어요',
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppSizes.paddingM),
-      itemCount: _results.length,
-      itemBuilder: (context, index) {
-        final item = _results[index];
-        switch (widget.searchType) {
-          case SearchType.market:
-            // 마켓 통합 검색: 상품과 알바 모두 표시
-            return _buildMarketItem(item);
-          case SearchType.group:
-            return _buildGroupItem(item as GroupModel);
-          case SearchType.community:
-            return _buildCommunityPostItem(item as CommunityPostModel);
-          case SearchType.breeding:
-            return _buildBreedingItem(item);
-          case SearchType.job:
-            return _buildJobItem(item as JobModel);
-        }
+    return Column(
+      children: [
+        // 검색 결과 카운트
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
+          child: Row(
+            children: [
+              Text(
+                '검색 결과',
+                style: AppTextStyles.bodySmall(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(width: AppSizes.gapXS),
+              Text(
+                '${_results.length}건',
+                style: AppTextStyles.bodySmall(context).withWeight(FontWeight.w600).withColor(widget.accentColor),
+              ),
+            ],
+          ),
+        ),
+        // 검색 결과 목록
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM),
+            itemCount: _results.length,
+            itemBuilder: (context, index) => _buildResultItem(_results[index]),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 검색 결과 아이템 - 타입별 분기
+  Widget _buildResultItem(dynamic item) {
+    if (item is ProductModel) return _buildProductTile(item);
+    if (item is JobModel) return _buildJobTile(item);
+    if (item is GroupModel) return _buildGroupTile(item);
+    if (item is CommunityPostModel) return _buildCommunityTile(item);
+    if (item is BreedingPostModel) return _buildBreedingTile(item);
+    return const SizedBox.shrink();
+  }
+
+  /// 상품 검색 결과 타일
+  Widget _buildProductTile(ProductModel product) {
+    final isShare = product.type == ProductType.share;
+    return _SearchResultTile(
+      imageUrl: product.imageUrls.isNotEmpty ? product.imageUrls.first : null,
+      accentColor: context.features.market,
+      badgeText: isShare ? '나눔' : '판매',
+      badgeColor: isShare ? context.features.walk : context.features.market,
+      title: product.title,
+      info: product.priceString,
+      infoColor: isShare ? context.features.walk : null,
+      time: formatRelativeTime(product.createdAt),
+      onTap: () {
+        Navigator.pop(context);
+        context.push('/market/product/${product.id}');
       },
     );
   }
 
-
-  /// 마켓 통합 검색 결과 아이템 빌더
-  Widget _buildMarketItem(dynamic item) {
-    if (item is ProductModel) {
-      return _buildProductItemWithBadge(item);
-    } else if (item is JobModel) {
-      return _buildJobItemWithBadge(item);
-    }
-    return const SizedBox.shrink();
+  /// 알바 검색 결과 타일
+  Widget _buildJobTile(JobModel job) {
+    return _SearchResultTile(
+      imageUrl: job.imageUrls.isNotEmpty ? job.imageUrls.first : null,
+      accentColor: context.features.market,
+      badgeText: '알바',
+      badgeColor: context.features.market,
+      title: job.title,
+      info: job.priceString,
+      infoColor: context.features.market,
+      time: formatRelativeTime(job.createdAt),
+      onTap: () {
+        Navigator.pop(context);
+        context.push('/market/job/${job.id}');
+      },
+    );
   }
 
-  /// 상품 아이템 (타입 배지 포함)
-  Widget _buildProductItemWithBadge(ProductModel product) {
-    final isShare = product.type == ProductType.share;
-    final badgeColor = isShare ? context.features.walk : context.features.market;
-    final badgeText = isShare ? '나눔' : '판매';
+  /// 소모임 검색 결과 타일
+  Widget _buildGroupTile(GroupModel group) {
+    return _SearchResultTile(
+      imageUrl: group.imageUrl,
+      accentColor: context.features.social,
+      title: group.name,
+      info: '${group.typeString} · 멤버 ${group.memberCount}명',
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(AppIcons.likeOutlined, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
+          const SizedBox(width: 2),
+          Text('${group.likeCount}', style: AppTextStyles.captionSmall(context)),
+        ],
+      ),
+      onTap: () {
+        Navigator.pop(context);
+        context.push('/social/group/${group.id}');
+      },
+    );
+  }
+
+  /// 커뮤니티 검색 결과 타일
+  Widget _buildCommunityTile(CommunityPostModel post) {
+    final displayTitle = post.title.isNotEmpty
+        ? post.title
+        : (post.content.length > 30 ? '${post.content.substring(0, 30)}...' : post.content);
     
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
-      child: ListTile(
-        leading: Stack(
-          children: [
-            MingrrImage.thumbnail(
-              imageUrl: product.imageUrls.isNotEmpty ? product.imageUrls.first : null,
-              width: 60,
-              height: 60,
-              radius: AppSizes.radiusS,
-              accentColor: context.features.market,
-            ),
-            // 타입 배지
-            Positioned(
-              top: 0,
-              left: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                decoration: BoxDecoration(
-                  color: badgeColor,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(AppSizes.radiusS),
-                    bottomRight: Radius.circular(AppSizes.radiusS),
-                  ),
-                ),
-                child: Text(
-                  badgeText,
-                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-          ],
-        ),
-        title: Text(product.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-        subtitle: Text(
-          product.priceString,
-          style: TextStyle(
-            color: isShare ? context.features.walk : Theme.of(context).colorScheme.onSurface,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        trailing: Text(
-          formatRelativeTime(product.createdAt),
-          style: AppTextStyles.captionSmall(context),
-        ),
-        onTap: () {
-          Navigator.pop(context);
-          context.push('/market/product/${product.id}');
-        },
-      ),
+    return _SearchResultTile(
+      imageUrl: post.imageUrls.isNotEmpty ? post.imageUrls.first : null,
+      accentColor: context.features.social,
+      badgeText: post.category.label,
+      badgeColor: context.features.social,
+      title: displayTitle,
+      info: '좋아요 ${post.likeCount} · 댓글 ${post.commentCount}',
+      time: formatRelativeTime(post.createdAt),
+      onTap: () {
+        Navigator.pop(context);
+        context.push('/social/community/${post.id}');
+      },
     );
   }
 
-  /// 알바 아이템 (타입 배지 포함)
-  Widget _buildJobItemWithBadge(JobModel job) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
-      child: ListTile(
-        leading: Stack(
-          children: [
-            MingrrImage.thumbnail(
-              imageUrl: job.imageUrls.isNotEmpty ? job.imageUrls.first : null,
-              width: 60,
-              height: 60,
-              radius: AppSizes.radiusS,
-              accentColor: context.features.market,
-            ),
-            // 타입 배지
-            Positioned(
-              top: 0,
-              left: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                decoration: BoxDecoration(
-                  color: context.features.market,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(AppSizes.radiusS),
-                    bottomRight: Radius.circular(AppSizes.radiusS),
-                  ),
-                ),
-                child: const Text(
-                  '알바',
-                  style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
-          ],
-        ),
-        title: Text(job.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-        subtitle: Text(
-          '${formatPrice(job.price)}원/${job.priceUnit}',
-          style: TextStyle(fontWeight: FontWeight.w600, color: context.features.market),
-        ),
-        trailing: Text(
-          formatRelativeTime(job.createdAt),
-          style: AppTextStyles.captionSmall(context),
-        ),
-        onTap: () {
-          Navigator.pop(context);
-          context.push('/market/job/${job.id}');
-        },
-      ),
+  /// 교배 검색 결과 타일
+  Widget _buildBreedingTile(BreedingPostModel breeding) {
+    return _SearchResultTile(
+      accentColor: context.features.dating,
+      badgeText: breeding.status.label,
+      badgeColor: context.features.dating,
+      title: breeding.title,
+      info: breeding.address ?? '위치 미설정',
+      time: formatRelativeTime(breeding.createdAt),
+      onTap: () {
+        Navigator.pop(context);
+        context.push('/dating/detail/${breeding.petId}');
+      },
     );
   }
 
-  Widget _buildGroupItem(GroupModel group) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
-      child: ListTile(
-        leading: MingrrImage.thumbnail(
-          imageUrl: group.imageUrl,
-          width: 60,
-          height: 60,
-          radius: AppSizes.radiusS,
-          accentColor: context.features.social,
-        ),
-        title: Text(group.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-        subtitle: Row(
-          children: [
-            Text(group.typeString, style: AppTextStyles.caption(context)),
-            const SizedBox(width: AppSizes.gapS),
-            Icon(AppIcons.profile, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
-            Text(' ${group.memberCount}', style: AppTextStyles.captionSmall(context)),
-          ],
-        ),
-        trailing: LikeCountText(count: group.likeCount, size: InfoBadgeSize.small),
-        onTap: () {
-          Navigator.pop(context);
-          context.push('/social/group/${group.id}');
-        },
-      ),
-    );
-  }
+  /// 검색 실행 (debounce 또는 Enter)
+  Future<void> _executeSearch(String query) async {
+    if (query.isEmpty) return;
 
-  Widget _buildJobItem(JobModel job) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
-      child: ListTile(
-        leading: MingrrImage.thumbnail(
-          imageUrl: job.imageUrls.isNotEmpty ? job.imageUrls.first : null,
-          width: 60,
-          height: 60,
-          radius: AppSizes.radiusS,
-          accentColor: context.features.market,
-        ),
-        title: Text(job.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-        subtitle: Text(
-          '${formatPrice(job.price)}원/${job.priceUnit}',
-          style: TextStyle(fontWeight: FontWeight.w600, color: context.features.market),
-        ),
-        trailing: Text(
-          formatRelativeTime(job.createdAt),
-          style: AppTextStyles.captionSmall(context),
-        ),
-        onTap: () {
-          Navigator.pop(context);
-          context.push('/market/job/${job.id}');
-        },
-      ),
-    );
-  }
-
-  Widget _buildBreedingItem(dynamic breeding) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
-      child: ListTile(
-        leading: MingrrImage.thumbnail(
-          imageUrl: breeding.imageUrls != null && breeding.imageUrls.isNotEmpty ? breeding.imageUrls.first : null,
-          width: 60,
-          height: 60,
-          radius: AppSizes.radiusS,
-          accentColor: context.features.dating,
-        ),
-        title: Text(breeding.title ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
-        subtitle: Text(
-          '${breeding.breed ?? '품종 미상'}',
-          style: AppTextStyles.captionSmall(context),
-        ),
-        trailing: Icon(AppIcons.chevronRight, color: Theme.of(context).colorScheme.outlineVariant),
-        onTap: () {
-          Navigator.pop(context);
-          context.push('/dating/detail/${breeding.petId}');
-        },
-      ),
-    );
-  }
-
-  Widget _buildCommunityPostItem(CommunityPostModel post) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppSizes.gapM),
-      child: ListTile(
-        leading: MingrrImage.thumbnail(
-          imageUrl: post.imageUrls.isNotEmpty ? post.imageUrls.first : null,
-          width: 60,
-          height: 60,
-          radius: AppSizes.radiusS,
-          accentColor: context.features.social,
-        ),
-        title: Text(
-          post.title.isNotEmpty ? post.title : (post.content.length > 30 ? '${post.content.substring(0, 30)}...' : post.content),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
-              decoration: BoxDecoration(
-                color: context.features.social.withValues(alpha: AppOpacity.o10),
-                borderRadius: BorderRadius.circular(AppSizes.radiusS),
-              ),
-              child: Text(
-                post.category.label,
-                style: AppTextStyles.labelMedium(context).copyWith(color: context.features.social),
-              ),
-            ),
-            const SizedBox(width: AppSizes.gapS),
-            LikeCountText(count: post.likeCount, size: InfoBadgeSize.small),
-            const SizedBox(width: AppSizes.gapS),
-            Icon(AppIcons.chatOutlined, size: 12, color: Theme.of(context).colorScheme.outlineVariant),
-            Text(' ${post.commentCount}', style: AppTextStyles.captionSmall(context)),
-          ],
-        ),
-        trailing: Text(
-          formatRelativeTime(post.createdAt),
-          style: AppTextStyles.captionSmall(context),
-        ),
-        onTap: () {
-          Navigator.pop(context);
-          context.push('/social/community/${post.id}');
-        },
-      ),
-    );
-  }
-
-  Future<void> _onSearch(String query) async {
-    final trimmedQuery = query.trim();
-    if (trimmedQuery.isEmpty) return;
-
+    final currentVersion = ++_searchVersion;
+    
     setState(() {
       _isLoading = true;
-      _lastQuery = trimmedQuery;
+      _lastQuery = query;
     });
 
     try {
+      final firestoreService = ref.read(firestoreServiceProvider);
       List<dynamic> results;
       switch (widget.searchType) {
         case SearchType.market:
-          results = await _firestoreService.searchMarketAll(trimmedQuery);
-          break;
+          results = await firestoreService.searchMarketAll(query);
         case SearchType.group:
-          results = await _firestoreService.searchGroups(trimmedQuery);
-          break;
+          results = await firestoreService.searchGroups(query);
         case SearchType.community:
-          results = await _firestoreService.searchCommunityPosts(trimmedQuery);
-          break;
+          results = await firestoreService.searchCommunityPosts(query);
         case SearchType.breeding:
-          results = await _firestoreService.searchBreedingPosts(trimmedQuery);
-          break;
+          results = await firestoreService.searchBreedingPosts(query);
         case SearchType.job:
-          results = await _firestoreService.searchJobs(trimmedQuery);
-          break;
+          results = await firestoreService.searchJobs(query);
       }
 
-      setState(() => _results = results);
+      // 이전 검색 요청이면 무시 (최신 요청만 반영)
+      if (currentVersion != _searchVersion) return;
+
+      if (mounted) setState(() => _results = results);
     } catch (e) {
+      if (currentVersion != _searchVersion) return;
       if (mounted) {
         ErrorHandler.showError(context, e, tag: 'Search', operation: '검색');
       }
     } finally {
-      if (mounted) {
+      if (currentVersion == _searchVersion && mounted) {
         setState(() => _isLoading = false);
       }
     }
+  }
+}
+
+/// ============================================================
+/// 검색 결과 통합 타일 컴포넌트
+/// 
+/// 모든 검색 결과(상품, 알바, 소모임, 커뮤니티, 교배)에 일관된 UI를 제공합니다.
+/// - 좌측: 썸네일 이미지 (60x60) + 선택적 배지
+/// - 중앙: 제목 + 핵심 정보
+/// - 우측: 시간 또는 커스텀 trailing
+/// ============================================================
+class _SearchResultTile extends StatelessWidget {
+  final String? imageUrl;
+  final Color accentColor;
+  final String? badgeText;
+  final Color? badgeColor;
+  final String title;
+  final String info;
+  final Color? infoColor;
+  final String? time;
+  final Widget? trailing;
+  final VoidCallback onTap;
+
+  const _SearchResultTile({
+    this.imageUrl,
+    required this.accentColor,
+    this.badgeText,
+    this.badgeColor,
+    required this.title,
+    required this.info,
+    this.infoColor,
+    this.time,
+    this.trailing,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.paddingS),
+      child: Material(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppSizes.radiusM),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppSizes.radiusM),
+          child: Container(
+            padding: const EdgeInsets.all(AppSizes.paddingM),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppSizes.radiusM),
+              border: Border.all(color: colorScheme.outline.withValues(alpha: AppOpacity.o30)),
+            ),
+            child: Row(
+              children: [
+                _buildThumbnail(context),
+                const SizedBox(width: AppSizes.gapM),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (badgeText != null) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
+                          decoration: BoxDecoration(
+                            color: (badgeColor ?? accentColor).withValues(alpha: AppOpacity.o10),
+                            borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                          ),
+                          child: Text(
+                            badgeText!,
+                            style: AppTextStyles.labelSmall(context).withWeight(FontWeight.w600).withColor(badgeColor ?? accentColor),
+                          ),
+                        ),
+                        const SizedBox(height: AppSizes.gapXXS),
+                      ],
+                      Text(
+                        title,
+                        style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: AppSizes.gapXXS),
+                      Text(
+                        info,
+                        style: AppTextStyles.bodySmall(context).withColor(
+                          infoColor ?? colorScheme.onSurfaceVariant,
+                        ).withWeight(infoColor != null ? FontWeight.w600 : FontWeight.w400),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                if (trailing != null)
+                  trailing!
+                else if (time != null)
+                  Text(time!, style: AppTextStyles.captionSmall(context)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThumbnail(BuildContext context) {
+    return MingrrImage.thumbnail(
+      imageUrl: imageUrl,
+      width: 60,
+      height: 60,
+      radius: AppSizes.radiusS,
+      accentColor: accentColor,
+    );
   }
 }

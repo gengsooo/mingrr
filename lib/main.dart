@@ -48,8 +48,8 @@ void main() async {
     AppLogger.error('Main', 'Firebase 초기화 실패', e);
   }
 
-  // 카카오 SDK 초기화 (로그인용)
-  kakao_sdk.KakaoSdk.init(nativeAppKey: 'e80e09aa4db6c1f3d1eedb1be73ee8c6');
+  // 카카오 SDK 초기화 (로그인용) — ApiConfig에서 키 관리 단일화
+  kakao_sdk.KakaoSdk.init(nativeAppKey: ApiConfig.kakaoNativeAppKey);
 
   // FCM 백그라운드 핸들러 등록
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);

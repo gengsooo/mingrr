@@ -24,7 +24,6 @@ export 'router/app_router.dart' show rootNavigatorKey, routerProvider;
 // ============================================================
 // 📱 MingrrApp - 앱의 최상위 위젯 (Firebase 연동 버전)
 // ============================================================
-// 🔑 app_demo.dart와의 차이점:
 // - 로그인 상태를 확인하는 라우터를 사용합니다
 // - Firebase 인증이 연동되어 있습니다
 class MingrrApp extends ConsumerWidget {
