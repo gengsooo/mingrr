@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../widgets/dialogs/dialogs.dart';
+import '../widgets/snackbar/mingrr_snackbar.dart';
 import 'app_logger.dart';
 
 /// ============================================================
@@ -152,19 +153,17 @@ class ErrorHandler {
   }) {
     if (!context.mounted) return;
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+    if (isError) {
+      MingrrSnackBar.error(context, message);
+    } else {
+      MingrrSnackBar.success(context, message);
+    }
   }
   
   /// 성공 메시지 표시
   static void showSuccess(BuildContext context, String message) {
-    showSnackBar(context, message: message, isError: false);
+    if (!context.mounted) return;
+    MingrrSnackBar.success(context, message);
   }
   
   // ===== 사용자 친화적 메시지 변환 =====

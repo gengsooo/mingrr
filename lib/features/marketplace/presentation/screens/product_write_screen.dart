@@ -12,6 +12,7 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/form_strings.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
+import '../../../../core/providers/firebase_providers.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/services/image_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
@@ -74,7 +75,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
   // 알바 지역
   LocationData? _selectedJobLocation;
 
-  final FirestoreService _firestoreService = FirestoreService();
+  FirestoreService get _firestoreService => ref.read(firestoreServiceProvider);
   final FirebaseService _firebaseService = FirebaseService();
 
   bool get _isEditMode => widget.product != null;

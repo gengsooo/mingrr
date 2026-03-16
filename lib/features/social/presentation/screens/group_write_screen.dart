@@ -12,6 +12,7 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/constants/form_strings.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
+import '../../../../core/providers/firebase_providers.dart';
 import '../../../../core/services/image_service.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/common_widgets.dart';
@@ -55,7 +56,7 @@ class _GroupWriteScreenState extends ConsumerState<GroupWriteScreen> {
   String? _selectedLocation;
   GeoPoint? _selectedGeoPoint;
 
-  final FirestoreService _firestoreService = FirestoreService();
+  FirestoreService get _firestoreService => ref.read(firestoreServiceProvider);
   final FirebaseService _firebaseService = FirebaseService();
 
   bool get _isEditMode => widget.group != null;

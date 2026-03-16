@@ -6,6 +6,7 @@ import '../../constants/app_sizes.dart';
 import '../../constants/location_constants.dart';
 import '../../../models/marketplace_model.dart';
 import '../common_widgets.dart';
+import '../../utils/format_utils.dart';
 
 /// ============================================================
 /// 상품 카드 컴포넌트
@@ -52,8 +53,8 @@ class ProductCard extends StatelessWidget {
                 const SizedBox(height: AppSizes.gapXS),
                 Text(
                   distanceString != null 
-                      ? '$distanceString · ${_formatTime(product.createdAt)}'
-                      : '${product.address ?? LocationConstants.noLocationText} · ${_formatTime(product.createdAt)}',
+                      ? '$distanceString · ${formatRelativeTime(product.createdAt)}'
+                      : '${product.address ?? LocationConstants.noLocationText} · ${formatRelativeTime(product.createdAt)}',
                   style: AppTextStyles.captionSmall(context),
                 ),
                 const SizedBox(height: AppSizes.gapS),
@@ -158,14 +159,6 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-  String _formatTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final diff = now.difference(dateTime);
-    if (diff.inMinutes < 1) return '방금';
-    if (diff.inHours < 1) return '${diff.inMinutes}분 전';
-    if (diff.inDays < 1) return '${diff.inHours}시간 전';
-    return '${diff.inDays}일 전';
-  }
 }
 
 /// 알바 카드 컴포넌트
@@ -211,8 +204,8 @@ class JobCard extends StatelessWidget {
                 // 2줄: 거리 · 시간
                 Text(
                   distanceString != null
-                      ? '$distanceString · ${_formatTime(job.createdAt)}'
-                      : '${job.address ?? '위치 미설정'} · ${_formatTime(job.createdAt)}',
+                      ? '$distanceString · ${formatRelativeTime(job.createdAt)}'
+                      : '${job.address ?? '위치 미설정'} · ${formatRelativeTime(job.createdAt)}',
                   style: AppTextStyles.captionSmall(context),
                 ),
                 const SizedBox(height: AppSizes.gapS),
@@ -354,15 +347,6 @@ class JobCard extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  String _formatTime(DateTime dateTime) {
-    final now = DateTime.now();
-    final diff = now.difference(dateTime);
-    if (diff.inMinutes < 1) return '방금';
-    if (diff.inHours < 1) return '${diff.inMinutes}분 전';
-    if (diff.inDays < 1) return '${diff.inHours}시간 전';
-    return '${diff.inDays}일 전';
   }
 }
 

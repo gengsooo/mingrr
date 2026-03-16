@@ -9,6 +9,7 @@ import '../../../../core/services/location_service.dart';
 import '../../../../core/services/transaction_service.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../models/marketplace_model.dart';
+import '../../../../core/models/sort_state.dart';
 
 /// ============================================================
 /// 마켓플레이스 관련 Provider
@@ -148,11 +149,52 @@ final jobDetailProvider = FutureProvider.autoDispose.family<JobModel?, String>((
 final jobByIdProvider = jobDetailProvider;
 
 /// ============================================================
+/// 마켓플레이스 정렬 옵션
+/// ============================================================
+
+/// 정렬 옵션
+enum MarketSortOption {
+  distance,  // 거리순 (기본)
+  latest,    // 최신순
+  popular,   // 인기순 (좋아요)
+}
+
+/// 정렬 상태
+class MarketSortState {
+  final MarketSortOption option;
+  final SortDirection direction;
+
+  const MarketSortState({
+    this.option = MarketSortOption.distance,
+    this.direction = SortDirection.descending,
+  });
+
+  MarketSortState copyWith({MarketSortOption? option, SortDirection? direction}) {
+    return MarketSortState(
+      option: option ?? this.option,
+      direction: direction ?? this.direction,
+    );
+  }
+
+  MarketSortState toggleDirection() {
+    return copyWith(
+      direction: direction == SortDirection.descending
+          ? SortDirection.ascending
+          : SortDirection.descending,
+    );
+  }
+}
+
+/// 마켓 정렬 상태 Provider
+final marketSortStateProvider = StateProvider<MarketSortState>((ref) => const MarketSortState());
+
+/// ============================================================
 /// 페이지네이션 마켓플레이스 Provider
 /// 
 /// 서버 사이드 필터링 + 클라이언트 거리 계산 + 캐싱
 /// - 타입별 서버 필터링 (판매/나눔)
 /// - 거리 필터링 (클라이언트)
+/// - 정렬 옵션 (거리순/최신순/인기순)
 /// - 20개씩 로드
 /// - keepAlive로 화면 전환 시 상태 유지
 /// ============================================================
@@ -166,6 +208,7 @@ final paginatedProductsProvider = StateNotifierProvider
   
   final userLocation = ref.watch(currentUserLocationProvider);
   final blockedUserIds = ref.watch(blockedUserIdsProvider).valueOrNull ?? [];
+  final sortState = ref.watch(marketSortStateProvider);
   
   return ClientPaginatedNotifier<ProductWithDistance>(
     pageSize: 20,
@@ -198,8 +241,22 @@ final paginatedProductsProvider = StateNotifierProvider
         result.add(ProductWithDistance(product: product, distanceMeters: distance));
       }
       
-      // 거리순 정렬 (위치 없는 상품은 가장 나중에 표시)
-      result.sort((a, b) => a.distanceMeters.compareTo(b.distanceMeters));
+      // 정렬 옵션에 따른 정렬
+      final isAsc = sortState.direction == SortDirection.ascending;
+      switch (sortState.option) {
+        case MarketSortOption.distance:
+          result.sort((a, b) => isAsc
+              ? b.distanceMeters.compareTo(a.distanceMeters)
+              : a.distanceMeters.compareTo(b.distanceMeters));
+        case MarketSortOption.latest:
+          result.sort((a, b) => isAsc
+              ? a.product.createdAt.compareTo(b.product.createdAt)
+              : b.product.createdAt.compareTo(a.product.createdAt));
+        case MarketSortOption.popular:
+          result.sort((a, b) => isAsc
+              ? a.product.likeCount.compareTo(b.product.likeCount)
+              : b.product.likeCount.compareTo(a.product.likeCount));
+      }
       return result;
     },
   );

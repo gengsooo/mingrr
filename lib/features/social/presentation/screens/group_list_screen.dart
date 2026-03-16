@@ -15,6 +15,7 @@ import '../../../../core/widgets/empty_states/location_required_empty_state.dart
 import '../../../../core/constants/location_constants.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 import '../../../../core/providers/location_verification_provider.dart';
+import '../../../../core/models/sort_state.dart';
 import '../providers/group_provider.dart';
 import 'group_detail_screen.dart';
 import 'group_write_screen.dart';
@@ -262,16 +263,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
 
           // 로딩 인디케이터
           if (paginatedState.hasMore)
-            const Padding(
-              padding: EdgeInsets.all(AppSizes.paddingL),
-              child: Center(
-                child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            ),
+            const MingrrPaginationLoader(),
 
           const SizedBox(height: 80),
         ],

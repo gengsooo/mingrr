@@ -8,11 +8,13 @@ import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/badges/svg_icons.dart';
 import '../../../../models/pet_model.dart';
+import '../../../../models/health_model.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
 import '../providers/health_provider.dart';
 import '../../../../core/utils/format_utils.dart';
 import 'walk_record_detail_screen.dart';
 import 'health_record_add_screens.dart';
+import 'health_record_detail_screens.dart';
 
 /// ============================================================
 /// 건강수첩 화면 (Firebase 연동 버전)
@@ -417,8 +419,8 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
         return _buildCheckupRecords(context, ref, pet);
       case HealthCategory.medication:
         return _buildMedicationRecords(context, ref, pet);
-      default:
-        return _buildEmptyRecords(context);
+      case HealthCategory.special:
+        return _buildSpecialRecords(context, ref, pet);
     }
   }
 
@@ -431,7 +433,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
         onRetry: () => ref.invalidate(weightRecordsProvider(pet.id)),
       ),
       data: (records) {
-        if (records.isEmpty) return _buildEmptyRecords(context);
+        if (records.isEmpty) return _buildEmptyRecords(context, icon: AppIcons.weight);
         
         return Column(
           children: records.take(5).map((record) {
@@ -440,8 +442,24 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
               iconColor: context.features.health,
               title: '${record.weight.toStringAsFixed(1)}kg',
               subtitle: formatShortDate(record.recordDate),
+              description: record.notes,
               onTap: () {
-                // TODO: 상세 화면으로 이동
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => WeightRecordDetailScreen(
+                      record: WeightRecord(
+                        id: record.id,
+                        date: record.recordDate,
+                        weight: record.weight,
+                        change: 0,
+                        targetWeight: 0,
+                        petName: pet.name,
+                        memo: record.notes,
+                      ),
+                    ),
+                  ),
+                );
               },
             );
           }).toList(),
@@ -459,7 +477,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
         onRetry: () => ref.invalidate(walkRecordsProvider(pet.id)),
       ),
       data: (records) {
-        if (records.isEmpty) return _buildEmptyRecords(context);
+        if (records.isEmpty) return _buildEmptyRecords(context, icon: AppIcons.walk);
         
         return Column(
           children: records.take(5).map((record) {
@@ -468,6 +486,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
               iconColor: context.features.walk,
               title: '${record.durationMinutes}분, ${record.distanceString}',
               subtitle: formatShortDateTime(record.startTime),
+              description: record.notes,
               onTap: () {
                 Navigator.push(
                   context,
@@ -495,7 +514,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
         onRetry: () => ref.invalidate(groomingRecordsProvider(pet.id)),
       ),
       data: (records) {
-        if (records.isEmpty) return _buildEmptyRecords(context);
+        if (records.isEmpty) return _buildEmptyRecords(context, icon: AppIcons.grooming);
         
         return Column(
           children: records.take(5).map((record) {
@@ -503,7 +522,8 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
               icon: AppIcons.grooming,
               iconColor: context.features.health,
               title: record.groomingType.label,
-              subtitle: '${formatShortDate(record.recordDate)} • ${record.location ?? ""}',
+              subtitle: '${formatShortDate(record.recordDate)}${record.location != null && record.location!.isNotEmpty ? ' • ${record.location}' : ''}',
+              description: record.notes,
               onTap: () {},
             );
           }).toList(),
@@ -521,7 +541,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
         onRetry: () => ref.invalidate(vaccinationRecordsProvider(pet.id)),
       ),
       data: (records) {
-        if (records.isEmpty) return _buildEmptyRecords(context);
+        if (records.isEmpty) return _buildEmptyRecords(context, icon: AppIcons.vaccination);
         
         return Column(
           children: records.take(5).map((record) {
@@ -529,7 +549,8 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
               icon: AppIcons.vaccination,
               iconColor: context.features.health,
               title: record.vaccineName,
-              subtitle: '${formatShortDate(record.vaccinationDate)} • ${record.hospitalName ?? ""}',
+              subtitle: '${formatShortDate(record.vaccinationDate)}${record.hospitalName != null && record.hospitalName!.isNotEmpty ? ' • ${record.hospitalName}' : ''}',
+              description: record.notes,
               onTap: () {},
             );
           }).toList(),
@@ -547,7 +568,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
         onRetry: () => ref.invalidate(checkupRecordsProvider(pet.id)),
       ),
       data: (records) {
-        if (records.isEmpty) return _buildEmptyRecords(context);
+        if (records.isEmpty) return _buildEmptyRecords(context, icon: AppIcons.checkup);
         
         return Column(
           children: records.take(5).map((record) {
@@ -555,7 +576,8 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
               icon: AppIcons.checkup,
               iconColor: context.features.health,
               title: record.diagnosis ?? '정기 검진',
-              subtitle: '${formatShortDate(record.checkupDate)} • ${record.hospitalName ?? ""}',
+              subtitle: '${formatShortDate(record.checkupDate)}${record.hospitalName != null && record.hospitalName!.isNotEmpty ? ' • ${record.hospitalName}' : ''}',
+              description: record.notes,
               onTap: () {},
             );
           }).toList(),
@@ -573,7 +595,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
         onRetry: () => ref.invalidate(medicationRecordsProvider(pet.id)),
       ),
       data: (records) {
-        if (records.isEmpty) return _buildEmptyRecords(context);
+        if (records.isEmpty) return _buildEmptyRecords(context, icon: AppIcons.medication);
         
         return Column(
           children: records.take(5).map((record) {
@@ -588,11 +610,11 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
             return MingrrRecordTile.medication(
               iconColor: iconColor,
               title: displayName,
-              subtitle: '${record.dosage ?? ""} • ${record.intervalString}',
+              subtitle: '${record.dosage != null && record.dosage!.isNotEmpty ? '${record.dosage} • ' : ''}${record.intervalString}',
+              description: record.notes,
               isActive: isActive,
               onTap: () {
-                // TODO: 약 상세 화면 구현 시 연결
-                MingrrSnackBar.info(context, '약 상세 화면은 준비 중입니다');
+                _showMedicationDetail(context, record, displayName, iconColor);
               },
             );
           }).toList(),
@@ -621,14 +643,235 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
     final name = medicationName.replaceAll(RegExp(r'[💊💉🩹🧴🩺🏥❤️⭐💧🧂]\s*'), '').trim();
     return (iconType: MedicationIconType.blue, name: name.isEmpty ? medicationName : name);
   }
-  
-  Widget _buildEmptyRecords(BuildContext context) {
+
+  void _showMedicationDetail(BuildContext context, MedicationRecordModel record, String displayName, Color iconColor) {
+    final isActive = record.endDate == null || record.endDate!.isAfter(DateTime.now());
+    final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.6),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 핸들
+            Container(
+              margin: const EdgeInsets.only(top: AppSizes.bottomSheetHandleTop),
+              width: AppSizes.bottomSheetHandleWidth,
+              height: AppSizes.bottomSheetHandleHeight,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(AppSizes.bottomSheetHandleRadius),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AppSizes.paddingL),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 헤더
+                  Row(
+                    children: [
+                      Container(
+                        width: 48, height: 48,
+                        decoration: BoxDecoration(
+                          color: iconColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                        ),
+                        child: Icon(AppIcons.medication, color: iconColor, size: AppSizes.iconL),
+                      ),
+                      const SizedBox(width: AppSizes.gapM),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(displayName, style: theme.textTheme.titleLarge),
+                            const SizedBox(height: AppSizes.gapXXS),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isActive ? context.features.success.withValues(alpha: 0.15) : theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                                  ),
+                                  child: Text(
+                                    isActive ? '복용 중' : '종료됨',
+                                    style: AppTextStyles.labelSmall(context).withColor(isActive ? context.features.success : theme.colorScheme.outlineVariant),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSizes.gapXL),
+                  // 정보 항목들
+                  if (record.dosage != null && record.dosage!.isNotEmpty)
+                    _medicationInfoRow(theme, '용량', record.dosage!),
+                  _medicationInfoRow(theme, '복용 주기', record.intervalString),
+                  _medicationInfoRow(theme, '시작일', formatShortDate(record.startDate)),
+                  if (record.endDate != null)
+                    _medicationInfoRow(theme, '종료일', formatShortDate(record.endDate!)),
+                  if (record.notes != null && record.notes!.isNotEmpty) ...[
+                    const SizedBox(height: AppSizes.gapM),
+                    Text('메모', style: theme.textTheme.labelMedium),
+                    const SizedBox(height: AppSizes.gapXS),
+                    Text(record.notes!, style: theme.textTheme.bodyMedium),
+                  ],
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _medicationInfoRow(ThemeData theme, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSizes.gapS),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(label, style: theme.textTheme.bodySmall),
+          ),
+          Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
+        ],
+      ),
+    );
+  }
+
+  void _showSpecialNoteDetail(BuildContext context, SpecialNoteModel record) {
+    final theme = Theme.of(context);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.bottomSheetRadius)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: AppSizes.bottomSheetHandleTop),
+              width: AppSizes.bottomSheetHandleWidth,
+              height: AppSizes.bottomSheetHandleHeight,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(AppSizes.bottomSheetHandleRadius),
+              ),
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSizes.paddingL),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          width: 48, height: 48,
+                          decoration: BoxDecoration(
+                            color: context.features.health.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                          ),
+                          child: Icon(AppIcons.special, color: context.features.health, size: AppSizes.iconL),
+                        ),
+                        const SizedBox(width: AppSizes.gapM),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(record.title, style: theme.textTheme.titleLarge),
+                              const SizedBox(height: AppSizes.gapXXS),
+                              Text(formatShortDate(record.recordDate), style: theme.textTheme.bodySmall),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSizes.gapXL),
+                    Text(record.content, style: theme.textTheme.bodyMedium?.copyWith(height: 1.6)),
+                    if (record.photoUrls.isNotEmpty) ...[
+                      const SizedBox(height: AppSizes.gapL),
+                      SizedBox(
+                        height: 120,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: record.photoUrls.length,
+                          separatorBuilder: (_, _) => const SizedBox(width: AppSizes.gapS),
+                          itemBuilder: (context, index) => ClipRRect(
+                            borderRadius: BorderRadius.circular(AppSizes.radiusM),
+                            child: Image.network(
+                              record.photoUrls[index],
+                              width: 120,
+                              height: 120,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpecialRecords(BuildContext context, WidgetRef ref, PetModel pet) {
+    final recordsAsync = ref.watch(specialNotesProvider(pet.id));
+    
+    return recordsAsync.when(
+      loading: () => const MingrrLoadingState(type: MingrrLoadingType.health, message: '건강 정보를 불러오고 있어요'),
+      error: (_, _) => MingrrErrorState(
+        onRetry: () => ref.invalidate(specialNotesProvider(pet.id)),
+      ),
+      data: (records) {
+        if (records.isEmpty) return _buildEmptyRecords(context, icon: AppIcons.special);
+        
+        return Column(
+          children: records.take(5).map((record) {
+            return MingrrRecordTile(
+              icon: AppIcons.special,
+              iconColor: context.features.health,
+              title: record.title,
+              subtitle: formatShortDate(record.recordDate),
+              description: record.content,
+              onTap: () => _showSpecialNoteDetail(context, record),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyRecords(BuildContext context, {IconData? icon}) {
     return Container(
       padding: const EdgeInsets.all(AppSizes.paddingXL),
       child: Center(
         child: Column(
           children: [
-            Icon(AppIcons.special, size: 40, color: Theme.of(context).colorScheme.outlineVariant),
+            Icon(icon ?? AppIcons.special, size: 40, color: Theme.of(context).colorScheme.outlineVariant),
             const SizedBox(height: AppSizes.gapM),
             Text(
               '아직 기록이 없습니다',

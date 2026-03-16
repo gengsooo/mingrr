@@ -9,6 +9,7 @@ import '../../../../core/services/location_service.dart';
 import '../../../../core/services/transaction_service.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../models/group_model.dart';
+import '../../../../core/models/sort_state.dart';
 
 /// ============================================================
 /// 소모임(Group) Provider
@@ -79,12 +80,6 @@ enum GroupSortOption {
   members,
   latest,
   likes,
-}
-
-/// 정렬 방향
-enum SortDirection {
-  descending,
-  ascending,
 }
 
 /// 정렬 상태

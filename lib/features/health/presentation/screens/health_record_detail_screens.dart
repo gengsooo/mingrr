@@ -370,17 +370,16 @@ class VaccinationRecordDetailScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Switch(
-                      value: true,
-                      onChanged: (value) {
-                        // TODO: 알림 기능 구현 시 연동
-                      },
-                      activeThumbColor: Colors.white,
-                      activeTrackColor: context.features.health,
-                      // 다크모드에서 OFF 상태 thumb이 track과 구분되도록 설정
-                      inactiveThumbColor: Theme.of(context).colorScheme.outline,
-                      inactiveTrackColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                      trackOutlineColor: WidgetStateProperty.all(Theme.of(context).colorScheme.outline),
+                    Tooltip(
+                      message: '알림 기능은 추후 업데이트 예정입니다',
+                      child: Switch(
+                        value: false,
+                        onChanged: null,
+                        // 다크모드에서 OFF 상태 thumb이 track과 구분되도록 설정
+                        inactiveThumbColor: Theme.of(context).colorScheme.outline,
+                        inactiveTrackColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        trackOutlineColor: WidgetStateProperty.all(Theme.of(context).colorScheme.outline),
+                      ),
                     ),
                   ],
                 ),

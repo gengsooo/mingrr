@@ -1,17 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/firebase_service.dart';
-import '../../../../core/services/firestore_service.dart';
+import '../../../../core/providers/firebase_providers.dart' show firestoreServiceProvider;
 import '../../../../core/services/favorite_service.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../../../../models/group_model.dart';
 import '../../../../models/marketplace_model.dart';
 import '../../../../models/pet_model.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-
-/// 데이터베이스 서비스 상태 관리
-final _firestoreServiceProvider = Provider<FirestoreService>((ref) {
-  return FirestoreService();
-});
 
 /// 사용자 활동 기록 Provider
 /// 순서: 산책 → 매칭 → 거래 → 커뮤니티 → 모임
@@ -29,7 +24,7 @@ final userActivityStatsProvider = FutureProvider.autoDispose<Map<String, int>>((
     };
   }
   
-  final firestoreService = ref.watch(_firestoreServiceProvider);
+  final firestoreService = ref.watch(firestoreServiceProvider);
   return firestoreService.getUserActivityStats(userId);
 });
 
@@ -119,7 +114,7 @@ final wishlistProductsProvider = FutureProvider.autoDispose<List<ProductModel>>(
   
   if (userId == null) return [];
   
-  final firestoreService = ref.watch(_firestoreServiceProvider);
+  final firestoreService = ref.watch(firestoreServiceProvider);
   return firestoreService.getUserLikedProducts(userId);
 });
 
@@ -136,7 +131,7 @@ final userVerificationsProvider = StreamProvider.autoDispose<Map<String, bool>>(
     });
   }
   
-  final firestoreService = ref.watch(_firestoreServiceProvider);
+  final firestoreService = ref.watch(firestoreServiceProvider);
   return firestoreService.watchUserVerifications(userId).handleError((error, stackTrace) {
     AppLogger.error('ProfileProvider', '인증 상태 스트림 오류 (userId: $userId)', error, stackTrace);
     return {'identity': false, 'location': false, 'petRegistration': false};

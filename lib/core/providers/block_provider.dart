@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/firestore_service.dart';
+import 'firebase_providers.dart' show firestoreServiceProvider;
 import '../../features/auth/presentation/providers/auth_provider.dart';
 
 /// ============================================================
@@ -7,11 +7,6 @@ import '../../features/auth/presentation/providers/auth_provider.dart';
 /// 
 /// 차단된 사용자 목록을 관리하고, 필터링에 사용
 /// ============================================================
-
-/// FirestoreService Provider
-final _firestoreServiceProvider = Provider<FirestoreService>((ref) {
-  return FirestoreService();
-});
 
 /// 차단한 사용자 ID 목록 Provider (실시간 스트림)
 final blockedUserIdsProvider = StreamProvider.autoDispose<List<String>>((ref) {
@@ -22,7 +17,7 @@ final blockedUserIdsProvider = StreamProvider.autoDispose<List<String>>((ref) {
     return Stream.value([]);
   }
   
-  final firestoreService = ref.watch(_firestoreServiceProvider);
+  final firestoreService = ref.watch(firestoreServiceProvider);
   return firestoreService.watchBlockedUserIds(userId);
 });
 

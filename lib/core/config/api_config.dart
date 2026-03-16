@@ -25,7 +25,7 @@ class ApiConfig {
   // ===== Fallback 값 (Remote Config 실패 시 사용) =====
   // 네이티브 설정(AndroidManifest, Info.plist)과 동일한 값
   // 클라이언트 SDK 키는 앱 번들에 이미 포함되므로 하드코딩해도 보안상 문제 없음
-  static const String _fallbackKakaoMapKey = 'e80e09aa4db6c1f3d1eedb1be73ee8c6';
+  static const String kakaoNativeAppKey = 'e80e09aa4db6c1f3d1eedb1be73ee8c6';
   
   // SDK 초기화 상태 추적
   static bool _isKakaoMapSdkInitialized = false;
@@ -52,7 +52,7 @@ class ApiConfig {
       
       // 기본값 설정 - Fallback 값 사용 (Remote Config 실패 시에도 작동)
       await _remoteConfig.setDefaults(const {
-        'kakao_map_key': _fallbackKakaoMapKey,
+        'kakao_map_key': kakaoNativeAppKey,
         'kakao_rest_api_key': '',
         'animal_registration_api_key': '',
       });

@@ -54,12 +54,18 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
   Position? _currentPosition;
   StreamSubscription<Position>? _positionStreamSubscription;
   Timer? _walkTimer;
+  Timer? _batchUploadTimer;
   
   // 산책 기록
   String? _currentWalkRecordId;
   final List<GeoPoint> _routePoints = [];
   final List<GeoPoint> _footprints = [];
   Position? _lastPosition;
+  
+  // 배치 업로드 버퍼 (Firestore 쓰기 최적화)
+  final List<GeoPoint> _pendingRoutePoints = [];
+  final List<GeoPoint> _pendingFootprints = [];
+  bool _hasPendingUpdate = false;
   
   // 선택된 반려동물 ID 목록 (중복 선택 가능)
   final Set<String> _selectedPetIds = {};
@@ -83,6 +89,8 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
     // 3. 타이머 취소
     _walkTimer?.cancel();
     _walkTimer = null;
+    _batchUploadTimer?.cancel();
+    _batchUploadTimer = null;
     
     // 4. 지도 컨트롤러 안전하게 정리 (크래시 방지 핵심)
     // SurfaceView가 dispose된 후 접근하는 것을 방지
@@ -804,6 +812,11 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         });
       });
       
+      // 배치 업로드 타이머 (30초마다 Firestore에 경로 업로드)
+      _batchUploadTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+        _flushPendingUpdates();
+      });
+      
       // 위치 추적 시작 (10초마다)
       _positionStreamSubscription = Geolocator.getPositionStream(
         locationSettings: const LocationSettings(
@@ -854,31 +867,57 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
           setState(() {
             _footprints.add(newLocation);
           });
-          
-          // Firebase에 발바닥 추가
-          final healthService = ref.read(healthServiceProvider);
-          await healthService.addFootprint(
-            recordId: _currentWalkRecordId!,
-            location: newLocation,
-          );
+          _pendingFootprints.add(newLocation);
         }
         
         // 지도에 경로 폴리라인 업데이트
         await _drawRoutePolyline();
         
-        // Firebase 경로 업데이트
-        final healthService = ref.read(healthServiceProvider);
-        await healthService.updateWalkRoute(
-          recordId: _currentWalkRecordId!,
-          newLocation: newLocation,
-          totalDistance: _walkDistance,
-        );
+        // 로컬 버퍼에 축적 (30초마다 배치 업로드)
+        _pendingRoutePoints.add(newLocation);
+        _hasPendingUpdate = true;
       }
     } catch (e) {
       AppLogger.error('WalkScreen', '경로 업데이트 오류', e);
     }
   }
-  
+
+  /// 버퍼에 쌓인 경로/발자국을 Firestore에 배치 업로드
+  Future<void> _flushPendingUpdates() async {
+    if (!_hasPendingUpdate || _currentWalkRecordId == null) return;
+
+    try {
+      final healthService = ref.read(healthServiceProvider);
+
+      // 경로 포인트 배치 업로드
+      if (_pendingRoutePoints.isNotEmpty) {
+        for (final point in _pendingRoutePoints) {
+          await healthService.updateWalkRoute(
+            recordId: _currentWalkRecordId!,
+            newLocation: point,
+            totalDistance: _walkDistance,
+          );
+        }
+        _pendingRoutePoints.clear();
+      }
+
+      // 발자국 배치 업로드
+      if (_pendingFootprints.isNotEmpty) {
+        for (final footprint in _pendingFootprints) {
+          await healthService.addFootprint(
+            recordId: _currentWalkRecordId!,
+            location: footprint,
+          );
+        }
+        _pendingFootprints.clear();
+      }
+
+      _hasPendingUpdate = false;
+    } catch (e) {
+      AppLogger.error('WalkScreen', '배치 업로드 오류', e);
+    }
+  }
+
   /// 산책 종료
   Future<void> _stopWalk() async {
     if (!_isWalking || _currentWalkRecordId == null) return;
@@ -886,7 +925,11 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
     try {
       // 타이머 및 위치 추적 중지
       _walkTimer?.cancel();
+      _batchUploadTimer?.cancel();
       _positionStreamSubscription?.cancel();
+      
+      // 잔여 버퍼 플러시
+      await _flushPendingUpdates();
       
       // 칼로리 계산 (간단한 공식: 거리(km) * 50)
       final calories = (_walkDistance / 1000) * 50;

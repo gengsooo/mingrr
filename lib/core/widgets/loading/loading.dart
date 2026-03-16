@@ -4,4 +4,5 @@
 // ============================================================
 
 export 'loading_widgets.dart';
+export 'mingrr_pagination_loader.dart';
 export 'skeleton_widgets.dart';

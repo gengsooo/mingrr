@@ -6,7 +6,7 @@ import '../../constants/app_sizes.dart';
 import '../../theme/app_text_styles.dart';
 import '../../theme/feature_colors.dart';
 import '../../services/firebase_service.dart';
-import '../../services/firestore_service.dart';
+import '../../providers/firebase_providers.dart';
 import '../../utils/error_handler.dart';
 import '../common_widgets.dart';
 import '../../../models/group_model.dart';
@@ -309,7 +309,7 @@ class _ScheduleWriteSheetState extends ConsumerState<ScheduleWriteSheet> {
     setState(() => _isSubmitting = true);
     
     try {
-      final firestoreService = FirestoreService();
+      final firestoreService = ref.read(firestoreServiceProvider);
       
       final startTime = DateTime(
         _selectedDate.year,

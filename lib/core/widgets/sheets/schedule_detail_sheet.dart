@@ -6,6 +6,7 @@ import '../../theme/app_text_styles.dart';
 import '../../theme/feature_colors.dart';
 import '../../services/firebase_service.dart';
 import '../../services/firestore_service.dart';
+import '../../providers/firebase_providers.dart';
 import '../../utils/error_handler.dart';
 import '../common_widgets.dart';
 import '../dialogs/dialogs.dart';
@@ -284,7 +285,7 @@ class _ScheduleDetailSheetState extends ConsumerState<ScheduleDetailSheet> {
     setState(() => _isLoading = true);
     
     try {
-      await FirestoreService().joinSchedule(widget.schedule.id, _myUserId!);
+      await ref.read(firestoreServiceProvider).joinSchedule(widget.schedule.id, _myUserId!);
       
       if (mounted) {
         ref.invalidate(groupSchedulesProvider(widget.groupId));
@@ -308,7 +309,7 @@ class _ScheduleDetailSheetState extends ConsumerState<ScheduleDetailSheet> {
     setState(() => _isLoading = true);
     
     try {
-      await FirestoreService().leaveSchedule(widget.schedule.id, _myUserId!);
+      await ref.read(firestoreServiceProvider).leaveSchedule(widget.schedule.id, _myUserId!);
       
       if (mounted) {
         ref.invalidate(groupSchedulesProvider(widget.groupId));
@@ -354,7 +355,7 @@ class _ScheduleDetailSheetState extends ConsumerState<ScheduleDetailSheet> {
     setState(() => _isLoading = true);
     
     try {
-      await FirestoreService().deleteSchedule(widget.schedule.id);
+      await ref.read(firestoreServiceProvider).deleteSchedule(widget.schedule.id);
       
       if (mounted) {
         ref.invalidate(groupSchedulesProvider(widget.groupId));

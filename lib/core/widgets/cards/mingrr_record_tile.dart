@@ -45,6 +45,9 @@ class MingrrRecordTile extends StatelessWidget {
   /// 부제목
   final String subtitle;
   
+  /// 설명 텍스트 (메모/노트 등, 1줄 말줄임)
+  final String? description;
+  
   /// 오른쪽 위젯 (선택)
   final Widget? trailing;
   
@@ -60,6 +63,7 @@ class MingrrRecordTile extends StatelessWidget {
     this.iconColor,
     required this.title,
     required this.subtitle,
+    this.description,
     this.trailing,
     required this.onTap,
     this.showChevron = true,
@@ -71,6 +75,7 @@ class MingrrRecordTile extends StatelessWidget {
     required Color iconColor,
     required String title,
     required String subtitle,
+    String? description,
     required bool isActive,
     required VoidCallback onTap,
   }) {
@@ -80,6 +85,7 @@ class MingrrRecordTile extends StatelessWidget {
       iconColor: iconColor,
       title: title,
       subtitle: subtitle,
+      description: description,
       trailing: MingrrRecordStatusBadge(
         text: isActive ? '복용 중' : '완료',
         isActive: isActive,
@@ -117,7 +123,7 @@ class MingrrRecordTile extends StatelessWidget {
             ),
             const SizedBox(width: AppSizes.gapM),
             
-            // 제목 + 부제목
+            // 제목 + 부제목 + 설명
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,6 +136,18 @@ class MingrrRecordTile extends StatelessWidget {
                     subtitle,
                     style: AppTextStyles.bodySmall(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
+                  if (description != null && description!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSizes.gapXXS),
+                      child: Text(
+                        description!,
+                        style: AppTextStyles.captionSmall(context).withColor(
+                          Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: AppOpacity.o70),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                 ],
               ),
             ),

@@ -8,6 +8,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/services/chat_service.dart';
 import '../../../../core/services/firebase_service.dart';
 import '../../../../core/services/firestore_service.dart';
+import '../../../../core/providers/firebase_providers.dart' show firestoreServiceProvider;
 import '../../../../core/services/rating_service.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/common_widgets.dart';
@@ -57,7 +58,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   final _scrollController = ScrollController();
   final _chatService = ChatService();
   final _firebaseService = FirebaseService();
-  final _firestoreService = FirestoreService();
+  FirestoreService get _firestoreService => ref.read(firestoreServiceProvider);
   final _ratingService = RatingService();
   final _imagePicker = ImagePicker();
   
