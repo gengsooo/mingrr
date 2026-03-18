@@ -16,6 +16,7 @@ PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 IOS_APP_ID="1:355588618342:ios:d5abaa8336c6683fe255a7"
 ANDROID_APP_ID="1:355588618342:android:ee38434c08c8871be255a7"
 EXPORT_OPTIONS="$PROJECT_DIR/ios/ExportOptions.plist"
+TESTER_GROUP="testers"
 
 # ── 인자 파싱 ──
 PLATFORM="${1:-all}"
@@ -92,7 +93,8 @@ deploy_ios() {
   print_step "iOS App Distribution 배포 중..."
   firebase appdistribution:distribute "$IPA_PATH" \
     --app "$IOS_APP_ID" \
-    --release-notes "$RELEASE_NOTES"
+    --release-notes "$RELEASE_NOTES" \
+    --groups "$TESTER_GROUP"
 
   print_success "iOS 배포 완료!"
 }
@@ -122,7 +124,8 @@ deploy_android() {
   print_step "Android App Distribution 배포 중..."
   firebase appdistribution:distribute "$APK_PATH" \
     --app "$ANDROID_APP_ID" \
-    --release-notes "$RELEASE_NOTES"
+    --release-notes "$RELEASE_NOTES" \
+    --groups "$TESTER_GROUP"
 
   print_success "Android 배포 완료!"
 }
