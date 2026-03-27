@@ -59,7 +59,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
             margin: EdgeInsets.zero,
             child: Column(
               children: [
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSizes.gapXL),
                 // 앱 아이콘
                 Container(
                   width: 80,
@@ -98,7 +98,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
                     style: theme.textTheme.bodySmall,
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: AppSizes.gapXL),
               ],
             ),
           ),

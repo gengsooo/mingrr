@@ -76,7 +76,6 @@ class _SocialScreenState extends ConsumerState<SocialScreen> {
             },
           ),
           AppBarActionButton.notification(),
-          AppBarActionButton.profile(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
         ],
       ),
       body: Column(

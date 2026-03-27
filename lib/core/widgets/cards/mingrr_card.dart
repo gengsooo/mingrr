@@ -31,23 +31,22 @@ class MingrrCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
+    final bgColor = backgroundColor ?? (isDark ? const Color(0xFF1B1D24) : Colors.white);
+    final rad = borderRadius ?? AppSizes.radiusL;
+    
     Widget card = Container(
-      margin: margin ?? const EdgeInsets.symmetric(
-        horizontal: AppSizes.paddingM,
-        vertical: AppSizes.paddingS,
-      ),
+      margin: margin ?? EdgeInsets.zero,
       decoration: BoxDecoration(
-        color: backgroundColor ?? (isDark ? const Color(0xFF1E1E1E) : Colors.white),
-        borderRadius: BorderRadius.circular(borderRadius ?? AppSizes.radiusL),
-        boxShadow: AppShadows.shadowS(isDark),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(rad),
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(borderRadius ?? AppSizes.radiusL),
+          borderRadius: BorderRadius.circular(rad),
           child: Padding(
-            padding: padding ?? const EdgeInsets.all(AppSizes.paddingM),
+            padding: padding ?? const EdgeInsets.all(AppSizes.cardInnerPadding),
             child: child,
           ),
         ),

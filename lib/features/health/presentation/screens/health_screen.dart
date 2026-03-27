@@ -127,7 +127,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
           const SizedBox(height: AppSizes.gapS),
           Text(
             '반려동물을 먼저 등록해주세요',
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: AppSizes.gapXL),
           MingrrButton(
@@ -318,7 +318,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
       data: (records) {
         if (records.isEmpty) {
           return Center(
-            child: Text('기록이 없습니다', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            child: Text('기록이 없습니다', style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant)),
           );
         }
         
@@ -354,7 +354,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
       data: (records) {
         if (records.isEmpty) {
           return Center(
-            child: Text('기록이 없습니다', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+            child: Text('기록이 없습니다', style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant)),
           );
         }
         
@@ -875,7 +875,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
             const SizedBox(height: AppSizes.gapM),
             Text(
               '아직 기록이 없습니다',
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSizes.gapXS),
             Text(

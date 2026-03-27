@@ -71,34 +71,41 @@ class HomeScreen extends ConsumerWidget {
 
             // ===== 컨텐츠 =====
             SliverPadding(
-              padding: const EdgeInsets.all(AppSizes.paddingM),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.screenPaddingH),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
+                  const SizedBox(height: AppSizes.paddingM),
+                  
                   // 홈 리마인더 배너
                   _buildReminderBanners(context, ref),
                   
-                  // 위치 불일치 알림 (배너 아래)
+                  // 위치 불일치 알림
                   _buildLocationMismatchBanner(context, ref),
                   
-                  // 반려동물 선택기 (여러 마리 지원)
+                  // 반려동물 선택기
                   if (pets.isNotEmpty)
                     _buildPetSelector(context, ref, pets, selectedIndex),
                   if (pets.isEmpty && !isLoading)
                     _buildEmptyPetsCard(context),
                   if (isLoading && pets.isEmpty)
                     _buildLoadingPetsCard(),
-                  const SizedBox(height: AppSizes.gapL),
+                  const SizedBox(height: AppSizes.sectionGap),
                   
-                  // 오늘의 건강 기록 (커스터마이징 가능)
+                  // 퀵 액션 그리드 (산책/건강수첩/커뮤니티/소모임)
+                  _buildQuickActions(context),
+                  const SizedBox(height: AppSizes.sectionGap),
+                  
+                  // 오늘의 건강 기록
                   if (selectedPet != null)
                     _buildHealthSection(context, ref, selectedPet, healthCategories),
-                  const SizedBox(height: AppSizes.gapXL),
+                  if (selectedPet != null)
+                    const SizedBox(height: AppSizes.sectionGap),
                   
                   // 추천친구
                   MingrrSectionHeader(
                     title: '추천친구',
                     actionText: '더보기',
-                    onActionTap: () => context.go('/dating?tab=0'),
+                    onActionTap: () => context.go('/dating'),
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   recommendedPetsAsync.when(
@@ -106,13 +113,13 @@ class HomeScreen extends ConsumerWidget {
                     loading: () => _buildLoadingAiSection(),
                     error: (_, _) => const SizedBox(),
                   ),
-                  const SizedBox(height: AppSizes.gapXL),
+                  const SizedBox(height: AppSizes.sectionGap),
                   
                   // 인기 소모임
                   MingrrSectionHeader(
                     title: '인기 소모임',
                     actionText: '더보기',
-                    onActionTap: () => context.go('/social?tab=1'),
+                    onActionTap: () => context.push('/groups'),
                   ),
                   const SizedBox(height: AppSizes.gapM),
                   _buildPopularGroupsSection(context),
@@ -153,8 +160,60 @@ class HomeScreen extends ConsumerWidget {
       ),
       actions: [
         AppBarActionButton.notification(),
-        AppBarActionButton.profile(backgroundColor: theme.scaffoldBackgroundColor),
       ],
+    );
+  }
+
+  /// 퀵 액션 그리드 (산책/건강수첩/커뮤니티/소모임)
+  Widget _buildQuickActions(BuildContext context) {
+    final accent = context.features.dating;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: _quickActionItem(context, AppIcons.walk, '산책', accent, colorScheme, () => context.push('/walk'))),
+            const SizedBox(width: AppSizes.gapM),
+            Expanded(child: _quickActionItem(context, AppIcons.health, '건강수첩', accent, colorScheme, () => context.push('/health'))),
+          ],
+        ),
+        const SizedBox(height: AppSizes.gapM),
+        Row(
+          children: [
+            Expanded(child: _quickActionItem(context, AppIcons.communityOutlined, '커뮤니티', accent, colorScheme, () => context.push('/community'))),
+            const SizedBox(width: AppSizes.gapM),
+            Expanded(child: _quickActionItem(context, AppIcons.group, '소모임', accent, colorScheme, () => context.push('/groups'))),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _quickActionItem(BuildContext context, IconData icon, String label, Color accent, ColorScheme cs, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM, horizontal: AppSizes.paddingM),
+        decoration: BoxDecoration(
+          color: cs.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40, height: 40,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: AppOpacity.o10),
+                borderRadius: BorderRadius.circular(AppSizes.radiusM),
+              ),
+              child: Icon(icon, size: 22, color: accent),
+            ),
+            const SizedBox(width: AppSizes.gapM),
+            Text(label, style: AppTextStyles.titleMedium(context).withWeight(FontWeight.w600)),
+          ],
+        ),
+      ),
     );
   }
 
@@ -511,7 +570,7 @@ class HomeScreen extends ConsumerWidget {
                         '산책하러 가기',
                         style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w700).withColor(Colors.white),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSizes.gapXS),
                       Text(
                         '반려동물과 함께 건강한 산책을!',
                         style: AppTextStyles.bodyMedium(context).withColor(Colors.white70),
@@ -855,7 +914,7 @@ class HomeScreen extends ConsumerWidget {
         builder: (ctx) => Center(
           child: Text(
             '아직 등록된 반려동물이 없습니다',
-            style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+            style: AppTextStyles.bodyMedium(ctx).withColor(Theme.of(ctx).colorScheme.onSurfaceVariant),
           ),
         ),
       );
@@ -985,7 +1044,7 @@ class HomeScreen extends ConsumerWidget {
                     padding: const EdgeInsets.all(AppSizes.paddingL),
                     child: Text(
                       '아직 등록된 소모임이 없습니다',
-                      style: TextStyle(color: Theme.of(ctx).colorScheme.onSurfaceVariant),
+                      style: AppTextStyles.bodyMedium(ctx).withColor(Theme.of(ctx).colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ),

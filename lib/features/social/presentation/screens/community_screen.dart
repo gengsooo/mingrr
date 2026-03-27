@@ -266,9 +266,8 @@ class _CommunityPostCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: AppSizes.paddingS),
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingM, vertical: AppSizes.paddingS),
         decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(AppSizes.radiusS),
-          boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
         ),
         child: IntrinsicHeight(
           child: Row(
@@ -403,4 +402,17 @@ class _CommunityPostCard extends StatelessWidget {
     );
   }
 
+}
+
+/// 독립 커뮤니티 화면 (자체 Scaffold + AppBar 포함)
+class CommunityScreenStandalone extends ConsumerWidget {
+  const CommunityScreenStandalone({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      appBar: const MingrrAppBar(title: '커뮤니티'),
+      body: const CommunityScreen(),
+    );
+  }
 }

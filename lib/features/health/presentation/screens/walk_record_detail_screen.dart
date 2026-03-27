@@ -109,7 +109,7 @@ class _WalkRecordDetailScreenState extends ConsumerState<WalkRecordDetailScreen>
                 if (record.photoUrls.isNotEmpty)
                   _buildPhotosSection(),
                 
-                const SizedBox(height: 100),
+                const SizedBox(height: AppSizes.gapXXL * 3),
               ],
             ),
           ),

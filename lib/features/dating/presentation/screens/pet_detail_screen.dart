@@ -280,7 +280,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                   _buildOwnerInfoWithVerification(context, pet),
                   
                   // 하단 여백 (버튼 공간)
-                  const SizedBox(height: 100),
+                  const SizedBox(height: AppSizes.gapXXL * 3),
                 ],
               ),
             ),
@@ -419,7 +419,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                   ],
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSizes.gapXS),
               Text(
                 '${pet.breed ?? '품종 미상'} · $age살 · ${pet.weight ?? 0}kg ($sizeStr)',
                 style: AppTextStyles.bodyLarge(context).copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
@@ -799,7 +799,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                                 nickname,
                                 style: AppTextStyles.titleMedium(context),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: AppSizes.gapXS),
                               KkosunnaeScoreSmall(score: kkosunnaeScore),
                             ],
                           ),
@@ -855,7 +855,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
           size: 20,
           color: isVerified ? context.features.success : Theme.of(context).colorScheme.outlineVariant,
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSizes.gapXS),
         Text(
           label,
           style: AppTextStyles.caption(context).withColor(

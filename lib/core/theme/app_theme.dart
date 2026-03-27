@@ -18,29 +18,31 @@ import 'feature_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  // ===== 색상 상수 (내부용) =====
-  static const _primary = Color(0xFFFFD54F);
-  static const _primaryDark = Color(0xFFFFC107);
-  static const _primaryLight = Color(0xFFFFF8E1);
+  // ===== 색상 상수 (내부용) - 뉴트럴 모던 팔레트 =====
+  static const _primary = Color(0xFFFF8A65);      // 코럴 (브랜드)
+  static const _primaryDark = Color(0xFFFF7043);
+  static const _primaryLight = Color(0xFFFFF3E0);
   static const _accent = Color(0xFFFF8A65);
   static const _accentLight = Color(0xFFFFCCBC);
-  static const _error = Color(0xFFE57373);
+  static const _error = Color(0xFFFF4B4B);
   
-  // 라이트 모드 색상
-  static const _textPrimary = Color(0xFF3E2723);
-  static const _textSecondary = Color(0xFF795548);
-  static const _textHint = Color(0xFFBCAAA4);
-  static const _divider = Color(0xFFEEE0D5);
-  static const _background = Color(0xFFFFFBF5);
+  // 라이트 모드 색상 (뉴트럴 그레이 톤)
+  static const _textPrimary = Color(0xFF191F28);     // 거의 블랙
+  static const _textSecondary = Color(0xFF8B95A1);   // 뉴트럴 그레이
+  static const _textHint = Color(0xFFB0B8C1);        // 연한 그레이
+  static const _divider = Color(0xFFF2F4F6);         // 배경색과 동일 (시각적 구분)
+  static const _background = Color(0xFFFFFFFF);      // 순백
+  static const _surfaceVariant = Color(0xFFF2F4F6);  // 카드/섹션 배경
+  static const _outline = Color(0xFFE5E8EB);         // 입력 필드 테두리
   
-  // 다크 모드 색상
-  static const _darkBackground = Color(0xFF121212);
-  static const _darkSurface = Color(0xFF1E1E1E);
-  static const _darkSurfaceLight = Color(0xFF2C2C2C);
-  static const _darkDivider = Color(0xFF3C3C3C);
+  // 다크 모드 색상 (뉴트럴 다크)
+  static const _darkBackground = Color(0xFF17171C);
+  static const _darkSurface = Color(0xFF1B1D24);
+  static const _darkSurfaceLight = Color(0xFF252830);
+  static const _darkDivider = Color(0xFF252830);
   static const _darkTextPrimary = Color(0xFFFFFFFF);
-  static const _darkTextSecondary = Color(0xFFB3B3B3);
-  static const _darkTextHint = Color(0xFF757575);
+  static const _darkTextSecondary = Color(0xFF8B95A1);
+  static const _darkTextHint = Color(0xFF6B7684);
 
   /// 라이트 테마 (기본)
   static ThemeData get lightTheme {
@@ -59,14 +61,14 @@ class AppTheme {
         secondaryContainer: _accentLight,
         tertiary: _primaryDark,
         surface: Colors.white,
-        surfaceContainerHighest: _primaryLight,
+        surfaceContainerHighest: _surfaceVariant,
         error: _error,
-        onPrimary: _textPrimary,
+        onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: _textPrimary,
         onSurfaceVariant: _textSecondary,
         onError: Colors.white,
-        outline: _divider,
+        outline: _outline,
         outlineVariant: _textHint,
       ),
       
@@ -77,8 +79,8 @@ class AppTheme {
       appBarTheme: const AppBarTheme(
         elevation: AppSizes.elevationNone,
         scrolledUnderElevation: 0,
-        centerTitle: true,
-        backgroundColor: Colors.white,
+        centerTitle: false,
+        backgroundColor: _background,
         surfaceTintColor: Colors.transparent,
         foregroundColor: _textPrimary,
         titleTextStyle: TextStyle(
@@ -95,26 +97,24 @@ class AppTheme {
       
       // ===== 카드 테마 =====
       cardTheme: CardThemeData(
-        elevation: AppSizes.elevationS,
+        elevation: AppSizes.elevationNone,
         color: Colors.white,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
         ),
-        margin: const EdgeInsets.symmetric(
-          horizontal: AppSizes.paddingM,
-          vertical: AppSizes.paddingS,
-        ),
+        margin: EdgeInsets.zero,
       ),
       
       // ===== 버튼 테마 =====
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: _primary,
-          foregroundColor: _textPrimary,
+          foregroundColor: Colors.white,
           elevation: AppSizes.elevationNone,
-          minimumSize: const Size(double.infinity, AppSizes.buttonHeightL),
+          minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusL),
+            borderRadius: BorderRadius.circular(AppSizes.radiusFull),
           ),
           textStyle: const TextStyle(
             fontFamily: 'Pretendard',
@@ -126,11 +126,11 @@ class AppTheme {
       
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: _primary,
-          side: const BorderSide(color: _primary, width: 1.5),
-          minimumSize: const Size(double.infinity, AppSizes.buttonHeightL),
+          foregroundColor: _textPrimary,
+          side: const BorderSide(color: _outline, width: 1),
+          minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusL),
+            borderRadius: BorderRadius.circular(AppSizes.radiusFull),
           ),
           textStyle: const TextStyle(
             fontFamily: 'Pretendard',
@@ -145,45 +145,45 @@ class AppTheme {
           foregroundColor: _textSecondary,
           textStyle: const TextStyle(
             fontFamily: 'Pretendard',
-            fontSize: 14,
+            fontSize: 15,
             fontWeight: FontWeight.w500,
           ),
         ),
       ),
       
-      // ===== 입력 필드 테마 =====
+      // ===== 입력 필드 테마 (filled 스타일) =====
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: _surfaceVariant,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.paddingM,
-          vertical: AppSizes.paddingM,
+          horizontal: AppSizes.paddingL,
+          vertical: AppSizes.paddingL,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusM),
-          borderSide: const BorderSide(color: _divider),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusM),
-          borderSide: const BorderSide(color: _divider),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusM),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
           borderSide: const BorderSide(color: _primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusM),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
           borderSide: const BorderSide(color: _error),
         ),
         hintStyle: const TextStyle(
           fontFamily: 'Pretendard',
           color: _textHint,
-          fontSize: 13,
+          fontSize: 15,
         ),
         labelStyle: const TextStyle(
           fontFamily: 'Pretendard',
           color: _textSecondary,
-          fontSize: 14,
+          fontSize: 15,
         ),
       ),
       
@@ -214,13 +214,14 @@ class AppTheme {
         shape: CircleBorder(),
       ),
       
-      // ===== 칩 테마 =====
+      // ===== 칩 테마 (pill 형태, border 없음) =====
       chipTheme: ChipThemeData(
-        backgroundColor: _primaryLight,
+        backgroundColor: _surfaceVariant,
         selectedColor: _primary,
         labelStyle: const TextStyle(
           fontFamily: 'Pretendard',
           fontSize: 13,
+          fontWeight: FontWeight.w500,
           color: _textPrimary,
         ),
         shape: RoundedRectangleBorder(
@@ -228,7 +229,7 @@ class AppTheme {
         ),
         side: BorderSide.none,
         padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.paddingM,
+          horizontal: AppSizes.paddingL,
           vertical: AppSizes.paddingS,
         ),
       ),
@@ -417,18 +418,19 @@ class AppTheme {
       // ===== 색상 스킴 =====
       colorScheme: const ColorScheme.dark(
         primary: _primary,
-        primaryContainer: Color(0xFF3D3D00),
+        primaryContainer: Color(0xFF5D2A1F),
         secondary: _accent,
         secondaryContainer: Color(0xFF5D2A1F),
         surface: _darkSurface,
         surfaceContainerHighest: _darkSurfaceLight,
         error: _error,
-        onPrimary: _textPrimary,
+        onPrimary: Colors.white,
         onSecondary: Colors.white,
         onSurface: _darkTextPrimary,
         onSurfaceVariant: _darkTextSecondary,
         onError: Colors.white,
         outline: _darkDivider,
+        outlineVariant: _darkTextHint,
       ),
       
       // ===== 배경 색상 =====
@@ -438,8 +440,8 @@ class AppTheme {
       appBarTheme: const AppBarTheme(
         elevation: AppSizes.elevationNone,
         scrolledUnderElevation: 0,
-        centerTitle: true,
-        backgroundColor: _darkSurface,
+        centerTitle: false,
+        backgroundColor: _darkBackground,
         foregroundColor: _darkTextPrimary,
         surfaceTintColor: Colors.transparent,
         titleTextStyle: TextStyle(
@@ -456,27 +458,24 @@ class AppTheme {
       
       // ===== 카드 테마 =====
       cardTheme: CardThemeData(
-        elevation: AppSizes.elevationS,
+        elevation: AppSizes.elevationNone,
         color: _darkSurface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
         ),
-        margin: const EdgeInsets.symmetric(
-          horizontal: AppSizes.paddingM,
-          vertical: AppSizes.paddingS,
-        ),
+        margin: EdgeInsets.zero,
       ),
       
       // ===== 버튼 테마 =====
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: _primary,
-          foregroundColor: _textPrimary,
+          foregroundColor: Colors.white,
           elevation: AppSizes.elevationNone,
-          minimumSize: const Size(double.infinity, AppSizes.buttonHeightL),
+          minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusL),
+            borderRadius: BorderRadius.circular(AppSizes.radiusFull),
           ),
           textStyle: const TextStyle(
             fontFamily: 'Pretendard',
@@ -603,15 +602,25 @@ class AppTheme {
         behavior: SnackBarBehavior.floating,
       ),
       
-      // ===== 칩 테마 =====
+      // ===== 칩 테마 (pill 형태, border 없음) =====
       chipTheme: ChipThemeData(
         backgroundColor: _darkSurfaceLight,
-        selectedColor: _primary.withValues(alpha: AppOpacity.o30),
+        selectedColor: _primary,
         disabledColor: _darkDivider,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusL),
+        labelStyle: const TextStyle(
+          fontFamily: 'Pretendard',
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: _darkTextPrimary,
         ),
-        side: const BorderSide(color: _darkDivider),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+        ),
+        side: BorderSide.none,
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.paddingL,
+          vertical: AppSizes.paddingS,
+        ),
       ),
       
       // ===== 탭바 테마 =====

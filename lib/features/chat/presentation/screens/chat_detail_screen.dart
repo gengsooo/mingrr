@@ -726,7 +726,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
             Flexible(
               child: Text(
                 message.content,
-                style: TextStyle(color: isMe ? Colors.white : Theme.of(context).colorScheme.onSurface),
+                style: AppTextStyles.bodyMedium(context).withColor(isMe ? Colors.white : Theme.of(context).colorScheme.onSurface),
               ),
             ),
           ],

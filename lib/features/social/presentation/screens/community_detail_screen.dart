@@ -428,7 +428,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
                         const SizedBox(height: AppSizes.gapS),
                         Text(
                           '첫 번째 댓글을 남겨보세요!',
-                          style: TextStyle(color: colorScheme.onSurfaceVariant),
+                          style: AppTextStyles.bodyMedium(context).withColor(colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -452,7 +452,7 @@ class _CommunityDetailScreenState extends ConsumerState<CommunityDetailScreen> {
             ),
           ),
           
-          const SizedBox(height: 80),
+          const SizedBox(height: AppSizes.gapXXL * 2.5),
         ],
       ),
     );

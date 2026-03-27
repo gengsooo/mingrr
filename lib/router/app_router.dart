@@ -20,7 +20,10 @@ import '../features/walk/presentation/screens/walk_screen.dart';
 import '../features/marketplace/presentation/screens/marketplace_screen.dart';
 import '../features/health/presentation/screens/health_screen.dart';
 import '../features/social/presentation/screens/social_screen.dart';
+import '../features/more/presentation/screens/more_screen.dart';
+import '../features/social/presentation/screens/community_screen.dart' as community;
 import '../features/social/presentation/screens/group_detail_screen.dart';
+import '../features/social/presentation/screens/group_list_screen.dart';
 import '../features/social/presentation/screens/community_detail_screen.dart';
 import '../features/chat/presentation/screens/chat_list_screen.dart';
 import '../features/chat/presentation/screens/chat_detail_screen.dart';
@@ -211,14 +214,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const ChatListScreen(),
           ),
           
-          // 5️⃣ 소셜 화면 (경로: '/social', 쿼리: ?tab=0,1)
+          // 5️⃣ 전체(더보기) 화면 (경로: '/more')
           GoRoute(
-            path: '/social',
-            builder: (context, state) {
-              final tabParam = state.uri.queryParameters['tab'];
-              final initialTab = int.tryParse(tabParam ?? '0') ?? 0;
-              return SocialScreen(initialTab: initialTab);
-            },
+            path: '/more',
+            builder: (context, state) => const MoreScreen(),
           ),
         ],
       ),
@@ -232,6 +231,28 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/walk',
         builder: (context, state) => const WalkScreen(),
+      ),
+      
+      // 커뮤니티 화면 (독립)
+      GoRoute(
+        path: '/community',
+        builder: (context, state) => const community.CommunityScreenStandalone(),
+      ),
+      
+      // 소모임 화면 (독립)
+      GoRoute(
+        path: '/groups',
+        builder: (context, state) => const GroupListScreenStandalone(),
+      ),
+      
+      // 소셜 화면 (호환성 유지)
+      GoRoute(
+        path: '/social',
+        builder: (context, state) {
+          final tabParam = state.uri.queryParameters['tab'];
+          final initialTab = int.tryParse(tabParam ?? '0') ?? 0;
+          return SocialScreen(initialTab: initialTab);
+        },
       ),
       
       // 건강수첩 화면 (경로: '/health', 쿼리: petId)

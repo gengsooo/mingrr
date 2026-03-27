@@ -259,7 +259,7 @@ class _EmailVerificationScreenState extends ConsumerState<EmailVerificationScree
             },
             child: Text(
               '로그아웃',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.error),
             ),
           ),
         ],

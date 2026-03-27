@@ -7,14 +7,12 @@ import 'package:go_router/go_router.dart';
 
 import '../core/constants/app_icons.dart';
 import '../core/constants/app_sizes.dart';
-import '../core/theme/app_text_styles.dart';
-import '../core/theme/feature_colors.dart';
 import '../core/widgets/network_status_banner.dart';
 import '../features/chat/presentation/providers/chat_provider.dart';
 
 // ============================================================
 // 로그인 후 사용하는 메인 화면의 레이아웃입니다
-// 홈, 데이팅, 마켓, 채팅, 프로필 5개 탭을 관리합니다
+// 홈, 데이팅, 채팅, 마켓, 전체 5개 탭을 관리합니다
 class MainShell extends StatelessWidget {
   // child: 바텀바 위에 표시될 실제 화면
   final Widget child;
@@ -66,18 +64,20 @@ class MingrrBottomNavBar extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final colorScheme = Theme.of(context).colorScheme;
     
-    // Container: 박스 형태의 위젯
     return Container(
-      // decoration: 컨테이너 꾸미기
       decoration: BoxDecoration(
-        color: isDark ? colorScheme.surface : Colors.white,  // 다크모드 대응
-        boxShadow: AppShadows.shadowL(isDark),
+        color: isDark ? colorScheme.surface : Colors.white,
+        border: Border(
+          top: BorderSide(
+            color: isDark ? const Color(0xFF252830) : const Color(0xFFF2F4F6),
+            width: 1,
+          ),
+        ),
       ),
-      // SafeArea: 노치나 홈 버튼 영역을 피해서 내용 표시
       child: SafeArea(
         child: Container(
-          height: AppSizes.bottomNavHeight,  // 바텀바 높이
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS),  // 좌우 여백
+          height: AppSizes.bottomNavHeight,
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS),
           
           // Row: 자식 위젯들을 가로로 나열
           child: Row(
@@ -106,7 +106,6 @@ class MingrrBottomNavBar extends ConsumerWidget {
                   index: 1,
                   currentIndex: currentIndex,
                   route: '/dating',
-                  color: context.features.dating,
                 ),
               ),
               
@@ -120,7 +119,6 @@ class MingrrBottomNavBar extends ConsumerWidget {
                   index: 2,
                   currentIndex: currentIndex,
                   route: '/chat',
-                  color: context.features.chat,  // 채팅 전용 주황색 테마
                   badge: unreadCount,
                 ),
               ),
@@ -135,21 +133,19 @@ class MingrrBottomNavBar extends ConsumerWidget {
                   index: 3,
                   currentIndex: currentIndex,
                   route: '/market',
-                  color: context.features.market,
                 ),
               ),
               
-              // 5️⃣ 소셜 버튼
+              // 5️⃣ 전체 버튼
               Expanded(
                 child: _buildNavItem(
                   context: context,
-                  icon: AppIcons.forumOutlined,
-                  activeIcon: AppIcons.forum,
-                  label: '소셜',
+                  icon: AppIcons.menuOutlined,
+                  activeIcon: AppIcons.menu,
+                  label: '전체',
                   index: 4,
                   currentIndex: currentIndex,
-                  route: '/social',
-                  color: context.features.social,
+                  route: '/more',
                 ),
               ),
             ],
@@ -165,105 +161,62 @@ class MingrrBottomNavBar extends ConsumerWidget {
   // 각 탭 버튼의 UI를 생성합니다
   Widget _buildNavItem({
     required BuildContext context,
-    required IconData icon,  // 비활성 상태 아이콘
-    required IconData activeIcon,  // 활성 상태 아이콘
-    required String label,  // 버튼 아래 텍스트
-    required int index,  // 이 버튼의 번호
-    required int currentIndex,  // 현재 선택된 버튼 번호
-    required String route,  // 이 버튼을 누르면 이동할 경로
-    Color? color,  // 활성 상태 색상 (선택사항)
-    int? badge,  // 배지 숫자 (선택사항)
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    required int index,
+    required int currentIndex,
+    required String route,
+    int? badge,
   }) {
-    // 이 버튼이 현재 선택되어 있는지 확인
     final isActive = index == currentIndex;
-    
-    // 활성 상태 색상 결정 (color가 없으면 기본 색상 사용)
-    final activeColor = color ?? Theme.of(context).colorScheme.primary;
+    final colorScheme = Theme.of(context).colorScheme;
+    final activeColor = isActive ? colorScheme.onSurface : colorScheme.onSurfaceVariant;
 
-    // GestureDetector: 터치 이벤트를 감지하는 위젯
     return GestureDetector(
-      // onTap: 버튼을 눌렀을 때 실행되는 함수
       onTap: () {
-        // 이미 선택된 버튼이 아닐 때만 화면 이동
-        if (!isActive) {
-          context.go(route);  // 지정된 경로로 이동
-        }
+        if (!isActive) context.go(route);
       },
-      behavior: HitTestBehavior.opaque,  // 투명한 영역도 터치 가능하게
-      
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.paddingXS,
-          vertical: AppSizes.paddingS,
-        ),
-        
-        // Column: 자식 위젯들을 세로로 나열 (아이콘 + 텍스트)
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        height: AppSizes.bottomNavHeight,
         child: Column(
-          mainAxisSize: MainAxisSize.min,  // 필요한 만큼만 공간 차지
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Stack: 자식 위젯들을 겹쳐서 배치 (아이콘 위에 배지를 올리기 위해)
             Stack(
-              clipBehavior: Clip.none,  // 영역 밖으로 나가도 잘리지 않음
+              clipBehavior: Clip.none,
               children: [
-                // AnimatedContainer: 속성이 변할 때 애니메이션 효과
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),  // 애니메이션 시간
-                  padding: const EdgeInsets.all(AppSizes.paddingS),
-                  decoration: BoxDecoration(
-                    // 활성 상태면 배경색 표시, 아니면 투명
-                    color: isActive
-                        ? activeColor.withValues(alpha: AppOpacity.o15)  // 15% 투명도
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusM),  // 둥근 모서리
-                  ),
-                  // Icon: 아이콘 위젯
-                  child: Icon(
-                    isActive ? activeIcon : icon,  // 활성 상태에 따라 아이콘 변경
-                    color: isActive 
-                        ? activeColor 
-                        : Theme.of(context).brightness == Brightness.dark
-                            ? Theme.of(context).colorScheme.onSurfaceVariant
-                            : Theme.of(context).colorScheme.outlineVariant,  // 다크모드 대응
-                    size: AppSizes.bottomNavIconSize,  // 아이콘 크기
-                  ),
+                Icon(
+                  isActive ? activeIcon : icon,
+                  color: activeColor,
+                  size: AppSizes.bottomNavIconSize,
                 ),
-                
-                // 배지가 있으면 표시 (if 문)
                 if (badge != null && badge > 0)
-                  // Positioned: Stack 안에서 위치를 지정
                   Positioned(
-                    top: 0,  // 위쪽 끝
-                    right: 0,  // 오른쪽 끝
+                    top: -4,
+                    right: -8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 1,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                       decoration: BoxDecoration(
-                        color: Colors.red,  // 빨간색 배경
-                        borderRadius: BorderRadius.circular(AppSizes.radiusS),  // 둥근 모양
+                        color: colorScheme.error,
+                        borderRadius: BorderRadius.circular(AppSizes.radiusFull),
                       ),
                       child: Text(
-                        badge > 99 ? '99+' : '$badge',  // 99 초과면 '99+' 표시
-                        style: AppTextStyles.labelSmall(context).withWeight(FontWeight.w600).withColor(Colors.white),
+                        badge > 99 ? '99+' : '$badge',
+                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white),
                       ),
                     ),
                   ),
               ],
             ),
-            
-            const SizedBox(height: 2),  // 아이콘과 텍스트 사이 간격
-            
-            // 버튼 아래 텍스트
+            const SizedBox(height: 2),
             Text(
               label,
-              style: AppTextStyles.caption(context)
-                  .withWeight(isActive ? FontWeight.w600 : FontWeight.w400)
-                  .withColor(isActive 
-                      ? activeColor 
-                      : Theme.of(context).brightness == Brightness.dark
-                          ? Theme.of(context).colorScheme.onSurfaceVariant
-                          : Theme.of(context).colorScheme.outlineVariant),
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                color: activeColor,
+              ),
             ),
           ],
         ),
@@ -274,23 +227,14 @@ class MingrrBottomNavBar extends ConsumerWidget {
   // ============================================================
   // 🔢 _getIndexFromLocation - URL 경로를 인덱스 번호로 변환
   // ============================================================
-  // 예: '/' -> 0, '/dating' -> 1, '/chat' -> 2, '/market' -> 3, '/social' -> 4
-  // 이 함수는 현재 어느 화면에 있는지 알아내기 위해 사용됩니다
   int _getIndexFromLocation(String location) {
-    // switch: 여러 경우의 수를 처리하는 문법
     switch (location) {
-      case '/':  // 홈 화면
-        return 0;
-      case '/dating':  // 데이팅 화면
-        return 1;
-      case '/chat':  // 채팅 화면
-        return 2;
-      case '/market':  // 마켓 화면
-        return 3;
-      case '/social':  // 소셜 화면
-        return 4;
-      default:  // 그 외의 경우 (산책, 건강수첩, 프로필 등)
-        return 0;  // 기본값으로 홈(0) 반환
+      case '/': return 0;
+      case '/dating': return 1;
+      case '/chat': return 2;
+      case '/market': return 3;
+      case '/more': return 4;
+      default: return 0;
     }
   }
 }

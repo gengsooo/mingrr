@@ -265,7 +265,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
           if (paginatedState.hasMore)
             const MingrrPaginationLoader(),
 
-          const SizedBox(height: 80),
+          const SizedBox(height: AppSizes.gapXXL * 2.5),
         ],
       ),
     );
@@ -292,10 +292,7 @@ class _GroupListScreenState extends ConsumerState<GroupListScreen> {
               const SizedBox(height: AppSizes.gapL),
               Text(
                 '가입한 모임이 없어요',
-                style: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: AppTextStyles.bodyMedium(context).withWeight(FontWeight.w500).withColor(colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: AppSizes.gapS),
               Text(
@@ -395,9 +392,8 @@ class _MyGroupCard extends StatelessWidget {
         margin: const EdgeInsets.only(right: AppSizes.paddingM),
         padding: const EdgeInsets.all(AppSizes.paddingM),
         decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(AppSizes.radiusS),
-          border: Border.all(color: accentColor.withValues(alpha: AppOpacity.o30)),
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -551,6 +547,19 @@ class _GroupCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 독립 소모임 화면 (자체 Scaffold + AppBar 포함)
+class GroupListScreenStandalone extends ConsumerWidget {
+  const GroupListScreenStandalone({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Scaffold(
+      appBar: const MingrrAppBar(title: '소모임'),
+      body: const GroupListScreen(),
     );
   }
 }

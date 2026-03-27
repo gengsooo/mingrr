@@ -104,45 +104,46 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
   final LinearGradient primaryGradient;
 
   // ===== 라이트 테마 색상 =====
+  // V3 리팩토링: 모든 기능별 색상을 동일한 accent(코럴)로 통합
   static const light = FeatureColors(
-    // 데이팅 - 로즈 핑크 계열
-    dating: Color(0xFFF48FB1),
-    datingContainer: Color(0xFFFCE4EC),
+    // 데이팅 → 통합 코럴
+    dating: Color(0xFFFF8A65),
+    datingContainer: Color(0xFFF5F5F5),
     onDating: Colors.white,
-    // 마켓 - 인디고 계열
-    market: Color(0xFF5C6BC0),
-    marketContainer: Color(0xFFE8EAF6),
+    // 마켓 → 통합 코럴
+    market: Color(0xFFFF8A65),
+    marketContainer: Color(0xFFF5F5F5),
     onMarket: Colors.white,
-    // 소셜 - 틸 계열
-    social: Color(0xFF4DB6AC),
-    socialContainer: Color(0xFFE0F2F1),
+    // 소셜 → 통합 코럴
+    social: Color(0xFFFF8A65),
+    socialContainer: Color(0xFFF5F5F5),
     onSocial: Colors.white,
-    // 건강 - 블루 계열
-    health: Color(0xFF64B5F6),
-    healthContainer: Color(0xFFE3F2FD),
+    // 건강 → 통합 코럴
+    health: Color(0xFFFF8A65),
+    healthContainer: Color(0xFFF5F5F5),
     onHealth: Colors.white,
-    // 산책 - 그린 계열
-    walk: Color(0xFF81C784),
-    walkContainer: Color(0xFFE8F5E9),
+    // 산책 → 통합 코럴
+    walk: Color(0xFFFF8A65),
+    walkContainer: Color(0xFFF5F5F5),
     onWalk: Colors.white,
-    // 채팅 - 앰버/오렌지 계열
-    chat: Color(0xFFFF9800),
-    chatContainer: Color(0xFFFFF3E0),
+    // 채팅 → 통합 코럴
+    chat: Color(0xFFFF8A65),
+    chatContainer: Color(0xFFF5F5F5),
     onChat: Colors.white,
-    // 교배 - 퍼플 계열
-    breeding: Color(0xFFCE93D8),
-    breedingContainer: Color(0xFFF3E5F5),
+    // 교배 → 통합 코럴
+    breeding: Color(0xFFFF8A65),
+    breedingContainer: Color(0xFFF5F5F5),
     onBreeding: Colors.white,
-    // 상태 색상
-    success: Color(0xFF81C784),
+    // 상태 색상 (독립 유지)
+    success: Color(0xFF66BB6A),
     successContainer: Color(0xFFE8F5E9),
-    warning: Color(0xFFFFB74D),
+    warning: Color(0xFFFFA726),
     warningContainer: Color(0xFFFFF3E0),
-    info: Color(0xFF64B5F6),
+    info: Color(0xFF42A5F5),
     infoContainer: Color(0xFFE3F2FD),
-    // 그라데이션 (프로필 상단 배경 - 빅뱅 금색과 구분되도록 연한 색상)
+    // 그라데이션
     warmGradient: LinearGradient(
-      colors: [Color(0xFFFFFBF5), Color(0xFFFFF8E8)],
+      colors: [Color(0xFFFAFAFA), Color(0xFFF5F5F5)],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ),
@@ -154,34 +155,28 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
   );
 
   // ===== 다크 테마 색상 =====
+  // V3 리팩토링: 모든 기능별 색상을 동일한 accent(코럴)로 통합
   static const dark = FeatureColors(
-    // 데이팅 - 로즈 핑크 계열 (다크모드)
-    dating: Color(0xFFF8BBD9),
-    datingContainer: Color(0xFF1E1E1E),  // 다크 서피스와 동일
+    dating: Color(0xFFFFAB91),
+    datingContainer: Color(0xFF1E1E1E),
     onDating: Colors.white,
-    // 마켓 - 인디고 계열 (다크모드)
-    market: Color(0xFF7986CB),
-    marketContainer: Color(0xFF1E1E1E),  // 다크 서피스와 동일
+    market: Color(0xFFFFAB91),
+    marketContainer: Color(0xFF1E1E1E),
     onMarket: Colors.white,
-    // 소셜 - 틸 계열 (다크모드)
-    social: Color(0xFF4DB6AC),
-    socialContainer: Color(0xFF1E1E1E),  // 다크 서피스와 동일
+    social: Color(0xFFFFAB91),
+    socialContainer: Color(0xFF1E1E1E),
     onSocial: Colors.white,
-    // 건강 - 블루 계열 (다크모드)
-    health: Color(0xFF64B5F6),
-    healthContainer: Color(0xFF1E1E1E),  // 다크 서피스와 동일
+    health: Color(0xFFFFAB91),
+    healthContainer: Color(0xFF1E1E1E),
     onHealth: Colors.white,
-    // 산책 - 그린 계열 (다크모드)
-    walk: Color(0xFF81C784),
-    walkContainer: Color(0xFF1E1E1E),  // 다크 서피스와 동일
+    walk: Color(0xFFFFAB91),
+    walkContainer: Color(0xFF1E1E1E),
     onWalk: Colors.white,
-    // 채팅 - 앰버/오렌지 계열 (다크모드)
-    chat: Color(0xFFFFB74D),
-    chatContainer: Color(0xFF1E1E1E),  // 다크 서피스와 동일
+    chat: Color(0xFFFFAB91),
+    chatContainer: Color(0xFF1E1E1E),
     onChat: Colors.white,
-    // 교배 - 퍼플 계열 (다크모드)
-    breeding: Color(0xFFCE93D8),
-    breedingContainer: Color(0xFF1E1E1E),  // 다크 서피스와 동일
+    breeding: Color(0xFFFFAB91),
+    breedingContainer: Color(0xFF1E1E1E),
     onBreeding: Colors.white,
     // 상태 색상 (다크모드)
     success: Color(0xFF81C784),
@@ -192,7 +187,7 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
     infoContainer: Color(0xFF1A3A5C),
     // 그라데이션 (다크모드)
     warmGradient: LinearGradient(
-      colors: [Color(0xFF2C2C2C), Color(0xFF1E1E1E)],
+      colors: [Color(0xFF1E1E1E), Color(0xFF171717)],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ),

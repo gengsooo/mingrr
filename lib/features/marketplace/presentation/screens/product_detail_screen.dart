@@ -195,7 +195,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen>
                   ],
                   
                   // 하단 여백 (버튼 공간)
-                  const SizedBox(height: 100),
+                  const SizedBox(height: AppSizes.gapXXL * 3),
                 ],
               ),
             ),

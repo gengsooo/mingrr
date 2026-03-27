@@ -291,9 +291,9 @@ class CustomerServiceScreen extends StatelessWidget {
               notice['date'] as String,
               style: theme.textTheme.labelSmall,
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSizes.gapXL),
             const MingrrDivider(),
-            const SizedBox(height: 20),
+            const SizedBox(height: AppSizes.gapXL),
             Expanded(
               child: SingleChildScrollView(
                 child: Text(
