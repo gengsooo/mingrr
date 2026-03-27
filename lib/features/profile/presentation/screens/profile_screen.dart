@@ -14,7 +14,6 @@ import '../../../../core/services/storage_service.dart';
 import '../../../../core/services/firestore_service.dart';
 import '../../../../core/providers/firebase_providers.dart' show firestoreServiceProvider;
 import '../../../../core/services/nickname_service.dart';
-import '../../../../core/services/share_service.dart';
 import '../../../../core/widgets/common_widgets.dart';
 import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/sheets/image_picker_sheet.dart';
@@ -32,13 +31,7 @@ import 'my_activity_screen.dart';
 import 'liked_list_screen.dart';
 import 'rating_history_screen.dart';
 import 'pet_edit_screen.dart';
-import 'profile_edit_screen.dart';
-import 'settings/notification_settings_screen.dart';
 import '../providers/profile_provider.dart';
-import 'settings/app_settings_screen.dart';
-import 'settings/account_settings_screen.dart';
-import 'settings/customer_service_screen.dart';
-import 'settings/app_info_screen.dart';
 import 'pet_registration_verification_dialog.dart';
 
 /// ============================================================
@@ -82,15 +75,15 @@ class ProfileScreen extends ConsumerWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // ===== 프로필 헤더 =====
+          // ===== 심플 앱바 =====
           SliverAppBar(
-            expandedHeight: 260,
-            pinned: true,
-            surfaceTintColor: Colors.transparent,
+            floating: true,
             elevation: AppSizes.elevationNone,
-            scrolledUnderElevation: 0.5,
+            scrolledUnderElevation: 0,
+            surfaceTintColor: Colors.transparent,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             title: const Text('프로필'),
-            centerTitle: true,
+            centerTitle: false,
             leading: MingrrLeadingButton.back(
               showShadow: false,
               onPressed: () {
@@ -101,10 +94,6 @@ class ProfileScreen extends ConsumerWidget {
                 }
               },
             ),
-            flexibleSpace: FlexibleSpaceBar(
-              collapseMode: CollapseMode.pin,
-              background: _buildProfileHeader(context, ref, currentUser),
-            ),
             actions: [
               // 개발자 도구 버튼 (debug 빌드 + admin 전용)
               if (kDebugMode && currentUser.valueOrNull?.email == 'admin@mingrr.com')
@@ -113,23 +102,22 @@ class ProfileScreen extends ConsumerWidget {
                   onPressed: () => context.push('/dev-tools'),
                   tooltip: '개발자 도구',
                 ),
-              // 설정 버튼 (우상단 톱니바퀴)
-              IconButton(
-                icon: const Icon(AppIcons.settingsOutlined),
-                onPressed: () => _showSettingsSheet(context, ref),
-              ),
             ],
           ),
 
           // ===== 컨텐츠 =====
           SliverPadding(
-            padding: const EdgeInsets.all(AppSizes.paddingM),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.screenPaddingH, vertical: AppSizes.paddingM),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
+                // 프로필 카드 (이전 gradient 헤더 → 카드 형태)
+                _buildProfileCard(context, ref, currentUser),
+                const SizedBox(height: AppSizes.sectionGap),
+                
                 // 인증 배지
                 _buildVerificationSection(context, ref, verifications),
                 
-                const SizedBox(height: AppSizes.gapXL),
+                const SizedBox(height: AppSizes.sectionGap),
                 
                 // 내 반려동물 (건강수첩 포함)
                 MingrrSectionHeader(
@@ -166,19 +154,17 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  /// 프로필 헤더 (보호자 사진 선택적 업로드 가능)
-  Widget _buildProfileHeader(BuildContext context, WidgetRef ref, AsyncValue<dynamic> currentUser) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: context.features.warmGradient,
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.only(top: AppSizes.paddingXXL, bottom: 12), // 앱바 높이만큼 상단 패딩
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+  /// 프로필 카드 (심플 카드 형태 - 토스/당근마켓 스타일)
+  Widget _buildProfileCard(BuildContext context, WidgetRef ref, AsyncValue<dynamic> currentUser) {
+    final colorScheme = Theme.of(context).colorScheme;
+    
+    return MingrrCard(
+      margin: EdgeInsets.zero,
+      child: Column(
+        children: [
+          Row(
             children: [
-              // 프로필 이미지 (선택적 - 없으면 기본 아이콘)
+              // 프로필 이미지
               GestureDetector(
                 onTap: () => _showProfileImagePicker(context, ref),
                 child: Stack(
@@ -192,66 +178,58 @@ class ProfileScreen extends ConsumerWidget {
                       bottom: 0,
                       right: 0,
                       child: Container(
-                        width: 30,
-                        height: 30,
+                        width: 26,
+                        height: 26,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
+                          color: colorScheme.primary,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
+                          border: Border.all(color: colorScheme.surface, width: 2),
                         ),
-                        child: const Icon(
-                          AppIcons.camera,
-                          size: 14,
-                          color: Colors.white,
-                        ),
+                        child: const Icon(AppIcons.camera, size: 12, color: Colors.white),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: AppSizes.gapS),
+              const SizedBox(width: AppSizes.gapL),
               
-              // 닉네임 + 수정 버튼
-              currentUser.when(
-                data: (user) => Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+              // 닉네임 + 꼬순내지수
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      user?.nickname ?? '사용자',
-                      style: AppTextStyles.headlineMedium(context).withWeight(FontWeight.w700),
-                    ),
-                    const SizedBox(width: AppSizes.gapS),
-                    GestureDetector(
-                      onTap: () => _showNicknameEditDialog(context, ref, user),
-                      child: Container(
-                        padding: const EdgeInsets.all(AppSizes.paddingXS),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          AppIcons.edit,
-                          size: 14,
-                          color: Colors.white,
+                    currentUser.when(
+                      data: (user) => GestureDetector(
+                        onTap: () => _showNicknameEditDialog(context, ref, user),
+                        child: Row(
+                          children: [
+                            Text(
+                              user?.nickname ?? '사용자',
+                              style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w700),
+                            ),
+                            const SizedBox(width: AppSizes.gapS),
+                            Icon(AppIcons.edit, size: 16, color: colorScheme.onSurfaceVariant),
+                          ],
                         ),
                       ),
+                      loading: () => Text('로딩 중...', style: AppTextStyles.headlineSmall(context)),
+                      error: (_, _) => Text('사용자', style: AppTextStyles.headlineSmall(context)),
+                    ),
+                    const SizedBox(height: AppSizes.gapS),
+                    currentUser.when(
+                      data: (user) => _buildKkosunnaeScore(context, ref, user?.kkosunnaeScore ?? 50.0),
+                      loading: () => const SizedBox(),
+                      error: (_, _) => const SizedBox(),
                     ),
                   ],
                 ),
-                loading: () => const Text('로딩 중...'),
-                error: (_, _) => const Text('사용자'),
               ),
-              const SizedBox(height: AppSizes.gapS),
               
-              // 꼬순내지수 (개선된 디자인)
-              currentUser.when(
-                data: (user) => _buildKkosunnaeScore(context, ref, user?.kkosunnaeScore ?? 50.0),
-                loading: () => const SizedBox(),
-                error: (_, _) => const SizedBox(),
-              ),
+              // 화살표
+              Icon(AppIcons.chevronRight, color: colorScheme.onSurfaceVariant, size: 20),
             ],
           ),
-        ),
+        ],
       ),
     );
   }
@@ -734,7 +712,7 @@ class ProfileScreen extends ConsumerWidget {
       ),
       title: Text(
         badgeType.label,
-        style: const TextStyle(fontWeight: FontWeight.w600),
+        style: AppTextStyles.titleSmall(context).withWeight(FontWeight.w600),
       ),
       subtitle: Text(
         isVerified ? '인증 완료' : description,
@@ -886,85 +864,6 @@ class ProfileScreen extends ConsumerWidget {
     }
   }
 
-  /// 설정 바텀시트
-  void _showSettingsSheet(BuildContext context, WidgetRef ref) {
-    showMingrrOptionsSheet(
-      context: context,
-      options: [
-        MingrrOptionItem(
-          icon: AppIcons.editOutlined,
-          label: '프로필 수정',
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ProfileEditScreen()),
-          ),
-        ),
-        MingrrOptionItem(
-          icon: AppIcons.notification,
-          label: '알림 설정',
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const NotificationSettingsScreen()),
-          ),
-        ),
-        MingrrOptionItem(
-          icon: AppIcons.settingsOutlined,
-          label: '앱 설정',
-          subtitle: '다크모드, 캐시 삭제',
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AppSettingsScreen()),
-          ),
-        ),
-        MingrrOptionItem(
-          icon: AppIcons.profileOutlined,
-          label: '계정 관리',
-          subtitle: '연동 계정, 비밀번호, 회원 탈퇴',
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AccountSettingsScreen()),
-          ),
-        ),
-        MingrrOptionItem(
-          icon: AppIcons.headset,
-          label: '고객센터',
-          subtitle: '문의, FAQ, 공지사항',
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CustomerServiceScreen()),
-          ),
-        ),
-        MingrrOptionItem(
-          icon: AppIcons.info,
-          label: '앱 정보',
-          subtitle: '버전, 이용약관, 라이선스',
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const AppInfoScreen()),
-          ),
-        ),
-        MingrrOptionItem(
-          icon: AppIcons.share,
-          label: '앱 공유하기',
-          subtitle: '친구에게 밍그르르 추천하기',
-          onTap: () => ShareService.shareApp(context),
-        ),
-        MingrrOptionItem(
-          icon: AppIcons.logout,
-          label: '로그아웃',
-          isDestructive: true,
-          onTap: () => showConfirmSheet(
-            context,
-            type: ConfirmSheetType.accountLogout,
-            onConfirm: () async {
-              await ref.read(authNotifierProvider.notifier).signOut();
-            },
-          ),
-        ),
-      ],
-    );
-  }
-
   /// 꼬순내지수 디자인 (공통 위젯 사용)
   Widget _buildKkosunnaeScore(BuildContext context, WidgetRef ref, double score) {
     return KkosunnaeScoreMedium(
@@ -978,6 +877,9 @@ class ProfileScreen extends ConsumerWidget {
   
   /// 프로필 이미지 위젯
   Widget _buildProfileImage(BuildContext context, String? imageUrl) {
+    const double profileSize = 72;
+    const double iconSize = 36;
+    
     // 대표 아이콘인 경우
     if (imageUrl != null && imageUrl.startsWith('default_avatar:')) {
       final avatarId = imageUrl.replaceFirst('default_avatar:', '');
@@ -986,16 +888,15 @@ class ProfileScreen extends ConsumerWidget {
         orElse: () => personDefaultAvatars.first,
       );
       return Container(
-        width: 100,
-        height: 100,
+        width: profileSize,
+        height: profileSize,
         decoration: BoxDecoration(
           color: avatar.backgroundColor,
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 3),
         ),
         child: Icon(
           avatar.icon,
-          size: 50,
+          size: iconSize,
           color: avatar.iconColor,
         ),
       );
@@ -1005,9 +906,7 @@ class ProfileScreen extends ConsumerWidget {
     if (imageUrl != null && imageUrl.isNotEmpty) {
       return MingrrImage.avatar(
         imageUrl: imageUrl,
-        size: 100,
-        borderColor: Colors.white,
-        borderWidth: 3,
+        size: profileSize,
         icon: AppIcons.profile,
       );
     }
@@ -1018,16 +917,15 @@ class ProfileScreen extends ConsumerWidget {
   
   Widget _buildDefaultProfileImage(BuildContext context) {
     return Container(
-      width: 100,
-      height: 100,
+      width: 72,
+      height: 72,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primary.withValues(alpha: AppOpacity.o15),
         shape: BoxShape.circle,
-        border: Border.all(color: Colors.white, width: 3),
       ),
       child: Icon(
         AppIcons.profile,
-        size: 50,
+        size: 36,
         color: Theme.of(context).colorScheme.primary,
       ),
     );

@@ -69,14 +69,12 @@ class MingrrFilterChip extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
         decoration: BoxDecoration(
-          color: isSelected ? chipColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppSizes.radiusS),
-          border: Border.all(
-            color: isSelected ? chipColor : colorScheme.outline,
-          ),
+          color: isSelected ? chipColor : colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppSizes.radiusFull),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -91,9 +89,9 @@ class MingrrFilterChip extends StatelessWidget {
             ],
             Text(
               label,
-              style: isSelected 
-                  ? AppTextStyles.labelMedium(context).copyWith(color: Colors.white)
-                  : AppTextStyles.labelMedium(context),
+              style: AppTextStyles.labelLarge(context).withColor(
+                isSelected ? Colors.white : colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
@@ -134,23 +132,21 @@ class MingrrSortChip extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
         decoration: BoxDecoration(
-          color: isSelected ? chipColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppSizes.radiusS),
-          border: Border.all(
-            color: isSelected ? chipColor : colorScheme.outline,
-          ),
+          color: isSelected ? chipColor : colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(AppSizes.radiusFull),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               label,
-              style: isSelected 
-                  ? AppTextStyles.labelMedium(context).copyWith(color: Colors.white)
-                  : AppTextStyles.labelMedium(context),
+              style: AppTextStyles.labelLarge(context).withColor(
+                isSelected ? Colors.white : colorScheme.onSurfaceVariant,
+              ),
             ),
             if (isSelected) ...[
               const SizedBox(width: AppSizes.gapXXS),
@@ -341,23 +337,21 @@ class MingrrCategoryChips extends StatelessWidget {
               final category = categories[index];
               final isSelected = index == selectedIndex;
               return Padding(
-                padding: const EdgeInsets.only(right: AppSizes.paddingXS),
+                padding: const EdgeInsets.only(right: AppSizes.gapS),
                 child: GestureDetector(
                   onTap: () => onSelected(index),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
                     decoration: BoxDecoration(
-                      color: isSelected ? chipColor : Colors.transparent,
-                      borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                      border: Border.all(
-                        color: isSelected ? chipColor : colorScheme.outline,
-                      ),
+                      color: isSelected ? chipColor : colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(AppSizes.radiusFull),
                     ),
                     child: Text(
                       category,
-                      style: isSelected 
-                          ? AppTextStyles.labelMedium(context).copyWith(color: Colors.white)
-                          : AppTextStyles.labelMedium(context),
+                      style: AppTextStyles.labelLarge(context).withColor(
+                        isSelected ? Colors.white : colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),
@@ -418,23 +412,21 @@ class MingrrCategoryChipsWithIcon extends StatelessWidget {
               final category = categories[index];
               final isSelected = index == selectedIndex;
               return Padding(
-                padding: const EdgeInsets.only(right: AppSizes.paddingXS),
+                padding: const EdgeInsets.only(right: AppSizes.gapS),
                 child: GestureDetector(
                   onTap: () => onSelected(index),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
                     decoration: BoxDecoration(
-                      color: isSelected ? chipColor : Colors.transparent,
-                      borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                      border: Border.all(
-                        color: isSelected ? chipColor : colorScheme.outline,
-                      ),
+                      color: isSelected ? chipColor : colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(AppSizes.radiusFull),
                     ),
                     child: Text(
                       category.label,
-                      style: isSelected 
-                          ? AppTextStyles.labelMedium(context).copyWith(color: Colors.white)
-                          : AppTextStyles.labelMedium(context),
+                      style: AppTextStyles.labelLarge(context).withColor(
+                        isSelected ? Colors.white : colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),

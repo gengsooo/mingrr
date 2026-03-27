@@ -433,7 +433,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
                     children: [
                       Icon(AppIcons.pet, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
                       const SizedBox(width: AppSizes.gapM),
-                      Text('반려동물 추가', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
+                      Text('반려동물 추가', style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.outlineVariant)),
                       const Spacer(),
                       Icon(AppIcons.chevronRight, color: Theme.of(context).colorScheme.outlineVariant),
                     ],
@@ -458,7 +458,7 @@ class _ProductWriteScreenState extends ConsumerState<ProductWriteScreen> {
               children: [
                 Icon(AppIcons.pet, size: 20, color: Theme.of(context).colorScheme.outlineVariant),
                 const SizedBox(width: AppSizes.gapM),
-                Text('반려동물을 선택해주세요', style: TextStyle(color: Theme.of(context).colorScheme.outlineVariant)),
+                Text('반려동물을 선택해주세요', style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.outlineVariant)),
                 const Spacer(),
                 Icon(AppIcons.chevronRight, color: Theme.of(context).colorScheme.outlineVariant),
               ],

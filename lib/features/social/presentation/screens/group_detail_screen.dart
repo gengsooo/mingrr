@@ -370,7 +370,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
               ],
             ),
           ),
-          const SizedBox(height: 100),
+          const SizedBox(height: AppSizes.gapXXL * 3),
         ],
       ),
     );
@@ -513,7 +513,7 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                           ),
                         PopupMenuItem(
                           value: 'kick',
-                          child: Text('강퇴하기', style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                          child: Text('강퇴하기', style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.error)),
                         ),
                       ],
                     ),
@@ -662,9 +662,8 @@ class _GroupDetailScreenState extends ConsumerState<GroupDetailScreen>
                 margin: const EdgeInsets.only(bottom: AppSizes.paddingM),
                 padding: const EdgeInsets.all(AppSizes.paddingL),
                 decoration: BoxDecoration(
-                  color: colorScheme.surface,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                  border: isPast ? null : Border.all(color: accentColor.withValues(alpha: AppOpacity.o30)),
+                  color: isPast ? colorScheme.surfaceContainerLow : colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusL),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

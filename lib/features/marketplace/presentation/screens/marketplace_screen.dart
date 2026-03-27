@@ -11,6 +11,7 @@ import '../../../../core/widgets/cards/product_card.dart';
 import '../../../../core/widgets/search_screen.dart';
 import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../core/widgets/navigation/appbar_actions.dart';
+import '../../../../core/widgets/filter_chip_bar.dart';
 import '../../../../core/widgets/filter_components.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/widgets/empty_states/location_required_empty_state.dart';
@@ -103,40 +104,15 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
       }
     });
 
-    // 탭 정의 (판매 / 나눔 / 알바)
-    final tabs = [
-      MingrrTabItem(label: '판매', icon: AppIcons.sell, color: context.features.market),
-      MingrrTabItem(label: '나눔', icon: AppIcons.gift, color: context.features.market),
-      MingrrTabItem(label: '알바', icon: AppIcons.work, color: context.features.market),
-    ];
-
     // 카테고리 정의 (탭에 따라 다름)
     final categories = selectedTab == 2
-        ? [
-            // 알바 카테고리
-            (label: '전체', emoji: null, icon: null),
-            (label: '돌봄', emoji: null, icon: null),
-            (label: '산책', emoji: null, icon: null),
-            (label: '목욕', emoji: null, icon: null),
-            (label: '훈련', emoji: null, icon: null),
-            (label: '기타', emoji: null, icon: null),
-          ]
-        : [
-            // 판매/나눔 카테고리
-            (label: '전체', emoji: null, icon: null),
-            (label: '사료/간식', emoji: null, icon: null),
-            (label: '의류', emoji: null, icon: null),
-            (label: '장난감', emoji: null, icon: null),
-            (label: '용품', emoji: null, icon: null),
-            (label: '가구', emoji: null, icon: null),
-          ];
+        ? ['전체', '돌봄', '산책', '목욕', '훈련', '기타']
+        : ['전체', '사료/간식', '의류', '장난감', '용품', '가구'];
 
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
+    final accent = context.features.dating;
     
     return Scaffold(
-      backgroundColor: isDark ? colorScheme.surface : context.features.marketContainer,
       appBar: MingrrAppBar.mainTab(
         title: '마켓',
         actions: [
@@ -147,33 +123,23 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
                 MaterialPageRoute(
                   builder: (ctx) => SearchScreen(
                     searchType: SearchType.market,
-                    accentColor: ctx.features.market,
+                    accentColor: ctx.features.dating,
                   ),
                 ),
               );
             },
           ),
           AppBarActionButton.notification(),
-          AppBarActionButton.profile(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
         ],
       ),
       body: Column(
         children: [
-          // 3개 탭 (판매 / 나눔 / 알바)
-          Container(
-            color: isDark ? colorScheme.surface : context.features.marketContainer,
-            child: MingrrMainTabBar(
-              tabs: tabs,
-              selectedIndex: selectedTab,
-              onTabSelected: (index) {
-                ref.read(_selectedTabProvider.notifier).state = index;
-              },
-            ),
-          ),
+          // 타입 필터 칩 (전체 | 판매 | 나눔 | 알바)
+          _buildTypeFilterChips(context, ref, selectedTab, accent, colorScheme),
           
           // 위치/거리 필터 바
           LocationDistanceBar(
-            accentColor: context.features.market,
+            accentColor: accent,
             currentDistance: distanceFilter,
             distanceOptions: LocationConstants.marketDistanceOptions,
             onDistanceChanged: (distance) {
@@ -184,12 +150,12 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
           // 카테고리 필터
           MingrrCategoryChips(
             title: '카테고리',
-            categories: categories.map((c) => c.label).toList(),
+            categories: categories,
             selectedIndex: selectedCategory,
             onSelected: (index) {
               ref.read(_selectedCategoryProvider.notifier).state = index;
             },
-            accentColor: context.features.market,
+            accentColor: accent,
           ),
           
           // 정렬 옵션
@@ -203,9 +169,24 @@ class _MarketplaceScreenState extends ConsumerState<MarketplaceScreen> {
       ),
       floatingActionButton: MingrrFAB.write(
         onPressed: () => _showAddSheet(context, selectedTab),
-        backgroundColor: context.features.market,
+        backgroundColor: accent,
         tooltip: '상품/알바 등록',
       ),
+    );
+  }
+
+  /// 타입 필터 칩 바 (전체 | 판매 | 나눔 | 알바)
+  Widget _buildTypeFilterChips(BuildContext context, WidgetRef ref, int selectedTab, Color accent, ColorScheme colorScheme) {
+    return MingrrFilterChipBar<int>(
+      items: const [
+        (key: -1, label: '전체'),
+        (key: 0, label: '판매'),
+        (key: 1, label: '나눔'),
+        (key: 2, label: '알바'),
+      ],
+      selected: selectedTab,
+      onSelected: (key) => ref.read(_selectedTabProvider.notifier).state = key,
+      accentColor: accent,
     );
   }
 
@@ -603,11 +584,8 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                             margin: EdgeInsets.only(right: type != MarketWriteType.job ? 8 : 0),
                             padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingM),
                             decoration: BoxDecoration(
-                              color: isSelected ? context.features.market : Colors.transparent,
-                              borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                              border: Border.all(
-                                color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
-                              ),
+                              color: isSelected ? context.features.market : Theme.of(context).colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(AppSizes.radiusFull),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -722,8 +700,8 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
         Text('알바 유형', style: AppTextStyles.titleMedium(context)),
         const SizedBox(height: AppSizes.gapS),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: AppSizes.gapS,
+          runSpacing: AppSizes.gapS,
           children: ['돌봄', '산책', '목욕', '훈련', '기타'].map((type) {
             final isSelected = _selectedJobCategory == type;
             return GestureDetector(
@@ -731,11 +709,8 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingL, vertical: AppSizes.paddingS),
                 decoration: BoxDecoration(
-                  color: isSelected ? context.features.market : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppSizes.radiusL),
-                  border: Border.all(
-                    color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
-                  ),
+                  color: isSelected ? context.features.market : Theme.of(context).colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusFull),
                 ),
                 child: Text(
                   type,
@@ -786,8 +761,8 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                       const SizedBox(width: AppSizes.gapS),
                       Text(
                         _startDate != null ? formatShortDate(_startDate!) : '시작일',
-                        style: TextStyle(
-                          color: _startDate != null 
+                        style: AppTextStyles.bodyMedium(context).withColor(
+                          _startDate != null 
                               ? Theme.of(context).colorScheme.onSurface 
                               : Theme.of(context).colorScheme.outlineVariant,
                         ),
@@ -826,8 +801,8 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                       const SizedBox(width: AppSizes.gapS),
                       Text(
                         _endDate != null ? formatShortDate(_endDate!) : '종료일',
-                        style: TextStyle(
-                          color: _endDate != null 
+                        style: AppTextStyles.bodyMedium(context).withColor(
+                          _endDate != null 
                               ? Theme.of(context).colorScheme.onSurface 
                               : Theme.of(context).colorScheme.outlineVariant,
                         ),
@@ -865,7 +840,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                       children: [
                         Text(
                           pet['name'] ?? '',
-                          style: const TextStyle(fontWeight: FontWeight.w500),
+                          style: AppTextStyles.titleSmall(context).withWeight(FontWeight.w500),
                         ),
                         Text(
                           '${pet['breed']} · ${pet['weight']}kg',
@@ -899,7 +874,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                 const SizedBox(width: AppSizes.gapS),
                 Text(
                   '반려동물 추가',
-                  style: TextStyle(color: context.features.market, fontWeight: FontWeight.w500),
+                  style: AppTextStyles.titleSmall(context).withWeight(FontWeight.w500).withColor(context.features.market),
                 ),
               ],
             ),
@@ -921,18 +896,15 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                   margin: EdgeInsets.only(right: type != JobPayType.daily ? 8 : 0),
                   padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
                   decoration: BoxDecoration(
-                    color: isSelected ? context.features.market.withValues(alpha: AppOpacity.o10) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
-                    border: Border.all(
-                      color: isSelected ? context.features.market : Theme.of(context).colorScheme.outline,
-                    ),
+                    color: isSelected ? context.features.market : Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(AppSizes.radiusFull),
                   ),
                   child: Text(
                     type.label,
                     textAlign: TextAlign.center,
                     style: AppTextStyles.bodyMedium(context)
                         .withWeight(isSelected ? FontWeight.w600 : FontWeight.normal)
-                        .withColor(isSelected ? context.features.market : Theme.of(context).colorScheme.onSurfaceVariant),
+                        .withColor(isSelected ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ),
               ),
@@ -1017,7 +989,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                     color: isAlreadySelected 
                         ? Theme.of(context).colorScheme.outline.withValues(alpha: AppOpacity.o50) 
                         : Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusL),
                     border: Border.all(
                       color: isAlreadySelected ? Theme.of(context).colorScheme.outline : Colors.transparent,
                     ),
@@ -1029,7 +1001,7 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                         height: 50,
                         decoration: BoxDecoration(
                           color: Theme.of(context).colorScheme.outline,
-                          borderRadius: BorderRadius.circular(AppSizes.radiusS),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusL),
                         ),
                         child: Icon(AppIcons.pet, color: Theme.of(context).colorScheme.outlineVariant),
                       ),
@@ -1040,9 +1012,8 @@ class _MarketWriteSheetState extends State<_MarketWriteSheet> {
                           children: [
                             Text(
                               pet['name']!,
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: isAlreadySelected 
+                              style: AppTextStyles.titleSmall(context).withWeight(FontWeight.w600).withColor(
+                                isAlreadySelected 
                                     ? Theme.of(context).colorScheme.outlineVariant 
                                     : Theme.of(context).colorScheme.onSurface,
                               ),

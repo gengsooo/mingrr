@@ -76,6 +76,10 @@ class AppIcons {
   static const IconData home = Icons.home;
   /// 홈 (외곽선)
   static const IconData homeOutlined = Icons.home_outlined;
+  /// 메뉴 (전체)
+  static const IconData menu = Icons.grid_view_rounded;
+  /// 메뉴 (전체, 외곽선)
+  static const IconData menuOutlined = Icons.grid_view_outlined;
 
   // ===== 공통 액션 =====
   /// 추가

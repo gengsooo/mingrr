@@ -519,13 +519,13 @@ service cloud.firestore {
     }
     
     // ============================================================
-    // breedingPosts Collection - 교배 게시글
+    // breedingPosts Collection - 교배 게시글 (V3: 기능 제거, 읽기만 허용)
     // ============================================================
     match /breedingPosts/{postId} {
       allow read: if isAdmin() || isSignedIn();
-      allow create: if isAdmin() || (isSignedIn() && incomingData().authorId == request.auth.uid);
-      allow update: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
-      allow delete: if isAdmin() || (isSignedIn() && existingData().authorId == request.auth.uid);
+      allow create: if isAdmin();  // 새 교배글 생성 비활성화
+      allow update: if isAdmin();  // 교배글 수정 비활성화
+      allow delete: if isAdmin();  // 교배글 삭제는 관리자만
     }
     
     // ============================================================
@@ -694,25 +694,13 @@ service cloud.firestore {
     }
     
     // ============================================================
-    // breeding_requests Collection - 교배 신청
+    // breeding_requests Collection - 교배 신청 (V3: 기능 제거, 읽기만 허용)
     // ============================================================
     match /breeding_requests/{requestId} {
-      // 읽기: 본인이 보냈거나 받은 신청만 조회 가능
-      allow read: if isAdmin() || (isSignedIn()
-        && (request.auth.uid == resource.data.senderId 
-            || request.auth.uid == resource.data.receiverId));
-      
-      // 생성: 본인이 발신자인 신청만 생성 가능
-      allow create: if isAdmin() || (isSignedIn()
-        && incomingData().senderId == request.auth.uid);
-      
-      // 수정: 받은 사람만 상태 변경 가능 (수락/거절)
-      allow update: if isAdmin() || (isSignedIn()
-        && existingData().receiverId == request.auth.uid);
-      
-      // 삭제: 본인이 보낸 신청만 삭제 가능
-      allow delete: if isAdmin() || (isSignedIn()
-        && existingData().senderId == request.auth.uid);
+      allow read: if isAdmin() || isSignedIn();
+      allow create: if isAdmin();  // 새 교배 신청 비활성화
+      allow update: if isAdmin();  // 교배 신청 수정 비활성화
+      allow delete: if isAdmin();  // 관리자만 삭제
     }
     
     // ============================================================

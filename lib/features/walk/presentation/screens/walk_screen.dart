@@ -239,7 +239,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                         ),
                         child: TextButton.icon(
                           icon: Icon(AppIcons.history, size: 18, color: context.features.health),
-                          label: Text('산책 기록', style: TextStyle(color: context.features.health)),
+                          label: Text('산책 기록', style: AppTextStyles.labelLarge(context).withColor(context.features.health)),
                           onPressed: () => _showWalkHistory(context),
                         ),
                       ),
@@ -817,11 +817,17 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         _flushPendingUpdates();
       });
       
-      // 위치 추적 시작 (10초마다)
+      // 위치 추적 시작 (최고 정확도, 5m 필터, foreground service)
       _positionStreamSubscription = Geolocator.getPositionStream(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          distanceFilter: 10, // 10미터 이상 이동 시 업데이트
+        locationSettings: AndroidSettings(
+          accuracy: LocationAccuracy.best,
+          distanceFilter: 5,
+          intervalDuration: const Duration(seconds: 3),
+          foregroundNotificationConfig: const ForegroundNotificationConfig(
+            notificationText: '산책 중 위치를 기록하고 있습니다',
+            notificationTitle: 'MINGRR 산책',
+            enableWakeLock: true,
+          ),
         ),
       ).listen((Position position) {
         _updateWalkRoute(position);
@@ -849,6 +855,21 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
           position.latitude,
           position.longitude,
         );
+        
+        // GPS 점프 필터링: 비현실적 속도(>30km/h = 8.3m/s) 감지 시 무시
+        final timeDiff = position.timestamp.difference(
+          DateTime.fromMillisecondsSinceEpoch(_lastPosition!.timestamp.millisecondsSinceEpoch),
+        ).inSeconds;
+        if (timeDiff > 0) {
+          final speed = distance / timeDiff;
+          if (speed > 8.3) {
+            AppLogger.debug('WalkScreen', 'GPS 점프 감지 (${speed.toStringAsFixed(1)}m/s), 무시');
+            return;
+          }
+        }
+        
+        // 너무 작은 이동(1m 미만)은 노이즈로 무시
+        if (distance < 1.0) return;
         
         final previousDistance = _walkDistance;
         
@@ -1010,7 +1031,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                           const SizedBox(height: AppSizes.gapL),
                           Text(
                             '산책 기록을 불러올 수 없어요',
-                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                           const SizedBox(height: AppSizes.gapS),
                           Text(
@@ -1032,7 +1053,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
                           const SizedBox(height: AppSizes.gapL),
                           Text(
                             '아직 산책 기록이 없어요',
-                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                           const SizedBox(height: AppSizes.gapS),
                           Text(
@@ -1108,15 +1129,25 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
 
   /// 산책 종료 요약 다이얼로그
   void _showWalkSummary() {
+    // 다이얼로그 표시 전에 로컬 변수에 값 복사 (0값 버그 수정)
+    final summaryDuration = _walkDuration;
+    final summaryDistance = _walkDistance;
+    final summaryCalories = (_walkDistance / 1000 * 50).toInt();
+    final summaryFootprints = _footprints.length;
+
+    // 초기화
+    _walkDuration = 0;
+    _walkDistance = 0;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
         ),
         title: Row(
           children: [
-            Icon(AppIcons.celebration, color: context.features.health),
+            Icon(AppIcons.celebration, color: dialogContext.features.health),
             const SizedBox(width: AppSizes.gapS),
             const Text('산책 완료!'),
           ],
@@ -1124,31 +1155,25 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildSummaryRow('시간', _formatDuration(_walkDuration)),
-            _buildSummaryRow('거리', _formatDistance(_walkDistance)),
-            _buildSummaryRow('칼로리', '${(_walkDistance / 1000 * 50).toInt()} kcal'),
-            _buildSummaryRow('발자국', '${_footprints.length}개'),
+            _buildSummaryRow('시간', _formatDuration(summaryDuration)),
+            _buildSummaryRow('거리', _formatDistance(summaryDistance)),
+            _buildSummaryRow('칼로리', '$summaryCalories kcal'),
+            _buildSummaryRow('발자국', '$summaryFootprints개'),
             const SizedBox(height: AppSizes.gapM),
             Text(
               '오늘도 건강해지는 산책 완료! 🎉',
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyles.bodyMedium(dialogContext).withColor(Theme.of(dialogContext).colorScheme.onSurfaceVariant),
             ),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('확인'),
           ),
         ],
       ),
     );
-    
-    // 초기화
-    _walkDuration = 0;
-    _walkDistance = 0;
   }
 
   /// 요약 행
@@ -1158,7 +1183,7 @@ class _WalkScreenState extends ConsumerState<WalkScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+          Text(label, style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant)),
           Text(
             value,
             style: AppTextStyles.headlineSmall(context).withWeight(FontWeight.w600),

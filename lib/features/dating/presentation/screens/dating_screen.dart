@@ -9,61 +9,35 @@ import '../../../../core/theme/feature_colors.dart';
 import '../../../../core/constants/pet_constants.dart';
 import '../../../../core/widgets/navigation/top_navigation.dart';
 import '../../../../core/widgets/search_screen.dart';
-import '../../../../core/widgets/sheets/request_sheet.dart';
 import '../../../../core/widgets/navigation/appbar_actions.dart';
-import '../../../../core/widgets/filter_components.dart';
+import '../../../../core/widgets/filter_chip_bar.dart';
 import '../../../../core/widgets/common_widgets.dart';
-import '../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../core/widgets/cards/dating_card.dart';
 import '../../../../core/widgets/refresh_wrapper.dart';
 import '../../../../core/widgets/empty_states/location_required_empty_state.dart';
 import '../../../../core/providers/refresh_notifier.dart';
 import '../../../../core/providers/location_verification_provider.dart';
-import '../../../../core/services/dating_service.dart';
-import '../../../../core/services/firebase_service.dart';
 import '../providers/dating_provider.dart';
 import '../../../pet/presentation/providers/pet_provider.dart';
-import 'breeding_write_screen.dart';
 import 'pet_detail_screen.dart';
-import '../../../../core/utils/error_handler.dart';
 
 /// ============================================================
-/// 데이팅 화면 (V2 리팩토링 - 반려동물 전용)
+/// 데이팅 화면 (V3 리팩토링 - 탭 제거, 교배 제거, 필터 통합)
 /// 
 /// 변경사항:
-/// - 3개 탭 (추천 / 근처 검색 / 교배찾기) - pill 형태
-/// - 추천: 궁합 알고리즘 기반 추천 리스트
-/// - 근처 검색: 거리 필터 + 그리드 뷰
-/// - 교배찾기: 상세 필터 + 교배 가능한 반려동물 목록
+/// - 상단 탭 제거 → 단일 리스트 + 정렬 필터 칩
+/// - 교배 기능 완전 제거
+/// - 정렬: 추천순 | 거리순
+/// - 검색: 앱바 검색 아이콘
 /// ============================================================
 
-/// 선택된 탭 (0: 추천, 1: 근처 검색, 2: 교배찾기)
-final _selectedTabProvider = StateProvider<int>((ref) => 0);
+/// 정렬 옵션 (0: 추천순, 1: 거리순)
+final _selectedSortProvider = StateProvider<int>((ref) => 0);
 
-/// 거리 필터 (근처 검색/교배찾기 공통) - 기본값 5km
+/// 거리 필터 - 기본값 5km (거리순 정렬 시 사용)
 final _distanceFilterProvider = StateProvider<double>((ref) => LocationConstants.defaultRadiusKm);
 
-/// ============================================================
-/// 교배찾기 필터 Provider
-/// ============================================================
-
-/// 성별 필터 (중복 선택 가능)
-final _breedingGenderFilterProvider = StateProvider<List<String>>((ref) => []);
-
-/// 같은 품종만 필터 (true: 같은 품종만, false/null: 무관)
-final _breedingSameBreedFilterProvider = StateProvider<bool?>((ref) => null);
-
-/// 무게/크기 필터 (중복 선택 가능)
-final _breedingSizeFilterProvider = StateProvider<List<String>>((ref) => []);
-
-/// 나이 필터 (null: 전체, 3, 5, 10, 15)
-final _breedingAgeFilterProvider = StateProvider<int?>((ref) => null);
-
-/// 혈통서 필터 (null: 전체, true: 혈통서 보유만)
-final _breedingPedigreeFilterProvider = StateProvider<bool?>((ref) => null);
-
 class DatingScreen extends ConsumerStatefulWidget {
-  /// 초기 탭 인덱스 (0: 추천친구, 1: 근처 검색, 2: 교배찾기)
   final int initialTab;
   
   const DatingScreen({super.key, this.initialTab = 0});
@@ -73,122 +47,79 @@ class DatingScreen extends ConsumerStatefulWidget {
 }
 
 class _DatingScreenState extends ConsumerState<DatingScreen> {
-  final ScrollController _breedingScrollController = ScrollController();
-  final ScrollController _nearbyScrollController = ScrollController();
-  final ScrollController _recommendScrollController = ScrollController();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    _breedingScrollController.addListener(_onBreedingScroll);
-    _nearbyScrollController.addListener(_onNearbyScroll);
-    _recommendScrollController.addListener(_onRecommendScroll);
-    
-    // 초기 탭 설정 (항상 initialTab으로 설정하여 이전 상태 무시)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(_selectedTabProvider.notifier).state = widget.initialTab;
-    });
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
-    _breedingScrollController.removeListener(_onBreedingScroll);
-    _nearbyScrollController.removeListener(_onNearbyScroll);
-    _recommendScrollController.removeListener(_onRecommendScroll);
-    _breedingScrollController.dispose();
-    _nearbyScrollController.dispose();
-    _recommendScrollController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
   }
 
-  void _onBreedingScroll() {
-    if (_breedingScrollController.position.pixels >=
-        _breedingScrollController.position.maxScrollExtent - 200) {
-      final distanceFilter = ref.read(_distanceFilterProvider);
-      ref.read(paginatedBreedingPetsProvider(distanceFilter).notifier).loadMore();
-    }
-  }
-
-  void _onNearbyScroll() {
-    if (_nearbyScrollController.position.pixels >=
-        _nearbyScrollController.position.maxScrollExtent - 200) {
-      final distanceFilter = ref.read(_distanceFilterProvider);
-      ref.read(paginatedNearbyPetsProvider(distanceFilter).notifier).loadMore();
-    }
-  }
-
-  void _onRecommendScroll() {
-    if (_recommendScrollController.position.pixels >=
-        _recommendScrollController.position.maxScrollExtent - 200) {
-      ref.read(paginatedRecommendedPetsProvider.notifier).loadMore();
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final selectedSort = ref.read(_selectedSortProvider);
+      if (selectedSort == 1) {
+        final distanceFilter = ref.read(_distanceFilterProvider);
+        ref.read(paginatedNearbyPetsProvider(distanceFilter).notifier).loadMore();
+      } else {
+        ref.read(paginatedRecommendedPetsProvider.notifier).loadMore();
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final selectedTab = ref.watch(_selectedTabProvider);
+    final selectedSort = ref.watch(_selectedSortProvider);
     final distanceFilter = ref.watch(_distanceFilterProvider);
-    // 내 반려동물 목록 미리 로드 (교배 신청 시 사용)
     ref.watch(userPetsProvider);
 
-    // 새로고침 트리거 감지 (등록/수정/삭제 후 자동 새로고침)
     ref.listen(datingRefreshProvider, (prev, next) {
       if (prev != next) {
-        ref.read(paginatedBreedingPetsProvider(distanceFilter).notifier).refresh();
         ref.read(paginatedNearbyPetsProvider(distanceFilter).notifier).refresh();
         ref.read(paginatedRecommendedPetsProvider.notifier).refresh();
       }
     });
 
-    final theme = Theme.of(context);
-    final features = theme.extension<FeatureColors>()!;
-    
-    // 탭 정의 (추천친구 / 근처 검색 / 교배찾기)
-    final tabs = [
-      MingrrTabItem(label: '추천친구', icon: AppIcons.autoAwesome, color: features.dating),
-      MingrrTabItem(label: '근처 검색', icon: AppIcons.radar, color: features.dating),
-      MingrrTabItem(label: '교배찾기', icon: AppIcons.breeding, color: features.dating),
-    ];
+    final accent = context.features.dating;
+    final colorScheme = Theme.of(context).colorScheme;
     
     return Scaffold(
-      backgroundColor: features.datingContainer,
       appBar: MingrrAppBar.mainTab(
         title: '데이팅',
         actions: [
-          // 교배찾기 탭에서만 검색 아이콘 표시
-          if (selectedTab == 2)
-            AppBarActionButton.search(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (ctx) => SearchScreen(
-                      searchType: SearchType.breeding,
-                      accentColor: features.dating,
-                    ),
+          AppBarActionButton.search(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (ctx) => SearchScreen(
+                    searchType: SearchType.breeding,
+                    accentColor: accent,
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
+          ),
           AppBarActionButton.notification(),
-          AppBarActionButton.profile(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
         ],
       ),
       body: Column(
         children: [
-          // 3개 탭 (추천 / 근처 검색 / 교배찾기)
-          MingrrMainTabBar(
-            tabs: tabs,
-            selectedIndex: selectedTab,
-            onTabSelected: (index) {
-              ref.read(_selectedTabProvider.notifier).state = index;
-            },
-          ),
+          // 정렬 필터 칩 바
+          _buildSortFilterBar(context, ref, selectedSort, accent, colorScheme),
           
-          // 위치/거리 필터 바 (근처 검색/교배찾기 탭에서 표시)
-          if (selectedTab == 1 || selectedTab == 2)
+          // 거리순 선택 시 거리 필터 표시
+          if (selectedSort == 1)
             LocationDistanceBar(
-              accentColor: features.dating,
+              accentColor: accent,
               currentDistance: distanceFilter,
               distanceOptions: LocationConstants.datingDistanceOptions,
               onDistanceChanged: (distance) {
@@ -196,35 +127,34 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
               },
             ),
           
-          // 교배찾기 필터 (교배찾기 탭에서만)
-          if (selectedTab == 2) _buildBreedingFilters(context, ref),
-          
-          // 탭별 컨텐츠
+          // 컨텐츠
           Expanded(
-            child: _buildTabContent(context, ref, selectedTab, distanceFilter),
+            child: _buildContent(context, ref, selectedSort, distanceFilter),
           ),
-          
-          const SizedBox(height: AppSizes.gapL),
         ],
-      ),
-      // 교배찾기 탭에서 글쓰기 FAB 표시
-      floatingActionButton: MingrrFAB.write(
-        onPressed: () => _showBreedingWriteSheet(context),
-        backgroundColor: features.dating,
-        visible: selectedTab == 2,
-        tooltip: '교배 등록',
       ),
     );
   }
 
-  /// 탭별 컨텐츠
-  Widget _buildTabContent(BuildContext context, WidgetRef ref, int selectedTab, double distanceFilter) {
-    // 위치 인증 상태 확인
+  /// 정렬 필터 칩 바
+  Widget _buildSortFilterBar(BuildContext context, WidgetRef ref, int selectedSort, Color accent, ColorScheme colorScheme) {
+    return MingrrFilterChipBar<int>(
+      items: const [
+        (key: 0, label: '추천순'),
+        (key: 1, label: '거리순'),
+      ],
+      selected: selectedSort,
+      onSelected: (key) => ref.read(_selectedSortProvider.notifier).state = key,
+      accentColor: accent,
+    );
+  }
+
+  /// 정렬별 컨텐츠
+  Widget _buildContent(BuildContext context, WidgetRef ref, int selectedSort, double distanceFilter) {
     final userAsync = ref.watch(currentUserStreamProvider);
     final user = userAsync.valueOrNull;
     final isLocationVerified = user?.isLocationVerified ?? false;
     
-    // 위치 미인증 시 빈 화면 표시
     if (!isLocationVerified) {
       return LocationRequiredEmptyState(
         type: LocationRequiredType.dating,
@@ -232,15 +162,13 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
       );
     }
     
-    switch (selectedTab) {
+    switch (selectedSort) {
       case 0:
-        return _buildRecommendList(context);  // 추천: 스크롤 리스트
+        return _buildRecommendList(context);
       case 1:
-        return _buildNearbyGrid(context, distanceFilter);  // 근처 검색: 그리드
-      case 2:
-        return _buildBreedingList(context, ref, distanceFilter);  // 교배찾기: 리스트
+        return _buildNearbyGrid(context, distanceFilter);
       default:
-        return const SizedBox();
+        return _buildRecommendList(context);
     }
   }
 
@@ -265,409 +193,6 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
         ),
       ),
     );
-  }
-
-  /// 교배찾기 필터 섹션
-  Widget _buildBreedingFilters(BuildContext context, WidgetRef ref) {
-    final accentColor = context.features.dating;
-    return MingrrFilterSection(
-      rows: [
-        // 1행: 성별 + 품종
-        MingrrFilterRow(
-          title: '성별/품종',
-          children: [
-            _buildGenderFilters(ref, accentColor),
-            const MingrrFilterDivider(),
-            _buildBreedFilters(ref, accentColor),
-          ],
-        ),
-        // 2행: 크기 + 나이
-        MingrrFilterRow(
-          title: '크기/나이',
-          children: [
-            _buildSizeFilters(context, ref, accentColor),
-            const MingrrFilterDivider(),
-            _buildAgeFilters(ref, accentColor),
-          ],
-        ),
-        // 3행: 혈통서
-        MingrrFilterRow(
-          title: '혈통서',
-          children: [
-            _buildPedigreeFilters(ref, accentColor),
-          ],
-        ),
-      ],
-    );
-  }
-
-  /// 성별 필터 (중복 선택 가능)
-  Widget _buildGenderFilters(WidgetRef ref, Color accentColor) {
-    final selectedGenders = ref.watch(_breedingGenderFilterProvider);
-    return Row(
-      children: [
-        MingrrFilterChip(
-          label: '남아',
-          icon: AppIcons.male,
-          iconSize: 14,
-          isSelected: selectedGenders.contains('male'),
-          onTap: () {
-            final current = List<String>.from(selectedGenders);
-            if (current.contains('male')) {
-              current.remove('male');
-            } else {
-              current.add('male');
-            }
-            ref.read(_breedingGenderFilterProvider.notifier).state = current;
-          },
-          accentColor: accentColor,
-        ),
-        const SizedBox(width: AppSizes.gapS),
-        MingrrFilterChip(
-          label: '여아',
-          icon: AppIcons.female,
-          iconSize: 14,
-          isSelected: selectedGenders.contains('female'),
-          onTap: () {
-            final current = List<String>.from(selectedGenders);
-            if (current.contains('female')) {
-              current.remove('female');
-            } else {
-              current.add('female');
-            }
-            ref.read(_breedingGenderFilterProvider.notifier).state = current;
-          },
-          accentColor: accentColor,
-        ),
-      ],
-    );
-  }
-
-  /// 품종 필터 (같은 품종/무관)
-  Widget _buildBreedFilters(WidgetRef ref, Color accentColor) {
-    final sameBreedFilter = ref.watch(_breedingSameBreedFilterProvider);
-    return Row(
-      children: [
-        MingrrFilterChip(
-          label: '품종 무관',
-          isSelected: sameBreedFilter == null || sameBreedFilter == false,
-          onTap: () => ref.read(_breedingSameBreedFilterProvider.notifier).state = null,
-          accentColor: accentColor,
-        ),
-        const SizedBox(width: AppSizes.gapS),
-        MingrrFilterChip(
-          label: '같은 품종만',
-          isSelected: sameBreedFilter == true,
-          onTap: () => ref.read(_breedingSameBreedFilterProvider.notifier).state = true,
-          accentColor: accentColor,
-        ),
-      ],
-    );
-  }
-
-  /// 크기 필터 (중복 선택 가능)
-  Widget _buildSizeFilters(BuildContext context, WidgetRef ref, Color accentColor) {
-    final selectedSizes = ref.watch(_breedingSizeFilterProvider);
-    final sizes = [
-      {'key': 'xs', 'label': '초소형'},
-      {'key': 's', 'label': '소형'},
-      {'key': 'm', 'label': '중형'},
-      {'key': 'l', 'label': '대형'},
-      {'key': 'xl', 'label': '초대형'},
-    ];
-    return Row(
-      children: [
-        // 안내 버튼
-        GestureDetector(
-          onTap: () => _showSizeGuideModal(context),
-          child: Container(
-            padding: const EdgeInsets.all(AppSizes.paddingXS),
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: AppOpacity.o10),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(AppIcons.help, size: 14, color: accentColor),
-          ),
-        ),
-        const SizedBox(width: AppSizes.gapS),
-        // 크기 필터 칩들
-        ...sizes.map((size) {
-          final key = size['key'] as String;
-          final isSelected = selectedSizes.contains(key);
-          return Padding(
-            padding: const EdgeInsets.only(right: AppSizes.paddingXS),
-            child: MingrrFilterChip(
-              label: size['label'] as String,
-              isSelected: isSelected,
-              onTap: () {
-                final current = List<String>.from(selectedSizes);
-                if (isSelected) {
-                  current.remove(key);
-                } else {
-                  current.add(key);
-                }
-                ref.read(_breedingSizeFilterProvider.notifier).state = current;
-              },
-              accentColor: accentColor,
-            ),
-          );
-        }),
-      ],
-    );
-  }
-
-  /// 크기 안내 모달
-  void _showSizeGuideModal(BuildContext context) {
-    final features = Theme.of(context).extension<FeatureColors>()!;
-    showInfoDialog(
-      context,
-      title: '반려동물 크기 안내',
-      icon: AppIcons.pet,
-      subtitle: '체중 기준으로 분류해요',
-      accentColor: features.dating,
-      items: const [
-        InfoItem(label: '초소형', value: '0~4kg', description: '치와와, 요크셔테리어 등'),
-        InfoItem(label: '소형', value: '4~10kg', description: '말티즈, 푸들, 시츄 등'),
-        InfoItem(label: '중형', value: '10~25kg', description: '코카스파니엘, 비글 등'),
-        InfoItem(label: '대형', value: '25~45kg', description: '골든리트리버, 래브라도 등'),
-        InfoItem(label: '초대형', value: '45kg~', description: '그레이트데인, 세인트버나드 등'),
-      ],
-      footerText: '반려동물마다 개체차가 있을 수 있어요',
-    );
-  }
-
-  /// 나이 필터
-  Widget _buildAgeFilters(WidgetRef ref, Color accentColor) {
-    final ageFilter = ref.watch(_breedingAgeFilterProvider);
-    final ages = [
-      {'key': null, 'label': '전체'},
-      {'key': 3, 'label': '3세 이하'},
-      {'key': 5, 'label': '5세 이하'},
-      {'key': 10, 'label': '10세 이하'},
-    ];
-    return Row(
-      children: ages.map((age) {
-        return Padding(
-          padding: const EdgeInsets.only(right: AppSizes.paddingXS),
-          child: MingrrFilterChip(
-            label: age['label'] as String,
-            isSelected: ageFilter == age['key'],
-            onTap: () => ref.read(_breedingAgeFilterProvider.notifier).state = age['key'] as int?,
-            accentColor: accentColor,
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  /// 혈통서 필터
-  Widget _buildPedigreeFilters(WidgetRef ref, Color accentColor) {
-    final pedigreeFilter = ref.watch(_breedingPedigreeFilterProvider);
-    return Row(
-      children: [
-        MingrrFilterChip(
-          label: '전체',
-          isSelected: pedigreeFilter == null,
-          onTap: () => ref.read(_breedingPedigreeFilterProvider.notifier).state = null,
-          accentColor: accentColor,
-        ),
-        const SizedBox(width: AppSizes.gapS),
-        MingrrFilterChip(
-          label: '혈통서 보유',
-          icon: AppIcons.verified,
-          iconSize: 12,
-          isSelected: pedigreeFilter == true,
-          onTap: () => ref.read(_breedingPedigreeFilterProvider.notifier).state = 
-              pedigreeFilter == true ? null : true,
-          accentColor: accentColor,
-        ),
-      ],
-    );
-  }
-
-  /// 교배찾기 리스트 (Firebase 연동 + 거리 필터링 + 페이지네이션)
-  Widget _buildBreedingList(BuildContext context, WidgetRef ref, double distanceFilter) {
-    final paginatedState = ref.watch(paginatedBreedingPetsProvider(distanceFilter));
-    final genderFilter = ref.watch(_breedingGenderFilterProvider);
-    final pedigreeFilter = ref.watch(_breedingPedigreeFilterProvider);
-    
-    // 초기 로딩 상태
-    if (paginatedState.isInitialLoading) {
-      return MingrrLoadingState(
-        type: MingrrLoadingType.dating,
-        message: '교배 가능한 반려동물을 찾고 있어요',
-        timeout: AppSizes.loadingTimeout,
-        onRetry: () => ref.read(paginatedBreedingPetsProvider(distanceFilter).notifier).loadInitial(),
-      );
-    }
-    
-    // 에러 상태
-    if (paginatedState.hasError && paginatedState.items.isEmpty) {
-      return MingrrErrorState(
-        title: '데이터를 불러올 수 없어요',
-        subtitle: '잠시 후 다시 시도해주세요',
-        onRetry: () => ref.read(paginatedBreedingPetsProvider(distanceFilter).notifier).loadInitial(),
-      );
-    }
-    
-    // 성별/혈통서 필터 적용
-    var filteredPets = paginatedState.items.toList();
-    if (genderFilter.isNotEmpty) {
-      filteredPets = filteredPets.where((p) {
-        if (genderFilter.contains('male') && p.pet.gender == PetGender.male) return true;
-        if (genderFilter.contains('female') && p.pet.gender == PetGender.female) return true;
-        return false;
-      }).toList();
-    }
-    if (pedigreeFilter == true) {
-      filteredPets = filteredPets.where((p) => p.pet.hasPedigree).toList();
-    }
-    
-    // 빈 상태
-    if (filteredPets.isEmpty) {
-      return MingrrEmptyState(
-        icon: AppIcons.breeding,
-        title: '아직 데이터가 없어요',
-        subtitle: '거리를 늘리거나 필터를 조정해보세요',
-        accentColor: context.features.dating,
-        onRefresh: () async {
-          await ref.read(paginatedBreedingPetsProvider(distanceFilter).notifier).refresh();
-        },
-      );
-    }
-    
-    // 데이터 있음
-    return MingrrRefreshWrapper(
-      color: context.features.dating,
-      onRefresh: () async {
-        await ref.read(paginatedBreedingPetsProvider(distanceFilter).notifier).refresh();
-      },
-      child: ListView.builder(
-        controller: _breedingScrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSizes.paddingM),
-        itemCount: filteredPets.length + (paginatedState.hasMore ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index >= filteredPets.length) {
-            return const Padding(
-              padding: EdgeInsets.all(AppSizes.paddingL),
-              child: Center(
-                child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)),
-              ),
-            );
-          }
-          return MingrrAnimatedListItem(
-            index: index,
-            child: _buildBreedingPetCard(context, ref, filteredPets[index]),
-          );
-        },
-      ),
-    );
-  }
-  
-  /// Firebase PetWithDistance를 사용한 교배찾기 카드 - 공통 컴포넌트 사용
-  Widget _buildBreedingPetCard(BuildContext context, WidgetRef ref, PetWithDistance petWithDistance) {
-    final pet = petWithDistance.pet;
-    
-    // 조건 태그 구성 (크기, 같은 품종만 — 품종은 상단 텍스트에 표시)
-    final conditionTags = <String>[];
-    if (pet.sizeString.isNotEmpty) conditionTags.add(pet.sizeString);
-    if (petWithDistance.sameBreedOnly) conditionTags.add('같은 품종만');
-    
-    return DatingBreedingCard(
-      name: pet.name,
-      breed: pet.breed,
-      ageString: pet.ageString,
-      sizeString: pet.sizeString,
-      isMale: pet.gender == PetGender.male,
-      distanceString: petWithDistance.distanceString,
-      breedingTitle: petWithDistance.breedingTitle,
-      description: petWithDistance.breedingDescription,
-      hasPedigree: pet.hasPedigree,
-      conditionTags: conditionTags,
-      imageUrl: pet.displayImageUrl,
-      onTap: () => _navigateToDetail(
-        context, 
-        pet.id, 
-        isBreeding: true,
-        distanceMeters: petWithDistance.distanceMeters,
-        breedingPostId: petWithDistance.breedingPostId,
-      ),
-      onBreedingRequest: () => _showBreedingRequestSheet(context, ref, pet.id),
-    );
-  }
-
-  /// 교배 신청 바톰시트
-  void _showBreedingRequestSheet(BuildContext context, WidgetRef ref, String targetPetId) async {
-    final myPets = ref.read(userPetsProvider).valueOrNull ?? [];
-    final myUserId = FirebaseService().currentUserId;
-    
-    if (myUserId == null) {
-      MingrrSnackBar.warning(context, '로그인이 필요합니다');
-      return;
-    }
-    
-    if (myPets.isEmpty) {
-      MingrrSnackBar.warning(context, '먼저 반려동물을 등록해주세요');
-      return;
-    }
-    
-    showBreedingRequestSheet(
-      context,
-      myPets: myPets,
-      onConfirm: (message, {selectedPet}) async {
-        try {
-          // 대상 반려동물 정보 가져오기
-          final targetPetDoc = await FirebaseService().petsCollection.doc(targetPetId).get();
-          if (!targetPetDoc.exists) {
-            if (context.mounted) {
-              MingrrSnackBar.warning(context, '반려동물 정보를 찾을 수 없습니다');
-            }
-            return;
-          }
-          
-          final targetPetData = targetPetDoc.data()!;
-          final targetOwnerId = targetPetData['ownerId'] as String;
-          
-          // 내 대표 반려동물 또는 선택한 반려동물
-          final myPet = selectedPet ?? myPets.firstWhere(
-            (p) => p.isPrimary,
-            orElse: () => myPets.first,
-          );
-          
-          // 교배 신청 보내기
-          final datingService = DatingService();
-          await datingService.sendBreedingRequest(
-            fromUserId: myUserId,
-            fromPetId: myPet.id,
-            toUserId: targetOwnerId,
-            toPetId: targetPetId,
-            message: message,
-          );
-          
-          if (context.mounted) {
-            MingrrSnackBar.success(context, '${myPet.name}(으)로 교배 신청을 보냈어요! 🐶');
-          }
-        } catch (e) {
-          if (context.mounted) {
-            ErrorHandler.showError(context, e, tag: 'Dating', operation: '교배 신청');
-          }
-        }
-      },
-    );
-  }
-
-  /// 교배 등록 화면 이동
-  void _showBreedingWriteSheet(BuildContext context) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const BreedingWriteScreen()),
-    );
-    
-    // 등록 성공 시 목록 새로고침
-    if (result == true && context.mounted) {
-      // 상태 관리가 자동 해제 모드이므로 자동으로 새로고침됨
-    }
   }
 
   /// 근처 검색 그리드 뷰 (Firebase 연동 + 거리 필터링 + 페이지네이션)
@@ -706,9 +231,9 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
               const SizedBox(height: AppSizes.gapL),
               Text(
                 '반려동물을 먼저 등록해주세요',
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
+                style: AppTextStyles.bodyMedium(context).withWeight(FontWeight.w500).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSizes.gapS),
               Text(
                 '내 반려동물을 등록하면\n추천 친구를 찾아드릴게요!',
                 style: AppTextStyles.caption(context),
@@ -744,7 +269,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
         await ref.read(paginatedNearbyPetsProvider(distanceFilter).notifier).refresh();
       },
       child: CustomScrollView(
-        controller: _nearbyScrollController,
+        controller: _scrollController,
         slivers: [
           SliverPadding(
             padding: const EdgeInsets.all(AppSizes.paddingM),
@@ -833,9 +358,9 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
               const SizedBox(height: AppSizes.gapL),
               Text(
                 '반려동물을 먼저 등록해주세요',
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontWeight: FontWeight.w500),
+                style: AppTextStyles.bodyMedium(context).withWeight(FontWeight.w500).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSizes.gapS),
               Text(
                 '반려동물을 등록하면 궁합이 맞는\n친구들을 추천해드려요',
                 style: AppTextStyles.caption(context),
@@ -871,7 +396,7 @@ class _DatingScreenState extends ConsumerState<DatingScreen> {
         await ref.read(paginatedRecommendedPetsProvider.notifier).refresh();
       },
       child: ListView.builder(
-        controller: _recommendScrollController,
+        controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(AppSizes.paddingM),
         itemCount: paginatedState.items.length + (paginatedState.hasMore ? 1 : 0),
