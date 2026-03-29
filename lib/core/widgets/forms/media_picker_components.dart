@@ -138,7 +138,7 @@ class MingrrImagePicker extends StatelessWidget {
                 children: [
                   Icon(AppIcons.addPhoto, size: 48, color: colorScheme.outlineVariant),
                   const SizedBox(height: AppSizes.gapS),
-                  Text('이미지 추가', style: TextStyle(color: colorScheme.outlineVariant)),
+                  Text('이미지 추가', style: AppTextStyles.bodyMedium(context).withColor(colorScheme.outlineVariant)),
                 ],
               ),
       ),

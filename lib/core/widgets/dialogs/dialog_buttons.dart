@@ -221,8 +221,8 @@ class MingrrDialogButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: bgColor,
           foregroundColor: fgColor,
-          disabledBackgroundColor: bgColor.withValues(alpha: 0.6),
-          disabledForegroundColor: fgColor.withValues(alpha: 0.6),
+          disabledBackgroundColor: bgColor.withValues(alpha: AppOpacity.o70),
+          disabledForegroundColor: fgColor.withValues(alpha: AppOpacity.o70),
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusS),

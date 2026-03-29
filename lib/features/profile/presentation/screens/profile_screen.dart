@@ -76,14 +76,8 @@ class ProfileScreen extends ConsumerWidget {
       body: CustomScrollView(
         slivers: [
           // ===== 심플 앱바 =====
-          SliverAppBar(
-            floating: true,
-            elevation: AppSizes.elevationNone,
-            scrolledUnderElevation: 0,
-            surfaceTintColor: Colors.transparent,
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            title: const Text('프로필'),
-            centerTitle: false,
+          MingrrSliverAppBar(
+            title: '프로필',
             leading: MingrrLeadingButton.back(
               showShadow: false,
               onPressed: () {
@@ -224,9 +218,6 @@ class ProfileScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-              
-              // 화살표
-              Icon(AppIcons.chevronRight, color: colorScheme.onSurfaceVariant, size: 20),
             ],
           ),
         ],

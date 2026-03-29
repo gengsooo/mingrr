@@ -506,7 +506,7 @@ class DatingBreedingCard extends StatelessWidget {
                               children: conditionTags.take(3).map((tag) => Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: context.features.dating.withValues(alpha: 0.08),
+                                  color: context.features.dating.withValues(alpha: AppOpacity.o10),
                                   borderRadius: BorderRadius.circular(AppSizes.radiusS),
                                 ),
                                 child: Text(

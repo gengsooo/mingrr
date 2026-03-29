@@ -45,7 +45,7 @@ class LocationRequiredEmptyState extends ConsumerWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.1),
+                color: accentColor.withValues(alpha: AppOpacity.o10),
                 shape: BoxShape.circle,
               ),
               child: Icon(

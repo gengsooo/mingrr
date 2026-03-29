@@ -213,7 +213,7 @@ class _ScheduleWriteSheetState extends ConsumerState<ScheduleWriteSheet> {
             ),
             decoration: BoxDecoration(
               color: colorScheme.surface,
-              border: Border(top: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.3))),
+              border: Border(top: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: AppOpacity.o30))),
             ),
             child: MingrrButton(
               text: _isEditing ? '수정 완료' : '일정 등록',

@@ -80,7 +80,7 @@ class _LocationSelectorSheetState extends State<LocationSelectorSheet> {
                     widget.onLocationResultSelected?.call(const LocationResult(address: ''));
                     Navigator.pop(context);
                   },
-                  child: Text('초기화', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                  child: Text('초기화', style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant)),
                 ),
                 Text(
                   '지역 선택',
@@ -382,7 +382,7 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
               children: [
                 TextButton(
                   onPressed: () => setState(() => _tempSelected.clear()),
-                  child: Text('초기화', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                  child: Text('초기화', style: AppTextStyles.bodyMedium(context).withColor(colorScheme.onSurfaceVariant)),
                 ),
                 Column(
                   children: [
@@ -399,7 +399,7 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
                     widget.onLocationsSelected(_tempSelected);
                     Navigator.pop(context);
                   },
-                  child: Text('완료', style: TextStyle(color: accentColor, fontWeight: FontWeight.w600)),
+                  child: Text('완료', style: AppTextStyles.bodyMedium(context).withWeight(FontWeight.w600).withColor(accentColor)),
                 ),
               ],
             ),
@@ -420,7 +420,7 @@ class _MultiLocationSelectorSheetState extends State<MultiLocationSelectorSheet>
                       onDeleted: () => setState(() => _tempSelected.remove(location)),
                       backgroundColor: accentColor.withValues(alpha: AppOpacity.o10),
                       side: BorderSide.none,
-                      labelStyle: TextStyle(color: accentColor),
+                      labelStyle: AppTextStyles.labelMedium(context).withColor(accentColor),
                       deleteIconColor: accentColor,
                       visualDensity: VisualDensity.compact,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,

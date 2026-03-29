@@ -148,7 +148,7 @@ class _CustomDatePickerSheetState extends State<CustomDatePickerSheet> {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 hintText: 'YYYY.MM.DD',
-                hintStyle: TextStyle(color: Theme.of(context).colorScheme.outlineVariant),
+                hintStyle: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.outlineVariant),
                 errorText: _errorText,
                 prefixIcon: Icon(AppIcons.calendar, color: widget.accentColor),
                 border: OutlineInputBorder(

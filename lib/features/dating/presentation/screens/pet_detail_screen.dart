@@ -512,7 +512,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS, vertical: AppSizes.paddingXS),
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.1),
+                color: accentColor.withValues(alpha: AppOpacity.o10),
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(
@@ -618,7 +618,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
-        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.3)),
+        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: AppOpacity.o30)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -639,7 +639,7 @@ class _PetDetailScreenState extends ConsumerState<PetDetailScreen> {
                 vertical: AppSizes.paddingXS,
               ),
               decoration: BoxDecoration(
-                color: context.features.dating.withValues(alpha: 0.1),
+                color: context.features.dating.withValues(alpha: AppOpacity.o10),
                 borderRadius: BorderRadius.circular(AppSizes.radiusS),
               ),
               child: Text(

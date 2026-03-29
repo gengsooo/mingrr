@@ -196,8 +196,7 @@ class MingrrSettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     
     // 색상 결정
     final Color effectiveIconColor;
@@ -240,9 +239,7 @@ class MingrrSettingsTile extends StatelessWidget {
       subtitle: subtitle != null
           ? Text(
               subtitle!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
+              style: AppTextStyles.caption(context).withColor(colorScheme.onSurfaceVariant),
             )
           : null,
       trailing: trailing ?? (showChevron
@@ -273,8 +270,6 @@ class MingrrSettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -283,7 +278,7 @@ class MingrrSettingsSection extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: AppSizes.gapS),
           child: Text(
             title,
-            style: theme.textTheme.titleLarge,
+            style: AppTextStyles.titleLarge(context),
           ),
         ),
         ...children,

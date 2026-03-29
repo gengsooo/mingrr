@@ -115,7 +115,7 @@ class RequestCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
           boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
           border: isPending 
-              ? Border.all(color: accentColor.withValues(alpha: 0.3), width: 1)
+              ? Border.all(color: accentColor.withValues(alpha: AppOpacity.o30), width: 1)
               : null,
         ),
         child: Column(
@@ -460,7 +460,7 @@ class _AsyncRequestCardState extends State<AsyncRequestCard> {
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
           boxShadow: AppShadows.shadowS(Theme.of(context).brightness == Brightness.dark),
           border: isPending 
-              ? Border.all(color: accentColor.withValues(alpha: 0.3), width: 1)
+              ? Border.all(color: accentColor.withValues(alpha: AppOpacity.o30), width: 1)
               : null,
         ),
         child: Column(

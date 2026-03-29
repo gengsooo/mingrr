@@ -38,7 +38,6 @@ class MingrrFilterChipBar<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -61,7 +60,7 @@ class MingrrFilterChipBar<T> extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: isSelected
                       ? accentColor
-                      : (isDark ? colorScheme.surfaceContainerHighest : colorScheme.surfaceContainerHighest),
+                      : colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(AppSizes.radiusFull),
                 ),
                 child: Text(

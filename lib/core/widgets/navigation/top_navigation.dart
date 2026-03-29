@@ -655,7 +655,7 @@ class LocationRegionBar extends StatelessWidget {
             ],
           ),
           if (selectedLocations.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSizes.gapM),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(

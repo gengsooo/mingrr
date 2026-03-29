@@ -508,7 +508,7 @@ class _KkosunnaeDetailSheetState extends State<KkosunnaeDetailSheet> {
               ],
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSizes.gapM),
           // 등급 설명
           Text(
             KkosunnaeService.getGradeDescription(score),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_icons.dart';
 import '../constants/app_sizes.dart';
+import '../theme/app_text_styles.dart';
 
 /// ============================================================
 /// MINGRR 공통 FAB (Floating Action Button)
@@ -215,9 +216,7 @@ class MingrrFAB extends StatelessWidget {
         icon: Icon(icon),
         label: Text(
           label!,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-          ),
+          style: AppTextStyles.labelLarge(context).withWeight(FontWeight.w600),
         ),
       );
     }

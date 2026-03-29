@@ -53,11 +53,11 @@ class RatingCard extends StatelessWidget {
           color: colorScheme.surface,
           borderRadius: BorderRadius.circular(AppSizes.radiusL),
           border: isPending 
-              ? Border.all(color: Colors.amber.withValues(alpha: 0.5), width: 1)
+              ? Border.all(color: Colors.amber.withValues(alpha: AppOpacity.o50), width: 1)
               : null,
           boxShadow: [
             BoxShadow(
-              color: colorScheme.shadow.withValues(alpha: 0.05),
+              color: colorScheme.shadow.withValues(alpha: AppOpacity.o05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -95,7 +95,7 @@ class RatingCard extends StatelessWidget {
                           vertical: AppSizes.paddingXXS,
                         ),
                         decoration: BoxDecoration(
-                          color: accentColor.withValues(alpha: 0.1),
+                          color: accentColor.withValues(alpha: AppOpacity.o10),
                           borderRadius: BorderRadius.circular(AppSizes.radiusS),
                         ),
                         child: Text(
@@ -170,7 +170,7 @@ class RatingCard extends StatelessWidget {
                   vertical: AppSizes.paddingS,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.1),
+                  color: Colors.amber.withValues(alpha: AppOpacity.o10),
                   borderRadius: BorderRadius.circular(AppSizes.radiusS),
                 ),
                 child: Text(
@@ -223,7 +223,7 @@ class RatingCardSkeleton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSizes.radiusL),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.05),
+            color: colorScheme.shadow.withValues(alpha: AppOpacity.o05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),

@@ -228,10 +228,12 @@ class MingrrOptionsSheet extends StatelessWidget {
                     leading: Icon(option.icon, color: effectiveColor),
                     title: Text(
                       option.label,
-                      style: TextStyle(color: effectiveColor),
+                      style: effectiveColor != null
+                          ? AppTextStyles.bodyLarge(context).withColor(effectiveColor)
+                          : AppTextStyles.bodyLarge(context),
                     ),
                     subtitle: option.subtitle != null 
-                        ? Text(option.subtitle!, style: Theme.of(context).textTheme.bodySmall)
+                        ? Text(option.subtitle!, style: AppTextStyles.caption(context))
                         : null,
                     onTap: () {
                       Navigator.pop(context);

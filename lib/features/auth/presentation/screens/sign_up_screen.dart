@@ -505,8 +505,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         padding: const EdgeInsets.all(AppSizes.paddingM),
         decoration: BoxDecoration(
           color: _allAgreed 
-              ? colorScheme.primary.withValues(alpha: 0.1)
-              : colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+              ? colorScheme.primary.withValues(alpha: AppOpacity.o10)
+              : colorScheme.surfaceContainerHighest.withValues(alpha: AppOpacity.o30),
           borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(
             color: _allAgreed ? colorScheme.primary : colorScheme.outline,
@@ -609,7 +609,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         color: colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: AppOpacity.o05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),

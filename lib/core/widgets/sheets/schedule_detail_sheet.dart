@@ -103,7 +103,7 @@ class _ScheduleDetailSheetState extends ConsumerState<ScheduleDetailSheet> {
                   decoration: BoxDecoration(
                     color: _isPast
                         ? colorScheme.surfaceContainerLow
-                        : accentColor.withValues(alpha: 0.1),
+                        : accentColor.withValues(alpha: AppOpacity.o10),
                     borderRadius: BorderRadius.circular(AppSizes.radiusS),
                   ),
                   child: Text(
@@ -199,7 +199,7 @@ class _ScheduleDetailSheetState extends ConsumerState<ScheduleDetailSheet> {
               ),
               decoration: BoxDecoration(
                 color: colorScheme.surface,
-                border: Border(top: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.3))),
+                border: Border(top: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: AppOpacity.o30))),
               ),
               child: _buildParticipateButton(context, accentColor),
             ),

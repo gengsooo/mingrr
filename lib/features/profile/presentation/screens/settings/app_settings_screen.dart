@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import '../../../../../core/constants/app_icons.dart';
 import '../../../../../core/constants/app_sizes.dart';
+import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/providers/theme_provider.dart';
 import '../../../../../core/widgets/common_widgets.dart';
 import '../../../../../core/utils/error_handler.dart';
@@ -28,7 +29,6 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
-    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: const MingrrAppBar(title: '앱 설정'),
@@ -45,7 +45,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> {
                   padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                   child: Text(
                     '화면 모드',
-                    style: theme.textTheme.titleLarge,
+                    style: AppTextStyles.titleLarge(context),
                   ),
                 ),
                 ...AppThemeMode.values.map((mode) => MingrrSettingsTile.radio(
@@ -70,7 +70,7 @@ class _AppSettingsScreenState extends ConsumerState<AppSettingsScreen> {
                   padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                   child: Text(
                     '저장 공간',
-                    style: theme.textTheme.titleLarge,
+                    style: AppTextStyles.titleLarge(context),
                   ),
                 ),
                 MingrrSettingsTile.destructive(

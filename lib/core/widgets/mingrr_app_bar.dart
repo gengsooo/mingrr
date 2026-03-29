@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../constants/app_icons.dart';
 import '../constants/app_sizes.dart';
+import '../theme/app_text_styles.dart';
 
 /// ============================================================
 /// MINGRR 공통 AppBar 컴포넌트
@@ -109,7 +110,7 @@ class MingrrAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onLeadingPressed,
     this.leading,
     this.actions,
-    this.centerTitle = true,
+    this.centerTitle = false,
     this.backgroundColor,
     this.iconTheme,
     this.titleTextStyle,
@@ -129,7 +130,7 @@ class MingrrAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.title,
     this.titleWidget,
     this.actions,
-    this.centerTitle = true,
+    this.centerTitle = false,
     this.backgroundColor,
     this.elevation = 0,
     this.scrolledUnderElevation,
@@ -151,7 +152,7 @@ class MingrrAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.title,
     required VoidCallback onClose,
     this.actions,
-    this.centerTitle = true,
+    this.centerTitle = false,
     this.backgroundColor,
     this.elevation = 0,
   }) : titleWidget = null,
@@ -176,7 +177,7 @@ class MingrrAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.leadingType = LeadingType.back,
     this.onLeadingPressed,
     this.actions,
-    this.centerTitle = true,
+    this.centerTitle = false,
   }) : leading = null,
        backgroundColor = Colors.black,
        iconTheme = const IconThemeData(color: Colors.white),
@@ -209,9 +210,7 @@ class MingrrAppBar extends StatelessWidget implements PreferredSizeWidget {
              onPressed: onCancel,
              child: Text(
                '취소',
-               style: TextStyle(
-                 color: Theme.of(context).colorScheme.onSurfaceVariant,
-               ),
+               style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
              ),
            ),
          ),
@@ -359,6 +358,102 @@ class MingrrLeadingButton extends StatelessWidget {
         ),
         onPressed: onPressed ?? () => Navigator.pop(context),
       ),
+    );
+  }
+}
+
+/// ============================================================
+/// MINGRR 공통 SliverAppBar 컴포넌트
+/// 
+/// CustomScrollView 내에서 사용하는 SliverAppBar 래퍼.
+/// MingrrAppBar와 동일한 디자인 언어를 유지합니다.
+/// 
+/// 사용 화면: 홈, 프로필, 더보기 등 CustomScrollView 기반 화면
+/// ============================================================
+class MingrrSliverAppBar extends StatelessWidget {
+  /// AppBar 제목
+  final String? title;
+  
+  /// 제목 위젯 (title보다 우선)
+  final Widget? titleWidget;
+  
+  /// 우측 액션 버튼들
+  final List<Widget>? actions;
+  
+  /// floating 여부 (기본: true)
+  final bool floating;
+  
+  /// pinned 여부 (기본: false)
+  final bool pinned;
+  
+  /// snap 여부 (floating이 true일 때만 동작, 기본: false)
+  final bool snap;
+  
+  /// leading 버튼 타입
+  final LeadingType leadingType;
+  
+  /// leading 버튼 커스텀 콜백
+  final VoidCallback? onLeadingPressed;
+  
+  /// 커스텀 leading 위젯 (leadingType보다 우선)
+  final Widget? leading;
+
+  /// 메인 탭용 (leading 없음, floating)
+  const MingrrSliverAppBar.mainTab({
+    super.key,
+    this.title,
+    this.titleWidget,
+    this.actions,
+    this.floating = true,
+    this.pinned = false,
+    this.snap = false,
+  }) : leadingType = LeadingType.none,
+       onLeadingPressed = null,
+       leading = null;
+
+  /// 일반 화면용 (뒤로가기, floating)
+  const MingrrSliverAppBar({
+    super.key,
+    this.title,
+    this.titleWidget,
+    this.actions,
+    this.floating = true,
+    this.pinned = false,
+    this.snap = false,
+    this.leadingType = LeadingType.back,
+    this.onLeadingPressed,
+    this.leading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
+    Widget? leadingWidget = leading;
+    if (leadingWidget == null && leadingType != LeadingType.none) {
+      leadingWidget = IconButton(
+        icon: Icon(
+          leadingType == LeadingType.close ? AppIcons.close : AppIcons.back,
+          size: 20,
+        ),
+        onPressed: onLeadingPressed ?? () => Navigator.pop(context),
+      );
+    }
+    
+    return SliverAppBar(
+      floating: floating,
+      pinned: pinned,
+      snap: snap,
+      elevation: AppSizes.elevationNone,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      surfaceTintColor: Colors.transparent,
+      centerTitle: false,
+      automaticallyImplyLeading: false,
+      leading: leadingWidget,
+      title: titleWidget ?? (title != null 
+          ? Text(title!, style: theme.appBarTheme.titleTextStyle)
+          : null),
+      actions: actions,
     );
   }
 }

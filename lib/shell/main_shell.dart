@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/constants/app_icons.dart';
 import '../core/constants/app_sizes.dart';
+import '../core/theme/app_text_styles.dart';
 import '../core/widgets/network_status_banner.dart';
 import '../features/chat/presentation/providers/chat_provider.dart';
 
@@ -69,7 +70,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
         color: isDark ? colorScheme.surface : Colors.white,
         border: Border(
           top: BorderSide(
-            color: isDark ? const Color(0xFF252830) : const Color(0xFFF2F4F6),
+            color: colorScheme.outline,
             width: 1,
           ),
         ),
@@ -171,7 +172,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
   }) {
     final isActive = index == currentIndex;
     final colorScheme = Theme.of(context).colorScheme;
-    final activeColor = isActive ? colorScheme.onSurface : colorScheme.onSurfaceVariant;
+    final activeColor = isActive ? colorScheme.primary : colorScheme.onSurfaceVariant;
 
     return GestureDetector(
       onTap: () {
@@ -203,7 +204,7 @@ class MingrrBottomNavBar extends ConsumerWidget {
                       ),
                       child: Text(
                         badge > 99 ? '99+' : '$badge',
-                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Colors.white),
+                        style: AppTextStyles.captionSmall(context).withSize(9).withWeight(FontWeight.w600).withColor(Colors.white),
                       ),
                     ),
                   ),
@@ -212,11 +213,9 @@ class MingrrBottomNavBar extends ConsumerWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: activeColor,
-              ),
+              style: AppTextStyles.captionSmall(context).withSize(10)
+                  .withWeight(isActive ? FontWeight.w600 : FontWeight.w400)
+                  .withColor(activeColor),
             ),
           ],
         ),

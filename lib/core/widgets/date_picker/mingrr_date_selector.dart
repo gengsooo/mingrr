@@ -387,7 +387,7 @@ class MingrrDateSelector extends StatelessWidget {
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingS),
-                          child: Text('~', style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                          child: Text('~', style: AppTextStyles.bodyLarge(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant)),
                         ),
                         Expanded(
                           child: GestureDetector(

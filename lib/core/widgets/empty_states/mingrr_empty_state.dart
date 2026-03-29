@@ -57,10 +57,7 @@ class MingrrEmptyState extends StatelessWidget {
                 // 제목
                 Text(
                   title,
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: AppTextStyles.bodyLarge(context).withWeight(FontWeight.w500).withColor(colorScheme.onSurfaceVariant),
                   textAlign: TextAlign.center,
                 ),
                 // 부제목

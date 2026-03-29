@@ -328,7 +328,7 @@ class TransactionCompleteDialog extends StatelessWidget {
               },
               child: Text(
                 '취소됐어요',
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ),
           ],

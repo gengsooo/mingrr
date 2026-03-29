@@ -47,15 +47,15 @@ class AppSizes {
   static const double avatarXXS = 24.0;   // 최소 아바타
   static const double avatarXS = 32.0;    // 채팅 리스트
   static const double avatarS = 40.0;     // 댓글, 리스트
-  static const double avatarM = 56.0;     // 카드, 프로필
+  static const double avatarM = 48.0;     // 카드, 프로필
   static const double avatarL = 80.0;     // 상세 화면
   static const double avatarXL = 120.0;   // 프로필 편집
   static const double avatarXXL = 160.0;  // 대형 프로필
 
   // ===== 테두리 반경 (4단계: S, M, L, Full) =====
   static const double radiusS = 12.0;     // 태그, 칩, 작은 카드
-  static const double radiusM = 16.0;     // 일반 카드, 버튼
-  static const double radiusL = 20.0;     // 큰 카드, 바텀시트
+  static const double radiusM = 14.0;     // 일반 카드, 버튼
+  static const double radiusL = 16.0;     // 큰 카드, 바텀시트
   static const double radiusFull = 999.0; // 완전 원형
 
   // ===== 버튼 높이 (3단계: S, M, L) =====
@@ -98,13 +98,13 @@ class AppSizes {
   static const double maxCardWidth = 400.0;
 
   // ===== 화면 레이아웃 (통일 기준) =====
-  static const double screenPaddingH = 20.0;
-  static const double sectionGap = 32.0;      // 섹션 간 간격
-  static const double cardInnerPadding = 20.0; // 카드 내부 패딩
-  static const double listItemGap = 16.0;     // 리스트 아이템 간격
+  static const double screenPaddingH = 16.0;
+  static const double sectionGap = 24.0;      // 섹션 간 간격
+  static const double cardInnerPadding = 16.0; // 카드 내부 패딩
+  static const double listItemGap = 12.0;     // 리스트 아이템 간격
 
   // ===== 바텀시트 =====
-  static const double bottomSheetRadius = 24.0;
+  static const double bottomSheetRadius = 20.0;
   static const double bottomSheetHandleWidth = 40.0;
   static const double bottomSheetHandleHeight = 4.0;
   static const double bottomSheetHandleRadius = bottomSheetHandleHeight / 2;  // 핸들 둥근 모서리

@@ -416,9 +416,9 @@ class _PetProfileModalState extends State<PetProfileModal> {
                   ],
                 ),
                 // 인증 배지 (소형)
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSizes.gapM),
                 const MingrrDivider(),
-                const SizedBox(height: 10),
+                const SizedBox(height: AppSizes.gapM),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [

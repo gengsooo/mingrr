@@ -18,12 +18,12 @@ import 'feature_colors.dart';
 class AppTheme {
   AppTheme._();
 
-  // ===== 색상 상수 (내부용) - 뉴트럴 모던 팔레트 =====
-  static const _primary = Color(0xFFFF8A65);      // 코럴 (브랜드)
-  static const _primaryDark = Color(0xFFFF7043);
-  static const _primaryLight = Color(0xFFFFF3E0);
-  static const _accent = Color(0xFFFF8A65);
-  static const _accentLight = Color(0xFFFFCCBC);
+  // ===== 색상 상수 (내부용) - 세이지 그린 팔레트 =====
+  static const _primary = Color(0xFF6B9B7D);       // 세이지 그린 (브랜드)
+  static const _primaryDark = Color(0xFF5A8A6C);   // 어두운 세이지
+  static const _primaryLight = Color(0xFFEDF5F0);  // 아주 연한 그린 (카드/섹션 배경)
+  static const _accent = Color(0xFF6B9B7D);        // primary와 동일
+  static const _accentLight = Color(0xFFC8DFD0);   // 연한 그린
   static const _error = Color(0xFFFF4B4B);
   
   // 라이트 모드 색상 (뉴트럴 그레이 톤)
@@ -32,7 +32,7 @@ class AppTheme {
   static const _textHint = Color(0xFFB0B8C1);        // 연한 그레이
   static const _divider = Color(0xFFF2F4F6);         // 배경색과 동일 (시각적 구분)
   static const _background = Color(0xFFFFFFFF);      // 순백
-  static const _surfaceVariant = Color(0xFFF2F4F6);  // 카드/섹션 배경
+  static const _surfaceVariant = Color(0xFFF5F7F6);  // 카드/필터 배경 (약간 그린 틴트)
   static const _outline = Color(0xFFE5E8EB);         // 입력 필드 테두리
   
   // 다크 모드 색상 (뉴트럴 다크)
@@ -418,9 +418,9 @@ class AppTheme {
       // ===== 색상 스킴 =====
       colorScheme: const ColorScheme.dark(
         primary: _primary,
-        primaryContainer: Color(0xFF5D2A1F),
+        primaryContainer: Color(0xFF2D4A37),
         secondary: _accent,
-        secondaryContainer: Color(0xFF5D2A1F),
+        secondaryContainer: Color(0xFF2D4A37),
         surface: _darkSurface,
         surfaceContainerHighest: _darkSurfaceLight,
         error: _error,
@@ -487,11 +487,11 @@ class AppTheme {
       
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: _primary,
-          side: const BorderSide(color: _primary, width: 1.5),
-          minimumSize: const Size(double.infinity, AppSizes.buttonHeightL),
+          foregroundColor: _darkTextPrimary,
+          side: const BorderSide(color: _darkDivider, width: 1),
+          minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.radiusL),
+            borderRadius: BorderRadius.circular(AppSizes.radiusFull),
           ),
           textStyle: const TextStyle(
             fontFamily: 'Pretendard',
@@ -503,10 +503,10 @@ class AppTheme {
       
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: _primary,
+          foregroundColor: _darkTextSecondary,
           textStyle: const TextStyle(
             fontFamily: 'Pretendard',
-            fontSize: 14,
+            fontSize: 15,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -517,33 +517,34 @@ class AppTheme {
         filled: true,
         fillColor: _darkSurfaceLight,
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.paddingM,
-          vertical: AppSizes.paddingM,
+          horizontal: AppSizes.paddingL,
+          vertical: AppSizes.paddingL,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusM),
-          borderSide: const BorderSide(color: _darkDivider),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusM),
-          borderSide: const BorderSide(color: _darkDivider),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusM),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
           borderSide: const BorderSide(color: _primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSizes.radiusM),
+          borderRadius: BorderRadius.circular(AppSizes.radiusL),
           borderSide: const BorderSide(color: _error),
         ),
         hintStyle: const TextStyle(
           fontFamily: 'Pretendard',
           color: _darkTextHint,
-          fontSize: 14,
+          fontSize: 15,
         ),
         labelStyle: const TextStyle(
           fontFamily: 'Pretendard',
           color: _darkTextSecondary,
+          fontSize: 15,
         ),
       ),
       
@@ -554,6 +555,16 @@ class AppTheme {
         unselectedItemColor: _darkTextHint,
         type: BottomNavigationBarType.fixed,
         elevation: AppSizes.elevationM,
+        selectedLabelStyle: TextStyle(
+          fontFamily: 'Pretendard',
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontFamily: 'Pretendard',
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+        ),
       ),
       
       // ===== 바텀시트 테마 =====
@@ -628,6 +639,16 @@ class AppTheme {
         labelColor: _primary,
         unselectedLabelColor: _darkTextSecondary,
         indicatorColor: _primary,
+        labelStyle: TextStyle(
+          fontFamily: 'Pretendard',
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+        unselectedLabelStyle: TextStyle(
+          fontFamily: 'Pretendard',
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+        ),
       ),
       
       // ===== 리스트타일 테마 =====
@@ -670,22 +691,22 @@ extension ScreenBackgroundExtension on BuildContext {
   }
   
   /// 섹션/카드 배경색 (상세/등록 화면 내부 컨테이너용)
-  /// - 라이트: 홈 배경색 (0xFFFFFBF5) - 서비스 대표 색상
+  /// - 라이트: 연한 그린 틴트 (0xFFEDF5F0)
   /// - 다크: surfaceContainerHighest (기존 다크 테마 유지)
   Color get sectionBackground {
     final isDark = Theme.of(this).brightness == Brightness.dark;
     return isDark 
         ? Theme.of(this).colorScheme.surfaceContainerHighest 
-        : const Color(0xFFFFFBF5);
+        : const Color(0xFFEDF5F0);
   }
   
   /// 입력 필드 배경색
-  /// - 라이트: 홈 배경색 (0xFFFFFBF5) - 서비스 대표 색상
+  /// - 라이트: 연한 그린 틴트 (0xFFEDF5F0)
   /// - 다크: surfaceContainerHighest
   Color get inputBackground {
     final isDark = Theme.of(this).brightness == Brightness.dark;
     return isDark 
         ? Theme.of(this).colorScheme.surfaceContainerHighest 
-        : const Color(0xFFFFFBF5);
+        : const Color(0xFFEDF5F0);
   }
 }

@@ -134,7 +134,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                     Container(
                       padding: const EdgeInsets.all(AppSizes.paddingM),
                       decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                        color: colorScheme.surfaceContainerHighest.withValues(alpha: AppOpacity.o50),
                         borderRadius: BorderRadius.circular(AppSizes.radiusS),
                       ),
                       child: Row(
@@ -175,7 +175,7 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
                 color: colorScheme.surface,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withValues(alpha: AppOpacity.o05),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
@@ -211,8 +211,8 @@ class _ConsentScreenState extends ConsumerState<ConsentScreen> {
         padding: const EdgeInsets.all(AppSizes.paddingM),
         decoration: BoxDecoration(
           color: _allAgreed 
-              ? colorScheme.primary.withValues(alpha: 0.1)
-              : colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+              ? colorScheme.primary.withValues(alpha: AppOpacity.o10)
+              : colorScheme.surfaceContainerHighest.withValues(alpha: AppOpacity.o30),
           borderRadius: BorderRadius.circular(AppSizes.radiusS),
           border: Border.all(
             color: _allAgreed ? colorScheme.primary : colorScheme.outline,

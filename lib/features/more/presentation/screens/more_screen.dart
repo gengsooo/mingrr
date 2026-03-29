@@ -34,16 +34,11 @@ class MoreScreen extends ConsumerWidget {
         child: CustomScrollView(
           slivers: [
             // 앱바
-            SliverAppBar(
-              floating: true,
-              elevation: AppSizes.elevationNone,
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              title: Text(
+            MingrrSliverAppBar.mainTab(
+              titleWidget: Text(
                 '전체',
                 style: AppTextStyles.headlineMedium(context),
               ),
-              centerTitle: false,
-              automaticallyImplyLeading: false,
             ),
 
             SliverPadding(

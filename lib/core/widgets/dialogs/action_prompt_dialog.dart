@@ -140,9 +140,7 @@ class MingrrActionPromptDialog extends StatelessWidget {
                 },
                 child: Text(
                   secondaryButtonText!,
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  style: AppTextStyles.bodyMedium(context).withColor(colorScheme.onSurfaceVariant),
                 ),
               ),
             ],

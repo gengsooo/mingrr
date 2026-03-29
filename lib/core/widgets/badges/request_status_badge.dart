@@ -221,9 +221,9 @@ class RequestStatusBadge extends StatelessWidget {
     return Container(
       padding: size.padding,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: AppOpacity.o10),
         borderRadius: BorderRadius.circular(AppSizes.radiusS),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withValues(alpha: AppOpacity.o30)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -238,7 +238,7 @@ class RequestStatusBadge extends StatelessWidget {
           ],
           Text(
             label,
-            style: TextStyle(
+            style: AppTextStyles.labelMedium(context).copyWith(
               fontSize: size.fontSize,
               fontWeight: FontWeight.w500,
               color: color,

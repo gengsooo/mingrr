@@ -104,35 +104,35 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
   final LinearGradient primaryGradient;
 
   // ===== 라이트 테마 색상 =====
-  // V3 리팩토링: 모든 기능별 색상을 동일한 accent(코럴)로 통합
+  // V3 리팩토링: 모든 기능별 색상을 동일한 accent(세이지 그린)로 통합
   static const light = FeatureColors(
-    // 데이팅 → 통합 코럴
-    dating: Color(0xFFFF8A65),
-    datingContainer: Color(0xFFF5F5F5),
+    // 데이팅 → 통합 세이지 그린
+    dating: Color(0xFF6B9B7D),
+    datingContainer: Color(0xFFEDF5F0),
     onDating: Colors.white,
-    // 마켓 → 통합 코럴
-    market: Color(0xFFFF8A65),
-    marketContainer: Color(0xFFF5F5F5),
+    // 마켓 → 통합 세이지 그린
+    market: Color(0xFF6B9B7D),
+    marketContainer: Color(0xFFEDF5F0),
     onMarket: Colors.white,
-    // 소셜 → 통합 코럴
-    social: Color(0xFFFF8A65),
-    socialContainer: Color(0xFFF5F5F5),
+    // 소셜 → 통합 세이지 그린
+    social: Color(0xFF6B9B7D),
+    socialContainer: Color(0xFFEDF5F0),
     onSocial: Colors.white,
-    // 건강 → 통합 코럴
-    health: Color(0xFFFF8A65),
-    healthContainer: Color(0xFFF5F5F5),
+    // 건강 → 통합 세이지 그린
+    health: Color(0xFF6B9B7D),
+    healthContainer: Color(0xFFEDF5F0),
     onHealth: Colors.white,
-    // 산책 → 통합 코럴
-    walk: Color(0xFFFF8A65),
-    walkContainer: Color(0xFFF5F5F5),
+    // 산책 → 통합 세이지 그린
+    walk: Color(0xFF6B9B7D),
+    walkContainer: Color(0xFFEDF5F0),
     onWalk: Colors.white,
-    // 채팅 → 통합 코럴
-    chat: Color(0xFFFF8A65),
-    chatContainer: Color(0xFFF5F5F5),
+    // 채팅 → 통합 세이지 그린
+    chat: Color(0xFF6B9B7D),
+    chatContainer: Color(0xFFEDF5F0),
     onChat: Colors.white,
-    // 교배 → 통합 코럴
-    breeding: Color(0xFFFF8A65),
-    breedingContainer: Color(0xFFF5F5F5),
+    // 교배 → 통합 세이지 그린
+    breeding: Color(0xFF6B9B7D),
+    breedingContainer: Color(0xFFEDF5F0),
     onBreeding: Colors.white,
     // 상태 색상 (독립 유지)
     success: Color(0xFF66BB6A),
@@ -143,40 +143,40 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
     infoContainer: Color(0xFFE3F2FD),
     // 그라데이션
     warmGradient: LinearGradient(
-      colors: [Color(0xFFFAFAFA), Color(0xFFF5F5F5)],
+      colors: [Color(0xFFF5F7F6), Color(0xFFEDF5F0)],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     ),
     primaryGradient: LinearGradient(
-      colors: [Color(0xFFFFD54F), Color(0xFFFFC107)],
+      colors: [Color(0xFF8FBF9E), Color(0xFF6B9B7D)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),
   );
 
   // ===== 다크 테마 색상 =====
-  // V3 리팩토링: 모든 기능별 색상을 동일한 accent(코럴)로 통합
+  // V3 리팩토링: 모든 기능별 색상을 동일한 accent(세이지 그린)로 통합
   static const dark = FeatureColors(
-    dating: Color(0xFFFFAB91),
-    datingContainer: Color(0xFF1E1E1E),
+    dating: Color(0xFF8FBF9E),
+    datingContainer: Color(0xFF2D4A37),
     onDating: Colors.white,
-    market: Color(0xFFFFAB91),
-    marketContainer: Color(0xFF1E1E1E),
+    market: Color(0xFF8FBF9E),
+    marketContainer: Color(0xFF2D4A37),
     onMarket: Colors.white,
-    social: Color(0xFFFFAB91),
-    socialContainer: Color(0xFF1E1E1E),
+    social: Color(0xFF8FBF9E),
+    socialContainer: Color(0xFF2D4A37),
     onSocial: Colors.white,
-    health: Color(0xFFFFAB91),
-    healthContainer: Color(0xFF1E1E1E),
+    health: Color(0xFF8FBF9E),
+    healthContainer: Color(0xFF2D4A37),
     onHealth: Colors.white,
-    walk: Color(0xFFFFAB91),
-    walkContainer: Color(0xFF1E1E1E),
+    walk: Color(0xFF8FBF9E),
+    walkContainer: Color(0xFF2D4A37),
     onWalk: Colors.white,
-    chat: Color(0xFFFFAB91),
-    chatContainer: Color(0xFF1E1E1E),
+    chat: Color(0xFF8FBF9E),
+    chatContainer: Color(0xFF2D4A37),
     onChat: Colors.white,
-    breeding: Color(0xFFFFAB91),
-    breedingContainer: Color(0xFF1E1E1E),
+    breeding: Color(0xFF8FBF9E),
+    breedingContainer: Color(0xFF2D4A37),
     onBreeding: Colors.white,
     // 상태 색상 (다크모드)
     success: Color(0xFF81C784),
@@ -192,7 +192,7 @@ class FeatureColors extends ThemeExtension<FeatureColors> {
       end: Alignment.bottomCenter,
     ),
     primaryGradient: LinearGradient(
-      colors: [Color(0xFF5D4A00), Color(0xFF3D3D00)],
+      colors: [Color(0xFF2D4A37), Color(0xFF1D3D2A)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),

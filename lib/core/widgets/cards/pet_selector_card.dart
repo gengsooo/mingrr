@@ -168,7 +168,7 @@ class _PetSelectorSheetState extends State<PetSelectorSheet> {
                           const SizedBox(height: AppSizes.gapM),
                           Text(
                             '등록된 반려동물이 없습니다',
-                            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                            style: AppTextStyles.bodyMedium(context).withColor(Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                         ],
                       ),

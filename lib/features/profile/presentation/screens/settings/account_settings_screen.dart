@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/constants/app_icons.dart';
 import '../../../../../core/constants/app_sizes.dart';
+import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/widgets/common_widgets.dart';
 import '../../../../../core/widgets/dialogs/dialogs.dart';
 import '../../../../auth/presentation/providers/auth_provider.dart';
@@ -36,8 +37,6 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
     final isKakaoLogin = providerData.any((p) => p.providerId == 'oidc.kakao');
     final isAppleLogin = providerData.any((p) => p.providerId == 'apple.com');
     final isGoogleLogin = providerData.any((p) => p.providerId == 'google.com');
-
-    final theme = Theme.of(context);
     
     return Scaffold(
       appBar: const MingrrAppBar(title: '계정 관리'),
@@ -54,7 +53,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                   padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                   child: Text(
                     '연동 계정',
-                    style: theme.textTheme.titleLarge,
+                    style: AppTextStyles.titleLarge(context),
                   ),
                 ),
                 MingrrSettingsTile.connection(
@@ -97,7 +96,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                     padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                     child: Text(
                       '보안',
-                      style: theme.textTheme.titleLarge,
+                      style: AppTextStyles.titleLarge(context),
                     ),
                   ),
                   MingrrSettingsTile(
@@ -122,7 +121,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
                   padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                   child: Text(
                     '개인정보',
-                    style: theme.textTheme.titleLarge,
+                    style: AppTextStyles.titleLarge(context),
                   ),
                 ),
                 MingrrSettingsTile(
@@ -162,7 +161,7 @@ class _AccountSettingsScreenState extends ConsumerState<AccountSettingsScreen> {
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.paddingXS),
             child: Text(
               '* 회원 탈퇴 시 30일간 데이터가 보관되며, 이 기간 내 재가입 시 복구가 가능합니다.',
-              style: theme.textTheme.labelSmall,
+              style: AppTextStyles.captionSmall(context),
             ),
           ),
         ],

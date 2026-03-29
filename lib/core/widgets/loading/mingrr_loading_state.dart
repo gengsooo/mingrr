@@ -77,10 +77,7 @@ class _MingrrLoadingStateState extends ConsumerState<MingrrLoadingState> {
             const SizedBox(height: AppSizes.gapL),
             Text(
               '인터넷 연결이 끊겼어요',
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
+              style: AppTextStyles.bodyLarge(context).withWeight(FontWeight.w500).withColor(colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSizes.gapS),
@@ -122,10 +119,7 @@ class _MingrrLoadingStateState extends ConsumerState<MingrrLoadingState> {
             const SizedBox(height: AppSizes.gapL),
             Text(
               '로딩이 오래 걸리고 있어요',
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
+              style: AppTextStyles.bodyLarge(context).withWeight(FontWeight.w500).withColor(colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSizes.gapS),
@@ -171,10 +165,7 @@ class _MingrrLoadingStateState extends ConsumerState<MingrrLoadingState> {
             const SizedBox(height: AppSizes.gapL),
             Text(
               widget.message!,
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
+              style: AppTextStyles.bodyLarge(context).withWeight(FontWeight.w500).withColor(colorScheme.onSurfaceVariant),
               textAlign: TextAlign.center,
             ),
           ],

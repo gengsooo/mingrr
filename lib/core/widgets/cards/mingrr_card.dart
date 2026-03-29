@@ -29,9 +29,9 @@ class MingrrCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colorScheme = Theme.of(context).colorScheme;
     
-    final bgColor = backgroundColor ?? (isDark ? const Color(0xFF1B1D24) : Colors.white);
+    final bgColor = backgroundColor ?? colorScheme.surface;
     final rad = borderRadius ?? AppSizes.radiusL;
     
     Widget card = Container(

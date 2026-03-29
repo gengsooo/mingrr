@@ -96,7 +96,7 @@ class LocationBubbleWidget extends StatelessWidget {
                 ),
               ],
               
-              const SizedBox(height: 10),
+              const SizedBox(height: AppSizes.gapM),
               
               // 버튼들
               Row(

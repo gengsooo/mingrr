@@ -75,7 +75,7 @@ class MingrrBreedPicker extends StatelessWidget {
               color: context.inputBackground,
               borderRadius: BorderRadius.circular(AppSizes.radiusS),
               border: Border.all(
-                color: colorScheme.outline.withValues(alpha: 0.3),
+                color: colorScheme.outline.withValues(alpha: AppOpacity.o30),
               ),
             ),
             child: Row(

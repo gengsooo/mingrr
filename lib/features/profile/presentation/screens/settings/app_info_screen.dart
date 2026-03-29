@@ -77,14 +77,12 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
                 const SizedBox(height: AppSizes.gapL),
                 Text(
                   '밍그르르',
-                  style: theme.textTheme.headlineMedium,
+                  style: AppTextStyles.headlineMedium(context),
                 ),
                 const SizedBox(height: AppSizes.gapXS),
                 Text(
                   '반려동물과 함께하는 일상',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                  style: AppTextStyles.bodyMedium(context).withColor(colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: AppSizes.gapL),
                 Container(
@@ -95,7 +93,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
                   ),
                   child: Text(
                     'v$_version ($_buildNumber)',
-                    style: theme.textTheme.bodySmall,
+                    style: AppTextStyles.caption(context),
                   ),
                 ),
                 const SizedBox(height: AppSizes.gapXL),
@@ -115,7 +113,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
                   padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                   child: Text(
                     '약관 및 정책',
-                    style: theme.textTheme.titleLarge,
+                    style: AppTextStyles.titleLarge(context),
                   ),
                 ),
                 MingrrSettingsTile(
@@ -143,7 +141,7 @@ class _AppInfoScreenState extends State<AppInfoScreen> {
           Center(
             child: Text(
               '© 2025 MINGRR. All rights reserved.',
-              style: theme.textTheme.labelSmall,
+              style: AppTextStyles.captionSmall(context),
             ),
           ),
         ],

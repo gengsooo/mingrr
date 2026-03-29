@@ -371,6 +371,31 @@ final isCommunityPostLikedProvider = FutureProvider.autoDispose.family<bool, Str
   return doc.exists;
 });
 
+/// 홈 화면용 커뮤니티 인기글 (좋아요순, 최근 7일, 최대 5개)
+final popularCommunityPostsProvider = FutureProvider.autoDispose<List<CommunityPostModel>>((ref) async {
+  ref.keepAlive();
+  
+  final firebase = FirebaseService();
+  final blockedUserIds = ref.watch(blockedUserIdsProvider).valueOrNull ?? [];
+  final sevenDaysAgo = DateTime.now().subtract(const Duration(days: 7));
+  
+  final snapshot = await firebase.feedPostsCollection
+      .where('createdAt', isGreaterThan: Timestamp.fromDate(sevenDaysAgo))
+      .orderBy('createdAt', descending: true)
+      .limit(30)
+      .get();
+  
+  final posts = snapshot.docs
+      .map((doc) => CommunityPostModel.fromFirestore(doc.data(), id: doc.id))
+      .where((post) => !blockedUserIds.contains(post.authorId))
+      .toList();
+  
+  // 클라이언트 사이드에서 좋아요순 정렬
+  posts.sort((a, b) => b.likeCount.compareTo(a.likeCount));
+  
+  return posts.take(5).toList();
+});
+
 /// ============================================================
 /// 페이지네이션 커뮤니티 게시글 Provider
 /// 

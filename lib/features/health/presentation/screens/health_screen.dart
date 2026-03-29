@@ -682,7 +682,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
                       Container(
                         width: 48, height: 48,
                         decoration: BoxDecoration(
-                          color: iconColor.withValues(alpha: 0.15),
+                          color: iconColor.withValues(alpha: AppOpacity.o15),
                           borderRadius: BorderRadius.circular(AppSizes.radiusM),
                         ),
                         child: Icon(AppIcons.medication, color: iconColor, size: AppSizes.iconL),
@@ -692,14 +692,14 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(displayName, style: theme.textTheme.titleLarge),
+                            Text(displayName, style: AppTextStyles.titleLarge(context)),
                             const SizedBox(height: AppSizes.gapXXS),
                             Row(
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: AppSizes.paddingXXS),
                                   decoration: BoxDecoration(
-                                    color: isActive ? context.features.success.withValues(alpha: 0.15) : theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
+                                    color: isActive ? context.features.success.withValues(alpha: AppOpacity.o15) : theme.colorScheme.outlineVariant.withValues(alpha: AppOpacity.o15),
                                     borderRadius: BorderRadius.circular(AppSizes.radiusS),
                                   ),
                                   child: Text(
@@ -724,9 +724,9 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
                     _medicationInfoRow(theme, '종료일', formatShortDate(record.endDate!)),
                   if (record.notes != null && record.notes!.isNotEmpty) ...[
                     const SizedBox(height: AppSizes.gapM),
-                    Text('메모', style: theme.textTheme.labelMedium),
+                    Text('메모', style: AppTextStyles.labelMedium(context)),
                     const SizedBox(height: AppSizes.gapXS),
-                    Text(record.notes!, style: theme.textTheme.bodyMedium),
+                    Text(record.notes!, style: AppTextStyles.bodyMedium(context)),
                   ],
                 ],
               ),
@@ -744,9 +744,9 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
         children: [
           SizedBox(
             width: 80,
-            child: Text(label, style: theme.textTheme.bodySmall),
+            child: Text(label, style: AppTextStyles.captionSmall(context)),
           ),
-          Expanded(child: Text(value, style: theme.textTheme.bodyMedium)),
+          Expanded(child: Text(value, style: AppTextStyles.bodyMedium(context))),
         ],
       ),
     );
@@ -788,7 +788,7 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
                         Container(
                           width: 48, height: 48,
                           decoration: BoxDecoration(
-                            color: context.features.health.withValues(alpha: 0.15),
+                            color: context.features.health.withValues(alpha: AppOpacity.o15),
                             borderRadius: BorderRadius.circular(AppSizes.radiusM),
                           ),
                           child: Icon(AppIcons.special, color: context.features.health, size: AppSizes.iconL),
@@ -798,16 +798,16 @@ class _HealthScreenState extends ConsumerState<HealthScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(record.title, style: theme.textTheme.titleLarge),
+                              Text(record.title, style: AppTextStyles.titleLarge(context)),
                               const SizedBox(height: AppSizes.gapXXS),
-                              Text(formatShortDate(record.recordDate), style: theme.textTheme.bodySmall),
+                              Text(formatShortDate(record.recordDate), style: AppTextStyles.caption(context)),
                             ],
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: AppSizes.gapXL),
-                    Text(record.content, style: theme.textTheme.bodyMedium?.copyWith(height: 1.6)),
+                    Text(record.content, style: AppTextStyles.bodyMedium(context).copyWith(height: 1.6)),
                     if (record.photoUrls.isNotEmpty) ...[
                       const SizedBox(height: AppSizes.gapL),
                       SizedBox(

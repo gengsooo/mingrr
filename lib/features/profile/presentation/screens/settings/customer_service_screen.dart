@@ -25,8 +25,6 @@ class CustomerServiceScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     return Scaffold(
       appBar: const MingrrAppBar(title: '고객센터'),
       body: ListView(
@@ -42,7 +40,7 @@ class CustomerServiceScreen extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                   child: Text(
                     '문의하기',
-                    style: theme.textTheme.titleLarge,
+                    style: AppTextStyles.titleLarge(context),
                   ),
                 ),
                 MingrrSettingsTile(
@@ -75,7 +73,7 @@ class CustomerServiceScreen extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: AppSizes.paddingM),
                   child: Text(
                     '자주 묻는 질문',
-                    style: theme.textTheme.titleLarge,
+                    style: AppTextStyles.titleLarge(context),
                   ),
                 ),
                 ..._buildFaqItems(context),
@@ -96,7 +94,7 @@ class CustomerServiceScreen extends StatelessWidget {
                   children: [
                     Text(
                       '공지사항',
-                      style: theme.textTheme.titleLarge,
+                      style: AppTextStyles.titleLarge(context),
                     ),
                     TextButton(
                       onPressed: () => _showAllNotices(context),
@@ -160,8 +158,6 @@ class CustomerServiceScreen extends StatelessWidget {
   }
 
   List<Widget> _buildFaqItems(BuildContext context) {
-    final theme = Theme.of(context);
-    
     final faqList = [
       {
         'question': '반려동물은 어떻게 등록하나요?',
@@ -185,14 +181,14 @@ class CustomerServiceScreen extends StatelessWidget {
       tilePadding: EdgeInsets.zero,
       title: Text(
         faq['question']!,
-        style: theme.textTheme.bodyMedium,
+        style: AppTextStyles.bodyMedium(context),
       ),
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: AppSizes.paddingL),
           child: Text(
             faq['answer']!,
-            style: theme.textTheme.bodySmall?.copyWith(height: 1.5),
+            style: AppTextStyles.caption(context).copyWith(height: 1.5),
           ),
         ),
       ],
@@ -200,8 +196,6 @@ class CustomerServiceScreen extends StatelessWidget {
   }
 
   List<Widget> _buildNoticeItems(BuildContext context) {
-    final theme = Theme.of(context);
-    
     final notices = [
       {
         'title': '[안내] 밍그르르 서비스 오픈!',
@@ -241,7 +235,7 @@ class CustomerServiceScreen extends StatelessWidget {
           Expanded(
             child: Text(
               notice['title'] as String,
-              style: theme.textTheme.bodyMedium,
+              style: AppTextStyles.bodyMedium(context),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -249,7 +243,7 @@ class CustomerServiceScreen extends StatelessWidget {
       ),
       subtitle: Text(
         notice['date'] as String,
-        style: theme.textTheme.labelSmall,
+        style: AppTextStyles.captionSmall(context),
       ),
       onTap: () => _showNoticeDetail(context, notice),
     )).toList();
@@ -282,14 +276,14 @@ class CustomerServiceScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: AppSizes.paddingS),
               child: Text(
                 notice['title'] as String,
-                style: theme.textTheme.headlineSmall,
+                style: AppTextStyles.headlineSmall(context),
                 textAlign: TextAlign.center,
               ),
             ),
             const SizedBox(height: AppSizes.gapS),
             Text(
               notice['date'] as String,
-              style: theme.textTheme.labelSmall,
+              style: AppTextStyles.captionSmall(context),
             ),
             const SizedBox(height: AppSizes.gapXL),
             const MingrrDivider(),
@@ -300,7 +294,7 @@ class CustomerServiceScreen extends StatelessWidget {
                   '공지사항 내용이 여기에 표시됩니다.\n\n'
                   '밍그르르를 이용해 주셔서 감사합니다.\n\n'
                   '더 좋은 서비스로 보답하겠습니다.',
-                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
+                  style: AppTextStyles.bodyMedium(context).copyWith(height: 1.6),
                 ),
               ),
             ),
